@@ -31,13 +31,13 @@ class JailbreakSchemeTest extends BaseCardTest {
         cast(new int[]{0}, List.of(target.getId()), 4);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class JailbreakSchemeTest extends BaseCardTest {
         harness.handleListChoice(player2, "Top");
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(artifact.getCard(), topCard);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
@@ -104,7 +104,7 @@ class JailbreakSchemeTest extends BaseCardTest {
         cast(new int[]{0, 1}, List.of(target.getId(), target.getId()), 6);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.handleListChoice(player2, "Bottom");
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
@@ -150,7 +150,7 @@ class JailbreakSchemeTest extends BaseCardTest {
         harness.handleListChoice(player2, "Bottom");
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, artifact.getCard());
         assertThat(gd.playerHands.get(player2.getId())).contains(creature.getCard());
     }
@@ -184,7 +184,7 @@ class JailbreakSchemeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).contains(artifact.getCard());
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(JailbreakScheme.class::isInstance);
@@ -207,7 +207,7 @@ class JailbreakSchemeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
         assertThat(gd.playerHands.get(player2.getId())).contains(target.getCard());

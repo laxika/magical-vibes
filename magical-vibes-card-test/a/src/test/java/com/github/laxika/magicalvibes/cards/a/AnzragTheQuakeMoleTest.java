@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GravestoneStrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,7 +53,7 @@ class AnzragTheQuakeMoleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent anzrag = findPermanent(player1, "Anzrag, the Quake-Mole");
-        assertThat(anzrag.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(anzrag.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
 
         anzrag.setAttacking(true);
         prepareDeclareBlockers();
@@ -77,7 +79,7 @@ class AnzragTheQuakeMoleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent anzrag = findPermanent(player1, "Anzrag, the Quake-Mole");
-        assertThat(anzrag.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(anzrag.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test

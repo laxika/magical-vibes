@@ -83,13 +83,13 @@ class EscapeTunnelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -155,9 +155,9 @@ class EscapeTunnelTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Escape Tunnel");
         harness.assertInGraveyard(player1, "Escape Tunnel");
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -169,7 +169,7 @@ class EscapeTunnelTest extends BaseCardTest {
         target.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         harness.assertInGraveyard(player1, "Escape Tunnel");
         assertThat(gd.stack).isEmpty();
     }
@@ -205,7 +205,7 @@ class EscapeTunnelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(blocker.getBlockingTargetIds()).contains(attacker.getId());
     }

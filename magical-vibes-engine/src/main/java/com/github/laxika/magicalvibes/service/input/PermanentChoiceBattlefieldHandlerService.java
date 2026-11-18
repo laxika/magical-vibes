@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
@@ -3569,7 +3571,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         Permanent other = gameQueryService.findPermanentById(gameData, otherId);
         if (other != null) {
-            other.setCantBlockThisTurn(true);
+            gameData.addEffectOnPermanent(entry, new CantBlockEffect(), other.getId(), Duration.UNTIL_END_OF_TURN);
             gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " can't block this turn."));
         }
 

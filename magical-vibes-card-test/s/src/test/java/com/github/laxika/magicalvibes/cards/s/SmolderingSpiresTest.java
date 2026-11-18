@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.l.LoamLion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,7 +33,7 @@ class SmolderingSpiresTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -56,9 +58,9 @@ class SmolderingSpiresTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
         assertThat(bls.canBlock(gd, ownCreature)).isFalse();
-        assertThat(otherCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(otherCreature.getId(), CantBlockEffect.class)).isFalse();
         assertThat(bls.canBlock(gd, otherCreature)).isTrue();
     }
 
@@ -76,7 +78,7 @@ class SmolderingSpiresTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
         assertThat(bls.canBlock(gd, blocker)).isTrue();
     }
 
@@ -105,6 +107,6 @@ class SmolderingSpiresTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 }

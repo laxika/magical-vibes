@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,7 +45,7 @@ class CrosswayVampireTest extends BaseCardTest {
         // Resolve ETB
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -87,7 +89,7 @@ class CrosswayVampireTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(vampire.getId());
         harness.passBothPriorities();
 
-        assertThat(vampire.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(vampire.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -125,9 +127,9 @@ class CrosswayVampireTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
-        assertThat(findPermanent(player1, "Crossway Vampire").isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player1, "Crossway Vampire").getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -142,7 +144,7 @@ class CrosswayVampireTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Crossway Vampire"));
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -156,9 +158,9 @@ class CrosswayVampireTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FurnaceHostCharger;
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
@@ -26,7 +28,7 @@ class SearingBarbTest extends BaseCardTest {
         cast(target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         Permanent incubator = findPermanent(player1, "Incubator");
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -61,7 +63,7 @@ class SearingBarbTest extends BaseCardTest {
         cast(target.getId());
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(countPermanents(player1, "Incubator")).isEqualTo(1);
     }
 
@@ -73,7 +75,7 @@ class SearingBarbTest extends BaseCardTest {
         cast(target.getId());
 
         assertThat(target.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(countPermanents(player1, "Incubator")).isEqualTo(1);
     }
 
@@ -85,7 +87,7 @@ class SearingBarbTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(countPermanents(player1, "Incubator")).isEqualTo(1);
     }
 
@@ -97,7 +99,7 @@ class SearingBarbTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(countPermanents(player1, "Incubator")).isZero();
         harness.assertInGraveyard(player1, "Searing Barb");
     }

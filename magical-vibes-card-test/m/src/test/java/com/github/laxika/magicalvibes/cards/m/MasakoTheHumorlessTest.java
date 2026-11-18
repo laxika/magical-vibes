@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -130,7 +134,8 @@ class MasakoTheHumorlessTest extends BaseCardTest {
         harness.addToBattlefield(player2, new MasakoTheHumorless());
         Permanent blocker = addCreatureReady(player2, new IsamaruHoundOfKonda());
         blocker.tap();
-        blocker.setCantBlockThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBlockEffect(), blocker.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThat(bls.canBlock(gd, blocker)).isFalse();
     }

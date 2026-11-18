@@ -53,7 +53,7 @@ class CreepingTarPitTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, tarPit))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
         assertThat(tarPit.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
-        assertThat(tarPit.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, tarPit)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ class CreepingTarPitTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, tarPit)).isFalse();
         assertThat(gqs.isLand(gd, tarPit)).isTrue();
         assertThat(tarPit.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
-        assertThat(tarPit.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, tarPit)).isFalse();
     }
 
     @Test
@@ -127,9 +127,9 @@ class CreepingTarPitTest extends BaseCardTest {
         assertThat(tarPit.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, tarPit)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, tarPit)).isEqualTo(2);
-        assertThat(tarPit.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, tarPit)).isTrue();
         assertThat(gqs.isCreature(gd, otherTarPit)).isFalse();
-        assertThat(otherTarPit.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherTarPit)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();

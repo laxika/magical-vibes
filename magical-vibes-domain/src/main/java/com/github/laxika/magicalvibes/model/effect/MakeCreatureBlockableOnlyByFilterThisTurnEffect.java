@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Stalwart ("can't be blocked by creatures with power 2 or less this turn" ≡ only by power 3+).
  *
  * <p>The single-creature counterpart of {@link GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect}:
- * the restriction is added to the creature's {@code Permanent.blockRestrictionsUntilEndOfTurn} and
- * consumed by {@code GameQueryService.getBlockRestriction}, cleared by {@code resetModifiers}.
+ * the restriction is a floating {@link CanBeBlockedOnlyByFilterEffect} on the creature until end of turn, read
+ * through {@code GameData.blockRestrictions}.
  *
  * @param blockerPredicate the only blockers that may block the creature
  * @param allowedBlockersDescription human-readable description of the allowed blockers (for logs/UI)

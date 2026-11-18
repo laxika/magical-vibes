@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BenalishHero;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,7 +34,7 @@ class YdwenEfreetTest extends BaseCardTest {
         assertThat(wonFlip).isNotEqualTo(lostFlip);
         if (lostFlip) {
             assertThat(efreet.isBlocking()).isFalse();
-            assertThat(efreet.isCantBlockThisTurn()).isTrue();
+            assertThat(gd.hasFloatingEffectOnPermanent(efreet.getId(), CantBlockEffect.class)).isTrue();
             assertThat(attacker.isBlockedWithoutBlockers()).isFalse();
         } else {
             assertThat(efreet.isBlocking()).isTrue();
@@ -59,7 +61,7 @@ class YdwenEfreetTest extends BaseCardTest {
         assertThat(efreet.isBlocking()).isEqualTo(wonFlip);
         assertThat(otherBlocker.isBlocking()).isTrue();
         assertThat(attacker.isBlockedWithoutBlockers()).isFalse();
-        assertThat(efreet.isCantBlockThisTurn()).isEqualTo(lostFlip);
+        assertThat(gd.hasFloatingEffectOnPermanent(efreet.getId(), CantBlockEffect.class)).isEqualTo(lostFlip);
     }
 
     @Test
@@ -90,7 +92,7 @@ class YdwenEfreetTest extends BaseCardTest {
                 .hasSize(1);
         boolean lostFlip = gameLogContains("loses the coin flip for Ydwen Efreet");
         assertThat(efreet.isBlocking()).isEqualTo(!lostFlip);
-        assertThat(efreet.isCantBlockThisTurn()).isEqualTo(lostFlip);
+        assertThat(gd.hasFloatingEffectOnPermanent(efreet.getId(), CantBlockEffect.class)).isEqualTo(lostFlip);
         assertThat(firstAttacker.isBlockedWithoutBlockers()).isFalse();
         assertThat(secondAttacker.isBlockedWithoutBlockers()).isFalse();
     }

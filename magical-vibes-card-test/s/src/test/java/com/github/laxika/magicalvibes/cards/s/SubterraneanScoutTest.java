@@ -32,7 +32,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Subterranean Scout"));
         harness.passBothPriorities();
 
-        assertThat(brute.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, brute)).isFalse();
     }
 
     @Test
@@ -56,7 +56,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, scout.getId());
         harness.passBothPriorities();
 
-        assertThat(scout.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, scout)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isTrue();
     }
 
     @Test
@@ -80,7 +80,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Subterranean Scout"));
         harness.passBothPriorities();
 
-        assertThat(wolf.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TimberpackWolf());
         harness.passBothPriorities();
 
-        assertThat(wolf.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -104,7 +104,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new TimberpackWolf());
 
-        assertThat(wolf.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isTrue();
         assertThat(bls.canBlockAttacker(gd, blocker, wolf,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
@@ -122,7 +122,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Subterranean Scout");
         harness.passBothPriorities();
 
-        assertThat(wolf.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
     @Test
@@ -138,7 +138,7 @@ class SubterraneanScoutTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(wolf.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isFalse();
         assertThat(bls.canBlockAttacker(gd, blocker, wolf,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
     }

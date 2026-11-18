@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +31,7 @@ class JamuraanLionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(lion.isTapped()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -78,10 +80,10 @@ class JamuraanLionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player1, TurnStep.CLEANUP);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -93,11 +95,11 @@ class JamuraanLionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, lion.getId());
 
         assertThat(lion.isTapped()).isTrue();
-        assertThat(lion.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(lion.getId(), CantBlockEffect.class)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(lion.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(lion.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -112,7 +114,7 @@ class JamuraanLionTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(lion.isTapped()).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -128,7 +130,7 @@ class JamuraanLionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -145,7 +147,7 @@ class JamuraanLionTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
 
         assertThat(lion.isTapped()).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

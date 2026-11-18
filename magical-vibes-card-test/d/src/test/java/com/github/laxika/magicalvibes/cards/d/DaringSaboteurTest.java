@@ -48,7 +48,7 @@ class DaringSaboteurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(saboteur.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, saboteur)).isTrue();
     }
 
     @Test
@@ -61,13 +61,13 @@ class DaringSaboteurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(saboteur.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, saboteur)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(saboteur.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, saboteur)).isFalse();
     }
 
     @Test
@@ -197,7 +197,7 @@ class DaringSaboteurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(saboteur.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, saboteur)).isTrue();
         assertThat(saboteur.isTapped()).isTrue();
     }
 

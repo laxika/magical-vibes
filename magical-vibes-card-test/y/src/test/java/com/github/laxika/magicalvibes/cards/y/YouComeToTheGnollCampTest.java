@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,9 +31,9 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
 
         cast(INTIMIDATE_THEM, List.of(first.getId(), second.getId()));
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isTrue();
-        assertThat(third.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(third.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -81,11 +83,11 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
 
         cast(INTIMIDATE_THEM, List.of(target.getId()));
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -110,7 +112,7 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
         harness.passBothPriorities();
 
-        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -125,7 +127,7 @@ class YouComeToTheGnollCampTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

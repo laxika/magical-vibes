@@ -34,7 +34,7 @@ class TidalTerrorTest extends BaseCardTest {
 
         assertThat(firstCreature.isTapped()).isTrue();
         assertThat(secondCreature.isTapped()).isTrue();
-        assertThat(terror.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, terror)).isTrue();
     }
 
     @Test
@@ -50,7 +50,7 @@ class TidalTerrorTest extends BaseCardTest {
 
         assertThat(firstCreature.isTapped()).isFalse();
         assertThat(secondCreature.isTapped()).isFalse();
-        assertThat(terror.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, terror)).isFalse();
     }
 
     @Test
@@ -68,7 +68,7 @@ class TidalTerrorTest extends BaseCardTest {
                 .hasMessageContaining("exactly 2");
         harness.handleMultiplePermanentsChosen(player1, List.of(firstCreature.getId(), secondCreature.getId()));
 
-        assertThat(terror.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, terror)).isTrue();
     }
 
     @Test
@@ -81,7 +81,7 @@ class TidalTerrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(terror.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, terror)).isFalse();
     }
 
     @Test
@@ -98,7 +98,7 @@ class TidalTerrorTest extends BaseCardTest {
 
         assertThat(firstCreature.isTapped()).isTrue();
         assertThat(secondCreature.isTapped()).isTrue();
-        assertThat(terror.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, terror)).isTrue();
     }
 
     @Test
@@ -113,7 +113,7 @@ class TidalTerrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(terror.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, terror)).isFalse();
         assertThat(opposingCreature.isTapped()).isFalse();
     }
 

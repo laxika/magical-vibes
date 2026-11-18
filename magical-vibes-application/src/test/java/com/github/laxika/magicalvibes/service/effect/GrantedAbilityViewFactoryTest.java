@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -39,7 +40,7 @@ class GrantedAbilityViewFactoryTest {
         List<GrantedAbilityView> views = factory.create(
                 creature,
                 bonus(Set.of(), List.of(protection)),
-                List.of(new GrantedEffectAttribution("Favor of the Mighty", protection)));
+                List.of(new GrantedEffectAttribution("Favor of the Mighty", protection)), false);
 
         assertThat(views).containsExactly(
                 new GrantedAbilityView("Protection from each color", "Favor of the Mighty"));
@@ -56,7 +57,7 @@ class GrantedAbilityViewFactoryTest {
                 new CantHaveMinusOneMinusOneCountersEffect());
 
         List<GrantedAbilityView> views =
-                factory.create(permanent("Creature"), bonus(Set.of(), effects), List.of());
+                factory.create(permanent("Creature"), bonus(Set.of(), effects), List.of(), false);
 
         assertThat(views).extracting(GrantedAbilityView::text).containsExactly(
                 "Can't be blocked",
@@ -74,7 +75,7 @@ class GrantedAbilityViewFactoryTest {
                 bonus(Set.of(), List.of()),
                 List.of(new GrantedEffectAttribution("Assault Suit", new CantBeSacrificedEffect()),
                         new GrantedEffectAttribution("Airtight Alibi", new CantBecomeSuspectedEffect()),
-                        new GrantedEffectAttribution("Anti-Magic Aura", new CantBeEnchantedByOtherAurasEffect())));
+                        new GrantedEffectAttribution("Anti-Magic Aura", new CantBeEnchantedByOtherAurasEffect())), false);
 
         assertThat(views).containsExactly(
                 new GrantedAbilityView("Can't be sacrificed", "Assault Suit"),
@@ -96,7 +97,7 @@ class GrantedAbilityViewFactoryTest {
         List<GrantedAbilityView> views = factory.create(
                 permanent,
                 bonus(Set.of(CardColor.BLACK, CardColor.RED), List.of()),
-                List.of());
+                List.of(), false);
 
         assertThat(views).containsExactly(
                 new GrantedAbilityView("Protection from red", "Voice"),
@@ -107,12 +108,11 @@ class GrantedAbilityViewFactoryTest {
     @DisplayName("Projects runtime unblockable and non-subtype protection")
     void projectsRuntimeGrantedAbilities() {
         Permanent permanent = permanent("Creature");
-        permanent.setCantBeBlocked(true);
         permanent.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()
                 .add(CardSubtype.HUMAN);
 
         List<GrantedAbilityView> views =
-                factory.create(permanent, bonus(Set.of(), List.of()), List.of());
+                factory.create(permanent, bonus(Set.of(), List.of()), List.of(), true);
 
         assertThat(views).containsExactly(
                 new GrantedAbilityView("Can't be blocked", null),
@@ -129,7 +129,7 @@ class GrantedAbilityViewFactoryTest {
                 permanent("Creature"),
                 bonus(Set.of(CardColor.BLACK, CardColor.GREEN), List.of()),
                 List.of(new GrantedEffectAttribution(
-                        "Sword of Feast and Famine", protection)));
+                        "Sword of Feast and Famine", protection)), false);
 
         assertThat(views).containsExactly(new GrantedAbilityView(
                 "Protection from black and green", "Sword of Feast and Famine"));

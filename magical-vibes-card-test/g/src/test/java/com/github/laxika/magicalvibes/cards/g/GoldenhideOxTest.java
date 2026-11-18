@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DictateOfKarametra;
 import com.github.laxika.magicalvibes.cards.p.PensiveMinotaur;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,7 +30,7 @@ class GoldenhideOxTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -46,7 +48,7 @@ class GoldenhideOxTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -71,13 +73,13 @@ class GoldenhideOxTest extends BaseCardTest {
         castGoldenhideOx(player1, bears.getId());
 
         resolveAllTriggers();
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -105,7 +107,7 @@ class GoldenhideOxTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(ox.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ox.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -125,7 +127,7 @@ class GoldenhideOxTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         resolveAllTriggers();
 
-        assertThat(other.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -186,7 +188,7 @@ class GoldenhideOxTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(ox.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ox.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -203,7 +205,7 @@ class GoldenhideOxTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(ox);
         resolveAllTriggers();
 
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     private void castGoldenhideOx(com.github.laxika.magicalvibes.model.Player player,

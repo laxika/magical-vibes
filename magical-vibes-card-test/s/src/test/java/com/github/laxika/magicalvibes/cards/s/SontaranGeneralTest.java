@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -32,8 +34,8 @@ class SontaranGeneralTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(firstOpponentCreature.getId()));
         resolveAllTriggers();
 
-        assertThat(firstOpponentCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(secondOpponentCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstOpponentCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondOpponentCreature.getId(), CantBlockEffect.class)).isFalse();
 
         assertThatCode(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -50,7 +52,7 @@ class SontaranGeneralTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -82,7 +84,7 @@ class SontaranGeneralTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
         assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
     }
 
@@ -103,8 +105,8 @@ class SontaranGeneralTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
         resolveAllTriggers();
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -124,7 +126,7 @@ class SontaranGeneralTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(opposing.getId()));
         resolveAllTriggers();
 
-        assertThat(opposing.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isTrue();
         assertThatCode(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");

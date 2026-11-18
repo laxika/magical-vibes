@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,7 +28,7 @@ class TauntingArbormageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -41,7 +43,7 @@ class TauntingArbormageTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
 
         target.setAttacking(true);
         prepareDeclareBlockers();
@@ -78,13 +80,13 @@ class TauntingArbormageTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         resolveAllTriggers();
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -94,8 +96,8 @@ class TauntingArbormageTest extends BaseCardTest {
         Permanent arbormage = harness.enterBattlefieldAndReturn(player1, new TauntingArbormage());
         resolveAllTriggers();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
-        assertThat(arbormage.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(arbormage.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

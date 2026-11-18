@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.s.SenseisDiviningTop;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,9 +31,9 @@ class UnearthlyBlizzardTest extends BaseCardTest {
 
         castUnearthlyBlizzard(List.of(creature1.getId(), creature2.getId(), creature3.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
-        assertThat(creature3.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature3.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -41,7 +43,7 @@ class UnearthlyBlizzardTest extends BaseCardTest {
 
         castUnearthlyBlizzard(List.of(creature1.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -51,7 +53,7 @@ class UnearthlyBlizzardTest extends BaseCardTest {
 
         castUnearthlyBlizzard(List.of());
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -62,8 +64,8 @@ class UnearthlyBlizzardTest extends BaseCardTest {
 
         castUnearthlyBlizzard(List.of(ownCreature.getId()));
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(untargetedCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargetedCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -124,7 +126,7 @@ class UnearthlyBlizzardTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -159,7 +161,7 @@ class UnearthlyBlizzardTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargeted.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Unearthly Blizzard");
     }
@@ -169,11 +171,11 @@ class UnearthlyBlizzardTest extends BaseCardTest {
     void blockingRestrictionExpires() {
         Permanent creature = addCreatureReady(player2, new WanderingOnes());
         castUnearthlyBlizzard(List.of(creature.getId()));
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     private void castUnearthlyBlizzard(List<UUID> targetIds) {

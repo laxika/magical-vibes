@@ -82,13 +82,13 @@ class InvisibleWomanTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
@@ -107,7 +107,7 @@ class InvisibleWomanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -155,7 +155,7 @@ class InvisibleWomanTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     private void advanceToBeginningOfCombat() {

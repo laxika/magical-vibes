@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
@@ -1835,7 +1836,8 @@ class GameQueryServiceTest {
         @DisplayName("returns true when permanent cantBeBlocked flag is set")
         void returnsTrueWhenFlagSet() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setCantBeBlocked(true);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new CantBeBlockedEffect(), perm.getId(), Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.hasCantBeBlocked(gd, perm)).isTrue();
         }

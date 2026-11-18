@@ -101,13 +101,13 @@ class OrochiColonyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 
     @Test
@@ -157,6 +157,6 @@ class OrochiColonyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 }

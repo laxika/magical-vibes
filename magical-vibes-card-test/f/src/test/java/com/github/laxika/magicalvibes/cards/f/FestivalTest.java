@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,8 +20,8 @@ class FestivalTest extends BaseCardTest {
     @Test
     @DisplayName("During an opponent's upkeep, all creatures can't attack this turn")
     void allCreaturesCantAttackThisTurn() {
-        Permanent player1Creature = addCreatureReady(player1);
-        Permanent player2Creature = addCreatureReady(player2);
+        addCreatureReady(player1);
+        addCreatureReady(player2);
         castFestivalDuringOpponentUpkeep();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -27,8 +29,6 @@ class FestivalTest extends BaseCardTest {
                 .getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player2.getId())).isEmpty();
-        assertThat(player1Creature.isCantAttackThisTurn()).isTrue();
-        assertThat(player2Creature.isCantAttackThisTurn()).isTrue();
     }
 
     @Test
@@ -57,7 +57,7 @@ class FestivalTest extends BaseCardTest {
 
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
-        assertThat(bear.isCantAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantAttackThisTurnEffect.class)).isFalse();
     }
 
     @Test

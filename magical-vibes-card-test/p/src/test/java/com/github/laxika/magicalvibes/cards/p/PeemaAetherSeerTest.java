@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -42,7 +44,7 @@ class PeemaAetherSeerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -126,7 +128,7 @@ class PeemaAetherSeerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
         gd.playerBattlefields.get(player2.getId()).remove(target);
         resolveAllTriggers();
 
@@ -145,7 +147,7 @@ class PeemaAetherSeerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(seer.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(seer.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(seer.isTapped()).isTrue();
     }
 

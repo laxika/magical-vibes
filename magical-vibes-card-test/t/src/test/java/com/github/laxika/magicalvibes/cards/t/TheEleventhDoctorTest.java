@@ -58,7 +58,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -149,7 +149,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         target.setPowerModifier(2);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -163,7 +163,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         target.setPowerModifier(2);
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -174,11 +174,11 @@ class TheEleventhDoctorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.passUntilWithNoAttackers(player2,
                 com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 }

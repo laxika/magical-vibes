@@ -87,7 +87,7 @@ class TurtleLairTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, turtle.getId());
         harness.passBothPriorities();
 
-        assertThat(turtle.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, turtle)).isTrue();
     }
 
     @Test
@@ -99,13 +99,13 @@ class TurtleLairTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, turtle.getId());
         harness.passBothPriorities();
-        assertThat(turtle.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, turtle)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(turtle.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, turtle)).isFalse();
     }
 
     @Test
@@ -194,9 +194,9 @@ class TurtleLairTest extends BaseCardTest {
         assertThat(lair.isTapped()).isTrue();
         assertThat(pool().get(ManaColor.BLUE)).isZero();
         assertThat(gd.stack).hasSize(1);
-        assertThat(ninja.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ninja)).isFalse();
         harness.passBothPriorities();
-        assertThat(ninja.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ninja)).isTrue();
     }
 
     @Test
@@ -232,7 +232,7 @@ class TurtleLairTest extends BaseCardTest {
             harness.passBothPriorities();
         });
 
-        assertThat(turtle.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, turtle)).isTrue();
         assertThat(blocker.getBlockingTargetIds()).containsExactly(turtle.getId());
         assertThat(gqs.isBlockedByAnyCreature(gd, turtle)).isTrue();
         resolveCombat();
@@ -249,7 +249,7 @@ class TurtleLairTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(lair.isTapped()).isFalse();
-        assertThat(turtle.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, turtle)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -277,7 +277,7 @@ class TurtleLairTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     private Permanent addReadyLair() {

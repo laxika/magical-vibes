@@ -1,5 +1,16 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
+
+import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.e.ElvenRiders;
@@ -251,7 +262,8 @@ class BlockLegalityContextTest extends BaseCardTest {
     void blockerCantBlockThisTurn() {
         Permanent zombies = attacking(player1, new ScatheZombies());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setCantBlockThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBlockEffect(), bears.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThat(reason(bears, zombies)).contains("Grizzly Bears can't block this turn");
     }
@@ -261,7 +273,8 @@ class BlockLegalityContextTest extends BaseCardTest {
     void blockerCantBlockSpecificAttacker() {
         Permanent zombies = attacking(player1, new ScatheZombies());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.getCantBlockIds().add(zombies.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBlockSourceEffect(zombies.getId()), bears.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThat(reason(bears, zombies)).contains("Grizzly Bears can't block Scathe Zombies this turn");
         assertThat(reason(bears, zombies)).isPresent();
@@ -274,7 +287,8 @@ class BlockLegalityContextTest extends BaseCardTest {
     @DisplayName("\"Can't be blocked\" flag on the attacker")
     void attackerCantBeBlockedFlag() {
         Permanent zombies = attacking(player1, new ScatheZombies());
-        zombies.setCantBeBlocked(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBeBlockedEffect(), zombies.getId(), Duration.UNTIL_END_OF_TURN));
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(reason(bears, zombies)).contains("Scathe Zombies can't be blocked");
@@ -285,9 +299,11 @@ class BlockLegalityContextTest extends BaseCardTest {
     void untilEndOfTurnDefenderConditionGrant() {
         Permanent zombies = attacking(player1, new ScatheZombies());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        zombies.getUnblockableIfDefenderControlsUntilEndOfTurn().add(new PermanentAllOfPredicate(List.of(
-                new PermanentHasSubtypePredicate(CardSubtype.FOREST),
-                new PermanentHasSupertypePredicate(CardSupertype.SNOW))));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.FOREST),
+                        new PermanentHasSupertypePredicate(CardSupertype.SNOW))), true),
+                zombies.getId(), Duration.UNTIL_END_OF_TURN));
 
         // A plain Forest is the right subtype but not snow (CR 702.14c).
         harness.addToBattlefield(player2, new Forest());
@@ -298,7 +314,7 @@ class BlockLegalityContextTest extends BaseCardTest {
         assertThat(reason(bears, zombies)).contains("Scathe Zombies can't be blocked");
 
         // The grant is until end of turn only.
-        zombies.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         assertThat(reason(bears, zombies)).isEmpty();
     }
 
@@ -316,7 +332,8 @@ class BlockLegalityContextTest extends BaseCardTest {
                 attacking(player1, new ShuCavalry()),
                 attacking(player1, new ScatheZombies()));
         // Flag-based restrictions so the matrix also exercises the non-card state paths
-        attackers.get(6).setCantBeBlocked(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBeBlockedEffect(), attackers.get(6).getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.addToBattlefield(player2, new Forest());
         List<Permanent> blockers = List.of(
@@ -327,7 +344,7 @@ class BlockLegalityContextTest extends BaseCardTest {
                 addCreatureReady(player2, new GoblinRaider()),
                 addCreatureReady(player2, new WallOfAir()));
         // Flip an otherwise-legal pair via the per-attacker restriction (black blocker vs fear)
-        blockers.get(1).getCantBlockIds().add(attackers.get(1).getId());
+        gd.cantBlockSourceIds(blockers.get(1).getId()).add(attackers.get(1).getId());
 
         List<Permanent> defenderBattlefield = defenderBattlefield();
         BlockLegalityContext shared = bls.createBlockLegalityContext(gd, defenderBattlefield);

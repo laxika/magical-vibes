@@ -56,7 +56,7 @@ class GossipsTalentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 
     @Test
@@ -150,8 +150,8 @@ class GossipsTalentTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactly(eligible.getId());
         harness.handlePermanentChosen(player1, eligible.getId());
         resolveAllTriggers();
-        assertThat(eligible.isCantBeBlocked()).isTrue();
-        assertThat(tooLarge.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, eligible)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, tooLarge)).isFalse();
     }
 
     @Test

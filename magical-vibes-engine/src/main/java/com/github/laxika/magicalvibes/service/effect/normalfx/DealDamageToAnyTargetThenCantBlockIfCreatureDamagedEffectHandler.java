@@ -59,7 +59,7 @@ public class DealDamageToAnyTargetThenCantBlockIfCreatureDamagedEffectHandler im
             }
             Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, dealtDamage.getKey());
             if (damagedPermanent != null && gameQueryService.isCreature(gameData, damagedPermanent)) {
-                cantBlockThisTurnEffectHandler.resolveForTarget(gameData, damagedPermanent);
+                cantBlockThisTurnEffectHandler.resolveForTarget(gameData, entry, damagedPermanent);
             }
         }
 

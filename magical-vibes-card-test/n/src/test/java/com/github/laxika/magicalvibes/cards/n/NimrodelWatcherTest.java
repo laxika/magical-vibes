@@ -31,7 +31,7 @@ class NimrodelWatcherTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, watcher)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, watcher)).isEqualTo(1);
-        assertThat(watcher.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, watcher)).isTrue();
     }
 
     @Test
@@ -67,7 +67,7 @@ class NimrodelWatcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, watcher)).isEqualTo(2);
-        assertThat(watcher.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, watcher)).isFalse();
     }
 
     private Permanent addWatcher() {

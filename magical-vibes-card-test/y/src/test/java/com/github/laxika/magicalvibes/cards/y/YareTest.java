@@ -31,7 +31,7 @@ class YareTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
         assertThat(blocker.getToughnessModifier()).isZero();
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
     @Test
@@ -90,7 +90,7 @@ class YareTest extends BaseCardTest {
         castYare(player1, blocker);
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
     @Test
@@ -105,7 +105,7 @@ class YareTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isZero();
     }
 
     @Test
@@ -158,7 +158,7 @@ class YareTest extends BaseCardTest {
         castYare(player2, blocker);
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
     @Test
@@ -171,7 +171,7 @@ class YareTest extends BaseCardTest {
         castYare(player2, blocker);
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
     @Test
@@ -190,7 +190,7 @@ class YareTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
     @Test
@@ -209,7 +209,7 @@ class YareTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof Yare);
     }
 
@@ -229,7 +229,7 @@ class YareTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(blocker.getPowerModifier()).isEqualTo(6);
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(4);
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(4);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIdx, 0),

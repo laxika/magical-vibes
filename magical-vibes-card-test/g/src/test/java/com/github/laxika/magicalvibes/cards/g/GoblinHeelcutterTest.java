@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.ArashinCleric;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +29,7 @@ class GoblinHeelcutterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -112,6 +114,6 @@ class GoblinHeelcutterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         resolveAllTriggers();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
     }
 }

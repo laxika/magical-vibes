@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,7 +40,7 @@ public class CantBlockThisCombatEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        target.setCantBlockThisCombat(true);
+        gameData.addEffectOnPermanent(entry, (CantBlockThisCombatEffect) effect, target.getId(), Duration.UNTIL_END_OF_COMBAT);
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block this combat."));
         log.info("Game {} - {} can't block this combat", gameData.id, target.getCard().getName());
     }

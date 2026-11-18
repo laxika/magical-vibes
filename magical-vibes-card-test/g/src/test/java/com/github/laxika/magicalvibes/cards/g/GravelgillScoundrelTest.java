@@ -31,7 +31,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, merfolk.getId());
 
         assertThat(merfolk.isTapped()).isTrue();
-        assertThat(scoundrel.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(merfolk.isTapped()).isFalse();
-        assertThat(scoundrel.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isFalse();
     }
 
     @Test
@@ -58,7 +58,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(scoundrel.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isFalse();
     }
 
     @Test
@@ -77,7 +77,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(scoundrel.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(kithkin.isTapped()).isTrue();
-        assertThat(scoundrel.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isTrue();
     }
 
     @Test
@@ -106,7 +106,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
 
         assertThat(merfolk.isTapped()).isTrue();
         assertThat(scoundrel.isTapped()).isFalse();
-        assertThat(scoundrel.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isTrue();
     }
 
     @Test
@@ -121,7 +121,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(scoundrel.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isFalse();
         assertThat(scoundrel.isTapped()).isFalse();
         assertThat(opposing.isTapped()).isFalse();
     }

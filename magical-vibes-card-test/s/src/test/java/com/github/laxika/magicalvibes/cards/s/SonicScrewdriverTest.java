@@ -90,13 +90,13 @@ class SonicScrewdriverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 
     @Test
@@ -193,7 +193,7 @@ class SonicScrewdriverTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -238,13 +238,13 @@ class SonicScrewdriverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, null, creature.getId());
 
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
         assertThat(screwdriver.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
     private Permanent addReadySonicScrewdriver(Player player) {

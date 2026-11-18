@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Marks creature(s) so they can't block for the remainder of the turn (a one-shot effect that
- * sets {@code Permanent.cantBlockThisTurn}). The {@link TapUntapScope} selects which creature(s)
+ * Marks creature(s) so they can't block for the remainder of the turn (a floating {@link CantBlockEffect} on each
+ * until end of turn). The {@link TapUntapScope} selects which creature(s)
  * are affected; the optional {@link PermanentPredicate} narrows the scanned scopes
  * ({@link TapUntapScope#ALL_CREATURES}).
  *
@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * predicate-filtered mass {@code CantBlockThisTurnEffect(PermanentPredicate)} ({@code ALL_CREATURES}).
  * The {@link TapUntapScope#ENCHANTED} form marks the permanent attached to the source Aura.
  *
- * <p>Not to be confused with the static {@code CantBlockEffect} ("this creature can't block",
- * read continuously by the combat services) or {@code CantBlockSourceEffect} ("can't block the
+ * <p>Not to be confused with a static {@code CantBlockEffect} ("this creature can't block", an ability) or {@code CantBlockSourceEffect} ("can't block the
  * source permanent"), which remain separate.
  *
  * @param scope  which creature(s) can't block this turn

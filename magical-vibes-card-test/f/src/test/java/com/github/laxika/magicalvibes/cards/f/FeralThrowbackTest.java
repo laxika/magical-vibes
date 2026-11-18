@@ -92,7 +92,7 @@ class FeralThrowbackTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).containsExactly(throwback.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(throwback.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -116,7 +116,7 @@ class FeralThrowbackTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -180,7 +180,7 @@ class FeralThrowbackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     private void addManaForFeralThrowback() {

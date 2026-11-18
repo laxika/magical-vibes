@@ -245,64 +245,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears cantBeBlocked flag on permanents")
-        void clearsCantBeBlocked() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setCantBeBlocked(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isCantBeBlocked()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Clears cantBlockThisTurn flag when it is the only modifier")
-        void clearsCantBlockThisTurn() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setCantBlockThisTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isCantBlockThisTurn()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Clears until-end-of-turn block restrictions on permanents")
-        void clearsBlockRestrictionsUntilEndOfTurn() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.getBlockRestrictionsUntilEndOfTurn().add(
-                    new com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect(
-                            new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(
-                                    com.github.laxika.magicalvibes.model.CardSubtype.WALL),
-                            "Walls"));
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears until-end-of-turn defender-condition evasion grants on permanents")
-        void clearsUnblockableIfDefenderControlsUntilEndOfTurn() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.getUnblockableIfDefenderControlsUntilEndOfTurn().add(
-                    new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(
-                            com.github.laxika.magicalvibes.model.CardSubtype.SWAMP));
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getUnblockableIfDefenderControlsUntilEndOfTurn()).isEmpty();
-        }
-
-        @Test
         @DisplayName("Clears animatedUntilEndOfTurn flag on permanents")
         void clearsAnimatedUntilEndOfTurn() {
             Card card = createCardWithName("Mutavault");
@@ -339,19 +281,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(perm.getGrantedCardTypes()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears mustAttackThisTurn flag on permanents")
-        void clearsMustAttackThisTurn() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setMustAttackThisTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isMustAttackThisTurn()).isFalse();
         }
 
         @Test
@@ -392,47 +321,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(perm.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Clears mustBeBlockedThisTurn flag when it is the only modifier")
-        void clearsMustBeBlockedThisTurnAlone() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setMustBeBlockedThisTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isMustBeBlockedThisTurn()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Clears mustBlockThisTurnIfAble flag when it is the only modifier")
-        void clearsMustBlockThisTurnIfAbleAlone() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setMustBlockThisTurnIfAble(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isMustBlockThisTurnIfAble()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Clears must-block assignments and extra block grants when they are the only modifiers")
-        void clearsMustBlockIdsAndAdditionalBlocksAlone() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.getMustBlockIds().add(UUID.randomUUID());
-            perm.setAdditionalBlocksUntilEndOfTurn(2);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getMustBlockIds()).isEmpty();
-            assertThat(perm.getAdditionalBlocksUntilEndOfTurn()).isZero();
         }
 
         @Test

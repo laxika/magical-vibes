@@ -34,7 +34,7 @@ class GiantKoiTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(koi.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isTrue();
     }
 
     @Test
@@ -46,13 +46,13 @@ class GiantKoiTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(koi.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(koi.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isFalse();
     }
 
     @Test
@@ -67,7 +67,7 @@ class GiantKoiTest extends BaseCardTest {
 
         assertThat(koi.isTapped()).isFalse();
         assertThat(creature.isTapped()).isFalse();
-        assertThat(koi.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isFalse();
     }
 
     @Test
@@ -100,10 +100,10 @@ class GiantKoiTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(koi.isTapped()).isFalse();
-        assertThat(koi.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(koi.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isTrue();
     }
 
     @Test
@@ -117,7 +117,7 @@ class GiantKoiTest extends BaseCardTest {
         assertThat(koi.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(koi.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, koi)).isTrue();
     }
 
     @Test

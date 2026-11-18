@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -58,8 +60,8 @@ class UntimelyMalfunctionTest extends BaseCardTest {
 
         cast(new int[]{2}, List.of(creature1.getId(), creature2.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -78,8 +80,8 @@ class UntimelyMalfunctionTest extends BaseCardTest {
 
         cast(new int[]{2}, List.of(chosen.getId()));
 
-        assertThat(chosen.isCantBlockThisTurn()).isTrue();
-        assertThat(unchosen.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(unchosen.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -124,7 +126,7 @@ class UntimelyMalfunctionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(remaining.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(leaving.getId()));
     }

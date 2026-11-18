@@ -48,7 +48,7 @@ class DimirKeyruneTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
         assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.HORROR);
-        assertThat(keyrune.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, keyrune)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class DimirKeyruneTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
         assertThat(gqs.isArtifact(keyrune)).isTrue();
-        assertThat(keyrune.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, keyrune)).isFalse();
     }
 
     @Test
@@ -132,7 +132,7 @@ class DimirKeyruneTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(2);
-        assertThat(keyrune.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, keyrune)).isTrue();
         assertThat(keyrune.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

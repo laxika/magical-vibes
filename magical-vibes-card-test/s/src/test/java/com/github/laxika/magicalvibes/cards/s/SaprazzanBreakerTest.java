@@ -30,7 +30,7 @@ class SaprazzanBreakerTest extends BaseCardTest {
         activateAndResolve(breaker);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest);
-        assertThat(breaker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class SaprazzanBreakerTest extends BaseCardTest {
         activateAndResolve(breaker);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonland);
-        assertThat(breaker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isFalse();
     }
 
     @Test
@@ -57,7 +57,7 @@ class SaprazzanBreakerTest extends BaseCardTest {
         activateAndResolve(breaker);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(breaker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isFalse();
     }
 
     @Test
@@ -68,13 +68,13 @@ class SaprazzanBreakerTest extends BaseCardTest {
         addBlueMana();
 
         activateAndResolve(breaker);
-        assertThat(breaker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(breaker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class SaprazzanBreakerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).anySatisfy(entry -> assertThat(entry.card()).isSameAs(forest));
-        assertThat(breaker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isTrue();
     }
 
     @Test
@@ -105,12 +105,12 @@ class SaprazzanBreakerTest extends BaseCardTest {
         activateAndResolve(breaker);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
-        assertThat(breaker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isTrue();
 
         activateAndResolve(breaker);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest, nonland);
-        assertThat(breaker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isTrue();
     }
 
     @Test
@@ -126,7 +126,7 @@ class SaprazzanBreakerTest extends BaseCardTest {
         activateAndResolve(breaker);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest);
-        assertThat(breaker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, breaker)).isTrue();
         assertThat(breaker.isTapped()).isTrue();
     }
 

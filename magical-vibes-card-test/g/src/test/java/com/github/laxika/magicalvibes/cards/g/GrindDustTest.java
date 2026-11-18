@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HarrierNaga;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -32,7 +34,7 @@ class GrindDustTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -136,8 +138,8 @@ class GrindDustTest extends BaseCardTest {
 
         assertThat(own.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(opposing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(own.isCantBlockThisTurn()).isFalse();
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(own.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +33,8 @@ class HustleBustleTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -137,8 +140,8 @@ class HustleBustleTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

@@ -38,7 +38,7 @@ function creature(id: string): Permanent {
     id, card: card('card-' + id, 'Bear ' + id), tapped: false, attacking: false, blocking: false,
     blockingTargets: [], summoningSick: false, powerModifier: 0, toughnessModifier: 0, grantedKeywords: [],
     removedKeywords: [], effectivePower: 2, effectiveToughness: 2, chosenColor: null, chosenName: null,
-    regenerationShield: 0, attachedTo: null, cantBeBlocked: false, animatedCreature: false, counters: {},
+    regenerationShield: 0, attachedTo: null, animatedCreature: false, counters: {},
     attackTargetId: null, markedDamage: 0, transformed: false, prepared: false
   };
 }

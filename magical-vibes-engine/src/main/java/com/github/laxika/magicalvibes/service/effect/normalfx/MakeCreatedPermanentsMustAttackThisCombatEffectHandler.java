@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -28,7 +31,7 @@ public class MakeCreatedPermanentsMustAttackThisCombatEffectHandler implements N
         for (var createdId : entry.getCreatedPermanentIds()) {
             Permanent created = gameQueryService.findPermanentById(gameData, createdId);
             if (created != null && gameQueryService.isCreature(gameData, created)) {
-                created.setMustAttackThisCombat(true);
+                gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(), created.getId(), Duration.UNTIL_END_OF_COMBAT);
                 count++;
             }
         }

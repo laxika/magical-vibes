@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,8 +38,8 @@ class MarkovWarlordTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         harness.passBothPriorities();
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -49,7 +51,7 @@ class MarkovWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -101,7 +103,7 @@ class MarkovWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -120,8 +122,8 @@ class MarkovWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
-        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargeted.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -135,8 +137,8 @@ class MarkovWarlordTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(removed);
         harness.passBothPriorities();
 
-        assertThat(remaining.isCantBlockThisTurn()).isTrue();
-        assertThat(removed.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(removed.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -149,7 +151,7 @@ class MarkovWarlordTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Markov Warlord"));
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -160,13 +162,13 @@ class MarkovWarlordTest extends BaseCardTest {
         castMarkovWarlord(List.of(creature.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

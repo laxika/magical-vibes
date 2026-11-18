@@ -30,7 +30,7 @@ class VectisAgentsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(agents.getEffectivePower()).isEqualTo(basePower - 2);
-        assertThat(agents.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
     }
 
     @Test
@@ -57,14 +57,14 @@ class VectisAgentsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(agents.getEffectivePower()).isEqualTo(basePower - 2);
-        assertThat(agents.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(agents.getEffectivePower()).isEqualTo(basePower);
-        assertThat(agents.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, agents)).isFalse();
     }
 
     @Test
@@ -83,9 +83,9 @@ class VectisAgentsTest extends BaseCardTest {
         }
 
         assertThat(agents.getEffectivePower()).isEqualTo(basePower - 6);
-        assertThat(agents.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
         assertThat(other.getEffectivePower()).isEqualTo(otherPower);
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(agents);
     }
 
@@ -102,7 +102,7 @@ class VectisAgentsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(agents.getEffectivePower()).isEqualTo(basePower - 2);
-        assertThat(agents.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
         assertThat(agents.isTapped()).isTrue();
     }
 

@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,8 +38,8 @@ class CourtlyProvocateurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, ABILITY_MUST_ATTACK, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
     }
 
     @Test
@@ -46,7 +51,7 @@ class CourtlyProvocateurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, ABILITY_MUST_ATTACK, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -57,11 +62,11 @@ class CourtlyProvocateurTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, ABILITY_MUST_ATTACK, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -74,7 +79,7 @@ class CourtlyProvocateurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, ABILITY_MUST_BLOCK, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         beginCombat(attacker);
 
@@ -112,16 +117,16 @@ class CourtlyProvocateurTest extends BaseCardTest {
         harness.activateAbility(player1, 1, ABILITY_MUST_BLOCK, null, blockTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(attackTarget.isMustAttackThisTurn()).isTrue();
-        assertThat(attackTarget.isMustBlockThisTurnIfAble()).isFalse();
-        assertThat(attackTarget.isMustBeBlockedThisTurn()).isFalse();
-        assertThat(attackTarget.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(attackTarget.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(attackTarget.getId(), MustBlockEachCombatEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(attackTarget.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(attackTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
 
-        assertThat(blockTarget.isMustBlockThisTurnIfAble()).isTrue();
-        assertThat(blockTarget.isMustAttackThisTurn()).isFalse();
-        assertThat(blockTarget.getMustAttackTargetId()).isNull();
-        assertThat(blockTarget.isMustBeBlockedThisTurn()).isFalse();
-        assertThat(blockTarget.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blockTarget.getId(), MustBlockEachCombatEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blockTarget.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(blockTarget.getId())).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(blockTarget.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blockTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -217,11 +222,11 @@ class CourtlyProvocateurTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, ABILITY_MUST_BLOCK, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @ParameterizedTest

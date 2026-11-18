@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.t.TravelingMinister;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -46,7 +48,7 @@ class BloodHypnotistTest extends BaseCardTest {
 
         sacrificeBloodToken(player1, blood, target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -58,7 +60,7 @@ class BloodHypnotistTest extends BaseCardTest {
 
         sacrificeToken(player1, treasure, target);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -73,8 +75,8 @@ class BloodHypnotistTest extends BaseCardTest {
         sacrificeBloodToken(player1, firstBlood, firstTarget);
         sacrificeToken(player1, secondBlood, secondTarget);
 
-        assertThat(firstTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(secondTarget.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondTarget.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -88,7 +90,7 @@ class BloodHypnotistTest extends BaseCardTest {
         sacrificeToken(player1, treasure, target);
         sacrificeBloodToken(player1, blood, target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -101,13 +103,13 @@ class BloodHypnotistTest extends BaseCardTest {
 
         sacrificeToken(player2, opponentsBlood, target);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         sacrificeBloodToken(player1, ownBlood, target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -119,7 +121,7 @@ class BloodHypnotistTest extends BaseCardTest {
 
         sacrificeBloodToken(player1, blood, target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -135,11 +137,11 @@ class BloodHypnotistTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(firstTarget.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstTarget.getId(), CantBlockEffect.class)).isFalse();
 
         sacrificeBloodToken(player1, secondBlood, secondTarget);
 
-        assertThat(secondTarget.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondTarget.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -157,7 +159,7 @@ class BloodHypnotistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -186,7 +188,7 @@ class BloodHypnotistTest extends BaseCardTest {
 
         sacrificeToken(player1, blood, target);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

@@ -33,7 +33,7 @@ class CephalidInkshrouderTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Suntail Hawk");
         assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isTrue();
-        assertThat(inkshrouder.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, inkshrouder)).isTrue();
     }
 
     @Test
@@ -91,7 +91,7 @@ class CephalidInkshrouderTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isFalse();
-        assertThat(inkshrouder.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, inkshrouder)).isFalse();
     }
 
     @Test
@@ -118,12 +118,12 @@ class CephalidInkshrouderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Guided Strike");
         harness.assertNotInHand(player1, "Guided Strike");
         assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isFalse();
-        assertThat(inkshrouder.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, inkshrouder)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isTrue();
-        assertThat(inkshrouder.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, inkshrouder)).isTrue();
     }
 
     @Test
@@ -142,7 +142,7 @@ class CephalidInkshrouderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Suntail Hawk");
         harness.assertInGraveyard(player1, "Guided Strike");
         assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isTrue();
-        assertThat(inkshrouder.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, inkshrouder)).isTrue();
     }
 
     @Test

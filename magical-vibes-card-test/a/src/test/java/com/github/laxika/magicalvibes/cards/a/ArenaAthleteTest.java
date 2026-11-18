@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TitansStrength;
@@ -34,7 +36,7 @@ class ArenaAthleteTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -108,7 +110,7 @@ class ArenaAthleteTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -123,15 +125,15 @@ class ArenaAthleteTest extends BaseCardTest {
         harness.castInstant(player1, 0, athlete.getId());
         harness.handlePermanentChosen(player1, firstBlocker.getId());
         harness.passBothPriorities();
-        assertThat(firstBlocker.isCantBlockThisTurn()).isTrue();
-        assertThat(secondBlocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstBlocker.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondBlocker.getId(), CantBlockEffect.class)).isFalse();
 
         harness.castInstant(player1, 0, athlete.getId());
         harness.handlePermanentChosen(player1, secondBlocker.getId());
         harness.passBothPriorities();
 
-        assertThat(firstBlocker.isCantBlockThisTurn()).isTrue();
-        assertThat(secondBlocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstBlocker.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondBlocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -145,11 +147,11 @@ class ArenaAthleteTest extends BaseCardTest {
         harness.castInstant(player1, 0, athlete.getId());
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -167,10 +169,10 @@ class ArenaAthleteTest extends BaseCardTest {
         harness.castInstant(player2, 0, athlete.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Arena Athlete");
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 }

@@ -42,7 +42,8 @@ public class GrantedAbilityViewFactory {
     public List<GrantedAbilityView> create(
             Permanent permanent,
             GameQueryService.StaticBonus bonus,
-            List<GrantedEffectAttribution> attributions) {
+            List<GrantedEffectAttribution> attributions,
+            boolean cantBeBlockedThisTurn) {
         List<GrantedAbilityView> result = new ArrayList<>();
         Set<CardColor> protectionCoveredByAttributedEffects = EnumSet.noneOf(CardColor.class);
 
@@ -106,7 +107,7 @@ public class GrantedAbilityViewFactory {
         if (permanent.isProtectionFromColorlessUntilEndOfTurn()) {
             result.add(new GrantedAbilityView("Protection from colorless", null));
         }
-        if (permanent.isCantBeBlocked()) {
+        if (cantBeBlockedThisTurn) {
             result.add(new GrantedAbilityView("Can't be blocked", null));
         }
         for (CardSubtype subtype : permanent.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()

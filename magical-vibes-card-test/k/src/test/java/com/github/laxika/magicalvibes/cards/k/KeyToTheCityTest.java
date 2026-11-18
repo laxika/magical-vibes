@@ -33,14 +33,14 @@ class KeyToTheCityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(key.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInGraveyard(player1, "Dukhara Peafowl");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
 import com.github.laxika.magicalvibes.cards.m.MillennialGargoyle;
 import com.github.laxika.magicalvibes.cards.m.Mugging;
@@ -183,6 +185,6 @@ class CartelAristocratTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Millennial Gargoyle");
         harness.assertInGraveyard(player1, "Mugging");
         assertThat(aristocrat.getMarkedDamage()).isZero();
-        assertThat(aristocrat.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(aristocrat.getId(), CantBlockEffect.class)).isFalse();
     }
 }

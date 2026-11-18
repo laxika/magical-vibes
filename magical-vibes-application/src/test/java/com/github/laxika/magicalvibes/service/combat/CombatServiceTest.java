@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
@@ -342,17 +346,6 @@ class CombatServiceTest {
 
             assertThat(attacker.getPlayersAttackedLastCombat()).containsExactly(player2Id);
             assertThat(attacker.getPlayersAttackedThisCombat()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears combat-scoped attack requirements")
-        void clearsCombatScopedAttackRequirements() {
-            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            attacker.setMustAttackThisCombat(true);
-
-            combatService.clearCombatState(gd);
-
-            assertThat(attacker.isMustAttackThisCombat()).isFalse();
         }
 
         @Test

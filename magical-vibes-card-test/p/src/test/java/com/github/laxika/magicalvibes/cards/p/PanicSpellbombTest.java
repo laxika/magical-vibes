@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
@@ -59,7 +61,7 @@ class PanicSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -80,7 +82,7 @@ class PanicSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
     }
 
 
@@ -186,7 +188,7 @@ class PanicSpellbombTest extends BaseCardTest {
 
         // Creature can't block
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -279,7 +281,7 @@ class PanicSpellbombTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(findPermanent(player2, "Copper Myr").isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player2, "Copper Myr").getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -294,11 +296,11 @@ class PanicSpellbombTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
 }

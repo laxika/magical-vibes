@@ -64,13 +64,13 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, corsairs.getId());
         harness.passBothPriorities();
 
-        assertThat(corsairs.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, corsairs)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(corsairs.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, corsairs)).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Goblin, Orc, or Pirate");
-        assertThat(corsairs.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, corsairs)).isFalse();
     }
 
     @Test
@@ -99,8 +99,8 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.isCantBeBlocked()).isTrue();
-        assertThat(corsairs.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, goblin)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, corsairs)).isFalse();
         assertThat(corsairs.isTapped()).isTrue();
     }
 
@@ -118,8 +118,8 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, army.getId());
         harness.passBothPriorities();
 
-        assertThat(army.isCantBeBlocked()).isTrue();
-        assertThat(corsairs.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, army)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, corsairs)).isFalse();
     }
 
     @Test
@@ -173,7 +173,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, goblin)).isTrue();
     }
 
     private Permanent addReadyCorsairs() {

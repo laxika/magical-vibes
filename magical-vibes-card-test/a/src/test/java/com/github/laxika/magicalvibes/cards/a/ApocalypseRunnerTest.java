@@ -29,7 +29,7 @@ class ApocalypseRunnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
         assertThat(runner.isTapped()).isTrue();
     }
 
@@ -48,7 +48,7 @@ class ApocalypseRunnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -92,7 +92,7 @@ class ApocalypseRunnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -107,7 +107,7 @@ class ApocalypseRunnerTest extends BaseCardTest {
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
@@ -123,7 +123,7 @@ class ApocalypseRunnerTest extends BaseCardTest {
 
         assertThat(runner.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test

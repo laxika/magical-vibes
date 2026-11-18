@@ -41,13 +41,13 @@ class DrownyardAmalgamTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(amalgam.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, amalgam)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(amalgam.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, amalgam)).isFalse();
     }
 
     @Test
@@ -110,11 +110,11 @@ class DrownyardAmalgamTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(amalgam.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, amalgam)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(amalgam.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, amalgam)).isTrue();
         assertThat(amalgam.isTapped()).isTrue();
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
     }
 }

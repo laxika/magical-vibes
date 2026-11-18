@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.t.ThrabenValiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,7 +42,7 @@ class FerventCatharTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -80,7 +82,7 @@ class FerventCatharTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(cathar.getId());
         harness.passBothPriorities();
-        assertThat(cathar.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(cathar.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -115,9 +117,9 @@ class FerventCatharTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
-        assertThat(findPermanent(player1, "Fervent Cathar").isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player1, "Fervent Cathar").getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -128,13 +130,13 @@ class FerventCatharTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -149,7 +151,7 @@ class FerventCatharTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.h.HyenaPack;
 import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,7 +44,7 @@ class AhnCropCrasherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
         assertThat(crasher.getSkipUntapCount()).isGreaterThan(0);
     }
 
@@ -55,7 +57,7 @@ class AhnCropCrasherTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(bears.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
         assertThat(crasher.getSkipUntapCount()).isZero();
     }
 

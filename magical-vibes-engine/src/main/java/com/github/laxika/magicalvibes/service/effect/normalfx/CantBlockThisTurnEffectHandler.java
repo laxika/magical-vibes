@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -66,7 +68,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
                 if (target == null) {
                     continue;
                 }
-                resolveForTarget(gameData, target);
+                resolveForTarget(gameData, entry, target);
             }
             return;
         }
@@ -81,11 +83,11 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        resolveForTarget(gameData, target);
+        resolveForTarget(gameData, entry, target);
     }
 
-    void resolveForTarget(GameData gameData, Permanent target) {
-        target.setCantBlockThisTurn(true);
+    void resolveForTarget(GameData gameData, StackEntry entry, Permanent target) {
+        gameData.addEffectOnPermanent(entry, new CantBlockEffect(), target.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
@@ -105,7 +107,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        enchanted.setCantBlockThisTurn(true);
+        gameData.addEffectOnPermanent(entry, new CantBlockEffect(), enchanted.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardThen(enchanted.getCard(), " can't block this turn."));
         log.info("Game {} - {} can't block this turn", gameData.id, enchanted.getCard().getName());
     }

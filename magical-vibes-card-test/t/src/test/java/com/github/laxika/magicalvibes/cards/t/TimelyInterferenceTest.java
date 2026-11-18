@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SunbathingRootwalla;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,7 +35,7 @@ class TimelyInterferenceTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isZero();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -48,7 +50,7 @@ class TimelyInterferenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
     }
 
@@ -84,7 +86,7 @@ class TimelyInterferenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -166,7 +168,7 @@ class TimelyInterferenceTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
     }
 

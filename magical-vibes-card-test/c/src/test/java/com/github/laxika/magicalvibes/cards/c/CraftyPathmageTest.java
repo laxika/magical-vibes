@@ -29,7 +29,7 @@ class CraftyPathmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(pathmage.isTapped()).isTrue();
-        assertThat(pathmage.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, pathmage)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class CraftyPathmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(pathmage.isTapped()).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -57,7 +57,7 @@ class CraftyPathmageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -75,7 +75,7 @@ class CraftyPathmageTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         declareAttackersAndPrepareBlockers(player1, List.of(1));
 
@@ -96,13 +96,13 @@ class CraftyPathmageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -115,7 +115,7 @@ class CraftyPathmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(pathmage.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -173,6 +173,6 @@ class CraftyPathmageTest extends BaseCardTest {
 
         assertThat(pathmage.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 }

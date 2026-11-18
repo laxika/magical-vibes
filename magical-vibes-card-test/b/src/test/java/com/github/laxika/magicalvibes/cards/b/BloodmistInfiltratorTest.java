@@ -46,7 +46,7 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handlePermanentChosen(player1, hybrid.getId()));
 
-        assertThat(infiltrator.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(hybrid.getCard());
     }
 
@@ -60,7 +60,7 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(infiltrator.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hybrid);
     }
 
@@ -76,13 +76,13 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handlePermanentChosen(player1, hybrid.getId()));
 
-        assertThat(infiltrator.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(infiltrator.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isFalse();
     }
 
     @Test
@@ -94,7 +94,7 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(infiltrator.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -110,7 +110,7 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handlePermanentChosen(player1, sacrifice.getId()));
 
-        assertThat(infiltrator.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
@@ -2928,7 +2930,8 @@ public class MultiPermanentChoiceHandlerService {
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && gameQueryService.isCreature(gameData, permanent)) {
-                permanent.setMustBlockThisTurnIfAble(true);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(null, null, chooserId,
+                        new MustBlockEachCombatEffect(), permanent.getId(), Duration.UNTIL_END_OF_TURN));
             }
         }
 
@@ -3491,8 +3494,9 @@ public class MultiPermanentChoiceHandlerService {
                 }
             }
             if (tappedCount == context.requiredCount()) {
-                makeCreatureUnblockableEffectHandler.makeUnblockable(
-                        gameData, gameQueryService.findPermanentById(gameData, context.sourcePermanentId()));
+                Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+                makeCreatureUnblockableEffectHandler.makeUnblockableThisTurn(gameData, source,
+                        source == null ? null : source.getCard().getName(), context.sourcePermanentId(), playerId);
             }
         }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AltarsReap;
 import com.github.laxika.magicalvibes.cards.j.JaceMemoryAdept;
@@ -42,7 +44,7 @@ class ChandraPyromasterTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
@@ -57,7 +59,7 @@ class ChandraPyromasterTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(bear.getMarkedDamage()).isZero();
-        assertThat(bear.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -188,7 +190,7 @@ class ChandraPyromasterTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -208,7 +210,7 @@ class ChandraPyromasterTest extends BaseCardTest {
 
         // "That planeswalker's controller" needs information about the now-illegal planeswalker target, which
         // the ability fails to determine (CR 608.2b), so the creature is no longer a legal target.
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

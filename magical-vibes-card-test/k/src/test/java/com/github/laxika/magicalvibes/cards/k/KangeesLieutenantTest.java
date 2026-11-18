@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
@@ -95,8 +97,8 @@ class KangeesLieutenantTest extends BaseCardTest {
         assertThat(tokens).filteredOn(token -> token.getCard().getName().equals("Soldier")).hasSize(2);
         assertThat(tokens).hasSize(4).allSatisfy(token -> {
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-            assertThat(token.isMustAttackThisTurn()).isTrue();
-            assertThat(token.getMustAttackTargetId()).isEqualTo(player2.getId());
+            assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isTrue();
+            assertThat(gd.mustAttackDefender(token.getId())).isEqualTo(player2.getId());
         });
 
         List<Integer> tokenIndices = tokens.stream()

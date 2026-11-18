@@ -29,8 +29,8 @@ class PhaseDolphinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, brushwagg.getId());
         resolveAllTriggers();
 
-        assertThat(brushwagg.isCantBeBlocked()).isTrue();
-        assertThat(dolphin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, brushwagg)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dolphin)).isFalse();
     }
 
     @Test
@@ -60,8 +60,8 @@ class PhaseDolphinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
-        assertThat(nonattacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, nonattacker)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class PhaseDolphinTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(dolphin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dolphin)).isFalse();
     }
 
     @Test
@@ -88,8 +88,8 @@ class PhaseDolphinTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(dolphin.isCantBeBlocked()).isFalse();
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dolphin)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -102,10 +102,10 @@ class PhaseDolphinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, brushwagg.getId());
         resolveAllTriggers();
 
-        assertThat(brushwagg.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, brushwagg)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(brushwagg.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, brushwagg)).isFalse();
     }
 }

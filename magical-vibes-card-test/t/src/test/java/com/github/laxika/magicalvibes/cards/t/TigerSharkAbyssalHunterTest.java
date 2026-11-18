@@ -62,13 +62,13 @@ class TigerSharkAbyssalHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shark.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, shark)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shark.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, shark)).isFalse();
     }
 
     @Test
@@ -100,9 +100,9 @@ class TigerSharkAbyssalHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shark.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, shark)).isTrue();
         assertThat(shark.isTapped()).isFalse();
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
     }
 
     @Test

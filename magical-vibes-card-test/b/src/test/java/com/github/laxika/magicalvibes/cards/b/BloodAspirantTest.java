@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
 import com.github.laxika.magicalvibes.cards.g.GravebreakerLamia;
 import com.github.laxika.magicalvibes.cards.s.StampedeRider;
@@ -35,7 +37,7 @@ class BloodAspirantTest extends BaseCardTest {
 
         assertThat(aspirant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Stampede Rider");
     }
 
@@ -53,7 +55,7 @@ class BloodAspirantTest extends BaseCardTest {
 
         assertThat(aspirant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Underworld Breach");
     }
 
@@ -95,7 +97,7 @@ class BloodAspirantTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Blood Aspirant");
         assertThat(watcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -141,7 +143,7 @@ class BloodAspirantTest extends BaseCardTest {
 
         assertThat(aspirant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(aspirant.getMarkedDamage()).isEqualTo(1);
-        assertThat(aspirant.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(aspirant.getId(), CantBlockEffect.class)).isTrue();
         harness.assertOnBattlefield(player1, "Blood Aspirant");
     }
 

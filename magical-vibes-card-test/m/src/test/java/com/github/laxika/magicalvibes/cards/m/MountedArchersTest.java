@@ -27,7 +27,7 @@ class MountedArchersTest extends BaseCardTest {
 
         activate(archers);
 
-        assertThat(archers.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(1);
+        assertThat(gd.additionalBlocksThisTurn(archers.getId())).isEqualTo(1);
     }
 
     @Test
@@ -38,7 +38,7 @@ class MountedArchersTest extends BaseCardTest {
         activate(archers);
         activate(archers);
 
-        assertThat(archers.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(2);
+        assertThat(gd.additionalBlocksThisTurn(archers.getId())).isEqualTo(2);
     }
 
     @Test
@@ -86,7 +86,7 @@ class MountedArchersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(archers.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(archers.getId())).isZero();
     }
 
     @Test

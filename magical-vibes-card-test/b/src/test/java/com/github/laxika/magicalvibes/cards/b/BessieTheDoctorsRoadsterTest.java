@@ -50,9 +50,9 @@ class BessieTheDoctorsRoadsterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, legendaryCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(legendaryCreature.isCantBeBlocked()).isTrue();
-        assertThat(nonlegendaryCreature.isCantBeBlocked()).isFalse();
-        assertThat(bessie.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, legendaryCreature)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, nonlegendaryCreature)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bessie)).isFalse();
     }
 
     @Test
@@ -117,14 +117,14 @@ class BessieTheDoctorsRoadsterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
-        assertThat(bessie.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bessie)).isFalse();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -141,6 +141,6 @@ class BessieTheDoctorsRoadsterTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(bessie.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 }

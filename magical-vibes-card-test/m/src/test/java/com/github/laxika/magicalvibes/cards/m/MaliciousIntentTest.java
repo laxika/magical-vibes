@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.n.NettleSwine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,7 +35,7 @@ class MaliciousIntentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -72,7 +74,7 @@ class MaliciousIntentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -107,7 +109,7 @@ class MaliciousIntentTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -132,7 +134,7 @@ class MaliciousIntentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(replacement.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(replacement.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -141,11 +143,11 @@ class MaliciousIntentTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NettleSwine());
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 }

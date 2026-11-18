@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,7 +58,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(bears.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -102,7 +104,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(bears.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
 
         runEndStep();
@@ -121,7 +123,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(bears.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -230,7 +232,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(bears.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustAttackIfAbleEffect.class)).isFalse();
         runEndStep();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
     }

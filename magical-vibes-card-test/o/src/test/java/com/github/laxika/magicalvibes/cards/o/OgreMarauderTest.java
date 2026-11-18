@@ -35,7 +35,7 @@ class OgreMarauderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(ogre.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ogre)).isFalse();
     }
 
     @Test
@@ -49,7 +49,7 @@ class OgreMarauderTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(ogre.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ogre)).isTrue();
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -70,7 +70,7 @@ class OgreMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(ogre.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ogre)).isTrue();
     }
 
     @Test
@@ -93,7 +93,7 @@ class OgreMarauderTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, second.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first);
-        assertThat(ogre.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ogre)).isFalse();
     }
 
     @Test
@@ -107,7 +107,7 @@ class OgreMarauderTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(sigarda);
-        assertThat(ogre.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ogre)).isTrue();
     }
 
     @Test

@@ -41,7 +41,7 @@ class CrashingBoarsTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, chosenBlocker.getId());
 
-        assertThat(chosenBlocker.getMustBlockIds()).containsExactly(boars.getId());
+        assertThat(gd.requiredBlockSourceIds(chosenBlocker.getId())).containsExactly(boars.getId());
 
         prepareDeclareBlockers();
 
@@ -65,7 +65,7 @@ class CrashingBoarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(tappedCreature.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(tappedCreature.getId())).isEmpty();
     }
 
     @Test
@@ -78,7 +78,7 @@ class CrashingBoarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(blocker.getMustBlockIds()).containsExactly(boars.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(boars.getId());
     }
 
     @Test
@@ -89,7 +89,7 @@ class CrashingBoarsTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        assertThat(blocker.getMustBlockIds()).containsExactly(boars.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(boars.getId());
 
         blocker.tap();
         prepareDeclareBlockers();
@@ -114,9 +114,9 @@ class CrashingBoarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(initiallyTapped.getMustBlockIds()).containsExactly(boars.getId());
-        assertThat(initiallyUntapped.getMustBlockIds()).isEmpty();
-        assertThat(attackingPlayersCreature.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(initiallyTapped.getId())).containsExactly(boars.getId());
+        assertThat(gd.requiredBlockSourceIds(initiallyUntapped.getId())).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(attackingPlayersCreature.getId())).isEmpty();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
 import com.github.laxika.magicalvibes.cards.t.TrumpetBlast;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -54,7 +56,7 @@ class GoblinBattleJesterTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -140,13 +142,13 @@ class GoblinBattleJesterTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.handlePermanentChosen(player1, jester.getId());
 
-        assertThat(jester.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(jester.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         harness.passBothPriorities();
 
-        assertThat(jester.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(jester.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
     }
@@ -163,11 +165,11 @@ class GoblinBattleJesterTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         resolveAllTriggers();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 }

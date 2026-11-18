@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,8 +61,8 @@ class HammerhandTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentBlocker.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBlocker.isCantBlockThisTurn()).isTrue();
-        assertThat(mine.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentBlocker.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(mine.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Hammerhand")
                         && mine.getId().equals(p.getAttachedTo()));
@@ -82,7 +84,7 @@ class HammerhandTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isTrue();
-        assertThat(mine.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(mine.getId(), CantBlockEffect.class)).isTrue();
     }
     @Test
     @DisplayName("The ETB target cannot be supplied as an additional Aura spell target")
@@ -110,7 +112,7 @@ class HammerhandTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, host.getId());
         harness.passBothPriorities();
 
-        assertThat(host.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(host.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, host, Keyword.HASTE)).isTrue();
     }
@@ -131,8 +133,8 @@ class HammerhandTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
-        assertThat(host.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(host.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, host, Keyword.HASTE)).isFalse();
     }

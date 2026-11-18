@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AzoriusChancery;
 import com.github.laxika.magicalvibes.cards.t.TrygonPredator;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,7 +32,7 @@ class SandstormEidolonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Sandstorm Eidolon");
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -116,12 +118,12 @@ class SandstormEidolonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Sandstorm Eidolon");
         harness.assertInGraveyard(player1, "Sandstorm Eidolon");
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -136,7 +138,7 @@ class SandstormEidolonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(eidolon);
         harness.assertNotInGraveyard(player1, "Sandstorm Eidolon");
         assertThat(gd.stack).isEmpty();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -149,7 +151,7 @@ class SandstormEidolonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Sandstorm Eidolon");
     }
 
@@ -194,12 +196,12 @@ class SandstormEidolonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 

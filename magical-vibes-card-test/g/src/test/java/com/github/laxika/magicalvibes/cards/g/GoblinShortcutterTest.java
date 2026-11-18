@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +30,7 @@ class GoblinShortcutterTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -64,7 +66,7 @@ class GoblinShortcutterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, shortcutter.getId());
         resolveAllTriggers();
 
-        assertThat(shortcutter.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(shortcutter.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -77,11 +79,11 @@ class GoblinShortcutterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -99,7 +101,7 @@ class GoblinShortcutterTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.l.LightningBlast;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,8 +34,8 @@ class ImpsTauntTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent target = findPermanent(player2, "Trained Armodon");
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
     }
 
     @Test
@@ -47,7 +49,7 @@ class ImpsTauntTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Trained Armodon");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(findPermanent(player1, "Trained Armodon").isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player1, "Trained Armodon").getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -117,7 +119,7 @@ class ImpsTauntTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Trained Armodon").isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player2, "Trained Armodon").getId(), MustAttackIfAbleEffect.class)).isTrue();
         assertThat(graveyardNames(player1)).doesNotContain("Imps' Taunt");
         assertThat(handNames(player1)).containsExactly("Imps' Taunt");
     }
@@ -183,10 +185,10 @@ class ImpsTauntTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
         declareAttackers(player2, List.of());
         assertThat(target.isAttackedThisTurn()).isFalse();
     }

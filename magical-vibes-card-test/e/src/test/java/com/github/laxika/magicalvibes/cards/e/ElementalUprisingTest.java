@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -36,7 +38,7 @@ class ElementalUprisingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
         assertThat(land.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
-        assertThat(land.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -65,7 +67,7 @@ class ElementalUprisingTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, land)).isFalse();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isFalse();
-        assertThat(land.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test

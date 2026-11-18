@@ -94,7 +94,7 @@ class FighterClassTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).doesNotContain(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).doesNotContain(attacker.getId());
     }
 
     @Test

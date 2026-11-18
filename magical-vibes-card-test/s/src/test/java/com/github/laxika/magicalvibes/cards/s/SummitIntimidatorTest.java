@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,7 +27,7 @@ class SummitIntimidatorTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -37,13 +39,13 @@ class SummitIntimidatorTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, 0, blocker.getId());
         resolveAllTriggers();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -75,7 +77,7 @@ class SummitIntimidatorTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -89,8 +91,8 @@ class SummitIntimidatorTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -106,7 +108,7 @@ class SummitIntimidatorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -123,7 +125,7 @@ class SummitIntimidatorTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         resolveAllTriggers();
 
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,9 +58,9 @@ class InciteTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
         // Unlike Alluring Siren, Incite doesn't force attacking a specific player
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
     }
 
     @Test
@@ -71,7 +73,7 @@ class InciteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -163,13 +165,13 @@ class InciteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
-        assertThat(target.isMustAttackThisTurn()).isFalse();
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
     }
 }

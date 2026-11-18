@@ -68,7 +68,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent target = findPermanent(player1, "Dawntreader Elk");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -83,13 +83,13 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent target = findPermanent(player1, "Dawntreader Elk");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent target = findPermanent(player2, "Dawntreader Elk");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -157,7 +157,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, targetId);
 
         Permanent target = findPermanent(player1, "Dawntreader Elk");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -194,7 +194,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Artful Dodge");
         assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card instanceof ArtfulDodge);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.h.HourOfNeed;
 import com.github.laxika.magicalvibes.cards.p.PensiveMinotaur;
 import com.github.laxika.magicalvibes.cards.t.TempleOfMalady;
@@ -29,8 +31,8 @@ class BlindingFlareTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(firstCreature.getId(), secondCreature.getId()));
 
-        assertThat(firstCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(secondCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondCreature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -63,14 +65,14 @@ class BlindingFlareTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -95,7 +97,7 @@ class BlindingFlareTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, creatures.stream().map(Permanent::getId).toList());
 
-        assertThat(creatures).allMatch(Permanent::isCantBlockThisTurn);
+        assertThat(creatures).allMatch(p -> gd.hasFloatingEffectOnPermanent(p.getId(), CantBlockEffect.class));
     }
 
     @Test
@@ -110,10 +112,10 @@ class BlindingFlareTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(
                 ownCreature.getId(), firstOpponentCreature.getId(), secondOpponentCreature.getId()));
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(firstOpponentCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(secondOpponentCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(unchosenCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstOpponentCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondOpponentCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(unchosenCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -154,10 +156,10 @@ class BlindingFlareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(exiledCreature);
-        assertThat(remainingCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(remainingCreature.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(permanent -> !permanent.getId().equals(remainingCreature.getId()))
                 .hasSize(1)
-                .allMatch(permanent -> !permanent.isCantBlockThisTurn());
+                .allMatch(permanent -> !gd.hasFloatingEffectOnPermanent(permanent.getId(), CantBlockEffect.class));
     }
 }

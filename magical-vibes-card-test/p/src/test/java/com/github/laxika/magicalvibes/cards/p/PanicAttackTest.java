@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,9 +35,9 @@ class PanicAttackTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0,
                 List.of(creature1.getId(), creature2.getId(), creature3.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
-        assertThat(creature3.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature3.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -49,8 +51,8 @@ class PanicAttackTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -63,7 +65,7 @@ class PanicAttackTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature1.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -76,7 +78,7 @@ class PanicAttackTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of());
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -116,7 +118,7 @@ class PanicAttackTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargeted.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Panic Attack");
     }
@@ -132,8 +134,8 @@ class PanicAttackTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId()));
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(untargetedCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargetedCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -179,7 +181,7 @@ class PanicAttackTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId()));
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -197,14 +199,14 @@ class PanicAttackTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         advanceToUpkeep(player2);
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -224,7 +226,7 @@ class PanicAttackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // creature2 should still be affected
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -236,13 +238,13 @@ class PanicAttackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId()));
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

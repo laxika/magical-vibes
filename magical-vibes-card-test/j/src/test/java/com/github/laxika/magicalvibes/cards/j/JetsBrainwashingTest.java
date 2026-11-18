@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.e.ErdwalIlluminator;
 import com.github.laxika.magicalvibes.cards.o.OtterPenguin;
@@ -29,7 +31,7 @@ class JetsBrainwashingTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
@@ -47,7 +49,7 @@ class JetsBrainwashingTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -71,7 +73,7 @@ class JetsBrainwashingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
@@ -136,7 +138,7 @@ class JetsBrainwashingTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
 
@@ -146,7 +148,7 @@ class JetsBrainwashingTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -161,7 +163,7 @@ class JetsBrainwashingTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
 

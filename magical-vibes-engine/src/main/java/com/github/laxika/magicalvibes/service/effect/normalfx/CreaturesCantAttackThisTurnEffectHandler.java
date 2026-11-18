@@ -31,11 +31,6 @@ public class CreaturesCantAttackThisTurnEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, null, Duration.UNTIL_END_OF_TURN));
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (gameQueryService.isCreature(gameData, permanent)) {
-                permanent.setCantAttackThisTurn(true);
-            }
-        });
         gameLogService.append(gameData, GameLog.text("Creatures can't attack this turn."));
         log.info("Game {} - creatures can't attack this turn", gameData.id);
     }

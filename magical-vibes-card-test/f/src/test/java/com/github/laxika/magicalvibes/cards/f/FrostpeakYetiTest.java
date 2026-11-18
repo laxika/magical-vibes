@@ -23,7 +23,7 @@ class FrostpeakYetiTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(yeti.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isFalse();
     }
 
     @Test
@@ -35,7 +35,7 @@ class FrostpeakYetiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(yeti.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isTrue();
     }
 
     @Test
@@ -46,13 +46,13 @@ class FrostpeakYetiTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(yeti.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(yeti.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isFalse();
     }
 
     @Test
@@ -64,11 +64,11 @@ class FrostpeakYetiTest extends BaseCardTest {
         pool.addSnowMana(ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(yeti.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isFalse();
         assertThat(pool.getTotal()).isZero();
         harness.passBothPriorities();
 
-        assertThat(yeti.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isTrue();
     }
 
     @Test
@@ -79,7 +79,7 @@ class FrostpeakYetiTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(yeti.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isFalse();
     }
 
     @Test
@@ -93,7 +93,7 @@ class FrostpeakYetiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(yeti.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isTrue();
         assertThat(yeti.isTapped()).isTrue();
     }
 
@@ -107,8 +107,8 @@ class FrostpeakYetiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(yeti.isCantBeBlocked()).isTrue();
-        assertThat(otherYeti.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, yeti)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherYeti)).isFalse();
     }
 
     private Permanent addYeti() {

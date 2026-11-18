@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -49,9 +52,7 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
         tokenCopySupport.createTokenCopiesForEachOpponent(gameData, entry, List.of(entry.getCard()),
                 entry.getControllerId(), copyEffect, opponentIds,
                 token -> token.getPersistentGrantedKeywords().add(Keyword.HASTE),
-                (opponentId, token) -> {
-                    token.setMustAttackThisTurn(true);
-                    token.setMustAttackTargetId(opponentId);
-                });
+                (opponentId, token) -> gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(opponentId),
+                        token.getId(), Duration.UNTIL_END_OF_TURN));
     }
 }

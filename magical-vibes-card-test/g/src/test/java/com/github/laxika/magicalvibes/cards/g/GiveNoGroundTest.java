@@ -63,7 +63,7 @@ class GiveNoGroundTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(target.getId())).isZero();
     }
 
     @Test
@@ -90,7 +90,7 @@ class GiveNoGroundTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(6);
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(other.getId())).isZero();
     }
 
     @Test
@@ -143,10 +143,10 @@ class GiveNoGroundTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(target.getId())).isZero();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(other.getId())).isZero();
         harness.assertInGraveyard(player1, "Give No Ground");
         assertThat(gd.stack).isEmpty();
     }

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
@@ -226,7 +230,8 @@ class AttackLegalityServiceTest extends BaseCardTest {
     @DisplayName("The \"can't attack this turn\" flag stops attacking")
     void cantAttackThisTurnFlagStopsAttacking() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCantAttackThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantAttackThisTurnEffect(TapUntapScope.TARGET), bears.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
     }
@@ -480,8 +485,23 @@ class AttackLegalityServiceTest extends BaseCardTest {
 
         // A transient "must attack this turn" stacks with the printed requirement rather than
         // replacing it — CR 508.1d compares totals, so two requirements must outrank one.
-        berserkers.setMustAttackThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(), berserkers.getId(), Duration.UNTIL_END_OF_TURN));
         assertThat(als.getMustAttackRequirementCount(gd, berserkers)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each resolved \"attacks this turn if able\" effect is its own requirement")
+    void eachResolvedMustAttackEffectCounts() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(), bears.getId(), Duration.UNTIL_END_OF_TURN));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(), bears.getId(), Duration.UNTIL_END_OF_TURN));
+
+        // CR 508.1d counts requirements, and each effect that says the creature attacks if able is one.
+        assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -489,7 +509,8 @@ class AttackLegalityServiceTest extends BaseCardTest {
     void combatScopedMustAttackRequirementIsCounted() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        bears.setMustAttackThisCombat(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(), bears.getId(), Duration.UNTIL_END_OF_COMBAT));
 
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
     }
@@ -499,13 +520,15 @@ class AttackLegalityServiceTest extends BaseCardTest {
     void directedMustAttackRequirementLapsesWhenItsTargetIsGone() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        bears.setMustAttackThisTurn(true);
-        bears.setMustAttackTargetId(player2.getId());
+        FloatingContinuousEffect requirement = gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test",
+                null, null, new MustAttackIfAbleEffect(player2.getId()), bears.getId(), Duration.UNTIL_END_OF_TURN));
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
 
         // A permanent id no living permanent carries — e.g. the planeswalker that imposed the
         // requirement has since left the battlefield.
-        bears.setMustAttackTargetId(UUID.randomUUID());
+        gd.endFloatingEffect(requirement);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(UUID.randomUUID()), bears.getId(), Duration.UNTIL_END_OF_TURN));
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isZero();
     }
 

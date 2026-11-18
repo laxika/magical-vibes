@@ -84,7 +84,7 @@ class BiolumeEggTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(serpent), null, null);
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Island"))
                 .hasSize(2);
@@ -193,12 +193,12 @@ class BiolumeEggTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.activateAbility(player1, indexOf(serpent), null, null);
         resolveAllTriggers();
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }
 
     @Test

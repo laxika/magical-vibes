@@ -54,7 +54,7 @@ class PrivateEyeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentDetective.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentDetective.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentDetective)).isTrue();
     }
 
     @Test
@@ -109,23 +109,23 @@ class PrivateEyeTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).contains(eye.getId());
         harness.handlePermanentChosen(player1, eye.getId());
-        assertThat(eye.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, eye)).isFalse();
         harness.passBothPriorities();
-        assertThat(eye.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, eye)).isTrue();
 
         drawCard(player1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(eye.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, eye)).isFalse();
         drawCard(player1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
                 .validPermanentIds()).contains(eye.getId());
         harness.handlePermanentChosen(player1, eye.getId());
         harness.passBothPriorities();
-        assertThat(eye.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, eye)).isTrue();
     }
 
     private void drawCard(com.github.laxika.magicalvibes.model.Player player) {

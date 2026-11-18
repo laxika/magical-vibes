@@ -31,7 +31,7 @@ class TrumpetingArmodonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).contains(armodon.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(armodon.getId());
     }
 
     @Test
@@ -124,7 +124,7 @@ class TrumpetingArmodonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getMustBlockIds()).doesNotContain(armodon.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).doesNotContain(armodon.getId());
     }
 
     @Test
@@ -136,13 +136,13 @@ class TrumpetingArmodonTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
-        assertThat(blocker.getMustBlockIds()).contains(armodon.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(armodon.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -199,7 +199,7 @@ class TrumpetingArmodonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getMustBlockIds()).contains(armodon.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(armodon.getId());
     }
 
     @Test

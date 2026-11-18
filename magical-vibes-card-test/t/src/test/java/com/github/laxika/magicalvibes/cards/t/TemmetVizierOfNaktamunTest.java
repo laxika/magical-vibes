@@ -54,7 +54,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
         assertThat(token.getPowerModifier()).isEqualTo(1);
         assertThat(token.getToughnessModifier()).isEqualTo(1);
-        assertThat(token.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, token)).isTrue();
     }
 
     @Test
@@ -140,7 +140,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(token.getPowerModifier()).isZero();
-        assertThat(token.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, token)).isFalse();
     }
 
     @Test
@@ -163,7 +163,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
         assertThat(token.getPowerModifier()).isEqualTo(1);
         assertThat(token.getToughnessModifier()).isEqualTo(1);
-        assertThat(token.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, token)).isTrue();
     }
 
     @Test

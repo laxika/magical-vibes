@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FestivalCrasher;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,8 +35,8 @@ class AbandonThePostTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -46,7 +48,7 @@ class AbandonThePostTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(bear.getId()));
 
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -71,7 +73,7 @@ class AbandonThePostTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(bear.getId()));
         harness.passBothPriorities();
 
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
         harness.assertNotInGraveyard(player1, "Abandon the Post");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Abandon the Post"));
@@ -85,11 +87,11 @@ class AbandonThePostTest extends BaseCardTest {
         addNormalMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of(bear.getId()));
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -141,7 +143,7 @@ class AbandonThePostTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
         harness.passBothPriorities();
 
-        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Abandon the Post");
     }
 
@@ -189,7 +191,7 @@ class AbandonThePostTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInGraveyard(player1, "Abandon the Post");
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -202,7 +204,7 @@ class AbandonThePostTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
     }
 }

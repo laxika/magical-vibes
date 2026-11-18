@@ -7,9 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Placed on the {@code Triggers.blocks()} ability, auto-targeting
  * the blocked attacker. The referenced creature is passed as the stack entry's target but the trigger
- * does not target (it can't fizzle). At resolution the opponent's {@code cantAttackNextTurn} flag is
- * set; the turn engine promotes it to an active restriction at the start of that creature's
- * controller's next turn, so it lasts exactly that one turn.
+ * does not target (it can't fizzle). At resolution this effect goes on that creature as a floating effect
+ * {@code Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN}: it begins as its controller's next turn begins and ends with
+ * that turn.
  */
 public record CantAttackNextTurnCombatOpponentEffect() implements CardEffect {
 

@@ -30,8 +30,8 @@ class OpenIntoWonderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
 
     @Test
@@ -72,13 +72,13 @@ class OpenIntoWonderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, List.of(bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -140,7 +140,7 @@ class OpenIntoWonderTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1, List.of(bears.getId()));
         harness.passBothPriorities();
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
         int casterHandSize = gd.playerHands.get(player1.getId()).size();
         bears.setAttacking(true);
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
@@ -188,7 +188,7 @@ class OpenIntoWonderTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(second.getCard());
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
         first.setAttacking(true);
         resolveCombat();
         harness.passBothPriorities();

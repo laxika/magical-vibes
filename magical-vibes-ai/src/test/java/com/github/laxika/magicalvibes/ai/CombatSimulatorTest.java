@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
@@ -1046,7 +1048,8 @@ class CombatSimulatorTest {
         Permanent temporaryLureAttacker = new Permanent(new GrizzlyBears());
         temporaryLureAttacker.setSummoningSick(false);
         temporaryLureAttacker.setAttacking(true);
-        temporaryLureAttacker.setMustBeBlockedByAllThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustBeBlockedByAllCreaturesEffect(), temporaryLureAttacker.getId(), Duration.UNTIL_END_OF_TURN));
         gd.playerBattlefields.get(player2.getId()).add(temporaryLureAttacker);
 
         Permanent regularAttacker = new Permanent(new GrizzlyBears());

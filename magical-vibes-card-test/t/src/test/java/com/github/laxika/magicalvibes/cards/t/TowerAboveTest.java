@@ -87,7 +87,7 @@ class TowerAboveTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).contains(bear.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(bear.getId());
     }
 
     @Test
@@ -149,8 +149,8 @@ class TowerAboveTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(firstBlocker.getMustBlockIds()).contains(attacker.getId());
-        assertThat(secondBlocker.getMustBlockIds()).contains(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(firstBlocker.getId())).contains(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(secondBlocker.getId())).contains(attacker.getId());
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

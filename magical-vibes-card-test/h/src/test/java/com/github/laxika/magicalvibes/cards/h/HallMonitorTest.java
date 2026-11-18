@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.w.WitherbloomCampus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +30,7 @@ class HallMonitorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         declareAttackersAndPrepareBlockers(List.of(1));
 
@@ -45,13 +47,13 @@ class HallMonitorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -90,7 +92,7 @@ class HallMonitorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(monitor.isTapped()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -115,7 +117,7 @@ class HallMonitorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(monitor.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -127,6 +129,6 @@ class HallMonitorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, monitor.getId());
         harness.passBothPriorities();
 
-        assertThat(monitor.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(monitor.getId(), CantBlockEffect.class)).isTrue();
     }
 }

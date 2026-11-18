@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BlazingArchon;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
@@ -47,7 +49,7 @@ class AlluringSirenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -101,8 +103,8 @@ class AlluringSirenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isEqualTo(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -114,15 +116,15 @@ class AlluringSirenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isEqualTo(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isEqualTo(player1.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isMustAttackThisTurn()).isFalse();
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
     }
 
     @Test
@@ -197,7 +199,7 @@ class AlluringSirenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
@@ -210,8 +212,8 @@ class AlluringSirenTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isEqualTo(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isEqualTo(player1.getId());
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -36,7 +38,7 @@ class CowardKillerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).contains(CardSubtype.COWARD);
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(2);
     }
@@ -80,13 +82,13 @@ class CowardKillerTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, COWARD, List.of(target.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target))
                 .contains(CardSubtype.SPIDER, CardSubtype.COWARD);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target))
                 .contains(CardSubtype.SPIDER).doesNotContain(CardSubtype.COWARD);
     }

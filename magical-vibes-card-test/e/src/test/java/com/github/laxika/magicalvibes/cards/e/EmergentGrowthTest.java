@@ -1,5 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
@@ -36,12 +44,12 @@ class EmergentGrowthTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(5);
         assertThat(bears.getEffectivePower()).isEqualTo(7);
         assertThat(bears.getEffectiveToughness()).isEqualTo(7);
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         // "must be blocked if able" is satisfied by one blocker — it must not become the Lure-style
         // "all creatures able to block it do so".
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isFalse();
-        assertThat(bears.isMustAttackThisTurn()).isFalse();
-        assertThat(bears.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -49,7 +57,8 @@ class EmergentGrowthTest extends BaseCardTest {
     void mustBeBlockedIfAble() {
         Permanent attacker = addCreatureReady(player1, new QueensBaySoldier());
         attacker.setAttacking(true);
-        attacker.setMustBeBlockedThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustBeBlockedIfAbleEffect(), attacker.getId(), Duration.UNTIL_END_OF_TURN));
 
         addCreatureReady(player2, new QueensBaySoldier());
 
@@ -65,7 +74,8 @@ class EmergentGrowthTest extends BaseCardTest {
     void oneBlockerSuffices() {
         Permanent attacker = addCreatureReady(player1, new QueensBaySoldier());
         attacker.setAttacking(true);
-        attacker.setMustBeBlockedThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustBeBlockedIfAbleEffect(), attacker.getId(), Duration.UNTIL_END_OF_TURN));
 
         addCreatureReady(player2, new QueensBaySoldier());
         addCreatureReady(player2, new QueensBaySoldier());
@@ -83,7 +93,8 @@ class EmergentGrowthTest extends BaseCardTest {
     void tappedCreaturesNotForcedToBlock() {
         Permanent attacker = addCreatureReady(player1, new QueensBaySoldier());
         attacker.setAttacking(true);
-        attacker.setMustBeBlockedThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustBeBlockedIfAbleEffect(), attacker.getId(), Duration.UNTIL_END_OF_TURN));
 
         Permanent tapped = addCreatureReady(player2, new QueensBaySoldier());
         tapped.tap();
@@ -110,7 +121,7 @@ class EmergentGrowthTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test

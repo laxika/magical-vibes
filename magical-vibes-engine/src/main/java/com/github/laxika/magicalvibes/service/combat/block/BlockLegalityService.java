@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisCombatEffect;
+
 import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -229,8 +231,8 @@ public class BlockLegalityService {
     public boolean canBlock(BlockLegalityContext context, Permanent creature) {
         if (!gameQueryService.isCreature(context.gameData, creature)
                 || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
-                || creature.isCantBlockThisTurn()
-                || creature.isCantBlockThisCombat()
+                || context.gameData.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class,
+                        CantBlockThisCombatEffect.class)
                 || gameQueryService.isLockedFromBlocking(context.gameData, creature.getId())
                 || gameQueryService.hasSuspectedAbilities(context.gameData, creature)
                 || isOutsideChosenBlockers(context.gameData, creature)) {
@@ -392,7 +394,7 @@ public class BlockLegalityService {
         if (pairRestrictionDenial != null) {
             return pairRestrictionDenial;
         }
-        for (CanBeBlockedOnlyByFilterEffect restriction : attacker.getBlockRestrictionsUntilEndOfTurn()) {
+        for (CanBeBlockedOnlyByFilterEffect restriction : gameData.blockRestrictions(attacker.getId())) {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                 return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
             }
@@ -420,10 +422,10 @@ public class BlockLegalityService {
         if (atk.landwalkDenial() != null && !blk.blocksLandwalkAsThoughNoLandwalk()) {
             return atk.landwalkDenial();
         }
-        if (blocker.isCantBlockThisTurn()) {
+        if (gameData.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)) {
             return BlockDenial.CANT_BLOCK_THIS_TURN;
         }
-        if (blocker.isCantBlockThisCombat()) {
+        if (gameData.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockThisCombatEffect.class)) {
             return BlockDenial.CANT_BLOCK;
         }
         if (gameQueryService.hasSuspectedAbilities(gameData, blocker)) {
@@ -445,7 +447,7 @@ public class BlockLegalityService {
                 && gameQueryService.getEffectivePower(gameData, attacker) >= blk.cantBlockPowerAtLeast()) {
             return BlockDenial.CANT_BLOCK_HIGH_POWER;
         }
-        if (blocker.getCantBlockIds().contains(attacker.getId())) {
+        if (gameData.cantBlockSourceIds(blocker.getId()).contains(attacker.getId())) {
             return BlockDenial.CANT_BLOCK_THAT_ATTACKER;
         }
         if (gameQueryService.hasProtectionFromSource(gameData, attacker, blocker, blk.colors())) {
@@ -680,7 +682,7 @@ public class BlockLegalityService {
         }
         if (!landwalkIgnored) {
             // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
-            for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
+            for (PermanentPredicate predicate : gameData.unblockableIfDefenderControls(attacker.getId())) {
                 if (defenderControls(context, predicate)) {
                     unblockable = true;
                     landwalkUnblockable = true;

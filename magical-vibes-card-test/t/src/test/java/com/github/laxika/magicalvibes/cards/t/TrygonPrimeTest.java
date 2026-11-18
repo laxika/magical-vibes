@@ -28,7 +28,7 @@ class TrygonPrimeTest extends BaseCardTest {
 
         assertThat(trygon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(otherAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(otherAttacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherAttacker)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class TrygonPrimeTest extends BaseCardTest {
 
         assertThat(trygon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(otherAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(otherAttacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherAttacker)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class TrygonPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(trygon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(trygon.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, trygon)).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class TrygonPrimeTest extends BaseCardTest {
 
         assertThat(trygon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(otherAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(otherAttacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherAttacker)).isFalse();
     }
 
     @Test
@@ -121,6 +121,6 @@ class TrygonPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(otherAttacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherAttacker)).isTrue();
     }
 }

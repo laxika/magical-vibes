@@ -41,7 +41,7 @@ class GrapplingHookTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(blocker.getMustBlockIds()).containsExactly(creature.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(creature.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -58,7 +58,7 @@ class GrapplingHookTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -127,8 +127,8 @@ class GrapplingHookTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(firstBlocker.getMustBlockIds()).containsExactly(creature.getId());
-        assertThat(secondBlocker.getMustBlockIds()).containsExactly(creature.getId());
+        assertThat(gd.requiredBlockSourceIds(firstBlocker.getId())).containsExactly(creature.getId());
+        assertThat(gd.requiredBlockSourceIds(secondBlocker.getId())).containsExactly(creature.getId());
     }
 
     @Test
@@ -146,7 +146,7 @@ class GrapplingHookTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(blocker.getMustBlockIds()).containsExactly(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(attacker.getId());
     }
 
     @Test

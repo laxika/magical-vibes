@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -37,10 +39,8 @@ class PredatoryRampageTest extends BaseCardTest {
     @DisplayName("Opponent's creatures must block if able")
     void opponentCreaturesMustBlock() {
         Permanent attacker = addCreatureReady(player1, new WalkingCorpse());
-        Permanent blocker = addCreatureReady(player2, new WalkingCorpse());
+        addCreatureReady(player2, new WalkingCorpse());
         castRampage();
-
-        assertThat(blocker.isMustBlockThisTurnIfAble()).isTrue();
 
         beginCombat(attacker);
 
@@ -68,7 +68,7 @@ class PredatoryRampageTest extends BaseCardTest {
         Permanent own = addCreatureReady(player1, new WalkingCorpse());
         castRampage();
 
-        assertThat(own.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(own.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -83,7 +83,7 @@ class PredatoryRampageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(own.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(theirs.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test

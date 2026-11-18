@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humility;
@@ -64,8 +66,8 @@ class BasandraBattleSeraphTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
     }
 
     @ParameterizedTest
@@ -112,8 +114,8 @@ class BasandraBattleSeraphTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, basandra.getId());
         harness.passBothPriorities();
 
-        assertThat(basandra.isMustAttackThisTurn()).isTrue();
-        assertThat(basandra.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(basandra.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(basandra.getId())).isNull();
     }
 
     @Test
@@ -163,13 +165,13 @@ class BasandraBattleSeraphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, basandra.getId());
         harness.passBothPriorities();
-        assertThat(basandra.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(basandra.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(basandra.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(basandra.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -198,7 +200,7 @@ class BasandraBattleSeraphTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

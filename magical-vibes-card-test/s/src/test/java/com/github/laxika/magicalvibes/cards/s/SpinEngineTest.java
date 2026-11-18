@@ -67,7 +67,7 @@ class SpinEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).contains(engine.getId());
     }
 
     @Test
@@ -87,7 +87,7 @@ class SpinEngineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getCantBlockIds()).isEmpty();
+        assertThat(gd.cantBlockSourceIds(target.getId())).isEmpty();
     }
 
     @Test
@@ -167,8 +167,8 @@ class SpinEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker2.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker1.getCantBlockIds()).contains(engine.getId());
-        assertThat(blocker2.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(blocker1.getId())).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(blocker2.getId())).contains(engine.getId());
     }
 
     @Test
@@ -182,14 +182,14 @@ class SpinEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(engine.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(blocker.getCantBlockIds()).isEmpty();
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -203,7 +203,7 @@ class SpinEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).contains(engine.getId());
         assertThat(engine.isTapped()).isTrue();
     }
 
@@ -217,7 +217,7 @@ class SpinEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).contains(engine.getId());
     }
 
     @Test
@@ -229,7 +229,7 @@ class SpinEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, engine.getId());
         harness.passBothPriorities();
 
-        assertThat(engine.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(engine.getId())).contains(engine.getId());
     }
 
     @Test
@@ -245,7 +245,7 @@ class SpinEngineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getCantBlockIds()).contains(engine.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).contains(engine.getId());
     }
 
     @Test

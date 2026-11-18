@@ -57,14 +57,14 @@ class AntManReformedRogueTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, antMan)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, antMan)).isEqualTo(3);
-        assertThat(antMan.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, antMan)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, antMan)).isEqualTo(2);
-        assertThat(antMan.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, antMan)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class AntManReformedRogueTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, antMan)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, antMan)).isEqualTo(3);
-        assertThat(antMan.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, antMan)).isFalse();
         assertThat(gqs.hasKeyword(gd, antMan, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -112,7 +112,7 @@ class AntManReformedRogueTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, antMan)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, antMan)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, antMan, Keyword.TRAMPLE)).isTrue();
-        assertThat(antMan.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, antMan)).isTrue();
     }
 
     @Test
@@ -131,7 +131,7 @@ class AntManReformedRogueTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, antMan)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, antMan)).isEqualTo(3);
-        assertThat(antMan.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, antMan)).isTrue();
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -156,6 +156,6 @@ class AntManReformedRogueTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, antMan)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, antMan, Keyword.TRAMPLE)).isFalse();
-        assertThat(antMan.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, antMan)).isFalse();
     }
 }

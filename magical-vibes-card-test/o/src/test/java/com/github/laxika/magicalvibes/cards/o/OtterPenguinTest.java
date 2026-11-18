@@ -70,7 +70,7 @@ class OtterPenguinTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
-        assertThat(otter.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isTrue();
     }
 
     @Test
@@ -85,7 +85,7 @@ class OtterPenguinTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
-        assertThat(otter.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isFalse();
     }
 
     @Test
@@ -100,13 +100,13 @@ class OtterPenguinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
-        assertThat(otter.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isFalse();
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
-        assertThat(otter.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isTrue();
     }
 
     @Test
@@ -118,7 +118,7 @@ class OtterPenguinTest extends BaseCardTest {
                 new OtterPenguin(), new OtterPenguin()));
         drawAndResolveTrigger(player1);
         drawAndResolveTrigger(player1);
-        assertThat(otter.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -126,14 +126,14 @@ class OtterPenguinTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
-        assertThat(otter.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isFalse();
 
         drawAndResolveTrigger(player1);
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
         drawAndResolveTrigger(player1);
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
-        assertThat(otter.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otter)).isTrue();
     }
 
     private void drawAndResolveTrigger(Player player) {

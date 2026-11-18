@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +32,8 @@ class SparkmagesGambitTest extends BaseCardTest {
 
         assertThat(firstTarget.getMarkedDamage()).isEqualTo(1);
         assertThat(secondTarget.getMarkedDamage()).isEqualTo(1);
-        assertThat(firstTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(secondTarget.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondTarget.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -46,9 +48,9 @@ class SparkmagesGambitTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(untargeted.getMarkedDamage()).isZero();
-        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargeted.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -60,7 +62,7 @@ class SparkmagesGambitTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -88,8 +90,8 @@ class SparkmagesGambitTest extends BaseCardTest {
 
         assertThat(own.getMarkedDamage()).isEqualTo(1);
         assertThat(opposing.getMarkedDamage()).isEqualTo(1);
-        assertThat(own.isCantBlockThisTurn()).isTrue();
-        assertThat(opposing.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(own.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -32,7 +34,7 @@ class FlummoxedCyclopsTest extends BaseCardTest {
         declareAttackers(player2, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(cyclops.isCantBlockThisCombat()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockThisCombatEffect.class)).isTrue();
     }
 
     @Test
@@ -44,7 +46,7 @@ class FlummoxedCyclopsTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(cyclops.isCantBlockThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockThisCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -58,7 +60,7 @@ class FlummoxedCyclopsTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveCombat(player2);
 
-        assertThat(cyclops.isCantBlockThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockThisCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -73,7 +75,7 @@ class FlummoxedCyclopsTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(cyclops.getId());
-        assertThat(cyclops.isCantBlockThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockThisCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -87,7 +89,7 @@ class FlummoxedCyclopsTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(cyclops.isCantBlockThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockThisCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -107,7 +109,7 @@ class FlummoxedCyclopsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
         resolveAllTriggers();
 
-        assertThat(cyclops.isCantBlockThisCombat()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockThisCombatEffect.class)).isTrue();
     }
 
     @Test

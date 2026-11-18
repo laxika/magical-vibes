@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,7 +44,7 @@ class NettlingImpTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -189,7 +191,7 @@ class NettlingImpTest extends BaseCardTest {
         harness.passBothPriorities();
         runEndStep();
 
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 

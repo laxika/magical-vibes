@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatureBlocksThisTurnIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -2202,7 +2204,7 @@ public abstract class AiDecisionEngine {
         List<Integer> promptedRequirements = pending.mustBlockRequirements().getOrDefault(
                 blockerIdx, List.of());
         required.addAll(promptedRequirements);
-            for (UUID mustBlockId : blocker.getRequiredBlockSourceIds()) {
+            for (UUID mustBlockId : gameData.requiredBlockSourceIds(blocker.getId())) {
             for (int attackerIdx : attackerIndices) {
                 if (isIndexInRange(attackerIdx, attackerBattlefield)
                         && attackerBattlefield.get(attackerIdx).getId().equals(mustBlockId)
@@ -2220,7 +2222,12 @@ public abstract class AiDecisionEngine {
     }
 
     private boolean hasMustBlockIfAbleRequirement(GameData gameData, Permanent blocker) {
-        if (blocker.isMustBlockThisTurnIfAble()) {
+        if (gameData.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachCombatEffect.class)) {
+            return true;
+        }
+        UUID blockerController = gameQueryService.findPermanentController(gameData, blocker.getId());
+        if (gameData.floatingEffectsOnNamedPlayers(EachOpponentCreatureBlocksThisTurnIfAbleEffect.class).stream()
+                .anyMatch(floating -> !floating.affectedPlayerId().equals(blockerController))) {
             return true;
         }
         if (blocker.getCard().getStaticEffects().stream()

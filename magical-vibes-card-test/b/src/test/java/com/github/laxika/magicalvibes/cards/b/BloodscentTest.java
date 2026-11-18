@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
 import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
@@ -27,7 +29,7 @@ class BloodscentTest extends BaseCardTest {
 
         castAndResolveBloodscent(target);
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -112,7 +114,7 @@ class BloodscentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test

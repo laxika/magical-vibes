@@ -29,7 +29,7 @@ class ActOfHeroismTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(1);
+        assertThat(gd.additionalBlocksThisTurn(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +82,7 @@ class ActOfHeroismTest extends BaseCardTest {
         castActOfHeroism(target);
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(1);
+        assertThat(gd.additionalBlocksThisTurn(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -90,7 +90,7 @@ class ActOfHeroismTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(target.getId())).isZero();
     }
 
     @Test
@@ -116,7 +116,7 @@ class ActOfHeroismTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
-        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(1);
+        assertThat(gd.additionalBlocksThisTurn(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -159,7 +159,7 @@ class ActOfHeroismTest extends BaseCardTest {
         assertThat(other.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(other.getId())).isZero();
     }
 
     private void castActOfHeroism(Permanent target) {

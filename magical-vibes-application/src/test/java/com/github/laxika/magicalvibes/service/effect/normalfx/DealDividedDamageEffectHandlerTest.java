@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -198,8 +200,8 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(elves.getMarkedDamage()).isEqualTo(1);
-            assertThat(bears.isCantBlockThisTurn()).isTrue();
-            assertThat(elves.isCantBlockThisTurn()).isTrue();
+            assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
+            assertThat(gd.hasFloatingEffectOnPermanent(elves.getId(), CantBlockEffect.class)).isTrue();
         }
 
         @Test

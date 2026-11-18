@@ -33,7 +33,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThat(basim.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         harness.castArtifact(player1, 0);
@@ -53,7 +53,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(basim.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -78,11 +78,11 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castCreature(player1, 0);
-        assertThat(basim.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(basim.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertNotOnBattlefield(player1, "Ezio Auditore da Firenze");
         resolveAllTriggers();
@@ -99,7 +99,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(basim.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         resolveAllTriggers();
     }
@@ -118,7 +118,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThat(basim.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -134,7 +134,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
         resolveAllTriggers();
 
-        assertThat(basim.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -149,19 +149,19 @@ class BasimIbnIshaqTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
-        assertThat(basim.isCantBeBlocked()).isTrue();
-        assertThat(opposingBasim.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingBasim)).isFalse();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(basim.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isFalse();
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new MindStone()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThat(basim.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, basim)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(opposingBasim.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingBasim)).isFalse();
     }
 }

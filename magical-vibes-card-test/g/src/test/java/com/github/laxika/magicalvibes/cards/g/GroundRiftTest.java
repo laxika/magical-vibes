@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
 import com.github.laxika.magicalvibes.cards.s.SpriteNoble;
@@ -31,7 +33,7 @@ class GroundRiftTest extends BaseCardTest {
         castGroundRift(blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -94,8 +96,8 @@ class GroundRiftTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();
 
-        assertThat(originalTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(copyTarget.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(originalTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(copyTarget.getId(), CantBlockEffect.class)).isTrue();
     }
 
     private void castGroundRift(UUID targetId) {
@@ -116,8 +118,8 @@ class GroundRiftTest extends BaseCardTest {
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).isEmpty();
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Ground Rift");
     }
 
@@ -136,8 +138,8 @@ class GroundRiftTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(card -> card instanceof GroundRift)).hasSize(1);
     }
@@ -160,8 +162,8 @@ class GroundRiftTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();
 
-        assertThat(copyTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(originalTarget.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(copyTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(originalTarget.getId(), CantBlockEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Ground Rift");
     }
 
@@ -172,10 +174,10 @@ class GroundRiftTest extends BaseCardTest {
 
         castGroundRift(target.getId());
         resolveAllTriggers();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 }

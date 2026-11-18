@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -47,7 +49,7 @@ public class RemoveAllLandwalkAbilitiesEffectHandler implements NormalEffectHand
             return;
         }
 
-        target.getUnblockableIfDefenderControlsUntilEndOfTurn().clear();
+        gameData.endFloatingEffectsOnPermanent(target.getId(), CantBeBlockedIfDefenderControlsMatchingPermanentEffect.class);
         for (Keyword landwalk : Keyword.LANDWALK_MAP.keySet()) {
             target.getRemovedKeywords().add(landwalk);
             gameData.addFloatingEffect(new FloatingContinuousEffect(

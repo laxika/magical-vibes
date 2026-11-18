@@ -168,7 +168,7 @@ class K9MarkITest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
-        assertThat(legendary.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, legendary)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -183,7 +183,7 @@ class K9MarkITest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(k9.isTapped()).isTrue();
-        assertThat(legendary.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, legendary)).isTrue();
     }
 
     @Test
@@ -195,13 +195,13 @@ class K9MarkITest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, k9.getId());
         harness.passBothPriorities();
         assertThat(k9.isTapped()).isTrue();
-        assertThat(k9.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, k9)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(k9.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, k9)).isFalse();
     }
 
     @Test
@@ -221,7 +221,7 @@ class K9MarkITest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, legendary.getId());
         resolveAllTriggers();
 
-        assertThat(legendary.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, legendary)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();

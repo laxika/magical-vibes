@@ -45,7 +45,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -57,7 +57,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(tunneler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, tunneler)).isFalse();
     }
 
     @Test
@@ -69,13 +69,13 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -87,7 +87,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentCreature)).isTrue();
     }
 
     @Test
@@ -124,7 +124,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tunneler.isTapped()).isTrue();
-        assertThat(tunneler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, tunneler)).isTrue();
     }
 
     @Test
@@ -135,7 +135,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
     }
 
     @Test
@@ -151,7 +151,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isFalse();
     }
 
     @Test
@@ -166,7 +166,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
     }
 
     @Test
@@ -227,7 +227,7 @@ class GoblinTunnelerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(tunneler);
         harness.passBothPriorities();
 
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 }

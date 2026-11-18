@@ -25,7 +25,7 @@ class FrilledSeaSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         assertThat(serpent.isTapped()).isFalse();
     }
 
@@ -38,13 +38,13 @@ class FrilledSeaSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }
 
     @Test
@@ -57,7 +57,7 @@ class FrilledSeaSerpentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }
 
     @Test
@@ -71,13 +71,13 @@ class FrilledSeaSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
-        assertThat(otherSerpent.isCantBeBlocked()).isFalse();
-        assertThat(opposingSerpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherSerpent)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingSerpent)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class FrilledSeaSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         assertThat(serpent.isTapped()).isTrue();
     }
 
@@ -106,7 +106,7 @@ class FrilledSeaSerpentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }
 
     private Permanent addSerpent(Player player) {

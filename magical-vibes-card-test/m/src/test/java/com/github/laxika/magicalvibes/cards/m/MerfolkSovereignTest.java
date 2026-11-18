@@ -89,7 +89,7 @@ class MerfolkSovereignTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetMerfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, targetMerfolk)).isTrue();
     }
 
     @Test
@@ -112,13 +112,13 @@ class MerfolkSovereignTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetMerfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, targetMerfolk)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, targetMerfolk)).isFalse();
     }
 
     @Test
@@ -130,7 +130,7 @@ class MerfolkSovereignTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentMerfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentMerfolk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentMerfolk)).isTrue();
     }
 
     @Test
@@ -167,7 +167,7 @@ class MerfolkSovereignTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sovereign.isTapped()).isTrue();
-        assertThat(sovereign.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, sovereign)).isTrue();
     }
 
     @Test
@@ -205,7 +205,7 @@ class MerfolkSovereignTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(sovereign);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }

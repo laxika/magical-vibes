@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,11 +51,7 @@ public class GrantAdditionalBlockToTargetUntilEndOfTurnEffectHandler implements 
             if (target == null) {
                 continue; // Partially resolves — skip removed targets.
             }
-            int currentAdditionalBlocks = target.getAdditionalBlocksUntilEndOfTurn();
-            if (currentAdditionalBlocks != Integer.MAX_VALUE) {
-                // An unlimited grant (Valor Made Real) already covers any further additional block.
-                target.setAdditionalBlocksUntilEndOfTurn(currentAdditionalBlocks + grant.additionalBlocks());
-            }
+            gameData.addEffectOnPermanent(entry, grant, target.getId(), Duration.UNTIL_END_OF_TURN);
 
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())

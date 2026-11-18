@@ -44,8 +44,8 @@ class RunedArchTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 0, 2, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
         harness.assertInGraveyard(player1, "Runed Arch");
     }
 
@@ -106,13 +106,13 @@ class RunedArchTest extends BaseCardTest {
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(aurochs.getId()));
         harness.passBothPriorities();
-        assertThat(aurochs.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, aurochs)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aurochs.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, aurochs)).isFalse();
     }
 
     @Test
@@ -131,8 +131,8 @@ class RunedArchTest extends BaseCardTest {
         harness.castInstant(player2, 0, targetThatGetsTooPowerful.getId());
         resolveAllTriggers();
 
-        assertThat(targetThatGetsTooPowerful.isCantBeBlocked()).isFalse();
-        assertThat(legalTarget.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, targetThatGetsTooPowerful)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, legalTarget)).isTrue();
     }
 
     @Test
@@ -145,10 +145,10 @@ class RunedArchTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Runed Arch");
         assertThat(countPermanents(player1, "Runed Arch")).isZero();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
 
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -197,7 +197,7 @@ class RunedArchTest extends BaseCardTest {
         harness.castInstant(player2, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         harness.assertInGraveyard(player1, "Runed Arch");
         assertThat(gd.stack).isEmpty();
     }
@@ -211,7 +211,7 @@ class RunedArchTest extends BaseCardTest {
                 player1, 0, 0, 1, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(countPermanents(player1, "Runed Arch")).isEqualTo(1);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -227,6 +227,6 @@ class RunedArchTest extends BaseCardTest {
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 }

@@ -27,7 +27,7 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent infantry = findPermanent(player1, "Wu Infantry");
-        assertThat(infantry.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.CLEANUP);
 
         Permanent infantry = findPermanent(player1, "Wu Infantry");
-        assertThat(infantry.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isFalse();
     }
 
     @Test
@@ -113,8 +113,8 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.isCantBeBlocked()).isTrue();
-        assertThat(findPermanent(player1, "Wu Infantry").isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentCreature)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player1, "Wu Infantry"))).isFalse();
     }
 
     @Test
@@ -127,7 +127,7 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(strategist.isTapped()).isTrue();
-        assertThat(strategist.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, strategist)).isTrue();
     }
 
     @Test

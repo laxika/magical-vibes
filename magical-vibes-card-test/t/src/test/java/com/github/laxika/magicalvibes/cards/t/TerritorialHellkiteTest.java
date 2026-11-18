@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +25,8 @@ class TerritorialHellkiteTest extends BaseCardTest {
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(hellkite.isMustAttackThisCombat()).isTrue();
-        assertThat(hellkite.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(hellkite.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(hellkite.getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -40,7 +42,7 @@ class TerritorialHellkiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hellkite.isTapped()).isTrue();
-        assertThat(hellkite.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(hellkite.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -60,7 +62,7 @@ class TerritorialHellkiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hellkite.isTapped()).isTrue();
-        assertThat(hellkite.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(hellkite.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -72,7 +74,7 @@ class TerritorialHellkiteTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(hellkite.isTapped()).isFalse();
-        assertThat(hellkite.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(hellkite.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -85,7 +87,7 @@ class TerritorialHellkiteTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
 
         assertThat(hellkite.isTapped()).isTrue();
-        assertThat(hellkite.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.mustAttackDefender(hellkite.getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -105,8 +107,8 @@ class TerritorialHellkiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hellkite.isTapped()).isFalse();
-        assertThat(hellkite.isMustAttackThisCombat()).isTrue();
-        assertThat(hellkite.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(hellkite.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(hellkite.getId())).isEqualTo(player2.getId());
     }
 
     private Permanent addReadyHellkite(Player player) {

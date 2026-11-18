@@ -31,7 +31,7 @@ class LochmereSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         harness.assertInGraveyard(player1, "Island");
     }
 
@@ -44,13 +44,13 @@ class LochmereSerpentTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }
 
     @Test

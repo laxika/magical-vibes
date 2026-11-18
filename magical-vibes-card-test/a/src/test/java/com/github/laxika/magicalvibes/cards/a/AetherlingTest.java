@@ -53,7 +53,7 @@ class AetherlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(aetherling.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, aetherling)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class AetherlingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aetherling.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, aetherling)).isFalse();
     }
 
     @Test
@@ -211,7 +211,7 @@ class AetherlingTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Aetherling");
         assertThat(returned.getId()).isNotEqualTo(original.getId());
-        assertThat(returned.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, returned)).isFalse();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(5);
     }

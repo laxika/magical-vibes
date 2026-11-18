@@ -29,7 +29,7 @@ class TeleportalTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -78,7 +78,7 @@ class TeleportalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -104,9 +104,9 @@ class TeleportalTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
-        assertThat(opponent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, opponent)).isFalse();
         other.setAttacking(true);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
@@ -178,7 +178,7 @@ class TeleportalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         harness.assertInGraveyard(player1, "Teleportal");
         assertThat(gd.stack).isEmpty();
     }

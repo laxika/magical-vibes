@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CanyonLurkers;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.w.WetlandSambar;
@@ -75,7 +77,7 @@ class HordeAmbusherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -113,7 +115,7 @@ class HordeAmbusherTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(redCard);
         harness.handlePermanentChosen(player1, ambusher.getId());
         harness.passBothPriorities();
-        assertThat(ambusher.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ambusher.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test

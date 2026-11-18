@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,7 +32,7 @@ class ChainwhipCyclopsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -61,13 +63,13 @@ class ChainwhipCyclopsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -91,10 +93,10 @@ class ChainwhipCyclopsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, cyclops.getId());
-        assertThat(cyclops.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockEffect.class)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(cyclops.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockEffect.class)).isTrue();
         assertThat(cyclops.isTapped()).isTrue();
     }
 
@@ -107,7 +109,7 @@ class ChainwhipCyclopsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(cyclops.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -123,10 +125,10 @@ class ChainwhipCyclopsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, second.getId());
         harness.passBothPriorities();
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isTrue();
-        assertThat(untouched.isCantBlockThisTurn()).isFalse();
-        assertThat(cyclops.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(untouched.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(cyclops.getId(), CantBlockEffect.class)).isFalse();
         assertThat(cyclops.isTapped()).isFalse();
     }
 
@@ -141,7 +143,7 @@ class ChainwhipCyclopsTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(cyclops.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     private Permanent addReadyCyclops(Player player) {

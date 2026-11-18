@@ -53,13 +53,13 @@ class AquaticIncursionTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, incursion), null, merfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(merfolk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, merfolk)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(merfolk.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, merfolk)).isFalse();
     }
 
     @Test
@@ -85,7 +85,7 @@ class AquaticIncursionTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, incursion), null, merfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(merfolk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, merfolk)).isTrue();
     }
 
     @Test
@@ -109,8 +109,8 @@ class AquaticIncursionTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, incursion), null, tokens.getFirst().getId());
         harness.passBothPriorities();
 
-        assertThat(tokens.getFirst().isCantBeBlocked()).isTrue();
-        assertThat(tokens.get(1).isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, tokens.getFirst())).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, tokens.get(1))).isFalse();
     }
 
     @Test

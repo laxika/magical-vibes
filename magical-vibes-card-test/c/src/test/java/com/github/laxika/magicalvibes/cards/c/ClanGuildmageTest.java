@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -35,9 +39,9 @@ class ClanGuildmageTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        target.resetModifiers();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -79,9 +83,9 @@ class ClanGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, guildmage.getId());
 
         assertThat(guildmage.isTapped()).isTrue();
-        assertThat(guildmage.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(guildmage.getId(), CantBlockEffect.class)).isFalse();
         harness.passBothPriorities();
-        assertThat(guildmage.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(guildmage.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test

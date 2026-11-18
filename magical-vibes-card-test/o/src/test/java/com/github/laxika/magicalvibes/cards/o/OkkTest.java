@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -79,7 +83,8 @@ class OkkTest extends BaseCardTest {
     void lostAttackRestrictionStillSatisfiesMustAttackRequirement() {
         Permanent okk = addCreatureReady(player1, new Okk());
         okk.setLosesAllAbilitiesUntilEndOfTurn(true);
-        okk.setMustAttackThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(), okk.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)

@@ -35,7 +35,7 @@ class SewerCrocodileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(crocodile.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isTrue();
     }
 
     @Test
@@ -59,13 +59,13 @@ class SewerCrocodileTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(crocodile.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crocodile.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isFalse();
     }
 
     @Test
@@ -80,7 +80,7 @@ class SewerCrocodileTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
-        assertThat(crocodile.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isFalse();
     }
 
     @Test
@@ -95,7 +95,7 @@ class SewerCrocodileTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
-        assertThat(crocodile.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isFalse();
     }
 
     @Test
@@ -108,11 +108,11 @@ class SewerCrocodileTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(crocodile.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
-        assertThat(crocodile.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isTrue();
         assertThat(crocodile.isTapped()).isTrue();
     }
 
@@ -128,7 +128,7 @@ class SewerCrocodileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(crocodile.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isTrue();
     }
 
     @Test
@@ -144,7 +144,7 @@ class SewerCrocodileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(crocodile.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, crocodile)).isTrue();
     }
 
     @Test

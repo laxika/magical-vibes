@@ -1105,8 +1105,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         Map<Integer, List<Integer>> provokedBlockersByAttacker = new HashMap<>();
         for (int blockerIdx : availableBlockerIndices) {
             Permanent blocker = battlefield.get(blockerIdx);
-            if (blocker.getMustBlockIds().isEmpty()) continue;
-            for (UUID mustBlockId : blocker.getMustBlockIds()) {
+            if (gameData.requiredBlockSourceIds(blocker.getId()).isEmpty()) continue;
+            for (UUID mustBlockId : gameData.requiredBlockSourceIds(blocker.getId())) {
                 for (int attackerIdx : attackerIndices) {
                     Permanent attacker = opponentBattlefield.get(attackerIdx);
                     if (attacker.getId().equals(mustBlockId) && canBlock(gameData, blocker, attacker)) {
@@ -1388,7 +1388,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent attacker = opponentBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean hasLure = attacker.isMustBeBlockedByAllThisTurn()
+            boolean hasLure = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedByAllCreaturesEffect.class)
                     || attacker.getCard().getStaticEffects().stream()
                     .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
@@ -1404,7 +1404,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent attacker = opponentBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
+            boolean mustBeBlocked = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
                     || attacker.getCard().getStaticEffects().stream()
                         .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);

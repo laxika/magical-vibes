@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachAttackingCreatureThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -100,14 +102,14 @@ class BlazeOfGloryTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(0)));
         castBlaze(blocker);
-        assertThat(blocker.isMustBlockEachAttackingCreatureThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachAttackingCreatureThisTurnEffect.class)).isTrue();
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(blocker.isMustBlockEachAttackingCreatureThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachAttackingCreatureThisTurnEffect.class)).isFalse();
     }
 
     private void castBlaze(Permanent target) {

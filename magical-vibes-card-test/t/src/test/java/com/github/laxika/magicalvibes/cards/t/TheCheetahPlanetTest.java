@@ -85,7 +85,7 @@ class TheCheetahPlanetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIds()).containsExactly(cat.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(cat.getId());
     }
 
     private void triggerAndChooseTarget(Trigger trigger, Permanent target) {

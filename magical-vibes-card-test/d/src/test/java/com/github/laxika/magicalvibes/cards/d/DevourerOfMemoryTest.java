@@ -27,7 +27,7 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         assertThat(devourer.getEffectivePower()).isEqualTo(3);
         assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
-        assertThat(devourer.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
     }
 
     @Test
@@ -60,7 +60,7 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         assertThat(devourer.getEffectivePower()).isEqualTo(2);
         assertThat(devourer.getEffectiveToughness()).isEqualTo(1);
-        assertThat(devourer.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, devourer)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         assertThat(devourer.getEffectivePower()).isEqualTo(4);
         assertThat(devourer.getEffectiveToughness()).isEqualTo(3);
-        assertThat(devourer.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -89,7 +89,7 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         assertThat(devourer.getEffectivePower()).isEqualTo(2);
         assertThat(devourer.getEffectiveToughness()).isEqualTo(1);
-        assertThat(devourer.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, devourer)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
@@ -111,10 +111,10 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         assertThat(ownDevourer.getEffectivePower()).isEqualTo(2);
         assertThat(ownDevourer.getEffectiveToughness()).isEqualTo(1);
-        assertThat(ownDevourer.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ownDevourer)).isFalse();
         assertThat(opposingDevourer.getEffectivePower()).isEqualTo(3);
         assertThat(opposingDevourer.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingDevourer.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingDevourer)).isTrue();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
@@ -136,7 +136,7 @@ class DevourerOfMemoryTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
         assertThat(devourer.getEffectivePower()).isEqualTo(3);
         assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
-        assertThat(devourer.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
         assertThat(devourer.isTapped()).isTrue();
     }
 

@@ -67,7 +67,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInHand(player1, "Veil of Secrecy");
     }
 
@@ -83,7 +83,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -102,7 +102,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.hasKeyword(Keyword.SHROUD)).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -150,7 +150,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test

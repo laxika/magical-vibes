@@ -47,7 +47,7 @@ class SpincrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spincrusher.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, spincrusher)).isTrue();
     }
 
     @Test
@@ -65,7 +65,7 @@ class SpincrusherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spincrusher.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, spincrusher)).isFalse();
     }
 
     @Test
@@ -97,7 +97,7 @@ class SpincrusherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spincrusher.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, spincrusher)).isFalse();
     }
 
     @Test
@@ -126,12 +126,12 @@ class SpincrusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(spincrusher.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, spincrusher)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(spincrusher.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, spincrusher)).isTrue();
     }
 
     @Test
@@ -146,7 +146,7 @@ class SpincrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spincrusher.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, spincrusher)).isTrue();
         assertThat(spincrusher.isTapped()).isTrue();
     }
 

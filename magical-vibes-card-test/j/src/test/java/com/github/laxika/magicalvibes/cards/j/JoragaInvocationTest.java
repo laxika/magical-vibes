@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.c.Cobblebrute;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +30,7 @@ class JoragaInvocationTest extends BaseCardTest {
         for (Permanent bears : gd.playerBattlefields.get(player1.getId())) {
             assertThat(bears.getEffectivePower()).isEqualTo(8);
             assertThat(bears.getEffectiveToughness()).isEqualTo(5);
-            assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+            assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         }
     }
 
@@ -41,7 +43,7 @@ class JoragaInvocationTest extends BaseCardTest {
 
         Permanent theirs = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(theirs.getEffectivePower()).isEqualTo(5);
-        assertThat(theirs.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(theirs.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -79,7 +81,7 @@ class JoragaInvocationTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test

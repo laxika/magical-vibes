@@ -147,7 +147,7 @@ class HearthCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, target.getId());
             harness.passBothPriorities();
 
-            assertThat(target.isCantBeBlocked()).isTrue();
+            assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         }
 
         @Test
@@ -183,7 +183,7 @@ class HearthCharmTest extends BaseCardTest {
             assertThat(target.getEffectivePower()).isEqualTo(3);
             harness.passBothPriorities();
 
-            assertThat(target.isCantBeBlocked()).isFalse();
+            assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -201,7 +201,7 @@ class HearthCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(target.getEffectivePower()).isEqualTo(3);
-            assertThat(target.isCantBeBlocked()).isTrue();
+            assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         }
 
         @Test
@@ -213,7 +213,7 @@ class HearthCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, target.getId());
             harness.passBothPriorities();
 
-            assertThat(target.isCantBeBlocked()).isTrue();
+            assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         }
 
         @Test
@@ -246,12 +246,12 @@ class HearthCharmTest extends BaseCardTest {
 
             harness.castInstant(player1, 0, 2, target.getId());
             harness.passBothPriorities();
-            assertThat(target.isCantBeBlocked()).isTrue();
+            assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
             harness.forceStep(TurnStep.END_STEP);
             harness.passUntil(TurnStep.CLEANUP);
 
-            assertThat(target.isCantBeBlocked()).isFalse();
+            assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         }
     }
 }

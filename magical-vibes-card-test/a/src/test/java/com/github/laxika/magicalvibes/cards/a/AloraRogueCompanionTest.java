@@ -31,7 +31,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
 
         attackWithAlora(attacker);
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
         returnAttackerAtEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);

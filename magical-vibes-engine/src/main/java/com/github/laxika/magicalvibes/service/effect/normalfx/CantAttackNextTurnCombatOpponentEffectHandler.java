@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,7 +46,7 @@ public class CantAttackNextTurnCombatOpponentEffectHandler implements NormalEffe
             return;
         }
 
-        target.setCantAttackNextTurn(true);
+        gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN);
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't attack during its controller's next turn."));
     }
 }

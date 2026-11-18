@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
@@ -134,9 +137,9 @@ public class AttackLegalityService {
             return false;
         }
         if (creature.isTapped()) return false;
-        if (creature.isCantAttackThisTurn()) return false;
         if (isCantAttackByPlayerCreaturesRestriction(gameData, creature)) return false;
-        if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class)) return false;
+        if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class,
+                CantAttackNextTurnCombatOpponentEffect.class)) return false;
         if (gameData.hasFloatingEffectOnPlayer(null, CreaturesCantAttackThisTurnEffect.class)) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
@@ -881,10 +884,12 @@ public class AttackLegalityService {
                 .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
                 .count();
 
-        if ((creature.isMustAttackThisTurn() || creature.isMustAttackThisCombat())
-                && (creature.getMustAttackTargetId() == null
-                        || canAttackRequiredTarget(gameData, creature, creature.getMustAttackTargetId()))) {
-            count[0]++;
+        for (FloatingContinuousEffect requirement
+                : gameData.floatingEffectsOnPermanent(creature.getId(), MustAttackIfAbleEffect.class)) {
+            UUID defenderId = ((MustAttackIfAbleEffect) requirement.effect()).defenderId();
+            if (defenderId == null || canAttackRequiredTarget(gameData, creature, defenderId)) {
+                count[0]++;
+            }
         }
 
         gameData.forEachPermanent((playerId, permanent) -> {

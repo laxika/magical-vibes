@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,9 +61,9 @@ class CartoucheOfZealTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentBlocker.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBlocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentBlocker.getId(), CantBlockEffect.class)).isTrue();
         // The enchant target (group 0) must NOT be marked can't-block.
-        assertThat(mine.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(mine.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Cartouche of Zeal")
                         && mine.getId().equals(p.getAttachedTo()));
@@ -79,7 +81,7 @@ class CartoucheOfZealTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
@@ -98,8 +100,8 @@ class CartoucheOfZealTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof CartoucheOfZeal);
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
     }
 
@@ -115,11 +117,11 @@ class CartoucheOfZealTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }

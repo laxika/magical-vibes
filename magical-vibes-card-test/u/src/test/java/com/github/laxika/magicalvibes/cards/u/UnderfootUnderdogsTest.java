@@ -55,7 +55,7 @@ class UnderfootUnderdogsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(underdogs.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -89,13 +89,13 @@ class UnderfootUnderdogsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -117,7 +117,7 @@ class UnderfootUnderdogsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(underdogs.isTapped()).isTrue();
-        assertThat(underdogs.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, underdogs)).isTrue();
     }
 
     @Test
@@ -160,7 +160,7 @@ class UnderfootUnderdogsTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(underdogs.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -176,7 +176,7 @@ class UnderfootUnderdogsTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(target);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -190,6 +190,6 @@ class UnderfootUnderdogsTest extends BaseCardTest {
         harness.passBothPriorities();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 }

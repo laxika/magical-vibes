@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.i.IxallisKeeper;
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -145,8 +147,8 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         // Both bears should still be alive (1 damage to 2/2) but can't block
         assertThat(bear1.getMarkedDamage()).isEqualTo(1);
         assertThat(bear2.getMarkedDamage()).isEqualTo(1);
-        assertThat(bear1.isCantBlockThisTurn()).isTrue();
-        assertThat(bear2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -247,7 +249,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(first.getCard());
         harness.passBothPriorities();
         assertThat(second.getMarkedDamage()).isEqualTo(1);
-        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(second);
     }
 
@@ -260,7 +262,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.activateAbilityWithDamageAssignments(player1, 0, 2, 1, Map.of(creature.getId(), 1));
         harness.passBothPriorities();
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -271,7 +273,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.activateAbilityWithDamageAssignments(player1, 0, 2, 1, Map.of(creature.getId(), 1));
         harness.passBothPriorities();
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test

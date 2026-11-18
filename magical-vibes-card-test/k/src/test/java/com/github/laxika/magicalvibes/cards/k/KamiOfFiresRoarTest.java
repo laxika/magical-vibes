@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DampenThought;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,7 +34,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -47,7 +49,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -98,7 +100,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -113,11 +115,11 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -131,11 +133,11 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, kami.getId());
 
-        assertThat(kami.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(kami.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(kami.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(kami.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(countPermanents(player1, "Kami of Fire's Roar")).isEqualTo(1);
 
@@ -144,7 +146,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Kami of Fire's Roar")).isEqualTo(2);
         assertThat(findPermanents(player1, "Kami of Fire's Roar"))
                 .filteredOn(permanent -> !permanent.getId().equals(kami.getId()))
-                .allMatch(permanent -> !permanent.isCantBlockThisTurn());
+                .allMatch(permanent -> !gd.hasFloatingEffectOnPermanent(permanent.getId(), CantBlockEffect.class));
     }
 
     @Test
@@ -161,7 +163,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
         harness.assertOnBattlefield(player1, "Kami of Fire's Roar");
         assertThat(gd.stack).isEmpty();
     }

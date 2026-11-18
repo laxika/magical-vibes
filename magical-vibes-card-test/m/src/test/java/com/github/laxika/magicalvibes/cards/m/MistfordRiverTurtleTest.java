@@ -81,8 +81,8 @@ class MistfordRiverTurtleTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
-        assertThat(nonattacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, nonattacker)).isFalse();
     }
 
     @Test
@@ -95,7 +95,7 @@ class MistfordRiverTurtleTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(turtle.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, turtle)).isFalse();
     }
 
     @Test
@@ -110,6 +110,6 @@ class MistfordRiverTurtleTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(turtle);
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 }

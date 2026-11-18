@@ -838,7 +838,7 @@ class GameActionAvailabilityServiceTest {
 
         private PermanentView permanentView(UUID permId, int faceDownCount) {
             return new PermanentView(permId, null, false, false, false, List.of(), false, 0, 0, Set.of(),
-                    List.of(), Set.of(), 0, 0, null, null, null, 0, false, false, java.util.Map.of(), null, 0, false,
+                    List.of(), Set.of(), 0, 0, null, null, null, 0, false, java.util.Map.of(), null, 0, false,
                     false, List.of(), List.of(), faceDownCount, List.of());
         }
 

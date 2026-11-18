@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GoldenBear;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
@@ -27,7 +32,7 @@ class AlluringScentTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenBear());
         castAlluringScent(target.getId());
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -36,9 +41,9 @@ class AlluringScentTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenBear());
         castAlluringScent(target.getId());
 
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -51,7 +56,7 @@ class AlluringScentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test

@@ -42,14 +42,14 @@ class YouComeToARiverTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -92,7 +92,7 @@ class YouComeToARiverTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -114,6 +114,6 @@ class YouComeToARiverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "You Come to a River");
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
         assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
     }
 }

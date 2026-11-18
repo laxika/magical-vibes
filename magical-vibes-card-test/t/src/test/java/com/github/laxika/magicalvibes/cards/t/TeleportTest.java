@@ -32,7 +32,7 @@ class TeleportTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Durkwood Boars");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(findPermanent(player1, "Durkwood Boars").isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player1, "Durkwood Boars"))).isTrue();
     }
 
     @Test
@@ -62,7 +62,7 @@ class TeleportTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Durkwood Boars");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(findPermanent(player2, "Durkwood Boars").isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player2, "Durkwood Boars"))).isTrue();
     }
 
     @Test
@@ -114,7 +114,7 @@ class TeleportTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Durkwood Boars").isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player1, "Durkwood Boars"))).isFalse();
     }
 
     @Test
@@ -129,8 +129,8 @@ class TeleportTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.isCantBeBlocked()).isTrue();
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         harness.assertInGraveyard(player1, "Teleport");
     }
 
@@ -160,6 +160,6 @@ class TeleportTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passUntil(TurnStep.END_STEP);
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 }

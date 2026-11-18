@@ -24,7 +24,7 @@ class SpiderManHometownHeroTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         castSpiderMan(bears);
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
@@ -38,7 +38,7 @@ class SpiderManHometownHeroTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(hillGiant.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hillGiant)).isFalse();
     }
 
     @Test
@@ -55,7 +55,7 @@ class SpiderManHometownHeroTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -68,18 +68,18 @@ class SpiderManHometownHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
     void unblockabilityExpiresAtEndOfTurn() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castSpiderMan(bears);
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     private void castSpiderMan(Permanent target) {

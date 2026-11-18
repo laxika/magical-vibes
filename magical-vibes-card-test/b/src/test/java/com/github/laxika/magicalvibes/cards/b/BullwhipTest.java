@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.e.EnsnaringBridge;
 import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,7 +33,7 @@ class BullwhipTest extends BaseCardTest {
 
         assertThat(bullwhip.isTapped()).isFalse();
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -46,7 +48,7 @@ class BullwhipTest extends BaseCardTest {
 
         assertThat(bullwhip.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -67,7 +69,7 @@ class BullwhipTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -111,7 +113,7 @@ class BullwhipTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(bullwhip.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

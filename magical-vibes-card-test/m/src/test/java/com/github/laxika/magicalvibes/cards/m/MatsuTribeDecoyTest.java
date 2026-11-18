@@ -28,7 +28,7 @@ class MatsuTribeDecoyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).contains(decoy.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(decoy.getId());
 
         decoy.setAttacking(true);
         prepareDeclareBlockers();
@@ -149,6 +149,6 @@ class MatsuTribeDecoyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getMustBlockIds()).contains(decoy.getId());
+        assertThat(gd.requiredBlockSourceIds(ownCreature.getId())).contains(decoy.getId());
     }
 }

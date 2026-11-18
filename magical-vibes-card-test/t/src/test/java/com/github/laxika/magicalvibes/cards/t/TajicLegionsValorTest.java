@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AureliaTheLawAbove;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.s.SkyknightLegionnaire;
@@ -33,7 +35,7 @@ class TajicLegionsValorTest extends BaseCardTest {
         Permanent recruit = findPermanent(player1, "Boros Recruit");
         assertThat(recruit.getCard().getManaValue()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, recruit, Keyword.HASTE)).isTrue();
-        assertThat(recruit.isMustAttackThisCombat()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

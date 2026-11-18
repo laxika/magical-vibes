@@ -30,7 +30,7 @@ class InfiltrateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent oraxid = findPermanent(player1, "Oraxid");
-        assertThat(oraxid.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, oraxid)).isTrue();
     }
 
     @Test
@@ -44,12 +44,12 @@ class InfiltrateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent oraxid = findPermanent(player1, "Oraxid");
-        assertThat(oraxid.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, oraxid)).isTrue();
 
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(oraxid.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, oraxid)).isFalse();
     }
 
     @Test

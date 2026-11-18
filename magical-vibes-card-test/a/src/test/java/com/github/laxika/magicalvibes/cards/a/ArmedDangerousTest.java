@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+
 import com.github.laxika.magicalvibes.cards.k.KraulWarrior;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -51,7 +53,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, DANGEROUS, bears.getId());
 
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -71,8 +73,8 @@ class ArmedDangerousTest extends BaseCardTest {
         assertThat(armedTarget.getEffectivePower()).isEqualTo(3);
         assertThat(armedTarget.getEffectiveToughness()).isEqualTo(3);
         assertThat(armedTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(armedTarget.isMustBeBlockedByAllThisTurn()).isFalse();
-        assertThat(dangerousTarget.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(armedTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(dangerousTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -91,7 +93,7 @@ class ArmedDangerousTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
         assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -123,7 +125,7 @@ class ArmedDangerousTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -165,7 +167,7 @@ class ArmedDangerousTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(armedTarget.getCard());
         harness.passBothPriorities();
 
-        assertThat(dangerousTarget.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(dangerousTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
         assertThat(dangerousTarget.getEffectivePower()).isEqualTo(2);
         assertThat(dangerousTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -187,7 +189,7 @@ class ArmedDangerousTest extends BaseCardTest {
         assertThat(armedTarget.getEffectivePower()).isEqualTo(3);
         assertThat(armedTarget.getEffectiveToughness()).isEqualTo(3);
         assertThat(armedTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(armedTarget.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(armedTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -199,6 +201,6 @@ class ArmedDangerousTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, DANGEROUS, target.getId());
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 }

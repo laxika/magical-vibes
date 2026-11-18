@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BambooGroveArcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +30,7 @@ class UnstoppableOgreTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -40,12 +42,12 @@ class UnstoppableOgreTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, 0, blocker.getId());
         resolveAllTriggers();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -59,9 +61,9 @@ class UnstoppableOgreTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
-        assertThat(findPermanent(player1, "Unstoppable Ogre").isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player1, "Unstoppable Ogre").getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -94,7 +96,7 @@ class UnstoppableOgreTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ogre.getId());
         resolveAllTriggers();
 
-        assertThat(ogre.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ogre.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -108,13 +110,13 @@ class UnstoppableOgreTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         Permanent ogre = findPermanent(player1, "Unstoppable Ogre");
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(ogre);
         gd.playerGraveyards.get(player1.getId()).add(ogre.getCard());
         resolveAllTriggers();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -133,8 +135,8 @@ class UnstoppableOgreTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         resolveAllTriggers();
 
-        assertThat(other.isCantBlockThisTurn()).isFalse();
-        assertThat(findPermanent(player1, "Unstoppable Ogre").isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player1, "Unstoppable Ogre").getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

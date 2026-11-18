@@ -63,7 +63,7 @@ class LongRiverLurkerTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getId()).isNotEqualTo(oldId);
-        assertThat(returned.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, returned)).isFalse();
     }
 
     @Test
@@ -92,7 +92,7 @@ class LongRiverLurkerTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
         return bears;
     }
 
@@ -191,7 +191,7 @@ class LongRiverLurkerTest extends BaseCardTest {
         Permanent bears = castLurkerTargetingBears();
         UUID oldId = bears.getId();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         bears.setAttacking(true);

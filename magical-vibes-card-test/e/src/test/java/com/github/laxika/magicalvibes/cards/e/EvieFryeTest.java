@@ -67,8 +67,8 @@ class EvieFryeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.isCantBeBlocked()).isTrue();
-        assertThat(opposingCreature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingCreature)).isFalse();
     }
 
     @Test
@@ -85,7 +85,7 @@ class EvieFryeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isFalse();
     }
 
     @Test
@@ -151,15 +151,15 @@ class EvieFryeTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(evie.getId()).doesNotContain(forest.getId());
         harness.handlePermanentChosen(player1, evie.getId());
-        assertThat(evie.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, evie)).isFalse();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(evie.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, evie)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(evie.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, evie)).isFalse();
     }
 
     @Test
@@ -183,7 +183,7 @@ class EvieFryeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
-        assertThat(jacob.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, jacob)).isTrue();
     }
 
     @Test
@@ -203,7 +203,7 @@ class EvieFryeTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(jacob);
         harness.passBothPriorities();
 
-        assertThat(jacob.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, jacob)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

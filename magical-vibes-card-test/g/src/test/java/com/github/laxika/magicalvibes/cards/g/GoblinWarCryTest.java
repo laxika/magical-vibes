@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
@@ -60,7 +62,7 @@ class GoblinWarCryTest extends BaseCardTest {
         castGoblinWarCry();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        assertThat(island.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(island.getId(), CantBlockEffect.class)).isFalse();
         assertThat(canBlockACreature(kept)).isTrue();
         assertThat(canBlockACreature(other)).isFalse();
     }

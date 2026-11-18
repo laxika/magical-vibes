@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -33,8 +35,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -48,7 +50,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -96,7 +98,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId()));
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -123,7 +125,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // creature2 should still be affected
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -152,8 +154,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(creature1.getId(), creature2.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -269,8 +271,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId()));
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(otherCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(otherCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -281,12 +283,12 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -301,7 +303,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
         harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Nightbird's Clutches"));

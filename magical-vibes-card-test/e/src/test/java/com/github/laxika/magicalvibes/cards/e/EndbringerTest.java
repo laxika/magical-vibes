@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.w.Wastes;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -53,8 +56,8 @@ class EndbringerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantAttackThisTurn()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantAttackThisTurnEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(als.canAttack(gd, target, player2.getId())).isFalse();
     }
 
@@ -156,8 +159,8 @@ class EndbringerTest extends BaseCardTest {
 
         advanceToNextTurn(player1);
 
-        assertThat(target.isCantAttackThisTurn()).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantAttackThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(als.canAttack(gd, target, player2.getId())).isTrue();
     }
 

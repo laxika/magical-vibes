@@ -28,7 +28,7 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(bureaucrat.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(1);
-        assertThat(bureaucrat.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
     @Test
@@ -56,14 +56,14 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(2);
-        assertThat(bureaucrat.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(1);
-        assertThat(bureaucrat.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
     @Test
@@ -79,13 +79,13 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(bureaucrat.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 1);
         assertThat(bureaucrat.getEffectiveToughness()).isEqualTo(initialToughness);
-        assertThat(bureaucrat.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
         harness.assertLife(player2, 20);
 
         harness.passBothPriorities();
@@ -107,14 +107,14 @@ class TVABureaucratTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(bureaucrat.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(bureaucrat.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
     @Test
@@ -130,7 +130,7 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(bureaucrat.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
     @Test
@@ -146,7 +146,7 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(bureaucrat.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
     }
 
     private Permanent addBureaucrat() {

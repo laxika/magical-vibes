@@ -24,7 +24,7 @@ class GatewaySneakTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(sneak.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, sneak)).isTrue();
     }
 
     @Test
@@ -34,7 +34,7 @@ class GatewaySneakTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest()));
         harness.playLand(player1, 0);
 
-        assertThat(sneak.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sneak)).isFalse();
     }
 
     @Test
@@ -63,7 +63,7 @@ class GatewaySneakTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sneak.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sneak)).isFalse();
     }
 
     private Permanent addSneakReady() {
@@ -84,7 +84,7 @@ class GatewaySneakTest extends BaseCardTest {
         harness.playLand(player2, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(sneak.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sneak)).isFalse();
     }
 
     @Test
@@ -97,14 +97,14 @@ class GatewaySneakTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(first.isCantBeBlocked()).isFalse();
-        assertThat(second.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isFalse();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
 
     @Test

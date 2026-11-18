@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.d.DreamProwler;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -150,7 +152,8 @@ class CombatBlockServiceTest extends BaseCardTest {
         void unblockableAttackersAreFilteredOut() {
             Permanent blockable = attacking(player1, new GrizzlyBears());
             Permanent unblockable = attacking(player1, new ScatheZombies());
-            unblockable.setCantBeBlocked(true);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new CantBeBlockedEffect(), unblockable.getId(), Duration.UNTIL_END_OF_TURN));
             addCreatureReady(player1, new HillGiant());
             addCreatureReady(player2, new GrizzlyBears());
 
@@ -226,7 +229,8 @@ class CombatBlockServiceTest extends BaseCardTest {
         void possibleBlockOpensTheDeclarationWithLegalPairs() {
             Permanent attacker = attacking(player1, new GrizzlyBears());
             Permanent unblockable = attacking(player1, new ScatheZombies());
-            unblockable.setCantBeBlocked(true);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new CantBeBlockedEffect(), unblockable.getId(), Duration.UNTIL_END_OF_TURN));
             Permanent blocker = addCreatureReady(player2, new HillGiant());
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);

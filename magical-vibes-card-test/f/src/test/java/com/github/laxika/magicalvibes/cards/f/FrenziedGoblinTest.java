@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -43,7 +45,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(recruit.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -58,7 +60,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(recruit.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -72,7 +74,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(recruit.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -86,13 +88,13 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, recruit.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(recruit.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(recruit.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -107,7 +109,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(recruit.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -123,7 +125,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(recruit.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -139,7 +141,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(recruit.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -154,7 +156,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(goblin.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(goblin.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -169,6 +171,6 @@ class FrenziedGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(recruit.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.cards.r.RubblebackRhino;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,10 +35,10 @@ class ChemistersTrickTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.isMustAttackThisTurn()).isTrue();
-        assertThat(target.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(target.getId())).isNull();
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
-        assertThat(own.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(own.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -55,7 +57,7 @@ class ChemistersTrickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -88,10 +90,10 @@ class ChemistersTrickTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(0);
-        assertThat(first.isMustAttackThisTurn()).isTrue();
-        assertThat(second.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), MustAttackIfAbleEffect.class)).isTrue();
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
-        assertThat(own.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(own.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -119,7 +121,7 @@ class ChemistersTrickTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
-        assertThat(rhino.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(rhino.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -136,7 +138,7 @@ class ChemistersTrickTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
-        assertThat(newcomer.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(newcomer.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -151,7 +153,7 @@ class ChemistersTrickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
-        assertThat(own.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(own.getId(), MustAttackIfAbleEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Chemister's Trick");
     }
 

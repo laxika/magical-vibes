@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.testutil.DelayedObligations;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -699,7 +703,8 @@ class AiDecisionEngineTest {
         Permanent attacker = new Permanent(new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        attacker.setMustBeBlockedByAllThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustBeBlockedByAllCreaturesEffect(), attacker.getId(), Duration.UNTIL_END_OF_TURN));
         gd.playerBattlefields.get(human.getId()).add(attacker);
 
         Permanent firstBlocker = new Permanent(new GrizzlyBears());

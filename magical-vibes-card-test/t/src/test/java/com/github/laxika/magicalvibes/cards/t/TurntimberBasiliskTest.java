@@ -39,7 +39,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
 
         Permanent target = triggerLandfall(player2);
 
-        assertThat(target.getMustBlockIds()).containsExactly(basilisk.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).containsExactly(basilisk.getId());
     }
 
     @Test
@@ -54,7 +54,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -70,7 +70,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -114,7 +114,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
         Permanent basilisk = harness.addToBattlefieldAndReturn(player1, new TurntimberBasilisk());
         Permanent target = triggerLandfall(player1);
 
-        assertThat(target.getMustBlockIds()).containsExactly(basilisk.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).containsExactly(basilisk.getId());
     }
 
     @Test
@@ -127,7 +127,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
     }
 
     @Test
@@ -145,7 +145,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
     }
 
     @Test
@@ -163,7 +163,7 @@ class TurntimberBasiliskTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getMustBlockIds()).containsExactly(basilisk.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).containsExactly(basilisk.getId());
     }
 
     @Test

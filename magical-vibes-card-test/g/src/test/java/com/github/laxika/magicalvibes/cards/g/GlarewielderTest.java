@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,8 +35,8 @@ class GlarewielderTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(bear1.getId(), bear2.getId()));
         resolveAllTriggers();
 
-        assertThat(bear1.isCantBlockThisTurn()).isTrue();
-        assertThat(bear2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear2.getId(), CantBlockEffect.class)).isTrue();
         harness.assertOnBattlefield(player1, "Glarewielder");
     }
 
@@ -49,7 +51,7 @@ class GlarewielderTest extends BaseCardTest {
         harness.castCreatureWithEvoke(player1, 0, bear.getId());
         resolveAllTriggers();
 
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
         harness.assertNotOnBattlefield(player1, "Glarewielder");
         harness.assertInGraveyard(player1, "Glarewielder");
     }
@@ -99,7 +101,7 @@ class GlarewielderTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear1);
         resolveAllTriggers();
 
-        assertThat(bear2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear2.getId(), CantBlockEffect.class)).isTrue();
         harness.assertOnBattlefield(player1, "Glarewielder");
     }
 

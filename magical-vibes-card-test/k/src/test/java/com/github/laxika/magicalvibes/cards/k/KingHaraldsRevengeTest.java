@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -37,7 +39,7 @@ class KingHaraldsRevengeTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -71,7 +73,7 @@ class KingHaraldsRevengeTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -117,7 +119,7 @@ class KingHaraldsRevengeTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test

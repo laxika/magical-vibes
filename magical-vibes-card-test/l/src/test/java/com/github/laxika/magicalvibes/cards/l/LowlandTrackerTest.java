@@ -49,7 +49,7 @@ class LowlandTrackerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(defendingCreature.isTapped()).isFalse();
-        assertThat(defendingCreature.getRequiredBlockSourceIds()).containsExactly(tracker.getId());
+        assertThat(gd.requiredBlockSourceIds(defendingCreature.getId())).containsExactly(tracker.getId());
 
         prepareDeclareBlockers();
 
@@ -74,7 +74,7 @@ class LowlandTrackerTest extends BaseCardTest {
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
-        assertThat(defendingCreature.getRequiredBlockSourceIds()).containsExactly(tracker.getId());
+        assertThat(gd.requiredBlockSourceIds(defendingCreature.getId())).containsExactly(tracker.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
     }
@@ -92,7 +92,7 @@ class LowlandTrackerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(defendingCreature.isTapped()).isTrue();
-        assertThat(defendingCreature.getRequiredBlockSourceIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(defendingCreature.getId())).isEmpty();
     }
 
     @Test

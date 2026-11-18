@@ -52,7 +52,7 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
 
         activate(kaseto, target);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -71,7 +71,7 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -100,7 +100,7 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, kaseto)).isEqualTo(6);
-        assertThat(kaseto.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, kaseto)).isTrue();
         assertThat(kaseto.isTapped()).isTrue();
     }
 
@@ -114,9 +114,9 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(2);
-        assertThat(kaseto.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, kaseto)).isFalse();
     }
 
     @Test
@@ -131,13 +131,13 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kaseto)).isEqualTo(2);
-        assertThat(kaseto.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, kaseto)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, kaseto)).isEqualTo(4);
-        assertThat(kaseto.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, kaseto)).isTrue();
     }
 
     private void activate(Permanent kaseto, Permanent target) {

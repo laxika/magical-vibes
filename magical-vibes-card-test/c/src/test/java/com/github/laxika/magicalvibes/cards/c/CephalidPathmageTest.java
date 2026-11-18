@@ -56,13 +56,13 @@ class CephalidPathmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Cephalid Pathmage");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -88,12 +88,12 @@ class CephalidPathmageTest extends BaseCardTest {
         assertThat(pathmage.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player1, "Cephalid Pathmage");
         harness.assertInGraveyard(player1, "Cephalid Pathmage");
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -124,7 +124,7 @@ class CephalidPathmageTest extends BaseCardTest {
         assertThat(pathmage.isTapped()).isFalse();
         harness.assertOnBattlefield(player1, "Cephalid Pathmage");
         assertThat(gd.stack).isEmpty();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -138,6 +138,6 @@ class CephalidPathmageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Cephalid Pathmage");
         assertThat(gd.stack).isEmpty();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.m.Mob;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +30,8 @@ class QuakefootCyclopsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear1.isCantBlockThisTurn()).isTrue();
-        assertThat(bear2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear2.getId(), CantBlockEffect.class)).isTrue();
         harness.assertOnBattlefield(player1, "Quakefoot Cyclops");
     }
 
@@ -57,7 +59,7 @@ class QuakefootCyclopsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Quakefoot Cyclops");
         harness.assertNotInHand(player1, "Quakefoot Cyclops");
 
@@ -120,7 +122,7 @@ class QuakefootCyclopsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(unchosen.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(unchosen.getId(), CantBlockEffect.class)).isFalse();
     }
 }

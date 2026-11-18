@@ -47,13 +47,13 @@ class WormholeSerpentTest extends BaseCardTest {
         addAbilityMana();
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -77,10 +77,10 @@ class WormholeSerpentTest extends BaseCardTest {
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, serpent.getId());
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         assertThat(serpent.isTapped()).isTrue();
     }
 
@@ -94,7 +94,7 @@ class WormholeSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         target.setAttacking(true);
         prepareDeclareBlockers(player2);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
@@ -114,7 +114,7 @@ class WormholeSerpentTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -125,7 +125,7 @@ class WormholeSerpentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, serpent.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -142,8 +142,8 @@ class WormholeSerpentTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         harness.passBothPriorities();
 
-        assertThat(source.isCantBeBlocked()).isFalse();
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, source)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

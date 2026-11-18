@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GuardianOfTheAges;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -32,8 +34,8 @@ class UrsineMonstrosityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(ursine.isMustAttackThisCombat()).isTrue();
-        assertThat(ursine.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(ursine.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(ursine.getId())).isEqualTo(player2.getId());
         assertThat(gqs.getEffectivePower(gd, ursine)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, ursine)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, ursine, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -53,7 +55,7 @@ class UrsineMonstrosityTest extends BaseCardTest {
         advanceToBeginningOfCombat(player2);
         harness.passBothPriorities();
 
-        assertThat(ursine.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ursine.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gqs.getEffectivePower(gd, ursine)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ursine, Keyword.INDESTRUCTIBLE)).isFalse();
     }
@@ -169,8 +171,8 @@ class UrsineMonstrosityTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ursine)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ursine, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(ursine.isMustAttackThisCombat()).isFalse();
-        assertThat(ursine.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(ursine.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(ursine.getId())).isNull();
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {

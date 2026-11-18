@@ -30,7 +30,7 @@ class AmphinPathmageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -42,13 +42,13 @@ class AmphinPathmageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -62,7 +62,7 @@ class AmphinPathmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, pathmage.getId());
         harness.passBothPriorities();
 
-        assertThat(pathmage.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, pathmage)).isTrue();
         assertThat(pathmage.isTapped()).isTrue();
     }
 
@@ -79,8 +79,8 @@ class AmphinPathmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(pathmage.isCantBeBlocked()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, pathmage)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(pathmage.isTapped()).isFalse();
     }
 
@@ -96,7 +96,7 @@ class AmphinPathmageTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(pathmage.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test

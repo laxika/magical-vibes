@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,8 +40,8 @@ class SeismicShiftTest extends BaseCardTest {
 
         List<Permanent> bf = gd.playerBattlefields.get(player2.getId());
         assertThat(bf).hasSize(2);
-        assertThat(bf.get(0).isCantBlockThisTurn()).isTrue();
-        assertThat(bf.get(1).isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bf.get(0).getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bf.get(1).getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -74,7 +76,7 @@ class SeismicShiftTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Mountain");
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -96,7 +98,7 @@ class SeismicShiftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -144,8 +146,8 @@ class SeismicShiftTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(land.getId(), target.getId()));
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -162,6 +164,6 @@ class SeismicShiftTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(land.getId()));
 
         harness.assertOnBattlefield(player1, "Mountain");
-        assertThat(land.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), CantBlockEffect.class)).isFalse();
     }
 }

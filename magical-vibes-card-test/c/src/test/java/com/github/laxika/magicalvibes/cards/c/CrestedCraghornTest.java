@@ -37,7 +37,7 @@ class CrestedCraghornTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(craghorn.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(craghorn.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -61,7 +61,7 @@ class CrestedCraghornTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -102,7 +102,7 @@ class CrestedCraghornTest extends BaseCardTest {
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
-        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(craghorn.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(craghorn.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
     }

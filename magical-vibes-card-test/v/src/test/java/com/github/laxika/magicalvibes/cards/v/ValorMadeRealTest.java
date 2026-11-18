@@ -51,7 +51,7 @@ class ValorMadeRealTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isZero();
     }
 
     @Test

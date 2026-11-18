@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,8 +46,7 @@ public class PermanentMustAttackItsOwnerThisTurnEffectHandler implements NormalE
             return;
         }
 
-        permanent.setMustAttackThisTurn(true);
-        permanent.setMustAttackTargetId(ownerId);
+        gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(ownerId), permanent.getId(), Duration.UNTIL_END_OF_TURN);
         String ownerName = gameData.playerIdToName.get(ownerId);
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
                 " must attack its owner" + (ownerName == null ? "" : " " + ownerName)

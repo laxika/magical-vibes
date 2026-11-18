@@ -28,7 +28,7 @@ class SureFootedInfiltratorTest extends BaseCardTest {
 
         assertThat(rogue.isTapped()).isTrue();
         assertThat(infiltrator.isTapped()).isFalse();
-        assertThat(infiltrator.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class SureFootedInfiltratorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(rogue.isTapped()).isTrue();
-        assertThat(infiltrator.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
     }
 
     @Test
@@ -78,7 +78,7 @@ class SureFootedInfiltratorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(infiltrator), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(infiltrator.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isFalse();
     }
 
     @Test

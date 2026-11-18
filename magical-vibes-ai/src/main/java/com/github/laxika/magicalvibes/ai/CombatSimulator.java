@@ -880,7 +880,7 @@ public class CombatSimulator {
     }
 
     private boolean hasLureEffect(GameData gameData, Permanent attacker) {
-        if (attacker.isMustBeBlockedByAllThisTurn()) return true;
+        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedByAllCreaturesEffect.class)) return true;
         boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
         if (hasOnCard) return true;
@@ -888,7 +888,7 @@ public class CombatSimulator {
     }
 
     private boolean hasMustBeBlockedIfAbleEffect(GameData gameData, Permanent attacker) {
-        if (attacker.isMustBeBlockedThisTurn()) return true;
+        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)) return true;
         boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
         if (hasOnCard) return true;

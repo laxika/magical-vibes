@@ -97,15 +97,10 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
     }
 
     private void applyRestriction(GameData gameData, StackEntry entry, Permanent permanent, CantAttackThisTurnEffect effect) {
-        if (com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration())) {
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
-                    entry.getSourcePermanentId(), entry.getControllerId(), effect, permanent.getId(),
-                    Duration.UNTIL_YOUR_NEXT_TURN));
-        } else if (Duration.UNTIL_END_OF_TURN.equals(effect.duration())) {
-            permanent.setCantAttackThisTurn(true);
-        } else {
+        if (!Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration()) && !Duration.UNTIL_END_OF_TURN.equals(effect.duration())) {
             throw new IllegalArgumentException("Unsupported attack restriction duration");
         }
+        gameData.addEffectOnPermanent(entry, effect, permanent.getId(), effect.duration());
     }
 
     private void resolveAllCreatures(GameData gameData, StackEntry entry, CantAttackThisTurnEffect e, FilterContext filterContext) {

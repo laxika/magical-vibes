@@ -29,7 +29,7 @@ class StealthMissionTest extends BaseCardTest {
         castStealthMission(creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class StealthMissionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -82,9 +82,9 @@ class StealthMissionTest extends BaseCardTest {
         castStealthMission(creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(otherCreature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherCreature)).isFalse();
     }
 
     @Test
@@ -105,7 +105,7 @@ class StealthMissionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Stealth Mission");
         assertThat(gd.playerDecks.get(player1.getId())).first().isSameAs(creature.getCard());
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 
     private void castStealthMission(UUID targetId) {

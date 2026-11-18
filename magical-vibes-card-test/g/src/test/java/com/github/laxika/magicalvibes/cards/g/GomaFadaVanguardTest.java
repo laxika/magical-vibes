@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,7 +28,7 @@ class GomaFadaVanguardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -43,8 +45,8 @@ class GomaFadaVanguardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, legalTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentWarrior.isCantBlockThisTurn()).isFalse();
-        assertThat(legalTarget.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentWarrior.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(legalTarget.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -61,8 +63,8 @@ class GomaFadaVanguardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
-        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -76,7 +78,7 @@ class GomaFadaVanguardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -92,7 +94,7 @@ class GomaFadaVanguardTest extends BaseCardTest {
                 .removePermanentToHand(gd, otherWarrior));
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -108,6 +110,6 @@ class GomaFadaVanguardTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToHand(gd, otherWarrior));
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 }

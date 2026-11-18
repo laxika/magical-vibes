@@ -95,7 +95,7 @@ class ShrewdHatchlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(hatchling.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(hatchling.getId());
 
         hatchling.setAttacking(true);
         prepareDeclareBlockers();

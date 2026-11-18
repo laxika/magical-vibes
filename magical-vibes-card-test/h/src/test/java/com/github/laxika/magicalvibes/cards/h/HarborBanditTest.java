@@ -75,7 +75,7 @@ class HarborBanditTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bandit.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bandit)).isTrue();
     }
 
     @Test
@@ -88,13 +88,13 @@ class HarborBanditTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bandit.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bandit)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bandit.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bandit)).isFalse();
     }
 
     @Test
@@ -134,10 +134,10 @@ class HarborBanditTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(bandit.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bandit)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(bandit.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bandit)).isTrue();
         assertThat(gqs.getEffectivePower(gd, bandit)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bandit)).isEqualTo(2);
     }
@@ -151,7 +151,7 @@ class HarborBanditTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(RuntimeException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(findPermanent(player1, "Harbor Bandit").isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player1, "Harbor Bandit"))).isFalse();
     }
 
     @Test

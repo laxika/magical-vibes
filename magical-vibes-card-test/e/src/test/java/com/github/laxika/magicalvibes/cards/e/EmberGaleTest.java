@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DrownerInitiate;
 import com.github.laxika.magicalvibes.cards.g.GreaterAuramancy;
 import com.github.laxika.magicalvibes.cards.p.PyreCharger;
@@ -130,7 +132,7 @@ class EmberGaleTest extends BaseCardTest {
         castEmberGale();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(red.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(red.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -146,8 +148,8 @@ class EmberGaleTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         harness.assertInGraveyard(player1, "Zealous Guardian");
-        assertThat(opposingRed.isCantBlockThisTurn()).isFalse();
-        assertThat(opposingBlue.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposingRed.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposingBlue.getId(), CantBlockEffect.class)).isFalse();
         assertThat(opposingBlue.getMarkedDamage()).isZero();
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));

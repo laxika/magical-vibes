@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CursedScroll;
 import com.github.laxika.magicalvibes.cards.j.JackalPup;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
@@ -86,7 +88,7 @@ class StunTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(drawnCard.getId());
@@ -140,9 +142,9 @@ class StunTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(target.isTapped()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
@@ -158,7 +160,7 @@ class StunTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, target.getId());
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -171,12 +173,12 @@ class StunTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new JackalPup()));
         addStunMana();
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     private void addStunMana() {

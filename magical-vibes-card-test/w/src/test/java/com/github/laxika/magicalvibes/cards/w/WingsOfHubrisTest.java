@@ -40,7 +40,7 @@ class WingsOfHubrisTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
         harness.assertInGraveyard(player1, "Wings of Hubris");
         harness.assertNotOnBattlefield(player1, "Wings of Hubris");
     }
@@ -141,7 +141,7 @@ class WingsOfHubrisTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Wings of Hubris");
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -160,11 +160,11 @@ class WingsOfHubrisTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Wings of Hubris");
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
@@ -176,7 +176,7 @@ class WingsOfHubrisTest extends BaseCardTest {
         wings.setAttachedTo(creature.getId());
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
 
         harness.setHand(player1, List.of(new FlickerOfFate()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -185,7 +185,7 @@ class WingsOfHubrisTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Nyxborn Colossus");
         assertThat(returned.getId()).isNotEqualTo(creature.getId());
-        assertThat(returned.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, returned)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

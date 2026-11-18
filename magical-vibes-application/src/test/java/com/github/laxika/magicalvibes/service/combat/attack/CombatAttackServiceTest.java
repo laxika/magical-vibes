@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.Brainwash;
@@ -275,7 +279,8 @@ class CombatAttackServiceTest extends BaseCardTest {
         @CardUsed(OrcishConscripts.class)
         void forcedRestrictedCreatureMayStayHomeWhenNoLegalDeclarationIncludesIt() {
             Permanent conscripts = addCreatureReady(player1, new OrcishConscripts());
-            conscripts.setMustAttackThisTurn(true);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new MustAttackIfAbleEffect(), conscripts.getId(), Duration.UNTIL_END_OF_TURN));
 
             List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
             assertThat(service().getMustAttackIndices(gd, player1.getId(), attackable)).isEmpty();
@@ -598,7 +603,8 @@ class CombatAttackServiceTest extends BaseCardTest {
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());
             Permanent planeswalker = harness.addToBattlefieldAndReturn(player2,
                     new com.github.laxika.magicalvibes.cards.j.JaceBeleren());
-            bears.setMustAttackTargetId(player2.getId());
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new MustAttackIfAbleEffect(player2.getId()), bears.getId(), Duration.UNTIL_END_OF_TURN));
             enterDeclareAttackers();
 
             assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index(bears)),

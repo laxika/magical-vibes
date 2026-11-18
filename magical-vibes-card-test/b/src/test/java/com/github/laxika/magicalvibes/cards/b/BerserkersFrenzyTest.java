@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.e.EtaliPrimalStorm;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -52,7 +54,7 @@ class BerserkersFrenzyTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactly(attacker.getId(), blocker.getId());
 
         harness.handleMultiplePermanentsChosen(player1, List.of(blocker.getId()));
-        assertThat(blocker.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         advanceToBlockerDeclaration();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))

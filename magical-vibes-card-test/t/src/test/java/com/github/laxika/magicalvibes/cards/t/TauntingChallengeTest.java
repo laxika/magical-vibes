@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+
 import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,7 +34,7 @@ class TauntingChallengeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -46,7 +51,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -99,7 +104,8 @@ class TauntingChallengeTest extends BaseCardTest {
     @DisplayName("All able creatures must block the affected attacker")
     void allAbleCreaturesMustBlock() {
         Permanent attacker = addCreatureReady(player1, new ForestBear());
-        attacker.setMustBeBlockedByAllThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustBeBlockedByAllCreaturesEffect(), attacker.getId(), Duration.UNTIL_END_OF_TURN));
         attacker.setAttacking(true);
 
         addCreatureReady(player2, new ForestBear());

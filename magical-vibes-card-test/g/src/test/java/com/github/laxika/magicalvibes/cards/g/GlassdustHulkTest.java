@@ -29,7 +29,7 @@ class GlassdustHulkTest extends BaseCardTest {
 
         assertThat(hulk.getPowerModifier()).isEqualTo(1);
         assertThat(hulk.getToughnessModifier()).isEqualTo(1);
-        assertThat(hulk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isTrue();
     }
 
     @Test
@@ -41,7 +41,7 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(hulk.getPowerModifier()).isEqualTo(1);
-        assertThat(hulk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isTrue();
 
         harness.setHand(player1, new ArrayList<>());
         harness.forceStep(TurnStep.END_STEP);
@@ -50,7 +50,7 @@ class GlassdustHulkTest extends BaseCardTest {
 
         assertThat(hulk.getPowerModifier()).isEqualTo(0);
         assertThat(hulk.getToughnessModifier()).isEqualTo(0);
-        assertThat(hulk.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
     }
 
     @Test
@@ -65,7 +65,7 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hulk.getPowerModifier()).isEqualTo(0);
-        assertThat(hulk.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
     }
 
     @Test
@@ -78,14 +78,14 @@ class GlassdustHulkTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(hulk.getPowerModifier()).isZero();
-        assertThat(hulk.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(hulk.getPowerModifier()).isEqualTo(1);
         assertThat(hulk.getToughnessModifier()).isEqualTo(1);
-        assertThat(hulk.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isTrue();
     }
 
     @Test
@@ -98,7 +98,7 @@ class GlassdustHulkTest extends BaseCardTest {
         Permanent hulk = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(hulk.getPowerModifier()).isZero();
         assertThat(hulk.getToughnessModifier()).isZero();
-        assertThat(hulk.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
     }
 
     @ParameterizedTest

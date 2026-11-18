@@ -31,8 +31,8 @@ class GhostformTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class GhostformTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(bears.getId()));
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
@@ -56,13 +56,13 @@ class GhostformTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(bears.getId()));
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class GhostformTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of());
 
-        assertThat(wolf.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, wolf)).isFalse();
         harness.assertInGraveyard(player1, "Ghostform");
         assertThat(gd.stack).isEmpty();
     }
@@ -133,8 +133,8 @@ class GhostformTest extends BaseCardTest {
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(returned.getId()).isNotEqualTo(first.getId());
-        assertThat(returned.isCantBeBlocked()).isFalse();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, returned)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
         harness.assertInGraveyard(player1, "Ghostform");
     }
 
@@ -152,7 +152,7 @@ class GhostformTest extends BaseCardTest {
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(returned.getId()).isNotEqualTo(wolf.getId());
-        assertThat(returned.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, returned)).isFalse();
         harness.assertInGraveyard(player1, "Ghostform");
         assertThat(gd.stack).isEmpty();
     }

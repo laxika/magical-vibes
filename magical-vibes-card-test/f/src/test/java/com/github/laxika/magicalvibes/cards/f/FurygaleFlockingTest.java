@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
 import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.model.Card;
@@ -52,8 +54,8 @@ class FurygaleFlockingTest extends BaseCardTest {
             assertThat(token.getEffectiveToughness()).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-            assertThat(token.isMustAttackThisTurn()).isTrue();
-            assertThat(token.getMustAttackTargetId()).isEqualTo(player2.getId());
+            assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isTrue();
+            assertThat(gd.mustAttackDefender(token.getId())).isEqualTo(player2.getId());
         });
     }
 
@@ -92,8 +94,8 @@ class FurygaleFlockingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
-        assertThat(token.isMustAttackThisTurn()).isFalse();
-        assertThat(token.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(token.getId())).isNull();
     }
 
     @Test

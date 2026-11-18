@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FrilledOculus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,7 +34,7 @@ class MarkForDeathTest extends BaseCardTest {
 
         List<Permanent> defenders = gd.playerBattlefields.get(player2.getId());
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(bls.canBlockAttacker(gd, target, attacker, defenders)).isTrue();
         assertThat(bls.canBlockAttacker(gd, other, attacker, defenders)).isFalse();
     }
@@ -43,7 +46,7 @@ class MarkForDeathTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new FrilledOculus());
         castMarkForDeath(target);
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

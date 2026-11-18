@@ -47,8 +47,8 @@ class LockjawSlobberingTeleporterTest extends BaseCardTest {
 
         assertThat(lockjaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, lockjaw)).isTrue();
-        assertThat(otherCreature.isCantBeBlocked()).isTrue();
-        assertThat(opposingCreature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherCreature)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingCreature)).isFalse();
     }
 
     @Test
@@ -58,7 +58,7 @@ class LockjawSlobberingTeleporterTest extends BaseCardTest {
         advanceToBeginningOfCombat();
 
         assertThat(lockjaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(lockjaw.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, lockjaw)).isFalse();
     }
 
     @Test

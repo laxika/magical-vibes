@@ -59,7 +59,7 @@ class GearseekerSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
     }
 
     @Test
@@ -72,13 +72,13 @@ class GearseekerSerpentTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }
 
     @Test
@@ -140,11 +140,11 @@ class GearseekerSerpentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
-        assertThat(serpent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         assertThat(serpent.isTapped()).isTrue();
     }
 }

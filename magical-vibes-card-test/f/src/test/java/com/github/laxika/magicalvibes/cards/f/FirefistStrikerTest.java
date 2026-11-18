@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -33,7 +35,7 @@ class FirefistStrikerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opposing.getId());
         resolveAllTriggers();
 
-        assertThat(opposing.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isTrue();
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -50,7 +52,7 @@ class FirefistStrikerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -66,7 +68,7 @@ class FirefistStrikerTest extends BaseCardTest {
 
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -82,8 +84,8 @@ class FirefistStrikerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         resolveAllTriggers();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -101,7 +103,7 @@ class FirefistStrikerTest extends BaseCardTest {
         secondOther.setAttacking(false);
         resolveAllTriggers();
 
-        assertThat(opposing.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -115,12 +117,12 @@ class FirefistStrikerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         harness.handlePermanentChosen(player1, opposing.getId());
         resolveAllTriggers();
-        assertThat(opposing.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(opposing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposing.getId(), CantBlockEffect.class)).isFalse();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -246,7 +248,7 @@ class ZombieOutlanderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, outlander.getId());
         harness.passBothPriorities();
 
-        assertThat(outlander.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(outlander.getId(), MustBlockEachCombatEffect.class)).isTrue();
     }
 
     @Test

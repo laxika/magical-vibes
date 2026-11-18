@@ -36,13 +36,13 @@ class PathmakerInitiateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -76,7 +76,7 @@ class PathmakerInitiateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, initiate.getId());
         harness.passBothPriorities();
 
-        assertThat(initiate.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, initiate)).isTrue();
     }
 
     @Test
@@ -87,7 +87,7 @@ class PathmakerInitiateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -133,7 +133,7 @@ class PathmakerInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(initiate.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -150,7 +150,7 @@ class PathmakerInitiateTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test

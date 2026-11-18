@@ -67,7 +67,7 @@ class SplinterRadicalRatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ninja.getId());
         harness.passBothPriorities();
 
-        assertThat(ninja.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ninja)).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class SplinterRadicalRatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ninja.getId());
         harness.passBothPriorities();
 
-        assertThat(ninja.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ninja)).isTrue();
         assertThat(splinter.isTapped()).isTrue();
     }
 
@@ -95,13 +95,13 @@ class SplinterRadicalRatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, splinter.getId());
         harness.passBothPriorities();
-        assertThat(splinter.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, splinter)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(splinter.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, splinter)).isFalse();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.w.WickerfolkThresher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -44,9 +46,9 @@ class TrialOfAgonyTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, chosen.getId());
 
         assertThat(chosen.getMarkedDamage()).isEqualTo(5);
-        assertThat(chosen.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isFalse();
         assertThat(other.getMarkedDamage()).isZero();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -63,7 +65,7 @@ class TrialOfAgonyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(remaining.getMarkedDamage()).isEqualTo(5);
-        assertThat(remaining.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -88,9 +90,9 @@ class TrialOfAgonyTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, second.getId());
 
         assertThat(second.getMarkedDamage()).isEqualTo(5);
-        assertThat(second.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isFalse();
         assertThat(first.getMarkedDamage()).isZero();
-        assertThat(first.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -120,8 +122,8 @@ class TrialOfAgonyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isZero();
-        assertThat(first.isCantBlockThisTurn()).isFalse();
-        assertThat(second.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Trial of Agony");
     }
 
@@ -138,7 +140,7 @@ class TrialOfAgonyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(remaining.getMarkedDamage()).isEqualTo(5);
-        assertThat(remaining.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isFalse();
     }
 
     private void castTrialOfAgony(Permanent first, Permanent second) {

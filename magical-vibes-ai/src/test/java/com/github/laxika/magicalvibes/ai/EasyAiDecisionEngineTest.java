@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.testutil.TestCards;
@@ -1996,7 +2000,8 @@ class EasyAiDecisionEngineTest {
             attacker.setAttacking(true);
             Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
             blocker.setSummoningSick(false);
-            blocker.setMustBlockThisTurnIfAble(true);
+            combatGd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new MustBlockEachCombatEffect(), blocker.getId(), Duration.UNTIL_END_OF_TURN));
 
             combatHarness.forceActivePlayer(opponent);
             combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);

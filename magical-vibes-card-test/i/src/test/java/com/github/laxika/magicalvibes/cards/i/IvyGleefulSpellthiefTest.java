@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.ColossalGrowth;
 import com.github.laxika.magicalvibes.cards.d.DualShot;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -115,8 +117,8 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
                     assertThat(permanent.getCard().isToken()).isTrue();
                     assertThat(permanent.getAttachedTo()).isEqualTo(ivy.getId());
                 });
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
-        assertThat(ivy.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ivy.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

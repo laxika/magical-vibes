@@ -41,8 +41,8 @@ class SecretTunnelTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
 
     @Test
@@ -96,7 +96,7 @@ class SecretTunnelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, 0, 1, List.of(creature.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 
     @Test

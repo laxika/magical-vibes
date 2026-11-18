@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -31,9 +33,9 @@ class DaringDiscoveryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Plains(), new HillGiant()));
         cast(List.of(creature1.getId(), creature2.getId(), creature3.getId()));
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
-        assertThat(creature3.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature3.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -132,7 +134,7 @@ class DaringDiscoveryTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(removed);
         harness.passBothPriorities();
 
-        assertThat(remaining.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isTrue();
         harness.handleCardChosen(player1, -1);
         assertThat(gd.playerHands.get(player1.getId())).contains(discovered);
     }

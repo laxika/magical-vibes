@@ -23,7 +23,7 @@ class ElvenkingsHarperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -34,12 +34,12 @@ class ElvenkingsHarperTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -66,8 +66,8 @@ class ElvenkingsHarperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, other.getId());
         harness.passBothPriorities();
 
-        assertThat(harper.isCantBeBlocked()).isTrue();
-        assertThat(other.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, harper)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isTrue();
         assertThat(harper.isTapped()).isTrue();
     }
 
@@ -79,7 +79,7 @@ class ElvenkingsHarperTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, harper.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(harper.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, harper)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

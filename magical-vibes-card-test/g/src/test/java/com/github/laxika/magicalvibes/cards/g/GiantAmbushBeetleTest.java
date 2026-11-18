@@ -46,7 +46,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getMustBlockIds()).contains(beetle.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(beetle.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -60,7 +60,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -74,7 +74,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(ownCreature.getMustBlockIds()).contains(beetle.getId());
+        assertThat(gd.requiredBlockSourceIds(ownCreature.getId())).contains(beetle.getId());
     }
 
     @Test
@@ -155,12 +155,12 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getMustBlockIds()).isNotEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isNotEmpty();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
     }
 
     @Test
@@ -176,7 +176,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
     }
 
     @Test

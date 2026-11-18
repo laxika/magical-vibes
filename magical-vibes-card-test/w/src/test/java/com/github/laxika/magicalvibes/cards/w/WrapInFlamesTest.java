@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
@@ -37,9 +39,9 @@ class WrapInFlamesTest extends BaseCardTest {
         assertThat(creature1.getMarkedDamage()).isEqualTo(1);
         assertThat(creature2.getMarkedDamage()).isEqualTo(1);
         assertThat(creature3.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
-        assertThat(creature3.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature3.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -55,8 +57,8 @@ class WrapInFlamesTest extends BaseCardTest {
 
         assertThat(creature1.getMarkedDamage()).isEqualTo(1);
         assertThat(creature2.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature1.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature2.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -97,9 +99,9 @@ class WrapInFlamesTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(chosen.getId()));
 
         assertThat(chosen.getMarkedDamage()).isEqualTo(1);
-        assertThat(chosen.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isTrue();
         assertThat(unchosen.getMarkedDamage()).isZero();
-        assertThat(unchosen.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(unchosen.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -113,7 +115,7 @@ class WrapInFlamesTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -130,9 +132,9 @@ class WrapInFlamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Nest Invader");
-        assertThat(removed.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(removed.getId(), CantBlockEffect.class)).isFalse();
         assertThat(remaining.getMarkedDamage()).isEqualTo(1);
-        assertThat(remaining.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -143,12 +145,12 @@ class WrapInFlamesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrapInFlames()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -191,7 +193,7 @@ class WrapInFlamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(unchosen.getMarkedDamage()).isZero();
-        assertThat(unchosen.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(unchosen.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Wrap in Flames");
         harness.assertInGraveyard(player2, "Nest Invader");

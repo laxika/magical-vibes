@@ -71,7 +71,7 @@ class TangleAnglerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).contains(angler.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(angler.getId());
     }
 
     @Test
@@ -169,8 +169,8 @@ class TangleAnglerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker2.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker1.getMustBlockIds()).contains(angler.getId());
-        assertThat(blocker2.getMustBlockIds()).contains(angler.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker1.getId())).contains(angler.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker2.getId())).contains(angler.getId());
     }
 
     @Test
@@ -206,13 +206,13 @@ class TangleAnglerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).contains(angler.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(angler.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -225,7 +225,7 @@ class TangleAnglerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getMustBlockIds()).contains(angler.getId());
+        assertThat(gd.requiredBlockSourceIds(ownCreature.getId())).contains(angler.getId());
     }
 
     @Test
@@ -241,7 +241,7 @@ class TangleAnglerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(angler.isTapped()).isTrue();
-        assertThat(target.getMustBlockIds()).contains(angler.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(angler.getId());
         assertThat(gd.stack).isEmpty();
     }
 

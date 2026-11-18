@@ -47,13 +47,13 @@ class RaggedPlaymateTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -76,9 +76,9 @@ class RaggedPlaymateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, playmate.getId());
 
         assertThat(playmate.isTapped()).isTrue();
-        assertThat(playmate.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, playmate)).isFalse();
         harness.passBothPriorities();
-        assertThat(playmate.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, playmate)).isTrue();
     }
 
     @Test
@@ -90,7 +90,7 @@ class RaggedPlaymateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -103,7 +103,7 @@ class RaggedPlaymateTest extends BaseCardTest {
         target.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +31,7 @@ class SpiderManWebSpinnerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -46,7 +48,7 @@ class SpiderManWebSpinnerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -88,11 +90,11 @@ class SpiderManWebSpinnerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, spiderMan.getId());
         resolveAllTriggers();
 
-        assertThat(spiderMan.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(spiderMan.getId(), CantBlockEffect.class)).isTrue();
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(spiderMan.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(spiderMan.getId(), CantBlockEffect.class)).isTrue();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(spiderMan.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(spiderMan.getId(), CantBlockEffect.class)).isFalse();
     }
 }

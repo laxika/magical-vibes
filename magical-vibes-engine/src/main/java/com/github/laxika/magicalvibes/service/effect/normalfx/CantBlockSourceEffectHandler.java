@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,7 +38,7 @@ public class CantBlockSourceEffectHandler implements NormalEffectHandlerBean {
         Permanent source = gameQueryService.findPermanentById(gameData, e.sourcePermanentId());
         String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
 
-        target.getCantBlockIds().add(e.sourcePermanentId());
+        gameData.addEffectOnPermanent(entry, e, target.getId(), Duration.UNTIL_END_OF_TURN);
 
         
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" can't block " + sourceName + " this turn.").build());

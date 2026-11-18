@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GoldenEgg;
 import com.github.laxika.magicalvibes.cards.r.RagingRedcap;
 import com.github.laxika.magicalvibes.cards.r.RovingKeep;
@@ -35,8 +37,8 @@ class BlowYourHouseDownTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).extracting(Permanent::getId)
                 .containsExactlyInAnyOrder(bear.getId(), untargetedWall.getId());
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
-        assertThat(untargetedWall.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargetedWall.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(card -> card.getId())
                 .contains(wall1.getCard().getId(), wall2.getCard().getId());
@@ -50,7 +52,7 @@ class BlowYourHouseDownTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(bear.getId()));
 
-        assertThat(bear.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bear.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -76,8 +78,8 @@ class BlowYourHouseDownTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Blow Your House Down");
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall, creature);
-        assertThat(wall.isCantBlockThisTurn()).isFalse();
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(wall.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -115,8 +117,8 @@ class BlowYourHouseDownTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wall);
         harness.assertInGraveyard(player1, "Roving Keep");
-        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opposingCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposingCreature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -125,11 +127,11 @@ class BlowYourHouseDownTest extends BaseCardTest {
         prepareCast();
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -149,8 +151,8 @@ class BlowYourHouseDownTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .contains(survivingCreature).doesNotContain(removedCreature, wall);
-        assertThat(survivingCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(removedCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(survivingCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(removedCreature.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(card -> card.getId())
                 .contains(removedCreature.getCard().getId(), wall.getCard().getId());
@@ -166,7 +168,7 @@ class BlowYourHouseDownTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
         harness.assertNotInGraveyard(player2, "Roving Keep");
-        assertThat(wall.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(wall.getId(), CantBlockEffect.class)).isTrue();
     }
 
     private void prepareCast() {

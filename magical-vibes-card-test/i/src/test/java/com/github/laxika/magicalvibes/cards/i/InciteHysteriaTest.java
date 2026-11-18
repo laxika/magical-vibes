@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+
 import com.github.laxika.magicalvibes.cards.g.GlassGolem;
 import com.github.laxika.magicalvibes.cards.g.GolgariBrownscale;
 import com.github.laxika.magicalvibes.cards.g.GolgariRotwurm;
@@ -33,11 +34,11 @@ class InciteHysteriaTest extends BaseCardTest {
 
         castInciteHysteria(target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(ownMatchingCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opponentMatchingCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(differentColorCreature.isCantBlockThisTurn()).isFalse();
-        assertThat(colorlessCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, target)).isTrue();
+        assertThat(!bls.canBlock(gd, ownMatchingCreature)).isTrue();
+        assertThat(!bls.canBlock(gd, opponentMatchingCreature)).isTrue();
+        assertThat(!bls.canBlock(gd, differentColorCreature)).isFalse();
+        assertThat(!bls.canBlock(gd, colorlessCreature)).isFalse();
     }
 
     @Test
@@ -49,9 +50,9 @@ class InciteHysteriaTest extends BaseCardTest {
 
         castInciteHysteria(target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(otherColorlessCreature.isCantBlockThisTurn()).isFalse();
-        assertThat(coloredCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, target)).isTrue();
+        assertThat(!bls.canBlock(gd, otherColorlessCreature)).isFalse();
+        assertThat(!bls.canBlock(gd, coloredCreature)).isFalse();
     }
 
     @Test
@@ -64,10 +65,10 @@ class InciteHysteriaTest extends BaseCardTest {
 
         castInciteHysteria(target);
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(greenCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(blackCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(differentColorCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, target)).isTrue();
+        assertThat(!bls.canBlock(gd, greenCreature)).isTrue();
+        assertThat(!bls.canBlock(gd, blackCreature)).isTrue();
+        assertThat(!bls.canBlock(gd, differentColorCreature)).isFalse();
     }
 
     @Test
@@ -78,14 +79,14 @@ class InciteHysteriaTest extends BaseCardTest {
         Permanent creatureEnteringBeforeResolution = addCreatureReady(player2, new ViashinoFangtail());
         Permanent differentColorCreature = addCreatureReady(player2, new GolgariBrownscale());
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
-        assertThat(creatureEnteringBeforeResolution.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, target)).isFalse();
+        assertThat(!bls.canBlock(gd, creatureEnteringBeforeResolution)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(creatureEnteringBeforeResolution.isCantBlockThisTurn()).isTrue();
-        assertThat(differentColorCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, target)).isTrue();
+        assertThat(!bls.canBlock(gd, creatureEnteringBeforeResolution)).isTrue();
+        assertThat(!bls.canBlock(gd, differentColorCreature)).isFalse();
     }
 
     @Test
@@ -98,7 +99,7 @@ class InciteHysteriaTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(matchingCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, matchingCreature)).isFalse();
     }
 
     @Test
@@ -107,13 +108,13 @@ class InciteHysteriaTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new ViashinoFangtail());
 
         castInciteHysteria(target);
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(!bls.canBlock(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(!bls.canBlock(gd, target)).isFalse();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -39,7 +41,7 @@ class DisturbedSlumberTest extends BaseCardTest {
         assertThat(land.getTransientSubtypes()).contains(CardSubtype.DINOSAUR);
         assertThat(gqs.hasKeyword(gd, land, Keyword.REACH)).isTrue();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
-        assertThat(land.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -72,7 +74,7 @@ class DisturbedSlumberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, land)).isFalse();
-        assertThat(land.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -177,7 +179,7 @@ class DisturbedSlumberTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, land)).isFalse();
-        assertThat(land.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Disturbed Slumber");
     }
 

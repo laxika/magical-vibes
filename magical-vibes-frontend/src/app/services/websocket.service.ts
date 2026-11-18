@@ -304,7 +304,6 @@ export interface Permanent {
   chosenName: string | null;
   regenerationShield: number;
   attachedTo: string | null;
-  cantBeBlocked: boolean;
   animatedCreature: boolean;
   /** All counters on this permanent, keyed by CounterType name (e.g. "LOYALTY", "CHARGE"). Only present counters are included. */
   counters: { [counterType: string]: number };

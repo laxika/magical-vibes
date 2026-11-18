@@ -83,7 +83,7 @@ class DeekahFractalTheoristTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, fractal.getId());
         harness.passBothPriorities();
 
-        assertThat(fractal.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, fractal)).isTrue();
     }
 
     @Test
@@ -145,7 +145,7 @@ class DeekahFractalTheoristTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, fractal.getId());
         harness.passBothPriorities();
 
-        assertThat(fractal.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, fractal)).isTrue();
     }
 
     @Test

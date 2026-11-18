@@ -39,7 +39,7 @@ class HunterSliverTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).containsExactly(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(attacker.getId());
 
         prepareDeclareBlockers(player2);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of()))
@@ -64,8 +64,8 @@ class HunterSliverTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
-        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -119,7 +119,7 @@ class HunterSliverTest extends BaseCardTest {
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers(player1);
-        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).containsExactly(hunter.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(hunter.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
     }

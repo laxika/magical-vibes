@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -37,8 +39,8 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -53,7 +55,7 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -81,13 +83,13 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         resolveAllTriggers();
-        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -103,8 +105,8 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(minotaur.isCantBlockThisTurn()).isFalse();
-        assertThat(opponentCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(minotaur.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -121,7 +123,7 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof SureStrike);
-        assertThat(minotaur.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(minotaur.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -139,7 +141,7 @@ class SmeltWardMinotaurTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(minotaur.getCard());
         resolveAllTriggers();
 
-        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(otherOpponentCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(otherOpponentCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 }

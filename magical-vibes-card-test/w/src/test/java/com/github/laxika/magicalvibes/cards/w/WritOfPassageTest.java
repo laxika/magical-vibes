@@ -32,7 +32,7 @@ class WritOfPassageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 
     @Test
@@ -76,8 +76,8 @@ class WritOfPassageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(enchantedAttacker.isCantBeBlocked()).isTrue();
-        assertThat(otherAttacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, enchantedAttacker)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherAttacker)).isFalse();
     }
 
     @Test
@@ -101,7 +101,7 @@ class WritOfPassageTest extends BaseCardTest {
         attacker.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -115,7 +115,7 @@ class WritOfPassageTest extends BaseCardTest {
         attacker.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -126,13 +126,13 @@ class WritOfPassageTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -150,7 +150,7 @@ class WritOfPassageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(writ);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -202,7 +202,7 @@ class WritOfPassageTest extends BaseCardTest {
         target.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -230,13 +230,13 @@ class WritOfPassageTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, target.getId());
         harness.passBothPriorities();
         target.setPowerModifier(1);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -276,7 +276,7 @@ class WritOfPassageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 
     private Permanent addAuraOn(Permanent host, Player controller) {

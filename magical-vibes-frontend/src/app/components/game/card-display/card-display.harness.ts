@@ -221,7 +221,6 @@ export function permanentOf(held: Card, overrides: Partial<Permanent> = {}): Per
     chosenName: null,
     regenerationShield: 0,
     attachedTo: null,
-    cantBeBlocked: false,
     animatedCreature: false,
     counters: {},
     attackTargetId: null,

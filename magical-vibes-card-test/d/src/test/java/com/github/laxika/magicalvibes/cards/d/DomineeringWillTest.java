@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -34,8 +36,8 @@ class DomineeringWillTest extends BaseCardTest {
         assertThat(second.isTapped()).isFalse();
         assertThat(first.isSummoningSick()).isTrue();
         assertThat(second.isSummoningSick()).isTrue();
-        assertThat(first.isMustBlockThisTurnIfAble()).isTrue();
-        assertThat(second.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), MustBlockEachCombatEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), MustBlockEachCombatEffect.class)).isTrue();
     }
 
     @Test
@@ -50,8 +52,8 @@ class DomineeringWillTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
                 .contains(first.getId(), second.getId());
-        assertThat(first.isMustBlockThisTurnIfAble()).isFalse();
-        assertThat(second.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), MustBlockEachCombatEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -90,7 +92,7 @@ class DomineeringWillTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c instanceof DomineeringWill);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(untouched);
         assertThat(untouched.isTapped()).isTrue();
-        assertThat(untouched.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(untouched.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -112,7 +114,7 @@ class DomineeringWillTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, second, third);
         for (Permanent creature : List.of(first, second, third)) {
             assertThat(creature.isTapped()).isFalse();
-            assertThat(creature.isMustBlockThisTurnIfAble()).isTrue();
+            assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), MustBlockEachCombatEffect.class)).isTrue();
         }
     }
 
@@ -132,10 +134,10 @@ class DomineeringWillTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(first);
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), MustBlockEachCombatEffect.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(second);
         assertThat(second.isTapped()).isFalse();
-        assertThat(second.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), MustBlockEachCombatEffect.class)).isTrue();
     }
 
     @Test
@@ -167,7 +169,7 @@ class DomineeringWillTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(creature.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test

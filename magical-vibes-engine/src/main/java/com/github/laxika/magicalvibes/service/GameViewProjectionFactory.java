@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
@@ -263,7 +265,8 @@ public class GameViewProjectionFactory {
                             new ArrayList<>(explained.grantedEffectAttributions());
                     attributions.addAll(gameQueryService.attachedRestrictionAttributions(data, p));
                     views.add(view.withGrantedAbilities(grantedAbilityViewFactory.create(
-                            p, bonus, attributions)));
+                            p, bonus, attributions,
+                            data.hasFloatingEffectOnPermanent(p.getId(), CantBeBlockedEffect.class))));
                 }
                 battlefields.add(views);
             }

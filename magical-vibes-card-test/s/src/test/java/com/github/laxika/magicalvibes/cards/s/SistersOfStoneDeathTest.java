@@ -31,7 +31,7 @@ class SistersOfStoneDeathTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).contains(sisters.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(sisters.getId());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))

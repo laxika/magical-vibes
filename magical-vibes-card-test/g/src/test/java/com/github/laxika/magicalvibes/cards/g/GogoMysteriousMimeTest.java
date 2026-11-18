@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -50,8 +52,8 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, gogo, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
-        assertThat(gogo.isMustAttackThisTurn()).isTrue();
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(gogo.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -68,8 +70,8 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         assertThat(gogo.getCard().getName()).isEqualTo("Gogo, Mysterious Mime");
         assertThat(gqs.hasKeyword(gd, gogo, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(gogo.isMustAttackThisTurn()).isFalse();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(gogo.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -80,7 +82,7 @@ class GogoMysteriousMimeTest extends BaseCardTest {
 
         resolveChoice(target);
         assertThat(gogo.getCard().getName()).isEqualTo("Gogo, Mysterious Mime");
-        assertThat(gogo.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(gogo.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.ensurePriority(player1);
@@ -90,9 +92,9 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gogo, Keyword.HASTE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, gogo)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(gogo.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(gogo.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -118,7 +120,7 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.hasKeyword(gd, gogo, Keyword.HASTE)).isFalse();
-        assertThat(gogo.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(gogo.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -153,7 +155,7 @@ class GogoMysteriousMimeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, gogo)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gogo, Keyword.HASTE)).isFalse();
-        assertThat(gogo.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(gogo.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -175,7 +177,7 @@ class GogoMysteriousMimeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

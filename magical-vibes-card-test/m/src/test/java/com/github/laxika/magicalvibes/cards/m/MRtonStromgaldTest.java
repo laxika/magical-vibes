@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -218,7 +222,8 @@ class MRtonStromgaldTest extends BaseCardTest {
         addCreatureReady(player1, new BalduvianBears()).setAttacking(true);
         addCreatureReady(player1, new BalduvianBears()).setAttacking(true);
         Permanent marton = addCreatureReady(player2, new MRtonStromgald());
-        marton.setAdditionalBlocksUntilEndOfTurn(1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(1), marton.getId(), Duration.UNTIL_END_OF_TURN));
         Permanent bear = addCreatureReady(player2, new BalduvianBears());
 
         prepareDeclareBlockers();

@@ -31,8 +31,8 @@ class ClammyProwlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
-        assertThat(prowler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, prowler)).isFalse();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ClammyProwlerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(prowler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, prowler)).isFalse();
     }
 
     @Test
@@ -54,13 +54,13 @@ class ClammyProwlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -72,8 +72,8 @@ class ClammyProwlerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.isCantBeBlocked()).isFalse();
-        assertThat(prowler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, prowler)).isFalse();
     }
 
     @Test
@@ -86,7 +86,7 @@ class ClammyProwlerTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -100,6 +100,6 @@ class ClammyProwlerTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(prowler.getCard());
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 }

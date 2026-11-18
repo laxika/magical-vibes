@@ -730,14 +730,15 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             // CR 508.1d: a must-attack requirement is only "able" to be obeyed without paying an attack
             // tax, since the controller is not required to pay that cost.
-            if (attacker.getMustAttackTargetId() != null
-                    && validTargetIds.contains(attacker.getMustAttackTargetId())
-                    && attackLegalityService.canAttackDefender(gameData, attacker, attacker.getMustAttackTargetId())
+            UUID requiredDefenderId = gameData.mustAttackDefender(attacker.getId());
+            if (requiredDefenderId != null
+                    && validTargetIds.contains(requiredDefenderId)
+                    && attackLegalityService.canAttackDefender(gameData, attacker, requiredDefenderId)
                     && castingCostService.getAttackPaymentPerCreature(gameData, playerId,
-                    attacker.getMustAttackTargetId(), attacker) == 0
+                    requiredDefenderId, attacker) == 0
                     && castingCostService.getAttackLifePaymentPerCreature(gameData, playerId,
-                    attacker.getMustAttackTargetId(), attacker) == 0
-                    && !attacker.getMustAttackTargetId().equals(targetId)) {
+                    requiredDefenderId, attacker) == 0
+                    && !requiredDefenderId.equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
             }
             if (gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects().stream()

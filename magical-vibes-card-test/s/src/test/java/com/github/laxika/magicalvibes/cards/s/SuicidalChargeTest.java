@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GoblinOutlander;
 import com.github.laxika.magicalvibes.cards.t.TukatongueThallid;
 import com.github.laxika.magicalvibes.cards.v.VillageMessenger;
@@ -30,7 +32,7 @@ class SuicidalChargeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, enemyBear)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(1);
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
         // The enchantment was sacrificed as the cost.
         harness.assertInGraveyard(player1, "Suicidal Charge");
     }
@@ -46,7 +48,7 @@ class SuicidalChargeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
-        assertThat(ownBear.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownBear.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -64,7 +66,7 @@ class SuicidalChargeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, enemyBear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(2);
-        assertThat(enemyBear.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -78,12 +80,12 @@ class SuicidalChargeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Suicidal Charge");
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectiveToughness(gd, enemy)).isEqualTo(2);
-        assertThat(enemy.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemy.getId(), MustAttackIfAbleEffect.class)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveToughness(gd, enemy)).isEqualTo(1);
-        assertThat(enemy.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemy.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -96,9 +98,9 @@ class SuicidalChargeTest extends BaseCardTest {
         Permanent afterResolution = addCreatureReady(player2, new GoblinOutlander());
 
         assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(1);
-        assertThat(beforeResolution.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(beforeResolution.getId(), MustAttackIfAbleEffect.class)).isTrue();
         assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
-        assertThat(afterResolution.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(afterResolution.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -114,7 +116,7 @@ class SuicidalChargeTest extends BaseCardTest {
         Permanent token = findPermanent(player2, "Saproling");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

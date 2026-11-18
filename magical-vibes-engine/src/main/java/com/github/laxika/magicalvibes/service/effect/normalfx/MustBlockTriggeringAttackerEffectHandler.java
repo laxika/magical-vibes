@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,7 +36,7 @@ public class MustBlockTriggeringAttackerEffectHandler implements NormalEffectHan
             return;
         }
 
-        blocker.getMustBlockIdsUntilEndOfCombat().add(attacker.getId());
+        gameData.addEffectOnPermanent(entry, new MustBlockSourceEffect(attacker.getId(), null, true), blocker.getId(), Duration.UNTIL_END_OF_COMBAT);
         gameLogService.append(gameData, GameLog.cardTextCard(blocker.getCard(),
                 " must block ", attacker.getCard(), " this combat if able."));
         log.info("Game {} - {} must block {} this combat if able", gameData.id,

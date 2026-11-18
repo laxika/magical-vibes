@@ -49,7 +49,6 @@ public class EachOpponentCreatureBlocksThisTurnIfAbleEffectHandler implements No
                     continue;
                 }
 
-                permanent.setMustBlockThisTurnIfAble(true);
                 gameLogService.append(gameData, GameLog.textCardText("", permanent.getCard(), " blocks this turn if able."));
             }
         }

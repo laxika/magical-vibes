@@ -27,7 +27,7 @@ class PasswallAdeptTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ class PasswallAdeptTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -52,13 +52,13 @@ class PasswallAdeptTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class PasswallAdeptTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, adept.getId());
         harness.passBothPriorities();
 
-        assertThat(adept.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, adept)).isTrue();
     }
 
     @Test
@@ -104,10 +104,10 @@ class PasswallAdeptTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
         assertThat(adept.isTapped()).isFalse();
-        assertThat(adept.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, adept)).isFalse();
     }
 
     @Test
@@ -118,7 +118,7 @@ class PasswallAdeptTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, adept.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(adept.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, adept)).isFalse();
     }
 
     @Test
@@ -132,7 +132,7 @@ class PasswallAdeptTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -148,8 +148,8 @@ class PasswallAdeptTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(other.isCantBeBlocked()).isFalse();
-        assertThat(adept.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, adept)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

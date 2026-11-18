@@ -27,7 +27,7 @@ class AgentOfHorizonsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(agent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isTrue();
         assertThat(agent.isTapped()).isFalse();
     }
 
@@ -39,13 +39,13 @@ class AgentOfHorizonsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(agent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(agent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isFalse();
     }
 
     @Test
@@ -58,7 +58,7 @@ class AgentOfHorizonsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(agent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isFalse();
     }
 
     @Test
@@ -70,10 +70,10 @@ class AgentOfHorizonsTest extends BaseCardTest {
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(agent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(agent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isTrue();
         assertThat(agent.isTapped()).isTrue();
     }
 
@@ -87,7 +87,7 @@ class AgentOfHorizonsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(agent.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isFalse();
     }
 
     @Test
@@ -101,14 +101,14 @@ class AgentOfHorizonsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(otherAgent.isCantBeBlocked()).isFalse();
-        assertThat(blocker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherAgent)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, blocker)).isFalse();
         declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(agent.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, agent)).isTrue();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
     }
 

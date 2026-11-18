@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,7 +33,7 @@ class ZogTriceratonCastawayTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -70,7 +72,7 @@ class ZogTriceratonCastawayTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, zog.getId());
         harness.passBothPriorities();
 
-        assertThat(zog.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(zog.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -131,10 +133,10 @@ class ZogTriceratonCastawayTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 }

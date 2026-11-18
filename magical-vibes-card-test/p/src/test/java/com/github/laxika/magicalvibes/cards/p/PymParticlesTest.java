@@ -28,7 +28,7 @@ class PymParticlesTest extends BaseCardTest {
         castPymParticles(target);
 
         assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInHand(player1, "Forest");
     }
 
@@ -39,14 +39,14 @@ class PymParticlesTest extends BaseCardTest {
         castPymParticles(target);
 
         assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -71,7 +71,7 @@ class PymParticlesTest extends BaseCardTest {
         castPymParticles(target);
 
         assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

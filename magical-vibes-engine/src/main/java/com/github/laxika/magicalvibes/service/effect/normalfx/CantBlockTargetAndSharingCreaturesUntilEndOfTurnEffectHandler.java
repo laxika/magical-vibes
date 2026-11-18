@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +57,8 @@ public class CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffectHandler imple
                     .noneMatch(targetColors::contains)))) {
                 return;
             }
-            permanent.setCantBlockThisTurn(true);
-            permanent.setCantBlockGrantedAbilityThisTurn(true);
+            gameData.addEffectOnPermanent(entry, new GrantEffectEffect(new CantBlockEffect(), GrantScope.TARGET),
+                    permanent.getId(), Duration.UNTIL_END_OF_TURN);
             affectedCount[0]++;
         });
 

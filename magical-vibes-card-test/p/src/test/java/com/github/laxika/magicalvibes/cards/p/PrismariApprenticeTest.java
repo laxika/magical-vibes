@@ -32,7 +32,7 @@ class PrismariApprenticeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -48,7 +48,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -67,7 +67,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -85,7 +85,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(apprentice.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isFalse();
     }
 
     @Test
@@ -99,7 +99,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -112,7 +112,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, List.of(player2.getId()));
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -128,7 +128,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -142,7 +142,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isFalse();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -155,7 +155,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castInstant(player2, 0);
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isFalse();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -171,7 +171,7 @@ class PrismariApprenticeTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         resolveAllTriggers();
 
-        assertThat(apprentice.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, apprentice)).isTrue();
         assertThat(apprentice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

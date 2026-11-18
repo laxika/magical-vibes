@@ -47,7 +47,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent target = findPermanent(player2, "Moriok Reaver");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent target = findPermanent(player1, "Moriok Reaver");
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(selfId);
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
-        assertThat(findPermanent(player1, "Neurok Invisimancer").isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player1, "Neurok Invisimancer"))).isTrue();
     }
 
     @Test

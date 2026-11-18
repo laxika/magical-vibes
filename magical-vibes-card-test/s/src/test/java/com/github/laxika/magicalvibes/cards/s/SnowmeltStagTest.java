@@ -49,7 +49,7 @@ class SnowmeltStagTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(stag.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, stag)).isTrue();
     }
 
     @Test
@@ -60,13 +60,13 @@ class SnowmeltStagTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(stag.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, stag)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stag.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, stag)).isFalse();
     }
 
     @Test
@@ -108,7 +108,7 @@ class SnowmeltStagTest extends BaseCardTest {
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(stag.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, stag)).isFalse();
         harness.passBothPriorities();
         declareAttackersAndPrepareBlockers(List.of(0, 1));
 
@@ -127,7 +127,7 @@ class SnowmeltStagTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(stag.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, stag)).isTrue();
         assertThat(stag.isTapped()).isTrue();
     }
 

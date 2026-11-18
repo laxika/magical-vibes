@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GoblinTombRaider;
 import com.github.laxika.magicalvibes.cards.m.MineshaftSpider;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,7 +44,7 @@ class BreechesEagerPillagerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -95,7 +97,7 @@ class BreechesEagerPillagerTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
     }
@@ -125,7 +127,7 @@ class BreechesEagerPillagerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, breeches.getId());
         resolveAllTriggers();
 
-        assertThat(breeches.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(breeches.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test

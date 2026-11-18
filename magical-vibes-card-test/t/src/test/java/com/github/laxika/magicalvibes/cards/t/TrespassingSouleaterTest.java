@@ -43,7 +43,7 @@ class TrespassingSouleaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(souleater.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, souleater)).isTrue();
     }
 
     @Test
@@ -55,13 +55,13 @@ class TrespassingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(souleater.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, souleater)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(souleater.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, souleater)).isFalse();
     }
 
 
@@ -74,7 +74,7 @@ class TrespassingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(souleater.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, souleater)).isTrue();
         harness.assertLife(player1, 18);
     }
 
@@ -88,7 +88,7 @@ class TrespassingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(souleater.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, souleater)).isTrue();
         harness.assertLife(player1, 20);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
@@ -145,8 +145,8 @@ class TrespassingSouleaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(original.isCantBeBlocked()).isFalse();
-        assertThat(replacement.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, original)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, replacement)).isFalse();
     }
 
     @Test
@@ -174,7 +174,7 @@ class TrespassingSouleaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
-        assertThat(souleater.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, souleater)).isTrue();
     }
 
     @Test

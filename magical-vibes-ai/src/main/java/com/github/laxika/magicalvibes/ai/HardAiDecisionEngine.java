@@ -2677,7 +2677,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Returns true if the attacker has a must-be-blocked-if-able effect.
      */
     private boolean hasMustBeBlockedIfAbleRequirement(GameData gameData, Permanent attacker) {
-        if (attacker.isMustBeBlockedThisTurn()) return true;
+        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class)) return true;
         boolean hasMustBlock = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class::isInstance);
         if (hasMustBlock) return true;

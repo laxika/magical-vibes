@@ -31,7 +31,7 @@ class TouchOfInvisibilityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -52,8 +52,8 @@ class TouchOfInvisibilityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.isCantBeBlocked()).isTrue();
-        assertThat(otherCreature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherCreature)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -74,7 +74,7 @@ class TouchOfInvisibilityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test

@@ -158,8 +158,8 @@ class AgilityBobbleheadTest extends BaseCardTest {
 
         assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(first.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
-        assertThat(second.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+        assertThat(gd.blockRestrictions(first.getId())).hasSize(1);
+        assertThat(gd.blockRestrictions(second.getId())).hasSize(1);
     }
 
     @Test
@@ -176,7 +176,7 @@ class AgilityBobbleheadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+        assertThat(gd.blockRestrictions(second.getId())).hasSize(1);
     }
 
     @Test
@@ -203,7 +203,7 @@ class AgilityBobbleheadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(creature.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+        assertThat(gd.blockRestrictions(creature.getId())).hasSize(1);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
@@ -211,6 +211,6 @@ class AgilityBobbleheadTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(creature.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
+        assertThat(gd.blockRestrictions(creature.getId())).isEmpty();
     }
 }

@@ -32,7 +32,7 @@ class SahaginTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sahagin.getEffectivePower()).isEqualTo(1);
-        assertThat(sahagin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
     @Test
@@ -47,14 +47,14 @@ class SahaginTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sahagin.getEffectivePower()).isEqualTo(2);
-        assertThat(sahagin.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(sahagin.getEffectivePower()).isEqualTo(2);
-        assertThat(sahagin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class SahaginTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sahagin.getEffectivePower()).isEqualTo(1);
-        assertThat(sahagin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
     @Test
@@ -82,7 +82,7 @@ class SahaginTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(sahagin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(sahagin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
     @Test
@@ -98,7 +98,7 @@ class SahaginTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(sahagin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(sahagin.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isTrue();
     }
 
     @Test
@@ -112,7 +112,7 @@ class SahaginTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(sahagin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(sahagin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
     @Test
@@ -125,7 +125,7 @@ class SahaginTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(sahagin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(sahagin.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
     private void setUpMainPhase() {

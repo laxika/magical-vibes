@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EverlastingTorment;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
@@ -31,8 +33,8 @@ class AggravateTest extends BaseCardTest {
 
         assertThat(enemyBear.getMarkedDamage()).isEqualTo(1);
         assertThat(otherEnemyBear.getMarkedDamage()).isEqualTo(1);
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
-        assertThat(otherEnemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(otherEnemyBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -45,7 +47,7 @@ class AggravateTest extends BaseCardTest {
         castAggravate(player2.getId());
 
         assertThat(ownBear.getMarkedDamage()).isZero();
-        assertThat(ownBear.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownBear.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(enemyArtifact.getMarkedDamage()).isZero();
     }
 
@@ -58,10 +60,10 @@ class AggravateTest extends BaseCardTest {
         castAggravate(player2.getId());
 
         assertThat(gargoyles.getMarkedDamage()).isZero();
-        assertThat(gargoyles.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(gargoyles.getId(), MustAttackIfAbleEffect.class)).isFalse();
         // The unprotected creature is still damaged and forced.
         assertThat(enemyBear.getMarkedDamage()).isEqualTo(1);
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -72,7 +74,7 @@ class AggravateTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         castAggravate(player2.getId());
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -95,7 +97,7 @@ class AggravateTest extends BaseCardTest {
         castAggravate(player1.getId());
 
         assertThat(ownBear.getMarkedDamage()).isEqualTo(1);
-        assertThat(ownBear.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -108,7 +110,7 @@ class AggravateTest extends BaseCardTest {
 
         assertThat(enemyBear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(enemyBear.getMarkedDamage()).isZero();
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -136,7 +138,7 @@ class AggravateTest extends BaseCardTest {
         Permanent laterBear = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(laterBear.getMarkedDamage()).isZero();
-        assertThat(laterBear.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(laterBear.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     private void castAggravate(UUID targetPlayerId) {

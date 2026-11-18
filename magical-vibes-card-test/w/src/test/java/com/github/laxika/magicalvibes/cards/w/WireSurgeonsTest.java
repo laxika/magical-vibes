@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.cards.v.VaultSkirge;
@@ -36,8 +38,8 @@ class WireSurgeonsTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.isMustAttackThisTurn()).isTrue();
-        assertThat(token.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(token.getId())).isEqualTo(player2.getId());
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 

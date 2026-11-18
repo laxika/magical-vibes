@@ -32,7 +32,7 @@ class SneakingGuideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class SneakingGuideTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -93,13 +93,13 @@ class SneakingGuideTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -130,9 +130,9 @@ class SneakingGuideTest extends BaseCardTest {
 
         assertThat(guide.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
-        assertThat(guide.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, guide)).isFalse();
         harness.passBothPriorities();
-        assertThat(guide.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, guide)).isTrue();
     }
 
     @Test
@@ -177,7 +177,7 @@ class SneakingGuideTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, guide.getId());
 
         assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(4);
-        assertThat(guide.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, guide)).isTrue();
     }
 
     @Test
@@ -191,6 +191,6 @@ class SneakingGuideTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(guide.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 }

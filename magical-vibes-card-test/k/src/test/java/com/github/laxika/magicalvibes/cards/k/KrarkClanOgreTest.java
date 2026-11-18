@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.cards.a.AvariceTotem;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -85,7 +87,7 @@ class KrarkClanOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(ogre.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Avarice Totem");
     }
@@ -101,14 +103,14 @@ class KrarkClanOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ogre.getId());
         harness.passBothPriorities();
 
-        assertThat(ogre.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ogre.getId(), CantBlockEffect.class)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         attacker.setAttacking(true);
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
-        assertThat(ogre.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ogre.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

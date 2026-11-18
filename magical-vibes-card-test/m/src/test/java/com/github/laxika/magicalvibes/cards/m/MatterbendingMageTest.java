@@ -58,7 +58,7 @@ class MatterbendingMageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, mage)).isTrue();
     }
 
     @Test
@@ -71,7 +71,7 @@ class MatterbendingMageTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mage)).isFalse();
     }
 
     @Test
@@ -83,12 +83,12 @@ class MatterbendingMageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(mage.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, mage)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(mage.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mage)).isFalse();
     }
 
     @Test
@@ -134,7 +134,7 @@ class MatterbendingMageTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mage)).isFalse();
         harness.assertLife(player1, 19);
     }
 
@@ -147,13 +147,13 @@ class MatterbendingMageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castSorcery(player1, 0, 1, player2.getId());
-        assertThat(firstMage.isCantBeBlocked()).isFalse();
-        assertThat(secondMage.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, firstMage)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, secondMage)).isFalse();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(firstMage.isCantBeBlocked()).isTrue();
-        assertThat(secondMage.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, firstMage)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, secondMage)).isTrue();
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
         harness.assertLife(player2, 19);

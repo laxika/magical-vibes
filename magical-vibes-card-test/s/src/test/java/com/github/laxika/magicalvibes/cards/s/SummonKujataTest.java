@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -54,10 +56,10 @@ class SummonKujataTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, third.getId());
         harness.passBothPriorities();
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isTrue();
-        assertThat(third.isCantBlockThisTurn()).isTrue();
-        assertThat(fourth.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(third.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(fourth.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -129,8 +131,8 @@ class SummonKujataTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isFalse();
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

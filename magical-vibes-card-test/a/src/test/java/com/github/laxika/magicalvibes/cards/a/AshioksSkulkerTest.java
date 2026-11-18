@@ -22,7 +22,7 @@ class AshioksSkulkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skulker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, skulker)).isTrue();
     }
 
     @Test
@@ -37,7 +37,7 @@ class AshioksSkulkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(skulker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, skulker)).isFalse();
     }
 
     @Test
@@ -62,7 +62,7 @@ class AshioksSkulkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skulker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, skulker)).isTrue();
         assertThat(skulker.isTapped()).isTrue();
     }
 
@@ -84,7 +84,7 @@ class AshioksSkulkerTest extends BaseCardTest {
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
         assertThat(bls.canBlockAttacker(gd, blocker, other,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
-        assertThat(blocker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, blocker)).isFalse();
     }
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);

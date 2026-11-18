@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.l.Lurker;
 import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -75,7 +79,8 @@ class SorrowsPathTest extends BaseCardTest {
         Permanent blockerA = addCreatureReady(player2, new Lurker());
         Permanent blockerB = addCreatureReady(player2, new Lurker());
         setupCombat(attackerA, attackerB, attackerC);
-        blockerA.setAdditionalBlocksUntilEndOfTurn(1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(1), blockerA.getId(), Duration.UNTIL_END_OF_TURN));
         assignBlocker(blockerA, attackerA);
         assignBlocker(blockerA, attackerB);
         assignBlocker(blockerB, attackerC);

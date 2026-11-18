@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.k.KillSwitch;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +31,8 @@ class OffBalanceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.isCantAttackThisTurn()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantAttackThisTurnEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         assertThat(als.canAttack(gd, target, player2.getId())).isFalse();
         assertThat(bls.canBlock(gd, target)).isFalse();
         assertThat(als.canAttack(gd, unaffected, player2.getId())).isTrue();

@@ -48,7 +48,7 @@ class BlitzballStadiumTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(stadium.isTapped()).isTrue();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
 
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -122,7 +122,7 @@ class BlitzballStadiumTest extends BaseCardTest {
         harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
                 harness::passBothPriorities);
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 

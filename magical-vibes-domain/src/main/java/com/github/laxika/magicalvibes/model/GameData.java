@@ -4751,6 +4751,101 @@ public class GameData {
     }
 
     /**
+     * A rules-modifying effect the resolving {@code entry} makes on the permanent {@code permanentId} for
+     * {@code duration} (CR 611.2a): "it can't block this turn", "it must be blocked this turn if able". The effect stays
+     * with that permanent and ends with its duration; a permanent that leaves the battlefield and returns is a new
+     * object it doesn't apply to.
+     */
+    public void addEffectOnPermanent(StackEntry entry, CardEffect effect, UUID permanentId,
+                                     com.github.laxika.magicalvibes.model.effect.Duration duration) {
+        addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, permanentId, duration));
+    }
+
+    /**
+     * The player the newest "attacks that player if able" requirement on {@code permanentId} names
+     * ({@link com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect#defenderId()}), or {@code null} when
+     * none names one.
+     */
+    public UUID mustAttackDefender(UUID permanentId) {
+        UUID defender = null;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect.class)) {
+            UUID named = ((com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect) fe.effect()).defenderId();
+            if (named != null) {
+                defender = named;
+            }
+        }
+        return defender;
+    }
+
+    /**
+     * How many creatures beyond one the permanent {@code permanentId} can block by the resolved "can block an
+     * additional creature this turn" effects on it, {@link Integer#MAX_VALUE} once one lets it block any number.
+     */
+    public int additionalBlocksThisTurn(UUID permanentId) {
+        int total = 0;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect.class,
+                com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect.class)) {
+            if (!(fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect grant)) {
+                return Integer.MAX_VALUE;
+            }
+            total += grant.additionalBlocks();
+        }
+        return total;
+    }
+
+    /**
+     * The attackers the permanent {@code permanentId} must block if able (CR 509.1c), by the resolved "blocks [that
+     * creature] this turn / this combat if able" effects on it
+     * ({@link com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect#sourcePermanentId()}).
+     */
+    public Set<UUID> requiredBlockSourceIds(UUID permanentId) {
+        Set<UUID> sources = new LinkedHashSet<>();
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect.class)) {
+            sources.add(((com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect) fe.effect()).sourcePermanentId());
+        }
+        return sources;
+    }
+
+    /**
+     * The attackers the permanent {@code permanentId} can't block, by the resolved "can't block [that creature] this
+     * turn" effects on it ({@link com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect#sourcePermanentId()}).
+     */
+    public Set<UUID> cantBlockSourceIds(UUID permanentId) {
+        Set<UUID> sources = new LinkedHashSet<>();
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect.class)) {
+            sources.add(((com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect) fe.effect()).sourcePermanentId());
+        }
+        return sources;
+    }
+
+    /** The resolved "can't be blocked except by …" effects on the permanent {@code permanentId}, oldest first. */
+    public List<com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect> blockRestrictions(
+            UUID permanentId) {
+        return floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect.class).stream()
+                .map(fe -> (com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect) fe.effect())
+                .toList();
+    }
+
+    /**
+     * What the defending player must control for the permanent {@code permanentId} to be unblockable, by the resolved
+     * landwalk grants on it (Barbarian Guides' snow landwalk of a chosen type).
+     */
+    public List<PermanentPredicate> unblockableIfDefenderControls(UUID permanentId) {
+        return floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect.class)
+                .stream()
+                .map(fe -> ((com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect)
+                        fe.effect()).defenderPermanentPredicate())
+                .toList();
+    }
+
+    /**
      * Makes {@code controllerId} control {@code controlledId} for {@code duration} (CR 724): a floating
      * {@link com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect} on the controlled player. Of the effects on one player the last one created is
      * the one that works (CR 724.1a), so this ends the older ones, begun or not; an older one that promises an extra

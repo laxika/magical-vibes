@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DaruLancer;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,9 +31,9 @@ class WaveOfIndifferenceTest extends BaseCardTest {
 
         castWave(2, List.of(firstTarget.getId(), secondTarget.getId()));
 
-        assertThat(firstTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(secondTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(firstTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(secondTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(untargeted.getId(), CantBlockEffect.class)).isFalse();
 
         declareAttackersAndPrepareBlockers(List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -69,7 +71,7 @@ class WaveOfIndifferenceTest extends BaseCardTest {
 
         castWave(0, List.of());
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -79,7 +81,7 @@ class WaveOfIndifferenceTest extends BaseCardTest {
 
         castWave(1, List.of(target.getId()));
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -88,13 +90,13 @@ class WaveOfIndifferenceTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new DaruLancer());
 
         castWave(1, List.of(target.getId()));
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -124,8 +126,8 @@ class WaveOfIndifferenceTest extends BaseCardTest {
         gd.playerHands.get(player2.getId()).add(departing.getCard());
         harness.passBothPriorities();
 
-        assertThat(remaining.isCantBlockThisTurn()).isTrue();
-        assertThat(departing.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(remaining.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(departing.getId(), CantBlockEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Wave of Indifference");
     }
 

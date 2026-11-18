@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -185,7 +187,7 @@ class ValeronOutlanderTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, valeron)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, valeron)).isEqualTo(1);
-        assertThat(valeron.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(valeron.getId(), MustAttackIfAbleEffect.class)).isTrue();
         harness.assertOnBattlefield(player2, "Valeron Outlander");
     }
 }

@@ -149,7 +149,7 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(survivor.getPowerModifier()).isZero();
-        assertThat(survivor.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, survivor)).isFalse();
         harness.assertNotInHand(player1, "Desert of the Mindful");
         harness.passBothPriorities();
         harness.assertInHand(player1, "Desert of the Mindful");

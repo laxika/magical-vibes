@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
@@ -250,13 +252,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveSorcery(player2, 0, List.of(terror.getId()));
-        assertThat(terror.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(terror.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(terror.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(terror.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(terror.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(terror.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -271,7 +273,7 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(terror.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(terror.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

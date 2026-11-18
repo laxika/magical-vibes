@@ -28,26 +28,26 @@ class RazzleDazzlerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isTrue();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
     }
     @Test
     @DisplayName("Opponent spells neither trigger nor count toward the controller's second spell")
@@ -61,7 +61,7 @@ class RazzleDazzlerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -69,7 +69,7 @@ class RazzleDazzlerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isTrue();
     }
 
     @Test
@@ -86,17 +86,17 @@ class RazzleDazzlerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
 
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(dazzler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isTrue();
     }
 
     @Test
@@ -114,7 +114,7 @@ class RazzleDazzlerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isTrue();
     }
 
     @Test
@@ -132,7 +132,7 @@ class RazzleDazzlerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
     }
 
     @Test
@@ -146,11 +146,11 @@ class RazzleDazzlerTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(dazzler.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isFalse();
         harness.passBothPriorities();
 
         assertThat(dazzler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(dazzler.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, dazzler)).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         resolveAllTriggers();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -172,6 +172,6 @@ class RazzleDazzlerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(removed);
         assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(survivor.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
     }
 }

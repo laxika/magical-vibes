@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -44,8 +46,8 @@ class GraywatersFixerTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(token.isAttacking()).isFalse();
         assertThat(token.isTapped()).isFalse();
-        assertThat(token.isMustAttackThisTurn()).isTrue();
-        assertThat(token.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(token.getId())).isEqualTo(player2.getId());
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 

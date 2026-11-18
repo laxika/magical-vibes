@@ -52,7 +52,7 @@ class VampireGourmandTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
-        assertThat(vampire.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class VampireGourmandTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        assertThat(vampire.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ class VampireGourmandTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(vampire.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -101,14 +101,14 @@ class VampireGourmandTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
 
-        assertThat(vampire.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isTrue();
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isFalse();
     }
 
     @Test
@@ -125,7 +125,7 @@ class VampireGourmandTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(vampire.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -145,7 +145,7 @@ class VampireGourmandTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(vampire.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, vampire)).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 }

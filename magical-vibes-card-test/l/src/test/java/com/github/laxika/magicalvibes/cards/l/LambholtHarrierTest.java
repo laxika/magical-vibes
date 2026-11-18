@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +29,7 @@ class LambholtHarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -52,11 +54,11 @@ class LambholtHarrierTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -71,7 +73,7 @@ class LambholtHarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harrier.getId());
         harness.passBothPriorities();
 
-        assertThat(harrier.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(harrier.getId(), CantBlockEffect.class)).isTrue();
         assertThat(harrier.isTapped()).isTrue();
     }
 
@@ -89,9 +91,9 @@ class LambholtHarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, second.getId());
         harness.passBothPriorities();
 
-        assertThat(first.isCantBlockThisTurn()).isTrue();
-        assertThat(second.isCantBlockThisTurn()).isTrue();
-        assertThat(harrier.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(first.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(second.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(harrier.getId(), CantBlockEffect.class)).isFalse();
         assertThat(harrier.isTapped()).isFalse();
     }
 
@@ -105,6 +107,6 @@ class LambholtHarrierTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, harrier.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(harrier.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(harrier.getId(), CantBlockEffect.class)).isFalse();
     }
 }

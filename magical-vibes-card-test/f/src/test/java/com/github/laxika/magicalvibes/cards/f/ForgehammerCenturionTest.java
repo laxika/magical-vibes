@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.MyrConvert;
@@ -73,7 +75,7 @@ class ForgehammerCenturionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(centurion.getCounterCount(CounterType.OIL)).isZero();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -90,7 +92,7 @@ class ForgehammerCenturionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(centurion.getCounterCount(CounterType.OIL)).isEqualTo(1);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -105,13 +107,13 @@ class ForgehammerCenturionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -129,7 +131,7 @@ class ForgehammerCenturionTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(centurion.getCounterCount(CounterType.OIL)).isEqualTo(3);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

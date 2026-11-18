@@ -49,7 +49,7 @@ class MarthaJonesTest extends BaseCardTest {
         sacrificeClue(findPermanent(player1, "Clue"), null);
 
         assertThat(findPermanents(player1, "Clue")).isEmpty();
-        assertThat(findPermanent(player1, "Martha Jones").isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, findPermanent(player1, "Martha Jones"))).isTrue();
         harness.assertInHand(player1, "Rory Williams");
     }
 
@@ -62,8 +62,8 @@ class MarthaJonesTest extends BaseCardTest {
 
         sacrificeClue(clue, target);
 
-        assertThat(martha.isCantBeBlocked()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -74,7 +74,7 @@ class MarthaJonesTest extends BaseCardTest {
 
         sacrificeClue(clue, null);
 
-        assertThat(martha.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isTrue();
     }
 
     private void sacrificeClue(Permanent clue, Permanent target) {
@@ -96,8 +96,8 @@ class MarthaJonesTest extends BaseCardTest {
 
         sacrificeClue(addClueToken(player1), target);
 
-        assertThat(martha.isCantBeBlocked()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -114,8 +114,8 @@ class MarthaJonesTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
-        assertThat(martha.isCantBeBlocked()).isTrue();
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
     }
 
     @Test
@@ -130,7 +130,7 @@ class MarthaJonesTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(martha.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isFalse();
     }
 
     @Test
@@ -148,7 +148,7 @@ class MarthaJonesTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
         resolveAllTriggers();
 
-        assertThat(martha.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isFalse();
     }
 
     @Test
@@ -166,7 +166,7 @@ class MarthaJonesTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, martha);
         resolveAllTriggers();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -175,16 +175,16 @@ class MarthaJonesTest extends BaseCardTest {
         Permanent martha = addCreatureReady(player1, new MarthaJones());
         Permanent target = addCreatureReady(player1, new RoryWilliams());
         sacrificeClue(addClueToken(player1), target);
-        assertThat(martha.isCantBeBlocked()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(martha.isCantBeBlocked()).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, martha)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     private Permanent addClueToken(Player player) {

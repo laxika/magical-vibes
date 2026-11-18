@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,7 +43,7 @@ public class MustBlockEachAttackingCreatureThisTurnEffectHandler implements Norm
                 continue;
             }
 
-            target.setMustBlockEachAttackingCreatureThisTurnIfAble(true);
+            gameData.addEffectOnPermanent(entry, new MustBlockEachAttackingCreatureThisTurnEffect(), target.getId(), Duration.UNTIL_END_OF_TURN);
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" requires ")

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AmaranthineWall;
 import com.github.laxika.magicalvibes.cards.f.FiendArtisan;
 import com.github.laxika.magicalvibes.cards.f.FrillscareMentor;
@@ -62,7 +64,7 @@ class ZirdaTheDawnwakerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         declareAttackersAndPrepareBlockers(player1, List.of(1));
 
@@ -126,7 +128,7 @@ class ZirdaTheDawnwakerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, zirda.getId());
         harness.passBothPriorities();
 
-        assertThat(zirda.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(zirda.getId(), CantBlockEffect.class)).isTrue();
         assertThat(zirda.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.e.EnvironmentalSciences;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,7 +36,7 @@ class AcademicDisputeTest extends BaseCardTest {
         castAcademicDispute(target);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         beginCombat(attacker);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -138,7 +140,7 @@ class AcademicDisputeTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -170,13 +172,13 @@ class AcademicDisputeTest extends BaseCardTest {
         Permanent target = addReadyCreature(player2, new GrizzlyBears());
         castAcademicDispute(target);
         harness.handleMayAbilityChosen(player1, false);
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     private void castAcademicDispute(Permanent target, Card... additionalHandCards) {

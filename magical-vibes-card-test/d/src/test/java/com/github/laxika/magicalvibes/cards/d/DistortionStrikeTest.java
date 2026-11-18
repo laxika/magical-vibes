@@ -32,7 +32,7 @@ class DistortionStrikeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -48,7 +48,7 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isFalse();
     }
 
     @Test
@@ -73,7 +73,7 @@ class DistortionStrikeTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         harness.assertInGraveyard(player1, "Distortion Strike");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
@@ -98,7 +98,7 @@ class DistortionStrikeTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(1);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
     @Test
@@ -140,9 +140,9 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
         assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
         harness.assertInGraveyard(player1, "Distortion Strike");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
@@ -174,7 +174,7 @@ class DistortionStrikeTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 
     @Test

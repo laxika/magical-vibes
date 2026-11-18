@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -46,7 +48,7 @@ public class MatchingCreaturesMustAttackThisTurnEffectHandler implements NormalE
                 // can legally attack, so setting the flag on ones that can't is harmless.
                 if (gameQueryService.isCreature(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(permanent, e.matcher(), filterContext)) {
-                    permanent.setMustAttackThisTurn(true);
+                    gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(), permanent.getId(), Duration.UNTIL_END_OF_TURN);
                     count[0]++;
                 }
             });

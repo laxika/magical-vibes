@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,7 +55,8 @@ class AtlasSizableStoogeTest extends BaseCardTest {
     @DisplayName("Blocking multiple creatures triggers the life gain only once")
     void blockingMultipleCreaturesGainsLifeOnce() {
         Permanent atlas = addCreatureReady(player1, new AtlasSizableStooge());
-        atlas.setAdditionalBlocksUntilEndOfTurn(1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(1), atlas.getId(), Duration.UNTIL_END_OF_TURN));
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
         int startingLife = gd.playerLifeTotals.get(player1.getId());

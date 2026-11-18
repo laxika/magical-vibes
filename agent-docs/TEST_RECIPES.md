@@ -49,8 +49,7 @@ rejects a block.
 To inspect an attack declaration before combat advances, wrap the action in
 `harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(...))`.
 For blocking restrictions, assert legality through `bls.canBlockAttacker(...)` rather
-than a permanent's internal `cantBlockThisTurn` flag: floating effects may apply the
-restriction without setting that flag.
+than the floating effects behind it: several effects can stop a creature from blocking.
 
 If you need a variant (an extra priority pass, a different step), delegate to the
 inherited helper rather than re-inlining its body:

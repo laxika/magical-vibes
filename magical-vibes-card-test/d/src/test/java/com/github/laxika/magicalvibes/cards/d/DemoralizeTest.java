@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -79,8 +81,8 @@ class DemoralizeTest extends BaseCardTest {
 
         castDemoralize();
 
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
-        assertThat(opposingCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposingCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -94,7 +96,7 @@ class DemoralizeTest extends BaseCardTest {
 
         castDemoralize();
 
-        assertThat(opposingCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opposingCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

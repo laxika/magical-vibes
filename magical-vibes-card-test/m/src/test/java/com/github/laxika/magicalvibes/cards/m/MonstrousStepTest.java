@@ -30,7 +30,7 @@ class MonstrousStepTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isEqualTo(7);
         assertThat(attacker.getToughnessModifier()).isEqualTo(7);
-        assertThat(findPermanent(player2, "Grizzly Bears").getMustBlockIds()).containsExactly(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(findPermanent(player2, "Grizzly Bears").getId())).containsExactly(attacker.getId());
     }
 
     @Test
@@ -125,7 +125,7 @@ class MonstrousStepTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isZero();
         assertThat(blocker.getToughnessModifier()).isZero();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Monstrous Step");
     }
 
@@ -164,6 +164,6 @@ class MonstrousStepTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isZero();
         assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 }

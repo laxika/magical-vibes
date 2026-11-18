@@ -41,7 +41,7 @@ class RoguesPassageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(passage.isTapped()).isTrue();
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ class RoguesPassageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -70,11 +70,11 @@ class RoguesPassageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -87,7 +87,7 @@ class RoguesPassageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(other.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         declareAttackersAndPrepareBlockers(List.of(1, 2));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1))))

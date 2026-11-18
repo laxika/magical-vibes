@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -32,7 +34,7 @@ class DemonicDreadTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve cascade (empty library, no-op)
         harness.passBothPriorities(); // resolve the spell
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -46,7 +48,7 @@ class DemonicDreadTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve cascade (empty library, no-op)
         harness.passBothPriorities(); // resolve the spell
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
 
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -121,7 +123,7 @@ class DemonicDreadTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(below);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(below, equal, hit);
         resolveAllTriggers();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -142,9 +144,9 @@ class DemonicDreadTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playersWhoPlayedCardFromExileThisTurn).contains(player1.getId());
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
         resolveAllTriggers();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Demonic Dread");
     }
 
@@ -166,10 +168,10 @@ class DemonicDreadTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, target.getId());
         resolveAllTriggers();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     private void prepareCaster() {

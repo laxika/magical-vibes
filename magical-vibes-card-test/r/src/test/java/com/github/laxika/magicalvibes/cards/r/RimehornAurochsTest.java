@@ -58,7 +58,7 @@ class RimehornAurochsTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(blocker.getId(), attacker.getId()));
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).contains(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(attacker.getId());
 
         attacker.setAttacking(true);
         prepareDeclareBlockers(player1);
@@ -129,7 +129,7 @@ class RimehornAurochsTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -60,7 +63,7 @@ public class DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffectHandler i
             // The can't-block rider is a separate part of the effect, so it applies even when the
             // damage itself was prevented.
             if (e.creaturesCantBlock()) {
-                creature.setCantBlockThisTurn(true);
+                gameData.addEffectOnPermanent(entry, new CantBlockEffect(), creature.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " can't block this turn."));
             }
         }

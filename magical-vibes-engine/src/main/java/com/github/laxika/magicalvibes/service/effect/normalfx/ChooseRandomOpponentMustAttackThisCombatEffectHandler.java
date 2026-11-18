@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,8 +65,7 @@ public class ChooseRandomOpponentMustAttackThisCombatEffectHandler implements No
         }
 
         UUID chosenOpponentId = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
-        source.setMustAttackThisCombat(true);
-        source.setMustAttackTargetId(chosenOpponentId);
+        gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(chosenOpponentId), source.getId(), Duration.UNTIL_END_OF_COMBAT);
 
         String opponentName = gameData.playerIdToName.getOrDefault(chosenOpponentId, "that player");
         gameLogService.append(gameData,

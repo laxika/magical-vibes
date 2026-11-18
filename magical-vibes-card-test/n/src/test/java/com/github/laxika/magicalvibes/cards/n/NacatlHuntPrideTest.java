@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,7 +38,7 @@ class NacatlHuntPrideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, ABILITY_CANT_BLOCK, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -47,7 +52,7 @@ class NacatlHuntPrideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, ABILITY_MUST_BLOCK, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         beginCombat(attacker);
 
@@ -104,11 +109,11 @@ class NacatlHuntPrideTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, ABILITY_MUST_BLOCK, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
-        // End-of-turn cleanup clears "until end of turn" combat requirements.
-        target.resetModifiers();
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        // The cleanup step ends "until end of turn" combat requirements (CR 514.2).
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
 
         beginCombat(attacker);
 
@@ -182,16 +187,16 @@ class NacatlHuntPrideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 1, ABILITY_MUST_BLOCK, null, greenTarget.getId());
         harness.passBothPriorities();
-        assertThat(redTarget.isCantBlockThisTurn()).isTrue();
-        assertThat(greenTarget.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(redTarget.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(greenTarget.getId(), MustBlockEachCombatEffect.class)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(redTarget.isCantBlockThisTurn()).isFalse();
-        assertThat(greenTarget.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(redTarget.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(greenTarget.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -204,7 +209,7 @@ class NacatlHuntPrideTest extends BaseCardTest {
         assertThat(source.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(source.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(source.getId(), MustBlockEachCombatEffect.class)).isTrue();
     }
 
     @Test

@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -77,15 +83,14 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
 
         switch (requirement) {
             case MUST_ATTACK -> {
-                target.setMustAttackThisTurn(true);
+                stamp(gameData, entry, target, requirement);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must attack this turn if able."));
                 log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
             }
             case MUST_ATTACK_EFFECT_CONTROLLER -> {
-                target.setMustAttackThisTurn(true);
                 // Force the creature to attack the ability's controller specifically, not their planeswalkers
                 // (Scryfall ruling: "it must attack you, not the planeswalker")
-                target.setMustAttackTargetId(entry.getControllerId());
+                stamp(gameData, entry, target, requirement);
 
                 String controllerName = gameData.playerIdToName.get(entry.getControllerId());
 
@@ -93,7 +98,7 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
                 log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
             }
             case MUST_BLOCK -> {
-                target.setMustBlockThisTurnIfAble(true);
+                stamp(gameData, entry, target, requirement);
 
                 String logEntry = target.getCard().getName() + " blocks this turn if able.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
@@ -107,22 +112,22 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
                 boolean controllerIsActivePlayer = gameData.activePlayerId != null
                         && gameData.activePlayerId.equals(gameQueryService.findPermanentController(gameData, target.getId()));
                 if (controllerIsActivePlayer) {
-                    target.setMustAttackThisTurn(true);
+                    stamp(gameData, entry, target, CombatRequirement.MUST_ATTACK);
                     gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " attacks this combat if able."));
                 } else {
-                    target.setMustBlockThisTurnIfAble(true);
+                    stamp(gameData, entry, target, CombatRequirement.MUST_BLOCK);
                     gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " blocks this combat if able."));
                 }
                 log.info("Game {} - {} attacks or blocks this combat if able (attacking: {})",
                         gameData.id, target.getCard().getName(), controllerIsActivePlayer);
             }
             case MUST_BE_BLOCKED -> {
-                target.setMustBeBlockedThisTurn(true);
+                stamp(gameData, entry, target, requirement);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must be blocked this turn if able."));
                 log.info("Game {} - {} must be blocked this turn if able", gameData.id, target.getCard().getName());
             }
             case MUST_BE_BLOCKED_BY_ALL -> {
-                target.setMustBeBlockedByAllThisTurn(true);
+                stamp(gameData, entry, target, requirement);
                 gameLogService.append(gameData, GameLog.textCardText("All creatures able to block ", target.getCard(), " this turn do so."));
                 log.info("Game {} - all creatures able to block {} this turn do so", gameData.id, target.getCard().getName());
             }
@@ -146,7 +151,7 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
                 continue;
             }
 
-            stamp(permanent, requirement, entry.getControllerId());
+            stamp(gameData, entry, permanent, requirement);
             count++;
         }
 
@@ -156,16 +161,16 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
                 requirement, count);
     }
 
-    private void stamp(Permanent permanent, CombatRequirement requirement, UUID controllerId) {
-        switch (requirement) {
-            case MUST_ATTACK -> permanent.setMustAttackThisTurn(true);
-            case MUST_ATTACK_EFFECT_CONTROLLER -> {
-                permanent.setMustAttackThisTurn(true);
-                permanent.setMustAttackTargetId(controllerId);
-            }
-            case MUST_BLOCK -> permanent.setMustBlockThisTurnIfAble(true);
-            case MUST_BE_BLOCKED -> permanent.setMustBeBlockedThisTurn(true);
-            case MUST_BE_BLOCKED_BY_ALL -> permanent.setMustBeBlockedByAllThisTurn(true);
-        }
+    /** Puts {@code requirement} on {@code permanent} until end of turn, as a floating effect of the resolving entry. */
+    private void stamp(GameData gameData, StackEntry entry, Permanent permanent, CombatRequirement requirement) {
+        CardEffect payload = switch (requirement) {
+            case MUST_ATTACK -> new MustAttackIfAbleEffect();
+            case MUST_ATTACK_EFFECT_CONTROLLER -> new MustAttackIfAbleEffect(entry.getControllerId());
+            case MUST_BLOCK -> new MustBlockEachCombatEffect();
+            case MUST_BE_BLOCKED -> new MustBeBlockedIfAbleEffect();
+            case MUST_BE_BLOCKED_BY_ALL -> new MustBeBlockedByAllCreaturesEffect();
+            case MUST_ATTACK_OR_BLOCK -> throw new IllegalArgumentException("Resolve attack-or-block to one half first");
+        };
+        gameData.addEffectOnPermanent(entry, payload, permanent.getId(), Duration.UNTIL_END_OF_TURN);
     }
 }

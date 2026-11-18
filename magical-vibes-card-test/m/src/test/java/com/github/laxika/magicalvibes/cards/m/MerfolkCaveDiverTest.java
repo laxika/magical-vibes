@@ -29,7 +29,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
 
         assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
         assertThat(caveDiver.getToughnessModifier()).isZero();
-        assertThat(caveDiver.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
-        assertThat(caveDiver.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
 
         assertThat(caveDiver.getPowerModifier()).isZero();
         assertThat(caveDiver.getToughnessModifier()).isZero();
-        assertThat(caveDiver.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
 
         assertThat(caveDiver.getPowerModifier()).isEqualTo(2);
         assertThat(caveDiver.getToughnessModifier()).isZero();
-        assertThat(caveDiver.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
     @Test
@@ -95,8 +95,8 @@ class MerfolkCaveDiverTest extends BaseCardTest {
 
         assertThat(first.getPowerModifier()).isEqualTo(1);
         assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
 
     @Test
@@ -112,9 +112,9 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(caveDiver.getPowerModifier()).isZero();
-        assertThat(caveDiver.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isFalse();
         assertThat(opposingDiver.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingDiver.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingDiver)).isTrue();
     }
 
     @Test
@@ -127,7 +127,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
-        assertThat(caveDiver.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
     @Test
@@ -141,13 +141,13 @@ class MerfolkCaveDiverTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(caveDiver.getPowerModifier()).isZero();
-        assertThat(caveDiver.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isFalse();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(revealedCard);
         assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
-        assertThat(caveDiver.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
     private void castExplorerAndResolveExplore() {

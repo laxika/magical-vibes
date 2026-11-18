@@ -63,7 +63,7 @@ class DeepfathomSkulkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -154,7 +154,7 @@ class DeepfathomSkulkerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, skulker.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(skulker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, skulker)).isFalse();
     }
 
     @Test
@@ -179,12 +179,12 @@ class DeepfathomSkulkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     private void addAbilityMana() {

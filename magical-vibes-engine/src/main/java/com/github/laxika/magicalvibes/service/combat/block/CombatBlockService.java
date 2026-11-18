@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachAttackingCreatureThisTurnEffect;
+
 import com.github.laxika.magicalvibes.model.effect.DeclarationReplacementEffect;
 import java.util.HashMap;
 import java.util.Map;
@@ -818,7 +820,7 @@ public class CombatBlockService {
         List<Integer> mustBeBlockedIndices = new ArrayList<>();
         for (int idx : attackerIndices) {
             Permanent attacker = attackerBattlefield.get(idx);
-            boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
+            boolean mustBeBlocked = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (mustBeBlocked) {
@@ -1030,7 +1032,7 @@ public class CombatBlockService {
         }
 
         // One-shot "can block an additional creature this turn" grants (e.g. Act of Heroism).
-        int additionalBlocks = creature.getAdditionalBlocksUntilEndOfTurn();
+        int additionalBlocks = gameData.additionalBlocksThisTurn(creature.getId());
         if (additionalBlocks == Integer.MAX_VALUE) {
             return Integer.MAX_VALUE;
         }
@@ -1345,7 +1347,7 @@ public class CombatBlockService {
      * such a requirement binds only creatures that currently have the counter, so a creature that lost it is released.
      */
     private Set<UUID> requiredBlockSourceIds(GameData gameData, Permanent blocker) {
-        Set<UUID> sources = new HashSet<>(blocker.getRequiredBlockSourceIds());
+        Set<UUID> sources = new HashSet<>(gameData.requiredBlockSourceIds(blocker.getId()));
         Map<UUID, Boolean> holdsCounterOf = new HashMap<>();
         for (FloatingContinuousEffect fe
                 : gameData.floatingEffectsOfTypes(CreaturesWithCounterMustBlockTriggeringAttackerEffect.class)) {
@@ -1420,7 +1422,7 @@ public class CombatBlockService {
         for (int i = 0; i < attackerBattlefield.size(); i++) {
             Permanent attacker = attackerBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean hasRequirement = attacker.isMustBeBlockedThisTurn()
+            boolean hasRequirement = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (hasRequirement) {
@@ -1623,8 +1625,8 @@ public class CombatBlockService {
     }
 
     /**
-     * "Target creature blocks this turn if able" (Nacatl Hunt-Pride): a creature flagged with
-     * {@link Permanent#isMustBlockThisTurnIfAble()} must be declared as a blocker of at least one
+     * "Target creature blocks this turn if able" (Nacatl Hunt-Pride): a creature with a floating
+     * {@link MustBlockEachCombatEffect} until end of turn must be declared as a blocker of at least one
      * attacker if it is able to block any of them. The requirement is satisfied vacuously when the
      * creature can't legally block any declared attacker (evasion, tapped, etc.). The permanent
      * static form, {@link MustBlockEachCombatEffect} ("this creature blocks each combat if able" —
@@ -1684,7 +1686,7 @@ public class CombatBlockService {
             List<BlockerAssignment> blockerAssignments) {
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (!blocker.isMustBlockEachAttackingCreatureThisTurnIfAble()) {
+            if (!gameData.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachAttackingCreatureThisTurnEffect.class)) {
                 continue;
             }
 
@@ -1950,8 +1952,8 @@ public class CombatBlockService {
     }
 
     /**
-     * A creature carries a "blocks if able" requirement either from a one-shot effect this turn
-     * ({@link Permanent#isMustBlockThisTurnIfAble()}) or from a permanent static
+     * A creature carries a "blocks if able" requirement either from a one-shot effect this turn (a floating
+     * {@link MustBlockEachCombatEffect} on it, or Predatory Rampage's on its opponent) or from a permanent static
      * {@link MustBlockEachCombatEffect} on itself or on an Aura attached to it.
      */
     private boolean mustBlockIfAble(GameData gameData, Permanent blocker) {
@@ -1959,7 +1961,7 @@ public class CombatBlockService {
         boolean opponentRequirement = gameData
                 .floatingEffectsOnNamedPlayers(EachOpponentCreatureBlocksThisTurnIfAbleEffect.class).stream()
                 .anyMatch(floating -> !floating.affectedPlayerId().equals(blockerController));
-        return opponentRequirement || blocker.isMustBlockThisTurnIfAble()
+        return opponentRequirement || gameData.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachCombatEffect.class)
                 || gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, blocker,
                         MustBlockEachCombatEffect.class)
                 || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -100,7 +104,8 @@ class ElderGargarothTest extends BaseCardTest {
         first.setAttacking(true);
         second.setAttacking(true);
         Permanent gargaroth = addReadyGargaroth(player2);
-        gargaroth.setAdditionalBlocksUntilEndOfTurn(1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(1), gargaroth.getId(), Duration.UNTIL_END_OF_TURN));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

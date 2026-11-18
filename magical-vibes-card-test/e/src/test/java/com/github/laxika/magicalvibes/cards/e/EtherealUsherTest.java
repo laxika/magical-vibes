@@ -48,13 +48,13 @@ class EtherealUsherTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, usher), 0, null, attacker.getId());
         harness.passBothPriorities();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -179,7 +179,7 @@ class EtherealUsherTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(usher);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test

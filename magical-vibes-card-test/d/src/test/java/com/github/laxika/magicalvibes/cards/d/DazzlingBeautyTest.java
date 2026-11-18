@@ -109,7 +109,7 @@ class DazzlingBeautyTest extends BaseCardTest {
         castDazzlingBeauty(attacker);
 
         assertThat(nomad.isTapped()).isTrue();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
         assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
 
         resolveCombat();

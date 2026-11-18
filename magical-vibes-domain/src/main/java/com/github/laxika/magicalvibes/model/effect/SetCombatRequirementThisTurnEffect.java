@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 /**
- * Stamps a one-shot combat requirement on a creature for the rest of the turn. The
- * requirement lives as a transient flag on the {@code Permanent} and is cleared at end of turn via
- * {@code resetModifiers()}.
+ * Stamps a one-shot combat requirement on a creature for the rest of the turn: a floating effect on the creature
+ * until end of turn ({@link MustAttackIfAbleEffect}, {@link MustBlockEachCombatEffect},
+ * {@link MustBeBlockedIfAbleEffect} or {@link MustBeBlockedByAllCreaturesEffect}).
  *
  * <p>These are the one-shot counterparts of the static abilities
  * ({@link MustBeBlockedIfAbleEffect}, {@link MustBeBlockedByAllCreaturesEffect}, {@link MustAttackEffect}):

@@ -44,7 +44,7 @@ class RampantElephantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).contains(elephant.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(elephant.getId());
     }
 
     @Test
@@ -106,12 +106,12 @@ class RampantElephantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).contains(elephant.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(elephant.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).doesNotContain(elephant.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).doesNotContain(elephant.getId());
     }
 
     @Test
@@ -143,7 +143,7 @@ class RampantElephantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).contains(elephant.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(elephant.getId());
         assertThat(elephant.isTapped()).isTrue();
     }
 
@@ -157,7 +157,7 @@ class RampantElephantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMustBlockIds()).contains(elephant.getId());
+        assertThat(gd.requiredBlockSourceIds(target.getId())).contains(elephant.getId());
     }
 
     @Test
@@ -214,7 +214,7 @@ class RampantElephantTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Ardent Soldier");
         harness.assertInHand(player2, "Ardent Soldier");
-        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(target.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 

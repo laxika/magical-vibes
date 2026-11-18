@@ -75,7 +75,6 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     chosenName: null,
     regenerationShield: 0,
     attachedTo: null,
-    cantBeBlocked: false,
     animatedCreature: false,
     counters: {},
     attackTargetId: null,

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.h.HollowhengeBeast;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -54,7 +56,7 @@ class DeadlyAllureTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -70,7 +72,7 @@ class DeadlyAllureTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -90,7 +92,7 @@ class DeadlyAllureTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(bears.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -142,7 +144,7 @@ class DeadlyAllureTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test

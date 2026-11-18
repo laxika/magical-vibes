@@ -66,7 +66,7 @@ class JillShivasDominantTest extends BaseCardTest {
 
         Permanent shiva = findPermanent(player1, "Shiva, Warden of Ice");
         assertThat(shiva.isTransformed()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -83,7 +83,7 @@ class JillShivasDominantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shiva.getCounterCount(CounterType.LORE)).isEqualTo(2);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -165,9 +165,9 @@ class JillShivasDominantTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, shiva.getId());
         harness.passBothPriorities();
 
-        assertThat(shiva.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, shiva)).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(shiva.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, shiva)).isFalse();
     }
 
     private void castJill() {

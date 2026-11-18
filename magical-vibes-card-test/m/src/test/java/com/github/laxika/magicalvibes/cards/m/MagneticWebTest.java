@@ -131,7 +131,7 @@ class MagneticWebTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(blocker.getMustBlockIds()).contains(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(attacker.getId());
 
         prepareDeclareBlockers(player1);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -150,7 +150,7 @@ class MagneticWebTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
 
         prepareDeclareBlockers(player1);
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
@@ -184,7 +184,7 @@ class MagneticWebTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test

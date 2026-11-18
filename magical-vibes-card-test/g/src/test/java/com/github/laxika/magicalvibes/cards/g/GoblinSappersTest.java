@@ -36,7 +36,7 @@ class GoblinSappersTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, sappers), 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .extracting(DelayedPermanentAction::permanentId)
                 .contains(bears.getId(), sappers.getId());
@@ -74,7 +74,7 @@ class GoblinSappersTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, sappers), 1, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         advanceThroughEndOfCombat();
 
@@ -93,7 +93,7 @@ class GoblinSappersTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, sappers), 0, null, sappers.getId());
         harness.passBothPriorities();
 
-        assertThat(sappers.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, sappers)).isTrue();
 
         advanceThroughEndOfCombat();
 

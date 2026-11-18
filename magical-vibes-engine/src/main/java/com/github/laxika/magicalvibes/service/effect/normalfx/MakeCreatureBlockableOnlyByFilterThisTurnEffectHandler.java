@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -69,8 +71,9 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
             return;
         }
 
-        target.getBlockRestrictionsUntilEndOfTurn().add(
-                new CanBeBlockedOnlyByFilterEffect(grant.blockerPredicate(), grant.allowedBlockersDescription()));
+        gameData.addEffectOnPermanent(entry,
+                new CanBeBlockedOnlyByFilterEffect(grant.blockerPredicate(), grant.allowedBlockersDescription()),
+                target.getId(), Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" can't be blocked this turn except by " + grant.allowedBlockersDescription() + ".").build());
         log.info("Game {} - {} can't be blocked this turn except by {}",

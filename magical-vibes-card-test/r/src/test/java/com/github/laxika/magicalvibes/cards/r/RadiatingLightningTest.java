@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.t.TeferiHeroOfDominaria;
 import com.github.laxika.magicalvibes.cards.m.MesaUnicorn;
@@ -53,7 +55,7 @@ class RadiatingLightningTest extends BaseCardTest {
         assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 1);
         // Radiating Lightning has no "attacks this turn if able" rider — Aggravate's flag must not
         // ride along on every card sharing the effect.
-        assertThat(battlefield).noneMatch(Permanent::isMustAttackThisTurn);
+        assertThat(battlefield).noneMatch(p -> gd.hasFloatingEffectOnPermanent(p.getId(), MustAttackIfAbleEffect.class));
     }
 
     @Test

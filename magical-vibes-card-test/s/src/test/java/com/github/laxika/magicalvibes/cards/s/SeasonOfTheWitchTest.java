@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -51,7 +56,8 @@ class SeasonOfTheWitchTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new Squire());
 
         declareAttackers(player2, List.of());
-        creature.setCantAttackThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantAttackThisTurnEffect(TapUntapScope.TARGET), creature.getId(), Duration.UNTIL_END_OF_TURN));
 
         runEndStep(player2);
 

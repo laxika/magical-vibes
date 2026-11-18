@@ -26,7 +26,7 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -98,7 +98,7 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test

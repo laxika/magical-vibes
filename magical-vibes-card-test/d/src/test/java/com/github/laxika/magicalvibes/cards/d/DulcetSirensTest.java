@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +30,8 @@ class DulcetSirensTest extends BaseCardTest {
                 List.of(creature.getId(), player2.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature.isMustAttackThisTurn()).isTrue();
-        assertThat(creature.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(creature.getId())).isEqualTo(player2.getId());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
@@ -93,7 +95,7 @@ class DulcetSirensTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackers(player1, List.of());
-        assertThat(sirens.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(sirens.getId(), MustAttackIfAbleEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

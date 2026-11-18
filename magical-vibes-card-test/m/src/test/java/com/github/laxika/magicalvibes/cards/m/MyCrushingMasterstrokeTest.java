@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.c.ChimericMass;
@@ -43,9 +45,9 @@ class MyCrushingMasterstrokeTest extends BaseCardTest {
         assertThat(opponentArtifact.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentArtifact, Keyword.HASTE)).isTrue();
-        assertThat(opponentCreature.isMustAttackThisTurn()).isTrue();
-        assertThat(opponentCreature.getMustAttackTargetId()).isEqualTo(player2.getId());
-        assertThat(ownCreature.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(opponentCreature.getId())).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -61,8 +63,8 @@ class MyCrushingMasterstrokeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(opponentCreature);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
-        assertThat(opponentCreature.isMustAttackThisTurn()).isFalse();
-        assertThat(opponentCreature.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(opponentCreature.getId())).isNull();
     }
 
     @Test

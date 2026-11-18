@@ -31,7 +31,7 @@ class SnoopingPageTest extends BaseCardTest {
         harness.castInstant(player1, 0, giantId);
         harness.passBothPriorities(); // resolve Repartee trigger
 
-        assertThat(page.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, page)).isTrue();
     }
 
     @Test
@@ -46,14 +46,14 @@ class SnoopingPageTest extends BaseCardTest {
         harness.castInstant(player1, 0, giantId);
         harness.passBothPriorities();
 
-        assertThat(page.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, page)).isTrue();
 
         harness.passBothPriorities(); // resolve Shock before advancing the turn
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(page.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, page)).isFalse();
     }
 
     @Test
@@ -103,7 +103,7 @@ class SnoopingPageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, page.getId());
         harness.passBothPriorities();
 
-        assertThat(page.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, page)).isTrue();
     }
 
     @Test
@@ -118,7 +118,7 @@ class SnoopingPageTest extends BaseCardTest {
         assertThat(gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isZero();
-        assertThat(page.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, page)).isFalse();
     }
 
     @Test

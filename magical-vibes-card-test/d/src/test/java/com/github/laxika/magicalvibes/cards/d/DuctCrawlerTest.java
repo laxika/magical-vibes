@@ -81,7 +81,7 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getCantBlockIds()).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).contains(crawler.getId());
     }
 
     @Test
@@ -99,7 +99,7 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getCantBlockIds()).doesNotContain(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).doesNotContain(crawler.getId());
     }
 
     @Test
@@ -121,7 +121,7 @@ class DuctCrawlerTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(blocker.getCantBlockIds())
+        assertThat(gd.cantBlockSourceIds(blocker.getId()))
                 .contains(crawler.getId())
                 .doesNotContain(replacement.getId());
     }
@@ -192,8 +192,8 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker2.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker1.getCantBlockIds()).contains(crawler.getId());
-        assertThat(blocker2.getCantBlockIds()).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(blocker1.getId())).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(blocker2.getId())).contains(crawler.getId());
 
         crawler.setAttacking(true);
         prepareDeclareBlockers();
@@ -217,12 +217,12 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(crawler.getId());
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
                 .applyCleanupResets(gd));
 
-        assertThat(blocker.getCantBlockIds()).isEmpty();
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -235,7 +235,7 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getCantBlockIds()).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(ownCreature.getId())).contains(crawler.getId());
     }
 
     @Test
@@ -250,7 +250,7 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getCantBlockIds()).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(target.getId())).contains(crawler.getId());
         assertThat(crawler.isTapped()).isTrue();
     }
 
@@ -263,7 +263,7 @@ class DuctCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, crawler.getId());
         harness.passBothPriorities();
 
-        assertThat(crawler.getCantBlockIds()).contains(crawler.getId());
+        assertThat(gd.cantBlockSourceIds(crawler.getId())).contains(crawler.getId());
     }
 
     @Test

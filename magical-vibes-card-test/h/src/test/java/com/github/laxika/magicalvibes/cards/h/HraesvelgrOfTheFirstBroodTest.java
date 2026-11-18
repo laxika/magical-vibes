@@ -34,7 +34,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -51,7 +51,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -85,7 +85,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -111,7 +111,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
 
         assertThat(hraesvelgr.getPowerModifier()).isEqualTo(1);
         assertThat(hraesvelgr.getToughnessModifier()).isZero();
-        assertThat(hraesvelgr.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isTrue();
     }
 
     @Test
@@ -126,7 +126,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
 
         assertThat(hraesvelgr.getPowerModifier()).isEqualTo(1);
         assertThat(hraesvelgr.getToughnessModifier()).isZero();
-        assertThat(hraesvelgr.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isTrue();
     }
 
     @Test
@@ -146,7 +146,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -161,7 +161,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(hraesvelgr.getPowerModifier()).isZero();
-        assertThat(hraesvelgr.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isFalse();
     }
 
     @Test
@@ -181,6 +181,6 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hraesvelgr.getPowerModifier()).isZero();
-        assertThat(hraesvelgr.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isFalse();
     }
 }

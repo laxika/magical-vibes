@@ -36,7 +36,7 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(hound.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hound)).isTrue();
     }
 
     @Test
@@ -78,7 +78,7 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
                 opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, opponentCreature)).isTrue();
     }
 
     @Test
@@ -119,13 +119,13 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Mirror-Guard"), 0, hound.getId());
         harness.passBothPriorities();
-        assertThat(hound.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hound)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hound.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hound)).isFalse();
     }
 
     @Test
@@ -143,7 +143,7 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, hound)).isEqualTo(4);
         harness.passBothPriorities();
 
-        assertThat(hound.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, hound)).isFalse();
         harness.assertInHand(player1, "Island");
         harness.assertNotOnBattlefield(player1, "Island");
         assertThat(gd.stack).isEmpty();
@@ -165,7 +165,7 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, hound.getId());
 
         assertThat(gqs.getEffectivePower(gd, hound)).isEqualTo(4);
-        assertThat(hound.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hound)).isTrue();
     }
 
     @Test
@@ -189,7 +189,7 @@ class SoratamiMirrorGuardTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Island");
         harness.assertNotOnBattlefield(player1, "Island");
         harness.passBothPriorities();
-        assertThat(hound.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, hound)).isTrue();
     }
 
     private int battlefieldIndex(Player owner, String name) {

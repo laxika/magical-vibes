@@ -6130,10 +6130,10 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the creature cannot be blocked. Checks the permanent's
-     * transient flag, its own static effects, attached auras/equipment, and granted effects.
+     * resolved "can't be blocked this turn" effects, its own static effects, attached auras/equipment, and granted effects.
      */
     public boolean hasCantBeBlocked(GameData gameData, Permanent creature) {
-        if (creature.isCantBeBlocked()) return true;
+        if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantBeBlockedEffect.class)) return true;
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (floating.effect() instanceof MakeAllCreaturesUnblockableEffect restriction
@@ -11236,13 +11236,13 @@ public class GameQueryService {
 
     /**
      * Whether {@code blocker} is required to block {@code attacker} by a Lure-style effect:
-     * the attacker's this-turn flag, a static {@link MustBeBlockedByAllCreaturesEffect} on the
+     * a resolved "all creatures able to block it do so" effect on the attacker, a static {@link MustBeBlockedByAllCreaturesEffect} on the
      * attacker (optionally filtered), or such an effect on an aura attached to the attacker.
      * A {@code null} {@code blockerFilter} forces every able creature; a non-null filter forces
      * only matching blockers (Talruum Piper: creatures with flying).
      */
     public boolean isRequiredToBlockByLure(GameData gameData, Permanent attacker, Permanent blocker) {
-        if (attacker.isMustBeBlockedByAllThisTurn()) {
+        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedByAllCreaturesEffect.class)) {
             return true;
         }
         if (!hasLostPrintedAbilities(gameData, attacker)) {
@@ -11268,7 +11268,7 @@ public class GameQueryService {
      * attacker count twice.
      */
     public int lureRequirementCount(GameData gameData, Permanent attacker, Permanent blocker) {
-        int count = attacker.isMustBeBlockedByAllThisTurn() ? 1 : 0;
+        int count = gameData.floatingEffectsOnPermanent(attacker.getId(), MustBeBlockedByAllCreaturesEffect.class).size();
         if (!hasLostPrintedAbilities(gameData, attacker)) {
             for (CardEffect effect : attacker.getCard().getStaticEffects()) {
                 if (!(effect instanceof EnchantedPermanentConditionalEffect)

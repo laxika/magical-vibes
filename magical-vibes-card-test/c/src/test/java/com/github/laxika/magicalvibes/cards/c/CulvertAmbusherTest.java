@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+
 import com.github.laxika.magicalvibes.cards.t.TopiaryPanther;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -28,7 +30,7 @@ class CulvertAmbusherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         beginCombat(attacker);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -56,7 +58,7 @@ class CulvertAmbusherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         beginCombat(attacker);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -83,7 +85,7 @@ class CulvertAmbusherTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Culvert Ambusher").isFaceDown()).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     @Test
@@ -116,7 +118,7 @@ class CulvertAmbusherTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, disguised.getId());
         resolveAllTriggers();
 
-        assertThat(disguised.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(disguised.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
     private void castFaceDown() {

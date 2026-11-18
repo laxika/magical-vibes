@@ -27,7 +27,7 @@ class BlockadeRunnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(runner.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isTrue();
     }
 
     @Test
@@ -38,13 +38,13 @@ class BlockadeRunnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(runner.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(runner.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isFalse();
     }
 
     @Test
@@ -56,7 +56,7 @@ class BlockadeRunnerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(runner.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isFalse();
     }
 
     @Test
@@ -68,7 +68,7 @@ class BlockadeRunnerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(runner.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isTrue();
     }
 
     @Test
@@ -101,13 +101,13 @@ class BlockadeRunnerTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(runner.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(runner.isCantBeBlocked()).isTrue();
-        assertThat(otherRunner.isCantBeBlocked()).isFalse();
-        assertThat(opposingRunner.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, otherRunner)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, opposingRunner)).isFalse();
     }
 
     @Test
@@ -120,7 +120,7 @@ class BlockadeRunnerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(runner.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, runner)).isTrue();
         assertThat(runner.isTapped()).isTrue();
     }
 }

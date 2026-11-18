@@ -30,7 +30,7 @@ class MinamoSightbenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, raider.getId());
         harness.passBothPriorities();
 
-        assertThat(raider.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, raider)).isTrue();
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -70,7 +70,7 @@ class MinamoSightbenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -100,13 +100,13 @@ class MinamoSightbenderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, raider.getId());
         harness.passBothPriorities();
-        assertThat(raider.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, raider)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raider.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, raider)).isFalse();
     }
     @Test
     @DisplayName("X may exceed the target's power")
@@ -118,7 +118,7 @@ class MinamoSightbenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class MinamoSightbenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, source)).isTrue();
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -145,7 +145,7 @@ class MinamoSightbenderTest extends BaseCardTest {
         target.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }

@@ -30,7 +30,7 @@ class WhitewaterNaiadsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(naiads.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, naiads)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -42,7 +42,7 @@ class WhitewaterNaiadsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -56,7 +56,7 @@ class WhitewaterNaiadsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, naiads.getId());
         harness.passBothPriorities();
 
-        assertThat(naiads.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, naiads)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -69,7 +69,7 @@ class WhitewaterNaiadsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
@@ -87,7 +87,7 @@ class WhitewaterNaiadsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test
@@ -113,13 +113,13 @@ class WhitewaterNaiadsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test

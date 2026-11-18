@@ -30,7 +30,7 @@ class TaigamsStrikeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -48,7 +48,7 @@ class TaigamsStrikeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
-        assertThat(bear.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class TaigamsStrikeTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         harness.assertInGraveyard(player1, "Taigam's Strike");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
@@ -98,7 +98,7 @@ class TaigamsStrikeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
     @Test
@@ -162,10 +162,10 @@ class TaigamsStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
-        assertThat(original.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, original)).isFalse();
         assertThat(gqs.getEffectivePower(gd, next)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, next)).isEqualTo(2);
-        assertThat(next.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, next)).isTrue();
         harness.assertInGraveyard(player1, "Taigam's Strike");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }

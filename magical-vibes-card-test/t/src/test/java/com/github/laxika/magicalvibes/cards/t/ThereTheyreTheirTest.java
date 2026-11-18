@@ -43,10 +43,10 @@ class ThereTheyreTheirTest extends BaseCardTest {
                 List.of(first.getId(), second.getId(), third.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
-        assertThat(third.isCantBeBlocked()).isTrue();
-        assertThat(fourth.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, third)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, fourth)).isFalse();
     }
 
     @Test
@@ -137,11 +137,11 @@ class ThereTheyreTheirTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .singleElement().satisfies(returned -> {
                     assertThat(returned.getId()).isNotEqualTo(second.getId());
-                    assertThat(returned.isCantBeBlocked()).isFalse();
+                    assertThat(gqs.hasCantBeBlocked(gd, returned)).isFalse();
                 });
     }
 
@@ -178,11 +178,11 @@ class ThereTheyreTheirTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 1, List.of(bear.getId()));
         harness.passBothPriorities();
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bear)).isFalse();
     }
 
     @Test
@@ -196,8 +196,8 @@ class ThereTheyreTheirTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.isCantBeBlocked()).isTrue();
-        assertThat(second.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
 
     @Test

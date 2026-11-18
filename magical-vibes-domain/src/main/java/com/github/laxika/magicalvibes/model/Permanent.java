@@ -108,14 +108,6 @@ public class Permanent {
      *  during its controller's last turn" (Halls of Mist, Giant Turtle, Tangle Kelp) follows the
      *  current controller after a control change. */
     private final Set<UUID> playersDuringWhoseLastTurnThisAttacked = new HashSet<>();
-    /** When true, this creature can't be declared as an attacker during its controller's next turn
-     *  (Wall of Dust's block trigger). Promoted into {@link #cantAttackThisTurn} at the start of the
-     *  controller's next turn by {@link #promoteCantAttackNextTurn()}. */
-    @Setter private boolean cantAttackNextTurn;
-    /** When true, this creature can't be declared as an attacker this turn. Armed from
-     *  {@link #cantAttackNextTurn} at the controller's turn start and self-clears the following
-     *  controller turn, so the restriction lasts exactly one turn. */
-    @Setter private boolean cantAttackThisTurn;
     private boolean blocking;
     /** Set when this creature is declared as a blocker; persists after combat ends (mirroring
      *  {@link #attackedThisTurn}) and is reset at each turn start. Read by
@@ -341,39 +333,11 @@ public class Permanent {
     @Setter private int chosenSacrificedToughness;
     /** Effective color count of the permanent sacrificed to pay an ability cost, read while it was still on the battlefield. */
     @Setter private int chosenSacrificedColorCount;
-    @Setter private boolean cantBeBlocked;
-    /** True when {@link #cantBeBlocked} comes from a granted "can't be blocked" ability (Ogre Marauder),
-     *  which a later loss of all abilities removes. */
-    @Setter private boolean cantBeBlockedGrantedAbility;
-    @Setter private boolean cantBlockThisTurn;
-    /** True when {@link #cantBlockThisTurn} comes from a granted "can't block" ability (Incite Hysteria),
-     *  which a later loss of all abilities removes. */
-    @Setter private boolean cantBlockGrantedAbilityThisTurn;
-    @Setter private boolean cantBlockThisCombat;
     /** True while this permanent has the suspected designation. Cleared only by a leave-and-return
      *  event or an effect that specifically makes it no longer suspected. */
     @Setter private boolean suspected;
     /** True while this permanent represents a commander. */
     @Setter private boolean commander;
-    /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
-     *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
-     *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
-    @Setter private int additionalBlocksUntilEndOfTurn;
-    /** When true, this creature must be declared as a blocker this turn if it can block any attacker
-     *  (general "blocks this turn if able", e.g. Nacatl Hunt-Pride). Cleared at end of turn. */
-    @Setter private boolean mustBlockThisTurnIfAble;
-    /** When true, this creature must block every attacking creature it can legally block this turn.
-     *  Cleared at end of turn. */
-    @Setter private boolean mustBlockEachAttackingCreatureThisTurnIfAble;
-    /** When true, this creature must attack during the current combat if able. Cleared when combat ends. */
-    @Setter private boolean mustAttackThisCombat;
-    @Setter private boolean mustAttackThisTurn;
-    /** When non-null, this creature must attack this specific player (not their planeswalkers). Cleared at end of turn. */
-    @Setter private UUID mustAttackTargetId;
-    /** When true, at least one creature must block this creature this turn if able (e.g. Emergent Growth). Cleared at end of turn. */
-    @Setter private boolean mustBeBlockedThisTurn;
-    /** When true, all creatures able to block this creature this turn do so (Lure-style, one-shot, e.g. Alluring Scent). Cleared at end of turn. */
-    @Setter private boolean mustBeBlockedByAllThisTurn;
     /** When true, this attacking creature is blocked even though no creature is blocking it
      *  (Dazzling Beauty). CR 509.1h — it deals no combat damage, since a blocked creature with no
      *  blockers to assign damage to assigns none. Cleared at end of turn. */
@@ -623,26 +587,10 @@ public class Permanent {
     @Setter private boolean protectionFromOpponentCreaturesUntilEndOfTurn;
     /** Whether all protection abilities have been removed from this permanent until end of turn. */
     @Setter private boolean protectionRemovedUntilEndOfTurn;
-    /** Blocking restrictions granted until end of turn by one-shot effects (e.g. Dread Charge:
-     *  "black creatures you control can't be blocked this turn except by black creatures").
-     *  Each entry means this creature can be blocked only by blockers matching the restriction's
-     *  filter. Consumed by {@code GameQueryService.getBlockRestriction}; cleared by {@link #resetModifiers()}. */
-    private final List<CanBeBlockedOnlyByFilterEffect> blockRestrictionsUntilEndOfTurn = new ArrayList<>();
-    /** Defender-condition evasion granted until end of turn by one-shot effects (e.g. Barbarian
-     *  Guides granting snow landwalk of a chosen type). This creature can't be blocked as long as
-     *  the defending player controls a permanent matching any of these predicates — the transient
-     *  counterpart of a printed
-     *  {@link com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect}.
-     *  Consumed by {@code BlockLegalityService}/{@code CombatHelper}; cleared by {@link #resetModifiers()}. */
-    private final List<PermanentPredicate> unblockableIfDefenderControlsUntilEndOfTurn = new ArrayList<>();
     /** Players who may target this permanent this turn as though it didn't have shroud (Autumn
      *  Willow). Read by the shroud checks in {@code TargetLegalityService}/{@code ValidTargetService};
      *  cleared by {@link #resetModifiers()}. */
     private final Set<UUID> shroudIgnoredByPlayersUntilEndOfTurn = new HashSet<>();
-    private final Set<UUID> cantBlockIds = new HashSet<>();
-    private final Set<UUID> mustBlockIds = new HashSet<>();
-    /** Source identities this creature must block only during the current combat. */
-    private final Set<UUID> mustBlockIdsUntilEndOfCombat = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
@@ -1056,8 +1004,6 @@ public class Permanent {
         this.playersAttackedLastCombat.addAll(source.playersAttackedLastCombat);
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.playersDuringWhoseLastTurnThisAttacked.addAll(source.playersDuringWhoseLastTurnThisAttacked);
-        this.cantAttackNextTurn = source.cantAttackNextTurn;
-        this.cantAttackThisTurn = source.cantAttackThisTurn;
         this.blocking = source.blocking;
         this.blockedThisTurn = source.blockedThisTurn;
         this.blockedThisCombat = source.blockedThisCombat;
@@ -1143,21 +1089,8 @@ public class Permanent {
         this.chosenSacrificedPower = source.chosenSacrificedPower;
         this.chosenSacrificedToughness = source.chosenSacrificedToughness;
         this.chosenSacrificedColorCount = source.chosenSacrificedColorCount;
-        this.cantBeBlocked = source.cantBeBlocked;
-        this.cantBeBlockedGrantedAbility = source.cantBeBlockedGrantedAbility;
-        this.cantBlockThisTurn = source.cantBlockThisTurn;
-        this.cantBlockGrantedAbilityThisTurn = source.cantBlockGrantedAbilityThisTurn;
-        this.cantBlockThisCombat = source.cantBlockThisCombat;
         this.suspected = source.suspected;
         this.commander = source.commander;
-        this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
-        this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
-        this.mustBlockEachAttackingCreatureThisTurnIfAble = source.mustBlockEachAttackingCreatureThisTurnIfAble;
-        this.mustAttackThisCombat = source.mustAttackThisCombat;
-        this.mustAttackThisTurn = source.mustAttackThisTurn;
-        this.mustAttackTargetId = source.mustAttackTargetId;
-        this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
-        this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
         this.blockedWithoutBlockers = source.blockedWithoutBlockers;
         this.dampingEngineIgnoredByPlayersThisTurn.addAll(source.dampingEngineIgnoredByPlayersThisTurn);
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
@@ -1242,8 +1175,6 @@ public class Permanent {
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
         this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
-        this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
-        this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.exileIfDying = source.exileIfDying;
         this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;
@@ -1251,9 +1182,6 @@ public class Permanent {
         this.lastKnownEquipmentCount = source.lastKnownEquipmentCount;
         this.enteredViaUnearth = source.enteredViaUnearth;
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
-        this.cantBlockIds.addAll(source.cantBlockIds);
-        this.mustBlockIds.addAll(source.mustBlockIds);
-        this.mustBlockIdsUntilEndOfCombat.addAll(source.mustBlockIdsUntilEndOfCombat);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.mireCounterLandIds.addAll(source.mireCounterLandIds);
@@ -1662,21 +1590,7 @@ public class Permanent {
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
         this.combatAbilities.clear();
-        this.mustBlockIdsUntilEndOfCombat.clear();
         this.bandId = null;
-        this.cantBlockThisCombat = false;
-        if (this.mustAttackThisCombat && !this.mustAttackThisTurn) {
-            // A combat-long attack requirement's chosen target ends with that combat.
-            this.mustAttackTargetId = null;
-        }
-        this.mustAttackThisCombat = false;
-    }
-
-    /** Sources this creature must block under either turn-long or combat-long requirements. */
-    public Set<UUID> getRequiredBlockSourceIds() {
-        Set<UUID> sources = new HashSet<>(mustBlockIds);
-        sources.addAll(mustBlockIdsUntilEndOfCombat);
-        return sources;
     }
 
     /** Finalizes the set of players or permanents this creature attacked during the combat. */
@@ -2324,19 +2238,6 @@ public class Permanent {
         this.basePowerToughnessOverriddenUntilEndOfTurn = false;
         this.basePowerOverride = 0;
         this.baseToughnessOverride = 0;
-        this.cantBeBlocked = false;
-        this.cantBeBlockedGrantedAbility = false;
-        this.cantAttackThisTurn = false;
-        this.cantBlockThisTurn = false;
-        this.cantBlockGrantedAbilityThisTurn = false;
-        this.additionalBlocksUntilEndOfTurn = 0;
-        this.mustBlockThisTurnIfAble = false;
-        this.mustBlockEachAttackingCreatureThisTurnIfAble = false;
-        this.mustAttackThisCombat = false;
-        this.mustAttackThisTurn = false;
-        this.mustAttackTargetId = null;
-        this.mustBeBlockedThisTurn = false;
-        this.mustBeBlockedByAllThisTurn = false;
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
         this.auraEffectsIgnoredByPlayersThisTurn.clear();
@@ -2367,12 +2268,7 @@ public class Permanent {
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;
         this.protectionRemovedUntilEndOfTurn = false;
-        this.blockRestrictionsUntilEndOfTurn.clear();
-        this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
         this.shroudIgnoredByPlayersUntilEndOfTurn.clear();
-        this.cantBlockIds.clear();
-        this.mustBlockIds.clear();
-        this.mustBlockIdsUntilEndOfCombat.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.suppressedStaticEffectsUntilEndOfTurn.clear();
         this.suppressedStaticEffectInstancesUntilEndOfTurn.clear();
@@ -2412,21 +2308,9 @@ public class Permanent {
         return switch (field) {
             case POWER_MODIFIER -> powerModifier;
             case TOUGHNESS_MODIFIER -> toughnessModifier;
-            case ADDITIONAL_BLOCKS -> additionalBlocksUntilEndOfTurn;
             case BASE_POWER_TOUGHNESS_OVERRIDDEN -> basePowerToughnessOverriddenUntilEndOfTurn;
             case BASE_POWER_OVERRIDE -> basePowerOverride;
             case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride;
-            case CANT_BE_BLOCKED -> cantBeBlocked;
-            case CANT_BE_BLOCKED_GRANTED_ABILITY -> cantBeBlockedGrantedAbility;
-            case CANT_ATTACK_THIS_TURN -> cantAttackThisTurn;
-            case CANT_BLOCK_THIS_TURN -> cantBlockThisTurn;
-            case CANT_BLOCK_GRANTED_ABILITY_THIS_TURN -> cantBlockGrantedAbilityThisTurn;
-            case MUST_BLOCK_THIS_TURN_IF_ABLE -> mustBlockThisTurnIfAble;
-            case MUST_BLOCK_EACH_ATTACKING_CREATURE_THIS_TURN_IF_ABLE -> mustBlockEachAttackingCreatureThisTurnIfAble;
-            case MUST_ATTACK_THIS_TURN -> mustAttackThisTurn;
-            case MUST_ATTACK_TARGET_ID -> mustAttackTargetId;
-            case MUST_BE_BLOCKED_THIS_TURN -> mustBeBlockedThisTurn;
-            case MUST_BE_BLOCKED_BY_ALL_THIS_TURN -> mustBeBlockedByAllThisTurn;
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
             case AURA_EFFECTS_IGNORED_BY_PLAYERS -> auraEffectsIgnoredByPlayersThisTurn;
             case DAMPING_ENGINE_IGNORED_BY_PLAYERS -> dampingEngineIgnoredByPlayersThisTurn;
@@ -2455,11 +2339,7 @@ public class Permanent {
             case PROTECTION_FROM_NON_SUBTYPE_CREATURES -> protectionFromNonSubtypeCreaturesUntilEndOfTurn;
             case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn;
             case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn;
-            case BLOCK_RESTRICTIONS -> blockRestrictionsUntilEndOfTurn;
-            case UNBLOCKABLE_IF_DEFENDER_CONTROLS -> unblockableIfDefenderControlsUntilEndOfTurn;
             case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn;
-            case CANT_BLOCK_IDS -> cantBlockIds;
-            case MUST_BLOCK_IDS -> mustBlockIds;
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
@@ -2496,21 +2376,9 @@ public class Permanent {
         switch (field) {
             case POWER_MODIFIER -> powerModifier = SaturatingMath.add(powerModifier, (Integer) value);
             case TOUGHNESS_MODIFIER -> toughnessModifier = SaturatingMath.add(toughnessModifier, (Integer) value);
-            case ADDITIONAL_BLOCKS -> additionalBlocksUntilEndOfTurn += (Integer) value;
             case BASE_POWER_TOUGHNESS_OVERRIDDEN -> basePowerToughnessOverriddenUntilEndOfTurn = true;
             case BASE_POWER_OVERRIDE -> basePowerOverride = (Integer) value;
             case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride = (Integer) value;
-            case CANT_BE_BLOCKED -> cantBeBlocked = true;
-            case CANT_BE_BLOCKED_GRANTED_ABILITY -> cantBeBlockedGrantedAbility = true;
-            case CANT_ATTACK_THIS_TURN -> cantAttackThisTurn = true;
-            case CANT_BLOCK_THIS_TURN -> cantBlockThisTurn = true;
-            case CANT_BLOCK_GRANTED_ABILITY_THIS_TURN -> cantBlockGrantedAbilityThisTurn = true;
-            case MUST_BLOCK_THIS_TURN_IF_ABLE -> mustBlockThisTurnIfAble = true;
-            case MUST_BLOCK_EACH_ATTACKING_CREATURE_THIS_TURN_IF_ABLE -> mustBlockEachAttackingCreatureThisTurnIfAble = true;
-            case MUST_ATTACK_THIS_TURN -> mustAttackThisTurn = true;
-            case MUST_ATTACK_TARGET_ID -> mustAttackTargetId = (UUID) value;
-            case MUST_BE_BLOCKED_THIS_TURN -> mustBeBlockedThisTurn = true;
-            case MUST_BE_BLOCKED_BY_ALL_THIS_TURN -> mustBeBlockedByAllThisTurn = true;
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
             case AURA_EFFECTS_IGNORED_BY_PLAYERS -> auraEffectsIgnoredByPlayersThisTurn.addAll((Set<UUID>) value);
             case DAMPING_ENGINE_IGNORED_BY_PLAYERS -> dampingEngineIgnoredByPlayersThisTurn.addAll((Set<UUID>) value);
@@ -2540,12 +2408,7 @@ public class Permanent {
                     protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll((Set<CardSubtype>) value);
             case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn = true;
             case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn = true;
-            case BLOCK_RESTRICTIONS -> blockRestrictionsUntilEndOfTurn.addAll((List<CanBeBlockedOnlyByFilterEffect>) value);
-            case UNBLOCKABLE_IF_DEFENDER_CONTROLS ->
-                    unblockableIfDefenderControlsUntilEndOfTurn.addAll((List<PermanentPredicate>) value);
             case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn.addAll((Set<UUID>) value);
-            case CANT_BLOCK_IDS -> cantBlockIds.addAll((Set<UUID>) value);
-            case MUST_BLOCK_IDS -> mustBlockIds.addAll((Set<UUID>) value);
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn = true;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn.addAll((Set) value);
             case SUPPRESSED_STATIC_EFFECT_INSTANCES ->
@@ -2708,19 +2571,6 @@ public class Permanent {
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
         this.untilNextTurnAnimationGrantorId = null;
-    }
-
-    /**
-     * Promotes a pending Wall of Dust "can't attack next turn" restriction into an active this-turn
-     * restriction and clears any restriction that has already expired. Because it assigns
-     * {@code cantAttackThisTurn = cantAttackNextTurn}, calling it at the start of every one of the
-     * controller's turns makes the restriction hold for exactly one turn. Must be called only for the
-     * active player's permanents at turn start (so a creature's restriction arms on ITS controller's
-     * turn, never an opponent's).
-     */
-    public void promoteCantAttackNextTurn() {
-        this.cantAttackThisTurn = this.cantAttackNextTurn;
-        this.cantAttackNextTurn = false;
     }
 
     /**

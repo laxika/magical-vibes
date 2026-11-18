@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -59,7 +61,7 @@ public class CreaturesWithCounterMustBlockTriggeringAttackerEffectHandler implem
                     continue;
                 }
 
-                permanent.getMustBlockIds().add(attackerId);
+                gameData.addEffectOnPermanent(entry, new MustBlockSourceEffect(attackerId), permanent.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData,
                         GameLog.textCardText("", permanent.getCard(), " blocks the attacking creature this turn if able."));
             }

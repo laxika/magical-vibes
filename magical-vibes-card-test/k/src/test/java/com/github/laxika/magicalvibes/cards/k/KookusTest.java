@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -31,7 +33,7 @@ class KookusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(kookus.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(kookus.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -46,7 +48,7 @@ class KookusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(kookus.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(kookus.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -74,7 +76,7 @@ class KookusTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(kookus.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(kookus.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -89,7 +91,7 @@ class KookusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(kookus.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(kookus.getId(), MustAttackIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -130,7 +132,7 @@ class KookusTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(kookus.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(kookus.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -177,6 +179,6 @@ class KookusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 17);
-        assertThat(returned.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(returned.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 }

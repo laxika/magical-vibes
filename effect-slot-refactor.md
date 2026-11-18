@@ -744,6 +744,15 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger (31 control card test classes and the route tests): only `ControlPlayerEffect` began/ended lines; no ability gained, lost or reordered.
 - Left: `Permanent`'s 75 end-of-turn fields, part 3's phasing item; then step 6.
 
+**D (part 9: `Permanent`'s combat fields).**
+- A combat requirement or restriction a resolution puts on a creature is an `onPermanent` floating effect whose payload names it (`GameData.addEffectOnPermanent`): `CantBlockEffect`, `CantBlockThisCombatEffect`, `CantAttackThisTurnEffect`, `CantBeBlockedEffect`, `MustAttackIfAbleEffect(defenderId)` (new; `mustAttackDefender`), `MustBlockEachCombatEffect`, `MustBlockEachAttackingCreatureThisTurnEffect`, `MustBlockSourceEffect` (`requiredBlockSourceIds`), `CantBlockSourceEffect` (`cantBlockSourceIds`), `MustBeBlockedIfAbleEffect`, `MustBeBlockedByAllCreaturesEffect`, `CanBeBlockedOnlyByFilterEffect` (`blockRestrictions`), the additional-block grants (`additionalBlocksThisTurn`), a granted landwalk of a non-basic type (`unblockableIfDefenderControls`). Gone: 20 `Permanent` fields with their copy, reset and combat-clear lines, 16 `EndOfTurnStateField`s, `promoteCantAttackNextTurn`, `PermanentView.cantBeBlocked` (the client never read it).
+- Wall of Dust's restriction is `DURING_AFFECTED_PLAYERS_NEXT_TURN`. Incite Hysteria's and Ogre Marauder's "gains 'can't block' / 'can't be blocked'" are layer-6 grants (`GrantEffectEffect`, CR 613.1f), so `LosesAllAbilitiesEffectHandler` no longer clears flags. "Creatures can't attack this turn" and Predatory Rampage keep only their player-wide effect (CR 611.2c).
+- Behaviour: each resolved "attacks if able" effect is its own requirement (CR 508.1d); one flag counted once.
+- Moments: every effect ends at the cleanup step or end of combat, where its field was cleared. `promoteCantAttackNextTurn` also cleared any "can't attack this turn" as its controller's turn began; Change of Heart's and Wall of Dust's tests skipped cleanup with `forceStep(CLEANUP)` and relied on that (they now pass through the end step).
+- Ledger (705 card test classes, route tests): only `floating began|ended` lines added, ended at CLEANUP or END_OF_COMBAT (three tests emit the cleanup event themselves; Hammerheim's landwalk removal); trigger lines differ only by route-fixture draws, discards, dice and clashes.
+- Open: `CombatAttackService.validateMaximumAttackRequirements` sums requirements over every attackable creature, ignoring an attacker-count limit: under Silent Arbiter with "attacks if able" on two creatures no declaration is legal (CR 508.1d's own example), at HEAD too.
+- Left: `Permanent`'s other end-of-turn fields (layered P/T, keywords, colours, types, protection, abilities, shields), part 3's phasing item; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

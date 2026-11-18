@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
 import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -27,8 +31,8 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(ruhan.isMustAttackThisCombat()).isTrue();
-        assertThat(ruhan.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(ruhan.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(ruhan.getId())).isEqualTo(player2.getId());
 
         beginDeclareAttackers(player1);
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
@@ -43,11 +47,11 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
-        assertThat(ruhan.isMustAttackThisCombat()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ruhan.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
-        ruhan.clearCombatState();
+        gd.rulesEvents.occur(new TurnEvent.StepEnded(TurnStep.END_OF_COMBAT, gd.activePlayerId));
 
-        assertThat(ruhan.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ruhan.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -58,7 +62,7 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         advanceToBeginningOfCombat(player2);
         harness.passBothPriorities();
 
-        assertThat(ruhan.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ruhan.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -66,13 +70,13 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         Permanent ruhan = addReadyRuhan(player1);
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
-        assertThat(ruhan.isMustAttackThisCombat()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(ruhan.getId(), MustAttackIfAbleEffect.class)).isTrue();
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> gs.declareAttackers(gd, player1, List.of(0)));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(ruhan.isMustAttackThisCombat()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ruhan.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

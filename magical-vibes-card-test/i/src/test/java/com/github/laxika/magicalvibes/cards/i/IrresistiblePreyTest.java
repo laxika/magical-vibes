@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,7 +32,7 @@ class IrresistiblePreyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         harness.assertInHand(player1, "Forest");
     }
 
@@ -69,7 +71,7 @@ class IrresistiblePreyTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -100,7 +102,7 @@ class IrresistiblePreyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -216,7 +218,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
                 boolean creatureWasDamaged = damageDealt > 0 && gameQueryService.isCreature(gameData, targetPermanent);
                 if (e.damagedCreaturesCantBlock() && creatureWasDamaged) {
-                    targetPermanent.setCantBlockThisTurn(true);
+                    gameData.addEffectOnPermanent(entry, new CantBlockEffect(), targetPermanent.getId(), Duration.UNTIL_END_OF_TURN);
                     gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " can't block this turn."));
                 }
                 if (e.tapDamagedCreatures() && creatureWasDamaged) {

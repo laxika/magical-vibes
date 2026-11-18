@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.cards.s.SecretDoor;
 import com.github.laxika.magicalvibes.model.Dungeon;
@@ -27,7 +29,7 @@ class FiftyFeetOfRopeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, wall.getId());
         harness.passBothPriorities();
 
-        assertThat(wall.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(wall.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test

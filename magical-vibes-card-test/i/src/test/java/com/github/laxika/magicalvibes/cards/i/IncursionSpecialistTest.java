@@ -27,25 +27,25 @@ class IncursionSpecialistTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(specialist.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isFalse();
         harness.passBothPriorities();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(specialist.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isTrue();
         harness.passBothPriorities();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(specialist.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(specialist.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isFalse();
     }
 
 
@@ -59,15 +59,15 @@ class IncursionSpecialistTest extends BaseCardTest {
         Permanent first = findPermanent(player1, "Incursion Specialist");
         int initialPower = first.getEffectivePower();
         int initialToughness = first.getEffectiveToughness();
-        assertThat(first.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
 
         harness.castCreature(player1, 0);
         assertThat(first.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(first.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
         harness.passBothPriorities();
         assertThat(first.getEffectivePower()).isEqualTo(initialPower + 2);
         assertThat(first.getEffectiveToughness()).isEqualTo(initialToughness);
-        assertThat(first.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -75,7 +75,7 @@ class IncursionSpecialistTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(first.getId()))
                 .findFirst().orElseThrow();
         assertThat(second.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(second.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isFalse();
     }
 
     @Test
@@ -92,14 +92,14 @@ class IncursionSpecialistTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(specialist.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isFalse();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(specialist.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isFalse();
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(specialist.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isTrue();
         harness.passBothPriorities();
     }
 
@@ -117,10 +117,10 @@ class IncursionSpecialistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(specialist.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isFalse();
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(specialist.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(specialist.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, specialist)).isTrue();
         harness.passBothPriorities();
     }
 

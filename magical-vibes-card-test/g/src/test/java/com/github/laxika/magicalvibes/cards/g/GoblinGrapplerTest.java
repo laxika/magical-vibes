@@ -37,7 +37,7 @@ class GoblinGrapplerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(grappler.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(grappler.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -61,7 +61,7 @@ class GoblinGrapplerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -102,7 +102,7 @@ class GoblinGrapplerTest extends BaseCardTest {
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
-        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(grappler.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(grappler.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
     }
@@ -122,7 +122,7 @@ class GoblinGrapplerTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
-        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(grappler.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(grappler.getId());
     }
 
     @Test
@@ -138,6 +138,6 @@ class GoblinGrapplerTest extends BaseCardTest {
                 () -> harness.handleMayAbilityChosen(player1, true));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
@@ -1860,7 +1862,8 @@ class RandomAiDecisionEngineTest {
 
         Permanent conscripts = harness.addToBattlefieldAndReturn(aiPlayer, new OrcishConscripts());
         conscripts.setSummoningSick(false);
-        conscripts.setMustAttackThisTurn(true);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new MustAttackIfAbleEffect(), conscripts.getId(), Duration.UNTIL_END_OF_TURN));
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -1903,7 +1906,7 @@ class RandomAiDecisionEngineTest {
         attacker.setAttacking(true);
         Permanent okk = harness.addToBattlefieldAndReturn(harness.getPlayer2(), new Okk());
         okk.setSummoningSick(false);
-        okk.getMustBlockIds().add(attacker.getId());
+        gameData.requiredBlockSourceIds(okk.getId()).add(attacker.getId());
 
         declareBlockersAsRandomAi(harness);
 

@@ -28,7 +28,7 @@ class AuriokSiegeSledTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).contains(sled.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(sled.getId());
 
         sled.setAttacking(true);
         prepareDeclareBlockers();

@@ -79,7 +79,7 @@ class HazoretGodseekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hazoret.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -102,7 +102,7 @@ class HazoretGodseekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hazoret.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -115,7 +115,7 @@ class HazoretGodseekerTest extends BaseCardTest {
         target.setPowerModifier(1);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test

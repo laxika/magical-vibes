@@ -166,8 +166,11 @@ class ChangeOfHeartTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    /** Ends the turn through its cleanup step, where "until end of turn" effects end (CR 514.2). */
     private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

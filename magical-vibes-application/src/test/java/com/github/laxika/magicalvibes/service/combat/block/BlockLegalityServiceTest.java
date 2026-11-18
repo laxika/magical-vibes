@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -124,7 +128,8 @@ class BlockLegalityServiceTest extends BaseCardTest {
     @DisplayName("The \"can't block this turn\" flag stops blocking")
     void cantBlockThisTurnFlagStopsBlocking() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setCantBlockThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new CantBlockEffect(), bears.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThat(bls.canBlock(gd, bears)).isFalse();
     }

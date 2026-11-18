@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +37,7 @@ class HostileRealmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
 
-        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(warrior.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -112,7 +114,7 @@ class HostileRealmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mutavault.isTapped()).isTrue();
-        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(warrior.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -126,7 +128,7 @@ class HostileRealmTest extends BaseCardTest {
                 .removeIf(p -> p.getCard() instanceof HostileRealm);
         harness.passBothPriorities();
 
-        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(warrior.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -136,12 +138,12 @@ class HostileRealmTest extends BaseCardTest {
         Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
         harness.activateAbility(player1, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
-        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(warrior.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(warrior.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(warrior.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -153,6 +155,6 @@ class HostileRealmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
 
-        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(warrior.getId(), CantBlockEffect.class)).isTrue();
     }
 }

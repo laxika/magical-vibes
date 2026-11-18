@@ -39,7 +39,7 @@ class DreadlightMonstrosityTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(monstrosity.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, monstrosity)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class DreadlightMonstrosityTest extends BaseCardTest {
         harness.setHand(player1, List.of(exiledCard));
         harness.passBothPriorities();
 
-        assertThat(monstrosity.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, monstrosity)).isTrue();
     }
 
     @Test
@@ -142,11 +142,11 @@ class DreadlightMonstrosityTest extends BaseCardTest {
         addManaForAbility();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(monstrosity.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, monstrosity)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(monstrosity.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, monstrosity)).isFalse();
     }
 
     private void addManaForAbility() {

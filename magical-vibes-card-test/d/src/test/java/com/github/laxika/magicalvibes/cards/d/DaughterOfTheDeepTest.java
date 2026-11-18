@@ -65,13 +65,13 @@ class DaughterOfTheDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -96,7 +96,7 @@ class DaughterOfTheDeepTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, commerce.getId());
         harness.passBothPriorities();
 
-        assertThat(commerce.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, commerce)).isTrue();
     }
 
     @Test
@@ -110,7 +110,7 @@ class DaughterOfTheDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -179,7 +179,7 @@ class DaughterOfTheDeepTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(source.isTapped()).isFalse();
-        assertThat(source.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, source)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

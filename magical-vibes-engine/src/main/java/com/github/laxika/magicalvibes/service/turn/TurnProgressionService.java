@@ -1134,9 +1134,6 @@ public class TurnProgressionService {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
             gameData.playerBattlefields.values().stream().filter(Objects::nonNull).forEach(battlefield ->
                     battlefield.forEach(p -> p.clearUntilNextTurnAnimationGrantedBy(nextActive)));
-            // Promote/expire Wall of Dust "can't attack next turn" restrictions on the active player's
-            // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
-            activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);
         }
         gameData.forEachPermanent((controllerId, permanent) ->
                 permanent.clearLosesAllAbilitiesUntilNextTurnController(nextActive));

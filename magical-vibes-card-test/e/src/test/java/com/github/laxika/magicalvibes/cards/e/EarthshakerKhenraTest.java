@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.k.KhenraEternal;
 import com.github.laxika.magicalvibes.cards.h.HarrierNaga;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -35,7 +37,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -53,8 +55,8 @@ class EarthshakerKhenraTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, khenra.getId());
         resolveAllTriggers();
 
-        assertThat(khenra.isCantBlockThisTurn()).isTrue();
-        assertThat(naga.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(khenra.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(naga.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -98,7 +100,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, naga.getId());
         resolveAllTriggers();
 
-        assertThat(naga.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(naga.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -113,7 +115,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Earthshaker Khenra");
         resolveAllTriggers();
 
-        assertThat(naga.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(naga.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -123,7 +125,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -133,7 +135,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
         findPermanent(player1, "Earthshaker Khenra").setPowerModifier(-1);
         resolveAllTriggers();
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -144,7 +146,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         findPermanent(player1, "Earthshaker Khenra").setPowerModifier(-1);
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -152,12 +154,12 @@ class EarthshakerKhenraTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new KhenraEternal());
         castKhenraAndPutTriggerOnStack(blocker.getId());
         resolveAllTriggers();
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

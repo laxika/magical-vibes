@@ -29,7 +29,7 @@ class HuntDownTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId(), attacker.getId()));
 
-        assertThat(blocker.getMustBlockIds()).contains(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(attacker.getId());
     }
 
     @Test
@@ -102,11 +102,11 @@ class HuntDownTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId(), attacker.getId()));
-        assertThat(blocker.getMustBlockIds()).contains(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).contains(attacker.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test
@@ -125,7 +125,7 @@ class HuntDownTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Hunt Down");
-        assertThat(blocker.getMustBlockIds()).doesNotContain(attacker.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -176,7 +176,7 @@ class HuntDownTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId(), creature.getId()));
 
-        assertThat(creature.getMustBlockIds()).contains(creature.getId());
+        assertThat(gd.requiredBlockSourceIds(creature.getId())).contains(creature.getId());
         harness.assertInGraveyard(player1, "Hunt Down");
     }
 
@@ -192,7 +192,7 @@ class HuntDownTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(attacker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(attacker.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Hunt Down");
     }
 }

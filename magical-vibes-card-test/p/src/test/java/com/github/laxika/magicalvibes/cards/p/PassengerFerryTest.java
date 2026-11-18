@@ -46,8 +46,8 @@ class PassengerFerryTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.isCantBeBlocked()).isTrue();
-        assertThat(ferry.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, ferry)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
@@ -67,7 +67,7 @@ class PassengerFerryTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class PassengerFerryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 
     @Test
@@ -109,7 +109,7 @@ class PassengerFerryTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
-        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
     }
 
     @Test
@@ -147,7 +147,7 @@ class PassengerFerryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 
     @Test

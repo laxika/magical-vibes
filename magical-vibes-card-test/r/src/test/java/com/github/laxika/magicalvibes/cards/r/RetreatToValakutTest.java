@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,7 +53,7 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -80,13 +82,13 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -100,20 +102,20 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.handleListChoice(player1, CANT_BLOCK_MODE);
         harness.handlePermanentChosen(player1, chosen.getId());
 
-        assertThat(chosen.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(chosen.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isTrue();
         assertThat(chosen.getEffectivePower()).isEqualTo(2);
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(chosen.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -141,6 +143,6 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
     }
 }

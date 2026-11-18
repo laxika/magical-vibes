@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,11 +46,8 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
         String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
 
-        if (e.untilEndOfCombat()) {
-            target.getMustBlockIdsUntilEndOfCombat().add(sourceId);
-        } else {
-            target.getMustBlockIds().add(sourceId);
-        }
+        gameData.addEffectOnPermanent(entry, new MustBlockSourceEffect(sourceId, null, e.untilEndOfCombat()),
+                target.getId(), e.untilEndOfCombat() ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);
 
         
         String duration = e.untilEndOfCombat() ? "this combat" : "this turn";

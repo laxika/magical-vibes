@@ -54,7 +54,7 @@ class GuildThiefTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thief.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, thief)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class GuildThiefTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thief.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, thief)).isFalse();
     }
 
     @Test
@@ -125,10 +125,10 @@ class GuildThiefTest extends BaseCardTest {
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(thief.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, thief)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(thief.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, thief)).isTrue();
         assertThat(thief.isTapped()).isTrue();
     }
 

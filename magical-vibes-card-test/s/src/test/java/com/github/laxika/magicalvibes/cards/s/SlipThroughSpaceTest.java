@@ -28,7 +28,7 @@ class SlipThroughSpaceTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
         assertThat(gd.playerHands.get(player1.getId()))
                 .singleElement()
                 .isInstanceOf(GrizzlyBears.class);
@@ -48,7 +48,7 @@ class SlipThroughSpaceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -73,7 +73,7 @@ class SlipThroughSpaceTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

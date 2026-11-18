@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -41,7 +43,7 @@ class VoldarenDuelistTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -79,7 +81,7 @@ class VoldarenDuelistTest extends BaseCardTest {
         Permanent duelist = findPermanent(player1, "Voldaren Duelist");
         harness.handlePermanentChosen(player1, duelist.getId());
         harness.passBothPriorities();
-        assertThat(duelist.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(duelist.getId(), CantBlockEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -113,9 +115,9 @@ class VoldarenDuelistTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
-        assertThat(findPermanent(player1, "Voldaren Duelist").isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(findPermanent(player1, "Voldaren Duelist").getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -127,10 +129,10 @@ class VoldarenDuelistTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -33,7 +35,7 @@ class VengeantEarthTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, target))
                 .contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
 
         target.setSummoningSick(false);
         target.setAttacking(true);
@@ -56,7 +58,7 @@ class VengeantEarthTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -72,7 +74,7 @@ class VengeantEarthTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -160,7 +162,7 @@ class VengeantEarthTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -178,6 +180,6 @@ class VengeantEarthTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 }

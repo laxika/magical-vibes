@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
+
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
@@ -1284,7 +1286,7 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SnowLandwalkGrantChoice ctx) {
-            handleSnowLandwalkGrantChoice(gameData, colorName, ctx);
+            handleSnowLandwalkGrantChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
@@ -3778,8 +3780,10 @@ public class ChoiceHandlerService {
                 if (keyword != null) {
                     target.getGrantedKeywords().add(keyword);
                 } else {
-                    target.getUnblockableIfDefenderControlsUntilEndOfTurn()
-                            .add(new PermanentHasSubtypePredicate(subtype));
+                    gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(null, null, player.getId(),
+                            new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
+                                    new PermanentHasSubtypePredicate(subtype), true),
+                            target.getId(), Duration.UNTIL_END_OF_TURN));
                 }
                 landwalkName = subtype.getDisplayName().toLowerCase() + "walk";
             }
@@ -4855,9 +4859,11 @@ public class ChoiceHandlerService {
                     target.getId(), Duration.UNTIL_END_OF_TURN));
 
             String colorName = chosenColor.name().toLowerCase();
-            target.getBlockRestrictionsUntilEndOfTurn().add(new CanBeBlockedOnlyByFilterEffect(
-                    new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(chosenColor))),
-                    "creatures that aren't " + colorName));
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(ctx.sourceCardName(), null,
+                    ctx.controllerId(), new CanBeBlockedOnlyByFilterEffect(
+                            new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(chosenColor))),
+                            "creatures that aren't " + colorName),
+                    target.getId(), Duration.UNTIL_END_OF_TURN));
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                     " gains hexproof from " + colorName + " and can't be blocked by "
@@ -6922,7 +6928,7 @@ public class ChoiceHandlerService {
      * Guides): it can't be blocked while the defending player controls a land that is both snow
      * and of that type (CR 702.14c).
      */
-    private void handleSnowLandwalkGrantChoice(GameData gameData, String subtypeName,
+    private void handleSnowLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,
                                               ChoiceContext.SnowLandwalkGrantChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
@@ -6935,9 +6941,11 @@ public class ChoiceHandlerService {
                         && floating.effect() instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
                         && landwalkEffect.ignoresAllLandwalk());
             }
-            target.getUnblockableIfDefenderControlsUntilEndOfTurn().add(new PermanentAllOfPredicate(List.of(
-                    new PermanentHasSubtypePredicate(subtype),
-                    new PermanentHasSupertypePredicate(CardSupertype.SNOW))));
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(null, null, player.getId(),
+                    new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(new PermanentAllOfPredicate(List.of(
+                            new PermanentHasSubtypePredicate(subtype),
+                            new PermanentHasSupertypePredicate(CardSupertype.SNOW))), true),
+                    target.getId(), Duration.UNTIL_END_OF_TURN));
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                     " gains snow " + subtype.getDisplayName().toLowerCase() + "walk until end of turn."));

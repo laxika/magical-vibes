@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,7 +31,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(rimerunner.isTapped()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -78,7 +80,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(rimerunner.isTapped()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -142,7 +144,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
 
         assertThat(rimerunner.isTapped()).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -152,14 +154,14 @@ class GoblinRimerunnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, rimerunner.getId());
         assertThat(rimerunner.isTapped()).isTrue();
-        assertThat(rimerunner.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(rimerunner.getId(), CantBlockEffect.class)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(rimerunner.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(rimerunner.getId(), CantBlockEffect.class)).isTrue();
 
         gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         rimerunner.resetModifiers();
 
-        assertThat(rimerunner.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(rimerunner.getId(), CantBlockEffect.class)).isFalse();
     }
 }

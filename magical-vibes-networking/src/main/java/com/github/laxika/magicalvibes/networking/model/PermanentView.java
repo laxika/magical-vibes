@@ -23,7 +23,6 @@ public record PermanentView(
         CardColor chosenColor,
         String chosenName,
         int regenerationShield,
-        boolean cantBeBlocked,
         boolean animatedCreature,
         /** All counters on the permanent, keyed by counter type. Only present (non-zero) counters are included. */
         Map<CounterType, Integer> counters,
@@ -52,7 +51,7 @@ public record PermanentView(
     public PermanentView withGrantedAbilities(List<GrantedAbilityView> abilities) {
         return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
                 powerModifier, toughnessModifier, grantedKeywords, abilities, removedKeywords, effectivePower,
-                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
+                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield,
                 animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
                 modifierLines, exiledWithCards, faceDownExiledCount, faceDownExiledCards);
     }
@@ -66,7 +65,7 @@ public record PermanentView(
     public PermanentView withFaceDownRevealed(List<CardView> cards, int remainingHiddenCount) {
         return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
                 powerModifier, toughnessModifier, grantedKeywords, grantedAbilities, removedKeywords, effectivePower,
-                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
+                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield,
                 animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
                 modifierLines, exiledWithCards, remainingHiddenCount, cards);
     }
@@ -75,7 +74,7 @@ public record PermanentView(
     public PermanentView withCard(CardView card) {
         return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
                 powerModifier, toughnessModifier, grantedKeywords, grantedAbilities, removedKeywords, effectivePower,
-                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
+                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield,
                 animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
                 modifierLines, exiledWithCards, faceDownExiledCount, faceDownExiledCards);
     }

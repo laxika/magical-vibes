@@ -96,14 +96,14 @@ class GhostlyPilfererTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(pilferer.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, pilferer)).isTrue();
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pilferer.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, pilferer)).isFalse();
     }
 
     @Test
@@ -146,11 +146,11 @@ class GhostlyPilfererTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(pilferer.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, pilferer)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(pilferer.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, pilferer)).isTrue();
         assertThat(pilferer.isTapped()).isTrue();
     }
 

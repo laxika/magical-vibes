@@ -100,9 +100,9 @@ class SpeedYoungAvengerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(target.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
+        assertThat(gd.blockRestrictions(target.getId())).isEmpty();
         harness.passBothPriorities();
-        assertThat(target.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+        assertThat(gd.blockRestrictions(target.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -138,11 +138,11 @@ class SpeedYoungAvengerTest extends BaseCardTest {
         assertThat(choice.validPermanentIds()).contains(opponentTarget.getId()).doesNotContain(nonHaste.getId());
         harness.handlePermanentChosen(player1, opponentTarget.getId());
         harness.passBothPriorities();
-        assertThat(opponentTarget.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+        assertThat(gd.blockRestrictions(opponentTarget.getId())).hasSize(1);
 
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(opponentTarget.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
+        assertThat(gd.blockRestrictions(opponentTarget.getId())).isEmpty();
     }
 
     private Permanent prepareTrigger() {

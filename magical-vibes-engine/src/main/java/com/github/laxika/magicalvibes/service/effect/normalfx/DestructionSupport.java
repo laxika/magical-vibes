@@ -871,12 +871,9 @@ public class DestructionSupport {
             } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect unblockable) {
                 // "it gains 'this creature can't be blocked' until end of turn unless defending
                 // player sacrifices a creature" (Ogre Marauder) — the attacking source.
-                makeCreatureUnblockableHandler.resolve(gameData, entry, unblockable);
                 Permanent grantedTo = entry.getSourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (grantedTo != null && grantedTo.isCantBeBlocked()) {
-                    grantedTo.setCantBeBlockedGrantedAbility(true);
-                }
+                makeCreatureUnblockableHandler.grantCantBeBlocked(gameData, grantedTo, entry, unblockable.duration());
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);

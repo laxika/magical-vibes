@@ -61,7 +61,7 @@ class KaitoCunningInfiltratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, creature.getId(), null);
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
     @Test

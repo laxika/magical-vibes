@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.cards.s.StormbreathDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -75,7 +77,7 @@ class BidentOfThassaTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(enemyBear.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(enemyBear.getId(), MustAttackIfAbleEffect.class)).isFalse();
     }
 
     @Test

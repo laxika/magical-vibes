@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
 import com.github.laxika.magicalvibes.cards.c.Conservator;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
@@ -23,10 +27,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({WallOfDust.class, GrizzlyBears.class, AnimateArtifact.class, Conservator.class, Disenchant.class})
 class WallOfDustTest extends BaseCardTest {
 
+    private boolean restrictionWaits(Permanent creature) {
+        return gd.scheduledFloatingEffects.stream().anyMatch(fe -> creature.getId().equals(fe.affectedPermanentId())
+                && fe.effect() instanceof CantAttackNextTurnCombatOpponentEffect);
+    }
+
+    private boolean restrictionApplies(Permanent creature) {
+        return gd.hasFloatingEffectOnPermanent(creature.getId(), CantAttackNextTurnCombatOpponentEffect.class);
+    }
+
+    private void restrictForNextTurn(Permanent creature) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Wall of Dust", null, player2.getId(),
+                new CantAttackNextTurnCombatOpponentEffect(), creature.getId(),
+                Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+    }
+
     private void advanceTurn(Player nextActivePlayer) {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(nextActivePlayer, TurnStep.UPKEEP);
     }
 
@@ -55,7 +74,7 @@ class WallOfDustTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(attacker.isCantAttackNextTurn()).isTrue();
+        assertThat(restrictionWaits(attacker)).isTrue();
     }
 
     @Test
@@ -73,27 +92,27 @@ class WallOfDustTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(firstAttacker.isCantAttackNextTurn()).isTrue();
-        assertThat(secondAttacker.isCantAttackNextTurn()).isTrue();
+        assertThat(restrictionWaits(firstAttacker)).isTrue();
+        assertThat(restrictionWaits(secondAttacker)).isTrue();
     }
 
     @Test
     @DisplayName("The restriction arms only on the creature's controller's next turn, not the intervening opponent turn")
     void restrictionArmsOnControllersNextTurn() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setCantAttackNextTurn(true); // state produced by the block trigger
+        restrictForNextTurn(bear); // state produced by the block trigger
 
         // The intervening opponent turn must not arm the restriction.
         harness.forceActivePlayer(player1);
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(bear.isCantAttackThisTurn()).isFalse();
-        assertThat(bear.isCantAttackNextTurn()).isTrue();
+        assertThat(restrictionApplies(bear)).isFalse();
+        assertThat(restrictionWaits(bear)).isTrue();
 
         // The controller's next turn arms it and it can't be declared as an attacker.
         advanceTurn(player1);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(bear.isCantAttackThisTurn()).isTrue();
+        assertThat(restrictionApplies(bear)).isTrue();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -104,14 +123,18 @@ class WallOfDustTest extends BaseCardTest {
     @DisplayName("The restriction wears off after the one turn and the creature can attack again")
     void restrictionWearsOff() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setCantAttackThisTurn(true); // already armed for player1's current turn
+        restrictForNextTurn(bear);
         harness.forceActivePlayer(player1);
 
-        // player1 -> player2 -> player1: the following controller turn clears the restriction.
+        // player1 -> player2 -> player1 (restricted) -> player2 -> player1: the restriction ended with that turn.
+        advanceTurn(player2);
+        advanceTurn(player1);
+        assertThat(restrictionApplies(bear)).isTrue();
         advanceTurn(player2);
         advanceTurn(player1);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(bear.isCantAttackThisTurn()).isFalse();
+        assertThat(restrictionApplies(bear)).isFalse();
+        assertThat(restrictionWaits(bear)).isFalse();
 
         // The restriction is gone, so the creature is a legal attacker again.
         assertThat(harness.getCombatAttackService()

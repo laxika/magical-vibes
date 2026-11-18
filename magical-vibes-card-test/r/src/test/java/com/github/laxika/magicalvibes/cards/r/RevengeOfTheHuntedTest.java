@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -36,7 +38,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(8);
         assertThat(bears.getEffectiveToughness()).isEqualTo(8);
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -58,7 +60,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
     @Test
@@ -72,7 +74,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(8);
         assertThat(target.getEffectiveToughness()).isEqualTo(8);
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
     @Test
@@ -119,7 +121,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(8);
         assertThat(target.getEffectiveToughness()).isEqualTo(8);
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Revenge of the Hunted");
     }

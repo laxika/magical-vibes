@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +27,8 @@ class RavingDeadTest extends BaseCardTest {
         advanceToBeginningOfCombat(player1);
         resolveAllTriggers();
 
-        assertThat(ravingDead.isMustAttackThisCombat()).isTrue();
-        assertThat(ravingDead.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(ravingDead.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(ravingDead.getId())).isEqualTo(player2.getId());
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
@@ -90,8 +92,8 @@ class RavingDeadTest extends BaseCardTest {
         advanceToBeginningOfCombat(player2);
         resolveAllTriggers();
 
-        assertThat(ravingDead.isMustAttackThisCombat()).isFalse();
-        assertThat(ravingDead.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(ravingDead.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(ravingDead.getId())).isNull();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GallantCitizen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -36,7 +38,7 @@ class ShriekTreblemakerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
         harness.assertInGraveyard(player1, "Gallant Citizen");
     }
 
@@ -52,7 +54,7 @@ class ShriekTreblemakerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardInHand);
     }
 
@@ -104,7 +106,7 @@ class ShriekTreblemakerTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
         }
 
-        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -122,11 +124,11 @@ class ShriekTreblemakerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handlePermanentChosen(player1, creature.getId());
 
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Gallant Citizen");
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -148,7 +150,7 @@ class ShriekTreblemakerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Gallant Citizen");
         harness.assertNotOnBattlefield(player2, "Gallant Citizen");
-        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

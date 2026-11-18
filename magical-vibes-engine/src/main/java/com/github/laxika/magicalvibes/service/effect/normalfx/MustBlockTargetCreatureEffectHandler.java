@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,7 +46,7 @@ public class MustBlockTargetCreatureEffectHandler implements NormalEffectHandler
             return;
         }
 
-        blocker.getMustBlockIds().add(blocked.getId());
+        gameData.addEffectOnPermanent(entry, new MustBlockSourceEffect(blocked.getId()), blocker.getId(), Duration.UNTIL_END_OF_TURN);
 
         
         gameLogService.append(gameData, GameLog.cardTextCard(blocker.getCard(), " must block ", blocked.getCard(), " this turn if able."));

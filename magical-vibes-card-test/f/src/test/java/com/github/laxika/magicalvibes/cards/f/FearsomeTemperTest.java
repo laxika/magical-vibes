@@ -39,7 +39,7 @@ class FearsomeTemperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(creature.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(creature.getId());
     }
 
     @Test
@@ -135,7 +135,7 @@ class FearsomeTemperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(creature.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(creature.getId());
     }
 
     @Test
@@ -150,7 +150,7 @@ class FearsomeTemperTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof FearsomeTemper);
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(creature.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
@@ -173,7 +173,7 @@ class FearsomeTemperTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getCantBlockIds()).contains(creature.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(creature.getId());
     }
 
     @Test
@@ -185,12 +185,12 @@ class FearsomeTemperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
-        assertThat(blocker.getCantBlockIds()).contains(creature.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).contains(creature.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(blocker.getCantBlockIds()).doesNotContain(creature.getId());
+        assertThat(gd.cantBlockSourceIds(blocker.getId())).doesNotContain(creature.getId());
     }
 
     private Permanent addEnchantedCreature() {

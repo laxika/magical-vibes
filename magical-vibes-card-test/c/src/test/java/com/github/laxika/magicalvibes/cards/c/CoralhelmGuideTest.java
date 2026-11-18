@@ -27,7 +27,7 @@ class CoralhelmGuideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -38,12 +38,12 @@ class CoralhelmGuideTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -60,8 +60,8 @@ class CoralhelmGuideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(guide.isTapped()).isFalse();
-        assertThat(firstTarget.isCantBeBlocked()).isTrue();
-        assertThat(secondTarget.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, firstTarget)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, secondTarget)).isTrue();
     }
 
     @Test
@@ -84,7 +84,7 @@ class CoralhelmGuideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, guide.getId());
         harness.passBothPriorities();
 
-        assertThat(guide.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, guide)).isTrue();
         assertThat(guide.isTapped()).isTrue();
     }
 
@@ -97,7 +97,7 @@ class CoralhelmGuideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(guide.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, guide)).isFalse();
     }
 
     @Test
@@ -110,7 +110,7 @@ class CoralhelmGuideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(guide.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, guide)).isFalse();
     }
 
     @Test

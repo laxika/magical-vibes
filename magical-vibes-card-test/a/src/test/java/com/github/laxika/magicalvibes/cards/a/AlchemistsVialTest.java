@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -46,8 +49,8 @@ class AlchemistsVialTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Alchemist's Vial");
 
         Permanent locked = findPermanent(player2, "Timberpack Wolf");
-        assertThat(locked.isCantAttackThisTurn()).isTrue();
-        assertThat(locked.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(locked.getId(), CantAttackThisTurnEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(locked.getId(), CantBlockEffect.class)).isTrue();
         assertThat(harness.getAttackLegalityService().canAttack(gd, locked, player2.getId())).isFalse();
     }
 
@@ -66,8 +69,8 @@ class AlchemistsVialTest extends BaseCardTest {
                 .filter(p -> !p.getId().equals(target.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(other.isCantAttackThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantAttackThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -81,8 +84,8 @@ class AlchemistsVialTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Alchemist's Vial");
         harness.assertInGraveyard(player1, "Alchemist's Vial");
-        assertThat(target.isCantAttackThisTurn()).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantAttackThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -150,8 +153,8 @@ class AlchemistsVialTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isCantAttackThisTurn()).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantAttackThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(als.canAttack(gd, target, player2.getId())).isTrue();
         assertThat(bls.canBlock(gd, target)).isTrue();
     }

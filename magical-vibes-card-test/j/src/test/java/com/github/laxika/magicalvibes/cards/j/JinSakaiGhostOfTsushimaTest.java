@@ -38,7 +38,7 @@ class JinSakaiGhostOfTsushimaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Ghost — It can't be blocked this turn");
         harness.passBothPriorities();
-        assertThat(attacker.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
 
         assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }

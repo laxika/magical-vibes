@@ -63,7 +63,7 @@ class ManifoldKeyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
     @Test
@@ -75,13 +75,13 @@ class ManifoldKeyTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 
     @Test
@@ -137,12 +137,12 @@ class ManifoldKeyTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         assertThat(key.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         gd.playerBattlefields.get(player1.getId()).remove(key);
         gd.playerGraveyards.get(player1.getId()).add(key.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -169,7 +169,7 @@ class ManifoldKeyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(key.isTapped()).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DenyTheWitch;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
@@ -30,8 +32,8 @@ class KnightRampagerTest extends BaseCardTest {
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(knight.isMustAttackThisCombat()).isTrue();
-        assertThat(knight.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(knight.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(knight.getId())).isEqualTo(player2.getId());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -82,8 +84,8 @@ class KnightRampagerTest extends BaseCardTest {
         advanceToBeginningOfCombat(player2);
         harness.passBothPriorities();
 
-        assertThat(knight.isMustAttackThisCombat()).isFalse();
-        assertThat(knight.getMustAttackTargetId()).isNull();
+        assertThat(gd.hasFloatingEffectOnPermanent(knight.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        assertThat(gd.mustAttackDefender(knight.getId())).isNull();
     }
 
     @Test

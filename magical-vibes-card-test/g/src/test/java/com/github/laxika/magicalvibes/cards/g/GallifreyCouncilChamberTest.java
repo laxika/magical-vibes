@@ -138,7 +138,7 @@ class GallifreyCouncilChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(doctor.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, doctor)).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, doctor.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

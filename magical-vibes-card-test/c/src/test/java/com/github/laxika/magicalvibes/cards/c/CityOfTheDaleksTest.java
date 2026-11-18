@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorElixir;
 import com.github.laxika.magicalvibes.cards.p.PalladiumMyr;
@@ -69,8 +71,8 @@ class CityOfTheDaleksTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, dalek, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, dalek, Keyword.HASTE)).isTrue();
         assertThat(dalek.isTapped()).isFalse();
-        assertThat(dalek.isMustAttackThisTurn()).isTrue();
-        assertThat(dalek.getMustAttackTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(dalek.getId(), MustAttackIfAbleEffect.class)).isTrue();
+        assertThat(gd.mustAttackDefender(dalek.getId())).isEqualTo(player2.getId());
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

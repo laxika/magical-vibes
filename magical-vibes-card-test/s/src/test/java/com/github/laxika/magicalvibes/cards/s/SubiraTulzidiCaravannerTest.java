@@ -35,7 +35,7 @@ class SubiraTulzidiCaravannerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, subira.getId()))
@@ -112,7 +112,7 @@ class SubiraTulzidiCaravannerTest extends BaseCardTest {
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 
-        assertThat(bears.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     @Test
@@ -126,7 +126,7 @@ class SubiraTulzidiCaravannerTest extends BaseCardTest {
         harness.passBothPriorities();
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        assertThat(bears.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     @Test

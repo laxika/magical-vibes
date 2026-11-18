@@ -79,7 +79,7 @@ class LuminousGuardianTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(guardian.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        assertThat(gd.additionalBlocksThisTurn(guardian.getId())).isZero();
     }
 
     @Test
@@ -170,7 +170,7 @@ class LuminousGuardianTest extends BaseCardTest {
         activate(player2, guardian, 1);
 
         assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(5);
-        assertThat(guardian.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(1);
+        assertThat(gd.additionalBlocksThisTurn(guardian.getId())).isEqualTo(1);
         assertThat(guardian.isTapped()).isTrue();
     }
     private Permanent addGuardian() {

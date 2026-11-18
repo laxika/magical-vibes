@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Target player chooses a creature they control; every <em>other</em> creature they control can't
- * block this turn (a one-shot effect setting {@code Permanent.cantBlockThisTurn} on the rest).
+ * block this turn (a floating {@link CantBlockEffect} until end of turn on each of the rest).
  *
  * <p>The chooser is the targeted player (not the caster) — pair on a card with a
  * {@code PlayerPredicateTargetFilter} restricting the target (e.g. to an opponent). At resolution

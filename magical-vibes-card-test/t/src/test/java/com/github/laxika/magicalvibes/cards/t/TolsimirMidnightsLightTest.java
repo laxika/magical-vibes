@@ -58,7 +58,7 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(wolf.getId());
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).containsExactly(wolf.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -78,7 +78,7 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
         assertThat(wolf.isAttacking()).isTrue();
     }
 
@@ -91,7 +91,7 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 
     @Test

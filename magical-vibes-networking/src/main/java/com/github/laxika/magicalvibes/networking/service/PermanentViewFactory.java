@@ -135,7 +135,6 @@ public class PermanentViewFactory {
                 p.getChosenColor(),
                 p.getChosenName(),
                 p.getRegenerationShield(),
-                p.isCantBeBlocked(),
                 animatedCreature || p.isAnimatedUntilNextTurn() || p.isPermanentlyAnimated(),
                 Map.copyOf(p.getCounters()),
                 p.getAttackTarget(),

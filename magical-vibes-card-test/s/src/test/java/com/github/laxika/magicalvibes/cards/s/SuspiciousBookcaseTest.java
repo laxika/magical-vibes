@@ -27,7 +27,7 @@ class SuspiciousBookcaseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bookcase.isTapped()).isTrue();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
     @Test
@@ -39,13 +39,13 @@ class SuspiciousBookcaseTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class SuspiciousBookcaseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(bookcase.isTapped()).isFalse();
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -98,7 +98,7 @@ class SuspiciousBookcaseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -110,10 +110,10 @@ class SuspiciousBookcaseTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bookcase.getId());
         assertThat(bookcase.isTapped()).isTrue();
-        assertThat(bookcase.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, bookcase)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(bookcase.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bookcase)).isTrue();
     }
 
     @Test
@@ -128,7 +128,7 @@ class SuspiciousBookcaseTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(bookcase.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -40,8 +43,8 @@ class FluttershyTest extends BaseCardTest {
         activate(fluttershy, List.of(player2.getId()));
 
         assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(3);
-        assertThat(targetCreature.isCantAttackThisTurn()).isFalse();
-        assertThat(targetCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(targetCreature.getId(), CantAttackThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(targetCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.p.ProwlersHelm;
 import com.github.laxika.magicalvibes.cards.t.TravelingPhilosopher;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,7 +32,7 @@ class SatyrPiperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
     @Test
@@ -47,7 +49,7 @@ class SatyrPiperTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
     @Test
@@ -109,7 +111,7 @@ class SatyrPiperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, piper.getId());
         harness.passBothPriorities();
 
-        assertThat(piper.isMustBeBlockedThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(piper.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         assertThat(piper.isTapped()).isTrue();
     }
 

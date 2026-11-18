@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
+
 import com.github.laxika.magicalvibes.cards.b.Bullwhip;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -57,7 +59,7 @@ class ArgothianTreefolkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(treefolk.getMarkedDamage()).isZero();
-        assertThat(treefolk.isMustAttackThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(treefolk.getId(), MustAttackIfAbleEffect.class)).isTrue();
         harness.assertOnBattlefield(player1, "Argothian Treefolk");
     }
 

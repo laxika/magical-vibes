@@ -30,19 +30,19 @@ class RiverfallMimicTest extends BaseCardTest {
     @DisplayName("Casting a blue-and-red spell makes the Mimic 3/3 and unblockable")
     void blueRedSpellPumpsMimic() {
         Permanent mimic = addCreatureReady(player1, new RiverfallMimic());
-        assertThat(mimic.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
 
         harness.setHand(player1, List.of(new RiverfallMimic()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
         harness.passBothPriorities(); // resolve the triggered ability
 
         assertThat(mimic.getEffectivePower()).isEqualTo(3);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(3);
-        assertThat(mimic.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
     }
 
     @Test
@@ -64,7 +64,7 @@ class RiverfallMimicTest extends BaseCardTest {
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
-        assertThat(mimic.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
     @Test
@@ -77,7 +77,7 @@ class RiverfallMimicTest extends BaseCardTest {
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
-        assertThat(mimic.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
     @Test
@@ -89,7 +89,7 @@ class RiverfallMimicTest extends BaseCardTest {
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
-        assertThat(mimic.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class RiverfallMimicTest extends BaseCardTest {
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
-        assertThat(mimic.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
     @Test
@@ -116,14 +116,14 @@ class RiverfallMimicTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(mimic.getEffectivePower()).isEqualTo(3);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(3);
-        assertThat(mimic.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
         assertThat(mimic.getEffectivePower()).isEqualTo(3);
         assertThat(mimic.getEffectiveToughness()).isEqualTo(3);
-        assertThat(mimic.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
     }
 
     @Test
@@ -137,7 +137,7 @@ class RiverfallMimicTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(5);
-        assertThat(mimic.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
         assertThat(mimic.getPlusOnePlusOneCounters()).isEqualTo(2);
     }
 }

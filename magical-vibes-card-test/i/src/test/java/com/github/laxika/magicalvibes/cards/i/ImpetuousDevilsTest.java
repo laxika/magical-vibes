@@ -38,7 +38,7 @@ class ImpetuousDevilsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, defendingCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(defendingCreature.getRequiredBlockSourceIds()).containsExactly(devils.getId());
+        assertThat(gd.requiredBlockSourceIds(defendingCreature.getId())).containsExactly(devils.getId());
     }
 
     @Test
@@ -54,7 +54,7 @@ class ImpetuousDevilsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent blocker = findPermanent(player2, "Field Creeper");
-        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
+        assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
         assertThat(devils.isAttacking()).isTrue();
     }
 

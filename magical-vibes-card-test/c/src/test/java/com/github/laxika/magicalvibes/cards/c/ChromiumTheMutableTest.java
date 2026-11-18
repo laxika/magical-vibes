@@ -40,7 +40,7 @@ class ChromiumTheMutableTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, chromium)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, chromium, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, chromium, Keyword.HEXPROOF)).isTrue();
-        assertThat(chromium.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, chromium)).isTrue();
         assertThat(gs.getEffectiveActivatedAbilities(gd, chromium)).isEmpty();
     }
 
@@ -59,7 +59,7 @@ class ChromiumTheMutableTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, chromium)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, chromium, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, chromium, Keyword.HEXPROOF)).isFalse();
-        assertThat(chromium.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, chromium)).isFalse();
         assertThat(gs.getEffectiveActivatedAbilities(gd, chromium)).hasSize(1);
     }
 

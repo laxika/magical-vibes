@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -108,7 +111,7 @@ public class DealDamageToOneOfTwoTargetCreaturesThenOtherCantBlockEffectHandler
         if (otherId != null) {
             Permanent other = gameQueryService.findPermanentById(gameData, otherId);
             if (other != null) {
-                other.setCantBlockThisTurn(true);
+                gameData.addEffectOnPermanent(entry, new CantBlockEffect(), other.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " can't block this turn."));
             }
         }

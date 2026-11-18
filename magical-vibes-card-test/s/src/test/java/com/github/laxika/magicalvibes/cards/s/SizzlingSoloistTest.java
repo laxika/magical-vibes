@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CabarettiInitiate;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,9 +30,9 @@ class SizzlingSoloistTest extends BaseCardTest {
 
         triggerAlliance(opponentCreature.getId());
 
-        assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isTrue();
         assertThat(mustAttack(opponentCreature)).isFalse();
-        assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -71,7 +73,7 @@ class SizzlingSoloistTest extends BaseCardTest {
         triggerAlliance(secondTarget.getId());
         triggerAlliance(thirdTarget.getId());
 
-        assertThat(thirdTarget.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(thirdTarget.getId(), CantBlockEffect.class)).isTrue();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -92,7 +94,7 @@ class SizzlingSoloistTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(opponentCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isFalse();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -102,7 +104,7 @@ class SizzlingSoloistTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(opponentCreature.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(opponentCreature.getId(), CantBlockEffect.class)).isFalse();
     }
 
     @Test
@@ -143,7 +145,7 @@ class SizzlingSoloistTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, soloist));
         harness.passBothPriorities();
 
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -164,11 +166,11 @@ class SizzlingSoloistTest extends BaseCardTest {
         triggerAlliance(target.getId());
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(mustAttack(target)).isFalse();
-        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
         assertThat(mustAttack(target)).isTrue();
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class);
