@@ -4,13 +4,24 @@ import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
 import com.github.laxika.magicalvibes.cards.d.DesertNomads;
 import com.github.laxika.magicalvibes.cards.d.DimirHouseGuard;
+import com.github.laxika.magicalvibes.cards.g.GiverOfRunes;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGuildpact;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.r.ReaverTitan;
 import com.github.laxika.magicalvibes.cards.s.Sewerdreg;
 import com.github.laxika.magicalvibes.cards.s.SiegeWurm;
+import com.github.laxika.magicalvibes.cards.t.TrueNameNemesis;
 import com.github.laxika.magicalvibes.cards.w.WeatherseedFaeries;
+import com.github.laxika.magicalvibes.cards.g.GrayOgre;
+import com.github.laxika.magicalvibes.cards.h.HaktosTheUnscarred;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.l.LavabrinkVenturer;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,7 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ConcertedEffort.class, BorosRecruit.class, BorosSwiftblade.class, CourierHawk.class,
         SiegeWurm.class, WeatherseedFaeries.class, DesertNomads.class, GuardianOfTheGuildpact.class,
-        DimirHouseGuard.class, Sewerdreg.class, ReaverTitan.class})
+        DimirHouseGuard.class, Sewerdreg.class, ReaverTitan.class, GiverOfRunes.class, GrizzlyBears.class,
+        Memnite.class, TrueNameNemesis.class, TsaboTavoc.class, IsamaruHoundOfKonda.class, LavabrinkVenturer.class,
+        LlanowarElves.class, GrayOgre.class, HaktosTheUnscarred.class})
 class ConcertedEffortTest extends BaseCardTest {
 
     private void resolveUpkeepTrigger(Player activePlayer) {
@@ -196,5 +209,98 @@ class ConcertedEffortTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFromSource(gd, titan, hawk)).isTrue();
         assertThat(gqs.hasProtectionFromSource(gd, recruit, hawk)).isTrue();
         assertThat(gqs.hasProtectionFromSource(gd, recruit, opposingWurm)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shares protection from colorless")
+    void sharesProtectionFromColorless() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        addCreatureReady(player1, new GiverOfRunes());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player2, new Memnite());
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "COLORLESS");
+        resolveAllTriggers();
+
+        assertThat(gqs.hasProtectionFromSource(gd, bears, memnite)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, memnite)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shares protection from a player")
+    void sharesProtectionFromPlayer() {
+        harness.setHand(player1, List.of(new TrueNameNemesis()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, opponentBears)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, ownBears)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shares protection from matching permanents (legendary creatures)")
+    void sharesProtectionFromLegendaryCreatures() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        harness.addToBattlefield(player1, new TsaboTavoc());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent isamaru = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, isamaru)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, bears)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shares protection from each mana value of the chosen quality as that quality")
+    void sharesProtectionFromChosenParity() {
+        harness.castFromHand(player1, new LavabrinkVenturer(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ODD");
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, elves)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, bears)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shares protection from each mana value other than the chosen number as those mana values")
+    void sharesProtectionFromAllOtherManaValues() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent haktos = harness.addToBattlefieldAndReturn(player1, new HaktosTheUnscarred());
+        haktos.setChosenNumber(2);
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        recruit.setChosenNumber(3);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ogre = harness.addToBattlefieldAndReturn(player2, new GrayOgre());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, bears)).isFalse();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, ogre)).isTrue();
     }
 }

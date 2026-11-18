@@ -11,7 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Applied in {@code DamagePreventionService.applyHalfDamagePrevention}, reached from both the player
  * choke point ({@code applyPlayerPreventionShield}) and the permanent choke point
- * ({@code applyCreaturePreventionShield}). Used by Gisela, Blade of Goldnight together with
+ * ({@code creatureDamageSteps}). Used by Gisela, Blade of Goldnight together with
  * {@link DoubleDamageToOpponentsAndTheirPermanentsEffect}.
  */
 public record PreventHalfDamageToControllerAndTheirPermanentsEffect() implements CardEffect {

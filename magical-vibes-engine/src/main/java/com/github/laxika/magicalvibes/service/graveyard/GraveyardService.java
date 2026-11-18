@@ -1036,7 +1036,7 @@ public class GraveyardService {
             return true;
         }
         if (gameData.regenerationShieldCount(perm.getId()) > 0) {
-            // Several kinds of shield are among the replacements above, so only one kind is left here.
+            // Several options are asked about before the event (above), so only one is left here.
             spendRegenerationShield(gameData, perm, regenerationOptions(gameData, perm).values().iterator().next());
             return true;
         }
@@ -1044,35 +1044,57 @@ public class GraveyardService {
     }
 
     /**
-     * The kinds of regeneration shield on {@code perm}, as options of {@link #destructionReplacementOptions}: one
-     * with no rider first, then the riders in a fixed order (CR 616.1 leaves the order to the controller).
+     * The regeneration shields on {@code perm}, as options of {@link #destructionReplacementOptions}: the affected
+     * permanent's controller chooses which applies (CR 616.1). Shields that would do the same thing are one option:
+     * all those with no rider, and those with the same rider whose delayed ability the same player controls (and that
+     * offer the card to the same player). The plain option comes first, then the riders in a fixed order, oldest
+     * shield first; a rider shared by options that differ only in who controls the ability names that player.
      */
     private Map<String, String> regenerationOptions(GameData gameData, Permanent perm) {
-        Map<String, String> options = new LinkedHashMap<>();
+        Map<String, String> baseLabels = new LinkedHashMap<>();
+        Map<String, UUID> controllers = new LinkedHashMap<>();
         List<FloatingContinuousEffect> shields = gameData.regenerationShields(perm.getId());
-        if (shields.stream().anyMatch(shield -> riderOf(shield) == RegenerationShield.Rider.NONE)) {
-            options.put("Regenerate without an additional effect", "PLAIN");
-        }
-        if (shields.stream().anyMatch(shield -> riderOf(shield) == RegenerationShield.Rider.MINUS_ONE_COUNTER)) {
-            options.put("Regenerate and put a -1/-1 counter on it", "MINUS");
-        }
-        if (shields.stream().anyMatch(shield -> riderOf(shield) == RegenerationShield.Rider.PLUS_ONE_COUNTER)) {
-            options.put("Regenerate and put a +1/+1 counter on it", "PLUS");
-        }
-        for (FloatingContinuousEffect shield : shields) {
-            if (riderOf(shield) == RegenerationShield.Rider.OPPONENT_DRAW) {
-                UUID recipient = ((RegenerationShield) shield.effect()).playerId();
-                options.put("Regenerate and let " + gameData.playerIdToName.get(recipient) + " draw a card",
-                        "DRAW:" + recipient);
+        for (RegenerationShield.Rider rider : RegenerationShield.Rider.values()) {
+            for (FloatingContinuousEffect shield : shields) {
+                if (riderOf(shield) == rider) {
+                    String key = regenerationOptionKey(shield);
+                    baseLabels.putIfAbsent(key, regenerationOptionLabel(gameData, shield));
+                    controllers.putIfAbsent(key, shield.controllerId());
+                }
             }
         }
-        for (FloatingContinuousEffect shield : shields) {
-            if (riderOf(shield) == RegenerationShield.Rider.GAIN_CONTROL) {
-                options.put("Regenerate and give " + gameData.playerIdToName.get(shield.controllerId()) + " control",
-                        "CONTROL:" + shield.controllerId());
-            }
-        }
+        Map<String, Long> labelCounts = new LinkedHashMap<>();
+        baseLabels.values().forEach(label -> labelCounts.merge(label, 1L, Long::sum));
+        Map<String, String> options = new LinkedHashMap<>();
+        baseLabels.forEach((key, label) -> options.put(labelCounts.get(label) > 1
+                ? label + " (" + gameData.playerIdToName.get(controllers.get(key)) + "'s ability)"
+                : label, key));
         return options;
+    }
+
+    /** The option a regeneration shield belongs to: equal for shields whose use does the same thing. */
+    private static String regenerationOptionKey(FloatingContinuousEffect shield) {
+        RegenerationShield payload = (RegenerationShield) shield.effect();
+        return switch (payload.rider()) {
+            case NONE -> "PLAIN";
+            case MINUS_ONE_COUNTER -> "MINUS:" + shield.controllerId();
+            case PLUS_ONE_COUNTER -> "PLUS:" + shield.controllerId();
+            case OPPONENT_DRAW -> "DRAW:" + shield.controllerId() + ":" + payload.playerId();
+            case GAIN_CONTROL -> "CONTROL:" + shield.controllerId();
+        };
+    }
+
+    private static String regenerationOptionLabel(GameData gameData, FloatingContinuousEffect shield) {
+        RegenerationShield payload = (RegenerationShield) shield.effect();
+        return switch (payload.rider()) {
+            case NONE -> "Regenerate without an additional effect";
+            case MINUS_ONE_COUNTER -> "Regenerate and put a -1/-1 counter on it";
+            case PLUS_ONE_COUNTER -> "Regenerate and put a +1/+1 counter on it";
+            case OPPONENT_DRAW -> "Regenerate and let " + gameData.playerIdToName.get(payload.playerId())
+                    + " draw a card";
+            case GAIN_CONTROL -> "Regenerate and give " + gameData.playerIdToName.get(shield.controllerId())
+                    + " control";
+        };
     }
 
     private static RegenerationShield.Rider riderOf(FloatingContinuousEffect shield) {
@@ -1085,15 +1107,7 @@ public class GraveyardService {
      */
     private FloatingContinuousEffect useRegenerationShield(GameData gameData, Permanent perm, String shield) {
         for (FloatingContinuousEffect fe : gameData.regenerationShields(perm.getId())) {
-            RegenerationShield payload = (RegenerationShield) fe.effect();
-            boolean matches = switch (payload.rider()) {
-                case NONE -> shield.equals("PLAIN");
-                case MINUS_ONE_COUNTER -> shield.equals("MINUS");
-                case PLUS_ONE_COUNTER -> shield.equals("PLUS");
-                case OPPONENT_DRAW -> shield.equals("DRAW:" + payload.playerId());
-                case GAIN_CONTROL -> shield.equals("CONTROL:" + fe.controllerId());
-            };
-            if (matches) {
+            if (regenerationOptionKey(fe).equals(shield)) {
                 gameData.endFloatingEffect(fe);
                 return fe;
             }
@@ -1216,14 +1230,17 @@ public class GraveyardService {
         }
         FloatingContinuousEffect used = useRegenerationShield(gameData, perm, shield);
         performRegeneration(gameData, perm);
-        if (shield.equals("MINUS")) {
-            spendMinusOneCounterRegenerationShield(gameData, perm);
-        } else if (shield.equals("PLUS")) {
-            spendPlusOnePlusOneCounterRegenerationShield(gameData, perm, used);
-        } else if (shield.startsWith("DRAW:")) {
-            spendOpponentDrawRegenerationShield(gameData, perm, UUID.fromString(shield.substring(5)), used);
-        } else if (shield.startsWith("CONTROL:")) {
-            spendGainControlRegenerationShield(gameData, perm, UUID.fromString(shield.substring(8)));
+        if (used == null) {
+            return;
+        }
+        RegenerationShield payload = (RegenerationShield) used.effect();
+        switch (payload.rider()) {
+            case NONE -> {
+            }
+            case MINUS_ONE_COUNTER -> spendCounterRegenerationShield(gameData, perm, used, -1);
+            case PLUS_ONE_COUNTER -> spendCounterRegenerationShield(gameData, perm, used, 1);
+            case OPPONENT_DRAW -> spendOpponentDrawRegenerationShield(gameData, perm, payload.playerId(), used);
+            case GAIN_CONTROL -> spendGainControlRegenerationShield(gameData, perm, used.controllerId());
         }
     }
 
@@ -1332,16 +1349,23 @@ public class GraveyardService {
     }
 
     /**
+     * The controller of a rider's delayed triggered ability: the player who controlled the spell or ability that made
+     * the shield (CR 603.7e), which is the shield effect's controller.
+     */
+    private UUID riderControllerId(GameData gameData, Permanent perm, FloatingContinuousEffect used) {
+        return used.controllerId() != null ? used.controllerId()
+                : gameQueryService.findPermanentController(gameData, perm.getId());
+    }
+
+    /**
      * Soldevi Sentry: a regeneration shield granted by its ability owes the opponent an optional draw
      * once that shield is chosen and spent.
      */
     private void spendOpponentDrawRegenerationShield(GameData gameData, Permanent perm, UUID opponentId,
                                                      FloatingContinuousEffect used) {
-        UUID triggerControllerId = used != null && used.controllerId() != null ? used.controllerId()
-                : gameQueryService.findPermanentController(gameData, perm.getId());
-
         // "When it regenerates this way, that player may draw a card": a delayed triggered ability (CR 603.7).
-        StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(), triggerControllerId,
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
+                riderControllerId(gameData, perm, used),
                 perm.getCard().getName() + "'s regeneration ability",
                 List.of(new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?",
                         null, MayChoicePlayer.TARGET_PLAYER)),
@@ -1353,34 +1377,18 @@ public class GraveyardService {
     }
 
     /**
-     * Matopi Golem: when a regeneration shield granted by its ability is chosen and spent, a
-     * triggered ability that puts a -1/-1 counter on the permanent is put on the stack.
+     * Matopi Golem (a -1/-1 counter) and Skeleton Scavengers (a +1/+1 counter): when a regeneration shield granted
+     * by its ability is chosen and spent, a delayed triggered ability puts the counter on the permanent; the
+     * ability's controller puts it (Vorinclex, Monstrous Raider and the like see that player).
      */
-    private void spendMinusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
+    private void spendCounterRegenerationShield(GameData gameData, Permanent perm, FloatingContinuousEffect used,
+                                                int modifier) {
         // "When it regenerates this way, put a counter on it": a delayed triggered ability (CR 603.7).
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
-                gameQueryService.findPermanentController(gameData, perm.getId()),
+                riderControllerId(gameData, perm, used),
                 perm.getCard().getName() + "'s regeneration ability",
-                List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(-1, -1, 1)),
-                perm.getId(), perm.getId());
-        trigger.setNonTargeting(true);
-        triggeredAbilityStackService.putDelayed(gameData, trigger);
-    }
-
-    /**
-     * Skeleton Scavengers: a regeneration shield granted by its ability puts a +1/+1 counter on the
-     * permanent once that shield is chosen and spent.
-     */
-    private void spendPlusOnePlusOneCounterRegenerationShield(GameData gameData, Permanent perm,
-                                                              FloatingContinuousEffect used) {
-        UUID triggerControllerId = used != null && used.controllerId() != null ? used.controllerId()
-                : gameQueryService.findPermanentController(gameData, perm.getId());
-
-        // "When it regenerates this way, put a counter on it": a delayed triggered ability (CR 603.7).
-        StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
-                triggerControllerId,
-                perm.getCard().getName() + "'s regeneration ability",
-                List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1)),
+                List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(
+                        modifier, modifier, 1)),
                 perm.getId(), perm.getId());
         trigger.setNonTargeting(true);
         triggeredAbilityStackService.putDelayed(gameData, trigger);

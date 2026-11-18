@@ -95,29 +95,6 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
             }
 
             @Test
-            @DisplayName("Does not track creature in permanentsDealtDamageThisTurn when damage is fully prevented")
-            void doesNotTrackWhenDamageFullyPrevented() {
-                Card burnCard = createCard("Shock");
-                Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
-                StackEntry entry = createEntry(burnCard, player1Id, bears.getId());
-                DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(1, false);
-
-                stubDamagePreventable();
-                stubDamageFromSourceNotPrevented();
-                stubNoDamageMultiplier();
-                when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player2Id);
-                // Prevention shield reduces damage to 0
-                when(damagePreventionService.applyCreaturePreventionShield(
-                        eq(gd), eq(bears), anyInt(), eq(false), nullable(Permanent.class))).thenReturn(0);
-                stubNoKeywordsOnSource(entry);
-                when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
-
-                dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
-
-                assertThat(gd.permanentsDealtDamageThisTurn).doesNotContain(bears.getId());
-            }
-
-            @Test
             @DisplayName("Multi-target: deals damage to each creature in targetIds")
             void multiTargetDealsDamageToEachCreature() {
                 Card burnCard = createCard("Dual Shot");

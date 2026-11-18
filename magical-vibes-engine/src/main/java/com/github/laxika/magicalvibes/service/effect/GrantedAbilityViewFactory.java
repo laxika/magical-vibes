@@ -201,7 +201,10 @@ public class GrantedAbilityViewFactory {
                     : "Protection from " + subtypes;
         }
         if (protection.protectionFromManaValueParity()) {
-            return "Protection from mana values of the chosen quality";
+            return protection.protectionFromFixedManaValueParity() == null
+                    ? "Protection from mana values of the chosen quality"
+                    : "Protection from " + protection.protectionFromFixedManaValueParity().name().toLowerCase()
+                            + " mana values";
         }
         if (protection.protectionFromManaValueAtLeast().isPresent()) {
             return "Protection from mana value "

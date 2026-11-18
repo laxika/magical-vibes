@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>
  * Applies to matching attacking creatures controlled by the source's controller (typically damage
  * from blockers). Noncombat damage is unaffected. Hooked in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield}.
+ * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#creatureDamageSteps()}.
  */
 public record PreventCombatDamageToAttackingCreaturesYouControlEffect(PermanentPredicate filter)
         implements CardEffect {

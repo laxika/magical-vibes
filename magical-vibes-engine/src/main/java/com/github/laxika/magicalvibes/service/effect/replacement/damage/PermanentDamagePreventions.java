@@ -316,7 +316,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
     }
 
     private static CreatureDamageStep.Context stepContext(PermanentDamageContext ctx) {
-        return new CreatureDamageStep.Context(ctx.target(), ctx.combat(), ctx.damageSource(), true);
+        return new CreatureDamageStep.Context(ctx.target(), ctx.combat(), ctx.damageSource());
     }
 
     /** A spell-only prevention, skipped when "damage can't be prevented" protects the permanent. */

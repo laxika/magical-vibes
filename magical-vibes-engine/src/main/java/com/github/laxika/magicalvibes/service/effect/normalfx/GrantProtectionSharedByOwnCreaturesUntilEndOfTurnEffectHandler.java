@@ -14,7 +14,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionSharedByOwnCre
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromAllOtherManaValuesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -91,21 +96,29 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, creature);
         protectionColors.addAll(bonus.protectionColors());
 
-        if (!bonus.losesAllAbilities()) {
+        if (!bonus.losesAllAbilities() && !gameQueryService.hasLostPrintedProtection(gameData, creature)) {
             for (CardEffect staticEffect : creature.getCard().getStaticEffects()) {
                 if (staticEffect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
                         && protection.scope() == null) {
                     collectColorsOfControlledPermanents(gameData, creature, protectionColors);
+                } else if (staticEffect instanceof ProtectionFromChosenPlayerEffect
+                        && !creature.getChosenPlayerIds().isEmpty()) {
+                    // Protection from the chosen player is protection from that player (CR 702.16k).
+                    protectionEffects.add(new ProtectionFromPlayersEffect(
+                            Set.copyOf(creature.getChosenPlayerIds()), false));
+                } else if (staticEffect instanceof ProtectionFromPermanentsMatchingEffect protection) {
+                    protectionEffects.add(protection);
                 } else if (staticEffect instanceof ProtectionGrantingEffect protection
                         && protection.protectionScope() == null) {
-                    addProtectionAbility(protection, protectionColors, protectionEffects);
+                    addProtectionAbility(withChosenValues(protection, creature), protectionColors, protectionEffects);
                 }
             }
         }
         for (CardEffect grantedEffect : bonus.grantedEffects()) {
             if (grantedEffect instanceof ProtectionGrantingEffect protection) {
-                addProtectionAbility(protection, protectionColors, protectionEffects);
-            } else if (grantedEffect instanceof ProtectionFromNonSubtypeCreaturesEffect
+                addProtectionAbility(withChosenValues(protection, creature), protectionColors, protectionEffects);
+            } else if (grantedEffect instanceof ProtectionFromPermanentsMatchingEffect
+                    || grantedEffect instanceof ProtectionFromNonSubtypeCreaturesEffect
                     || grantedEffect instanceof GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect) {
                 protectionEffects.add(grantedEffect);
             }
@@ -123,17 +136,52 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
         }
     }
 
+    /**
+     * The protection ability with the creature's chosen odd/even quality or number fixed in it: "protection from each
+     * mana value of the chosen quality" (Lavabrink Venturer) and "from each mana value other than the chosen number"
+     * (Haktos the Unscarred) are protection from those mana values (CR 702.16i), so a creature that gains the ability
+     * from this one has protection from the same mana values. {@code null} while nothing has been chosen.
+     */
+    private static ProtectionGrantingEffect withChosenValues(ProtectionGrantingEffect protection, Permanent creature) {
+        if (protection.protectionFromManaValueParity() && protection.protectionFromFixedManaValueParity() == null) {
+            return creature.getChosenManaValueParity() == null ? null
+                    : new ProtectionFromManaValueParityEffect(creature.getChosenManaValueParity());
+        }
+        if (!protection.protectionFromManaValuesOtherThanChosen().isEmpty()
+                && protection.protectionFromManaValuesOtherThanFixed() == null) {
+            int chosen = creature.getChosenNumber();
+            return protection.protectionFromManaValuesOtherThanChosen().contains(chosen)
+                    ? new ProtectionFromAllOtherManaValuesEffect(Set.of(chosen), chosen) : null;
+        }
+        return protection;
+    }
+
+    /**
+     * Shares one protection ability: its colours join the shared colour protection, and any other quality it
+     * protects from (CR 702.16a), colorless and players (CR 702.16k) included, is granted as the ability itself.
+     */
     private void addProtectionAbility(ProtectionGrantingEffect protection,
                                       Set<CardColor> protectionColors,
                                       Set<CardEffect> protectionEffects) {
+        if (protection == null) {
+            return;
+        }
         protectionColors.addAll(protection.protectionFromColors());
         if (!protection.protectionFromCardTypes().isEmpty()
                 || !protection.protectionFromSubtypes().isEmpty()
                 || protection.protectionFromManaValueAtLeast().isPresent()
                 || protection.protectionFromManaValueAtMost().isPresent()
                 || protection.protectionFromMulticolored()
+                || protection.protectionFromEnemyColoredMulticolored()
                 || protection.protectionFromMonocolored()
                 || protection.protectionFromColoredSpells()
+                || protection.protectionFromColorless()
+                || !protection.protectionFromPlayers().isEmpty()
+                || protection.protectionFromRingBearers()
+                || protection.protectionFromModifiedCreatures()
+                || !protection.protectionFromPermanentsWithCounters().isEmpty()
+                || protection.protectionFromManaValueParity()
+                || !protection.protectionFromManaValuesOtherThanChosen().isEmpty()
                 || protection.protectsFromEverything()) {
             protectionEffects.add(protection);
         }

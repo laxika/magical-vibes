@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DarkPrivilege;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
+import com.github.laxika.magicalvibes.cards.r.ReinsOfPower;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,9 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarkPrivilege.class, MatopiGolem.class, PantherWarriors.class})
+@CardUsed({DarkPrivilege.class, MatopiGolem.class, PantherWarriors.class, ReinsOfPower.class,
+        VorinclexMonstrousRaider.class})
 class MatopiGolemTest extends BaseCardTest {
 
     private Permanent addGolemReady() {
@@ -157,6 +162,31 @@ class MatopiGolemTest extends BaseCardTest {
 
         assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The -1/-1 trigger is controlled by the player who activated the ability, even after a control change")
+    void counterTriggerIsControlledByActivatorAfterControlChange() {
+        Permanent golem = addGolemReady();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new ReinsOfPower()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(golem);
+        // Doubles the counters player 1 puts and halves (rounding down) those player 2 puts.
+        harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+
+        golem.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Matopi Golem");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test

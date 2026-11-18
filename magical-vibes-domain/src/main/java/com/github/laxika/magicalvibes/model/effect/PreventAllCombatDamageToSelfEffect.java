@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Static effect: "Prevent all combat damage that would be dealt to this creature." (e.g. Seraph of the Sword)
  * <p>
  * Always-on marker read off source permanent's own static effects in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield}.
+ * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#creatureDamageSteps()}.
  * Noncombat damage is unaffected, and unlike
  * {@link PreventAllCombatDamageToAndBySelfEffect} the creature still deals its own combat damage.
  */

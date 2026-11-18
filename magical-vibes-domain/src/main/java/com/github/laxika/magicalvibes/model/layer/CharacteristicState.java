@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import lombok.Getter;
 import lombok.Setter;
@@ -79,8 +80,12 @@ public class CharacteristicState {
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     /** Colors from which protection has been removed by a later layer-6 effect. */
     private final Set<CardColor> removedProtectionColors = EnumSet.noneOf(CardColor.class);
-    /** Whether all protection abilities have been removed by a later layer-6 effect. */
-    private boolean protectionRemoved;
+    /**
+     * Whether a layer-6 "loses all protection" effect removed the object's own (printed) protection abilities. The
+     * object has them before any effect applies, so a removal with any timestamp removes them and no later effect
+     * gives them back; protection a later effect grants is a new ability, kept in the granted state.
+     */
+    private boolean printedProtectionRemoved;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedStaticEffects = new ArrayList<>();
     /** Granted effects that are rules restrictions rather than abilities; they survive "loses all abilities". */
@@ -207,7 +212,7 @@ public class CharacteristicState {
         this.seededKeywords.addAll(source.seededKeywords);
         this.protectionColors.addAll(source.protectionColors);
         this.removedProtectionColors.addAll(source.removedProtectionColors);
-        this.protectionRemoved = source.protectionRemoved;
+        this.printedProtectionRemoved = source.printedProtectionRemoved;
         this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
         this.grantedStaticEffects.addAll(source.grantedStaticEffects);
         this.nonAbilityEffects.addAll(source.nonAbilityEffects);
@@ -395,7 +400,6 @@ public class CharacteristicState {
 
     public void addProtectionColors(Collection<CardColor> colors) {
         if (abilityGainProhibited) return;
-        protectionRemoved = false;
         removedProtectionColors.removeAll(colors);
         protectionColors.addAll(colors);
     }
@@ -406,24 +410,26 @@ public class CharacteristicState {
     }
 
     /**
-     * Applies a "loses all protection" effect: removes every protection ability accumulated so far, the granted ones
-     * included. Protection granted by a later effect (a later timestamp, CR 613.7) is added afterwards and stays.
+     * Applies a "loses all protection" effect: removes every protection ability the object has at this point, its
+     * own printed ones and those granted so far. Protection granted by a later effect (a later timestamp, CR 613.7)
+     * is added afterwards and stays.
      */
     public void removeAllProtection() {
         protectionColors.clear();
         grantedStaticEffects.removeIf(effect -> !nonAbilityEffects.contains(effect) && isProtectionAbility(effect));
         removedProtectionColors.addAll(EnumSet.allOf(CardColor.class));
-        protectionRemoved = true;
+        printedProtectionRemoved = true;
     }
 
     private static boolean isProtectionAbility(CardEffect effect) {
         return effect instanceof ProtectionGrantingEffect
+                || effect instanceof ProtectionFromPermanentsMatchingEffect
                 || effect instanceof ProtectionFromNonSubtypeCreaturesEffect
                 || effect instanceof GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
     }
 
-    public boolean isProtectionRemoved() {
-        return protectionRemoved;
+    public boolean isPrintedProtectionRemoved() {
+        return printedProtectionRemoved;
     }
 
     /** Whether the layer-6 state so far gives this permanent protection from the given color. */
@@ -444,9 +450,6 @@ public class CharacteristicState {
 
     public void addStaticEffect(CardEffect effect) {
         if (abilityGainProhibited) return;
-        if (effect instanceof ProtectionGrantingEffect) {
-            protectionRemoved = false;
-        }
         grantedStaticEffects.add(effect);
     }
 

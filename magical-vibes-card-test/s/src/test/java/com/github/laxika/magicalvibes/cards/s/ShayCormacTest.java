@@ -4,25 +4,32 @@ import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.cards.b.BountyHunter;
 import com.github.laxika.magicalvibes.cards.c.CarnageTyrant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
+import com.github.laxika.magicalvibes.cards.g.GodsWilling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.p.Progenitus;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.t.TelJiladChosen;
 import com.github.laxika.magicalvibes.cards.t.TolarianTerror;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ShayCormac.class, BountyHunter.class, GrizzlyBears.class, Assassinate.class,
         CarnageTyrant.class, DarksteelMyr.class, Progenitus.class, TurnToFrog.class, SmokeBomb.class,
-        TolarianTerror.class})
+        TolarianTerror.class, TelJiladChosen.class, GodsWilling.class, Memnite.class})
 class ShayCormacTest extends BaseCardTest {
 
     @Test
@@ -237,5 +244,64 @@ class ShayCormacTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(shay.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Nested
+    @DisplayName("Losing all protection")
+    class LosingAllProtection {
+
+        private Permanent chosen;
+        private Permanent memnite;
+
+        private void setUp() {
+            addCreatureReady(player1, new ShayCormac());
+            memnite = addCreatureReady(player1, new Memnite());
+            chosen = addCreatureReady(player2, new TelJiladChosen());
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        }
+
+        private void activateShay() {
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        private void grantProtectionFromRed() {
+            harness.setHand(player2, java.util.List.of(new GodsWilling()));
+            harness.addMana(player2, ManaColor.WHITE, 1);
+            harness.castAndResolveInstant(player2, 0, chosen.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+            harness.handleListChoice(player2, "RED");
+            harness.getGameService().handleInteractionAnswer(
+                    gd, player2, new InteractionAnswer.ScryOrder(java.util.List.of(0), java.util.List.of()));
+        }
+
+        @Test
+        @DisplayName("Protection gained after the removal applies, and printed protection stays lost")
+        void laterGrantSurvivesButPrintedProtectionDoesNotReturn() {
+            setUp();
+            activateShay();
+            assertThat(gqs.hasProtectionFromSource(gd, chosen, memnite)).isFalse();
+
+            grantProtectionFromRed();
+
+            assertThat(gqs.hasProtectionFrom(gd, chosen, CardColor.RED)).isTrue();
+            assertThat(gqs.hasProtectionFromSource(gd, chosen, memnite)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Protection gained before the removal is lost with the printed protection")
+        void earlierGrantIsLostWithPrintedProtection() {
+            setUp();
+            grantProtectionFromRed();
+            assertThat(gqs.hasProtectionFrom(gd, chosen, CardColor.RED)).isTrue();
+            assertThat(gqs.hasProtectionFromSource(gd, chosen, memnite)).isTrue();
+
+            activateShay();
+
+            assertThat(gqs.hasProtectionFrom(gd, chosen, CardColor.RED)).isFalse();
+            assertThat(gqs.hasProtectionFromSource(gd, chosen, memnite)).isFalse();
+        }
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>
  * Evaluated when damage would be dealt, so it covers creatures that arrive after this resolves.
  * Hooked in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield}.
+ * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#creatureDamageSteps()}.
  *
  * @param noncombatOnly {@code true} prevents only noncombat damage (Mark of Asylum); {@code false}
  *                      prevents all damage, combat included (Inner Sanctum)

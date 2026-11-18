@@ -488,7 +488,9 @@ GrantScope.TARGET)`, and `GrantEffectEffect(protection, GrantScope.TARGET)` for 
 `ProtectionFromColorlessEffect`, `ProtectionFromPlayersEffect` (players fixed as it resolves),
 `ProtectionFromNonSubtypeCreaturesEffect` and `GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect` (its
 "opponents" are read at each check). A "loses all abilities" or "loses all protection" removes only the grants older
-than it; `CharacteristicState.removeAllProtection` drops the protection abilities granted so far. Readers ask the
+than it; `CharacteristicState.removeAllProtection` drops the protection abilities granted so far and marks the
+permanent's own printed protection removed (`isPrintedProtectionRemoved`; the printed abilities precede every effect,
+so no later grant brings them back), and `GameQueryService.hasLostPrintedProtection` gates only the printed reads. Readers ask the
 layered queries (`GameQueryService.hasKeyword`, `hasProtectionFrom…`, `computeStaticBonus(...).grantedEffects()`);
 `Permanent.hasKeyword` is intrinsic only. The player chosen as a permanent enters (True-Name Nemesis, Guardian Archon)
 is `Permanent.chosenPlayerIds`, read by `ProtectionFromChosenPlayerEffect`.

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>
  * Prevents all damage — combat and noncombat — dealt to the source permanent whenever the damage's
  * source is a creature. Combat damage is always dealt by a creature (CR 510.1c) and is prevented in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield};
+ * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#creatureDamageSteps()};
  * the noncombat case (a creature's ability, fight, etc.) is checked in
  * {@code DamageSupport.dealCreatureDamage} via
  * {@code GameQueryService.isCreatureSourceDamageToSelfPrevented}. Damage from noncreature sources

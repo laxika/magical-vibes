@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.r.ReinsOfPower;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkeletonScavengers.class, SpinedWurm.class, ReinsOfPower.class})
+@CardUsed({SkeletonScavengers.class, SpinedWurm.class, ReinsOfPower.class, VorinclexMonstrousRaider.class})
 class SkeletonScavengersTest extends BaseCardTest {
 
     @Test
@@ -182,6 +186,81 @@ class SkeletonScavengersTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         resolveAllTriggers();
         assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Nested
+    @DisplayName("With shields from two different activators")
+    class ShieldsFromTwoActivators {
+
+        private Permanent scavengers;
+
+        /**
+         * Player 1 activates, player 2 gains control and activates too, and player 1 controls a Vorinclex that
+         * doubles the counters player 1 puts and halves (rounding down) those player 2 puts.
+         */
+        private void destroyWithTwoShields() {
+            scavengers = addScavengersReady();
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            resolveAllTriggers();
+
+            harness.setHand(player1, List.of(new ReinsOfPower()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(scavengers);
+            harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.activateAbilityOfPermanent(player2, scavengers, 0, null, null);
+            resolveAllTriggers();
+            assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(2);
+
+            scavengers.setMarkedDamage(1);
+            harness.runStateBasedActions();
+        }
+
+        private String shieldOf(Player activator) {
+            return "Regenerate and put a +1/+1 counter on it ("
+                    + gd.playerIdToName.get(activator.getId()) + "'s ability)";
+        }
+
+        @Test
+        @DisplayName("The controller is offered each activator's shield")
+        void bothShieldsAreOffered() {
+            destroyWithTwoShields();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                    .containsExactlyInAnyOrder(shieldOf(player1), shieldOf(player2));
+        }
+
+        @Test
+        @DisplayName("Choosing the older shield gives its activator the +1/+1 counter trigger")
+        void olderShieldTriggersForItsActivator() {
+            destroyWithTwoShields();
+            harness.handleListChoice(player2, shieldOf(player1));
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+            resolveAllTriggers();
+            assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+            assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Choosing the newer shield gives its activator the +1/+1 counter trigger")
+        void newerShieldTriggersForItsActivator() {
+            destroyWithTwoShields();
+            harness.handleListChoice(player2, shieldOf(player2));
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+            resolveAllTriggers();
+            assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
+        }
     }
 
     private Permanent addScavengersReady() {

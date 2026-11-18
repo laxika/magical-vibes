@@ -1312,7 +1312,7 @@ public class DamageSupport {
                 .orElseThrow();
         Permanent target = gameQueryService.findPermanentById(gameData, event.recipientPermanentId());
         DamageEvent replaced = target == null ? event : event.withAmount(step.apply().apply(gameData,
-                new CreatureDamageStep.Context(target, event.combat(), event.explicitSource(), true), event.amount()));
+                new CreatureDamageStep.Context(target, event.combat(), event.explicitSource()), event.amount()));
         continueDamageAfterDepartureQuestions(gameData, replaced);
         return true;
     }

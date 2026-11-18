@@ -308,9 +308,9 @@ final class RecordingCharacteristicState extends CharacteristicState {
     }
 
     @Override
-    public boolean isProtectionRemoved() {
+    public boolean isPrintedProtectionRemoved() {
         read(Characteristic.ABILITIES);
-        return super.isProtectionRemoved();
+        return super.isPrintedProtectionRemoved();
     }
 
     @Override

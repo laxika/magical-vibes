@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaValueParity;
 
 import java.util.OptionalInt;
 import java.util.Set;
@@ -123,11 +124,27 @@ public interface ProtectionGrantingEffect extends CardEffect {
     }
 
     /**
+     * For {@link #protectionFromManaValueParity()}: the odd/even quality when the effect fixes it, or {@code null}
+     * when it is the quality chosen for the permanent that has the ability.
+     */
+    default ManaValueParity protectionFromFixedManaValueParity() {
+        return null;
+    }
+
+    /**
      * The possible chosen numbers for protection from every other mana value. An empty set means
      * this effect does not have this protection shape.
      */
     default Set<Integer> protectionFromManaValuesOtherThanChosen() {
         return Set.of();
+    }
+
+    /**
+     * For {@link #protectionFromManaValuesOtherThanChosen()}: the number when the effect fixes it, or {@code null}
+     * when it is the number chosen for the permanent that has the ability.
+     */
+    default Integer protectionFromManaValuesOtherThanFixed() {
+        return null;
     }
 
     /**

@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Always-on marker read off source permanent's own static effects. The
  * damage-taken side is checked in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield};
+ * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#creatureDamageSteps()};
  * the damage-dealt side in
  * {@code GameQueryService.isPreventedFromDealingDamage(GameData, Permanent, boolean)}. Noncombat
  * damage in either direction is unaffected.

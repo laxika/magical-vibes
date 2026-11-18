@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 
 /**
  * One replacement or prevention effect that can apply to damage dealt to a permanent, as
- * {@link DamagePreventionService#creatureDamageSteps()} lists them. The fixed-order chain
- * ({@code DamagePreventionService.applyCreaturePreventionShield}) walks the steps in order; the CR 616.1
- * ordering ({@code PermanentDamagePreventions}) offers each applicable step to the permanent's controller, for
+ * {@link DamagePreventionService#creatureDamageSteps()} lists them. The CR 616.1 ordering
+ * ({@code PermanentDamagePreventions}) offers each applicable step to the permanent's controller, for
  * noncombat, combat and redirected damage alike.
  *
  * @param family     identifies the step for CR 614.5 bookkeeping
@@ -18,24 +17,21 @@ import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
  * @param pure       whether the step only changes the amount (nothing consumed, no rider)
  * @param applies    whether the step would modify {@code damage} now, without changing the game
  * @param apply      applies the step and returns the damage left
- * @param endsChain  whether the fixed-order chain stops after this step applies, keeping what it
- *                   returned (counter-removal replacements for damage that can't be prevented)
  * @param departs    the permanent's departure from the battlefield that {@code apply} would perform instead of the
  *                   damage ("destroy it instead", "sacrifice it"), or {@code null}; the CR 616.1 ordering asks that
  *                   departure's questions before applying the step (CR 616.1f)
  */
 public record CreatureDamageStep(String family, String label, ReplacementOption.Kind kind, boolean pure,
-                                 Applies applies, Apply apply, Applies endsChain, Departs departs) {
+                                 Applies applies, Apply apply, Departs departs) {
 
     /** A step that never makes the permanent leave the battlefield. */
     public CreatureDamageStep(String family, String label, ReplacementOption.Kind kind, boolean pure,
-                              Applies applies, Apply apply, Applies endsChain) {
-        this(family, label, kind, pure, applies, apply, endsChain, (gameData, context, damage) -> null);
+                              Applies applies, Apply apply) {
+        this(family, label, kind, pure, applies, apply, (gameData, context, damage) -> null);
     }
 
     /** Who the damage is dealt to and how, for the steps. */
-    public record Context(Permanent permanent, boolean combatDamage, Permanent damageSource,
-                          boolean applySelfDamagePrevention) {}
+    public record Context(Permanent permanent, boolean combatDamage, Permanent damageSource) {}
 
     @FunctionalInterface
     public interface Applies {

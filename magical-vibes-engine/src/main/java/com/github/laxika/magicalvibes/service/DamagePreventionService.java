@@ -380,10 +380,6 @@ public class DamagePreventionService {
         return remaining;
     }
 
-    public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
-        return applyCreaturePreventionShield(gameData, permanent, damage, false);
-    }
-
     /** Heals all damage previously marked on a permanent when a positive damage event reaches it. */
     public void applyDamageHealingReplacement(GameData gameData, Permanent permanent, int damage) {
         if (permanent == null || damage <= 0) {
@@ -410,45 +406,10 @@ public class DamagePreventionService {
                 .anyMatch(e -> e instanceof PreventDamageAndAddPlusCountersEffect);
     }
 
-    public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
-            boolean isCombatDamage) {
-        return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, null);
-    }
-
-    public int applyCreaturePreventionShieldWithoutSelfDamagePrevention(
-            GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
-        return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, null, false);
-    }
-
-    public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
-                                              boolean isCombatDamage, Permanent damageSource) {
-        return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, damageSource, true);
-    }
-
     /**
-     * The fixed-order chain: applies every step of {@link #creatureDamageSteps()} that applies to {@code damage},
-     * in list order, and returns the damage left. Damage that is dealt goes through the CR 616.1 ordering
-     * instead, which offers the same steps as options.
-     */
-    private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
-                                              boolean isCombatDamage, Permanent damageSource,
-                                              boolean applySelfDamagePrevention) {
-        CreatureDamageStep.Context context = new CreatureDamageStep.Context(
-                permanent, isCombatDamage, damageSource, applySelfDamagePrevention);
-        for (CreatureDamageStep step : creatureDamageSteps()) {
-            if (damage <= 0) return 0;
-            if (!step.applies().test(gameData, context, damage)) continue;
-            boolean endsChain = step.endsChain().test(gameData, context, damage);
-            damage = step.apply().apply(gameData, context, damage);
-            if (endsChain) return damage;
-        }
-        return Math.max(0, damage);
-    }
-
-    /**
-     * The replacement and prevention effects that can apply to damage dealt to a permanent, in the
-     * order the fixed-order chain applies them. Counter and destruction replacements come first and
-     * apply even to damage that can't be prevented; every step after "can't be prevented" is a
+     * The replacement and prevention effects that can apply to damage dealt to a permanent; the CR 616.1 ordering
+     * offers each one that applies to the permanent's controller as an option. Counter and destruction replacements
+     * are listed first and apply even to damage that can't be prevented; every step after "can't be prevented" is a
      * prevention effect.
      */
     public List<CreatureDamageStep> creatureDamageSteps() {
@@ -462,12 +423,9 @@ public class DamagePreventionService {
 
     private volatile List<CreatureDamageStep> creatureDamageSteps;
 
-    private static final CreatureDamageStep.Applies NEVER = (gameData, context, damage) -> false;
-    private static final CreatureDamageStep.Applies ALWAYS = (gameData, context, damage) -> true;
-
     private CreatureDamageStep step(String family, String label, ReplacementOption.Kind kind, boolean pure,
                                     CreatureDamageStep.Applies applies, CreatureDamageStep.Apply apply) {
-        return new CreatureDamageStep(family, label, kind, pure, applies, apply, NEVER);
+        return new CreatureDamageStep(family, label, kind, pure, applies, apply);
     }
 
     private CreatureDamageStep preventAll(String family, String label, CreatureDamageStep.Applies applies) {
@@ -527,7 +485,7 @@ public class DamagePreventionService {
                         && gameQueryService.isCreature(gd, c.permanent())
                         && gameQueryService.findPermanentById(gd, c.permanent().getId()) == c.permanent(),
                 (gd, c, damage) -> replaceNextDamageToTargetWithDestruction(gd, c.permanent(), damage) ? 0 : damage,
-                NEVER, (gd, c, damage) -> DepartureIntent.destroy(c.permanent().getId(), false)));
+                (gd, c, damage) -> DepartureIntent.destroy(c.permanent().getId(), false)));
         steps.add(step("ControlledCreaturesReduction", "Reduce the damage to your creature", replacement, true,
                 (gd, c, damage) -> damage > 0 && gameQueryService.isCreature(gd, c.permanent())
                         && applyControlledCreaturesDamageReduction(gd, c.permanent(), damage) < damage,
@@ -637,7 +595,7 @@ public class DamagePreventionService {
                         gd, c.permanent(), damage),
                 (gd, c, damage) -> damagePreventionReplacementSupport
                         .applyDamageToPermanentByRemovingCountersOrSacrificing(gd, c.permanent(), damage) ? 0 : damage,
-                NEVER, (gd, c, damage) -> damagePreventionReplacementSupport.sacrificesForDamage(
+                (gd, c, damage) -> damagePreventionReplacementSupport.sacrificesForDamage(
                         gd, c.permanent(), damage) ? DepartureIntent.sacrifice(c.permanent().getId()) : null));
         steps.add(preventAll("ProtectionCompetingWithCounterRemoval", "Prevent the damage (protection)",
                 (gd, c, damage) -> damage > 0 && c.damageSource() != null && preventable(gd, c)
@@ -651,15 +609,10 @@ public class DamagePreventionService {
                     return damage > 0 && effect != null && (!effect.requiresCounter() || hasCounter)
                             && (!effect.preventOnlyIfCounterAvailable() || hasCounter);
                 },
-                this::removePlusOneCountersForDamage,
-                (gd, c, damage) -> {
-                    var effect = preventRemovePlusOneCountersEffect(gd, c.permanent());
-                    return effect != null && !effect.preventsDamage()
-                            || !gameQueryService.isDamagePreventable(gd, c.combatDamage());
-                }));
+                this::removePlusOneCountersForDamage));
         steps.add(step("SelfDamageControlChangeUnpreventable",
                 "Have an opponent gain control of it (the damage can't be prevented)", prevention, false,
-                (gd, c, damage) -> damage > 0 && !preventable(gd, c) && c.applySelfDamagePrevention()
+                (gd, c, damage) -> damage > 0 && !preventable(gd, c)
                         && hasControlChangeOnPrevention(gd, c.permanent())
                         && selfDamagePrevented(gd, c.permanent(), damage) > 0,
                 (gd, c, damage) -> {
@@ -667,7 +620,7 @@ public class DamagePreventionService {
                     return damage;
                 }));
         steps.add(step("SelfDamagePrevention", "Prevent damage to it", prevention, false,
-                (gd, c, damage) -> preventable(gd, c) && c.applySelfDamagePrevention()
+                (gd, c, damage) -> preventable(gd, c)
                         && applySelfDamagePreventionAmount(gd, c.permanent(), damage) > 0,
                 (gd, c, damage) -> applySelfDamagePreventionShield(gd, c.permanent(), damage)));
         steps.add(step("ControllerAndCreaturesPerSource", "Prevent some of the damage from this source", prevention,
@@ -748,8 +701,7 @@ public class DamagePreventionService {
         steps.add(new CreatureDamageStep("ControlledCreatureDamageLimit", "Limit the damage to it", prevention, true,
                 (gd, c, damage) -> preventable(gd, c)
                         && gameQueryService.getControlledCreatureDamageLimit(gd, c.permanent()) < damage,
-                (gd, c, damage) -> gameQueryService.getControlledCreatureDamageLimit(gd, c.permanent()),
-                ALWAYS));
+                (gd, c, damage) -> gameQueryService.getControlledCreatureDamageLimit(gd, c.permanent())));
         steps.add(preventAll("AllCombatToControlledCreature", "Prevent combat damage to your creatures",
                 (gd, c, damage) -> c.combatDamage() && preventable(gd, c)
                         && gameQueryService.isAllCombatDamageToControlledCreaturePrevented(gd, c.permanent())));

@@ -21,7 +21,10 @@ public record RegenerationShield(Rider rider, UUID playerId) implements CardEffe
     public enum Rider {
         /** Nothing else. */
         NONE,
-        /** "When it regenerates this way, put a -1/-1 counter on it" (Matopi Golem). */
+        /**
+         * "When it regenerates this way, put a -1/-1 counter on it" (Matopi Golem): a delayed triggered ability
+         * controlled by the effect's controller (CR 603.7e).
+         */
         MINUS_ONE_COUNTER,
         /**
          * "When it regenerates this way, put a +1/+1 counter on it" (Skeleton Scavengers): a delayed triggered

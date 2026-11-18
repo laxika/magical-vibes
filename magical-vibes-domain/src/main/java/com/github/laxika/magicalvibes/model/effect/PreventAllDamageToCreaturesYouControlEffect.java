@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Applies to every creature controlled by the source's controller that matches {@code filter} (evaluated
  * when damage would be dealt, so it covers creatures that appear or change later). Both combat and
  * noncombat damage is prevented, up to {@code damageLimit} damage remaining. Hooked in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield}.
+ * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#creatureDamageSteps()}.
  *
  * @param filter       extra restriction on the protected creatures, or {@code null} for every creature you control
  * @param damageLimit  maximum damage left after this effect is applied; zero means prevent all damage

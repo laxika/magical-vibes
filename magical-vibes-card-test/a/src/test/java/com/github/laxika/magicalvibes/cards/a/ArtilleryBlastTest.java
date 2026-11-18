@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.InnerSanctum;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.t.TangledIslet;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArtilleryBlast.class, AirElemental.class, Forest.class, Island.class, Plains.class, TangledIslet.class})
+@CardUsed({ArtilleryBlast.class, AirElemental.class, Forest.class, Island.class, Plains.class, TangledIslet.class,
+        InnerSanctum.class})
 class ArtilleryBlastTest extends BaseCardTest {
 
     @Test
@@ -133,6 +135,28 @@ class ArtilleryBlastTest extends BaseCardTest {
         castArtilleryBlast(target);
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A creature it damages counts as dealt damage this turn")
+    void damagedCreatureIsDealtDamageThisTurn() {
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        target.tap();
+        castArtilleryBlast(target);
+
+        assertThat(gd.permanentsDealtDamageThisTurn).contains(target.getId());
+    }
+
+    @Test
+    @DisplayName("A creature whose damage is all prevented isn't dealt damage this turn")
+    void fullyPreventedDamageIsNotDealt() {
+        harness.addToBattlefield(player2, new InnerSanctum());
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        target.tap();
+        castArtilleryBlast(target);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.permanentsDealtDamageThisTurn).doesNotContain(target.getId());
     }
 
     private void castArtilleryBlast(Permanent target) {

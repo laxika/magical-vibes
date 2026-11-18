@@ -803,6 +803,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Open: `protectionRemoved` is a whole-permanent gate that a newer protection grant clears, bringing printed protection back; Concerted Effort doesn't share protection from colorless or from players.
 - Left: P/T modifiers and base P/T overrides; abilities and text changes; part 3's phasing item; then step 6.
 
+**D (part 16: rules fixes from parts 14 and 15).**
+- Regeneration riders: the delayed ability is the shield controller's (CR 603.7e) and puts its counters as that player (Vorinclex, Monstrous Raider). Shields are offered per rider, controller and recipient (CR 616.1); identical ones stay one option (`MatopiGolemTest`, `SkeletonScavengersTest`; fail before).
+- Deleted: the fixed-order damage chain (`applyCreaturePreventionShield*`, `CreatureDamageStep.endsChain`, `Context.applySelfDamagePrevention`); its "fully prevented damage isn't dealt" coverage is in `ArtilleryBlastTest`.
+- "Loses all protection" has no whole-permanent gate: `printedProtectionRemoved`, never cleared, is read only by printed-protection reads (`hasLostPrintedProtection`); later grants apply (CR 613.1f, 613.7; `ShayCormacTest`, fails before).
+- Concerted Effort shares every protection quality: colorless, players (CR 702.16k), matching permanents (read from the layered state), and chosen parity or other-than-chosen mana values with the choice fixed in the shared ability (CR 702.16i, Haktos ruling) (`ConcertedEffortTest`, fails before).
+- Ledger (1,725 card test classes, route tests): only the new tests' lines and random draws.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:
