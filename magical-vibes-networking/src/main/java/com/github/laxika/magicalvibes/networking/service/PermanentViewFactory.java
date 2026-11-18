@@ -114,7 +114,7 @@ public class PermanentViewFactory {
             cardView = cardView.toBuilder().name(staticName).build();
         }
         cardView = applyTextReplacements(cardView, p);
-        cardView = applyGrantedSubtypes(cardView, p, removedSubtypes);
+        cardView = hideRemovedSubtypes(cardView, removedSubtypes);
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding, landSubtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes, cardTypeOverriding);
@@ -123,7 +123,7 @@ public class PermanentViewFactory {
             cardView = stripLostActivatedAbilities(cardView, p);
         }
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
-        cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
+        cardView = applyStaticGrantedColors(cardView, staticGrantedColors, colorOverriding);
         // When creature loses all abilities, strip its own activated abilities, mana abilities included
         if (losesAllAbilities) {
             cardView = stripCardActivatedAbilities(cardView);
@@ -215,16 +215,11 @@ public class PermanentViewFactory {
                 .build();
     }
 
-    private CardView applyGrantedSubtypes(CardView cardView, Permanent p, Set<CardSubtype> removedSubtypes) {
-        if (p.getGrantedSubtypes().isEmpty() && removedSubtypes.isEmpty()) {
+    private CardView hideRemovedSubtypes(CardView cardView, Set<CardSubtype> removedSubtypes) {
+        if (removedSubtypes.isEmpty()) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
-        for (CardSubtype subtype : p.getGrantedSubtypes()) {
-            if (!mergedSubtypes.contains(subtype)) {
-                mergedSubtypes.add(subtype);
-            }
-        }
         mergedSubtypes.removeAll(removedSubtypes);
         return cardView.toBuilder().subtypes(mergedSubtypes).build();
     }
@@ -397,33 +392,28 @@ public class PermanentViewFactory {
         return cardView.toBuilder().activatedAbilities(retained).build();
     }
 
-    private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
+    private CardView applyStaticGrantedColors(CardView cardView, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
         // Determine the effective color: static grants add to permanent's colors
-        if (staticGrantedColors.isEmpty() && !colorOverriding && p.getGrantedColors().isEmpty()) {
+        if (staticGrantedColors.isEmpty() && !colorOverriding) {
             return cardView;
         }
         CardColor effectiveColor = cardView.color();
         List<CardColor> effectiveColors = new ArrayList<>(cardView.colors());
-        // Persistent granted colors are additive ("in addition to its other colors")
-        if (!p.getGrantedColors().isEmpty()) {
-            for (CardColor color : p.getGrantedColors()) {
+        if (colorOverriding) {
+            // Color-setting (including "becomes colorless" with an empty set)
+            effectiveColors = new ArrayList<>(staticGrantedColors);
+            effectiveColor = staticGrantedColors.isEmpty() ? null : staticGrantedColors.iterator().next();
+        } else {
+            // Added colors ("in addition to its other colors") join the printed ones; the first added
+            // color becomes the primary one only for a colorless card.
+            for (CardColor color : staticGrantedColors) {
                 if (!effectiveColors.contains(color)) {
                     effectiveColors.add(color);
                 }
             }
             if (effectiveColor == null) {
-                effectiveColor = p.getGrantedColors().iterator().next();
+                effectiveColor = staticGrantedColors.iterator().next();
             }
-        }
-        if (colorOverriding) {
-            // Color-setting (including "becomes colorless" with an empty set)
-            effectiveColors = new ArrayList<>(staticGrantedColors);
-            effectiveColor = staticGrantedColors.isEmpty() ? null : staticGrantedColors.iterator().next();
-        } else if (!staticGrantedColors.isEmpty()) {
-            // Static color grants take precedence for display if the card has no color
-            // For multicolor, we display the first granted color as primary
-            effectiveColor = staticGrantedColors.iterator().next();
-            effectiveColors = new ArrayList<>(staticGrantedColors);
         }
         if (effectiveColor == cardView.color() && effectiveColors.equals(cardView.colors())) {
             return cardView;

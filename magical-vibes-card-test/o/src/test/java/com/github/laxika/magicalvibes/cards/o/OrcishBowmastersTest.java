@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SphinxOfTheSecondSun;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -66,7 +67,7 @@ class OrcishBowmastersTest extends BaseCardTest {
     @Test
     void amassesOnAnExistingArmyAndGrantsOrc() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.addToBattlefield(player1, new OrcishBowmasters());
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
@@ -77,7 +78,7 @@ class OrcishBowmastersTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Orc Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.ORC);
     }
 
     @Test

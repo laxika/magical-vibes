@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.StratusDancer;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -142,7 +143,7 @@ class GiftOfDoomTest extends BaseCardTest {
     void attachmentDoesNotTargetAndCanEnchantAnOpponentsHexproofCreature() {
         Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keyword(gd, target, Keyword.HEXPROOF);
         Permanent gift = castFaceDown();
 
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift),

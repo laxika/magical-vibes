@@ -32,7 +32,7 @@ class XathridGorgonTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.PETRIFICATION)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isTrue();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, target)).isEmpty();
     }
@@ -50,7 +50,7 @@ class XathridGorgonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEFENDER)).isTrue();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, target)).isEmpty();
         assertThat(target.getCounterCount(CounterType.PETRIFICATION)).isEqualTo(1);
     }

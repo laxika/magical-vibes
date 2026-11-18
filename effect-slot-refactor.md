@@ -779,6 +779,15 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger (723 card test classes of colour, type and animation effects, route tests): only `floating began|ended` lines added; trigger lines differ only by route-fixture draws, Ebony Fly's die, Setzer's coin flips and the new Cyclopean Giant test.
 - Left: `persistentGrantedCardTypes`, `grantedSubtypes`, `grantedColors` and `persistentGrantedKeywords` (permanent grants, mostly dual-written with a `PERMANENT` floating effect); P/T modifiers and base P/T overrides; keywords; protection; abilities and text changes; shields; part 3's phasing item; then step 6.
 
+**D (part 13: indefinite type, colour and keyword grants).**
+- "In addition to its other colors and types", "gains haste" with no duration, "becomes an artifact", "enters with haste" (CR 614.1c) and Arcum's Weathervane's supertype change are `PERMANENT` floating effects on the permanent (`GrantSubtypeEffect`, `GrantColorEffect`, `GrantKeywordEffect`, `GrantCardTypeEffect`, the resolving `SetTargetPermanentSupertypeEffect`; CR 611.2a, 613.7b). New `GameData.addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId, effect, permanentId, duration)` for sites with no resolving entry. Gone: `Permanent.persistentGrantedKeywords`, `persistentGrantedCardTypes`, `persistentGrantedSupertypes`, `persistentRemovedSupertypes`, `persistentSupertypeChangeTimestamps`, `grantedColors`, `grantedSubtypes`, their seeds in `CharacteristicState` / `LayerSystemService` and fingerprint lines.
+- Perpetual changes are seeded by the pass from `perpetualKeywords`, `perpetualCardTypes`, `perpetualCardSubtypes`, `perpetualCreatureTypeReplacedCardIds` (the permanent's own card; none face down, CR 708.2a), now in the board fingerprint; the placement mirrors are gone.
+- Rules fix: a grant applies at its timestamp, so an earlier Humility no longer removes it (`FatedReturnTest#indestructibleIsNewerThanAnEarlierHumility`; fails before by construction, the seeded grant was cleared by the lose-all; not run at HEAD). `hasEffectiveSupertype`: the newest change on the permanent decides.
+- `GameData`-less readers (`Permanent.hasKeyword`, `GameQueryService.isArtifact/isEnchantment(Permanent)`, `permanentHasSubtype`, predicate fallbacks) are intrinsic only; 31 card tests asserting through them now ask the layered queries. The view adds static colours to the printed ones instead of replacing them.
+- Ledger (2,800 card test classes, route tests): only `floating began|ended` lines added (Awakener Druid's colour ends as its source leaves; Shallow Grave / Wake the Past swap the indefinite haste for an until-end-of-turn one in the same step, as the fields did); trigger lines differ only by random dice, coins, draws, drafts and opening hands (Hoard Hauler reaches cleanup).
+- Open: Primal Clay's chosen form is copiable (ruling 2021-03-19) and still isn't; "except it has haste" token copies (CR 707.9b) likewise.
+- Left: P/T modifiers and base P/T overrides; until-end-of-turn keywords; protection; abilities and text changes; shields; part 3's phasing item; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -129,7 +130,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, blood, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasColor(gd, blood, CardColor.BLACK)).isTrue();
         assertThat(blood.getCard().getSubtypes()).contains(CardSubtype.BLOOD);
-        assertThat(blood.getGrantedSubtypes()).contains(CardSubtype.BAT);
+        assertThat(PermanentGrants.subtypesOf(gd, blood)).contains(CardSubtype.BAT);
         assertThat(caster.getCard().getName()).isEqualTo("Bloodbat Summoner");
     }
 

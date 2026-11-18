@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatedReturn.class, GrizzlyBears.class, HolyDay.class, Terror.class})
+@CardUsed({FatedReturn.class, GrizzlyBears.class, HolyDay.class, Humility.class, Terror.class})
 class FatedReturnTest extends BaseCardTest {
 
     @Test
@@ -36,8 +37,24 @@ class FatedReturnTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCard().getId()).isEqualTo(creature.getId());
-        assertThat(returned.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The gained indestructible applies after an earlier Humility, so the creature keeps it")
+    void indestructibleIsNewerThanAnEarlierHumility() {
+        harness.addToBattlefield(player2, new Humility());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        prepareCast(player2);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.Prismite;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -59,7 +60,7 @@ class CrushDissentTest extends BaseCardTest {
     @Test
     void allowsSpellWhenControllerPaysAndAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player2, new Prismite());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         Prismite spell = new Prismite();
         harness.setHand(player1, List.of(spell));
@@ -76,15 +77,15 @@ class CrushDissentTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Prismite");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
     void amassesOnOnlyTheChosenArmyAndAddsZombieSubtype() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new Prismite());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new Prismite());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         second.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         Prismite spell = new Prismite();
@@ -100,16 +101,16 @@ class CrushDissentTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Prismite");
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
     }
 
     @Test
     void createsOwnArmyWhenOnlyOpponentControlsAnArmyAndPaymentIsAccepted() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player1, new Prismite());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         Prismite spell = new Prismite();
         harness.setHand(player1, List.of(spell));

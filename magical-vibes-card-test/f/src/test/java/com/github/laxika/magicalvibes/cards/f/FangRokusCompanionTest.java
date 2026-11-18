@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -47,7 +48,7 @@ class FangRokusCompanionTest extends BaseCardTest {
         kill(fang);
 
         Permanent returned = findPermanent(player1, "Fang, Roku's Companion");
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.SPIRIT);
         harness.assertNotInGraveyard(player1, "Fang, Roku's Companion");
 
         kill(returned);
@@ -115,7 +116,7 @@ class FangRokusCompanionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Fang, Roku's Companion");
         Permanent returned = findPermanent(player2, "Fang, Roku's Companion");
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.SPIRIT);
         harness.assertNotInGraveyard(player1, "Fang, Roku's Companion");
 
         kill(returned);
@@ -128,7 +129,7 @@ class FangRokusCompanionTest extends BaseCardTest {
     @DisplayName("Fang already made a Spirit does not return from death")
     void alreadySpiritDoesNotReturn() {
         Permanent fang = addCreatureReady(player1, new FangRokusCompanion());
-        fang.getGrantedSubtypes().add(CardSubtype.SPIRIT);
+        PermanentGrants.subtype(gd, fang, CardSubtype.SPIRIT);
 
         kill(fang);
 

@@ -61,8 +61,8 @@ class DreadSlaverTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectiveColors(gd, bears)).contains(CardColor.BLACK, CardColor.GREEN);
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.ZOMBIE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.ZOMBIE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.BEAR)).isTrue();
     }
 
     @Test

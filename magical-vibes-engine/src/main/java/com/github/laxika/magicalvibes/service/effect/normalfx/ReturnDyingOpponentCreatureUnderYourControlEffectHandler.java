@@ -54,7 +54,7 @@ public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
         if (e.grantSubtype() != null && gameQueryService.isCreature(gameData, result.permanent())) {
-            graveyardReturnSupport.applyPermanentGrants(result.permanent(), null, e.grantSubtype());
+            graveyardReturnSupport.applyPermanentGrants(gameData, controllerId, result.permanent(), null, e.grantSubtype());
         }
 
         graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());

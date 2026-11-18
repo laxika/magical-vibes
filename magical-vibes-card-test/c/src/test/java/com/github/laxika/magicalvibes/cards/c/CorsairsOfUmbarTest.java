@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.g.GoblinCratermaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -40,7 +41,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
     @DisplayName("Amasses Orcs 3 on an existing Army")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent corsairs = addReadyCorsairs();
         corsairs.setAttacking(true);
 
@@ -48,7 +49,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ORC);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
@@ -128,8 +129,8 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         Permanent corsairs = addReadyCorsairs();
         Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new CorsairsOfUmbar());
         Permanent secondArmy = harness.addToBattlefieldAndReturn(player1, new CorsairsOfUmbar());
-        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
-        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, firstArmy, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, secondArmy, CardSubtype.ARMY);
         corsairs.setAttacking(true);
 
         resolveCombat();
@@ -137,9 +138,9 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(secondArmy.getId()));
 
         assertThat(firstArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(firstArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, firstArmy)).doesNotContain(CardSubtype.ORC);
         assertThat(secondArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(secondArmy.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, secondArmy)).contains(CardSubtype.ARMY, CardSubtype.ORC);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
     }
@@ -148,7 +149,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
     @DisplayName("An opposing Army does not prevent creating your own Orc Army")
     void ignoresOpposingArmyWhenAmassing() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new CorsairsOfUmbar());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         Permanent corsairs = addReadyCorsairs();
         corsairs.setAttacking(true);
 
@@ -158,7 +159,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Orc Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(3);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.ORC);
     }
 
 

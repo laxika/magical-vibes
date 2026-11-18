@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.d.DemonBolt;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -80,7 +81,7 @@ class AscentOfTheWorthyTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
-        assertThat(returned.getGrantedSubtypes())
+        assertThat(PermanentGrants.subtypesOf(gd, returned))
                 .contains(CardSubtype.ANGEL, CardSubtype.WARRIOR);
     }
 

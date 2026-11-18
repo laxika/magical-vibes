@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -163,7 +164,7 @@ class ScorchTheFieldsTest extends BaseCardTest {
     @DisplayName("An indestructible land remains but Humans still take damage")
     void indestructibleLandDoesNotPreventHumanDamage() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
-        land.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, land, Keyword.INDESTRUCTIBLE);
         Permanent human = harness.addToBattlefieldAndReturn(player2, new ThrabenHeretic());
         harness.setHand(player1, List.of(new ScorchTheFields()));
         harness.addMana(player1, ManaColor.RED, 5);

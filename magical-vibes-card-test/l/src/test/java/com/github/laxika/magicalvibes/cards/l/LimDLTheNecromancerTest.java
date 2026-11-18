@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CorpulentCorpse;
 import com.github.laxika.magicalvibes.cards.d.DrudgeReavers;
 import com.github.laxika.magicalvibes.cards.s.StranglingSoot;
@@ -36,7 +37,7 @@ class LimDLTheNecromancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent returned = findPermanent(player1, "Drudge Reavers");
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.ZOMBIE);
         harness.assertNotInGraveyard(player2, "Drudge Reavers");
         harness.assertInGraveyard(player1, "Strangling Soot");
     }
@@ -139,6 +140,6 @@ class LimDLTheNecromancerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Reavers");
         harness.assertNotInGraveyard(player1, "Drudge Reavers");
-        assertThat(findPermanent(player1, "Drudge Reavers").getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, findPermanent(player1, "Drudge Reavers"))).contains(CardSubtype.ZOMBIE);
     }
 }

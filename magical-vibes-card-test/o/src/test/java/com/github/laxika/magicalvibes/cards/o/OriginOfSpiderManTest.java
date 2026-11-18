@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -27,7 +28,7 @@ class OriginOfSpiderManTest extends BaseCardTest {
         assertThat(spider).isNotNull();
         assertThat(spider.getCard().getPower()).isEqualTo(2);
         assertThat(spider.getCard().getToughness()).isEqualTo(1);
-        assertThat(spider.getGrantedSubtypes()).isEmpty();
+        assertThat(PermanentGrants.subtypesOf(gd, spider)).isEmpty();
         assertThat(spider.getCard().getSubtypes()).containsExactly(CardSubtype.SPIDER);
         assertThat(spider.getCard().getKeywords()).contains(Keyword.REACH);
     }
@@ -47,9 +48,8 @@ class OriginOfSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.SPIDER, CardSubtype.HERO);
-        assertThat(bears.getPersistentGrantedSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(gqs.hasEffectiveSupertype(gd, bears, CardSupertype.LEGENDARY)).isTrue();
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.SPIDER, CardSubtype.HERO);
+                assertThat(gqs.hasEffectiveSupertype(gd, bears, CardSupertype.LEGENDARY)).isTrue();
     }
 
     @Test

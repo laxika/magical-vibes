@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
@@ -179,7 +180,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
         addCapsuleMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, target, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Cylian Elf");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -51,7 +52,7 @@ class AngrathCaptainOfChaosTest extends BaseCardTest {
     void amassesOnAnExistingArmyAndMakesItZombie() {
         Permanent angrath = addReadyAngrath(player1, 5);
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -61,7 +62,7 @@ class AngrathCaptainOfChaosTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -69,17 +70,17 @@ class AngrathCaptainOfChaosTest extends BaseCardTest {
         addReadyAngrath(player1, 5);
         Permanent first = harness.addToBattlefieldAndReturn(player1, new ArborealGrazer());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new ArborealGrazer());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
     }
 
@@ -87,7 +88,7 @@ class AngrathCaptainOfChaosTest extends BaseCardTest {
     void opposingArmyDoesNotPreventCreatingYourOwnArmy() {
         addReadyAngrath(player1, 5);
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new ArborealGrazer());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -98,7 +99,7 @@ class AngrathCaptainOfChaosTest extends BaseCardTest {
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, army, Keyword.MENACE)).isTrue();
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.ZOMBIE);
     }
 
     @Test

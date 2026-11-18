@@ -78,8 +78,11 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithS
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -358,10 +361,9 @@ public class BattlefieldPlacementService {
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
             PerpetualCardBattlefieldEffectSupport.applyStored(gameData, controllerId, permanent);
-            applyPerpetualKeywords(gameData, permanent);
             applyPerpetualTriggeredAbilityGrants(gameData, permanent);
             applyPerpetualEnterTapped(gameData, permanent);
-            applyPerpetualCardCharacteristics(gameData, permanent);
+            applyPerpetualActivatedAbilities(gameData, permanent);
             applyRandomNumberChoiceOnEnter(permanent);
             com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoiceOnEnterSupport
                     .applyIfPresent(gameData, controllerId, permanent);
@@ -432,10 +434,10 @@ public class BattlefieldPlacementService {
             }
             if (request.riotHaste()) {
                 permanent.getGrantedKeywords().add(Keyword.HASTE);
-                permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                grantOnEntry(gameData, controllerId, permanent, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
             }
             applySpellEntryCounters(gameData, controllerId, permanent);
-            applySpellGrantedSubtypes(gameData, permanent);
+            applySpellGrantedSubtypes(gameData, controllerId, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
             applyEntryReplacementEffects(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
             applyEnterWithKeywords(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
@@ -1541,17 +1543,20 @@ public class BattlefieldPlacementService {
         return true;
     }
 
+    /**
+     * An indefinite grant made as the permanent enters ("it enters with haste", "it's a black Zombie in addition to
+     * its other colors and types", CR 614.1c): a continuous effect on the permanent with its own timestamp
+     * (CR 613.7b) that applies in the layered pass.
+     */
+    private void grantOnEntry(GameData gameData, UUID controllerId, Permanent permanent, CardEffect effect) {
+        gameData.addEffectOnPermanent(permanent.getCard().getName(), permanent.getId(), controllerId, effect,
+                permanent.getId(), Duration.PERMANENT);
+    }
+
     private void applyPerpetualEnterTapped(GameData gameData, Permanent permanent) {
         if (permanent.getOriginalCard() != null
                 && gameData.perpetualEnterTappedCardIds.contains(permanent.getOriginalCard().getId())) {
             permanent.tap();
-        }
-    }
-
-    private void applyPerpetualKeywords(GameData gameData, Permanent permanent) {
-        if (permanent.getOriginalCard() != null) {
-            permanent.getPersistentGrantedKeywords().addAll(
-                    gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of()));
         }
     }
 
@@ -1581,18 +1586,11 @@ public class BattlefieldPlacementService {
         }
     }
 
-    private void applyPerpetualCardCharacteristics(GameData gameData, Permanent permanent) {
+    private void applyPerpetualActivatedAbilities(GameData gameData, Permanent permanent) {
         if (permanent.getOriginalCard() == null) {
             return;
         }
         UUID cardId = permanent.getOriginalCard().getId();
-        permanent.getPersistentGrantedCardTypes().addAll(
-                gameData.perpetualCardTypes.getOrDefault(cardId, Set.of()));
-        gameData.perpetualCardSubtypes.getOrDefault(cardId, Set.of()).forEach(subtype -> {
-            if (!permanent.getGrantedSubtypes().contains(subtype)) {
-                permanent.getGrantedSubtypes().add(subtype);
-            }
-        });
         gameData.perpetualActivatedAbilities.getOrDefault(cardId, List.of()).forEach(ability -> {
             if (!permanent.getPersistentGrantedActivatedAbilities().contains(ability)) {
                 permanent.getPersistentGrantedActivatedAbilities().add(ability);
@@ -2142,7 +2140,7 @@ public class BattlefieldPlacementService {
         applyGrantedBloodthirst(gameData, controllerId, permanent);
         applySpellAdditionalEnterCounters(gameData, controllerId, permanent, sourceStackEntry);
         applySpellGrantedSunburst(gameData, controllerId, permanent);
-        applySpellGrantedHaste(gameData, permanent);
+        applySpellGrantedHaste(gameData, controllerId, permanent);
     }
 
     /**
@@ -2194,7 +2192,8 @@ public class BattlefieldPlacementService {
                 continue;
             }
             permanent.getGrantedKeywords().add(enterWith.keyword());
-            permanent.getPersistentGrantedKeywords().add(enterWith.keyword());
+            grantOnEntry(gameData, controllerId, permanent,
+                    new GrantKeywordEffect(enterWith.keyword(), GrantScope.TARGET));
         }
     }
 
@@ -2401,10 +2400,10 @@ public class BattlefieldPlacementService {
      * keyed by card id and consumed here, so it applies only to the permanent that spell becomes; it
      * wears off with the permanent's other until-end-of-turn keyword grants.
      */
-    private void applySpellGrantedHaste(GameData gameData, Permanent permanent) {
+    private void applySpellGrantedHaste(GameData gameData, UUID controllerId, Permanent permanent) {
         if (gameData.spellsGrantedHasteOnEntry.remove(permanent.getCard().getId())) {
             if (gameData.spellsGrantedPermanentHasteOnEntry.remove(permanent.getCard().getId())) {
-                permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                grantOnEntry(gameData, controllerId, permanent, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
             } else {
                 permanent.getGrantedKeywords().add(Keyword.HASTE);
             }
@@ -2454,25 +2453,21 @@ public class BattlefieldPlacementService {
                 applyEntryCounters(gameData, controllerId, permanent, counterType, count));
     }
 
-    private void applySpellGrantedSubtypes(GameData gameData, Permanent permanent) {
+    private void applySpellGrantedSubtypes(GameData gameData, UUID controllerId, Permanent permanent) {
         Set<CardSubtype> granted = gameData.spellGrantedSubtypesOnEntry.remove(permanent.getCard().getId());
         if (granted == null) return;
         for (CardSubtype subtype : granted) {
-            if (!permanent.getGrantedSubtypes().contains(subtype)) {
-                permanent.getGrantedSubtypes().add(subtype);
-            }
+            grantOnEntry(gameData, controllerId, permanent, new GrantSubtypeEffect(subtype, GrantScope.TARGET));
         }
     }
 
     private void applySpellCastCharacteristics(GameData gameData, Permanent permanent,
                                                StackEntry sourceStackEntry) {
         if (sourceStackEntry == null) return;
-        permanent.getGrantedColors().addAll(sourceStackEntry.getGrantedColorsOnEntry());
-        sourceStackEntry.getGrantedSubtypesOnEntry().forEach(subtype -> {
-            if (!permanent.getGrantedSubtypes().contains(subtype)) {
-                permanent.getGrantedSubtypes().add(subtype);
-            }
-        });
+        sourceStackEntry.getGrantedColorsOnEntry().forEach(color -> gameData.addEffectOnPermanent(sourceStackEntry,
+                new GrantColorEffect(color, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT));
+        sourceStackEntry.getGrantedSubtypesOnEntry().forEach(subtype -> gameData.addEffectOnPermanent(sourceStackEntry,
+                new GrantSubtypeEffect(subtype, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT));
         long timestamp = (sourceStackEntry.getBasePowerOverrideOnEntry() != null
                 || sourceStackEntry.getBaseToughnessOverrideOnEntry() != null)
                 ? gameData.nextTimestamp() : 0;
@@ -2596,7 +2591,9 @@ public class BattlefieldPlacementService {
                 subtypes.add(to);
             }
         }
-        subtypes.addAll(entering.getGrantedSubtypes());
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPermanent(entering.getId(), GrantSubtypeEffect.class)) {
+            subtypes.add(((GrantSubtypeEffect) fe.effect()).subtype());
+        }
         boolean changeling = !entering.isLosesAllAbilitiesUntilEndOfTurn()
                 && entering.getCard().hasKeyword(Keyword.CHANGELING);
 
@@ -2800,12 +2797,10 @@ public class BattlefieldPlacementService {
             }
 
             permanent.getCopiableEntryCharacteristics().add(characteristics);
-            permanent.getPersistentGrantedCardTypes().addAll(characteristics.addedCardTypes());
-            characteristics.addedSubtypes().forEach(subtype -> {
-                if (!permanent.getGrantedSubtypes().contains(subtype)) {
-                    permanent.getGrantedSubtypes().add(subtype);
-                }
-            });
+            characteristics.addedCardTypes().forEach(cardType -> grantOnEntry(gameData, controllerId, permanent,
+                    new GrantCardTypeEffect(cardType, GrantScope.TARGET)));
+            characteristics.addedSubtypes().forEach(subtype -> grantOnEntry(gameData, controllerId, permanent,
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET)));
 
             long timestamp = gameData.nextTimestamp();
             if (characteristics.basePower() != null) {
@@ -2901,9 +2896,7 @@ public class BattlefieldPlacementService {
                 : gameQueryService.activeStaticEffects(gameData, controllerId,
                 ControlledCreaturesEnterWithSourcePowerCountersEffect.class)) {
             ControlledCreaturesEnterWithSourcePowerCountersEffect e = active.effect();
-            if (!permanent.getGrantedSubtypes().contains(e.addedSubtype())) {
-                permanent.getGrantedSubtypes().add(e.addedSubtype());
-            }
+            grantOnEntry(gameData, controllerId, permanent, new GrantSubtypeEffect(e.addedSubtype(), GrantScope.TARGET));
             additionalCounters += Math.max(0, gameQueryService.getEffectivePower(gameData, active.source()));
         }
 

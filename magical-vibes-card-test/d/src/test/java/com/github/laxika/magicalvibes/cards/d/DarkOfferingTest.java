@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredGriffin;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -110,7 +111,7 @@ class DarkOfferingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         harness.castSorcery(player1, 0, griffin.getId());
-        griffin.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, griffin, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Armored Griffin");

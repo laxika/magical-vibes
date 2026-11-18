@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -47,7 +50,9 @@ public class RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeHandler
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
             Permanent permanent = new Permanent(topCard);
-            permanent.getPersistentGrantedCardTypes().add(effect.addedCardType());
+            gameData.addEffectOnPermanent(ability.sourceCard().getName(), null, ability.controllerId(),
+                    new GrantCardTypeEffect(effect.addedCardType(), GrantScope.TARGET),
+                    permanent.getId(), Duration.PERMANENT);
             int count = gameQueryService.cantHaveCountersForController(gameData, permanent, ability.controllerId())
                     ? 0 : gameQueryService.replaceCounters(gameData, permanent, ability.controllerId(),
                     effect.counterType(), 1, ability.controllerId());

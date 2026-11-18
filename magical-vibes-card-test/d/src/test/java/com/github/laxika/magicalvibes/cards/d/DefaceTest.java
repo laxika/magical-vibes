@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CoralCommando;
 import com.github.laxika.magicalvibes.cards.s.ScreamingShield;
 import com.github.laxika.magicalvibes.cards.w.WallOfLostThoughts;
@@ -116,7 +117,7 @@ class DefaceTest extends BaseCardTest {
         @Test
         void destroysCreatureWithGrantedDefender() {
             Permanent commando = harness.addToBattlefieldAndReturn(player2, new CoralCommando());
-            commando.getPersistentGrantedKeywords().add(Keyword.DEFENDER);
+            PermanentGrants.keyword(gd, commando, Keyword.DEFENDER);
             harness.setHand(player1, List.of(new Deface()));
             harness.addMana(player1, ManaColor.RED, 1);
 

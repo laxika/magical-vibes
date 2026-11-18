@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BishopOfWings;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -37,7 +38,7 @@ class ValkyriesCallTest extends BaseCardTest {
         Permanent returned = findPermanents(player1, "Grizzly Bears").getFirst();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.ANGEL);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.ANGEL);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 

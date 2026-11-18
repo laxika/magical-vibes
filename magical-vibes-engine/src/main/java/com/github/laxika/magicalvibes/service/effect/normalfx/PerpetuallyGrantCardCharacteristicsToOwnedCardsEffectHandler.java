@@ -46,15 +46,9 @@ public class PerpetuallyGrantCardCharacteristicsToOwnedCardsEffectHandler
 
         gameData.playerBattlefields.forEach((controllerId, permanents) -> {
             for (Permanent permanent : permanents) {
-                if (applyToCard(gameData, entry, grant, ownerId, controllerId,
-                        permanent.getCard(), modifiedCardIds)) {
-                    permanent.getPersistentGrantedCardTypes().addAll(grant.cardTypes());
-                    grant.subtypes().forEach(subtype -> {
-                        if (!permanent.getGrantedSubtypes().contains(subtype)) {
-                            permanent.getGrantedSubtypes().add(subtype);
-                        }
-                    });
-                }
+                applyToCard(gameData, entry, grant, ownerId, controllerId, permanent.getCard(),
+                        permanent.getOriginalCard() == null ? permanent.getCard() : permanent.getOriginalCard(),
+                        modifiedCardIds);
             }
         });
 
@@ -62,14 +56,14 @@ public class PerpetuallyGrantCardCharacteristicsToOwnedCardsEffectHandler
             for (ExiledCardEntry exiled : gameData.exiledCards) {
                 if (ownerId.equals(exiled.ownerId())) {
                     applyToCard(gameData, entry, grant, ownerId, ownerId,
-                            exiled.card(), modifiedCardIds);
+                            exiled.card(), exiled.card(), modifiedCardIds);
                 }
             }
         }
 
         for (StackEntry stackEntry : gameData.stack) {
             applyToCard(gameData, entry, grant, ownerId, null,
-                    stackEntry.getCard(), modifiedCardIds);
+                    stackEntry.getCard(), stackEntry.getCard(), modifiedCardIds);
         }
     }
 
@@ -81,27 +75,31 @@ public class PerpetuallyGrantCardCharacteristicsToOwnedCardsEffectHandler
             return;
         }
         for (Card card : cards) {
-            applyToCard(gameData, entry, effect, ownerId, zoneOwnerId, card, modifiedCardIds);
+            applyToCard(gameData, entry, effect, ownerId, zoneOwnerId, card, card, modifiedCardIds);
         }
     }
 
-    private boolean applyToCard(GameData gameData, StackEntry entry,
-                                PerpetuallyGrantCardCharacteristicsToOwnedCardsEffect effect,
-                                UUID ownerId, UUID zoneOwnerId, Card card,
-                                Set<UUID> modifiedCardIds) {
+    /**
+     * Records the perpetual change on {@code recorded} when {@code card}, the card as it is now, matches. They differ
+     * for a permanent that is a copy: it matches as the card it copies, but the change is made to its own card, which
+     * the layered pass reads it from.
+     */
+    private void applyToCard(GameData gameData, StackEntry entry,
+                             PerpetuallyGrantCardCharacteristicsToOwnedCardsEffect effect,
+                             UUID ownerId, UUID zoneOwnerId, Card card, Card recorded,
+                             Set<UUID> modifiedCardIds) {
         if (card == null || card.isToken() || modifiedCardIds.contains(card.getId())
                 || !isOwnedBy(card, ownerId, zoneOwnerId)
                 || !predicateEvaluationService.matchesCardPredicate(
                         card, effect.filter(), entry.getCard().getId(), gameData, ownerId)) {
-            return false;
+            return;
         }
 
         modifiedCardIds.add(card.getId());
-        gameData.perpetualCardTypes.merge(card.getId(), Set.copyOf(effect.cardTypes()),
+        gameData.perpetualCardTypes.merge(recorded.getId(), Set.copyOf(effect.cardTypes()),
                 (existing, added) -> union(existing, added));
-        gameData.perpetualCardSubtypes.merge(card.getId(), Set.copyOf(effect.subtypes()),
+        gameData.perpetualCardSubtypes.merge(recorded.getId(), Set.copyOf(effect.subtypes()),
                 (existing, added) -> union(existing, added));
-        return true;
     }
 
     private boolean isOwnedBy(Card card, UUID ownerId, UUID zoneOwnerId) {

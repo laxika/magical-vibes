@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPerm
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
@@ -321,6 +322,7 @@ public final class LayerClassifier {
         map.put(GrantSupertypeToAllNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSupertypeToPermanentsWithCountersEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSupertypeUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
+        map.put(SetTargetPermanentSupertypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantChosenSubtypeToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSubtypeToOwnCreaturesInAllZonesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSubtypeToOwnLandsAndLandCardsEffect.class, fixed(Layer.L4_TYPE));

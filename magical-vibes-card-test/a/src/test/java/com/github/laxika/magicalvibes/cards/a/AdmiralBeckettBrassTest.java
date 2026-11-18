@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -47,7 +48,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
         if (!gd.combatDamageSourceSubtypesThisTurn.containsKey(creature.getId())) {
             Set<CardSubtype> subtypes = ConcurrentHashMap.newKeySet();
             subtypes.addAll(creature.getCard().getSubtypes());
-            subtypes.addAll(creature.getGrantedSubtypes());
+            subtypes.addAll(PermanentGrants.subtypesOf(gd, creature));
             gd.combatDamageSourceSubtypesThisTurn.put(creature.getId(), subtypes);
         }
     }
@@ -116,7 +117,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             bears.setAttackTarget(player2.getId());
             harness.resolveCombatDamage();
 
-            bears.getGrantedSubtypes().add(CardSubtype.PIRATE);
+            PermanentGrants.subtype(gd, bears, CardSubtype.PIRATE);
             bears.setAttacking(true);
             for (int i = 0; i < 2; i++) {
                 Permanent pirate = harness.addToBattlefieldAndReturn(player1, new SailorOfMeans());

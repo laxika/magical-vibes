@@ -38,7 +38,7 @@ class KoboldWarcallerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent enteredBears = findPermanent(player1, "Grizzly Bears");
-        assertThat(enteredBears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteredBears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -56,14 +56,14 @@ class KoboldWarcallerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.assertInHand(player1, "Grizzly Bears");
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
         declareAttackers(List.of(1));
         assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
     }
@@ -92,8 +92,8 @@ class KoboldWarcallerTest extends BaseCardTest {
 
         List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
         assertThat(bears).hasSize(2);
-        assertThat(bears.get(0).hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(bears.get(1).hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears.get(0), Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears.get(1), Keyword.HASTE)).isTrue();
     }
 
     @Test

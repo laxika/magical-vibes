@@ -220,9 +220,9 @@ class PermanentViewFactoryTest {
         Card printed = card("Adventurer", CardType.CREATURE);
         printed.setSubtypes(List.of(CardSubtype.HUMAN));
         Permanent creature = new Permanent(printed);
-        creature.getGrantedSubtypes().add(CardSubtype.HUMAN);
 
-        PermanentView view = create(creature);
+        PermanentView view = factory.create(creature, 0, 0, Set.of(), false, List.of(), Set.of(),
+                List.of(CardSubtype.HUMAN));
 
         assertThat(view.card().subtypes())
                 .containsExactly(CardSubtype.HUMAN);
@@ -346,9 +346,9 @@ class PermanentViewFactoryTest {
         printed.setColor(CardColor.RED);
         printed.setColors(List.of(CardColor.RED));
         Permanent creature = new Permanent(printed);
-        creature.getGrantedColors().add(CardColor.BLACK);
 
-        PermanentView view = create(creature);
+        PermanentView view = factory.create(creature, 0, 0, Set.of(), false, List.of(), Set.of(CardColor.BLACK),
+                List.of());
 
         assertThat(view.card().color()).isEqualTo(CardColor.RED);
         assertThat(view.card().colors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.BLACK);

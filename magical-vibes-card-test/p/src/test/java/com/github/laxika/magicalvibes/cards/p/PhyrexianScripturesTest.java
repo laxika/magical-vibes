@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColdWaterSnapper;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -77,8 +78,8 @@ class PhyrexianScripturesTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Creature should be permanently an artifact
-        assertThat(creature.getPersistentGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(creature)).isTrue();
+        assertThat(PermanentGrants.cardTypesOf(gd, creature)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, creature)).isTrue();
     }
 
     @Test
@@ -102,8 +103,8 @@ class PhyrexianScripturesTest extends BaseCardTest {
         creature.resetModifiers();
 
         // Persistent card type should survive
-        assertThat(creature.getPersistentGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(creature)).isTrue();
+        assertThat(PermanentGrants.cardTypesOf(gd, creature)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, creature)).isTrue();
     }
 
     @Test
@@ -153,7 +154,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
         Permanent creature = findPermanent(player2, "Primordial Wurm");
         assertThat(creature).isNotNull();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.getPersistentGrantedCardTypes()).doesNotContain(CardType.ARTIFACT);
+        assertThat(PermanentGrants.cardTypesOf(gd, creature)).doesNotContain(CardType.ARTIFACT);
     }
 
     @Test
@@ -196,7 +197,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
         // Make the Primordial Wurm an artifact permanently (simulating chapter I effect)
         Permanent creature = findPermanent(player1, "Primordial Wurm");
         assertThat(creature).isNotNull();
-        creature.getPersistentGrantedCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.cardType(gd, creature, CardType.ARTIFACT);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -273,7 +274,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
         }
         harness.passBothPriorities();
         assertThat(snapper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gqs.isArtifact(snapper)).isFalse();
+        assertThat(gqs.isArtifact(gd, snapper)).isFalse();
     }
 
     @Test
@@ -284,7 +285,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gqs.isArtifact(creature)).isTrue();
+        assertThat(gqs.isArtifact(gd, creature)).isTrue();
         assertThat(gqs.isCreature(gd, creature)).isTrue();
     }
 

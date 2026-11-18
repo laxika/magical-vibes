@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CemeteryGate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -183,7 +184,7 @@ class ApocalypseChimeTest extends BaseCardTest {
     void indestructiblePermanentSurvives() {
         chimeReady();
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new SpectralBears());
-        bears.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, bears, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new MesaFalcon());
 
         ringChime();

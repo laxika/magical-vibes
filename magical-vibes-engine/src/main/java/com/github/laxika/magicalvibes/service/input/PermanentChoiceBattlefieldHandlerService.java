@@ -3500,7 +3500,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                     }
                 }
                 if (auraGraveyardReturn.grantHaste()) {
-                    auraPerm.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                    gameData.addEffectOnPermanent(auraPerm.getCard().getName(), auraPerm.getId(), auraControllerId,
+                            new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), auraPerm.getId(), Duration.PERMANENT);
                 }
                 if (auraGraveyardReturn.exileIfLeavesBattlefield()) {
                     auraPerm.setExileIfLeavesBattlefield(true);

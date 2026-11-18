@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
@@ -44,7 +45,7 @@ class LorcanWarlockCollectorTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife - 2);
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.WARLOCK);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.WARLOCK);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card instanceof GrizzlyBears);
     }
@@ -136,7 +137,7 @@ class LorcanWarlockCollectorTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(findPermanent(player1, "Grizzly Bears").getGrantedSubtypes()).contains(CardSubtype.WARLOCK);
+        assertThat(PermanentGrants.subtypesOf(gd, findPermanent(player1, "Grizzly Bears"))).contains(CardSubtype.WARLOCK);
     }
 
     @Test

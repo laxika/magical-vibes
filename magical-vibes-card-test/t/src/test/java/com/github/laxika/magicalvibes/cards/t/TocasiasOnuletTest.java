@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -118,7 +119,7 @@ class TocasiasOnuletTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent onABattlefield = findPermanent(player1, "Tocasia's Onulet");
-        assertThat(onABattlefield.getPersistentGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, onABattlefield)).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Tocasia's Onulet");
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

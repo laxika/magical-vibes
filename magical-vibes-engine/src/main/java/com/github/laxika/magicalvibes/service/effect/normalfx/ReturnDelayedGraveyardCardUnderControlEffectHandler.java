@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -102,11 +105,13 @@ public class ReturnDelayedGraveyardCardUnderControlEffectHandler implements Norm
             }
         }
         if (returnEffect.grantColor() != null) {
-            permanent.getGrantedColors().add(returnEffect.grantColor());
+            gameData.addEffectOnPermanent(entry, new GrantColorEffect(returnEffect.grantColor(), GrantScope.TARGET),
+                    permanent.getId(), Duration.PERMANENT);
         }
-        if (returnEffect.grantSubtype() != null
-                && !permanent.getGrantedSubtypes().contains(returnEffect.grantSubtype())) {
-            permanent.getGrantedSubtypes().add(returnEffect.grantSubtype());
+        if (returnEffect.grantSubtype() != null) {
+            gameData.addEffectOnPermanent(entry,
+                    new GrantSubtypeEffect(returnEffect.grantSubtype(), GrantScope.TARGET),
+                    permanent.getId(), Duration.PERMANENT);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, permanent);
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -38,7 +39,7 @@ class RageIntoTheValleyTest extends BaseCardTest {
     @DisplayName("Adds two +1/+1 counters and Goblin to an existing Army")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new RageIntoTheValley()));
@@ -50,16 +51,16 @@ class RageIntoTheValleyTest extends BaseCardTest {
         harness.assertLife(player1, 19);
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test
     @DisplayName("Chooses one of multiple Armies and preserves its existing counters and types")
     void choosesOnlyOneArmy() {
         Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, firstArmy, CardSubtype.ARMY);
         Permanent chosenArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        chosenArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, chosenArmy, CardSubtype.ARMY);
         chosenArmy.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         RageIntoTheValley drawnCard = new RageIntoTheValley();
         harness.setLibrary(player1, List.of(drawnCard));
@@ -74,10 +75,10 @@ class RageIntoTheValleyTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(chosenArmy.getId()));
 
         assertThat(chosenArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(chosenArmy.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, chosenArmy)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
         assertThat(gqs.hasEffectiveSubtype(gd, chosenArmy, CardSubtype.BEAR)).isTrue();
         assertThat(firstArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(firstArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, firstArmy)).doesNotContain(CardSubtype.GOBLIN);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(firstArmy, chosenArmy);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -86,7 +87,7 @@ class RageIntoTheValleyTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creating your own Goblin Army")
     void ignoresOpponentsArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         harness.setLibrary(player1, List.of(new RageIntoTheValley()));
         harness.setHand(player1, List.of(new RageIntoTheValley()));
         addMana();
@@ -96,7 +97,7 @@ class RageIntoTheValleyTest extends BaseCardTest {
         Permanent army = findPermanent(player1, "Goblin Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.GOBLIN);
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
     }

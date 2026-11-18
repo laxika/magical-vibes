@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CardColor;
 
@@ -166,7 +167,7 @@ class NekrataalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
 
-        target.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, target, CardColor.BLACK);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

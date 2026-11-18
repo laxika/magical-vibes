@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -35,7 +36,7 @@ class RelentlessAdvanceTest extends BaseCardTest {
     @Test
     void amassesThreeOnAnExistingArmyAndMakesItZombie() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castRelentlessAdvance();
 
@@ -43,15 +44,15 @@ class RelentlessAdvanceTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
     void choosesOnlyOneOfMultipleArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castRelentlessAdvance();
 
@@ -59,7 +60,7 @@ class RelentlessAdvanceTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, second))
                 .contains(CardSubtype.BEAR, CardSubtype.ARMY, CardSubtype.ZOMBIE);
@@ -70,8 +71,8 @@ class RelentlessAdvanceTest extends BaseCardTest {
     void cannotDeclineChoosingAnArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castRelentlessAdvance();
 
@@ -86,12 +87,12 @@ class RelentlessAdvanceTest extends BaseCardTest {
     @Test
     void ignoresOpponentArmy() {
         Permanent opponentArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opponentArmy, CardSubtype.ARMY);
 
         castRelentlessAdvance();
 
         assertThat(opponentArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opponentArmy)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
                 .satisfies(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                         .isEqualTo(3));

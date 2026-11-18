@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
@@ -122,7 +123,7 @@ class ExecuteTest extends BaseCardTest {
     @DisplayName("Execute still draws when an indestructible white creature survives")
     void drawsEvenWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
-        target.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Execute()));
         harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -138,7 +139,7 @@ class ExecuteTest extends BaseCardTest {
     @DisplayName("Execute can destroy a multicolored creature that is white")
     void destroysMulticoloredWhiteCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
-        target.getGrantedColors().add(CardColor.BLUE);
+        PermanentGrants.color(gd, target, CardColor.BLUE);
         harness.setHand(player1, List.of(new Execute()));
         harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);

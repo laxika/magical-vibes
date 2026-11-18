@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
@@ -160,7 +161,7 @@ class StandUpForYourselfTest extends BaseCardTest {
     @Test
     void doesNotDestroyIndestructibleCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new StandUpForYourself()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

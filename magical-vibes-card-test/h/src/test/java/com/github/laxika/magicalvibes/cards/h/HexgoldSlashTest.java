@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
 import com.github.laxika.magicalvibes.cards.c.ChimneyRabble;
 import com.github.laxika.magicalvibes.cards.p.PaladinOfPredation;
@@ -55,7 +56,7 @@ class HexgoldSlashTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ChimneyRabble());
         prepareHexgoldSlash();
         harness.castInstant(player1, 0, target.getId());
-        target.getPersistentGrantedKeywords().add(Keyword.TOXIC);
+        PermanentGrants.keyword(gd, target, Keyword.TOXIC);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Chimney Rabble");

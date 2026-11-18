@@ -490,7 +490,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (!sourceLinked(duration)
                 && !Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
                 && !Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)
-                && !Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
+                && !Duration.UNTIL_END_OF_COMBAT.equals(duration)
+                && !Duration.PERMANENT.equals(duration)) {
             keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)
                     .forEach(bucketFor(permanent, duration)::add);
         }
@@ -504,8 +505,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     private Set<Keyword> bucketFor(Permanent permanent, Duration duration) {
         if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             return permanent.getUntilNextTurnKeywords();
-        } else if (Duration.PERMANENT.equals(duration)) {
-            return permanent.getPersistentGrantedKeywords();
         }
         return permanent.getGrantedKeywords();
     }

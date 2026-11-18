@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GreaterGood;
@@ -152,7 +153,7 @@ class SlayTest extends BaseCardTest {
     @DisplayName("Slay draws even when an indestructible green creature survives")
     void drawsWhenIndestructibleTargetSurvives() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, bears, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Slay()));
         harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -175,7 +176,7 @@ class SlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castInstant(player1, 0, bears.getId());
-        bears.getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keyword(gd, bears, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

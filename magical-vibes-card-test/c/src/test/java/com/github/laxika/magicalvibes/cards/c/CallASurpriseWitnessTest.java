@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.p.ProjektorInspector;
@@ -38,7 +39,7 @@ class CallASurpriseWitnessTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.SPIRIT);
     }
 
     @Test

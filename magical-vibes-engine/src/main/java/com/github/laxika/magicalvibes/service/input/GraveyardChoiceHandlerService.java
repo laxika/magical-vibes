@@ -26,6 +26,10 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneOfEachCardTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
@@ -546,10 +550,13 @@ public class GraveyardChoiceHandlerService {
                         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
                     }
                     if (grantColor != null) {
-                        perm.getGrantedColors().add(grantColor);
+                        gameData.addEffectOnPermanent(card.getName(), perm.getId(), playerId,
+                                new GrantColorEffect(grantColor, GrantScope.TARGET), perm.getId(), Duration.PERMANENT);
                     }
-                    if (grantSubtype != null && !perm.getGrantedSubtypes().contains(grantSubtype)) {
-                        perm.getGrantedSubtypes().add(grantSubtype);
+                    if (grantSubtype != null) {
+                        gameData.addEffectOnPermanent(card.getName(), perm.getId(), playerId,
+                                new GrantSubtypeEffect(grantSubtype, GrantScope.TARGET), perm.getId(),
+                                Duration.PERMANENT);
                     }
                     if (enterTapped) {
                         perm.tap();

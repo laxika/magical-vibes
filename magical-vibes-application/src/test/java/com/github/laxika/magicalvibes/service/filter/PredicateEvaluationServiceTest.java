@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.filter;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -2995,10 +2996,10 @@ class PredicateEvaluationServiceTest {
             Card printedSnow = createLand("Snow-Covered Forest");
             printedSnow.setSupertypes(Set.of(CardSupertype.SNOW));
             Permanent removed = addPermanent(player1Id, printedSnow);
-            removed.getPersistentRemovedSupertypes().add(CardSupertype.SNOW);
+            PermanentGrants.supertype(gd, removed, CardSupertype.SNOW, false);
 
             Permanent granted = addPermanent(player1Id, createLand("Forest"));
-            granted.getPersistentGrantedSupertypes().add(CardSupertype.SNOW);
+            PermanentGrants.supertype(gd, granted, CardSupertype.SNOW, true);
 
             PermanentHasSupertypePredicate snow = new PermanentHasSupertypePredicate(CardSupertype.SNOW);
             assertThat(evaluator.matchesStaticFilter(removed, snow, ctx())).isFalse();
@@ -3011,9 +3012,9 @@ class PredicateEvaluationServiceTest {
             Permanent artifact = addPermanent(player1Id, createArtifact("Angel's Feather"));
             Permanent plain = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
             Permanent madeLegendary = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-            madeLegendary.getPersistentGrantedSupertypes().add(CardSupertype.LEGENDARY);
+            PermanentGrants.supertype(gd, madeLegendary, CardSupertype.LEGENDARY, true);
             Permanent madeSaga = addPermanent(player1Id, createEnchantment("Chapter"));
-            madeSaga.getGrantedSubtypes().add(CardSubtype.SAGA);
+            PermanentGrants.subtype(gd, madeSaga, CardSubtype.SAGA);
 
             PermanentIsHistoricPredicate historic = new PermanentIsHistoricPredicate();
             assertThat(evaluator.matchesStaticFilter(artifact, historic, ctx())).isTrue();

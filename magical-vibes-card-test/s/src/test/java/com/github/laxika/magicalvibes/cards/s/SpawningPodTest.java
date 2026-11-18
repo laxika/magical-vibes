@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,7 +31,7 @@ class SpawningPodTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         Permanent sought = findPermanent(player1, "Grizzly Bears");
-        assertThat(sought.getGrantedSubtypes()).contains(CardSubtype.PHYREXIAN);
+        assertThat(PermanentGrants.subtypesOf(gd, sought)).contains(CardSubtype.PHYREXIAN);
     }
 
     @Test

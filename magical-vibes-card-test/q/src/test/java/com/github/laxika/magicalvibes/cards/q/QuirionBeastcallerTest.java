@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -204,7 +205,7 @@ class QuirionBeastcallerTest extends BaseCardTest {
         harness.declareDivision(Map.of(bears.getId(), 2, giant.getId(), 1));
 
         killBeastcaller(beastcaller);
-        bears.getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keyword(gd, bears, Keyword.SHROUD);
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -72,7 +73,7 @@ class TerrorOfTowashiTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(returnedCreature.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.PHYREXIAN);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.PHYREXIAN);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .doesNotContain(returnedCreature);
     }

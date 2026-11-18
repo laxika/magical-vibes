@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,14 +31,14 @@ class MistyMountainsRaiderTest extends BaseCardTest {
     @Test
     void attackingAddsTwoCountersAndGoblinSubtypeToAnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         addCreatureReady(player1, new MistyMountainsRaider());
 
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
     }
 
     @Test

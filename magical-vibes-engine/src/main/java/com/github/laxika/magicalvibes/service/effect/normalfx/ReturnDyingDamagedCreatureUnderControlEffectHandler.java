@@ -70,7 +70,7 @@ public class ReturnDyingDamagedCreatureUnderControlEffectHandler implements Norm
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
 
         Permanent permanent = new Permanent(cardToReturn);
-        graveyardReturnSupport.applyPermanentGrants(permanent, returnEffect.grantColor(), returnEffect.grantSubtype());
+        graveyardReturnSupport.applyPermanentGrants(gameData, controllerId, permanent, returnEffect.grantColor(), returnEffect.grantSubtype());
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 

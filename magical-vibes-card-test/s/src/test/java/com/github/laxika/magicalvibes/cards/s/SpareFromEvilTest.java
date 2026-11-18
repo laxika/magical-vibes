@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvacynianPriest;
 import com.github.laxika.magicalvibes.cards.d.DoomedTraveler;
 import com.github.laxika.magicalvibes.cards.g.Geistflame;
@@ -196,7 +197,7 @@ class SpareFromEvilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getGrantedSubtypes()).doesNotContain(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).doesNotContain(CardSubtype.VAMPIRE);
         assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -101,7 +102,7 @@ class DescentOfTheDragonsTest extends BaseCardTest {
     @DisplayName("An indestructible creature survives and creates no Dragon")
     void indestructibleCreatureDoesNotCreateDragon() {
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new ColossodonYearling());
-        protectedCreature.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, protectedCreature, Keyword.INDESTRUCTIBLE);
         Permanent ordinaryCreature = harness.addToBattlefieldAndReturn(player2, new ColossodonYearling());
 
         castDescent(List.of(protectedCreature.getId(), ordinaryCreature.getId()));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarrukUnleashed;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -169,7 +170,7 @@ class HoodedBlightfangTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, planeswalker.getId());
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
-        planeswalker.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keyword(gd, planeswalker, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(planeswalker);
@@ -180,7 +181,7 @@ class HoodedBlightfangTest extends BaseCardTest {
         addReadyBlightfang(player1);
         addReadyDeathtouchCreature(player1);
         Permanent planeswalker = addPlaneswalker(player2, 4);
-        planeswalker.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, planeswalker, Keyword.INDESTRUCTIBLE);
 
         harness.activateAbility(player1, 1, null, planeswalker.getId());
         harness.passBothPriorities();
@@ -204,7 +205,7 @@ class HoodedBlightfangTest extends BaseCardTest {
 
     private Permanent addReadyDeathtouchCreature(Player player) {
         Permanent permanent = addCreatureReady(player, new ProdigalPyromancer());
-        permanent.getPersistentGrantedKeywords().add(Keyword.DEATHTOUCH);
+        PermanentGrants.keyword(gd, permanent, Keyword.DEATHTOUCH);
         return permanent;
     }
 

@@ -49,7 +49,7 @@ class MishraEminentOneTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.CONSTRUCT);
         assertThat(token.getCard().getPower()).isEqualTo(4);
         assertThat(token.getCard().getToughness()).isEqualTo(4);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .singleElement()
                 .satisfies(action -> {

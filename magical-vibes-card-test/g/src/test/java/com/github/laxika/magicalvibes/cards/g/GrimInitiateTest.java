@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -36,14 +37,14 @@ class GrimInitiateTest extends BaseCardTest {
     @DisplayName("When Grim Initiate dies, it amasses Zombies 1 on an existing Army")
     void deathTriggerAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
 
         destroyInitiate(initiate.getId());
 
         assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -51,8 +52,8 @@ class GrimInitiateTest extends BaseCardTest {
     void deathTriggerChoosesOneArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
 
         destroyInitiate(initiate.getId());
@@ -67,7 +68,7 @@ class GrimInitiateTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creating your own Army")
     void deathTriggerIgnoresOpponentsArmy() {
         Permanent opponentArmy = harness.addToBattlefieldAndReturn(player2, new GrimInitiate());
-        opponentArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opponentArmy, CardSubtype.ARMY);
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
 
         destroyInitiate(initiate.getId());
@@ -85,7 +86,7 @@ class GrimInitiateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player1, 0, initiate.getId());
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         harness.passBothPriorities();
 

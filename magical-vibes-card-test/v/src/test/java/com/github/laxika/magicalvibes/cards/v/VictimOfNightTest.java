@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AmbushViper;
@@ -167,7 +168,7 @@ class VictimOfNightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, viper.getId());
 
-        viper.getGrantedSubtypes().add(CardSubtype.ZOMBIE);
+        PermanentGrants.subtype(gd, viper, CardSubtype.ZOMBIE);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ambush Viper");

@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -132,13 +136,17 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             if (returnEffect.enterTapped()) {
                 perm.tap();
             }
-            perm.getPersistentGrantedKeywords().addAll(returnEffect.grantedKeywords());
+            if (!returnEffect.grantedKeywords().isEmpty()) {
+                gameData.addEffectOnPermanent(entry,
+                        new GrantKeywordEffect(Set.copyOf(returnEffect.grantedKeywords()), GrantScope.TARGET),
+                        perm.getId(), Duration.PERMANENT);
+            }
             if (returnEffect.enterFaceDown()) {
                 Set<CardSubtype> subtypes = returnEffect.grantedSubtype() == null
                         ? Set.of() : Set.of(returnEffect.grantedSubtype());
                 perm.setFaceDown(2, 2, Set.of(CardType.ARTIFACT, CardType.CREATURE), subtypes);
             } else {
-                applyPermanentCharacteristics(gameData, newControllerId, perm, returnEffect);
+                applyPermanentCharacteristics(gameData, entry, newControllerId, perm, returnEffect);
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
@@ -220,7 +228,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         return hosts;
     }
 
-    private void applyPermanentCharacteristics(GameData gameData, UUID controllerId,
+    private void applyPermanentCharacteristics(GameData gameData, StackEntry entry, UUID controllerId,
                                                Permanent permanent,
                                                ReturnAllCardsExiledWithSourceEffect effect) {
         if (effect.basePower() != null) {
@@ -233,9 +241,9 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             permanent.setPermanentBaseToughnessOverride(effect.baseToughness());
             permanent.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
         }
-        if (effect.grantedSubtype() != null
-                && !permanent.getGrantedSubtypes().contains(effect.grantedSubtype())) {
-            permanent.getGrantedSubtypes().add(effect.grantedSubtype());
+        if (effect.grantedSubtype() != null) {
+            gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(effect.grantedSubtype(), GrantScope.TARGET),
+                    permanent.getId(), Duration.PERMANENT);
         }
         if (effect.enteringCounterType() != null
                 && !gameQueryService.cantHaveCounters(gameData, permanent)) {

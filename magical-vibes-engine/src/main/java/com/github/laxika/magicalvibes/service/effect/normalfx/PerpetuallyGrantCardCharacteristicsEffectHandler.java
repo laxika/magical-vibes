@@ -67,15 +67,6 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
         });
 
         if (source != null) {
-            if (perpetual.replacesCreatureTypes()) {
-                source.getGrantedSubtypes().removeIf(StaticEffectSupport::isCreatureSubtype);
-            }
-            source.getPersistentGrantedCardTypes().addAll(perpetual.cardTypes());
-            perpetual.subtypes().forEach(subtype -> {
-                if (!source.getGrantedSubtypes().contains(subtype)) {
-                    source.getGrantedSubtypes().add(subtype);
-                }
-            });
             perpetual.activatedAbilities().forEach(ability -> {
                 if (!source.getPersistentGrantedActivatedAbilities().contains(ability)) {
                     source.getPersistentGrantedActivatedAbilities().add(ability);

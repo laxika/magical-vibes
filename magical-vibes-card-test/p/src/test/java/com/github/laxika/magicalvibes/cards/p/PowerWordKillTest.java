@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrinningDemon;
 import com.github.laxika.magicalvibes.cards.b.BaneslayerAngel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -80,7 +81,7 @@ class PowerWordKillTest extends BaseCardTest {
     @Test
     void cannotTargetCreatureWithAnAdditionalExcludedSubtype() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new SepulcherGhoul());
-        ghoul.getGrantedSubtypes().add(CardSubtype.DEMON);
+        PermanentGrants.subtype(gd, ghoul, CardSubtype.DEMON);
         harness.setHand(player1, List.of(new PowerWordKill()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -96,7 +97,7 @@ class PowerWordKillTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, ghoul.getId());
 
-        ghoul.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        PermanentGrants.subtype(gd, ghoul, CardSubtype.DRAGON);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Sepulcher Ghoul");

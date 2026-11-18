@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasGodPharaoh;
 import com.github.laxika.magicalvibes.cards.t.TormentOfScarabs;
@@ -112,7 +113,7 @@ class LilianasDefeatTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaDeathsMajesty());
         liliana.setCounterCount(CounterType.LOYALTY, 5);
-        liliana.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, liliana, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new LilianasDefeat()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

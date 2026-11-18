@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,14 +42,7 @@ public class SetTargetPermanentSupertypeEffectHandler implements NormalEffectHan
                 continue;
             }
 
-            if (e.gained()) {
-                target.getPersistentRemovedSupertypes().remove(e.supertype());
-                target.getPersistentGrantedSupertypes().add(e.supertype());
-            } else {
-                target.getPersistentGrantedSupertypes().remove(e.supertype());
-                target.getPersistentRemovedSupertypes().add(e.supertype());
-            }
-            target.getPersistentSupertypeChangeTimestamps().put(e.supertype(), gameData.nextTimestamp());
+            gameData.addEffectOnPermanent(entry, e, target.getId(), Duration.PERMANENT);
 
             String supertypeName = e.supertype().getDisplayName().toLowerCase();
             String text = e.gained() ? " becomes " + supertypeName + "." : " is no longer " + supertypeName + ".";

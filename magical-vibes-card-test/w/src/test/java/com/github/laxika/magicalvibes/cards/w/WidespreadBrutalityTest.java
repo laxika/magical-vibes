@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssailant;
 import com.github.laxika.magicalvibes.cards.j.JayaVeneratedFiremage;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
@@ -43,13 +44,13 @@ class WidespreadBrutalityTest extends BaseCardTest {
     @DisplayName("Adds counters to an existing Army before using its power")
     void amassesOnExistingArmyBeforeDamaging() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GoblinAssailant());
 
         castWidespreadBrutality();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(opponent.getMarkedDamage()).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
@@ -59,7 +60,7 @@ class WidespreadBrutalityTest extends BaseCardTest {
     void damagesFriendlyNonArmiesButExemptsOpposingArmies() {
         harness.addToBattlefield(player1, new GoblinAssailant());
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GoblinAssailant());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         Permanent wurm = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         castWidespreadBrutality();
@@ -77,8 +78,8 @@ class WidespreadBrutalityTest extends BaseCardTest {
     void usesOnlyTheChosenArmyWhenMultipleArmiesExist() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        chosen.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, chosen, CardSubtype.ARMY);
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         castWidespreadBrutality();
@@ -87,9 +88,9 @@ class WidespreadBrutalityTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(chosen.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, chosen)).contains(CardSubtype.ZOMBIE);
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(chosen.getMarkedDamage()).isZero();
         assertThat(opponent.getMarkedDamage()).isEqualTo(4);

@@ -40,6 +40,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -2545,7 +2547,8 @@ public class CardChoiceHandlerService {
             permanent.tap();
         }
         if (choice.grantHaste()) {
-            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            gameData.addEffectOnPermanent(chosenCard.getName(), permanent.getId(), player.getId(),
+                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {
@@ -3085,7 +3088,8 @@ public class CardChoiceHandlerService {
             permanent.tap();
         }
         if (grantHaste) {
-            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            gameData.addEffectOnPermanent(card.getName(), permanent.getId(), playerId,
+                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
         }
         UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -57,7 +58,7 @@ class GhostVacuumTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.SPIRIT);
         assertThat(returned.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
         assertThat(gd.getCardsExiledByPermanent(vacuum.getId())).containsExactly(shock);

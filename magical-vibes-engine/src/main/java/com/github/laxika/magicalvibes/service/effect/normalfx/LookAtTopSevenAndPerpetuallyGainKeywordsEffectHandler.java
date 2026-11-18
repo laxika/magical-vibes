@@ -100,7 +100,6 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
         String sourceName = entry.getCard() == null ? "Priest of Possibility" : entry.getCard().getName();
         Card perpetualCard = source.getOriginalCard();
         if (!grantableKeywords.isEmpty()) {
-            source.getPersistentGrantedKeywords().addAll(grantableKeywords);
             if (perpetualCard != null) {
                 gameData.perpetualKeywords.merge(perpetualCard.getId(), Set.copyOf(grantableKeywords),
                         (existing, added) -> {

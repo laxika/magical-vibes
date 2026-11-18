@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AxebaneGuardian;
 import com.github.laxika.magicalvibes.cards.e.EtherealArmor;
 import com.github.laxika.magicalvibes.model.Card;
@@ -97,7 +98,7 @@ class UltimatePriceTest extends BaseCardTest {
         prepare();
         harness.castInstant(player1, 0, guardian.getId());
 
-        guardian.getGrantedColors().add(CardColor.BLUE);
+        PermanentGrants.color(gd, guardian, CardColor.BLUE);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Axebane Guardian");

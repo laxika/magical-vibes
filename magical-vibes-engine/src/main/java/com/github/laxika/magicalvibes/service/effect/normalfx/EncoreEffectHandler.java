@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
@@ -51,7 +53,8 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
         // "They gain haste" is granted to the tokens, not part of the copy (CR 707.2).
         tokenCopySupport.createTokenCopiesForEachOpponent(gameData, entry, List.of(entry.getCard()),
                 entry.getControllerId(), copyEffect, opponentIds,
-                token -> token.getPersistentGrantedKeywords().add(Keyword.HASTE),
+                token -> gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        token.getId(), Duration.PERMANENT),
                 (opponentId, token) -> gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(opponentId),
                         token.getId(), Duration.UNTIL_END_OF_TURN));
     }

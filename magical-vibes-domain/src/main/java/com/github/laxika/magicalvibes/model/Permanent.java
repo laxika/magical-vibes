@@ -466,29 +466,9 @@ public class Permanent {
      */
     @Setter private UUID protectorPlayerId;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
-    /** Keywords granted permanently by a one-shot effect that locks in a characteristic for the
-     *  life of the permanent (e.g. Primal Clay "becomes ... with flying/defender"). Unlike
-     *  {@link #grantedKeywords} these survive {@link #resetModifiers()} — the layered pass seeds
-     *  them just like {@link #grantedSubtypes}/{@link #grantedColors} do for durable type/color grants. */
-    private final Set<Keyword> persistentGrantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Set<Keyword> removedKeywords = new HashSet<>();
-    /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
-     *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Until-end-of-turn type grants are floating effects. */
-    private final Set<CardType> persistentGrantedCardTypes = EnumSet.noneOf(CardType.class);
-    /** Supertypes granted to this permanent for as long as it stays on the battlefield by a one-shot
-     *  effect ({@code SetTargetPermanentSupertypeEffect}, e.g. Arcum's Weathervane "target nonsnow
-     *  basic land becomes snow"). Read via {@code GameQueryService.hasEffectiveSupertype}, never by
-     *  inspecting the printed supertypes. NOT cleared by {@link #resetModifiers()}. */
-    private final Set<CardSupertype> persistentGrantedSupertypes = EnumSet.noneOf(CardSupertype.class);
-    /** Supertypes removed from this permanent for as long as it stays on the battlefield by a one-shot
-     *  effect (Arcum's Weathervane "target snow land is no longer snow"). Mutually exclusive with
-     *  {@link #persistentGrantedSupertypes} — the later activation wins. NOT cleared by
-     *  {@link #resetModifiers()}. */
-    private final Set<CardSupertype> persistentRemovedSupertypes = EnumSet.noneOf(CardSupertype.class);
-    private final Map<CardSupertype, Long> persistentSupertypeChangeTimestamps = new EnumMap<>(CardSupertype.class);
     /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
     @Setter private String persistentName;
     /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
@@ -567,13 +547,6 @@ public class Permanent {
     /** Dealt damage by a source with deathtouch since the last state-based action check (CR 704.5h).
      *  Consumed by each SBA check; also cleared by regeneration and during the cleanup step. */
     @Setter private boolean damagedByDeathtouch;
-    /** Colors permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other colors").
-     *  NOT cleared by {@link #resetModifiers()} — survives turn resets. */
-    private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
-    /** Subtypes permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other types").
-     *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Until-end-of-turn subtype grants are floating effects. */
-    private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     /** When true, the creature's base power has been permanently overridden (e.g. by an exchange effect
      *  like Evra, Halcyon Witness). NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBasePowerOverrideTimestamp}. */
@@ -1035,12 +1008,7 @@ public class Permanent {
         this.enteredFromExile = source.enteredFromExile;
         this.returnedWhenSourceLeftId = source.returnedWhenSourceLeftId;
         this.grantedKeywords.addAll(source.grantedKeywords);
-        this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);
-        this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
-        this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
-        this.persistentRemovedSupertypes.addAll(source.persistentRemovedSupertypes);
-        this.persistentSupertypeChangeTimestamps.putAll(source.persistentSupertypeChangeTimestamps);
         this.persistentName = source.persistentName;
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
@@ -1068,8 +1036,6 @@ public class Permanent {
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);
         this.damagedByDeathtouch = source.damagedByDeathtouch;
-        this.grantedColors.addAll(source.grantedColors);
-        this.grantedSubtypes.addAll(source.grantedSubtypes);
         this.basePowerOverriddenPermanently = source.basePowerOverriddenPermanently;
         this.permanentBasePowerOverride = source.permanentBasePowerOverride;
         this.permanentBasePowerOverrideTimestamp = source.permanentBasePowerOverrideTimestamp;
@@ -1773,7 +1739,6 @@ public class Permanent {
         };
         return (keyword == Keyword.MENACE && suspected)
                 || (!faceDown && card.hasKeyword(keyword)) || grantedKeywords.contains(keyword)
-                || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword)
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);
     }

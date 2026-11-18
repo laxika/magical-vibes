@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AlabasterHostIntercessor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -88,7 +89,7 @@ class MirrodinAvengedTest extends BaseCardTest {
     @Test
     void drawsEvenWhenDamagedCreatureIsIndestructible() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlabasterHostIntercessor());
-        creature.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, creature, Keyword.INDESTRUCTIBLE);
         gd.recordDamageToPermanent(creature.getId(), 1);
         harness.setLibrary(player1, List.of(new VolcanicSpite()));
         harness.setHand(player1, List.of(new MirrodinAvenged()));

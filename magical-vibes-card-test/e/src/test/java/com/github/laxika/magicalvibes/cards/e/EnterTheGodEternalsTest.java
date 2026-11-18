@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
@@ -66,7 +67,7 @@ class EnterTheGodEternalsTest extends BaseCardTest {
     @DisplayName("adds counters to an existing Army instead of creating a token")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         GrizzlyBears targetCard = new GrizzlyBears();
         targetCard.setToughness(5);
         Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
@@ -74,7 +75,7 @@ class EnterTheGodEternalsTest extends BaseCardTest {
         castEnterTheGodEternals(target);
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
@@ -161,7 +162,7 @@ class EnterTheGodEternalsTest extends BaseCardTest {
     @Test
     void lethalDamageToOwnArmyIsFollowedByCountersBeforeItCanDie() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castEnterTheGodEternals(army);
 
@@ -175,17 +176,17 @@ class EnterTheGodEternalsTest extends BaseCardTest {
     void choosesOneOfMultipleExistingArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         castEnterTheGodEternals(target);
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, second);
     }
 

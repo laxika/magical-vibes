@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
@@ -38,22 +39,22 @@ class HeraldOfTheDreadhordeTest extends BaseCardTest {
     @DisplayName("When Herald of the Dreadhorde dies, it amasses Zombies 2 on an existing Army")
     void deathTriggerAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
 
         destroyHerald(herald.getId());
 
         assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
     void amassesOnlyOnTheChosenArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
 
         destroyHerald(herald.getId());
@@ -69,8 +70,8 @@ class HeraldOfTheDreadhordeTest extends BaseCardTest {
     void cannotDeclineToChooseAnArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
 
         destroyHerald(herald.getId());
@@ -102,7 +103,7 @@ class HeraldOfTheDreadhordeTest extends BaseCardTest {
     @Test
     void opposingArmyDoesNotPreventCreatingOwnArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new HeraldOfTheDreadhorde());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfTheDreadhorde());
 
         destroyHerald(herald.getId());

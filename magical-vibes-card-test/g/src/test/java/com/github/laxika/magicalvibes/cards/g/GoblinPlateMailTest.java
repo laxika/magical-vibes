@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -35,13 +36,13 @@ class GoblinPlateMailTest extends BaseCardTest {
     @Test
     void entersAttachedToExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castPlateMail();
 
         Permanent plateMail = findPermanent(player1, "Goblin Plate Mail");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
         assertThat(plateMail.getAttachedTo()).isEqualTo(army.getId());
         assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(3);
@@ -67,8 +68,8 @@ class GoblinPlateMailTest extends BaseCardTest {
     void attachesToTheChosenArmyWhenSeveralArmiesExist() {
         Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
-        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, firstArmy, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, secondArmy, CardSubtype.ARMY);
 
         castPlateMail();
         harness.handleMultiplePermanentsChosen(player1, List.of(secondArmy.getId()));
@@ -79,13 +80,13 @@ class GoblinPlateMailTest extends BaseCardTest {
         assertThat(secondArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firstArmy, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, secondArmy, Keyword.MENACE)).isTrue();
-        assertThat(secondArmy.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, secondArmy)).contains(CardSubtype.GOBLIN);
     }
 
     @Test
     void createsOwnArmyEvenWhenOpponentControlsAnArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         castPlateMail();
 

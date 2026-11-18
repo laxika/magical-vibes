@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -53,7 +54,7 @@ class BeornTheFierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
-        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.BEAR);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.BEAR);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
@@ -76,7 +77,7 @@ class BeornTheFierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(existingBear.getCounterCount(CounterType.TRAMPLE)).isZero();
-        assertThat(existingBear.getGrantedSubtypes()).doesNotContain(CardSubtype.BEAR);
+        assertThat(PermanentGrants.subtypesOf(gd, existingBear)).doesNotContain(CardSubtype.BEAR);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -113,14 +114,14 @@ class BeornTheFierceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(target.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
-        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.BEAR);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.BEAR);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(target.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
-        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.BEAR);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.BEAR);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
@@ -142,7 +143,7 @@ class BeornTheFierceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(target.getCounterCount(CounterType.TRAMPLE)).isZero();
-        assertThat(target.getGrantedSubtypes()).doesNotContain(CardSubtype.BEAR);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).doesNotContain(CardSubtype.BEAR);
     }
 
     @Test

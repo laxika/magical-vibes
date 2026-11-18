@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LazotepReaver;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -42,7 +43,7 @@ class EternalSkylordTest extends BaseCardTest {
     @DisplayName("ETB amasses Zombies 2 on an existing Army without granting flying to nontokens")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castEternalSkylord();
 
@@ -50,7 +51,7 @@ class EternalSkylordTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.hasKeyword(gd, army, Keyword.FLYING)).isFalse();
     }
 
@@ -79,8 +80,8 @@ class EternalSkylordTest extends BaseCardTest {
     void choosesOnlyOneOfMultipleArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new LazotepReaver());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new LazotepReaver());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castEternalSkylord();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
@@ -122,7 +123,7 @@ class EternalSkylordTest extends BaseCardTest {
     @Test
     void createsArmyWhenExistingArmyLeavesBeforeTriggerResolves() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new LazotepReaver());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.enterBattlefieldAndReturn(player1, new EternalSkylord());
         gd.playerBattlefields.get(player1.getId()).remove(army);
 
@@ -140,7 +141,7 @@ class EternalSkylordTest extends BaseCardTest {
     void usesArmyThatAppearsBeforeTriggerResolves() {
         harness.enterBattlefieldAndReturn(player1, new EternalSkylord());
         Permanent army = harness.addToBattlefieldAndReturn(player1, new LazotepReaver());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         harness.passBothPriorities();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -39,12 +40,12 @@ class InvadeTheCityTest extends BaseCardTest {
     void amassesOnAnExistingArmyAndMakesItZombie() {
         harness.setGraveyard(player1, List.of(new Shock(), new Divination(), new GrizzlyBears()));
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castInvadeTheCity();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
@@ -69,12 +70,12 @@ class InvadeTheCityTest extends BaseCardTest {
     void zeroAmassStillMakesAnExistingArmyZombie() {
         harness.setGraveyard(player1, List.of());
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castInvadeTheCity();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(army);
     }
 
@@ -96,7 +97,7 @@ class InvadeTheCityTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new InvadeTheCity()));
         harness.setGraveyard(player2, List.of(new InvadeTheCity(), new InvadeTheCity()));
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         castInvadeTheCity();
 
@@ -104,7 +105,7 @@ class InvadeTheCityTest extends BaseCardTest {
                 .satisfies(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                         .isEqualTo(1));
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -112,16 +113,16 @@ class InvadeTheCityTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new InvadeTheCity()));
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castInvadeTheCity();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, second);
     }
 
@@ -130,8 +131,8 @@ class InvadeTheCityTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new InvadeTheCity()));
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castInvadeTheCity();
 

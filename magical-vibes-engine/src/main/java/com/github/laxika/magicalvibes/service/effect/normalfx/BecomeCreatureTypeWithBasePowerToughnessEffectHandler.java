@@ -43,10 +43,6 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             return;
         }
 
-        if (e.replacesGrantedSubtypes()) {
-            source.getGrantedSubtypes().clear();
-        }
-
         if (e.power() != null) {
             source.setBasePowerOverriddenPermanently(true);
             source.setPermanentBasePowerOverride(e.power());
@@ -79,9 +75,6 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT.equals(floating.duration())
                                 && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect
                                 && source.getId().equals(floating.affectedPermanentId()));
-            }
-            if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
-                source.getGrantedSubtypes().add(e.addedSubtype());
             }
             if (e.replacesGrantedSubtypes()) {
                 // "Becomes a [printed type] [added type]" sets the creature types outright, so it also

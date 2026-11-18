@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -85,7 +86,7 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(5);
         assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.TREEFOLK);
-        assertThat(forest.getGrantedColors()).contains(CardColor.GREEN);
+        assertThat(PermanentGrants.colorsOf(gd, forest)).contains(CardColor.GREEN);
 
         // It's still a land
         assertThat(gqs.getEffectiveCardTypes(gd, forest)).contains(CardType.LAND);
@@ -121,7 +122,7 @@ class AwakenerDruidTest extends BaseCardTest {
 
         assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.TREEFOLK);
-        assertThat(forest.getGrantedColors()).isEmpty();
+        assertThat(PermanentGrants.colorsOf(gd, forest)).isEmpty();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gd.sourceLinkedAnimations).isEmpty();
     }

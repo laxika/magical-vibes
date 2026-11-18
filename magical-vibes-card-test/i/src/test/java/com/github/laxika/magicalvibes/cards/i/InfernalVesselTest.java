@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.s.ScavengingOoze;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,7 +27,7 @@ class InfernalVesselTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Infernal Vessel");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.DEMON);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.DEMON);
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
     }
@@ -84,7 +85,7 @@ class InfernalVesselTest extends BaseCardTest {
     @DisplayName("A Vessel that is already a Demon does not trigger on death")
     void alreadyDemonDoesNotReturn() {
         Permanent vessel = harness.addToBattlefieldAndReturn(player1, new InfernalVessel());
-        vessel.getGrantedSubtypes().add(CardSubtype.DEMON);
+        PermanentGrants.subtype(gd, vessel, CardSubtype.DEMON);
 
         vessel.setMarkedDamage(vessel.getEffectiveToughness());
         harness.runStateBasedActions();

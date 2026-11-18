@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.cards.q.QuilledWolf;
 import com.github.laxika.magicalvibes.model.Card;
@@ -42,8 +43,8 @@ class EverAfterTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getId().equals(fox.getId()) || p.getCard().getId().equals(wolf.getId()))
                 .hasSize(2)
                 .allSatisfy(permanent -> {
-                    assertThat(permanent.getGrantedColors()).contains(CardColor.BLACK);
-                    assertThat(permanent.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+                    assertThat(PermanentGrants.colorsOf(gd, permanent)).contains(CardColor.BLACK);
+                    assertThat(PermanentGrants.subtypesOf(gd, permanent)).contains(CardSubtype.ZOMBIE);
                 });
     }
 
@@ -64,8 +65,8 @@ class EverAfterTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getId().equals(fox.getId()))
                 .singleElement()
                 .satisfies(permanent -> {
-                    assertThat(permanent.getGrantedColors()).contains(CardColor.BLACK);
-                    assertThat(permanent.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+                    assertThat(PermanentGrants.colorsOf(gd, permanent)).contains(CardColor.BLACK);
+                    assertThat(PermanentGrants.subtypesOf(gd, permanent)).contains(CardSubtype.ZOMBIE);
                 });
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(everAfter);
         assertThat(gd.playerDecks.get(player1.getId())).endsWith(everAfter);
@@ -145,7 +146,7 @@ class EverAfterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {
             assertThat(permanent.getCard()).isSameAs(wolf);
             assertThat(gqs.getEffectiveColors(gd, permanent)).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLACK);
-            assertThat(permanent.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+            assertThat(PermanentGrants.subtypesOf(gd, permanent)).contains(CardSubtype.ZOMBIE);
             assertThat(gqs.hasEffectiveSubtype(gd, permanent, CardSubtype.WOLF)).isTrue();
             assertThat(gqs.hasEffectiveSubtype(gd, permanent, CardSubtype.ZOMBIE)).isTrue();
             assertThat(permanent.isTapped()).isFalse();

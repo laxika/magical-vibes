@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -95,7 +96,7 @@ class CleansingWildfireTest extends BaseCardTest {
     @Test
     void survivingIndestructibleLandStillAllowsSearchAndDraw() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        target.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setLibrary(player2, List.of(new Island()));
         harness.setLibrary(player1, List.of(new Island()));
         castWildfire(target);

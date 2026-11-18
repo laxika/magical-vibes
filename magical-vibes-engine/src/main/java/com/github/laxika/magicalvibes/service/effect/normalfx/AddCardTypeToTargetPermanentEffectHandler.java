@@ -38,9 +38,6 @@ public class AddCardTypeToTargetPermanentEffectHandler implements NormalEffectHa
             return;
         }
 
-        if (e.persistent()) {
-            target.getPersistentGrantedCardTypes().add(e.cardType());
-        }
         // Timestamped layer-4 grant (CR 613.7), so an earlier type-setting effect doesn't hide it.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),

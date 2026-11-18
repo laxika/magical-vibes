@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 
 
@@ -1162,9 +1163,9 @@ class GameQueryServiceTest {
         @DisplayName("returns true for permanent with granted artifact type")
         void returnsTrueForGrantedType() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.getPersistentGrantedCardTypes().add(CardType.ARTIFACT);
+            PermanentGrants.cardType(gd, perm, CardType.ARTIFACT);
 
-            assertThat(gqs.isArtifact(perm)).isTrue();
+            assertThat(gqs.isArtifact(gd, perm)).isTrue();
         }
     }
 

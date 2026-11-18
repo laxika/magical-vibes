@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.r.Recover;
 import com.github.laxika.magicalvibes.cards.c.CorpsejackMenace;
@@ -70,8 +71,8 @@ class GraveBetrayalTest extends BaseCardTest {
         advanceToEndStep();
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
-        assertThat(returned.getGrantedColors()).contains(CardColor.BLACK);
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.colorsOf(gd, returned)).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test

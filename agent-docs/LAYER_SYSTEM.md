@@ -151,7 +151,8 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
 1. Per query epoch, build one mutable **`CharacteristicState`**
    (`model/layer/CharacteristicState.java`) per permanent, seeded from the **post-copy card**
    (L1 applied to the card identity before the pass — clones already mutate
-   `Permanent.card`) plus the permanent's persistent one-shot grants and counters.
+   `Permanent.card`), its counters and its card's perpetual changes. The types, colours and indefinite
+   keywords effects give it are floating effects applied at their timestamps, never seeds.
 2. **L2 (control)** determines controller attribution for the rest of the pass.
    **Implemented (step 8), but OUTSIDE the per-query pass:** every control-changing effect is
    a floating `L2_CONTROL` effect; the controller of a permanent is DERIVED — the newest
@@ -464,6 +465,19 @@ the `Duration` the card states. Readers ask `GameData.hasFloatingEffectOnPlayer`
 `PreventionScope`. No `GameData` field, cleanup reset or `EndOfTurnStateField` holds such an effect, and the clock ends
 it (Runed Terror's per-player cleanup included). Several of one kind combine as the rule says: any of a set, the
 newest (maximum life, fixed land colour), the strictest (a spell limit), a sum (damage bonuses).
+
+**Indefinite grants.** "It's a black Zombie in addition to its other colors and types", "it gains haste" with no stated
+duration, "it becomes an artifact in addition to its other types", "it enters with haste" (CR 614.1c) and "target land
+becomes snow" are floating effects on the permanent with `Duration.PERMANENT` (CR 611.2a), stamped as they are made
+(CR 613.7b) and applied in their layer in timestamp order: `GrantSubtypeEffect`, `GrantColorEffect`, `GrantKeywordEffect`,
+`GrantCardTypeEffect` (all `GrantScope.TARGET`) and the resolving `SetTargetPermanentSupertypeEffect` itself. A site
+with no resolving entry at hand (a replacement as the permanent enters, a choice's continuation) uses
+`GameData.addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId, effect, permanentId, duration)`. The
+`Permanent` keeps none of them: an earlier "loses all abilities" (Humility) no longer removes a later grant, as it did
+while the grants were seeded before every effect. Perpetual
+changes are not effects: the pass seeds them from `GameData.perpetualKeywords`, `perpetualCardTypes`,
+`perpetualCardSubtypes` and `perpetualCreatureTypeReplacedCardIds` by the permanent's own card, as part of its
+characteristics. Tests give and read these grants through `testutil.PermanentGrants`.
 
 An effect on a card outside the battlefield ("you may play that card this turn", "it gains flashback until end of
 turn", "it is revealed until your next turn") is on that card through `onCard` (`affectedCardId`); it ends as the card

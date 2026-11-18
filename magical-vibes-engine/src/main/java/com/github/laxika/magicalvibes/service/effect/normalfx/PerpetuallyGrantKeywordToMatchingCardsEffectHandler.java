@@ -51,7 +51,6 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
                 continue;
             }
             restoreOrStackPerpetualKeywords(gameData, permanent, grantableKeywords);
-            permanent.getPersistentGrantedKeywords().addAll(grantableKeywords);
             addPerpetualKeywords(gameData, permanent.getOriginalCard().getId(), grantableKeywords);
             addPerpetualTriggeredAbility(gameData, permanent.getOriginalCard().getId(), perpetual);
             addPersistentTriggeredAbility(permanent, perpetual);
@@ -97,7 +96,8 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
         Set<Keyword> removed = gameData.perpetualCardRemovedKeywords.get(cardId);
         for (Keyword keyword : keywords) {
             boolean lost = removed != null && removed.remove(keyword);
-            if (!lost && permanent.getPersistentGrantedKeywords().contains(keyword)) {
+            if (!lost && gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())
+                    .contains(keyword)) {
                 gameData.perpetualCardExtraKeywordInstances
                         .computeIfAbsent(cardId, ignored -> new java.util.concurrent.ConcurrentHashMap<>())
                         .merge(keyword, 1, Integer::sum);

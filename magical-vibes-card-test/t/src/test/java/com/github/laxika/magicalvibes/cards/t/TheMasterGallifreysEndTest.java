@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AdricMathematicalGenius;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -112,7 +113,7 @@ class TheMasterGallifreysEndTest extends BaseCardTest {
     @Test
     void masterTriggersForItsOwnDeathWhenItIsAnArtifactCreature() {
         Permanent master = harness.addToBattlefieldAndReturn(player1, new TheMasterGallifreysEnd());
-        master.getPersistentGrantedCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.cardType(gd, master, CardType.ARTIFACT);
         master.setMarkedDamage(3);
         harness.runStateBasedActions();
         resolveAllTriggers();

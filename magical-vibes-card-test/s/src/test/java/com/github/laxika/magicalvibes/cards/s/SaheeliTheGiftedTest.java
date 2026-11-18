@@ -75,7 +75,7 @@ class SaheeliTheGiftedTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(copies).hasSize(1);
-        assertThat(copies.getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, copies.getFirst(), Keyword.HASTE)).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(copies.getFirst().getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
@@ -110,7 +110,7 @@ class SaheeliTheGiftedTest extends BaseCardTest {
         assertThat(tokenCopies("Worn Powerstone")).hasSize(2);
         assertThat(tokenCopies("Ornithopter")).hasSize(2);
         assertThat(findPermanents(player1, "Soldier")).hasSize(2);
-        assertThat(tokenCopies("Ornithopter")).allMatch(copy -> copy.hasKeyword(Keyword.HASTE));
+        assertThat(tokenCopies("Ornithopter")).allMatch(copy -> gqs.hasKeyword(gd, copy, Keyword.HASTE));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.p.PollenbrightDruid;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -39,7 +40,7 @@ class AvenEternalTest extends BaseCardTest {
     @DisplayName("ETB amasses Zombies 1 on an existing Army and makes it a Zombie")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castAvenEternal();
 
@@ -47,7 +48,7 @@ class AvenEternalTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -55,17 +56,17 @@ class AvenEternalTest extends BaseCardTest {
     void choosesOneArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castAvenEternal();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gqs.effectiveCreatureSubtypes(gd, second))
                 .contains(CardSubtype.ELF, CardSubtype.DRUID, CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
@@ -75,12 +76,12 @@ class AvenEternalTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creating your own Army")
     void ignoresOpponentsArmy() {
         Permanent opponentArmy = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
-        opponentArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opponentArmy, CardSubtype.ARMY);
 
         castAvenEternal();
 
         assertThat(opponentArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opponentArmy)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement()
@@ -116,7 +117,7 @@ class AvenEternalTest extends BaseCardTest {
     @DisplayName("Amass checks for an Army when the trigger resolves")
     void createsArmyWhenPreviousArmyLeavesBeforeResolution() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.castFromHand(player1, new AvenEternal(), "{2}{U}");
         harness.passBothPriorities();
 

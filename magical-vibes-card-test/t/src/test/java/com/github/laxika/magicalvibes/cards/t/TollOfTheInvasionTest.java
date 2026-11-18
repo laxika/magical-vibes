@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CloudfinRaptor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -49,7 +50,7 @@ class TollOfTheInvasionTest extends BaseCardTest {
     @DisplayName("Amasses on an existing Army")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.setHand(player2, List.of(new Peek()));
         castTollOfTheInvasion();
 
@@ -59,7 +60,7 @@ class TollOfTheInvasionTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -98,16 +99,16 @@ class TollOfTheInvasionTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         harness.setHand(player2, List.of());
         castTollOfTheInvasion();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE, CardSubtype.ARMY);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ZOMBIE, CardSubtype.ARMY);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }

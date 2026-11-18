@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -118,7 +119,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         // Choose 5 vampires to tap (including Captivating Vampire itself)
         List<Permanent> vampires = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.VAMPIRE)
-                        || p.getGrantedSubtypes().contains(CardSubtype.VAMPIRE))
+                        || PermanentGrants.subtypesOf(gd, p).contains(CardSubtype.VAMPIRE))
                 .filter(p -> !p.isTapped())
                 .limit(5)
                 .toList();
@@ -135,7 +136,7 @@ class CaptivatingVampireTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(target.getId()));
 
         // Creature should be a Vampire now
-        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.VAMPIRE);
 
         // Control is permanent
         assertThat(gd.newestControlEffectFor(target.getId()).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT);

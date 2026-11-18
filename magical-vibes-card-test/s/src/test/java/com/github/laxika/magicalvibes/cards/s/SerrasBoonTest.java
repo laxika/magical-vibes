@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
 import com.github.laxika.magicalvibes.cards.g.GaeasAnthem;
 import com.github.laxika.magicalvibes.cards.n.NeedlepeakSpider;
@@ -120,12 +122,12 @@ class SerrasBoonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
-        creature.getGrantedColors().add(CardColor.WHITE);
+        FloatingContinuousEffect whiteGrant = PermanentGrants.color(gd, creature, CardColor.WHITE);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
-        creature.getGrantedColors().clear();
+        gd.endFloatingEffect(whiteGrant);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);

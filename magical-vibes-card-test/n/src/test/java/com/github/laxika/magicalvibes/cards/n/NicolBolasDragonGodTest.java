@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
 import com.github.laxika.magicalvibes.cards.f.FblthpTheLost;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -132,7 +133,7 @@ class NicolBolasDragonGodTest extends BaseCardTest {
     void minusEightSpareOpponentWithNonlegendaryPlaneswalker() {
         Permanent nicol = addReadyNicol(player1, 9);
         Permanent planeswalker = addReadyPlaneswalker(player2, new UginTheIneffable(), 3);
-        planeswalker.getPersistentRemovedSupertypes().add(CardSupertype.LEGENDARY);
+        PermanentGrants.supertype(gd, planeswalker, CardSupertype.LEGENDARY, false);
 
         harness.activateAbility(player1, battlefieldIndex(player1, nicol), 2, null, null);
         harness.passBothPriorities();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -143,7 +144,7 @@ class DoomBladeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, bears.getId());
 
-        harness.inMutationScope(() -> bears.getGrantedColors().add(CardColor.BLACK));
+        harness.inMutationScope(() -> PermanentGrants.color(gd, bears, CardColor.BLACK));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Runeclaw Bear");

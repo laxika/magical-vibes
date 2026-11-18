@@ -677,9 +677,12 @@ public class AnimationSupport {
                                    UUID controllerId) {
         addAnimationFloatingEffects(gameData, new AnimationSource(sourceName, sourcePermanentId, controllerId),
                 target, effect, power, toughness, Duration.PERMANENT);
-        // The animation has no duration, so the granted card types must survive turn cleanup too
-        // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").
-        target.getPersistentGrantedCardTypes().addAll(effect.grantedCardTypes());
+        if (!effect.becomesCreature()) {
+            for (CardType cardType : effect.grantedCardTypes()) {
+                addAnimationCardTypeFloatingEffect(gameData, new AnimationSource(sourceName, sourcePermanentId,
+                        controllerId), target, cardType, Duration.PERMANENT);
+            }
+        }
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
@@ -754,7 +757,10 @@ public class AnimationSupport {
         }
 
         if (effect.animatedColor() != null) {
-            target.getGrantedColors().add(effect.animatedColor());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantColorEffect(effect.animatedColor(), GrantScope.TARGET), target.getId(), null, null,
+                    Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
 
         gameData.sourceLinkedAnimations.put(target.getId(), sourcePermanentId);

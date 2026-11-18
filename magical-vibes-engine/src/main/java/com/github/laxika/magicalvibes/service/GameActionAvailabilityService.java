@@ -293,7 +293,6 @@ public class GameActionAvailabilityService {
                 boolean myrCtx = perm.getCard().getSubtypes().contains(CardSubtype.MYR);
                 boolean powerstoneCtx = pool.getPowerstoneOnlyColorless() > 0;
                 Set<CardSubtype> soaCtx = new HashSet<>(perm.getCard().getSubtypes());
-                soaCtx.addAll(perm.getGrantedSubtypes());
                 soaCtx.addAll(gameQueryService.getEffectiveSubtypes(gameData, perm));
                 Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, perm)
                         ? soaCtx : Set.of();

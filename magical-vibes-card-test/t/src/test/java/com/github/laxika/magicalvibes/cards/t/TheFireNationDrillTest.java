@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZetalpaPrimalDawn;
@@ -158,8 +159,8 @@ class TheFireNationDrillTest extends BaseCardTest {
     @DisplayName("The Drill also loses keywords if an opponent controls it when its ability resolves")
     void sourceChangingControlIsIncludedInKeywordRemoval() {
         Permanent drill = harness.addToBattlefieldAndReturn(player1, new TheFireNationDrill());
-        drill.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
-        drill.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, drill, Keyword.HEXPROOF);
+        PermanentGrants.keyword(gd, drill, Keyword.INDESTRUCTIBLE);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, null);
 

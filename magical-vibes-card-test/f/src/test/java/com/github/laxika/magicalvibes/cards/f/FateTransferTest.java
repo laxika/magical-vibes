@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrabappleCohort;
 import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -126,7 +127,7 @@ class FateTransferTest extends BaseCardTest {
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         prepareSpell();
         harness.castInstant(player1, 0, List.of(source.getId(), destination.getId()));
-        (sourceGainsShroud ? source : destination).getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keyword(gd, (sourceGainsShroud ? source : destination), Keyword.SHROUD);
 
         harness.passBothPriorities();
 

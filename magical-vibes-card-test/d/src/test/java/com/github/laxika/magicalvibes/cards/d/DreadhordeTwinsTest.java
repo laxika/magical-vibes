@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.l.LazotepReaver;
 import com.github.laxika.magicalvibes.cards.p.PouncingLynx;
@@ -39,7 +40,7 @@ class DreadhordeTwinsTest extends BaseCardTest {
     @DisplayName("Enters and amasses Zombies 2 on an existing Army")
     void entersAndAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new PouncingLynx());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.castFromHand(player1, new DreadhordeTwins(), "{3}{R}");
         resolveAllTriggers();
         Permanent twins = findPermanent(player1, "Dreadhorde Twins");
@@ -48,7 +49,7 @@ class DreadhordeTwinsTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.hasKeyword(gd, army, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, twins, Keyword.TRAMPLE)).isFalse();
     }
@@ -57,8 +58,8 @@ class DreadhordeTwinsTest extends BaseCardTest {
     void choosesOnlyOneOfMultipleArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PouncingLynx());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PouncingLynx());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         harness.castFromHand(player1, new DreadhordeTwins(), "{3}{R}");
         resolveAllTriggers();
@@ -67,8 +68,8 @@ class DreadhordeTwinsTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ZOMBIE);
         assertThat(countPermanents(player1, "Zombie Army")).isZero();
     }
 

@@ -137,7 +137,7 @@ class GoryosVengeanceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
-        assertThat(findPermanent(player1, "Kira, Great Glass-Spinner").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Kira, Great Glass-Spinner"), Keyword.HASTE)).isTrue();
 
         harness.passUntil(player2, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
@@ -160,7 +160,7 @@ class GoryosVengeanceTest extends BaseCardTest {
         harness.castWithSplice(player1, 0, legend.getId(), List.of(1));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Kira, Great Glass-Spinner").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Kira, Great Glass-Spinner"), Keyword.HASTE)).isTrue();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");

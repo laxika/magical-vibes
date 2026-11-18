@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StepThrough;
@@ -58,7 +59,7 @@ class LazotepChancellorTest extends BaseCardTest {
     @Test
     void payingForDiscardTriggerAddsCountersToExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.addToBattlefield(player1, new LazotepChancellor());
         harness.setHand(player1, List.of(new Censor()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -72,7 +73,7 @@ class LazotepChancellorTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
     }
 
     @Test

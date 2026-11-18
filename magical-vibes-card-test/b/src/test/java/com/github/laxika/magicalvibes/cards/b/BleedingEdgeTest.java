@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -42,7 +43,7 @@ class BleedingEdgeTest extends BaseCardTest {
     @Test
     void optionalTargetCanBeDeclinedAndAmassesOnAnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castBleedingEdge(List.of());
 
@@ -50,7 +51,7 @@ class BleedingEdgeTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -105,17 +106,17 @@ class BleedingEdgeTest extends BaseCardTest {
     void choosesOnlyOneOfMultipleExistingArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castBleedingEdge(List.of());
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         assertThat(gd.stack).isEmpty();
     }
@@ -123,7 +124,7 @@ class BleedingEdgeTest extends BaseCardTest {
     @Test
     void amassCanSaveTheTargetedArmyBeforeStateBasedActions() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castBleedingEdge(List.of(army.getId()));
 
@@ -136,7 +137,7 @@ class BleedingEdgeTest extends BaseCardTest {
     @Test
     void opponentsArmyDoesNotReceiveTheAmassCounters() {
         Permanent opponentsArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentsArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opponentsArmy, CardSubtype.ARMY);
 
         castBleedingEdge(List.of());
 

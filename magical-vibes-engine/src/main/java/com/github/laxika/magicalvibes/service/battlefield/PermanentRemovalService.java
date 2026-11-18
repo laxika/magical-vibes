@@ -50,6 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingWithLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
@@ -3333,8 +3335,6 @@ public class PermanentRemovalService {
                         entry.setValue(remainingAnimation.sourcePermanentId());
                         continue;
                     }
-                    animatedTarget.getGrantedColors().clear();
-
                     gameLogService.append(gameData,
                             GameLog.cardThen(animatedTarget.getCard(), " is no longer a creature."));
                     log.info("Game {} - {} reverts to non-creature (source {} left battlefield)",
@@ -3687,7 +3687,9 @@ public class PermanentRemovalService {
             }
             applyPendingReturnCounters(gameData, ownerId, pending, permanent, primary);
             if (pending.grantHaste()) {
-                permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(card.getName(), permanent.getId(), ownerId,
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(),
+                        Duration.PERMANENT);
             }
             if (primary) {
                 primaryPermanent = permanent;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BrassTalonChimera;
 import com.github.laxika.magicalvibes.cards.d.DwarvenVigilantes;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -127,7 +128,7 @@ class LeadBellyChimeraTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lead-Belly Chimera");
         harness.assertInGraveyard(player1, "Brass-Talon Chimera");
         assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
-        assertThat(target.getPersistentGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test

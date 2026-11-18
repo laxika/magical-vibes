@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.c.Colossapede;
 import com.github.laxika.magicalvibes.cards.h.HazeOfPollen;
@@ -70,8 +71,8 @@ class LilianaDeathsMajestyTest extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(bears.getId()))
                 .findFirst().orElseThrow();
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
-        assertThat(returned.getGrantedColors()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.colorsOf(gd, returned)).contains(CardColor.BLACK);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(bears.getId()));
     }

@@ -8,10 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
  * directions: "target snow land is no longer snow" is {@code (SNOW, false)} and "target nonsnow
  * basic land becomes snow" is {@code (SNOW, true)}.
  *
- * <p>The change is recorded on the permanent itself ({@code persistentGrantedSupertypes} /
- * {@code persistentRemovedSupertypes}) and read back through
- * {@code GameQueryService.hasEffectiveSupertype}. The two directions are mutually exclusive, so a
- * later activation simply overrides an earlier one.
+ * <p>The record is also its own payload: the resolution puts it on the target as a floating effect with no end
+ * (CR 611.2a), applied in layer 4 at its timestamp and read back through
+ * {@code GameQueryService.hasEffectiveSupertype}, where the newest change on the permanent decides.
  *
  * <p>The spec is left as an unnarrowed benign permanent target — which permanents are legal
  * ("snow land", "nonsnow basic land") differs per ability and is expressed with the

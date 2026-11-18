@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HinterlandHermit;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -41,7 +42,7 @@ class ImmerwolfTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         Permanent wolf = findPermanent(player1, "Grizzly Bears");
-        wolf.getGrantedSubtypes().add(CardSubtype.WOLF);
+        PermanentGrants.subtype(gd, wolf, CardSubtype.WOLF);
 
         // 2/2 base + 1/1 from Immerwolf
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
@@ -160,7 +161,7 @@ class ImmerwolfTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Immerwolf());
         harness.addToBattlefield(player1, new YoungWolf());
         Permanent wolf = findPermanent(player1, "Young Wolf");
-        wolf.getGrantedSubtypes().add(CardSubtype.WEREWOLF);
+        PermanentGrants.subtype(gd, wolf, CardSubtype.WEREWOLF);
 
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);

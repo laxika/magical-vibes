@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IgneousGolem;
 import com.github.laxika.magicalvibes.cards.m.MuckRats;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -143,7 +144,7 @@ class HandOfDeathTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is black in addition to another color")
     void cannotTargetMulticoloredBlackCreature() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new WildGriffin());
-        griffin.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, griffin, CardColor.BLACK);
         harness.setHand(player1, List.of(new HandOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -160,7 +161,7 @@ class HandOfDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castSorcery(player1, 0, griffin.getId());
-        griffin.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, griffin, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wild Griffin");

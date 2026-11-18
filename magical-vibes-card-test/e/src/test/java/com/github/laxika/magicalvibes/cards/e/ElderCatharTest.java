@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -61,7 +62,7 @@ class ElderCatharTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handlePermanentChosen(player1, target.getId());
 
-            target.getGrantedSubtypes().add(CardSubtype.HUMAN);
+            PermanentGrants.subtype(gd, target, CardSubtype.HUMAN);
             harness.passBothPriorities();
 
             assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

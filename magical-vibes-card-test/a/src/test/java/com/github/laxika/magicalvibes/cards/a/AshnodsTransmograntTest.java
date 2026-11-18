@@ -56,7 +56,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
     }
 
@@ -71,7 +71,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

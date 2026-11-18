@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -58,7 +59,7 @@ class LazotepPlatingTest extends BaseCardTest {
     @DisplayName("Amasses on an existing Army and protection wears off at end of turn")
     void amassesOnExistingArmyAndProtectionExpires() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castLazotepPlating();
 
@@ -66,7 +67,7 @@ class LazotepPlatingTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
         assertThat(gqs.hasKeyword(gd, army, Keyword.HEXPROOF)).isTrue();
 
@@ -83,15 +84,15 @@ class LazotepPlatingTest extends BaseCardTest {
     void choosesOneOfMultipleArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castLazotepPlating();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, second))
                 .contains(CardSubtype.ELF, CardSubtype.DRUID, CardSubtype.ARMY, CardSubtype.ZOMBIE);
@@ -106,8 +107,8 @@ class LazotepPlatingTest extends BaseCardTest {
     void cannotDeclineArmyChoice() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castLazotepPlating();
 
@@ -149,13 +150,13 @@ class LazotepPlatingTest extends BaseCardTest {
     @DisplayName("Opponent Armies are ignored and permanents entering later are not protected")
     void onlyProtectsOwnPermanentsPresentAtResolution() {
         Permanent opponentArmy = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
-        opponentArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opponentArmy, CardSubtype.ARMY);
 
         castLazotepPlating();
         Permanent laterPermanent = harness.addToBattlefieldAndReturn(player1, new PollenbrightDruid());
 
         assertThat(opponentArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opponentArmy)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(gqs.hasKeyword(gd, opponentArmy, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.playerHasHexproof(gd, player2.getId())).isFalse();
         assertThat(gqs.hasKeyword(gd, laterPermanent, Keyword.HEXPROOF)).isFalse();

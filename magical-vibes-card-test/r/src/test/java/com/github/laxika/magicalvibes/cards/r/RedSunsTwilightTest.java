@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlueSunsTwilight;
 import com.github.laxika.magicalvibes.cards.m.MyrConvert;
 import com.github.laxika.magicalvibes.model.Card;
@@ -88,7 +89,7 @@ class RedSunsTwilightTest extends BaseCardTest {
     @DisplayName("Indestructible artifacts do not produce copies")
     void copiesOnlyArtifactsActuallyDestroyed() {
         Permanent protectedArtifact = harness.addToBattlefieldAndReturn(player2, new MyrConvert());
-        protectedArtifact.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, protectedArtifact, Keyword.INDESTRUCTIBLE);
         Permanent ordinaryArtifact = harness.addToBattlefieldAndReturn(player2, new MyrConvert());
 
         castAndResolve(5, List.of(protectedArtifact.getId(), ordinaryArtifact.getId()));
@@ -142,7 +143,7 @@ class RedSunsTwilightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RedSunsTwilight()));
         harness.addMana(player1, ManaColor.RED, 7);
         harness.castSorcery(player1, 0, 5, List.of(protectedArtifact.getId(), ordinaryArtifact.getId()));
-        protectedArtifact.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keyword(gd, protectedArtifact, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 

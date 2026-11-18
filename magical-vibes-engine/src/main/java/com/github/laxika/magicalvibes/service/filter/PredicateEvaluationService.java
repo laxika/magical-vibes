@@ -1504,11 +1504,9 @@ public class PredicateEvaluationService {
                 if (gameData != null) {
                     yield gameQueryService.computeStaticBonus(gameData, permanent).grantedSubtypes()
                             .contains(hasSubtypePredicate.subtype())
-                            || permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
-                            || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype());
+                            || permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype());
                 }
                 yield permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
-                        || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype())
                         || (creatureSubtype && permanent.hasKeyword(Keyword.CHANGELING));
             }
             case PermanentHasAnySubtypePredicate hasAnySubtypePredicate -> {
@@ -1523,9 +1521,8 @@ public class PredicateEvaluationService {
                             .anyMatch(subtype -> gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype));
                 }
                 Set<CardSubtype> wanted = hasAnySubtypePredicate.subtypes();
-                boolean hasSubtype = (!permanent.isFaceDown()
-                        && permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains))
-                        || permanent.getGrantedSubtypes().stream().anyMatch(wanted::contains);
+                boolean hasSubtype = !permanent.isFaceDown()
+                        && permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains);
                 if (!hasSubtype && gameData != null && !GameQueryService.isStaticEvaluationActive()) {
                     hasSubtype = gameQueryService.effectiveCreatureSubtypes(gameData, permanent).stream()
                             .anyMatch(wanted::contains);
@@ -1662,7 +1659,7 @@ public class PredicateEvaluationService {
                         : gameQueryService.isArtifact(gameData, permanent);
                 yield artifact
                         || gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.LEGENDARY)
-                        || hasSagaSubtype(permanent);
+                        || hasSagaSubtype(gameData, permanent);
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
@@ -2542,10 +2539,7 @@ public class PredicateEvaluationService {
                 if (gameData != null) {
                     yield gameQueryService.getEffectiveColors(gameData, permanent).size() == 2;
                 }
-                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-                combined.addAll(permanent.getEffectiveColors());
-                combined.addAll(permanent.getGrantedColors());
-                yield combined.size() == 2;
+                yield Set.copyOf(permanent.getEffectiveColors()).size() == 2;
             }
             case PermanentAnyOfPredicate anyOfPredicate -> {
                 for (PermanentPredicate nested : anyOfPredicate.predicates()) {
@@ -3540,7 +3534,6 @@ public class PredicateEvaluationService {
             }
             cardTypes.addAll(permanent.getCard().getAdditionalTypes());
         }
-        cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
         return cardTypes;
     }
 
@@ -3877,7 +3870,8 @@ public class PredicateEvaluationService {
             case PermanentIsModifiedPredicate ignored ->
                     isModified(context == null ? null : context.gameData(), permanent, context);
             case PermanentIsFaceDownPredicate ignored -> matchesStaticLeaf(permanent, predicate);
-            case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsHistoricPredicate ignored -> matchesPermanentPredicate(
+                    LayerSystemService.activeStateFor(permanent.getId()), permanent, predicate, context);
             case PermanentIsKindredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -4418,10 +4412,7 @@ public class PredicateEvaluationService {
         if (layered != null) {
             return layered.getColors();
         }
-        Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-        combined.addAll(permanent.getEffectiveColors());
-        combined.addAll(permanent.getGrantedColors());
-        return combined;
+        return Set.copyOf(permanent.getEffectiveColors());
     }
 
     /**
@@ -4458,7 +4449,6 @@ public class PredicateEvaluationService {
         }
         Set<CardSubtype> result = new HashSet<>();
         result.addAll(permanent.getCard().getSubtypes());
-        result.addAll(permanent.getGrantedSubtypes());
         result.removeIf(subtype -> !gameQueryService.isCreatureSubtype(subtype));
         return result;
     }
@@ -4837,10 +4827,7 @@ public class PredicateEvaluationService {
         if (gameData != null) {
             return gameQueryService.getEffectiveColors(gameData, permanent);
         }
-        Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-        combined.addAll(permanent.getEffectiveColors());
-        combined.addAll(permanent.getGrantedColors());
-        return combined;
+        return Set.copyOf(permanent.getEffectiveColors());
     }
 
     private static boolean hasOutOfBandManaAbility(Permanent permanent) {
@@ -5103,9 +5090,15 @@ public class PredicateEvaluationService {
      * Saga is not a creature type, so unlike {@link PermanentHasSubtypePredicate} there is no
      * Changeling or "loses all creature types" interaction to honor here.
      */
-    private static boolean hasSagaSubtype(Permanent permanent) {
-        return permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                || permanent.getGrantedSubtypes().contains(CardSubtype.SAGA);
+    private boolean hasSagaSubtype(GameData gameData, Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.hasSubtype(CardSubtype.SAGA);
+        }
+        if (gameData != null && !GameQueryService.isStaticEvaluationActive()) {
+            return gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.SAGA);
+        }
+        return permanent.getCard().getSubtypes().contains(CardSubtype.SAGA);
     }
 
     /** An attacking creature is blocked if any permanent references its id as a blocking target. */

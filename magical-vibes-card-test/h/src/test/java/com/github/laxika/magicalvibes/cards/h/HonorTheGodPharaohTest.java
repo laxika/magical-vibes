@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -37,7 +38,7 @@ class HonorTheGodPharaohTest extends BaseCardTest {
     @Test
     void discardsDrawsTwoAndAmassesOnAnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new HonorTheGodPharaoh(), new PrimordialWurm()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -47,7 +48,7 @@ class HonorTheGodPharaohTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
@@ -86,7 +87,7 @@ class HonorTheGodPharaohTest extends BaseCardTest {
     @Test
     void opposingArmyDoesNotPreventCreatingOwnArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new HonorTheGodPharaoh(), new HonorTheGodPharaoh()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -97,15 +98,15 @@ class HonorTheGodPharaohTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
                 .satisfies(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.ZOMBIE);
     }
 
     @Test
     void choosesOnlyOneOfMultipleArmiesAndGrantsItZombie() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new HonorTheGodPharaoh(), new HonorTheGodPharaoh()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -115,9 +116,9 @@ class HonorTheGodPharaohTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
@@ -126,8 +127,8 @@ class HonorTheGodPharaohTest extends BaseCardTest {
     void cannotDeclineChoosingAnArmyWhenMultipleArmiesExist() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new HonorTheGodPharaoh(), new HonorTheGodPharaoh()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorosMastiff;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RakdosShredFreak;
@@ -55,10 +57,10 @@ class MazeGliderTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, mastiff, Keyword.FLYING)).isFalse();
 
-        harness.inMutationScope(() -> mastiff.getGrantedColors().add(CardColor.BLUE));
+        FloatingContinuousEffect blueGrant = PermanentGrants.color(gd, mastiff, CardColor.BLUE);
         assertThat(gqs.hasKeyword(gd, mastiff, Keyword.FLYING)).isTrue();
 
-        harness.inMutationScope(() -> mastiff.getGrantedColors().clear());
+        harness.inMutationScope(() -> gd.endFloatingEffect(blueGrant));
         assertThat(gqs.hasKeyword(gd, mastiff, Keyword.FLYING)).isFalse();
     }
 
@@ -67,11 +69,11 @@ class MazeGliderTest extends BaseCardTest {
     void grantsFlyingToCreatureEnteringLater() {
         addCreatureReady(player1, new MazeGlider());
         Permanent mastiff = addCreatureReady(player1, new BorosMastiff());
-        harness.inMutationScope(() -> mastiff.getGrantedColors().add(CardColor.BLUE));
+        harness.inMutationScope(() -> PermanentGrants.color(gd, mastiff, CardColor.BLUE));
         assertThat(gqs.hasKeyword(gd, mastiff, Keyword.FLYING)).isTrue();
 
         Permanent newcomer = addCreatureReady(player1, new BorosMastiff());
-        harness.inMutationScope(() -> newcomer.getGrantedColors().add(CardColor.GREEN));
+        harness.inMutationScope(() -> PermanentGrants.color(gd, newcomer, CardColor.GREEN));
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.FLYING)).isTrue();
     }
 
@@ -82,8 +84,8 @@ class MazeGliderTest extends BaseCardTest {
         Permanent own = addCreatureReady(player1, new BorosMastiff());
         Permanent opposing = addCreatureReady(player2, new BorosMastiff());
         harness.inMutationScope(() -> {
-            own.getGrantedColors().add(CardColor.BLUE);
-            opposing.getGrantedColors().add(CardColor.BLUE);
+            PermanentGrants.color(gd, own, CardColor.BLUE);
+            PermanentGrants.color(gd, opposing, CardColor.BLUE);
         });
 
         assertThat(gqs.hasKeyword(gd, own, Keyword.FLYING)).isTrue();

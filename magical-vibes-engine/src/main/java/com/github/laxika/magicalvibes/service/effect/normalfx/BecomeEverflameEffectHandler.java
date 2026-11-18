@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEverflameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -53,9 +54,8 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setPersistentName(EVERFLAME_NAME);
-        if (!source.getGrantedSubtypes().contains(CardSubtype.EQUIPMENT)) {
-            source.getGrantedSubtypes().add(CardSubtype.EQUIPMENT);
-        }
+        gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.TARGET),
+                source.getId(), Duration.PERMANENT);
         source.setLosesAllAbilitiesPermanently(true);
 
         // "It loses all other card types": a layer-4 effect stamped now, so it overrides an earlier

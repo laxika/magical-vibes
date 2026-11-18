@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -140,7 +141,7 @@ class SkullportMerchantTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         Permanent merchant = harness.addToBattlefieldAndReturn(player1, new SkullportMerchant());
         grantCardTypeUntilEndOfTurn(merchant, CardType.ARTIFACT);
-        merchant.getGrantedSubtypes().add(CardSubtype.TREASURE);
+        PermanentGrants.subtype(gd, merchant, CardSubtype.TREASURE);
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

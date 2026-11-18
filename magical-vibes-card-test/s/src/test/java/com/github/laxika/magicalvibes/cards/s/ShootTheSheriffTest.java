@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredArmadillo;
 import com.github.laxika.magicalvibes.cards.d.DeadeyeDuelist;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -107,7 +108,7 @@ class ShootTheSheriffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstant(player1, 0, creature.getId());
-        creature.getGrantedSubtypes().add(CardSubtype.ROGUE);
+        PermanentGrants.subtype(gd, creature, CardSubtype.ROGUE);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

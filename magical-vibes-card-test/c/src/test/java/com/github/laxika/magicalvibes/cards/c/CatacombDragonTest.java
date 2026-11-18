@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SandGolem;
 import com.github.laxika.magicalvibes.cards.s.StalkingTiger;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
@@ -72,7 +73,7 @@ class CatacombDragonTest extends BaseCardTest {
     void dragonBlockerUnaffected() {
         addAttackingDragon();
         Permanent blocker = addFlyingBlocker(new StalkingTiger());
-        blocker.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        PermanentGrants.subtype(gd, blocker, CardSubtype.DRAGON);
 
         block();
 
@@ -111,7 +112,7 @@ class CatacombDragonTest extends BaseCardTest {
         addAttackingDragon();
         Permanent qualifyingBlocker = addFlyingBlocker(new ZhalfirinKnight());
         Permanent dragonBlocker = addFlyingBlocker(new StalkingTiger());
-        dragonBlocker.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        PermanentGrants.subtype(gd, dragonBlocker, CardSubtype.DRAGON);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -166,7 +167,7 @@ class CatacombDragonTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        blocker.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        PermanentGrants.subtype(gd, blocker, CardSubtype.DRAGON);
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);

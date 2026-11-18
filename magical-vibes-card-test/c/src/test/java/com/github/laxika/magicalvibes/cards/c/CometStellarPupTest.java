@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -111,7 +112,7 @@ class CometStellarPupTest extends BaseCardTest {
         setRoll(roll);
         addComet(5);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keyword(gd, creature, Keyword.HEXPROOF);
 
         beginActivation();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.b.BattleMenu;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -32,7 +33,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bear)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -40,7 +41,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
     void drawsDyingMutantsPowerDuringControllerTurn() {
         addCreatureReady(player1, new JenovaAncientCalamity());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.getGrantedSubtypes().add(CardSubtype.MUTANT);
+        PermanentGrants.subtype(gd, bear, CardSubtype.MUTANT);
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
@@ -59,7 +60,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
     void doesNotDrawDuringOpponentTurn() {
         addCreatureReady(player1, new JenovaAncientCalamity());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.getGrantedSubtypes().add(CardSubtype.MUTANT);
+        PermanentGrants.subtype(gd, bear, CardSubtype.MUTANT);
 
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
@@ -84,7 +85,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(bear.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bear)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -98,7 +99,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bear.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bear)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -122,7 +123,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
     @CardUsed({JenovaAncientCalamity.class, BattleMenu.class})
     void drawsForJenovasOwnDeathWhenItIsAMutant() {
         Permanent jenova = addCreatureReady(player1, new JenovaAncientCalamity());
-        jenova.getGrantedSubtypes().add(CardSubtype.MUTANT);
+        PermanentGrants.subtype(gd, jenova, CardSubtype.MUTANT);
         jenova.setPowerModifier(3);
         harness.setHand(player1, List.of(new BattleMenu()));
         harness.setLibrary(player1, List.of(new JenovaAncientCalamity(), new JenovaAncientCalamity(),
@@ -150,14 +151,14 @@ class JenovaAncientCalamityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bear.getGrantedSubtypes()).doesNotContain(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bear)).doesNotContain(CardSubtype.MUTANT);
     }
 
     @Test
     void doesNotDrawForOpponentMutantDeath() {
         addCreatureReady(player1, new JenovaAncientCalamity());
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
-        bear.getGrantedSubtypes().add(CardSubtype.MUTANT);
+        PermanentGrants.subtype(gd, bear, CardSubtype.MUTANT);
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.forceActivePlayer(player1);
@@ -175,7 +176,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
     void drawsUsingDyingMutantsModifiedPower() {
         addCreatureReady(player1, new JenovaAncientCalamity());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.getGrantedSubtypes().add(CardSubtype.MUTANT);
+        PermanentGrants.subtype(gd, bear, CardSubtype.MUTANT);
         bear.setPowerModifier(2);
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),

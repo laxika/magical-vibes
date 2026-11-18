@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -35,7 +36,7 @@ class SealockMonsterTest extends BaseCardTest {
 
         assertThat(sealockMonster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(sealockMonster.isMonstrous()).isTrue();
-        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.ISLAND);
+        assertThat(PermanentGrants.subtypesOf(gd, forest)).contains(CardSubtype.ISLAND);
         assertThat(harness.getGameQueryService().effectiveLandTypes(gd, forest))
                 .contains(CardSubtype.FOREST, CardSubtype.ISLAND);
     }

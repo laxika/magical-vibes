@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeeprootWarrior;
 import com.github.laxika.magicalvibes.cards.d.DiveDown;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -141,7 +142,7 @@ class WalkThePlankTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castSorcery(player1, 0, creature.getId());
 
-        creature.getGrantedSubtypes().add(CardSubtype.MERFOLK);
+        PermanentGrants.subtype(gd, creature, CardSubtype.MERFOLK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ancient Brontodon");

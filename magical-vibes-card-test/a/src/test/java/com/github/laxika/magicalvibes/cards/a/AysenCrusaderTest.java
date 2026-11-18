@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.cards.g.GoblinDeathraiders;
 import com.github.laxika.magicalvibes.cards.g.GuanYuSaintedWarrior;
@@ -84,7 +85,7 @@ class AysenCrusaderTest extends BaseCardTest {
     @Test
     void countsItselfOnceWhenItGainsBothRelevantTypes() {
         Permanent crusader = addCreatureReady(player1, new AysenCrusader());
-        crusader.getGrantedSubtypes().addAll(List.of(CardSubtype.SOLDIER, CardSubtype.WARRIOR));
+        PermanentGrants.subtype(gd, crusader, CardSubtype.SOLDIER); PermanentGrants.subtype(gd, crusader, CardSubtype.WARRIOR);
 
         assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(3);

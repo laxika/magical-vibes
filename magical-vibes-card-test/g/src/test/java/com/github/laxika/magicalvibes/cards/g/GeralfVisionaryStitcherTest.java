@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
 import com.github.laxika.magicalvibes.cards.r.RepositorySkaab;
 import com.github.laxika.magicalvibes.model.Card;
@@ -53,7 +54,7 @@ class GeralfVisionaryStitcherTest extends BaseCardTest {
     @Test
     void geralfHasFlyingWhenHeIsAlsoAZombie() {
         Permanent geralf = addCreatureReady(player1, new GeralfVisionaryStitcher());
-        geralf.getGrantedSubtypes().add(CardSubtype.ZOMBIE);
+        PermanentGrants.subtype(gd, geralf, CardSubtype.ZOMBIE);
 
         assertThat(gqs.hasKeyword(gd, geralf, Keyword.FLYING)).isTrue();
     }

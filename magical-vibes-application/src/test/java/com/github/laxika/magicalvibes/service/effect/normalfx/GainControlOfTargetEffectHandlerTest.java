@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -155,7 +156,7 @@ class GainControlOfTargetEffectHandlerTest {
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
                     effect, Duration.PERMANENT, null, "Captivating Vampire");
-            assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+            assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.VAMPIRE);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears becomes a Vampire in addition to its other types.")));
         }
 
@@ -164,8 +165,8 @@ class GainControlOfTargetEffectHandlerTest {
         void doesNotDuplicateGrantedSubtype() {
             Card card = createCard("Captivating Vampire");
             Permanent target = createCreature("Grizzly Bears");
-            target.getGrantedSubtypes().add(CardSubtype.VAMPIRE);
             gd.playerBattlefields.get(player2Id).add(target);
+            PermanentGrants.subtype(gd, target, CardSubtype.VAMPIRE);
 
             GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT, CardSubtype.VAMPIRE);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
@@ -174,7 +175,7 @@ class GainControlOfTargetEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            assertThat(target.getGrantedSubtypes().stream()
+            assertThat(PermanentGrants.subtypesOf(gd, target).stream()
                     .filter(s -> s == CardSubtype.VAMPIRE).count()).isEqualTo(1);
         }
 
@@ -269,8 +270,8 @@ class GainControlOfTargetEffectHandlerTest {
                     .thenReturn(true);
             handler.resolve(gd, entry, effect);
 
-            assertThat(target1.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
-            assertThat(target2.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+            assertThat(PermanentGrants.subtypesOf(gd, target1)).contains(CardSubtype.VAMPIRE);
+            assertThat(PermanentGrants.subtypesOf(gd, target2)).contains(CardSubtype.VAMPIRE);
             verify(gameLogService, times(2)).append(eq(gd), any(GameLogEntry.class));
         }
     }

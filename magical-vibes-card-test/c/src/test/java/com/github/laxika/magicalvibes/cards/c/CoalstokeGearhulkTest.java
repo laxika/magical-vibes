@@ -52,9 +52,9 @@ class CoalstokeGearhulkTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
-        assertThat(returned.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
     }
 
     @Test

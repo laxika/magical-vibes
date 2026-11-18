@@ -40,7 +40,7 @@ class EtherealEscortTest extends BaseCardTest {
         Permanent enteredBear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(bear.getId()))
                 .findFirst().orElseThrow();
-        assertThat(enteredBear.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteredBear, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -64,7 +64,7 @@ class EtherealEscortTest extends BaseCardTest {
         Permanent enteredBear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(bear.getId()))
                 .findFirst().orElseThrow();
-        assertThat(enteredBear.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteredBear, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -110,11 +110,11 @@ class EtherealEscortTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> {
                     assertThat(permanent.getCard().getId()).isEqualTo(unchosen.getId());
-                    assertThat(permanent.hasKeyword(Keyword.LIFELINK)).isFalse();
+                    assertThat(gqs.hasKeyword(gd, permanent, Keyword.LIFELINK)).isFalse();
                 })
                 .anySatisfy(permanent -> {
                     assertThat(permanent.getCard().getId()).isEqualTo(chosen.getId());
-                    assertThat(permanent.hasKeyword(Keyword.LIFELINK)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, permanent, Keyword.LIFELINK)).isTrue();
                 });
     }
 

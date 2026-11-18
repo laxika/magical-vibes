@@ -32,7 +32,7 @@ class TheIrencragTest extends BaseCardTest {
         offerTransformation();
 
         assertThat(gqs.getEffectiveName(gd, irencrag)).isEqualTo("Everflame, Heroes' Legacy");
-        assertThat(gqs.permanentHasSubtype(irencrag, CardSubtype.EQUIPMENT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, irencrag, CardSubtype.EQUIPMENT)).isTrue();
     }
 
     @Test
@@ -67,7 +67,7 @@ class TheIrencragTest extends BaseCardTest {
         offerTransformation(false);
 
         assertThat(gqs.getEffectiveName(gd, irencrag)).isEqualTo("The Irencrag");
-        assertThat(gqs.permanentHasSubtype(irencrag, CardSubtype.EQUIPMENT)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, irencrag, CardSubtype.EQUIPMENT)).isFalse();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GideonJura;
@@ -122,7 +123,7 @@ class AssassinsBladeTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.castInstant(player2, 0, attacker.getId());
-        attacker.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, attacker, CardColor.BLACK);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);

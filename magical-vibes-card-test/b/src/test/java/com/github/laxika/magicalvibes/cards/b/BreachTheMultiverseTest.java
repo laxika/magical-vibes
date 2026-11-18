@@ -43,8 +43,8 @@ class BreachTheMultiverseTest extends BaseCardTest {
 
         Permanent ownPermanent = findPermanentByCardId(ownCreature.getId());
         Permanent opposingPermanent = findPermanentByCardId(opposingCreature.getId());
-        assertThat(GameQueryService.permanentHasSubtype(ownPermanent, CardSubtype.PHYREXIAN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(opposingPermanent, CardSubtype.PHYREXIAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownPermanent, CardSubtype.PHYREXIAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, opposingPermanent, CardSubtype.PHYREXIAN)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(opposingCreature.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -90,7 +90,7 @@ class BreachTheMultiverseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(GameQueryService.permanentHasSubtype(
+        assertThat(gqs.hasEffectiveSubtype(gd,
                 findPermanentByCardId(opposingCreature.getId()), CardSubtype.PHYREXIAN)).isTrue();
     }
 
@@ -108,7 +108,7 @@ class BreachTheMultiverseTest extends BaseCardTest {
 
         Permanent returned = findPermanentByCardId(planeswalker.getId());
         assertThat(returned.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.PHYREXIAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.PHYREXIAN)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -124,10 +124,10 @@ class BreachTheMultiverseTest extends BaseCardTest {
         harness.castFromHand(player1, new BreachTheMultiverse(), "{5}{B}{B}");
         harness.passBothPriorities();
 
-        assertThat(GameQueryService.permanentHasSubtype(existing, CardSubtype.PHYREXIAN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(existing, CardSubtype.SATYR)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(existing, CardSubtype.SCOUT)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(opposing, CardSubtype.PHYREXIAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, existing, CardSubtype.PHYREXIAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, existing, CardSubtype.SATYR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, existing, CardSubtype.SCOUT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, opposing, CardSubtype.PHYREXIAN)).isFalse();
 
         harness.castFromHand(player1, new PortentTracker(), "{1}{G}");
         harness.passBothPriorities();
@@ -136,8 +136,8 @@ class BreachTheMultiverseTest extends BaseCardTest {
         Permanent later = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(existing.getId()))
                 .findFirst().orElseThrow();
-        assertThat(GameQueryService.permanentHasSubtype(later, CardSubtype.PHYREXIAN)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(existing, CardSubtype.PHYREXIAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, later, CardSubtype.PHYREXIAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, existing, CardSubtype.PHYREXIAN)).isTrue();
     }
 
     @Test

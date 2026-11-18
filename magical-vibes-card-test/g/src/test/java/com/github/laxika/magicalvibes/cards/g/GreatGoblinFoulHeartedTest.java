@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -33,13 +34,13 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
     @DisplayName("Amass puts three counters on an existing Army")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castGreatGoblin();
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
         assertThat(gqs.hasKeyword(gd, army, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -59,10 +60,10 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
     @DisplayName("Only Armies controlled by Great Goblin's controller gain trample")
     void onlyOwnArmiesGainTrample() {
         Permanent ownArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        ownArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, ownArmy, CardSubtype.ARMY);
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         addCreatureReady(player1, new GreatGoblinFoulHearted());
 
         assertThat(gqs.hasKeyword(gd, ownArmy, Keyword.TRAMPLE)).isTrue();
@@ -74,7 +75,7 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
     @DisplayName("Great Goblin gains trample when it is itself an Army")
     void sourceArmyAlsoGainsTrample() {
         Permanent goblin = addCreatureReady(player1, new GreatGoblinFoulHearted());
-        goblin.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, goblin, CardSubtype.ARMY);
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.TRAMPLE)).isTrue();
     }
@@ -83,9 +84,9 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
     @DisplayName("Amass chooses one of multiple Armies and preserves its other types")
     void choosesOneExistingArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castGreatGoblin();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -94,7 +95,7 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
         assertThat(gqs.effectiveCreatureSubtypes(gd, second)).contains(CardSubtype.BEAR, CardSubtype.ARMY, CardSubtype.GOBLIN);
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
     }
@@ -103,14 +104,14 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creating your own Army")
     void opposingArmyIsNotAmassed() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         castGreatGoblin();
 
         assertThat(findPermanent(player1, "Goblin Army")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.GOBLIN);
     }
 
     @Test

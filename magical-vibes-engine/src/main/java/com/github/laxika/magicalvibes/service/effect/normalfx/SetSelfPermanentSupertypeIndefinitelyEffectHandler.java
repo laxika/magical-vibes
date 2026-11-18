@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetSelfPermanentSupertypeIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,12 +34,7 @@ public class SetSelfPermanentSupertypeIndefinitelyEffectHandler implements Norma
             return;
         }
 
-        if (change.gained()) {
-            source.getPersistentRemovedSupertypes().remove(change.supertype());
-            source.getPersistentGrantedSupertypes().add(change.supertype());
-        } else {
-            source.getPersistentGrantedSupertypes().remove(change.supertype());
-            source.getPersistentRemovedSupertypes().add(change.supertype());
-        }
+        gameData.addEffectOnPermanent(entry, new SetTargetPermanentSupertypeEffect(change.supertype(), change.gained()),
+                source.getId(), Duration.PERMANENT);
     }
 }

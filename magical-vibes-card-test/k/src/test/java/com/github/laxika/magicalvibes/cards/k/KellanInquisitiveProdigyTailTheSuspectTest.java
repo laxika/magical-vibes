@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GildedLotus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -109,7 +110,7 @@ class KellanInquisitiveProdigyTailTheSuspectTest extends BaseCardTest {
     void drawsEvenWhenOwnArtifactIsIndestructible() {
         addCreatureReady(player1, new KellanInquisitiveProdigyTailTheSuspect());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IzzetCluestone());
-        artifact.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, artifact, Keyword.INDESTRUCTIBLE);
         Card drawn = new KellanInquisitiveProdigyTailTheSuspect();
         harness.setLibrary(player1, List.of(drawn));
 

@@ -41,7 +41,7 @@ class IronManFuturistParagonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, targetCreature)).isTrue();
-        assertThat(gqs.isArtifact(targetCreature)).isTrue();
+        assertThat(gqs.isArtifact(gd, targetCreature)).isTrue();
         assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.FLYING)).isTrue();
@@ -66,7 +66,7 @@ class IronManFuturistParagonTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
@@ -84,7 +84,7 @@ class IronManFuturistParagonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
@@ -122,7 +122,7 @@ class IronManFuturistParagonTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 

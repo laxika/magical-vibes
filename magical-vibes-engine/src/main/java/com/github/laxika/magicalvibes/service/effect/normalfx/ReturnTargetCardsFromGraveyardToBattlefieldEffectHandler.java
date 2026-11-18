@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -135,7 +138,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
-                graveyardReturnSupport.applyPermanentGrants(permanent, effect.grantColor(), effect.grantSubtype());
+                graveyardReturnSupport.applyPermanentGrants(gameData, entry.getControllerId(), permanent, effect.grantColor(), effect.grantSubtype());
                 if (effect.enterTapped()) {
                     permanent.tap();
                 }
@@ -238,7 +241,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             List<Permanent> preparedPermanents = new ArrayList<>();
             for (Card card : cardsToReturn) {
                 Permanent prepared = new Permanent(card);
-                graveyardReturnSupport.applyPermanentGrants(prepared, e.grantColor(), e.grantSubtype());
+                graveyardReturnSupport.applyPermanentGrants(gameData, entry.getControllerId(), prepared, e.grantColor(), e.grantSubtype());
                 if (e.enterTapped()) prepared.tap();
                 prepared.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 applyEntryAnimation(gameData, entry, prepared, e);
@@ -279,7 +282,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
-                graveyardReturnSupport.applyPermanentGrants(permanent, e.grantColor(), e.grantSubtype());
+                graveyardReturnSupport.applyPermanentGrants(gameData, entry.getControllerId(), permanent, e.grantColor(), e.grantSubtype());
                 if (e.enterTapped()) {
                     permanent.tap();
                 }
@@ -399,7 +402,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
-                graveyardReturnSupport.applyPermanentGrants(permanent, effect.grantColor(), effect.grantSubtype());
+                graveyardReturnSupport.applyPermanentGrants(gameData, entry.getControllerId(), permanent, effect.grantColor(), effect.grantSubtype());
                 if (effect.enterTapped()) {
                     permanent.tap();
                 }
@@ -468,8 +471,12 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private void applyReturnRiders(GameData gameData, StackEntry entry, Permanent permanent,
                                    ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         if (effect.grantHaste()) {
-            (effect.permanentHaste() ? permanent.getPersistentGrantedKeywords() : permanent.getGrantedKeywords())
-                    .add(Keyword.HASTE);
+            if (effect.permanentHaste()) {
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        permanent.getId(), Duration.PERMANENT);
+            } else {
+                permanent.getGrantedKeywords().add(Keyword.HASTE);
+            }
         }
         if (effect.sacrificeAtEndStep()) {
             // One delayed trigger of the spell or ability sacrifices everything it returned, and only the

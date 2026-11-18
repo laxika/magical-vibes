@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Standardize;
@@ -37,7 +38,7 @@ class ClavileOFirstOfTheBlessedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, vampire.getId());
         resolveAllTriggers();
 
-        assertThat(vampire.getGrantedSubtypes()).contains(CardSubtype.DEMON);
+        assertThat(PermanentGrants.subtypesOf(gd, vampire)).contains(CardSubtype.DEMON);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -62,7 +63,7 @@ class ClavileOFirstOfTheBlessedTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(bears.getGrantedSubtypes()).doesNotContain(CardSubtype.DEMON);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).doesNotContain(CardSubtype.DEMON);
     }
 
     @Test

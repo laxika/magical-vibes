@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -29,7 +30,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         Permanent army = findPermanent(player1, "Goblin Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test

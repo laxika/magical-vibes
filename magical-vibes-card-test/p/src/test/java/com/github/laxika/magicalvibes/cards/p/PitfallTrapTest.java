@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WelkinTern;
 import com.github.laxika.magicalvibes.cards.v.VastwoodGorger;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -157,7 +158,7 @@ class PitfallTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castWithAlternateCost(player1, 0, attacker.getId());
-        attacker.getPersistentGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keyword(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Vastwood Gorger");

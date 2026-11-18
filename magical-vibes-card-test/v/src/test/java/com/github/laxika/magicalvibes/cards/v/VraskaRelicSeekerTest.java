@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -307,7 +308,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     void minusThreeCreatesTreasureWhenDestructionFails() {
         addReadyVraska(player1);
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HierophantsChalice());
-        artifact.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, artifact, Keyword.INDESTRUCTIBLE);
 
         harness.activateAbility(player1, 0, 1, null, artifact.getId());
         harness.passBothPriorities();

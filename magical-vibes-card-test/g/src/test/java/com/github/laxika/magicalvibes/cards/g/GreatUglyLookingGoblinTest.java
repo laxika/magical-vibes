@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ClapSnap;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -54,7 +55,7 @@ class GreatUglyLookingGoblinTest extends BaseCardTest {
     @DisplayName("An existing Army receives two +1/+1 counters")
     void adventureUsesExistingArmy() {
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         GreatUglyLookingGoblin card = new GreatUglyLookingGoblin();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -65,7 +66,7 @@ class GreatUglyLookingGoblinTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test

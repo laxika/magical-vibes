@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WitchKingOfAngmar;
@@ -65,7 +66,7 @@ class SauronTheDarkLordTest extends BaseCardTest {
     void armyCombatDamageTemptsTheRingAndOffersFourCards() {
         Permanent sauron = addCreatureReady(player1, new SauronTheDarkLord());
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         army.setAttacking(true);
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
@@ -156,7 +157,7 @@ class SauronTheDarkLordTest extends BaseCardTest {
     void mayDiscardAnEmptyHandToDrawFour() {
         Permanent sauron = addCreatureReady(player1, new SauronTheDarkLord());
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         army.setAttacking(true);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
@@ -176,7 +177,7 @@ class SauronTheDarkLordTest extends BaseCardTest {
     void decliningDiscardKeepsTheHandAndDoesNotDraw() {
         Permanent sauron = addCreatureReady(player1, new SauronTheDarkLord());
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         army.setAttacking(true);
         GrizzlyBears heldCard = new GrizzlyBears();
         harness.setHand(player1, List.of(heldCard));

@@ -53,9 +53,8 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
             }
 
             if (Duration.PERMANENT.equals(e.duration())) {
-                if (!target.getGrantedSubtypes().contains(e.subtype())) {
-                    target.getGrantedSubtypes().add(e.subtype());
-                }
+                gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET),
+                        target.getId(), Duration.PERMANENT);
                 if (e.perpetual() && target.getOriginalCard() != null) {
                     gameData.perpetualCardSubtypes.merge(target.getOriginalCard().getId(), Set.of(e.subtype()),
                             (existing, added) -> {

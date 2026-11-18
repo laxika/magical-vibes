@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
 import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
@@ -52,7 +53,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             assertThat(target.getMarkedDamage()).isEqualTo(1);
 
             // Target creature is now a Vampire
-            assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+            assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.VAMPIRE);
 
             // Olivia gets a +1/+1 counter (3/3 base -> effectively 4/4)
             assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -246,7 +247,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             harness.activateAbility(player1, oliviaIdx, null, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+            assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.VAMPIRE);
 
             // Second: steal it
             harness.addMana(player1, ManaColor.COLORLESS, 3);

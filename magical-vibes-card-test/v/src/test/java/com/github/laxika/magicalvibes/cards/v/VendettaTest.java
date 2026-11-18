@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Gloomhunter;
 import com.github.laxika.magicalvibes.cards.h.HyenaUmbra;
@@ -151,7 +152,7 @@ class VendettaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0, target.getId());
 
-        target.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, target, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Lagac Lizard");

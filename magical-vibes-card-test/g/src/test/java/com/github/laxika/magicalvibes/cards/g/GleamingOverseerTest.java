@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -37,7 +38,7 @@ class GleamingOverseerTest extends BaseCardTest {
     @Test
     void amassesOnExistingArmyWithoutGrantingKeywordsToNontokenZombie() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castGleamingOverseer();
 
@@ -45,7 +46,7 @@ class GleamingOverseerTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.hasKeyword(gd, army, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.hasKeyword(gd, army, Keyword.MENACE)).isFalse();
     }
@@ -54,16 +55,16 @@ class GleamingOverseerTest extends BaseCardTest {
     void choosesOnlyOneOfMultipleArmiesAndMakesItAZombie() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castGleamingOverseer();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
     }
@@ -88,7 +89,7 @@ class GleamingOverseerTest extends BaseCardTest {
     @Test
     void opposingArmyDoesNotPreventCreationOrReceiveKeywords() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         castGleamingOverseer();
         Permanent army = gd.playerBattlefields.get(player1.getId()).stream()

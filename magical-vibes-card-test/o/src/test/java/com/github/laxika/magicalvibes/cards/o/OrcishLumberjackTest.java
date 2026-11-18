@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -85,7 +86,7 @@ class OrcishLumberjackTest extends BaseCardTest {
     @DisplayName("Can sacrifice itself if it has the Forest subtype")
     void canSacrificeItselfIfItIsAForest() {
         Permanent lumberjack = addCreatureReady(player1, new OrcishLumberjack());
-        lumberjack.getGrantedSubtypes().add(CardSubtype.FOREST);
+        PermanentGrants.subtype(gd, lumberjack, CardSubtype.FOREST);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "GREEN");

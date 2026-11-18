@@ -21,20 +21,20 @@ class MemnarchTest extends BaseCardTest {
         addReadyMemnarch(player1);
         Permanent target = addCreatureReady(player2, new AuriokGlaivemaster());
 
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -87,7 +87,7 @@ class MemnarchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Auriok Glaivemaster").getId()).isEqualTo(target.getId());
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
         harness.assertNotOnBattlefield(player2, "Auriok Glaivemaster");
         harness.assertInGraveyard(player1, "Memnarch");
@@ -117,7 +117,7 @@ class MemnarchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
 
         harness.setHand(player2, java.util.List.of());
         harness.getPermanentRemovalService().removePermanentToHand(gd, target);
@@ -129,7 +129,7 @@ class MemnarchTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player2, "Auriok Glaivemaster");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
-        assertThat(gqs.isArtifact(returned)).isFalse();
+        assertThat(gqs.isArtifact(gd, returned)).isFalse();
     }
 
     private Permanent addReadyMemnarch(Player player) {

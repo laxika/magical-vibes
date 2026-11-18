@@ -83,7 +83,7 @@ class HeavyweightDemolisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent demolisher = findPermanent(player1, "Heavyweight Demolisher");
-        assertThat(demolisher.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, demolisher, Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();

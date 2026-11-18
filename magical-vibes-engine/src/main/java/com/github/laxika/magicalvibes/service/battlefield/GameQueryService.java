@@ -237,6 +237,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerFlagbearerEffe
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDeathtouchToControllerSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSplitSecondToControllerSpellsUsingArtifactManaEffect;
@@ -864,23 +865,20 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the permanent currently has the given supertype, accounting for
      * global static supertype removals ({@link PermanentsMatchingLoseSupertypeEffect}, e.g.
-     * Melting's "All lands are no longer snow") and per-permanent supertype changes recorded by
-     * {@code SetTargetPermanentSupertypeEffect} (Arcum's Weathervane). Every supertype check that
-     * such an effect can touch must route through this instead of reading the printed supertypes.
-     * An explicit per-permanent grant is the most recent effect on that permanent, so it wins over
-     * a global removal.
+     * Melting's "All lands are no longer snow") and the floating {@code SetTargetPermanentSupertypeEffect}s on the
+     * permanent (Arcum's Weathervane). Every supertype check that such an effect can touch must route through this
+     * instead of reading the printed supertypes. Of the permanent's own changes the newest decides, and a gain
+     * newer than every matching global removal wins over it (CR 613.7).
      */
     public boolean hasEffectiveSupertype(GameData gameData, Permanent permanent, CardSupertype supertype) {
         if (supertype == CardSupertype.LEGENDARY && isRingBearer(gameData, permanent)) {
             return true;
         }
-        if (permanent.getPersistentGrantedSupertypes().contains(supertype)) {
-            long changeTimestamp = permanent.getPersistentSupertypeChangeTimestamps()
-                    .getOrDefault(supertype, Long.MAX_VALUE);
-            return latestMatchingSupertypeRemovalTimestamp(gameData, permanent, supertype) <= changeTimestamp;
-        }
-        if (permanent.getPersistentRemovedSupertypes().contains(supertype)) {
-            return false;
+        FloatingContinuousEffect change = gameData == null ? null
+                : newestSupertypeChange(gameData, permanent.getId(), supertype);
+        if (change != null) {
+            return ((SetTargetPermanentSupertypeEffect) change.effect()).gained()
+                    && latestMatchingSupertypeRemovalTimestamp(gameData, permanent, supertype) <= change.timestamp();
         }
         CharacteristicState activeState = gameData != null
                 ? LayerSystemService.activeStateFor(permanent.getId()) : null;
@@ -966,6 +964,19 @@ public class GameQueryService {
         } finally {
             layerSystemService.endPass(pass);
         }
+    }
+
+    private static FloatingContinuousEffect newestSupertypeChange(GameData gameData, UUID permanentId,
+                                                                  CardSupertype supertype) {
+        FloatingContinuousEffect newest = null;
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPermanent(permanentId,
+                SetTargetPermanentSupertypeEffect.class)) {
+            if (((SetTargetPermanentSupertypeEffect) fe.effect()).supertype() == supertype
+                    && (newest == null || fe.timestamp() > newest.timestamp())) {
+                newest = fe;
+            }
+        }
+        return newest;
     }
 
     private boolean losesSupertypeFromGlobalStaticEffect(
@@ -1483,7 +1494,6 @@ public class GameQueryService {
             } else {
                 addLandTypes(result, permanent.getCard().getSubtypes());
             }
-            addLandTypes(result, permanent.getGrantedSubtypes());
         }
         addLandTypes(result, bonus.grantedSubtypes());
         return result;
@@ -3534,13 +3544,7 @@ public class GameQueryService {
         if (bonus.cardTypeOverriding()) {
             return bonus.grantedCardTypes().contains(type);
         }
-        // A type-changing effect that added a type "in addition to its other types" stores it on
-        // the permanent (transient until-end-of-turn or persistent), not in the static bonus â€” e.g.
-        // Phyrexian Scriptures' chapter I making a creature an artifact. Mirror the non-layered
-        // isArtifact/isEnchantment so the layered checks see those grants too.
-        return hasCardType(permanent, type)
-                || permanent.getPersistentGrantedCardTypes().contains(type)
-                || bonus.grantedCardTypes().contains(type);
+        return hasCardType(permanent, type) || bonus.grantedCardTypes().contains(type);
     }
 
     private Set<CardType> baseCardTypes(Permanent permanent) {
@@ -3553,7 +3557,6 @@ public class GameQueryService {
             }
             cardTypes.addAll(permanent.getCard().getAdditionalTypes());
         }
-        cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
         return cardTypes;
     }
 
@@ -4026,12 +4029,11 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent is an artifact, either by its natural card type,
-     * a transient granted card type (until end of turn), or a persistent granted card type (permanent).
+     * Returns {@code true} if the permanent is an artifact by its own card type, ignoring every continuous effect;
+     * {@link #isArtifact(GameData, Permanent)} answers with the layers applied.
      */
     public boolean isArtifact(Permanent permanent) {
-        return hasCardType(permanent, CardType.ARTIFACT)
-                || permanent.getPersistentGrantedCardTypes().contains(CardType.ARTIFACT);
+        return hasCardType(permanent, CardType.ARTIFACT);
     }
 
     /**
@@ -4043,12 +4045,11 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent is an enchantment, either by its natural card type,
-     * a transient granted card type (until end of turn), or a persistent granted card type (permanent).
+     * Returns {@code true} if the permanent is an enchantment by its own card type, ignoring every continuous effect;
+     * {@link #isEnchantment(GameData, Permanent)} answers with the layers applied.
      */
     public boolean isEnchantment(Permanent permanent) {
-        return hasCardType(permanent, CardType.ENCHANTMENT)
-                || permanent.getPersistentGrantedCardTypes().contains(CardType.ENCHANTMENT);
+        return hasCardType(permanent, CardType.ENCHANTMENT);
     }
 
     /**
@@ -4084,7 +4085,8 @@ public class GameQueryService {
         return gameData.perpetualCardRemovedKeywords
                 .getOrDefault(permanent.getCard().getId(), Set.of()).contains(keyword)
                 && !permanent.getGrantedKeywords().contains(keyword)
-                && !permanent.getPersistentGrantedKeywords().contains(keyword)
+                && gameData.floatingEffectsOnPermanent(permanent.getId(), GrantKeywordEffect.class).stream()
+                        .noneMatch(fe -> ((GrantKeywordEffect) fe.effect()).keywords().contains(keyword))
                 && !permanent.getUntilNextTurnKeywords().contains(keyword);
     }
 
@@ -4243,7 +4245,6 @@ public class GameQueryService {
         if (!hasKeyword(permanent, bonus, Keyword.DEVOID)) {
             colors.addAll(permanent.getEffectiveColors());
         }
-        colors.addAll(permanent.getGrantedColors());
         colors.addAll(bonus.grantedColors());
         return colors;
     }
@@ -4627,10 +4628,7 @@ public class GameQueryService {
         if (state != null) {
             return Set.copyOf(state.getColors());
         }
-        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
-        colors.addAll(permanent.getEffectiveColors());
-        colors.addAll(permanent.getGrantedColors());
-        return colors;
+        return Set.copyOf(permanent.getEffectiveColors());
     }
 
     /** Returns {@code true} if the permanent currently has the given color (layer-5 aware). */
@@ -6325,7 +6323,6 @@ public class GameQueryService {
         if (!bonus.subtypeOverriding()) {
             subtypes.addAll(permanent.getCard().getSubtypes());
         }
-        subtypes.addAll(permanent.getGrantedSubtypes());
         subtypes.addAll(bonus.grantedSubtypes());
         return subtypes.contains(CardSubtype.VEHICLE);
     }
@@ -7692,7 +7689,6 @@ public class GameQueryService {
             if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
                 mergedKeywords.addAll(target.getCard().getKeywords());
                 mergedKeywords.addAll(target.getGrantedKeywords());
-                mergedKeywords.addAll(target.getPersistentGrantedKeywords());
                 mergedKeywords.addAll(target.getUntilNextTurnKeywords());
                 mergedKeywords.removeAll(target.getRemovedKeywords());
             }
@@ -8411,13 +8407,9 @@ public class GameQueryService {
             protectedSubtypes.addAll(creatureOnlySubtypes);
         }
         if (protectedSubtypes.isEmpty()) return false;
-        // CR 708.2a: a face-down permanent has no printed subtypes, only those its face-down effect lists.
-        if (!source.isFaceDown()) {
-            for (CardSubtype subtype : getEffectiveSubtypes(gameData, source)) {
-                if (protectedSubtypes.contains(subtype)) return true;
-            }
-        }
-        for (CardSubtype subtype : source.getGrantedSubtypes()) {
+        // CR 708.2a: a face-down permanent has no printed subtypes, only those its face-down effect lists and those
+        // effects give it, which the layered subtypes are.
+        for (CardSubtype subtype : getEffectiveSubtypes(gameData, source)) {
             if (protectedSubtypes.contains(subtype)) return true;
         }
         if (hasKeyword(gameData, source, Keyword.CHANGELING)
@@ -8771,8 +8763,7 @@ public class GameQueryService {
         if (bonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 || !bonus.removedKeywords().isEmpty() || !permanent.getRemovedKeywords().isEmpty()
                 || !bonus.grantedEffects().isEmpty() || !bonus.grantedActivatedAbilities().isEmpty()
-                || !card.getKeywords().containsAll(permanent.getGrantedKeywords())
-                || !card.getKeywords().containsAll(permanent.getPersistentGrantedKeywords())) {
+                || !card.getKeywords().containsAll(permanent.getGrantedKeywords())) {
             return true;
         }
         return !card.getKeywords().containsAll(bonus.keywords());
@@ -11522,15 +11513,14 @@ public class GameQueryService {
 
     /**
      * Checks whether a permanent has a given subtype without triggering {@code computeStaticBonus}
-     * (which would cause infinite recursion). Checks base subtypes, persistent granted subtypes
-     * and the intrinsic Changeling keyword; continuous effects are the layered pass's business.
+     * (which would cause infinite recursion). Checks base subtypes and the intrinsic Changeling keyword; continuous
+     * effects are the layered pass's business.
      */
     public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
         if (permanent.getLastKnownSubtypes() != null) {
             return permanent.getLastKnownSubtypes().contains(subtype);
         }
         return permanent.getCard().getSubtypes().contains(subtype)
-                || permanent.getGrantedSubtypes().contains(subtype)
                 || permanent.hasKeyword(Keyword.CHANGELING);
     }
 

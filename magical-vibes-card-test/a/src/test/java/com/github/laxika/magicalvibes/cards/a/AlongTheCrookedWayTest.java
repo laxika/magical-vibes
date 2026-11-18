@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssailant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -91,7 +92,7 @@ class AlongTheCrookedWayTest extends BaseCardTest {
     void amassesOnExistingArmy() {
         addAlongTheCrookedWay();
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new Disentomb()));
@@ -102,7 +103,7 @@ class AlongTheCrookedWayTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test
@@ -158,8 +159,8 @@ class AlongTheCrookedWayTest extends BaseCardTest {
         addAlongTheCrookedWay();
         Permanent first = addCreatureReady(player1, new GrizzlyBears());
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new Disentomb()));
@@ -171,9 +172,9 @@ class AlongTheCrookedWayTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.GOBLIN);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.GOBLIN);
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
     }
 

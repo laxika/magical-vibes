@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SandwurmConvergence;
 import com.github.laxika.magicalvibes.cards.s.SamutTheTested;
 import com.github.laxika.magicalvibes.cards.s.ShelteredThicket;
@@ -94,7 +95,7 @@ class NissasDefeatTest extends BaseCardTest {
     void drawsExactlyOneCardWhenNissaIsIndestructible() {
         Permanent nissa = harness.addToBattlefieldAndReturn(player2, new NissaGenesisMage());
         nissa.setCounterCount(CounterType.LOYALTY, 5);
-        nissa.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, nissa, Keyword.INDESTRUCTIBLE);
         harness.setLibrary(player1, List.of(new FeralProwler(), new Forest()));
         harness.setHand(player1, List.of(new NissasDefeat()));
         harness.addMana(player1, ManaColor.GREEN, 3);

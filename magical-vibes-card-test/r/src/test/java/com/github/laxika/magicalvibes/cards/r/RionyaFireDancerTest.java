@@ -34,7 +34,7 @@ class RionyaFireDancerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tokens.getFirst(), Keyword.HASTE)).isTrue();
         assertThat(rionya).isIn(gd.playerBattlefields.get(player1.getId()));
     }
 

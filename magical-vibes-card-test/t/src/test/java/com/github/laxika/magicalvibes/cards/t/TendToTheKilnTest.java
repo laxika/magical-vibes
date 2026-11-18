@@ -52,7 +52,7 @@ class TendToTheKilnTest extends BaseCardTest {
         assertThat(kiln.getCounterCount(CounterType.FLAME)).isZero();
         Permanent flamebraider = findPermanent(player1, "Flamebraider");
         assertThat(flamebraider.getCard()).isInstanceOf(Flamebraider.class);
-        assertThat(flamebraider.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, flamebraider, Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();

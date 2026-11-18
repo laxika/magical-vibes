@@ -39,7 +39,7 @@ class DevastatingOnslaughtTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allMatch(token -> token.hasKeyword(Keyword.HASTE));
+        assertThat(tokens).allMatch(token -> gqs.hasKeyword(gd, token, Keyword.HASTE));
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .extracting(DelayedPermanentAction::permanentId)
                 .containsExactlyInAnyOrder(tokens.get(0).getId(), tokens.get(1).getId());
@@ -137,7 +137,7 @@ class DevastatingOnslaughtTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
 
         harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities();
@@ -147,7 +147,7 @@ class DevastatingOnslaughtTest extends BaseCardTest {
         Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(target.getId())
                         && !permanent.getCard().isToken()).findFirst().orElseThrow();
-        assertThat(clone.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(clone);

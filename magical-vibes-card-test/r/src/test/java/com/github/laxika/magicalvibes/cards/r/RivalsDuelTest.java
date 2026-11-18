@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheGoldenCricket;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.cards.s.StinkdrinkerBandit;
@@ -138,7 +139,7 @@ class RivalsDuelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
-        boggart.getGrantedSubtypes().add(CardSubtype.KNIGHT);
+        PermanentGrants.subtype(gd, boggart, CardSubtype.KNIGHT);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Order of the Golden Cricket");

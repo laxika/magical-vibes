@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DwarfholdChampion;
 import com.github.laxika.magicalvibes.cards.l.LoyalWarhound;
 import com.github.laxika.magicalvibes.cards.m.MonkOfTheOpenHand;
@@ -126,7 +127,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
     void cannotTargetCreatureWithExcludedKeyword(Keyword keyword) {
         Permanent grandMaster = addReadyGrandMaster(player1, 5);
         Permanent target = addCreatureReady(player2, new DwarfholdChampion());
-        target.getPersistentGrantedKeywords().add(keyword);
+        PermanentGrants.keyword(gd, target, keyword);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -148,7 +149,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
         addReadyGrandMaster(player1, 5);
         Permanent target = addCreatureReady(player2, new DwarfholdChampion());
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        target.getPersistentGrantedKeywords().add(Keyword.VIGILANCE);
+        PermanentGrants.keyword(gd, target, Keyword.VIGILANCE);
 
         harness.passBothPriorities();
 

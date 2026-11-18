@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -50,7 +51,7 @@ class BothersomeNoisemakerTest extends BaseCardTest {
     @DisplayName("Amassing uses an existing Army")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.addToBattlefield(player1, new BothersomeNoisemaker());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -60,7 +61,7 @@ class BothersomeNoisemakerTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
     }
 
     @Test
@@ -115,9 +116,9 @@ class BothersomeNoisemakerTest extends BaseCardTest {
     @DisplayName("Amass lets its controller choose one of multiple Armies")
     void choosesOneArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         harness.addToBattlefield(player1, new BothersomeNoisemaker());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -127,9 +128,9 @@ class BothersomeNoisemakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.GOBLIN);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
     }
 }

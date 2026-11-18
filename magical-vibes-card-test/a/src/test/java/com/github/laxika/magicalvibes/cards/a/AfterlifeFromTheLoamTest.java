@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -43,8 +44,8 @@ class AfterlifeFromTheLoamTest extends BaseCardTest {
 
         Permanent returnedOwnCreature = findPermanent(player1, "Grizzly Bears");
         Permanent returnedOpponentCreature = findPermanent(player1, "Hill Giant");
-        assertThat(returnedOwnCreature.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
-        assertThat(returnedOpponentCreature.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, returnedOwnCreature)).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, returnedOpponentCreature)).contains(CardSubtype.ZOMBIE);
         assertThat(returnedOwnCreature.getCard().getSubtypes()).contains(CardSubtype.BEAR);
     }
 
@@ -110,7 +111,7 @@ class AfterlifeFromTheLoamTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature);
         assertThat(findPermanent(player1, "Hill Giant").isTapped()).isFalse();
-        assertThat(findPermanent(player1, "Hill Giant").getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, findPermanent(player1, "Hill Giant"))).contains(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -130,7 +131,7 @@ class AfterlifeFromTheLoamTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(findPermanent(player1, "Hill Giant").getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, findPermanent(player1, "Hill Giant"))).contains(CardSubtype.ZOMBIE);
     }
 
     @Test

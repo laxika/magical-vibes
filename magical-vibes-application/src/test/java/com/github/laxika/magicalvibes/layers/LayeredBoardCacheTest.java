@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.layers;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Dub;
 import com.github.laxika.magicalvibes.cards.e.ElvishChampion;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -74,15 +75,15 @@ class LayeredBoardCacheTest extends BaseCardTest {
     }
 
     @Test
-    void directPermanentFieldMutationInvalidates() {
-        // The Elf lord's filter verdict lives in the cached board — a direct subtype grant on
-        // the bear must invalidate it, or the bear would keep missing the lord's boost.
+    void newSubtypeGrantInvalidates() {
+        // The Elf lord's filter verdict lives in the cached board — a new floating subtype grant
+        // on the bear must invalidate it, or the bear would keep missing the lord's boost.
         add(player1, new ElvishChampion());
         Permanent bear = add(player1, new GrizzlyBears());
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isFalse();
 
-        bear.getGrantedSubtypes().add(CardSubtype.ELF);
+        PermanentGrants.subtype(gd, bear, CardSubtype.ELF);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isTrue();
     }

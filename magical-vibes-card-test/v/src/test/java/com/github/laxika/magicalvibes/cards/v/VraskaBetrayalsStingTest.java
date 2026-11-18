@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CopperLonglegs;
 import com.github.laxika.magicalvibes.cards.a.ArmoredScrapgorger;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,7 +50,7 @@ class VraskaBetrayalsStingTest extends BaseCardTest {
 
         assertThat(gqs.isArtifact(gd, elves)).isTrue();
         assertThat(gqs.isCreature(gd, elves)).isFalse();
-        assertThat(elves.getGrantedSubtypes()).contains(CardSubtype.TREASURE);
+        assertThat(PermanentGrants.subtypesOf(gd, elves)).contains(CardSubtype.TREASURE);
 
         harness.activateAbility(player2, 0, null, null);
         harness.handleListChoice(player2, ManaColor.RED.name());

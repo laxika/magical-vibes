@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
@@ -69,7 +70,7 @@ class GrandOssuaryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castAndResolveSorcery(player1, 0, dying.getId());
-        recipient.getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keyword(gd, recipient, Keyword.SHROUD);
         harness.passBothPriorities();
 
         assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

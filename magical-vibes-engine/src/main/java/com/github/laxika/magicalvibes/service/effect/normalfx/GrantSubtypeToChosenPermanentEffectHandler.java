@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -31,11 +34,12 @@ public class GrantSubtypeToChosenPermanentEffectHandler implements NormalEffectH
         }
 
         Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
-        if (chosen == null || chosen.getGrantedSubtypes().contains(grant.subtype())) {
+        if (chosen == null) {
             return;
         }
 
-        chosen.getGrantedSubtypes().add(grant.subtype());
+        gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(grant.subtype(), GrantScope.TARGET),
+                chosen.getId(), Duration.PERMANENT);
         gameLogService.append(gameData, GameLog.builder()
                 .card(chosen.getCard())
                 .text(" becomes a " + grant.subtype().getDisplayName()

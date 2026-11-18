@@ -51,9 +51,9 @@ class KheruLichLordTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(returned.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(returned.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(returned.isExileIfLeavesBattlefield()).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .anySatisfy(action -> {

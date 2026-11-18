@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JudgeOfCurrents;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -103,7 +104,7 @@ class AquitectsWillTest extends BaseCardTest {
 
         assertThat(simMountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
         assertThat(realMountain.getPersistentGrantedActivatedAbilities()).isEmpty();
-        assertThat(realMountain.getGrantedSubtypes()).doesNotContain(CardSubtype.ISLAND);
+        assertThat(PermanentGrants.subtypesOf(gd, realMountain)).doesNotContain(CardSubtype.ISLAND);
         assertThat(realMountain.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
         // Only the Mountain's own mana ability (CR 305.6); no Island ability leaked from the copy.
         assertThat(gs.getEffectiveActivatedAbilities(gd, realMountain))

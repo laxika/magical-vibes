@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -183,7 +184,7 @@ class TerrorTest extends BaseCardTest {
     void cannotTargetMulticoloredCreatureIncludingBlack() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, bears, CardColor.BLACK);
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -202,7 +203,7 @@ class TerrorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstant(player1, 0, bears.getId());
-        bears.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, bears, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

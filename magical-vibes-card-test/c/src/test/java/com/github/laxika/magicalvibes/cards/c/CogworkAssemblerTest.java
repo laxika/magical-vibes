@@ -32,7 +32,7 @@ class CogworkAssemblerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(assembler.isTapped()).isFalse();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
@@ -117,9 +117,9 @@ class CogworkAssemblerTest extends BaseCardTest {
         Permanent steel = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getOriginalCard() instanceof SculptingSteel)
                 .findFirst().orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(steel.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(steel.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, steel, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, steel, Keyword.HASTE)).isFalse();
     }
 
     private Permanent addReadyAssembler() {

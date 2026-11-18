@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -143,7 +144,7 @@ class HenryWuInGenGeneticistTest extends BaseCardTest {
     @Test
     void creatureThatBecameHumanDoesNotGiveReward() {
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        fodder.getGrantedSubtypes().add(CardSubtype.HUMAN);
+        PermanentGrants.subtype(gd, fodder, CardSubtype.HUMAN);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         castHenry();
         harness.handleMayAbilityChosen(player1, true);

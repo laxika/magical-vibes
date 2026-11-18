@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArborealGrazer;
 import com.github.laxika.magicalvibes.cards.q.Quasiduplicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -37,7 +38,7 @@ class VizierOfTheScorpionTest extends BaseCardTest {
     @Test
     void amassesOnAnExistingArmyAndDoesNotGiveDeathtouchToANontoken() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new ArborealGrazer());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
 
         castVizierOfTheScorpion();
 
@@ -45,7 +46,7 @@ class VizierOfTheScorpionTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.hasKeyword(gd, army, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -53,8 +54,8 @@ class VizierOfTheScorpionTest extends BaseCardTest {
     void mustChooseAnArmyWhenMultipleArmiesAreControlled() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new VizierOfTheScorpion());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new VizierOfTheScorpion());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castVizierOfTheScorpion();
 
@@ -70,7 +71,7 @@ class VizierOfTheScorpionTest extends BaseCardTest {
     @Test
     void opponentsArmyDoesNotPreventCreatingAnArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new VizierOfTheScorpion());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
 
         castVizierOfTheScorpion();
 

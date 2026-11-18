@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.m.MyrSire;
@@ -144,7 +145,7 @@ class GoForTheThroatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, creature.getId());
 
-        creature.getPersistentGrantedCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.cardType(gd, creature, CardType.ARTIFACT);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Rot Wolf");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
@@ -147,7 +148,7 @@ class MoxAmberTest extends BaseCardTest {
         Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxAmber());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JayaBallard());
         // Model a planeswalker that has lost legendary status, as with a nonlegendary copy.
-        planeswalker.getPersistentRemovedSupertypes().add(CardSupertype.LEGENDARY);
+        PermanentGrants.supertype(gd, planeswalker, CardSupertype.LEGENDARY, false);
 
         harness.activateAbility(player1, 0, null, null);
 

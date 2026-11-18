@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ErdwalIlluminator;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -87,7 +88,7 @@ class FatefulAbsenceTest extends BaseCardTest {
     @DisplayName("An indestructible target survives and its controller still investigates")
     void investigatesEvenWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, target, Keyword.INDESTRUCTIBLE);
 
         castFatefulAbsence(target);
 
@@ -118,7 +119,7 @@ class FatefulAbsenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatefulAbsence()));
         addFatefulAbsenceMana();
         harness.castInstant(player1, 0, target.getId());
-        target.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keyword(gd, target, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 

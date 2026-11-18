@@ -29,13 +29,12 @@ public class OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffectHandler implements
     private final GameQueryService gameQueryService;
 
     /**
-     * Whether the land already carries {@code subtype} from its own printed, granted or transient types.
+     * Whether the land already carries {@code subtype} from its own printed or floating-granted types.
      * Types supplied by other continuous effects (e.g. Prismatic Omen) are deliberately ignored, so the
      * grant is still recorded on the land and survives those effects leaving the battlefield.
      */
     private static boolean hasOwnBasicLandType(GameData gameData, Permanent permanent, CardSubtype subtype) {
         return permanent.getCard().getSubtypes().contains(subtype)
-                || permanent.getGrantedSubtypes().contains(subtype)
                 || gameData.floatingEffectsOnPermanent(permanent.getId(), GrantSubtypeEffect.class).stream()
                 .anyMatch(fe -> ((GrantSubtypeEffect) fe.effect()).subtype() == subtype
                 && !((GrantSubtypeEffect) fe.effect()).overriding());

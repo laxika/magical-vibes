@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -116,7 +117,7 @@ class AgyremTest extends BaseCardTest {
     @Test
     void creatureThatWasGrantedWhiteReturnsToTheBattlefieldRatherThanHand() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.getGrantedColors().add(CardColor.WHITE);
+        PermanentGrants.color(gd, bears, CardColor.WHITE);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, bears));
         harness.passBothPriorities();

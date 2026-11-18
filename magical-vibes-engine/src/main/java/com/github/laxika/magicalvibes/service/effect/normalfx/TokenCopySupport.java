@@ -483,7 +483,7 @@ public class TokenCopySupport {
             for (int i = 0; i < group.count(); i++) {
                 Card addedCard = TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
                         fixedStat(blueprint.toughness()), event.sourceSetCode());
-                tokens.add(withGrantedHaste(addedCard, addedCard, effect));
+                tokens.add(withGrantedHaste(gameData, entry, addedCard, addedCard, effect));
                 attackTargets.add(firstAttackTarget);
                 copiedCards.add(null);
             }
@@ -606,7 +606,7 @@ public class TokenCopySupport {
         CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
         for (int copy = 0; copy < count; copy++) {
             Card tokenCard = copyTemplate(batch.entry(), sourceCard, effect, batch.copyException());
-            Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
+            Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(gameData, batch.entry(), tokenCard, sourceCard, effect), effect);
             if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
                 preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
             }
@@ -629,7 +629,7 @@ public class TokenCopySupport {
         for (int i = 0; i < group.count(); i++) {
             Card substitute = TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
                     fixedStat(blueprint.toughness()), setCode);
-            tokens.add(withGrantedDeathEffects(withGrantedHaste(substitute, substitute, batch.effect()),
+            tokens.add(withGrantedDeathEffects(withGrantedHaste(gameData, batch.entry(), substitute, substitute, batch.effect()),
                     batch.effect()));
         }
     }
@@ -754,10 +754,10 @@ public class TokenCopySupport {
 
     /**
      * "It gains haste" is an effect granting the token haste, not an exception to the copy
-     * (CR 707.2), so it is moved off the copiable token card onto the permanent where a copy of the
-     * token won't pick it up. A frozen token card is replaced by a mutable runtime copy first.
+     * (CR 707.2), so it is moved off the copiable token card into a continuous effect on the permanent that a copy
+     * of the token won't pick up. A frozen token card is replaced by a mutable runtime copy first.
      */
-    private static Permanent withGrantedHaste(Card tokenCard, Card sourceCard,
+    private static Permanent withGrantedHaste(GameData gameData, StackEntry entry, Card tokenCard, Card sourceCard,
                                               CreateTokenCopyOfTargetPermanentEffect effect) {
         if (!effect.grantHaste()) {
             return new Permanent(tokenCard);
@@ -774,7 +774,8 @@ public class TokenCopySupport {
         }
         Permanent token = new Permanent(copiableCard);
         if (!effect.hasteUntilEndOfTurn()) {
-            token.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                    token.getId(), Duration.PERMANENT);
         }
         return token;
     }

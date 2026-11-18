@@ -35,7 +35,7 @@ class BroodmateTyrantTest extends BaseCardTest {
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getEffectivePower()).isEqualTo(5);
         assertThat(token.getEffectiveToughness()).isEqualTo(5);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -53,7 +53,7 @@ class BroodmateTyrantTest extends BaseCardTest {
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.isTapped()).isFalse();
         assertThat(token.isAttacking()).isFalse();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Broodmate Tyrant"));
     }
@@ -86,7 +86,7 @@ class BroodmateTyrantTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Broodmate Tyrant")).hasSize(1);
         assertThat(dragonTokens(player1)).hasSize(1);
         Permanent dragon = dragonTokens(player1).getFirst();
-        assertThat(dragon.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.HASTE)).isFalse();
         assertThat(dragon.isTapped()).isFalse();
         assertThat(dragon.isAttacking()).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

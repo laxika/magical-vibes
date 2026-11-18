@@ -54,8 +54,8 @@ class ChainerDementiaMasterTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.BEAR)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.NIGHTMARE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.NIGHTMARE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -182,7 +182,7 @@ class ChainerDementiaMasterTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.NIGHTMARE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.NIGHTMARE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Chainer, Dementia Master");

@@ -112,10 +112,10 @@ public class CharacteristicState {
     private boolean printedAbilitiesRemoved;
 
     /**
-     * Seeds the state from the permanent's post-copy card plus the persistent one-shot grants
-     * and counters stored on the {@link Permanent}. Transient (until-end-of-turn etc.) state is
-     * NOT seeded — in the target model those are floating continuous effects applied during the
-     * pass.
+     * Seeds the state from the permanent's post-copy card and the counters and designations stored on the
+     * {@link Permanent}, and the activated abilities an effect gave it indefinitely. The types, colours and keywords
+     * an effect gives it are NOT seeded: those are floating continuous effects applied during the pass at their own
+     * timestamps.
      */
     public CharacteristicState(Card card, Permanent permanent) {
         this.name = permanent.isFaceDown() ? null
@@ -129,15 +129,11 @@ public class CharacteristicState {
             }
             this.cardTypes.addAll(card.getAdditionalTypes());
         }
-        this.cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
         if (!permanent.isFaceDown()) {
             this.supertypes.addAll(card.getSupertypes());
             this.subtypes.addAll(card.getSubtypes());
         } else {
             this.subtypes.addAll(permanent.getFaceDownSubtypes());
-        }
-        for (CardSubtype granted : permanent.getGrantedSubtypes()) {
-            addSubtype(granted);
         }
         // Seed every intrinsic color: a multicolored card ({W/U} hybrid) is all of its colors,
         // not just the first. Legacy animation/awakening/override colors replace this baseline in
@@ -149,7 +145,6 @@ public class CharacteristicState {
                 this.colors.add(card.getColor());
             }
         }
-        this.colors.addAll(permanent.getGrantedColors());
         if (!permanent.isFaceDown()) {
             this.keywords.addAll(card.getKeywords());
             this.meleeInstances = keywords.contains(Keyword.MELEE) ? 1 : 0;

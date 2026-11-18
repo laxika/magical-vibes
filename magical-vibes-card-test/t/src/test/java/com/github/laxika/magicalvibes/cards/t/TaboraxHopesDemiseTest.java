@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ClericOfChillDepths;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionSkulker;
 import com.github.laxika.magicalvibes.model.Card;
@@ -171,7 +172,7 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
     void grantedClericSubtypeAllowsDraw() {
         Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
-        creature.getGrantedSubtypes().add(CardSubtype.CLERIC);
+        PermanentGrants.subtype(gd, creature, CardSubtype.CLERIC);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ExpeditionSkulker()));
         harness.setLife(player1, 20);

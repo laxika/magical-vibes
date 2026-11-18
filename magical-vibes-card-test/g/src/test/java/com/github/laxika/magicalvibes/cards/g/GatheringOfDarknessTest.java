@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -34,14 +35,14 @@ class GatheringOfDarknessTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(creature.getId()));
         Permanent army = findPermanent(player1, "Goblin Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test
     @DisplayName("May omit the graveyard target and amass on an existing Army")
     void omitsTargetAndAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new GatheringOfDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -49,7 +50,7 @@ class GatheringOfDarknessTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test
@@ -113,7 +114,7 @@ class GatheringOfDarknessTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creating your own Army")
     void ignoresOpponentsArmy() {
         Permanent opponentArmy = harness.addToBattlefieldAndReturn(player2, new OrdinaryBear());
-        opponentArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opponentArmy, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new GatheringOfDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -122,7 +123,7 @@ class GatheringOfDarknessTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Goblin Army")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(opponentArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, opponentArmy)).doesNotContain(CardSubtype.GOBLIN);
     }
 
     @Test
@@ -130,8 +131,8 @@ class GatheringOfDarknessTest extends BaseCardTest {
     void choosesOneOfMultipleArmies() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new GatheringOfDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -139,9 +140,9 @@ class GatheringOfDarknessTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.GOBLIN);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
     }
 }

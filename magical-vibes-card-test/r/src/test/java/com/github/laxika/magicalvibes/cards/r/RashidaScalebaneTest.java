@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
@@ -23,7 +24,7 @@ class RashidaScalebaneTest extends BaseCardTest {
     void destroysDragonBeforeGainingLife() {
         addCreatureReady(player1, new RashidaScalebane());
         Permanent dragon = addCreatureReady(player1, new PlatinumEmperion());
-        dragon.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        PermanentGrants.subtype(gd, dragon, CardSubtype.DRAGON);
         dragon.setAttacking(true);
 
         harness.forceActivePlayer(player1);

@@ -43,7 +43,7 @@ class ArgivianWelcomeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getId().equals(bears.getId())
-                        && permanent.hasKeyword(Keyword.FLASH));
+                        && gqs.hasKeyword(gd, permanent, Keyword.FLASH));
     }
 
     @Test

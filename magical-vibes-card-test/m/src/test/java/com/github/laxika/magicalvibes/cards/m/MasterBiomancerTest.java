@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LivingLands;
@@ -27,7 +28,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent bears = castBears(player1);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -66,7 +67,7 @@ class MasterBiomancerTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getGrantedSubtypes()).doesNotContain(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).doesNotContain(CardSubtype.MUTANT);
     }
 
     @Test
@@ -77,7 +78,7 @@ class MasterBiomancerTest extends BaseCardTest {
 
         Permanent biomancer = findPermanent(player1, "Master Biomancer");
         assertThat(biomancer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(biomancer.getGrantedSubtypes()).doesNotContain(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, biomancer)).doesNotContain(CardSubtype.MUTANT);
     }
 
     @Test
@@ -88,7 +89,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent bears = castBears(player1);
         gd.playerBattlefields.get(player1.getId()).remove(biomancer);
 
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.MUTANT);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -100,7 +101,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent bears = castBears(player1);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -111,7 +112,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent bears = castBears(player1);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -121,7 +122,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent second = harness.enterBattlefieldAndReturn(player1, new MasterBiomancer());
 
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.MUTANT);
         Permanent bears = castBears(player1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
     }
@@ -134,7 +135,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent bears = castBears(player1);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, bears)).contains(CardSubtype.MUTANT);
     }
 
     @Test
@@ -145,7 +146,7 @@ class MasterBiomancerTest extends BaseCardTest {
         Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        assertThat(PermanentGrants.subtypesOf(gd, forest)).contains(CardSubtype.MUTANT);
     }
 
     private Permanent castBears(Player player) {

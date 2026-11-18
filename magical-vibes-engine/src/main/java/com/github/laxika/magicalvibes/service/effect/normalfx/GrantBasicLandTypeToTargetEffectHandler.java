@@ -79,7 +79,7 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
      * granted). When {@code replacing} is {@code true} the land <em>becomes</em> the subtype for the
      * duration, replacing its other land types/mana ability (rule 305.7). Both are timestamped
      * layer-4 floating effects (rules 613.1d, 613.7); the one-shot added type and its mana
-     * ability end at end of turn, a permanent addition is stored on the Permanent as a persistent grant.
+     * ability end at end of turn, a permanent addition is an indefinite floating grant (rule 611.2a).
      * Shared by this handler (fixed-type path) and the player's basic-land-type choice resolution.
      */
     public static void applyBasicLandType(GameData gameData, Permanent targetLand, CardSubtype subtype,
@@ -109,9 +109,8 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
             // Permanent: survives turn resets. Stored on the Permanent, never on the Card —
             // the Card instance is shared with AI simulation copies, so mutating it here
             // would leak a simulated grant into the real game.
-            if (!targetLand.getGrantedSubtypes().contains(subtype)) {
-                targetLand.getGrantedSubtypes().add(subtype);
-            }
+            gameData.addEffectOnPermanent(sourceName, sourcePermanentId, controllerId,
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), targetLand.getId(), Duration.PERMANENT);
             targetLand.getPersistentGrantedActivatedAbilities().add(manaAbility);
         }
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BattlefieldForge;
 import com.github.laxika.magicalvibes.cards.e.EbonyTreefolk;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -128,7 +129,7 @@ class DeathMutationTest extends BaseCardTest {
         addMana();
         harness.castSorcery(player1, 0, target.getId());
 
-        target.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, target, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Dodecapod");

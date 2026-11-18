@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KondaLordOfEiganjo;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -60,7 +61,7 @@ class GrMaWormtongueTest extends BaseCardTest {
     void legendarySacrificeAmassesOnExistingArmyAndMakesItOrc() {
         addGrima();
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent fodder = addCreatureReady(player1, new KondaLordOfEiganjo());
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -71,7 +72,7 @@ class GrMaWormtongueTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ORC);
     }
 
     @Test
@@ -114,9 +115,9 @@ class GrMaWormtongueTest extends BaseCardTest {
     void choosesOneOfMultipleArmiesAndOnlyThatArmyBecomesOrc() {
         addGrima();
         Permanent firstArmy = addCreatureReady(player1, new GrizzlyBears());
-        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, firstArmy, CardSubtype.ARMY);
         Permanent secondArmy = addCreatureReady(player1, new GrizzlyBears());
-        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, secondArmy, CardSubtype.ARMY);
         Permanent fodder = addCreatureReady(player1, new KondaLordOfEiganjo());
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -125,9 +126,9 @@ class GrMaWormtongueTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(secondArmy.getId()));
 
         assertThat(firstArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(firstArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, firstArmy)).doesNotContain(CardSubtype.ORC);
         assertThat(secondArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(secondArmy.getGrantedSubtypes()).contains(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, secondArmy)).contains(CardSubtype.ORC);
         assertThat(findPermanents(player1, "Orc Army")).isEmpty();
     }
 
@@ -135,7 +136,7 @@ class GrMaWormtongueTest extends BaseCardTest {
     void nonlegendarySacrificeDoesNotChangeExistingArmy() {
         addGrima();
         Permanent army = addCreatureReady(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -143,7 +144,7 @@ class GrMaWormtongueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(army.getGrantedSubtypes()).doesNotContain(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).doesNotContain(CardSubtype.ORC);
         assertThat(findPermanents(player1, "Orc Army")).isEmpty();
     }
 
@@ -151,7 +152,7 @@ class GrMaWormtongueTest extends BaseCardTest {
     void opposingArmyDoesNotPreventCreatingOwnArmy() {
         addGrima();
         Permanent opposingArmy = addCreatureReady(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         addCreatureReady(player1, new KondaLordOfEiganjo());
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -161,7 +162,7 @@ class GrMaWormtongueTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Orc Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(2);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ORC);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.ORC);
     }
 
     @Test

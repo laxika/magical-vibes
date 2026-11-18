@@ -3680,9 +3680,7 @@ public class ChoiceHandlerService {
     private void addChosenKeywordToLegacyBucket(Permanent target, Keyword keyword, Duration duration) {
         if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             target.getUntilNextTurnKeywords().add(keyword);
-        } else if (Duration.PERMANENT.equals(duration)) {
-            target.getPersistentGrantedKeywords().add(keyword);
-        } else {
+        } else if (!Duration.PERMANENT.equals(duration)) {
             target.getGrantedKeywords().add(keyword);
         }
     }
@@ -6767,10 +6765,12 @@ public class ChoiceHandlerService {
             perm.setPermanentBaseToughnessOverride(form.toughness());
             perm.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
             if (form.keyword() != null) {
-                perm.getPersistentGrantedKeywords().add(form.keyword());
+                gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
+                        new GrantKeywordEffect(form.keyword(), GrantScope.TARGET), perm.getId(), Duration.PERMANENT);
             }
             if (form.subtype() != null) {
-                perm.getGrantedSubtypes().add(form.subtype());
+                gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
+                        new GrantSubtypeEffect(form.subtype(), GrantScope.TARGET), perm.getId(), Duration.PERMANENT);
             }
             perm.setPrimalClayForm(form);
 

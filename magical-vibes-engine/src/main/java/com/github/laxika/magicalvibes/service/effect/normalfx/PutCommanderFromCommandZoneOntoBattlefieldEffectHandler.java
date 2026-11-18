@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCommanderFromCommandZoneOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -73,7 +76,8 @@ public class PutCommanderFromCommandZoneOntoBattlefieldEffectHandler implements 
 
         Permanent permanent = new Permanent(commander, Zone.COMMAND);
         permanent.setCommander(true);
-        permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+        gameData.addEffectOnPermanent(sourceCard.getName(), null, controllerId,
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, commander);
         DelayedPermanentActions.schedule(gameData, controllerId, sourceCard, null,

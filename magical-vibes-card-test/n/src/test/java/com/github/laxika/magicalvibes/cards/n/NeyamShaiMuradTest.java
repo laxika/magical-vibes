@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -93,7 +94,7 @@ class NeyamShaiMuradTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(returned.getGrantedSubtypes()).doesNotContain(com.github.laxika.magicalvibes.model.CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, returned)).doesNotContain(com.github.laxika.magicalvibes.model.CardSubtype.VAMPIRE);
     }
 
     @Test

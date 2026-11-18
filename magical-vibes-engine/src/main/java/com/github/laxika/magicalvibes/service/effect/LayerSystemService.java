@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUnti
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
@@ -856,7 +857,7 @@ public class LayerSystemService {
      *     every mutable field the pass seeds from or applies with — tap state
      *     ({@code OWN_TAPPED_CREATURES}, tapped-scope filters), attachment, chosen values,
      *     counters (P/T predicate leaves, AWAKENING animation), P/T modifiers and overrides,
-     *     animation state, granted/removed keywords, colors, subtypes, card types, the
+     *     animation state, until-end-of-turn granted and removed keywords, the
      *     transient land-type override, lose-all flags, text replacements and persistent
      *     granted activated abilities;</li>
      * <li>commander designations, which are read by commander-filtered static effects;</li>
@@ -865,6 +866,8 @@ public class LayerSystemService {
      *     tests that mutate an unfrozen card in place ({@code TestCards.mutableCard}) — a frozen
      *     card cannot change, so its identity covers it;</li>
      * <li>the floating continuous effects (immutable records — identity suffices);</li>
+     * <li>the perpetual changes to cards (P/T, keywords, card types, subtypes, a replaced creature type), read as
+     *     part of the cards' own characteristics;</li>
      * <li>recorded ownership of permanents that changed control, read by ownership filters;</li>
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
      *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
@@ -996,6 +999,10 @@ public class LayerSystemService {
         h = mix(h, gameData.perpetualCardRemovedKeywords.hashCode());
         h = mix(h, gameData.perpetualCardRemovedKeywords.size());
         h = mix(h, gameData.perpetualCardExtraKeywordInstances.hashCode());
+        h = mix(h, gameData.perpetualKeywords.hashCode());
+        h = mix(h, gameData.perpetualCardTypes.hashCode());
+        h = mix(h, gameData.perpetualCardSubtypes.hashCode());
+        h = mix(h, gameData.perpetualCreatureTypeReplacedCardIds.hashCode());
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
@@ -1111,14 +1118,8 @@ public class LayerSystemService {
         h = hashEnums(h, p.getFaceDownSubtypes());
 
         h = hashEnums(h, p.getGrantedKeywords());
-        h = hashEnums(h, p.getPersistentGrantedKeywords());
         h = hashEnums(h, p.getRemovedKeywords());
         h = hashEnums(h, p.getUntilNextTurnKeywords());
-        h = hashEnums(h, p.getGrantedColors());
-        h = hashEnums(h, p.getGrantedSubtypes());
-        h = hashEnums(h, p.getPersistentGrantedCardTypes());
-        h = hashEnums(h, p.getPersistentGrantedSupertypes());
-        h = hashEnums(h, p.getPersistentRemovedSupertypes());
         h = mix(h, p.getPersistentName() == null ? 0 : p.getPersistentName().hashCode());
 
         for (TextReplacement replacement : p.getTextReplacements()) {
@@ -1318,13 +1319,7 @@ public class LayerSystemService {
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
             CharacteristicState state = new CharacteristicState(permanent.getCard(), permanent);
-            if (permanent.getOriginalCard() != null && !permanent.isFaceDown()
-                    && gameData.perpetualCreatureTypeReplacedCardIds.contains(permanent.getOriginalCard().getId())) {
-                // Perpetually "becomes a [creature type]": the printed creature types are replaced;
-                // the perpetual types stay as persistent grants on the permanent.
-                state.removeSubtypesIf(subtype -> StaticEffectSupport.isCreatureSubtype(subtype)
-                        && !permanent.getGrantedSubtypes().contains(subtype));
-            }
+            seedPerpetualCardTypes(gameData, permanent, state);
             if (permanent.isFaceDown() && (permanent.isCloaked() || permanent.isFaceDownWard())) {
                 state.addKeyword(Keyword.WARD);
             }
@@ -1339,11 +1334,12 @@ public class LayerSystemService {
             // (colors and keywords are untouched by layer 4).
             seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
             // A one-shot changeling grant (e.g. Wings of Velis Vel) is not seeded into the state
-            // until layer 6, so it is also read from the permanent's granted keywords here.
+            // until layer 6, so it is also read from the permanent's granted keywords and its
+            // floating keyword grants here.
             boolean grantedChangeling = !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                     && !permanent.getRemovedKeywords().contains(Keyword.CHANGELING)
                     && (permanent.getGrantedKeywords().contains(Keyword.CHANGELING)
-                    || permanent.getPersistentGrantedKeywords().contains(Keyword.CHANGELING));
+                    || hasFloatingKeywordGrant(gameData, permanent.getId(), Keyword.CHANGELING));
             if (state.hasKeyword(Keyword.CHANGELING) || grantedChangeling) {
                 for (CardSubtype subtype : CardSubtype.values()) {
                     if (StaticEffectSupport.isCreatureSubtype(subtype)) state.addSubtype(subtype);
@@ -2337,6 +2333,16 @@ public class LayerSystemService {
                             null, false, false, null, grant.supertype()));
                 }
             }
+            case SetTargetPermanentSupertypeEffect change -> {
+                if (instance.floating() == null) return;
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                    if (change.gained()) {
+                        states.get(target.permanent().getId()).addSupertype(change.supertype());
+                    } else {
+                        states.get(target.permanent().getId()).removeSupertype(change.supertype());
+                    }
+                }
+            }
             case GrantSupertypeUntilEndOfTurnEffect grant -> {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
@@ -3138,7 +3144,10 @@ public class LayerSystemService {
         } else {
             state.snapshotPrintedTriggerKeywords();
             state.addKeywords(permanent.getGrantedKeywords());
-            state.addKeywords(permanent.getPersistentGrantedKeywords());
+            if (permanent.getOriginalCard() != null) {
+                state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
+                        gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())));
+            }
             state.addKeywords(permanent.getUntilNextTurnKeywords());
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
                     gameData.perpetualCardKeywords.getOrDefault(permanent.getCard().getId(), Set.of())));
@@ -3148,6 +3157,30 @@ public class LayerSystemService {
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
         }
         state.snapshotSeededCharacteristics();
+    }
+
+    /**
+     * Seeds the card types and subtypes the permanent's card has perpetually gained, and drops its printed creature
+     * types when it perpetually became a creature type. A perpetual change is made to the card, not an effect with a
+     * duration (CR 611.2a), so it is part of the characteristics every layer starts from, as the card's printed ones
+     * are; a face-down permanent has none of its card's characteristics (CR 708.2a).
+     */
+    private static void seedPerpetualCardTypes(GameData gameData, Permanent permanent, CharacteristicState state) {
+        if (permanent.getOriginalCard() == null || permanent.isFaceDown()) {
+            return;
+        }
+        UUID cardId = permanent.getOriginalCard().getId();
+        if (gameData.perpetualCreatureTypeReplacedCardIds.contains(cardId)) {
+            state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+        }
+        gameData.perpetualCardTypes.getOrDefault(cardId, Set.of()).forEach(state::addCardType);
+        gameData.perpetualCardSubtypes.getOrDefault(cardId, Set.of()).forEach(state::addSubtype);
+    }
+
+    /** Whether a floating effect on {@code permanentId} grants it {@code keyword}. */
+    private static boolean hasFloatingKeywordGrant(GameData gameData, UUID permanentId, Keyword keyword) {
+        return gameData.floatingEffectsOnPermanent(permanentId, GrantKeywordEffect.class).stream()
+                .anyMatch(fe -> ((GrantKeywordEffect) fe.effect()).keywords().contains(keyword));
     }
 
     /**

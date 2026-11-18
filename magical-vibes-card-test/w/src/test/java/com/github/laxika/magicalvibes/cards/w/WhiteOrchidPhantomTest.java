@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -130,7 +131,7 @@ class WhiteOrchidPhantomTest extends BaseCardTest {
     @DisplayName("An indestructible target still lets its controller search")
     void indestructibleLandStillAllowsSearch() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new GhostQuarter());
-        land.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, land, Keyword.INDESTRUCTIBLE);
         harness.setLibrary(player2, List.of(new Forest()));
 
         castWhiteOrchidPhantom();

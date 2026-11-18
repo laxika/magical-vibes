@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -32,7 +33,7 @@ class OliviaMobilizedForWarTest extends BaseCardTest {
 
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
         assertThat(gqs.hasKeyword(gd, fox, Keyword.HASTE)).isTrue();
-        assertThat(fox.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, fox)).contains(CardSubtype.VAMPIRE);
     }
 
     @Test
@@ -44,7 +45,7 @@ class OliviaMobilizedForWarTest extends BaseCardTest {
 
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, fox, Keyword.HASTE)).isFalse();
-        assertThat(fox.getGrantedSubtypes()).doesNotContain(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, fox)).doesNotContain(CardSubtype.VAMPIRE);
     }
 
     @Test
@@ -58,7 +59,7 @@ class OliviaMobilizedForWarTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
         assertThat(gqs.hasKeyword(gd, fox, Keyword.HASTE)).isTrue();
-        assertThat(fox.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, fox)).contains(CardSubtype.VAMPIRE);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -74,7 +75,7 @@ class OliviaMobilizedForWarTest extends BaseCardTest {
 
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
         assertThat(gqs.hasKeyword(gd, fox, Keyword.HASTE)).isFalse();
-        assertThat(fox.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, fox)).contains(CardSubtype.VAMPIRE);
     }
 
     @Test
@@ -92,7 +93,7 @@ class OliviaMobilizedForWarTest extends BaseCardTest {
         Permanent fox = findPermanent(player1, "Devilthorn Fox");
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, fox, Keyword.HASTE)).isFalse();
-        assertThat(fox.getGrantedSubtypes()).doesNotContain(CardSubtype.VAMPIRE);
+        assertThat(PermanentGrants.subtypesOf(gd, fox)).doesNotContain(CardSubtype.VAMPIRE);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

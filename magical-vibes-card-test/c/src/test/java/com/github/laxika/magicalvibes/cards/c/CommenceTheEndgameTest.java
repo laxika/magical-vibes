@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -39,7 +40,7 @@ class CommenceTheEndgameTest extends BaseCardTest {
     @DisplayName("Adds counters to an existing Army and makes it a Zombie")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new CommenceTheEndgame(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -48,7 +49,7 @@ class CommenceTheEndgameTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
@@ -79,8 +80,8 @@ class CommenceTheEndgameTest extends BaseCardTest {
     void choosesOneArmy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
@@ -91,9 +92,9 @@ class CommenceTheEndgameTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 
@@ -101,7 +102,7 @@ class CommenceTheEndgameTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creating your own Army")
     void ignoresOpponentsArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.castFromHand(player1, new CommenceTheEndgame(), "{4}{U}{U}");
@@ -113,6 +114,6 @@ class CommenceTheEndgameTest extends BaseCardTest {
         assertThat(army.getCard().getSubtypes()).contains(CardSubtype.ARMY, CardSubtype.ZOMBIE);
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.ZOMBIE);
     }
 }

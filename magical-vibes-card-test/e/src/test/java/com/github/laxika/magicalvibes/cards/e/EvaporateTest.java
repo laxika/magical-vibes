@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
 import com.github.laxika.magicalvibes.cards.g.GiantOyster;
 import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
@@ -83,7 +84,7 @@ class EvaporateTest extends BaseCardTest {
     @DisplayName("Evaporate damages a creature that is both white and blue only once")
     void damagesWhiteAndBlueCreatureOnlyOnce() {
         Permanent oyster = harness.addToBattlefieldAndReturn(player2, new GiantOyster());
-        oyster.getGrantedColors().add(CardColor.WHITE);
+        PermanentGrants.color(gd, oyster, CardColor.WHITE);
 
         castEvaporate();
 

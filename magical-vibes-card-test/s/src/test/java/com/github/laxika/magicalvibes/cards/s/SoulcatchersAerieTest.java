@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BattleScreech;
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
@@ -131,7 +132,7 @@ class SoulcatchersAerieTest extends BaseCardTest {
     void triggersForCreatureGrantedBirdSubtype() {
         Permanent aerie = harness.addToBattlefieldAndReturn(player1, new SoulcatchersAerie());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
-        creature.getGrantedSubtypes().add(CardSubtype.BIRD);
+        PermanentGrants.subtype(gd, creature, CardSubtype.BIRD);
 
         killWithLavaDart(player1, creature);
 

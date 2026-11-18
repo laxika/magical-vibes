@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
@@ -64,7 +65,7 @@ class DownDownToGoblinTownTest extends BaseCardTest {
     @DisplayName("Chapter II adds a counter and Goblin subtype to an existing Army")
     void chapterIIUsesExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         addSagaWithLore(1);
 
         triggerNextChapter();
@@ -72,7 +73,7 @@ class DownDownToGoblinTownTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
     }
 
     @Test
@@ -139,7 +140,7 @@ class DownDownToGoblinTownTest extends BaseCardTest {
     @DisplayName("Chapter II ignores an opponent's Army and creates its controller's Goblin Army")
     void chapterIIIgnoresOpponentsArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         addSagaWithLore(1);
 
         triggerNextChapter();
@@ -149,7 +150,7 @@ class DownDownToGoblinTownTest extends BaseCardTest {
         assertThat(army).isNotNull();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, opposingArmy)).doesNotContain(CardSubtype.GOBLIN);
     }
 
     @Test

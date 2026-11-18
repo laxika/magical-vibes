@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.o.OrcishCaptain;
@@ -13,7 +15,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -152,7 +156,7 @@ class DwarvenSoldierTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        blocker.getGrantedSubtypes().add(CardSubtype.ORC);
+        PermanentGrants.subtype(gd, blocker, CardSubtype.ORC);
         harness.passBothPriorities();
 
         assertThat(soldier.getToughnessModifier()).isZero();
@@ -166,7 +170,7 @@ class DwarvenSoldierTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        attacker.getGrantedSubtypes().add(CardSubtype.ORC);
+        PermanentGrants.subtype(gd, attacker, CardSubtype.ORC);
         harness.passBothPriorities();
 
         assertThat(soldier.getToughnessModifier()).isZero();
@@ -180,7 +184,7 @@ class DwarvenSoldierTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        blocker.getGrantedSubtypes().remove(CardSubtype.ORC);
+        gd.endFloatingEffect(orcGrants.get(blocker));
         harness.passBothPriorities();
 
         assertThat(soldier.getToughnessModifier()).isEqualTo(2);
@@ -194,7 +198,7 @@ class DwarvenSoldierTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        attacker.getGrantedSubtypes().remove(CardSubtype.ORC);
+        gd.endFloatingEffect(orcGrants.get(attacker));
         harness.passBothPriorities();
 
         assertThat(soldier.getToughnessModifier()).isEqualTo(2);
@@ -204,9 +208,11 @@ class DwarvenSoldierTest extends BaseCardTest {
         return addCreatureReady(player, orc ? new OrcishCaptain() : new GrizzlyBears());
     }
 
+    private final Map<Permanent, FloatingContinuousEffect> orcGrants = new HashMap<>();
+
     private Permanent addMutableOrcCreature(Player player) {
         Permanent permanent = addCreatureReady(player, new GrizzlyBears());
-        permanent.getGrantedSubtypes().add(CardSubtype.ORC);
+        orcGrants.put(permanent, PermanentGrants.subtype(gd, permanent, CardSubtype.ORC));
         return permanent;
     }
 }

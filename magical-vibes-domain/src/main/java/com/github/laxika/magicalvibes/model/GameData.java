@@ -4756,10 +4756,23 @@ public class GameData {
      * with that permanent and ends with its duration; a permanent that leaves the battlefield and returns is a new
      * object it doesn't apply to.
      */
-    public void addEffectOnPermanent(StackEntry entry, CardEffect effect, UUID permanentId,
-                                     com.github.laxika.magicalvibes.model.effect.Duration duration) {
-        addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
-                entry.getSourcePermanentId(), entry.getControllerId(), effect, permanentId, duration));
+    public FloatingContinuousEffect addEffectOnPermanent(StackEntry entry, CardEffect effect, UUID permanentId,
+                                                         com.github.laxika.magicalvibes.model.effect.Duration duration) {
+        return addEffectOnPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, permanentId, duration);
+    }
+
+    /**
+     * An effect on the permanent {@code permanentId} for {@code duration} made where no resolving stack entry is at
+     * hand: a replacement effect modifying how the permanent enters (CR 614.1c: "it enters with haste", "it's a black
+     * Zombie in addition to its other colors and types") or a choice's continuation. It gets its timestamp now
+     * (CR 613.7b), so it applies after the effects that already exist, and returns the stamped effect.
+     */
+    public FloatingContinuousEffect addEffectOnPermanent(String sourceCardName, UUID sourcePermanentId,
+                                                         UUID controllerId, CardEffect effect, UUID permanentId,
+                                                         com.github.laxika.magicalvibes.model.effect.Duration duration) {
+        return addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceCardName, sourcePermanentId, controllerId,
+                effect, permanentId, duration));
     }
 
     /**

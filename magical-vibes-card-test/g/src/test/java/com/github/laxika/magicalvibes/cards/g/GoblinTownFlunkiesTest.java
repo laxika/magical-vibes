@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,7 +37,7 @@ class GoblinTownFlunkiesTest extends BaseCardTest {
     @DisplayName("Entering the battlefield amasses on an existing Army")
     void amassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new GoblinTownFlunkies()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -47,7 +48,7 @@ class GoblinTownFlunkiesTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
     }
 
     @Test
@@ -89,7 +90,7 @@ class GoblinTownFlunkiesTest extends BaseCardTest {
     @DisplayName("An opposing Army does not prevent creating your own Army")
     void ignoresOpponentsArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GoblinTownFlunkies());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new GoblinTownFlunkies()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -107,8 +108,8 @@ class GoblinTownFlunkiesTest extends BaseCardTest {
     void choosesOneOfMultipleArmies() {
         Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
         Permanent secondArmy = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
-        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
-        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, firstArmy, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, secondArmy, CardSubtype.ARMY);
         harness.setHand(player1, List.of(new GoblinTownFlunkies()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

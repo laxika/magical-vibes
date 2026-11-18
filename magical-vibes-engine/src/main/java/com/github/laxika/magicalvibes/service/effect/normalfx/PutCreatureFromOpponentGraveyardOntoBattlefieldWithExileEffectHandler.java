@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -43,7 +46,8 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         result.permanent().getGrantedKeywords().add(Keyword.HASTE);
         // "It gains haste" has no duration, so it also survives the end-of-turn reset of granted keywords.
-        result.permanent().getPersistentGrantedKeywords().add(Keyword.HASTE);
+        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                result.permanent().getId(), Duration.PERMANENT);
         if (((PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) effect).exileIfItWouldLeave()) {
             result.permanent().setExileIfLeavesBattlefield(true);
         }

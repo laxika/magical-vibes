@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -64,9 +65,13 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
 
         Permanent permanent = new Permanent(cardToReturn);
-        graveyardReturnSupport.applyPermanentGrants(permanent, null,
+        graveyardReturnSupport.applyPermanentGrants(gameData, battlefieldControllerId, permanent, null,
                 returnEffect.subtypeOverride().isEmpty() ? returnEffect.grantSubtype() : null);
-        permanent.getPersistentGrantedKeywords().addAll(returnEffect.grantKeywords());
+        if (!returnEffect.grantKeywords().isEmpty()) {
+            gameData.addEffectOnPermanent(entry,
+                    new GrantKeywordEffect(Set.copyOf(returnEffect.grantKeywords()), GrantScope.TARGET),
+                    permanent.getId(), Duration.PERMANENT);
+        }
         if (returnEffect.enterWithCounter() != null && returnEffect.enterWithCounterCount() > 0) {
             int counters = gameQueryService.replaceCounters(gameData, permanent, battlefieldControllerId,
                     returnEffect.enterWithCounter(), returnEffect.enterWithCounterCount());

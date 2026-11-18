@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BilbosDeadlySlice;
 import com.github.laxika.magicalvibes.cards.o.OrdinaryBear;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -37,21 +38,21 @@ class FearsomeGoblinPairTest extends BaseCardTest {
     @DisplayName("When Fearsome Goblin Pair dies, it amasses Goblins 4 on an existing Army")
     void deathTriggerAmassesOnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
 
         destroyPair(pair.getId());
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.GOBLIN);
     }
 
     @Test
     @DisplayName("Amass adds counters to an existing Army without removing its other types")
     void deathTriggerPreservesExistingCountersAndTypes() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         army.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
 
@@ -68,7 +69,7 @@ class FearsomeGoblinPairTest extends BaseCardTest {
     @DisplayName("An opponent's Army does not prevent creation of your Goblin Army")
     void deathTriggerIgnoresOpponentsArmy() {
         Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new OrdinaryBear());
-        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, opposingArmy, CardSubtype.ARMY);
         Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
 
         destroyPair(pair.getId());
@@ -84,9 +85,9 @@ class FearsomeGoblinPairTest extends BaseCardTest {
     @DisplayName("With multiple Armies, only the chosen Army receives counters and becomes a Goblin")
     void deathTriggerChoosesOneArmy() {
         Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
-        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, firstArmy, CardSubtype.ARMY);
         Permanent secondArmy = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
-        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, secondArmy, CardSubtype.ARMY);
         Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
 
         destroyPair(pair.getId());

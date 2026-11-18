@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraTheFirebrand;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,7 +25,7 @@ class MagmaquakeTest extends BaseCardTest {
     void damagesFlyingPlaneswalkers() {
         Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraTheFirebrand());
         chandra.setCounterCount(CounterType.LOYALTY, 3);
-        chandra.getPersistentGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keyword(gd, chandra, Keyword.FLYING);
         harness.setHand(player1, List.of(new Magmaquake()));
         harness.addMana(player1, ManaColor.RED, 4);
 

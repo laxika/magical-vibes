@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EiganjoCastle;
 import com.github.laxika.magicalvibes.cards.h.HanaKami;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
@@ -35,7 +36,7 @@ class SenseiGoldenTailTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.TRAINING)).isEqualTo(1);
-        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.SAMURAI);
+        assertThat(PermanentGrants.subtypesOf(gd, target)).contains(CardSubtype.SAMURAI);
 
         declareAttackersAndPrepareBlockers(List.of(indexOf(target)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(target))));

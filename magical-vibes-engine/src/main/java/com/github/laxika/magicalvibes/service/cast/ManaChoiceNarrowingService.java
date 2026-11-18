@@ -154,7 +154,6 @@ public class ManaChoiceNarrowingService {
         boolean artifactContext = gameQueryService.isArtifact(gameData, source);
         boolean myrContext = source.getCard().getSubtypes().contains(CardSubtype.MYR);
         Set<CardSubtype> subtypeContext = new HashSet<>(source.getCard().getSubtypes());
-        subtypeContext.addAll(source.getGrantedSubtypes());
         subtypeContext.addAll(gameQueryService.getEffectiveSubtypes(gameData, source));
         return new ManaCost(abilityCost).canPay(pool, 0, artifactContext, myrContext, false, false,
                 false, null, subtypeContext, false, artifactContext);

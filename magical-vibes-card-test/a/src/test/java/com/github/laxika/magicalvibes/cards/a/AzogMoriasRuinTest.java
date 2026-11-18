@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -51,14 +52,14 @@ class AzogMoriasRuinTest extends BaseCardTest {
     @Test
     void addsCountersAndGoblinSubtypeToAnExistingArmy() {
         Permanent army = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         castAzog(target.getId());
 
         assertThat(findPermanents(player2, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
     }
 
     @Test
@@ -111,7 +112,7 @@ class AzogMoriasRuinTest extends BaseCardTest {
     @Test
     void zeroPowerStillMakesAnExistingArmyAGoblinAndDraws() {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.setPowerModifier(-2);
         harness.setLibrary(player1, List.of(new Forest()));
@@ -121,16 +122,16 @@ class AzogMoriasRuinTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Forest");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, army)).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
     }
 
     @Test
     void theTargetsControllerChoosesWhichArmyReceivesCounters() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         castAzog(target.getId());
@@ -138,9 +139,9 @@ class AzogMoriasRuinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.GOBLIN);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(PermanentGrants.subtypesOf(gd, second)).contains(CardSubtype.GOBLIN);
         assertThat(findPermanents(player2, "Goblin Army")).isEmpty();
     }
 

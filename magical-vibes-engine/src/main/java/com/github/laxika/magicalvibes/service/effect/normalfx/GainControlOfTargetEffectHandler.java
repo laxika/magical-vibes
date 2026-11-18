@@ -73,9 +73,6 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
                     e, e.duration(), null, entry.getCard().getName());
 
             if (controlApplied && e.grantedSubtype() != null) {
-                if (!target.getGrantedSubtypes().contains(e.grantedSubtype())) {
-                    target.getGrantedSubtypes().add(e.grantedSubtype());
-                }
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(), new GrantSubtypeEffect(e.grantedSubtype(), GrantScope.TARGET),

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -98,7 +99,7 @@ class NoxiousGraspTest extends BaseCardTest {
     @Test
     void gainsLifeWhenOwnIndestructibleCreatureSurvives() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new LeafkinDruid());
-        target.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new NoxiousGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         int lifeBefore = gd.getLife(player1.getId());

@@ -35,7 +35,7 @@ class MomosHeistTest extends BaseCardTest {
         assertThat(artifact.isTapped()).isFalse();
         harness.assertOnBattlefield(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player2, "Ornithopter");
-        assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -74,7 +74,7 @@ class MomosHeistTest extends BaseCardTest {
         cast(artifact);
 
         assertThat(artifact.isTapped()).isFalse();
-        assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isTrue();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
@@ -103,7 +103,7 @@ class MomosHeistTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player2, "Ornithopter");
-        assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.END_STEP);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -28,7 +29,7 @@ class DarkBanishingTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is black in addition to another color")
     void cannotTargetMulticoloredBlackCreature() {
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new CanopySpider());
-        spider.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, spider, CardColor.BLACK);
 
         harness.setHand(player1, List.of(new DarkBanishing()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -47,7 +48,7 @@ class DarkBanishingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castInstant(player1, 0, spider.getId());
 
-        spider.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, spider, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Canopy Spider");

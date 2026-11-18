@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.ShivanZombie;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
@@ -111,7 +112,7 @@ class AnnihilateTest extends BaseCardTest {
     @DisplayName("Annihilate draws even when indestructibility prevents destruction")
     void drawsWhenTargetIsIndestructible() {
         Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        barbarian.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keyword(gd, barbarian, Keyword.INDESTRUCTIBLE);
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new Annihilate()));
         harness.addMana(player1, ManaColor.BLACK, 5);

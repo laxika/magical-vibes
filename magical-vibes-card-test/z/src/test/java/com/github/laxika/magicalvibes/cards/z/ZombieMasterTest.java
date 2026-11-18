@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -172,7 +173,7 @@ class ZombieMasterTest extends BaseCardTest {
     void noncreatureZombiePermanentGainsRegenerateAbility() {
         harness.addToBattlefield(player1, new ZombieMaster());
         Permanent zombiePermanent = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        zombiePermanent.getGrantedSubtypes().add(CardSubtype.ZOMBIE);
+        PermanentGrants.subtype(gd, zombiePermanent, CardSubtype.ZOMBIE);
 
         assertThat(gqs.hasKeyword(gd, zombiePermanent, Keyword.SWAMPWALK)).isFalse();
         assertThat(gs.getEffectiveActivatedAbilities(gd, zombiePermanent)).isNotEmpty();

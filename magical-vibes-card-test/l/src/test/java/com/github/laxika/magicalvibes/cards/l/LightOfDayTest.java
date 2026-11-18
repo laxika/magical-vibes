@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.Souldrinker;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
@@ -118,7 +119,7 @@ class LightOfDayTest extends BaseCardTest {
     void multicoloredBlackCreatureCannotAttackOrBlock() {
         harness.addToBattlefield(player1, new LightOfDay());
         Permanent creature = addCreatureReady(player1, new TrainedArmodon());
-        creature.getGrantedColors().add(CardColor.BLACK);
+        PermanentGrants.color(gd, creature, CardColor.BLACK);
 
         assertThat(als.canAttack(gd, creature, player1.getId())).isFalse();
         assertThat(bls.canBlock(gd, creature)).isFalse();

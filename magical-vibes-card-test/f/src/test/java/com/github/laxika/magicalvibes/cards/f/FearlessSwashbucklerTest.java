@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -85,7 +86,7 @@ class FearlessSwashbucklerTest extends BaseCardTest {
     void triggersForOneAttackerThatIsBothPirateAndVehicle() {
         harness.addToBattlefield(player1, new FearlessSwashbuckler());
         Permanent vehicle = addDreadnoughtReady();
-        vehicle.getGrantedSubtypes().add(CardSubtype.PIRATE);
+        PermanentGrants.subtype(gd, vehicle, CardSubtype.PIRATE);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -104,7 +105,7 @@ class BlightedShamanTest extends BaseCardTest {
     void sacrificeSwampCanSacrificeSourceWhenItIsASwamp() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
         grantCardTypeUntilEndOfTurn(shaman, CardType.LAND);
-        shaman.getGrantedSubtypes().add(CardSubtype.SWAMP);
+        PermanentGrants.subtype(gd, shaman, CardSubtype.SWAMP);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -59,7 +60,7 @@ class AscendantSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(3);
-        assertThat(spirit.getGrantedSubtypes()).contains(CardSubtype.WARRIOR);
+        assertThat(PermanentGrants.subtypesOf(gd, spirit)).contains(CardSubtype.WARRIOR);
 
         resetPriority();
         addSnowMana(3);
@@ -69,7 +70,7 @@ class AscendantSpiritTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, spirit, com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
         assertThat(spirit.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(spirit.getGrantedSubtypes()).contains(CardSubtype.ANGEL);
+        assertThat(PermanentGrants.subtypesOf(gd, spirit)).contains(CardSubtype.ANGEL);
 
         resetPriority();
         addSnowMana(8);

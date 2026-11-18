@@ -49,7 +49,7 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, clay)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, clay, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, clay, Keyword.DEFENDER)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, clay, CardSubtype.WALL)).isFalse();
     }
 
     @Test
@@ -61,7 +61,7 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, clay)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, clay, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, clay, Keyword.DEFENDER)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, clay, CardSubtype.WALL)).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class PrimalClayTest extends BaseCardTest {
 
         clay.resetModifiers();
 
-        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, clay, CardSubtype.WALL)).isTrue();
     }
     @DisplayName("Choosing the 1/6 Wall shape sets a 1/6 Wall with defender")
     @Test
@@ -81,7 +81,7 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, clay)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, clay, Keyword.DEFENDER)).isTrue();
         assertThat(gqs.hasKeyword(gd, clay, Keyword.FLYING)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, clay, CardSubtype.WALL)).isTrue();
     }
 
     @Test
@@ -121,7 +121,7 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, returnedClay)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, returnedClay)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, returnedClay, Keyword.DEFENDER)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(returnedClay, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returnedClay, CardSubtype.WALL)).isTrue();
     }
 
     @Test
@@ -188,6 +188,6 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, copy, Keyword.DEFENDER)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(copy, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, copy, CardSubtype.WALL)).isTrue();
     }
 }
