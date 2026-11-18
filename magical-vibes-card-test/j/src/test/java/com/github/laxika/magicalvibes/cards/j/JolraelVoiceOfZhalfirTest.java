@@ -77,7 +77,7 @@ class JolraelVoiceOfZhalfirTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isFalse();

@@ -64,7 +64,7 @@ class CargoShipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ship.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(ship.getId())).isTrue();
         assertThat(gqs.isCreature(gd, ship)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }

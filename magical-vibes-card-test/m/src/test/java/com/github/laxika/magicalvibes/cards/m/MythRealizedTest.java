@@ -73,7 +73,7 @@ class MythRealizedTest extends BaseCardTest {
         assertThat(gqs.isEnchantment(gd, myth)).isTrue();
         assertThat(gqs.getEffectivePower(gd, myth)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, myth)).isEqualTo(3);
-        assertThat(myth.getTransientSubtypes())
+        assertThat(gqs.getEffectiveSubtypes(gd, myth))
                 .containsExactlyInAnyOrder(CardSubtype.MONK, CardSubtype.AVATAR);
 
         myth.setCounterCount(CounterType.LORE, 5);
@@ -98,7 +98,7 @@ class MythRealizedTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, myth)).isFalse();
         assertThat(gqs.isEnchantment(gd, myth)).isTrue();
-        assertThat(myth.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, myth)).isEmpty();
     }
 
     @Test

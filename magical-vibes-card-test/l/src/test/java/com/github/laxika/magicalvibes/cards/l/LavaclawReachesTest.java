@@ -53,7 +53,7 @@ class LavaclawReachesTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, reaches)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, reaches))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
-        assertThat(reaches.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, reaches)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test

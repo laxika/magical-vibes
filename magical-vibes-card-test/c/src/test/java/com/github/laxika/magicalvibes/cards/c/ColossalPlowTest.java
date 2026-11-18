@@ -32,7 +32,7 @@ class ColossalPlowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(plow.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(plow.getId())).isTrue();
         assertThat(gqs.isCreature(gd, plow)).isTrue();
         assertThat(angel.isTapped()).isTrue();
         assertThat(bears.isTapped()).isTrue();

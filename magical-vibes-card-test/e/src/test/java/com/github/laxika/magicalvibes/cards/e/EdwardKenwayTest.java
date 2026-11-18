@@ -49,9 +49,7 @@ class EdwardKenwayTest extends BaseCardTest {
     void vehicleCombatDamageExilesTopCardFaceDown() {
         addCreatureReady(player1, new EdwardKenway());
         Permanent vehicle = addCreatureReady(player1, new RenegadeFreighter());
-        vehicle.setAnimatedUntilEndOfTurn(true);
-        vehicle.setAnimatedPower(4);
-        vehicle.setAnimatedToughness(3);
+        animateUntilEndOfTurn(vehicle, 4, 3);
         vehicle.setAttacking(true);
         vehicle.setAttackTarget(player2.getId());
 
@@ -172,9 +170,7 @@ class EdwardKenwayTest extends BaseCardTest {
 
     private Permanent attackingVehicle(Player controller, Player defender) {
         Permanent vehicle = addCreatureReady(controller, new RenegadeFreighter());
-        vehicle.setAnimatedUntilEndOfTurn(true);
-        vehicle.setAnimatedPower(4);
-        vehicle.setAnimatedToughness(3);
+        animateUntilEndOfTurn(vehicle, 4, 3);
         vehicle.setAttacking(true);
         vehicle.setAttackTarget(defender.getId());
         return vehicle;

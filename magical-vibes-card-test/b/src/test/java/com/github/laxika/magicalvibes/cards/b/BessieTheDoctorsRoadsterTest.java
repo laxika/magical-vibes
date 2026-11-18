@@ -34,9 +34,7 @@ class BessieTheDoctorsRoadsterTest extends BaseCardTest {
         Permanent bessie = addCreatureReady(player1, new BessieTheDoctorsRoadster());
         Permanent legendaryCreature = addCreatureReady(player1, new ArvadTheCursed());
         Permanent nonlegendaryCreature = addCreatureReady(player1, new GrizzlyBears());
-        bessie.setAnimatedUntilEndOfTurn(true);
-        bessie.setAnimatedPower(3);
-        bessie.setAnimatedToughness(4);
+        animateUntilEndOfTurn(bessie, 3, 4);
 
         declareAttackers(player1, List.of(0));
 
@@ -131,9 +129,7 @@ class BessieTheDoctorsRoadsterTest extends BaseCardTest {
     void attackTriggerResolvesAfterBessieLeavesBattlefield() {
         Permanent bessie = addCreatureReady(player1, new BessieTheDoctorsRoadster());
         Permanent target = addCreatureReady(player1, new ArvadTheCursed());
-        bessie.setAnimatedUntilEndOfTurn(true);
-        bessie.setAnimatedPower(3);
-        bessie.setAnimatedToughness(4);
+        animateUntilEndOfTurn(bessie, 3, 4);
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, target.getId());

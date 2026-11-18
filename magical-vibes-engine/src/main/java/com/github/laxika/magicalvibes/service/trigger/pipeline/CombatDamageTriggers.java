@@ -297,6 +297,7 @@ public class CombatDamageTriggers {
                 effectiveSubtypes.addAll(creature.getCard().getSubtypes());
                 effectiveSubtypes.addAll(creature.getGrantedSubtypes());
                 effectiveSubtypes.addAll(creature.getTransientSubtypes());
+                effectiveSubtypes.addAll(gameQueryService.getEffectiveSubtypes(gameData, creature));
                 if (gameQueryService.hasKeyword(gameData, creature, Keyword.CHANGELING)) {
                     gameData.combatDamageSourcesWithChangelingThisTurn.add(creature.getId());
                 }

@@ -40,7 +40,7 @@ class BomatBazaarBargeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(barge.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(barge.getId())).isTrue();
         assertThat(gqs.isCreature(gd, barge)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }
@@ -128,6 +128,6 @@ class BomatBazaarBargeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, barge)).isFalse();
-        assertThat(barge.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(barge.getId())).isFalse();
     }
 }

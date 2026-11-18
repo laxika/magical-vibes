@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,11 +41,11 @@ class EnsouledScimitarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, scimitar)).isTrue();
-        assertThat(gqs.isArtifact(scimitar)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(scimitar, CardSubtype.EQUIPMENT)).isTrue();
+        assertThat(gqs.isArtifact(gd, scimitar)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, scimitar)).contains(CardSubtype.EQUIPMENT);
         assertThat(gqs.getEffectivePower(gd, scimitar)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, scimitar)).isEqualTo(5);
-        assertThat(GameQueryService.permanentHasSubtype(scimitar, CardSubtype.SPIRIT)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, scimitar)).contains(CardSubtype.SPIRIT);
         assertThat(gqs.hasKeyword(gd, scimitar, Keyword.FLYING)).isTrue();
     }
 
@@ -68,7 +67,7 @@ class EnsouledScimitarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, scimitar)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(scimitar, CardSubtype.SPIRIT)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, scimitar)).doesNotContain(CardSubtype.SPIRIT);
         assertThat(gqs.hasKeyword(gd, scimitar, Keyword.FLYING)).isFalse();
     }
 

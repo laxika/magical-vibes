@@ -58,7 +58,7 @@ class CrawlingBarrensTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, barrens)).isTrue();
         assertThat(gqs.getEffectivePower(gd, barrens)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, barrens)).isEqualTo(2);
-        assertThat(barrens.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, barrens)).contains(CardSubtype.ELEMENTAL);
         assertThat(barrens.getCard().hasType(CardType.LAND)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

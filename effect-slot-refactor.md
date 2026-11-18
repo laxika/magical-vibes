@@ -763,6 +763,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - For the types and colours: most writers already add a floating effect too. These set only the field: the animation paths in `AnimationSupport`, the non-replacing basic land type, `AddCardTypeToOwnPermanentsUntilEndOfTurn` and `LoseSubtypesUntilEndOfTurn`. `LayerSystemService` seeds these fields, or applies them after layer 4, outside timestamp order.
 - Left: `Permanent`'s layered fields (P/T, keywords, colours, types, protection, abilities), the shields, part 3's phasing item; then step 6.
 
+**D (part 11: until-end-of-turn and end-of-combat animations).**
+- An animation for those durations is one floating effect per characteristic (`AnimationSupport.addAnimationFloatingEffects`, which the "for as long as" and next-upkeep animations share): card types (`SetCardTypesEffect` for "becomes a creature" alone, CR 205.1a), creature types (the first one sets them), colours, keywords, base P/T (7b, none when it keeps the printed values). Crew stays the one floating `AnimatePermanentsEffect`. Gone: `animatedUntilEndOfTurn`, `animatedUntilEndOfCombat`, `animatedPower`, `animatedToughness`, `animatedColor`, `animatedPtFromCard`, `clearUntilEndOfCombatAnimation`, four `EndOfTurnStateField`s. Animation no longer writes `transientSubtypes`, `grantedCardTypes`, `transientColors`, the creature-type overrides or `grantedKeywords`.
+- Readers outside the layered pass that took the flags as "is a creature" ask `GameData.animatedByFloatingEffect`. The engine and AI callers of the `GameData`-less `isArtifact` (blocker facts, protection from artifacts, mana contexts, sacrifice checks, the AI evaluators) use the layered one; three subtype unions for mana and combat-damage records add `getEffectiveSubtypes`.
+- Rules fix (test fails before): an animation's keywords apply at its timestamp (CR 613.7, 613.1f), so a manland animated after Humility keeps its flying and vigilance (`CelestialColonnadeTest`). They used to be seeded as printed, so any "loses all abilities" removed them.
+- Moments: every effect ends at cleanup or end of combat, as the flags did. Phasing out no longer ends an "until end of combat" animation at once: it ends as combat ends, phased out or not (CR 702.26f).
+- Ledger (1,240 card test classes, route tests): only `floating began|ended` lines added, ended where the old state was cleared; trigger lines differ only by random cards, dice and coin flips.
+- Left: the next-turn and permanent animation flags (`animatedUntilNextTurn`, `permanentlyAnimated` with their P/T); the other writers of the type and colour fields (part 10's list); P/T modifiers, keywords, protection, abilities, shields; part 3's phasing item; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

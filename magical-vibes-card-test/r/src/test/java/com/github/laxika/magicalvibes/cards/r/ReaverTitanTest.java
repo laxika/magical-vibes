@@ -46,7 +46,7 @@ class ReaverTitanTest extends BaseCardTest {
 
         Permanent titan = gd.playerBattlefields.get(player1.getId()).get(0);
         assertThat(gqs.isCreature(gd, titan)).isTrue();
-        assertThat(titan.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(titan.getId())).isTrue();
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

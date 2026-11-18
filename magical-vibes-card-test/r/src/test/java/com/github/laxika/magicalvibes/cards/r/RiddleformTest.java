@@ -53,7 +53,7 @@ class RiddleformTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, riddleform)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, riddleform)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, riddleform, Keyword.FLYING)).isTrue();
-        assertThat(riddleform.getTransientSubtypes()).contains(CardSubtype.SPHINX);
+        assertThat(gqs.getEffectiveSubtypes(gd, riddleform)).contains(CardSubtype.SPHINX);
     }
 
     @Test
@@ -101,7 +101,7 @@ class RiddleformTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, riddleform)).isFalse();
-        assertThat(riddleform.getTransientSubtypes()).doesNotContain(CardSubtype.SPHINX);
+        assertThat(gqs.getEffectiveSubtypes(gd, riddleform)).doesNotContain(CardSubtype.SPHINX);
     }
 
     @Test

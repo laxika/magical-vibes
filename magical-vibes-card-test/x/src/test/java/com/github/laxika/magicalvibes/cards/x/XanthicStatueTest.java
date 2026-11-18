@@ -26,11 +26,11 @@ class XanthicStatueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, statue)).isTrue();
-        assertThat(gqs.isArtifact(statue)).isTrue();
+        assertThat(gqs.isArtifact(gd, statue)).isTrue();
         assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(8);
-        assertThat(statue.getTransientSubtypes()).contains(CardSubtype.GOLEM);
-        assertThat(statue.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.getEffectiveSubtypes(gd, statue)).contains(CardSubtype.GOLEM);
+        assertThat(gqs.hasKeyword(gd, statue, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -48,9 +48,9 @@ class XanthicStatueTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, statue)).isFalse();
-        assertThat(gqs.isArtifact(statue)).isTrue();
-        assertThat(statue.getTransientSubtypes()).doesNotContain(CardSubtype.GOLEM);
-        assertThat(statue.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(gqs.isArtifact(gd, statue)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, statue)).doesNotContain(CardSubtype.GOLEM);
+        assertThat(gqs.hasKeyword(gd, statue, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

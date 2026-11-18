@@ -279,7 +279,7 @@ class QuicksilverGargantuanTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gqs.isCreature(gd, copy)).isFalse();
         assertThat(copy.getCounterCount(CounterType.CHARGE)).isZero();
-        assertThat(copy.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(copy.getId())).isFalse();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 1, null, null);

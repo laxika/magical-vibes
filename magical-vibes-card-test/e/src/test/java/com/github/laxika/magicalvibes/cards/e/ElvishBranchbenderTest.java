@@ -46,11 +46,11 @@ class ElvishBranchbenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isTrue();
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
-        assertThat(forest.getTransientSubtypes()).contains(CardSubtype.TREEFOLK);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.TREEFOLK);
         // Still a land (types are additive).
         assertThat(gqs.isLand(gd, forest)).isTrue();
     }
@@ -83,9 +83,9 @@ class ElvishBranchbenderTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(forest.getTransientSubtypes()).doesNotContain(CardSubtype.TREEFOLK);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.TREEFOLK);
     }
 
 

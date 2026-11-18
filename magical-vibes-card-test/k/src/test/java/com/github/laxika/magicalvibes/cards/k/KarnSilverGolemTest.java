@@ -36,8 +36,8 @@ class KarnSilverGolemTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(karn.getEffectivePower()).isEqualTo(0);
-        assertThat(karn.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(8);
     }
 
     @Test
@@ -51,8 +51,8 @@ class KarnSilverGolemTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(karn.getEffectivePower()).isEqualTo(0);
-        assertThat(karn.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(8);
     }
 
     @Test
@@ -64,8 +64,8 @@ class KarnSilverGolemTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(karn.getEffectivePower()).isEqualTo(4);
-        assertThat(karn.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(4);
     }
 
     @Test
@@ -78,11 +78,11 @@ class KarnSilverGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, powerstone.getId());
         harness.passBothPriorities();
 
-        assertThat(powerstone.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(powerstone.getId())).isTrue();
         assertThat(gqs.isCreature(gd, powerstone)).isTrue();
         assertThat(gqs.isArtifact(gd, powerstone)).isTrue();
-        assertThat(powerstone.getEffectivePower()).isEqualTo(3);
-        assertThat(powerstone.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, powerstone)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, powerstone)).isEqualTo(3);
     }
 
     @Test
@@ -97,8 +97,8 @@ class KarnSilverGolemTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, powerstone)).isTrue();
         assertThat(gqs.isArtifact(gd, powerstone)).isTrue();
-        assertThat(powerstone.getEffectivePower()).isEqualTo(3);
-        assertThat(powerstone.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, powerstone)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, powerstone)).isEqualTo(3);
     }
 
     @Test
@@ -140,7 +140,7 @@ class KarnSilverGolemTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(powerstone.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(powerstone.getId())).isFalse();
         assertThat(gqs.isCreature(gd, powerstone)).isFalse();
         assertThat(gqs.isArtifact(gd, powerstone)).isTrue();
     }
@@ -156,14 +156,14 @@ class KarnSilverGolemTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(karn.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(karn.getEffectivePower()).isEqualTo(4);
-        assertThat(karn.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(4);
     }
 
     @Test
@@ -180,8 +180,8 @@ class KarnSilverGolemTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(karn.getEffectivePower()).isEqualTo(0);
-        assertThat(karn.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(8);
     }
 
     @Test
@@ -201,8 +201,8 @@ class KarnSilverGolemTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(karn.getEffectiveToughness()).isEqualTo(8);
-        assertThat(karn.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(0);
     }
 
     @Test
@@ -231,8 +231,8 @@ class KarnSilverGolemTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, powerstone)).isTrue();
-        assertThat(powerstone.getEffectivePower()).isEqualTo(3);
-        assertThat(powerstone.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, powerstone)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, powerstone)).isEqualTo(3);
         assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
     }
 
@@ -249,8 +249,8 @@ class KarnSilverGolemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, powerstone)).isTrue();
-        assertThat(powerstone.getEffectivePower()).isEqualTo(3);
-        assertThat(powerstone.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, powerstone)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, powerstone)).isEqualTo(3);
         assertThat(karn.isTapped()).isTrue();
     }
 

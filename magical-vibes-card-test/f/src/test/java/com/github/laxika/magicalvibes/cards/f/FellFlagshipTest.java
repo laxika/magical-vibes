@@ -71,7 +71,7 @@ class FellFlagshipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flagship.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(flagship.getId())).isTrue();
         assertThat(gqs.isCreature(gd, flagship)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }
@@ -147,7 +147,7 @@ class FellFlagshipTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(flagship.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(flagship.getId())).isFalse();
         assertThat(gqs.isCreature(gd, flagship)).isFalse();
     }
 
@@ -156,9 +156,7 @@ class FellFlagshipTest extends BaseCardTest {
     @DisplayName("Damaged player must discard a card when Fell Flagship deals combat damage")
     void discardOnCombatDamage() {
         Permanent flagship = addFellFlagshipReady(player1);
-        flagship.setAnimatedUntilEndOfTurn(true);
-        flagship.setAnimatedPower(3);
-        flagship.setAnimatedToughness(3);
+        animateUntilEndOfTurn(flagship, 3, 3);
         flagship.setAttacking(true);
 
         harness.setHand(player2, new ArrayList<>(List.of(new QueensBaySoldier())));
@@ -182,9 +180,7 @@ class FellFlagshipTest extends BaseCardTest {
     @DisplayName("No discard trigger when Fell Flagship is blocked")
     void noDiscardWhenBlocked() {
         Permanent flagship = addFellFlagshipReady(player1);
-        flagship.setAnimatedUntilEndOfTurn(true);
-        flagship.setAnimatedPower(3);
-        flagship.setAnimatedToughness(3);
+        animateUntilEndOfTurn(flagship, 3, 3);
         flagship.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new AirElemental());
@@ -205,9 +201,7 @@ class FellFlagshipTest extends BaseCardTest {
     @DisplayName("No input needed when opponent has no cards to discard")
     void noInputWhenOpponentHandEmpty() {
         Permanent flagship = addFellFlagshipReady(player1);
-        flagship.setAnimatedUntilEndOfTurn(true);
-        flagship.setAnimatedPower(3);
-        flagship.setAnimatedToughness(3);
+        animateUntilEndOfTurn(flagship, 3, 3);
         flagship.setAttacking(true);
 
         harness.setHand(player2, new ArrayList<>());

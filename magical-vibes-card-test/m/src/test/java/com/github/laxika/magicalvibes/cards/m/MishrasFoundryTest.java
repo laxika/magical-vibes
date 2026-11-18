@@ -35,10 +35,10 @@ class MishrasFoundryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, foundry)).isTrue();
-        assertThat(gqs.isArtifact(foundry)).isTrue();
+        assertThat(gqs.isArtifact(gd, foundry)).isTrue();
         assertThat(gqs.getEffectivePower(gd, foundry)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, foundry)).isEqualTo(2);
-        assertThat(foundry.getTransientSubtypes()).contains(CardSubtype.ASSEMBLY_WORKER);
+        assertThat(gqs.getEffectiveSubtypes(gd, foundry)).contains(CardSubtype.ASSEMBLY_WORKER);
         assertThat(gqs.isLand(gd, foundry)).isTrue();
     }
 
@@ -53,8 +53,8 @@ class MishrasFoundryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, foundry)).isFalse();
-        assertThat(gqs.isArtifact(foundry)).isFalse();
-        assertThat(foundry.getTransientSubtypes()).doesNotContain(CardSubtype.ASSEMBLY_WORKER);
+        assertThat(gqs.isArtifact(gd, foundry)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, foundry)).doesNotContain(CardSubtype.ASSEMBLY_WORKER);
     }
 
     @Test

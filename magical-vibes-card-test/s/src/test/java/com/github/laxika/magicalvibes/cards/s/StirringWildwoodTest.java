@@ -53,7 +53,7 @@ class StirringWildwoodTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, wildwood)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, wildwood))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
-        assertThat(wildwood.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, wildwood)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, wildwood, Keyword.REACH)).isTrue();
     }
 
@@ -71,7 +71,7 @@ class StirringWildwoodTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, wildwood)).isFalse();
         assertThat(gqs.isLand(gd, wildwood)).isTrue();
-        assertThat(wildwood.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, wildwood)).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, wildwood, Keyword.REACH)).isFalse();
     }
 

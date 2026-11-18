@@ -52,7 +52,7 @@ class RudeAwakeningTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.isLand(gd, forest)).isTrue();
-        assertThat(bears.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(bears.getId())).isFalse();
         assertThat(gqs.isCreature(gd, opponentMountain)).isFalse();
     }
 

@@ -41,12 +41,12 @@ class SelesnyaKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.WOLF);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.WOLF);
     }
 
     @Test
@@ -63,7 +63,7 @@ class SelesnyaKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class SelesnyaKeyruneTest extends BaseCardTest {
 
         assertThat(keyrune.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
@@ -155,9 +155,9 @@ class SelesnyaKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, keyrune)).isEmpty();
-        assertThat(keyrune.getTransientSubtypes()).doesNotContain(CardSubtype.WOLF);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).doesNotContain(CardSubtype.WOLF);
     }
 
     private Permanent addReadyKeyrune(Player player) {

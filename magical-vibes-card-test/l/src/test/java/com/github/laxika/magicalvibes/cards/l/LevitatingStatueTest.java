@@ -56,12 +56,12 @@ class LevitatingStatueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
 
-        assertThat(statue.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(statue.getId())).isTrue();
         assertThat(gqs.isCreature(gd, statue)).isTrue();
-        assertThat(gqs.isArtifact(statue)).isTrue();
+        assertThat(gqs.isArtifact(gd, statue)).isTrue();
         assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(1);
-        assertThat(statue.getTransientSubtypes()).contains(CardSubtype.CONSTRUCT);
+        assertThat(gqs.getEffectiveSubtypes(gd, statue)).contains(CardSubtype.CONSTRUCT);
     }
 
     @Test

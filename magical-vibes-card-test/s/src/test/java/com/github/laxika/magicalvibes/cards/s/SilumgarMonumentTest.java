@@ -43,12 +43,12 @@ class SilumgarMonumentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, monument)).isTrue();
-        assertThat(gqs.isArtifact(monument)).isTrue();
+        assertThat(gqs.isArtifact(gd, monument)).isTrue();
         assertThat(gqs.getEffectivePower(gd, monument)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, monument)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, monument))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
-        assertThat(monument.getTransientSubtypes()).contains(CardSubtype.DRAGON);
+        assertThat(gqs.getEffectiveSubtypes(gd, monument)).contains(CardSubtype.DRAGON);
         assertThat(gqs.hasKeyword(gd, monument, Keyword.FLYING)).isTrue();
         assertThat(monument.isTapped()).isFalse();
     }
@@ -68,8 +68,8 @@ class SilumgarMonumentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, monument)).isFalse();
-        assertThat(gqs.isArtifact(monument)).isTrue();
-        assertThat(monument.getTransientSubtypes()).doesNotContain(CardSubtype.DRAGON);
+        assertThat(gqs.isArtifact(gd, monument)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, monument)).doesNotContain(CardSubtype.DRAGON);
         assertThat(gqs.hasKeyword(gd, monument, Keyword.FLYING)).isFalse();
     }
 

@@ -45,10 +45,10 @@ class MimicTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, mimic)).isTrue();
-        assertThat(gqs.isArtifact(mimic)).isTrue();
+        assertThat(gqs.isArtifact(gd, mimic)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(3);
-        assertThat(mimic.getTransientSubtypes()).contains(CardSubtype.SHAPESHIFTER);
+        assertThat(gqs.getEffectiveSubtypes(gd, mimic)).contains(CardSubtype.SHAPESHIFTER);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -67,8 +67,8 @@ class MimicTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, mimic)).isFalse();
-        assertThat(gqs.isArtifact(mimic)).isTrue();
-        assertThat(mimic.getTransientSubtypes()).doesNotContain(CardSubtype.SHAPESHIFTER);
+        assertThat(gqs.isArtifact(gd, mimic)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, mimic)).doesNotContain(CardSubtype.SHAPESHIFTER);
     }
 
     @Test

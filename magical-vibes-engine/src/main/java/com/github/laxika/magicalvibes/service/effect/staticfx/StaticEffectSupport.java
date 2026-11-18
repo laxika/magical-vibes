@@ -166,8 +166,7 @@ public class StaticEffectSupport {
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
         if (activeState != null && activeState.hasCardType(CardType.CREATURE)) return true;
         if (activeState == null && permanent.getCard().hasType(CardType.CREATURE)) return true;
-        if (permanent.isAnimatedUntilEndOfTurn()) return true;
-        if (permanent.isAnimatedUntilEndOfCombat()) return true;
+        if (gameData != null && gameData.animatedByFloatingEffect(permanent.getId())) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;

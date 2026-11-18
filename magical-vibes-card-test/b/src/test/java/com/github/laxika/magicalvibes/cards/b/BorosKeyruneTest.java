@@ -41,13 +41,13 @@ class BorosKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(1);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.SOLDIER);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.SOLDIER);
     }
 
     @Test
@@ -64,7 +64,7 @@ class BorosKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 

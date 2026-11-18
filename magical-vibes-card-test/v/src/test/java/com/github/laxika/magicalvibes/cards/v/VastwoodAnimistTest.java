@@ -28,7 +28,7 @@ class VastwoodAnimistTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
-        assertThat(forest.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test
@@ -56,7 +56,7 @@ class VastwoodAnimistTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(forest.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

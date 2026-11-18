@@ -27,9 +27,9 @@ class AlloyAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, refractor)).isTrue();
-        assertThat(gqs.isArtifact(refractor)).isTrue();
-        assertThat(refractor.getEffectivePower()).isEqualTo(4);
-        assertThat(refractor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.isArtifact(gd, refractor)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, refractor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, refractor)).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -49,7 +49,7 @@ class AlloyAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, refractor)).isFalse();
-        assertThat(gqs.isArtifact(refractor)).isTrue();
+        assertThat(gqs.isArtifact(gd, refractor)).isTrue();
     }
 
     @Test
@@ -101,8 +101,8 @@ class AlloyAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, refractor)).isTrue();
-        assertThat(refractor.getEffectivePower()).isEqualTo(4);
-        assertThat(refractor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, refractor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, refractor)).isEqualTo(4);
         assertThat(animist.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -122,8 +122,8 @@ class AlloyAnimistTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, first)).isTrue();
         assertThat(gqs.isCreature(gd, second)).isTrue();
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
         assertThat(animist.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -141,7 +141,7 @@ class AlloyAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, refractor)).isFalse();
-        assertThat(gqs.isArtifact(refractor)).isTrue();
+        assertThat(gqs.isArtifact(gd, refractor)).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -158,8 +158,8 @@ class AlloyAnimistTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, refractor)).isTrue();
-        assertThat(refractor.getEffectivePower()).isEqualTo(4);
-        assertThat(refractor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, refractor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, refractor)).isEqualTo(4);
         assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -177,8 +177,8 @@ class AlloyAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, refractor)).isTrue();
-        assertThat(gqs.isArtifact(refractor)).isTrue();
-        assertThat(refractor.getEffectivePower()).isEqualTo(4);
-        assertThat(refractor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.isArtifact(gd, refractor)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, refractor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, refractor)).isEqualTo(4);
     }
 }

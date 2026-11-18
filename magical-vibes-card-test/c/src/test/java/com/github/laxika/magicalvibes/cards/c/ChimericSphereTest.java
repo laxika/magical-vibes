@@ -29,7 +29,7 @@ class ChimericSphereTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, sphere)).isTrue();
         assertThat(gqs.getEffectivePower(gd, sphere)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sphere)).isEqualTo(1);
-        assertThat(sphere.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(gqs.getEffectiveSubtypes(gd, sphere)).contains(CardSubtype.CONSTRUCT);
         assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isTrue();
     }
 
@@ -45,7 +45,7 @@ class ChimericSphereTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, sphere)).isTrue();
         assertThat(gqs.getEffectivePower(gd, sphere)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, sphere)).isEqualTo(2);
-        assertThat(sphere.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(gqs.getEffectiveSubtypes(gd, sphere)).contains(CardSubtype.CONSTRUCT);
         assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isFalse();
     }
 
@@ -107,9 +107,9 @@ class ChimericSphereTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(sphere.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(sphere.getId())).isFalse();
         assertThat(gqs.isCreature(gd, sphere)).isFalse();
-        assertThat(sphere.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, sphere)).doesNotContain(CardSubtype.CONSTRUCT);
         assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isFalse();
     }
 
@@ -144,7 +144,7 @@ class ChimericSphereTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, sphere)).isFalse();
         assertThat(gqs.isArtifact(gd, sphere)).isTrue();
-        assertThat(sphere.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, sphere)).doesNotContain(CardSubtype.CONSTRUCT);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, 0, null, null);

@@ -52,7 +52,7 @@ class WanderingFumaroleTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, fumarole)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, fumarole))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
-        assertThat(fumarole.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, fumarole)).contains(CardSubtype.ELEMENTAL);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -82,7 +82,7 @@ class WanderingFumaroleTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, fumarole)).isTrue();
         assertThat(gqs.getEffectivePower(gd, fumarole)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, fumarole)).isEqualTo(0);
-        assertThat(fumarole.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, fumarole)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

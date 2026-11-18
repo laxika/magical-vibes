@@ -39,7 +39,7 @@ class CultivatorsCaravanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(caravan.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(caravan.getId())).isTrue();
         assertThat(gqs.isCreature(gd, caravan)).isTrue();
         assertThat(crew.isTapped()).isTrue();
         assertThat(caravan.isTapped()).isFalse();

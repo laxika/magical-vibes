@@ -25,11 +25,11 @@ class StuffedBearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, bear)).isTrue();
-        assertThat(gqs.isArtifact(bear)).isTrue();
+        assertThat(gqs.isArtifact(gd, bear)).isTrue();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(CardColor.GREEN);
-        assertThat(bear.getTransientSubtypes()).contains(CardSubtype.BEAR);
+        assertThat(gqs.getEffectiveSubtypes(gd, bear)).contains(CardSubtype.BEAR);
     }
 
     @Test
@@ -44,8 +44,8 @@ class StuffedBearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, bear)).isFalse();
-        assertThat(gqs.isArtifact(bear)).isTrue();
-        assertThat(bear.getTransientSubtypes()).doesNotContain(CardSubtype.BEAR);
+        assertThat(gqs.isArtifact(gd, bear)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, bear)).doesNotContain(CardSubtype.BEAR);
         assertThat(gqs.getEffectiveColors(gd, bear)).isEmpty();
     }
 
@@ -86,11 +86,11 @@ class StuffedBearTest extends BaseCardTest {
 
         assertThat(bear.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, bear)).isTrue();
-        assertThat(gqs.isArtifact(bear)).isTrue();
+        assertThat(gqs.isArtifact(gd, bear)).isTrue();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(CardColor.GREEN);
-        assertThat(bear.getTransientSubtypes()).containsExactly(CardSubtype.BEAR);
+        assertThat(gqs.getEffectiveSubtypes(gd, bear)).contains(CardSubtype.BEAR);
     }
 
     private Permanent addStuffedBear() {

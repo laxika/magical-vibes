@@ -43,13 +43,13 @@ class GolgariKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.INSECT);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.INSECT);
     }
 
     @Test
@@ -66,7 +66,7 @@ class GolgariKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.DEATHTOUCH)).isFalse();
     }
 

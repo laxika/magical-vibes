@@ -1,5 +1,13 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+
 import com.github.laxika.magicalvibes.cards.a.AdunOakenshield;
 import com.github.laxika.magicalvibes.cards.e.ElvenRiders;
 import com.github.laxika.magicalvibes.cards.j.Johan;
@@ -180,10 +188,10 @@ class UnholyCitadelTest extends BaseCardTest {
     @DisplayName("The Citadel grants itself the ability when it is a black legendary creature")
     void animatedBlackLegendaryCitadelCanBand() {
         Permanent citadel = addCreatureReady(player1, new UnholyCitadel());
-        citadel.setAnimatedUntilEndOfTurn(true);
-        citadel.setAnimatedPower(3);
-        citadel.setAnimatedToughness(3);
-        citadel.setAnimatedColor(CardColor.BLACK);
+        animateUntilEndOfTurn(citadel, 3, 3);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantColorEffect(CardColor.BLACK, GrantScope.TARGET, true), citadel.getId(),
+                Duration.UNTIL_END_OF_TURN));
         citadel.getPersistentGrantedSupertypes().add(CardSupertype.LEGENDARY);
         Permanent otherLegendary = addCreatureReady(player1, new TobiasAndrion());
 

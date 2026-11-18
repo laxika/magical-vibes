@@ -46,13 +46,13 @@ class SimicKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.HEXPROOF)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.CRAB);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.CRAB);
     }
 
     @Test
@@ -69,7 +69,7 @@ class SimicKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.HEXPROOF)).isFalse();
     }
 

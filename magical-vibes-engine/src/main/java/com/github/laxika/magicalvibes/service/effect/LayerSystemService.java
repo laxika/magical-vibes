@@ -1033,8 +1033,6 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isTapped() ? 1 : 0);
         flags = flags << 1 | (p.isColorOverridden() ? 1 : 0);
         flags = flags << 1 | (p.isBasePowerToughnessOverriddenUntilEndOfTurn() ? 1 : 0);
-        flags = flags << 1 | (p.isAnimatedUntilEndOfTurn() ? 1 : 0);
-        flags = flags << 1 | (p.isAnimatedUntilEndOfCombat() ? 1 : 0);
         flags = flags << 1 | (p.isAnimatedUntilNextTurn() ? 1 : 0);
         flags = flags << 1 | (p.isPermanentlyAnimated() ? 1 : 0);
         flags = flags << 1 | (p.isBasePowerOverriddenPermanently() ? 1 : 0);
@@ -1106,10 +1104,6 @@ public class LayerSystemService {
         h = mix(h, p.getToughnessModifier());
         h = mix(h, p.getBasePowerOverride());
         h = mix(h, p.getBaseToughnessOverride());
-        h = mix(h, p.getAnimatedPower());
-        h = mix(h, p.getAnimatedToughness());
-        h = mix(h, p.isAnimatedPtFromCard() ? 1 : 0);
-        h = mix(h, enumOrdinal(p.getAnimatedColor()));
         h = mix(h, p.getPermanentAnimatedPower());
         h = mix(h, p.getPermanentAnimatedToughness());
         h = mix(h, p.getUntilNextTurnAnimatedPower());
@@ -3152,9 +3146,7 @@ public class LayerSystemService {
     }
 
     private static boolean isOneShotAnimated(Permanent permanent) {
-        return permanent.isAnimatedUntilEndOfTurn()
-                || permanent.isAnimatedUntilEndOfCombat()
-                || permanent.isAnimatedUntilNextTurn()
+        return permanent.isAnimatedUntilNextTurn()
                 || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
@@ -3164,7 +3156,7 @@ public class LayerSystemService {
     /**
      * Seeds the legacy one-shot color and ability state that has not been migrated to floating
      * effects yet, then snapshots the seeded baseline. Mirrors {@code Permanent.getEffectiveColor}
-     * and {@code Permanent.hasKeyword}: animation colors replace, the awakening counter makes
+     * and {@code Permanent.hasKeyword}: the awakening counter makes
      * the land green, granted/until-next-turn keywords add, removed keywords subtract, the
      * legacy "loses all abilities until end of turn" flag clears everything at seed time (so
      * later-timestamp layered grants still apply, matching the old accumulator behavior).
@@ -3172,10 +3164,7 @@ public class LayerSystemService {
     private void seedLegacyColorAndAbilityState(GameData gameData, Permanent permanent,
                                                 CharacteristicState state,
                                                 List<TextReplacement> globalWordChange) {
-        if ((permanent.isAnimatedUntilEndOfTurn() || permanent.isAnimatedUntilEndOfCombat())
-                && permanent.getAnimatedColor() != null) {
-            state.replaceSeedColors(Set.of(permanent.getAnimatedColor()));
-        } else if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
+        if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
             state.replaceSeedColors(Set.of(CardColor.GREEN));
         } else if (permanent.isColorOverridden() && !permanent.getTransientColors().isEmpty()) {
             // Legacy one-shot color override (pre-migration state, e.g. AI simulation copies).

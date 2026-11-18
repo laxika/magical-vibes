@@ -4846,6 +4846,28 @@ public class GameData {
     }
 
     /**
+     * Whether a resolved effect makes the permanent {@code permanentId} a creature: a floating animation or card-type
+     * effect on it that adds or sets the creature type ("becomes a 3/3 creature until end of turn", crew). For readers
+     * outside the layered pass that answer "is it a creature" from the permanent alone; the layered pass applies these
+     * effects in timestamp order.
+     */
+    public boolean animatedByFloatingEffect(UUID permanentId) {
+        return floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect.class,
+                com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect.class,
+                com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect.class).stream()
+                .anyMatch(fe -> switch (fe.effect()) {
+                    case com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect grant ->
+                            grant.cardType() == CardType.CREATURE;
+                    case com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect set ->
+                            set.cardTypes().contains(CardType.CREATURE);
+                    case com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect animate ->
+                            animate.becomesCreature();
+                    default -> false;
+                });
+    }
+
+    /**
      * Whether damage that would be dealt to the permanent {@code permanentId} this turn can't be prevented or dealt
      * instead to another permanent or player, by a resolved effect on it (Whippoorwill).
      */
@@ -7739,8 +7761,7 @@ public class GameData {
     private int countCreaturePermanents(UUID playerId) {
         return (int) playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE)
-                        || permanent.isAnimatedUntilEndOfTurn()
-                        || permanent.isAnimatedUntilEndOfCombat()
+                        || animatedByFloatingEffect(permanent.getId())
                         || permanent.isAnimatedUntilNextTurn()
                         || permanent.isPermanentlyAnimated())
                 .count();

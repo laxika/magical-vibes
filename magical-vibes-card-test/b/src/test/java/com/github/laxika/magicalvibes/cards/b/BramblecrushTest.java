@@ -143,9 +143,7 @@ class BramblecrushTest extends BaseCardTest {
     @DisplayName("Cannot target a land that is currently a creature")
     void cannotTargetAnimatedLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
-        land.setAnimatedUntilEndOfTurn(true);
-        land.setAnimatedPower(3);
-        land.setAnimatedToughness(3);
+        animateUntilEndOfTurn(land, 3, 3);
         harness.setHand(player1, List.of(new Bramblecrush()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -162,9 +160,7 @@ class BramblecrushTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castSorcery(player1, 0, land.getId());
 
-        land.setAnimatedUntilEndOfTurn(true);
-        land.setAnimatedPower(3);
-        land.setAnimatedToughness(3);
+        animateUntilEndOfTurn(land, 3, 3);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Forest");

@@ -75,7 +75,7 @@ class BigWheelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wheel.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(wheel.getId())).isTrue();
         assertThat(gqs.isCreature(gd, wheel)).isTrue();
         assertThat(crew.isTapped()).isTrue();
 

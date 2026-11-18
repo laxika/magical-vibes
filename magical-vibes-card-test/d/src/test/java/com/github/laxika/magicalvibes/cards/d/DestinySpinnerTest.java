@@ -102,7 +102,7 @@ class DestinySpinnerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
         assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
-        assertThat(land.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
 

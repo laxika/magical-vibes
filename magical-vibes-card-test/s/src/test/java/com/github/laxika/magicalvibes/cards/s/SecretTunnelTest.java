@@ -76,9 +76,7 @@ class SecretTunnelTest extends BaseCardTest {
     @Test
     void animatedTunnelCannotBeBlocked() {
         Permanent tunnel = harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
-        tunnel.setAnimatedUntilEndOfTurn(true);
-        tunnel.setAnimatedPower(2);
-        tunnel.setAnimatedToughness(2);
+        animateUntilEndOfTurn(tunnel, 2, 2);
 
         assertThat(gqs.isCreature(gd, tunnel)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, tunnel)).isTrue();

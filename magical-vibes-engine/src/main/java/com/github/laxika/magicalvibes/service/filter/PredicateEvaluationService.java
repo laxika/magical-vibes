@@ -1646,8 +1646,6 @@ public class PredicateEvaluationService {
             case PermanentIsCreaturePredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
-                            || permanent.isAnimatedUntilEndOfTurn()
-                            || permanent.isAnimatedUntilEndOfCombat()
                             || permanent.isAnimatedUntilNextTurn()
                             || permanent.isPermanentlyAnimated()
                             || permanent.getCounterCount(CounterType.AWAKENING) > 0;
@@ -3583,8 +3581,6 @@ public class PredicateEvaluationService {
             return layered.hasCardType(CardType.CREATURE);
         }
         return permanent.getCard().hasType(CardType.CREATURE)
-                || permanent.isAnimatedUntilEndOfTurn()
-                || permanent.isAnimatedUntilEndOfCombat()
                 || permanent.isAnimatedUntilNextTurn()
                 || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
@@ -5140,14 +5136,12 @@ public class PredicateEvaluationService {
     }
 
     /**
-     * The animation flags that make a permanent a creature without any layer-4 effect saying so.
-     * Kept alongside the state read because a {@link CharacteristicState} is built from continuous
-     * effects only, while these are one-shot resolutions recorded on the permanent.
+     * The animation flags that make a permanent a creature without any layer-4 effect saying so (until your next
+     * turn, permanently, an awakening counter). Kept alongside the state read because these are recorded on the
+     * permanent rather than as floating effects.
      */
     private static boolean isOneShotAnimated(Permanent permanent) {
-        return permanent.isAnimatedUntilEndOfTurn()
-                || permanent.isAnimatedUntilEndOfCombat()
-                || permanent.isAnimatedUntilNextTurn()
+        return permanent.isAnimatedUntilNextTurn()
                 || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }

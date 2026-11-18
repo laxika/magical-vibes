@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -15,11 +16,14 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpells
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
@@ -246,6 +250,26 @@ public abstract class BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    /**
+     * Makes {@code permanent} a creature until end of turn, keeping its printed power and toughness, as a resolved
+     * animation would (crew): a floating effect that adds the creature type.
+     */
+    protected void animateUntilEndOfTurn(Permanent permanent) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), permanent.getId(),
+                Duration.UNTIL_END_OF_TURN));
+    }
+
+    /**
+     * Makes {@code permanent} a {@code power}/{@code toughness} creature until end of turn, as a resolved animation
+     * would: floating effects that add the creature type and set its base power and toughness.
+     */
+    protected void animateUntilEndOfTurn(Permanent permanent, int power, int toughness) {
+        animateUntilEndOfTurn(permanent);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new SetBasePowerToughnessEffect(power, toughness), permanent.getId(), Duration.UNTIL_END_OF_TURN));
     }
 
     /**

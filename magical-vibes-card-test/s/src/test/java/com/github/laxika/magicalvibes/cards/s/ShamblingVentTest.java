@@ -81,7 +81,7 @@ class ShamblingVentTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, vent))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(gqs.effectiveCreatureSubtypes(gd, vent)).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(vent.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, vent)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, vent, Keyword.LIFELINK)).isTrue();
     }
 
@@ -100,7 +100,7 @@ class ShamblingVentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, vent)).isFalse();
-        assertThat(vent.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, vent)).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.isLand(gd, vent)).isTrue();
         assertThat(gqs.hasKeyword(gd, vent, Keyword.LIFELINK)).isFalse();
     }

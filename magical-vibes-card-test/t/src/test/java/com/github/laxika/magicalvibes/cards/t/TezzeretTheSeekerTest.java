@@ -105,15 +105,15 @@ class TezzeretTheSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(stone.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(stone.getAnimatedPower()).isEqualTo(5);
-        assertThat(stone.getAnimatedToughness()).isEqualTo(5);
-        assertThat(stone.getGrantedCardTypes()).contains(CardType.CREATURE);
-        assertThat(stone.getEffectivePower()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(stone.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, stone)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, stone)).isEqualTo(5);
+        assertThat(gqs.isCreature(gd, stone)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, stone)).isEqualTo(5);
 
         // Non-artifact creature is unaffected.
-        assertThat(bears.isAnimatedUntilEndOfTurn()).isFalse();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gd.animatedByFloatingEffect(bears.getId())).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -124,13 +124,13 @@ class TezzeretTheSeekerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
-        assertThat(stone.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(stone.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stone.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(stone.getId())).isFalse();
     }
 
     @Test
@@ -142,7 +142,7 @@ class TezzeretTheSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(oppStone.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(oppStone.getId())).isFalse();
     }
 
     @Test
@@ -246,16 +246,16 @@ class TezzeretTheSeekerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent laterStone = addPermanent(player1, new MindStone());
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(5);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(5);
-        assertThat(laterStone.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(laterStone.getId())).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isZero();
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
     }
 
     private Permanent addReadyTezzeret(Player player, int loyalty) {

@@ -42,16 +42,16 @@ class NaturalAffinityTest extends BaseCardTest {
         cast();
 
         Permanent ownForest = findPermanent(player1, "Forest");
-        assertThat(ownForest.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(ownForest.getEffectivePower()).isEqualTo(2);
-        assertThat(ownForest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.animatedByFloatingEffect(ownForest.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ownForest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownForest)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, ownForest)).isTrue();
         assertThat(gqs.isLand(gd, ownForest)).isTrue();
 
         Permanent opponentMountain = findPermanent(player2, "Mountain");
-        assertThat(opponentMountain.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(opponentMountain.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentMountain.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.animatedByFloatingEffect(opponentMountain.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentMountain)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentMountain)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, opponentMountain)).isTrue();
         assertThat(gqs.isLand(gd, opponentMountain)).isTrue();
     }
@@ -130,7 +130,7 @@ class NaturalAffinityTest extends BaseCardTest {
         cast();
         Permanent laterForest = harness.enterBattlefieldAndReturn(player2, new Forest());
 
-        assertThat(laterForest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(laterForest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, laterForest)).isFalse();
         assertThat(gqs.isLand(gd, laterForest)).isTrue();
     }
@@ -146,7 +146,7 @@ class NaturalAffinityTest extends BaseCardTest {
 
         cast();
 
-        assertThat(arixmethes.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(arixmethes.getId())).isTrue();
         assertThat(gqs.isCreature(gd, arixmethes)).isTrue();
         assertThat(gqs.getEffectivePower(gd, arixmethes)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, arixmethes)).isEqualTo(2);

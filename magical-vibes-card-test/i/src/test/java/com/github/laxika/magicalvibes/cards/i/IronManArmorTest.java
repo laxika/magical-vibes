@@ -55,11 +55,11 @@ class IronManArmorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, armor)).isTrue();
-        assertThat(gqs.isArtifact(armor)).isTrue();
+        assertThat(gqs.isArtifact(gd, armor)).isTrue();
         assertThat(armor.getAttachedTo()).isNull();
         assertThat(gqs.getEffectivePower(gd, armor)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, armor)).isEqualTo(2);
-        assertThat(armor.getTransientSubtypes()).contains(CardSubtype.CONSTRUCT, CardSubtype.HERO);
+        assertThat(gqs.getEffectiveSubtypes(gd, armor)).contains(CardSubtype.CONSTRUCT, CardSubtype.HERO);
         assertThat(gqs.hasKeyword(gd, armor, Keyword.FLYING)).isTrue();
     }
 
@@ -76,7 +76,7 @@ class IronManArmorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, armor)).isFalse();
-        assertThat(armor.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, armor)).doesNotContain(CardSubtype.CONSTRUCT, CardSubtype.HERO);
     }
 
     @Test

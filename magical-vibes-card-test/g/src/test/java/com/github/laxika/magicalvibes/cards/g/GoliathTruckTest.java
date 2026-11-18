@@ -34,7 +34,7 @@ class GoliathTruckTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(truck.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(truck.getId())).isTrue();
         assertThat(crew.isTapped()).isTrue();
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

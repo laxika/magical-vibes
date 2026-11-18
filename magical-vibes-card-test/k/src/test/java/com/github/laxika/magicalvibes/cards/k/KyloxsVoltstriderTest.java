@@ -26,7 +26,7 @@ class KyloxsVoltstriderTest extends BaseCardTest {
         crewVoltstrider();
 
         assertThat(gqs.isCreature(gd, voltstrider)).isTrue();
-        assertThat(voltstrider.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(voltstrider.getId())).isTrue();
     }
 
     @Test

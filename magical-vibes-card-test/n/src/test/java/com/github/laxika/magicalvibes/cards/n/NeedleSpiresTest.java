@@ -124,7 +124,7 @@ class NeedleSpiresTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, spires)).isEqualTo(1);
         assertThat(gqs.getEffectiveColors(gd, spires))
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
-        assertThat(spires.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, spires)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, spires, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 

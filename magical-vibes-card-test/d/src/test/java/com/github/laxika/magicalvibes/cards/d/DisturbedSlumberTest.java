@@ -38,7 +38,7 @@ class DisturbedSlumberTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
         assertThat(gqs.isLand(gd, land)).isTrue();
-        assertThat(land.getTransientSubtypes()).contains(CardSubtype.DINOSAUR);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.DINOSAUR);
         assertThat(gqs.hasKeyword(gd, land, Keyword.REACH)).isTrue();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();

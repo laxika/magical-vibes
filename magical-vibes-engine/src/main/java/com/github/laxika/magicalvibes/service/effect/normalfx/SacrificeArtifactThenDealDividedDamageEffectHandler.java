@@ -53,7 +53,7 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameQueryService.isArtifact(p)) {
+                if (gameQueryService.isArtifact(gameData, p)) {
                     validArtifactIds.add(p.getId());
                 }
             }

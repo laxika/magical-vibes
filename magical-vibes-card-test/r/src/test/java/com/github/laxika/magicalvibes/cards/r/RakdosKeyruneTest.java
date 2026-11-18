@@ -41,13 +41,13 @@ class RakdosKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(1);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.DEVIL);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.DEVIL);
     }
 
     @Test
@@ -64,7 +64,7 @@ class RakdosKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.FIRST_STRIKE)).isFalse();
     }
 

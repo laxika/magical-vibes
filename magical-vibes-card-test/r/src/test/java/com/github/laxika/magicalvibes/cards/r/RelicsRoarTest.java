@@ -26,11 +26,11 @@ class RelicsRoarTest extends BaseCardTest {
 
         castAt(target);
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
-        assertThat(target.getTransientSubtypes()).contains(CardSubtype.DINOSAUR);
+        assertThat(gqs.getEffectiveSubtypes(gd, target)).contains(CardSubtype.DINOSAUR);
     }
 
     @Test
@@ -42,7 +42,7 @@ class RelicsRoarTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
-        assertThat(target.getTransientSubtypes()).contains(CardSubtype.DINOSAUR);
+        assertThat(gqs.getEffectiveSubtypes(gd, target)).contains(CardSubtype.DINOSAUR);
     }
 
     @Test
@@ -54,9 +54,9 @@ class RelicsRoarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
         assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(target.getTransientSubtypes()).doesNotContain(CardSubtype.DINOSAUR);
+        assertThat(gqs.getEffectiveSubtypes(gd, target)).doesNotContain(CardSubtype.DINOSAUR);
     }
 
     @Test
@@ -106,7 +106,7 @@ class RelicsRoarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.DINOSAUR)).isFalse();
         harness.assertOnBattlefield(player1, "Spellbook");

@@ -130,9 +130,7 @@ class MoleModuleTest extends BaseCardTest {
 
     private Permanent addAttackingMoleModule() {
         Permanent mole = addMoleModuleReady();
-        mole.setAnimatedUntilEndOfTurn(true);
-        mole.setAnimatedPower(6);
-        mole.setAnimatedToughness(6);
+        animateUntilEndOfTurn(mole, 6, 6);
         mole.setAttacking(true);
         return mole;
     }

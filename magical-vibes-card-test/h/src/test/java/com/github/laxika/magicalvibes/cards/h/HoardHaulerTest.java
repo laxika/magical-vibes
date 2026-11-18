@@ -23,9 +23,7 @@ class HoardHaulerTest extends BaseCardTest {
     @DisplayName("Creates a Treasure for each artifact controlled by the damaged player")
     void createsTreasureForEachArtifactControlledByDamagedPlayer() {
         Permanent hauler = addCreatureReady(player1, new HoardHauler());
-        hauler.setAnimatedUntilEndOfTurn(true);
-        hauler.setAnimatedPower(5);
-        hauler.setAnimatedToughness(5);
+        animateUntilEndOfTurn(hauler, 5, 5);
         hauler.setAttacking(true);
 
         addCreatureReady(player2, new LeoninScimitar());
@@ -45,9 +43,7 @@ class HoardHaulerTest extends BaseCardTest {
     @DisplayName("Creates Treasures when trample deals damage through a blocker")
     void createsTreasureWhenTramplingOverBlocker() {
         Permanent hauler = addCreatureReady(player1, new HoardHauler());
-        hauler.setAnimatedUntilEndOfTurn(true);
-        hauler.setAnimatedPower(5);
-        hauler.setAnimatedToughness(5);
+        animateUntilEndOfTurn(hauler, 5, 5);
         hauler.setAttacking(true);
 
         addCreatureReady(player2, new LeoninScimitar());
@@ -67,9 +63,7 @@ class HoardHaulerTest extends BaseCardTest {
     @Test
     void createsNoTreasureWhenBlockerAbsorbsAllCombatDamage() {
         Permanent hauler = addCreatureReady(player1, new HoardHauler());
-        hauler.setAnimatedUntilEndOfTurn(true);
-        hauler.setAnimatedPower(5);
-        hauler.setAnimatedToughness(5);
+        animateUntilEndOfTurn(hauler, 5, 5);
         hauler.setAttacking(true);
         addCreatureReady(player2, new LeoninScimitar());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -87,9 +81,7 @@ class HoardHaulerTest extends BaseCardTest {
     @Test
     void createsNoTreasureWhenDamagedPlayerControlsNoArtifacts() {
         Permanent hauler = addCreatureReady(player1, new HoardHauler());
-        hauler.setAnimatedUntilEndOfTurn(true);
-        hauler.setAnimatedPower(5);
-        hauler.setAnimatedToughness(5);
+        animateUntilEndOfTurn(hauler, 5, 5);
         hauler.setAttacking(true);
         addCreatureReady(player1, new LeoninScimitar());
 
@@ -103,9 +95,7 @@ class HoardHaulerTest extends BaseCardTest {
     @Test
     void countsArtifactsAtResolutionEvenIfHaulerHasLeftBattlefield() {
         Permanent hauler = addCreatureReady(player1, new HoardHauler());
-        hauler.setAnimatedUntilEndOfTurn(true);
-        hauler.setAnimatedPower(5);
-        hauler.setAnimatedToughness(5);
+        animateUntilEndOfTurn(hauler, 5, 5);
         hauler.setAttacking(true);
         Permanent artifact = addCreatureReady(player2, new LeoninScimitar());
 

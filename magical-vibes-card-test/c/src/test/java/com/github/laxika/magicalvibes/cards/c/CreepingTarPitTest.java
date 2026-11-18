@@ -52,7 +52,7 @@ class CreepingTarPitTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, tarPit)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, tarPit))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
-        assertThat(tarPit.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, tarPit)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasCantBeBlocked(gd, tarPit)).isTrue();
     }
 
@@ -72,7 +72,7 @@ class CreepingTarPitTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, tarPit)).isFalse();
         assertThat(gqs.isLand(gd, tarPit)).isTrue();
-        assertThat(tarPit.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, tarPit)).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasCantBeBlocked(gd, tarPit)).isFalse();
     }
 

@@ -36,7 +36,7 @@ class EmbodimentOfInsightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(3);
         assertThat(gqs.isLand(gd, forest)).isTrue();
-        assertThat(forest.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isTrue();
     }
@@ -93,7 +93,7 @@ class EmbodimentOfInsightTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isFalse();

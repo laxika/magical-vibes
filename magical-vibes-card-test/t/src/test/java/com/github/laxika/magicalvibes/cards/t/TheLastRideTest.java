@@ -60,7 +60,7 @@ class TheLastRideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ride.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(ride.getId())).isTrue();
         assertThat(gqs.isCreature(gd, ride)).isTrue();
         assertThat(gqs.getEffectivePower(gd, ride)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, ride)).isEqualTo(8);

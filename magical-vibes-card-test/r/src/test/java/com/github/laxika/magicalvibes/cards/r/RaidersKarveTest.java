@@ -28,7 +28,7 @@ class RaidersKarveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(karve.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(karve.getId())).isTrue();
         assertThat(crew.isTapped()).isTrue();
 
         declareAttackers(player1, List.of(0));

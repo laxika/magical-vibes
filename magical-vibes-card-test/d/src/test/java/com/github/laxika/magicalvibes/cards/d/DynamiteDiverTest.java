@@ -24,7 +24,7 @@ class DynamiteDiverTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
         harness.passBothPriorities();
 
-        assertThat(vehicle.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(vehicle.getId())).isTrue();
         assertThat(diver.isTapped()).isTrue();
     }
 

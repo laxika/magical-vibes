@@ -368,7 +368,6 @@ public class PhasingService {
             permanent.rollOverCombatAttackRecord();
         }
         permanent.clearCombatState();
-        permanent.clearUntilEndOfCombatAnimation();
         preparedSupport.releasePreparedCopyOnPhaseOut(gameData, permanent);
         gameData.playerBattlefields.get(controllerId).remove(permanent);
         phasedOutList(gameData, controllerId).add(permanent);
@@ -599,9 +598,7 @@ public class PhasingService {
         if (permanent.getCard().hasType(CardType.CREATURE)) {
             return true;
         }
-        return permanent.isAnimatedUntilEndOfTurn()
-                || permanent.isAnimatedUntilEndOfCombat()
-                || permanent.isAnimatedUntilNextTurn()
+        return permanent.isAnimatedUntilNextTurn()
                 || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }

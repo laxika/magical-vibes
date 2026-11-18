@@ -34,7 +34,7 @@ class StillLifeTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, stillLife)).isTrue();
         assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
-        assertThat(stillLife.getTransientSubtypes()).containsExactly(CardSubtype.CENTAUR);
+        assertThat(gqs.getEffectiveSubtypes(gd, stillLife)).containsExactly(CardSubtype.CENTAUR);
         assertThat(gqs.isEnchantment(gd, stillLife)).isTrue();
     }
 
@@ -64,7 +64,7 @@ class StillLifeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, stillLife)).isFalse();
-        assertThat(stillLife.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, stillLife)).isEmpty();
     }
 
     @Test
@@ -119,7 +119,7 @@ class StillLifeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
         assertThat(gqs.isEnchantment(gd, stillLife)).isTrue();
-        assertThat(stillLife.getTransientSubtypes()).containsExactly(CardSubtype.CENTAUR);
+        assertThat(gqs.getEffectiveSubtypes(gd, stillLife)).containsExactly(CardSubtype.CENTAUR);
         assertThat(gqs.isCreature(gd, otherStillLife)).isFalse();
     }
 

@@ -25,7 +25,7 @@ class BallistaChargerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(charger.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(charger.getId())).isTrue();
         assertThat(crew.isTapped()).isTrue();
 
         declareAttackers(player1, List.of(0));

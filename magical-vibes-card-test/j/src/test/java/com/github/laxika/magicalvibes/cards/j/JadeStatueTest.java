@@ -67,12 +67,12 @@ class JadeStatueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(statue.isAnimatedUntilEndOfCombat()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(statue.getId())).isTrue();
         assertThat(gqs.isCreature(gd, statue)).isTrue();
-        assertThat(gqs.isArtifact(statue)).isTrue();
+        assertThat(gqs.isArtifact(gd, statue)).isTrue();
         assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(6);
-        assertThat(statue.getTransientSubtypes()).contains(CardSubtype.GOLEM);
+        assertThat(gqs.getEffectiveSubtypes(gd, statue)).contains(CardSubtype.GOLEM);
     }
 
     @Test
@@ -101,15 +101,15 @@ class JadeStatueTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.activateAbility(player1, indexOf(statue), 0, null, null);
         harness.passBothPriorities();
-        assertThat(statue.isAnimatedUntilEndOfCombat()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(statue.getId())).isTrue();
         assertThat(gqs.isCreature(gd, statue)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(statue.isAnimatedUntilEndOfCombat()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(statue.getId())).isFalse();
         assertThat(gqs.isCreature(gd, statue)).isFalse();
         assertThat(gqs.getEffectiveToughness(gd, statue)).isEqualTo(0);
-        assertThat(statue.getTransientSubtypes()).doesNotContain(CardSubtype.GOLEM);
+        assertThat(gqs.getEffectiveSubtypes(gd, statue)).doesNotContain(CardSubtype.GOLEM);
     }
 
     private int indexOf(Permanent perm) {

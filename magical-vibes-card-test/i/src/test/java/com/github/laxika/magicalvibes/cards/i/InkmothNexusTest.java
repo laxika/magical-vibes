@@ -71,16 +71,17 @@ class InkmothNexusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(nexus.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(nexus.getAnimatedPower()).isEqualTo(1);
-        assertThat(nexus.getAnimatedToughness()).isEqualTo(1);
+        assertThat(gd.animatedByFloatingEffect(nexus.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nexus)).isEqualTo(1);
         assertThat(gqs.isCreature(gd, nexus)).isTrue();
         assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, nexus)).isEqualTo(1);
-        assertThat(nexus.getAnimatedColor()).isNull();
-        assertThat(nexus.getTransientSubtypes()).containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.BLINKMOTH);
-        assertThat(nexus.getGrantedKeywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.INFECT);
-        assertThat(gqs.isArtifact(nexus)).isTrue();
+        assertThat(gqs.getEffectiveColor(gd, nexus)).isNull();
+        assertThat(gqs.getEffectiveSubtypes(gd, nexus)).contains(CardSubtype.PHYREXIAN, CardSubtype.BLINKMOTH);
+        assertThat(gqs.hasKeyword(gd, nexus, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nexus, Keyword.INFECT)).isTrue();
+        assertThat(gqs.isArtifact(gd, nexus)).isTrue();
     }
 
     @Test
@@ -117,17 +118,17 @@ class InkmothNexusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, nexus)).isTrue();
-        assertThat(gqs.isArtifact(nexus)).isTrue();
+        assertThat(gqs.isArtifact(gd, nexus)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(nexus.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(nexus.getId())).isFalse();
         assertThat(gqs.isCreature(gd, nexus)).isFalse();
-        assertThat(gqs.isArtifact(nexus)).isFalse();
-        assertThat(nexus.getGrantedKeywords()).isEmpty();
-        assertThat(nexus.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.isArtifact(gd, nexus)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nexus, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, nexus)).doesNotContain(CardSubtype.PHYREXIAN, CardSubtype.BLINKMOTH);
     }
 
     @Test
@@ -148,7 +149,7 @@ class InkmothNexusTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, nexus)).isFalse();
         assertThat(gqs.isLand(gd, nexus)).isTrue();
-        assertThat(gqs.isArtifact(nexus)).isFalse();
+        assertThat(gqs.isArtifact(gd, nexus)).isFalse();
     }
 
     @Test

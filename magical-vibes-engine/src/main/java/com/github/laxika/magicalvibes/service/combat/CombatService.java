@@ -138,7 +138,6 @@ public class CombatService {
                 permanent.rollOverCombatAttackRecord();
             }
             permanent.clearCombatState();
-            permanent.clearUntilEndOfCombatAnimation();
         }));
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.creaturesThatEnlistedThisCombat.clear();

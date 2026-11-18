@@ -32,12 +32,12 @@ class JadeIdolTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(idol.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(idol.getId())).isTrue();
         assertThat(gqs.isCreature(gd, idol)).isTrue();
-        assertThat(gqs.isArtifact(idol)).isTrue();
+        assertThat(gqs.isArtifact(gd, idol)).isTrue();
         assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(4);
-        assertThat(idol.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, idol)).contains(CardSubtype.SPIRIT);
     }
 
     @Test
@@ -51,7 +51,7 @@ class JadeIdolTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(idol.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(idol.getId())).isTrue();
         assertThat(gqs.isCreature(gd, idol)).isTrue();
     }
 
@@ -65,7 +65,7 @@ class JadeIdolTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0);
 
-        assertThat(idol.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(idol.getId())).isFalse();
         assertThat(gqs.isCreature(gd, idol)).isFalse();
     }
 
@@ -81,7 +81,7 @@ class JadeIdolTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(idol.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(idol.getId())).isFalse();
         assertThat(gqs.isCreature(gd, idol)).isFalse();
     }
 
@@ -95,13 +95,13 @@ class JadeIdolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0);
-        assertThat(idol.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(idol.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(idol.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(idol.getId())).isFalse();
         assertThat(gqs.isCreature(gd, idol)).isFalse();
     }
 

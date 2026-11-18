@@ -43,13 +43,13 @@ class OrzhovKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.LIFELINK)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.THRULL);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.THRULL);
     }
 
     @Test
@@ -66,7 +66,7 @@ class OrzhovKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.LIFELINK)).isFalse();
     }
 

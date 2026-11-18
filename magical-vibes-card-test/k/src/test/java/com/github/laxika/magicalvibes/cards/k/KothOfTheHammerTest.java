@@ -51,10 +51,10 @@ class KothOfTheHammerTest extends BaseCardTest {
 
         assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(mountain.isTapped()).isFalse();
-        assertThat(mountain.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(mountain.getAnimatedPower()).isEqualTo(4);
-        assertThat(mountain.getAnimatedToughness()).isEqualTo(4);
-        assertThat(mountain.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gd.animatedByFloatingEffect(mountain.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(4);
+        assertThat(gqs.getEffectiveSubtypes(gd, mountain)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test
@@ -66,8 +66,8 @@ class KothOfTheHammerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, mountain.getId());
         harness.passBothPriorities();
 
-        assertThat(mountain.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(mountain.getAnimatedPower()).isEqualTo(4);
+        assertThat(gd.animatedByFloatingEffect(mountain.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(4);
     }
 
     @Test
@@ -93,8 +93,8 @@ class KothOfTheHammerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentMountain.isTapped()).isFalse();
-        assertThat(opponentMountain.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(opponentMountain.getAnimatedPower()).isEqualTo(4);
+        assertThat(gd.animatedByFloatingEffect(opponentMountain.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentMountain)).isEqualTo(4);
     }
 
     @Test
@@ -236,7 +236,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(query.isCreature(gd, mountain)).isFalse();
         assertThat(query.isLand(gd, mountain)).isTrue();
         assertThat(query.getEffectiveColors(gd, mountain)).isEmpty();
-        assertThat(mountain.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, mountain)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

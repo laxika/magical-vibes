@@ -66,9 +66,7 @@ class AvengersQuinjetTest extends BaseCardTest {
     void attacksAndOffersTheSameModes() {
         Permanent quinjet = harness.addToBattlefieldAndReturn(player1, new AvengersQuinjet());
         quinjet.setSummoningSick(false);
-        quinjet.setAnimatedUntilEndOfTurn(true);
-        quinjet.setAnimatedPower(4);
-        quinjet.setAnimatedToughness(4);
+        animateUntilEndOfTurn(quinjet, 4, 4);
         Card hero = new BraveBrawler();
         harness.setHand(player1, List.of(hero));
 

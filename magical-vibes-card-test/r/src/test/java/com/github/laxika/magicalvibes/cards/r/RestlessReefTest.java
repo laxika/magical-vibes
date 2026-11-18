@@ -55,7 +55,7 @@ class RestlessReefTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, reef)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, reef))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
-        assertThat(reef.getTransientSubtypes()).containsExactly(CardSubtype.SHARK);
+        assertThat(gqs.getEffectiveSubtypes(gd, reef)).contains(CardSubtype.SHARK);
         assertThat(gqs.hasKeyword(gd, reef, Keyword.DEATHTOUCH)).isTrue();
     }
 

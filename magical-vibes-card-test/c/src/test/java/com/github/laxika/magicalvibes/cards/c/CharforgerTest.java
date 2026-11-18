@@ -150,9 +150,7 @@ class CharforgerTest extends BaseCardTest {
         Permanent charforger = harness.addToBattlefieldAndReturn(player1, new Charforger());
         Permanent animatedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         animatedLand.getGrantedCardTypes().add(CardType.CREATURE);
-        animatedLand.setAnimatedUntilEndOfTurn(true);
-        animatedLand.setAnimatedPower(3);
-        animatedLand.setAnimatedToughness(3);
+        animateUntilEndOfTurn(animatedLand, 3, 3);
 
         putIntoGraveyard(animatedLand);
 

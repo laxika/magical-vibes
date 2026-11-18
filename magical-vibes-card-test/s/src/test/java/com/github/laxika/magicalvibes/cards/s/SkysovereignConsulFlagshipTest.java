@@ -58,7 +58,7 @@ class SkysovereignConsulFlagshipTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(flagship.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(flagship.getId())).isTrue();
         assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 

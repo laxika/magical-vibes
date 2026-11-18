@@ -32,7 +32,7 @@ class AvalancheCallerTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, snowLand)).isTrue();
         assertThat(gqs.getEffectivePower(gd, snowLand)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, snowLand)).isEqualTo(4);
-        assertThat(snowLand.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, snowLand)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, snowLand, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, snowLand, Keyword.HASTE)).isTrue();
     }

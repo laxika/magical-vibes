@@ -356,9 +356,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
     private Permanent addAnimatedSaga() {
         harness.addToBattlefield(player1, new SongOfFreyalise());
         Permanent saga = findPermanent(player1, "Song of Freyalise");
-        saga.setAnimatedUntilEndOfTurn(true);
-        saga.setAnimatedPower(4);
-        saga.setAnimatedToughness(4);
+        animateUntilEndOfTurn(saga, 4, 4);
         return saga;
     }
 

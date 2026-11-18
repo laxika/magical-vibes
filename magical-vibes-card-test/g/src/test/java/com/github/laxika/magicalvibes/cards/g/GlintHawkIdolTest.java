@@ -48,14 +48,14 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(idolPerm.getAnimatedPower()).isEqualTo(2);
-        assertThat(idolPerm.getAnimatedToughness()).isEqualTo(2);
+        assertThat(gd.animatedByFloatingEffect(idolPerm.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, idolPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, idolPerm)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, idolPerm)).isTrue();
         assertThat(gqs.isArtifact(gd, idolPerm)).isTrue();
         assertThat(gqs.getEffectivePower(gd, idolPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, idolPerm)).isEqualTo(2);
-        assertThat(idolPerm.getTransientSubtypes()).contains(CardSubtype.BIRD);
+        assertThat(gqs.getEffectiveSubtypes(gd, idolPerm)).contains(CardSubtype.BIRD);
         assertThat(gqs.hasKeyword(gd, idolPerm, Keyword.FLYING)).isTrue();
     }
 
@@ -86,10 +86,10 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(idolPerm.getId())).isFalse();
         assertThat(gqs.isCreature(gd, idolPerm)).isFalse();
-        assertThat(idolPerm.getTransientSubtypes()).isEmpty();
-        assertThat(idolPerm.getGrantedKeywords()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, idolPerm)).doesNotContain(CardSubtype.BIRD);
+        assertThat(gqs.hasKeyword(gd, idolPerm, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -122,9 +122,9 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // resolve AnimatePermanentsEffect
 
-        assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(idolPerm.getAnimatedPower()).isEqualTo(2);
-        assertThat(idolPerm.getAnimatedToughness()).isEqualTo(2);
+        assertThat(gd.animatedByFloatingEffect(idolPerm.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, idolPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, idolPerm)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, idolPerm, Keyword.FLYING)).isTrue();
     }
 
@@ -142,7 +142,7 @@ class GlintHawkIdolTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(idolPerm.getId())).isFalse();
         assertThat(gqs.isCreature(gd, idolPerm)).isFalse();
     }
 

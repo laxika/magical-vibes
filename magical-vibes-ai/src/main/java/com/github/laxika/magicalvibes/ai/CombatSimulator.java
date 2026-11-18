@@ -1008,7 +1008,7 @@ public class CombatSimulator {
                 gameQueryService.hasKeyword(perm, bonus, Keyword.REACH),
                 gameQueryService.hasKeyword(perm, bonus, Keyword.DEFENDER),
                 cantBeBlocked,
-                gameQueryService.isArtifact(perm),
+                gameQueryService.isArtifact(gameData, perm),
                 gameQueryService.hasKeyword(perm, bonus, Keyword.INFECT),
                 perm.getCard().getColor(),
                 score

@@ -96,9 +96,7 @@ public class AnimationSupport {
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
      * animation's timestamp — a later-timestamp base-P/T setter (Diminish, Lignify) overrides
-     * it while the permanent stays a creature. The animation flags on {@code Permanent} are
-     * still written for direct readers; this floating instance is what drives 7b precedence
-     * in the layered pass ({@code agent-docs/LAYER_SYSTEM.md}).
+     * it while the permanent stays a creature ({@code agent-docs/LAYER_SYSTEM.md}).
      */
     private void addAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
                                                   int power, int toughness, Duration duration) {
@@ -110,11 +108,11 @@ public class AnimationSupport {
 
     private void addDynamicAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry,
                                                          Permanent target,
-                                                         AnimatePermanentsEffect effect) {
+                                                         AnimatePermanentsEffect effect, Duration duration) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()), target.getId(),
-                null, null, effect.duration(), 0));
+                null, null, duration, 0));
     }
 
     private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
@@ -125,14 +123,6 @@ public class AnimationSupport {
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantColorEffect(color, GrantScope.SELF, true), target.getId(), null, null,
                 duration, 0));
-    }
-
-    private void addAnimationCardTypeOverrideFloatingEffect(GameData gameData, StackEntry entry,
-                                                            Permanent target, Set<CardType> cardTypes) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new SetCardTypesEffect(cardTypes, GrantScope.TARGET), target.getId(), null, null,
-                Duration.UNTIL_END_OF_TURN, 0));
     }
 
     /**
@@ -255,50 +245,19 @@ public class AnimationSupport {
                 : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
         boolean untilEndOfCombat = Duration.UNTIL_END_OF_COMBAT.equals(effect.duration());
-        if (untilEndOfCombat) {
-            self.setAnimatedUntilEndOfCombat(true);
-        } else {
-            self.setAnimatedUntilEndOfTurn(true);
-        }
-        if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
-            addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
-        } else if (effect.power() != null || effect.toughness() != null) {
-            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
-                    untilEndOfCombat ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);
-        }
-        self.setAnimatedPower(power);
-        self.setAnimatedToughness(toughness);
-        self.setAnimatedPtFromCard(effect.power() == null && effect.toughness() == null);
-        self.setAnimatedColor(effect.animatedColor());
-        addAnimationColorFloatingEffect(gameData, entry, self, effect.animatedColor(),
-                untilEndOfCombat ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);
-        applyAnimatedColors(self, effect);
+        Duration duration = untilEndOfCombat ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN;
         // Only a crew activation makes the Vehicle "crewed" (CR 702.122a); an identical triggered
         // animation (Kolodin, Triumph Caster) does not.
         boolean crew = entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 && effect.equals(AnimatePermanentsEffect.crew());
-        // Crew only makes the Vehicle an artifact creature (CR 702.122a); it keeps its subtypes.
-        if (!crew) {
-            self.getTransientSubtypes().clear();
-        }
-        self.getTransientSubtypes().addAll(effect.grantedSubtypes());
-        self.getGrantedKeywords().addAll(effect.grantedKeywords());
-        if (effect.cardTypeOverriding()) {
-            // "Becomes a [creature type] creature" also replaces the other creature types (CR 205.1a).
-            List<CardSubtype> setCreatureTypes = effect.grantedSubtypes().stream()
-                    .filter(gameQueryService::isCreatureSubtype)
-                    .toList();
-            if (!setCreatureTypes.isEmpty()) {
-                self.setTransientCreatureTypeOverride(null);
-                self.getTransientCreatureTypeOverrides().clear();
-                self.getTransientCreatureTypeOverrides().addAll(setCreatureTypes);
-            }
-            // "Becomes a creature" replaces the other card types (CR 205.1a).
-            Set<CardType> replacementTypes = EnumSet.of(CardType.CREATURE);
-            replacementTypes.addAll(effect.grantedCardTypes());
-            addAnimationCardTypeOverrideFloatingEffect(gameData, entry, self, replacementTypes);
+        if (crew) {
+            // The Vehicle becomes an artifact creature at the crew ability's own timestamp (CR 613.1d, 613.7b), so
+            // an earlier type-setting effect (Swift Reconfiguration) does not strip it; it keeps its subtypes.
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), self.getId(), entry.getControllerId(), effect,
+                    self.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         } else {
-            self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+            addAnimationFloatingEffects(gameData, entry, self, effect, power, toughness, duration);
         }
 
         // CR 301.5c — Equipment that's also a creature can't stay attached
@@ -314,15 +273,71 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         if (crew) {
-            // The Vehicle becomes a creature at the crew ability's own timestamp (CR 613.1d, 613.7b), so
-            // an earlier type-setting effect (Swift Reconfiguration) does not strip it.
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), self.getId(), entry.getControllerId(), effect,
-                    self.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             gameData.rulesEvents.occur(new CrewEvent.BecameCrewed(self, entry.getControllerId()));
         }
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
+    }
+
+    /**
+     * The animation as timestamped floating effects on {@code target} for {@code duration} (CR 611.2a), each applied
+     * in its layer by timestamp (CR 613.7): the card types (layer 4, CR 613.1d; "becomes a creature" without "in
+     * addition to its other types" replaces them, CR 205.1a) and creature types, the colours (layer 5), the keywords
+     * (layer 6) and the base power and toughness (sublayer 7b, CR 613.4b; none when the animation keeps the printed
+     * values). An animation that doesn't make it a creature (Ghirapur's "becomes a 5/3 Vehicle in addition to its
+     * other types") grants only its subtypes, keywords and base power and toughness.
+     */
+    private void addAnimationFloatingEffects(GameData gameData, StackEntry entry, Permanent target,
+                                             AnimatePermanentsEffect effect, int power, int toughness,
+                                             Duration duration) {
+        if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
+            addDynamicAnimationBasePtFloatingEffect(gameData, entry, target, effect, duration);
+        } else if (effect.power() != null || effect.toughness() != null) {
+            addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, duration);
+        }
+        boolean colorReplaced = false;
+        if (effect.animatedColor() != null) {
+            addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(), duration);
+            colorReplaced = true;
+        }
+        for (CardColor color : effect.animatedColors()) {
+            addFloating(gameData, entry, target, new GrantColorEffect(color, GrantScope.TARGET, !colorReplaced),
+                    duration);
+            colorReplaced = true;
+        }
+        if (effect.becomesCreature()) {
+            if (effect.cardTypeOverriding()) {
+                Set<CardType> replacementTypes = EnumSet.of(CardType.CREATURE);
+                replacementTypes.addAll(effect.grantedCardTypes());
+                addFloating(gameData, entry, target, new SetCardTypesEffect(replacementTypes, GrantScope.TARGET),
+                        duration);
+            } else {
+                addAnimationCardTypeFloatingEffect(gameData, entry, target, CardType.CREATURE, duration);
+                for (CardType cardType : effect.grantedCardTypes()) {
+                    addAnimationCardTypeFloatingEffect(gameData, entry, target, cardType, duration);
+                }
+            }
+        }
+        // "Becomes a [creature type] creature" also replaces the other creature types (CR 205.1a): the first
+        // creature type it names sets them, the rest are added.
+        boolean creatureTypesSet = !effect.cardTypeOverriding();
+        for (CardSubtype subtype : effect.grantedSubtypes()) {
+            boolean setsCreatureTypes = !creatureTypesSet && gameQueryService.isCreatureSubtype(subtype);
+            creatureTypesSet |= setsCreatureTypes;
+            addFloating(gameData, entry, target, new GrantSubtypeEffect(subtype, GrantScope.TARGET, setsCreatureTypes),
+                    duration);
+        }
+        if (!effect.grantedKeywords().isEmpty()) {
+            addFloating(gameData, entry, target, new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
+                    duration);
+        }
+    }
+
+    private void addFloating(GameData gameData, StackEntry entry, Permanent target, CardEffect effect,
+                             Duration duration) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, target.getId(), null, null,
+                duration, 0));
     }
 
     private void animateOneWithFloatingDuration(GameData gameData, StackEntry entry,
@@ -347,32 +362,7 @@ public class AnimationSupport {
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
         Duration duration = effect.duration();
 
-        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, duration);
-        addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(), duration);
-
-        if (effect.cardTypeOverriding()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new SetCardTypesEffect(effect.grantedCardTypes(), GrantScope.TARGET),
-                    target.getId(), null, null, duration, 0));
-        } else {
-            addAnimationCardTypeFloatingEffect(gameData, entry, target, CardType.CREATURE, duration);
-            for (CardType cardType : effect.grantedCardTypes()) {
-                addAnimationCardTypeFloatingEffect(gameData, entry, target, cardType, duration);
-            }
-        }
-        for (CardSubtype subtype : effect.grantedSubtypes()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,
-                    duration, 0));
-        }
-        if (!effect.grantedKeywords().isEmpty()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
-                    target.getId(), null, null, duration, 0));
-        }
+        addAnimationFloatingEffects(gameData, entry, target, effect, power, toughness, duration);
 
         String durationText = Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration) ? "until your next upkeep"
                 : Duration.UNTIL_PLANESWALK.equals(duration) ? "until planeswalk"
@@ -390,15 +380,6 @@ public class AnimationSupport {
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
                 duration, 0));
-    }
-
-    private void applyAnimatedColors(Permanent permanent, AnimatePermanentsEffect effect) {
-        if (effect.animatedColors().isEmpty()) {
-            return;
-        }
-        permanent.getTransientColors().clear();
-        permanent.getTransientColors().addAll(effect.animatedColors());
-        permanent.setColorOverridden(true);
     }
 
     /** OWN_LANDS scope — all lands you control (Sylvan Awakening), until end of turn or your next turn. */
@@ -423,11 +404,8 @@ public class AnimationSupport {
                 continue;
             }
 
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(), null, null,
-                    effect.duration(), 0));
             if (untilNextTurn) {
+                addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE, effect.duration());
                 perm.setAnimatedUntilNextTurn(true);
                 perm.setUntilNextTurnAnimatedPower(power);
                 perm.setUntilNextTurnAnimatedToughness(toughness);
@@ -439,15 +417,8 @@ public class AnimationSupport {
                 addAnimationColorFloatingEffect(gameData, entry, perm, effect.animatedColor(),
                         Duration.UNTIL_YOUR_NEXT_TURN);
             } else {
-                perm.setAnimatedUntilEndOfTurn(true);
-                perm.setAnimatedPower(power);
-                perm.setAnimatedToughness(toughness);
-                perm.setAnimatedColor(effect.animatedColor());
-                perm.getTransientSubtypes().clear();
-                perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
-                perm.getGrantedKeywords().addAll(effect.grantedKeywords());
-                perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
-                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, Duration.UNTIL_END_OF_TURN);
+                addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
+                        Duration.UNTIL_END_OF_TURN);
             }
 
             log.info("Game {} - {} animated{}", gameData.id, perm.getCard().getName(),
@@ -499,24 +470,9 @@ public class AnimationSupport {
             if (!gameQueryService.isLand(gameData, perm)) {
                 continue;
             }
-            perm.setAnimatedUntilEndOfTurn(true);
-            perm.setAnimatedPower(power);
-            perm.setAnimatedToughness(toughness);
-            perm.setAnimatedColor(effect.animatedColor());
-            perm.getTransientSubtypes().clear();
-            perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
-            perm.getGrantedKeywords().addAll(effect.grantedKeywords());
-            perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
-            addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness,
-                    Duration.UNTIL_END_OF_TURN);
-            // Layer 4 creature type as a timestamped floating effect, so it still applies to a land whose
-            // card types were overridden by an earlier effect (e.g. Song of the Dryads, CR 613.1d/613.7).
-            addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE,
-                    Duration.UNTIL_END_OF_TURN);
-            for (CardType grantedType : effect.grantedCardTypes()) {
-                addAnimationCardTypeFloatingEffect(gameData, entry, perm, grantedType,
-                        Duration.UNTIL_END_OF_TURN);
-            }
+            // Timestamped, so the creature type still applies to a land whose card types were overridden by an
+            // earlier effect (e.g. Song of the Dryads, CR 613.1d/613.7).
+            addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness, Duration.UNTIL_END_OF_TURN);
 
             log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
         }
@@ -539,19 +495,9 @@ public class AnimationSupport {
                 if (!gameQueryService.isLand(gameData, perm)) {
                     continue;
                 }
-                perm.setAnimatedUntilEndOfTurn(true);
-                perm.setAnimatedPower(power);
-                perm.setAnimatedToughness(toughness);
-                if (effect.animatedColor() != null) {
-                    perm.setAnimatedColor(effect.animatedColor());
-                }
-                perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
-                perm.getGrantedKeywords().addAll(effect.grantedKeywords());
-                perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
-                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, Duration.UNTIL_END_OF_TURN);
-                // Layer 4 creature type as a timestamped floating effect, so it still applies to a land whose
-                // card types were overridden by an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
-                addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE,
+                // Timestamped, so the creature type still applies to a land whose card types were overridden by
+                // an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
+                addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
                         Duration.UNTIL_END_OF_TURN);
 
                 log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
@@ -587,32 +533,14 @@ public class AnimationSupport {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), filterContext)) {
+                // Without "becomes a creature" (Ghirapur's "becomes a 5/3 Vehicle in addition to its other types")
+                // the base P/T only shows once something else makes it a creature.
+                addAnimationFloatingEffects(gameData, entry, permanent, effect, power, toughness,
+                        Duration.UNTIL_END_OF_TURN);
                 if (!effect.becomesCreature()) {
-                    // "becomes a 5/3 Vehicle in addition to its other types" (Ghirapur): no creature
-                    // type, so the base P/T only shows once something else makes it a creature.
-                    permanent.getTransientSubtypes().addAll(effect.grantedSubtypes());
-                    permanent.getGrantedKeywords().addAll(effect.grantedKeywords());
-                    addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness,
-                            Duration.UNTIL_END_OF_TURN);
                     count++;
                     continue;
                 }
-                permanent.setAnimatedUntilEndOfTurn(true);
-                permanent.setAnimatedPower(power);
-                permanent.setAnimatedToughness(toughness);
-                permanent.setAnimatedColor(effect.animatedColor());
-                applyAnimatedColors(permanent, effect);
-                permanent.getTransientSubtypes().clear();
-                permanent.getTransientSubtypes().addAll(effect.grantedSubtypes());
-                permanent.getGrantedKeywords().addAll(effect.grantedKeywords());
-                if (effect.cardTypeOverriding()) {
-                    addAnimationCardTypeOverrideFloatingEffect(gameData, entry, permanent,
-                            effect.grantedCardTypes());
-                } else {
-                    permanent.getGrantedCardTypes().add(CardType.CREATURE);
-                    permanent.getGrantedCardTypes().addAll(effect.grantedCardTypes());
-                }
-                addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness, Duration.UNTIL_END_OF_TURN);
 
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {

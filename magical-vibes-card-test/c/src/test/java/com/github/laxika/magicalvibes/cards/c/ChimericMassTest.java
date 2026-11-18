@@ -77,7 +77,7 @@ class ChimericMassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mass.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(mass.getId())).isTrue();
         assertThat(gqs.isCreature(gd, mass)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
@@ -115,12 +115,12 @@ class ChimericMassTest extends BaseCardTest {
         Permanent mass = addMassReady(player1, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThat(mass.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, mass)).doesNotContain(CardSubtype.CONSTRUCT);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mass.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(gqs.getEffectiveSubtypes(gd, mass)).contains(CardSubtype.CONSTRUCT);
     }
 
     @Test
@@ -132,7 +132,7 @@ class ChimericMassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mass.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(mass.getId())).isTrue();
         assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
 
         // Advance to cleanup step — animation ends
@@ -140,7 +140,7 @@ class ChimericMassTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mass.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(mass.getId())).isFalse();
         assertThat(gqs.isCreature(gd, mass)).isFalse();
         // Charge counters should still be there
         assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
@@ -178,7 +178,7 @@ class ChimericMassTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mass.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(mass.getId())).isFalse();
         assertThat(gqs.isCreature(gd, mass)).isFalse();
     }
 

@@ -41,11 +41,11 @@ class ForiysianTotemTest extends BaseCardTest {
         animate(totem, player1);
 
         assertThat(gqs.isCreature(gd, totem)).isTrue();
-        assertThat(gqs.isArtifact(totem)).isTrue();
+        assertThat(gqs.isArtifact(gd, totem)).isTrue();
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, totem)).containsExactly(CardColor.RED);
-        assertThat(totem.getTransientSubtypes()).contains(CardSubtype.GIANT);
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).contains(CardSubtype.GIANT);
         assertThat(gqs.hasKeyword(gd, totem, Keyword.TRAMPLE)).isTrue();
     }
 

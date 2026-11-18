@@ -44,7 +44,7 @@ class WeatherlightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weatherlight.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(weatherlight.getId())).isTrue();
         assertThat(gqs.isCreature(gd, weatherlight)).isTrue();
         assertThat(gqs.getEffectivePower(gd, weatherlight)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, weatherlight)).isEqualTo(5);
@@ -62,7 +62,7 @@ class WeatherlightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weatherlight.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(weatherlight.getId())).isTrue();
         assertThat(gqs.isCreature(gd, weatherlight)).isTrue();
         assertThat(bear1.isTapped()).isTrue();
         assertThat(bear2.isTapped()).isTrue();
@@ -105,7 +105,7 @@ class WeatherlightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(weatherlight.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(weatherlight.getId())).isFalse();
         assertThat(gqs.isCreature(gd, weatherlight)).isFalse();
     }
 
@@ -140,9 +140,7 @@ class WeatherlightTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent weatherlight = addWeatherlightReady(player1);
         // Manually animate it as if crewed
-        weatherlight.setAnimatedUntilEndOfTurn(true);
-        weatherlight.setAnimatedPower(4);
-        weatherlight.setAnimatedToughness(5);
+        animateUntilEndOfTurn(weatherlight, 4, 5);
         weatherlight.setAttacking(true);
 
         setupTopCards(List.of(
@@ -180,9 +178,7 @@ class WeatherlightTest extends BaseCardTest {
     void noCombatDamageTriggerWhenBlocked() {
         harness.setLife(player2, 20);
         Permanent weatherlight = addWeatherlightReady(player1);
-        weatherlight.setAnimatedUntilEndOfTurn(true);
-        weatherlight.setAnimatedPower(4);
-        weatherlight.setAnimatedToughness(5);
+        animateUntilEndOfTurn(weatherlight, 4, 5);
         weatherlight.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new SerraAngel());

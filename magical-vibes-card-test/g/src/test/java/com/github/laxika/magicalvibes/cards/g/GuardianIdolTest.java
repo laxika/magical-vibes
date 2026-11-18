@@ -53,10 +53,10 @@ class GuardianIdolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, idol)).isTrue();
-        assertThat(gqs.isArtifact(idol)).isTrue();
+        assertThat(gqs.isArtifact(gd, idol)).isTrue();
         assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(2);
-        assertThat(idol.getTransientSubtypes()).containsExactly(CardSubtype.GOLEM);
+        assertThat(gqs.getEffectiveSubtypes(gd, idol)).contains(CardSubtype.GOLEM);
     }
 
     @Test
@@ -85,7 +85,7 @@ class GuardianIdolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, idol)).isFalse();
-        assertThat(idol.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, idol)).doesNotContain(CardSubtype.GOLEM);
     }
 
     private Permanent addIdolReady(Player player) {
@@ -136,7 +136,7 @@ class GuardianIdolTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(2);
-        assertThat(idol.getTransientSubtypes()).containsExactly(CardSubtype.GOLEM);
+        assertThat(gqs.getEffectiveSubtypes(gd, idol)).contains(CardSubtype.GOLEM);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

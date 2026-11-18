@@ -39,7 +39,7 @@ class MishrasFactoryTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, factory)).isTrue();
-        assertThat(gqs.isArtifact(factory)).isTrue();
+        assertThat(gqs.isArtifact(gd, factory)).isTrue();
         assertThat(gqs.getEffectivePower(gd, factory)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, factory)).isEqualTo(2);
         assertThat(gqs.effectiveCreatureSubtypes(gd, factory)).contains(CardSubtype.ASSEMBLY_WORKER);
@@ -60,9 +60,9 @@ class MishrasFactoryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(factory.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(factory.getId())).isFalse();
         assertThat(gqs.isCreature(gd, factory)).isFalse();
-        assertThat(gqs.isArtifact(factory)).isFalse();
+        assertThat(gqs.isArtifact(gd, factory)).isFalse();
     }
 
     @Test

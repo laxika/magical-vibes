@@ -60,8 +60,8 @@ class DiminishTest extends BaseCardTest {
         // Grizzly Bears is normally 2/2 — after Diminish it should be 1/1
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -72,8 +72,8 @@ class DiminishTest extends BaseCardTest {
         // Give the bear +2/+2 boost
         bear.setPowerModifier(2);
         bear.setToughnessModifier(2);
-        assertThat(bear.getEffectivePower()).isEqualTo(4); // 2 base + 2 modifier
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4); // 2 base + 2 modifier
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         harness.setHand(player1, List.of(new Diminish()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -82,8 +82,8 @@ class DiminishTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         // Base becomes 1/1, modifiers still apply: 1 + 2 = 3
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -92,8 +92,8 @@ class DiminishTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        assertThat(bear.getEffectivePower()).isEqualTo(4); // 2 base + 2 counters
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4); // 2 base + 2 counters
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         harness.setHand(player1, List.of(new Diminish()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -102,8 +102,8 @@ class DiminishTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         // Base becomes 1/1, counters still apply: 1 + 2 = 3
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -117,7 +117,7 @@ class DiminishTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
 
         // Move to cleanup
         harness.forceStep(TurnStep.END_STEP);
@@ -126,8 +126,8 @@ class DiminishTest extends BaseCardTest {
 
         // After cleanup, base P/T override is removed
         assertThat(bear.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -141,8 +141,8 @@ class DiminishTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -187,9 +187,9 @@ class DiminishTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Village is now a 3/3 animated creature
-        assertThat(village.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(village.getEffectivePower()).isEqualTo(3);
-        assertThat(village.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.animatedByFloatingEffect(village.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(3);
 
         // Cast Diminish on the animated village
         harness.setHand(player1, List.of(new Diminish()));
@@ -198,8 +198,8 @@ class DiminishTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, village.getId());
 
         // Per layer 7b: Diminish has later timestamp, overrides animation's 3/3 → 1/1
-        assertThat(village.getEffectivePower()).isEqualTo(1);
-        assertThat(village.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(1);
     }
 
     @Test
@@ -212,8 +212,8 @@ class DiminishTest extends BaseCardTest {
         perm.setPermanentAnimatedPower(5);
         perm.setPermanentAnimatedToughness(5);
 
-        assertThat(perm.getEffectivePower()).isEqualTo(5);
-        assertThat(perm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);
 
         // Cast Diminish
         harness.setHand(player1, List.of(new Diminish()));
@@ -222,8 +222,8 @@ class DiminishTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, perm.getId());
 
         // Diminish overrides the permanently animated 5/5 → 1/1
-        assertThat(perm.getEffectivePower()).isEqualTo(1);
-        assertThat(perm.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
     }
 
     @Test
@@ -240,7 +240,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, village.getId());
 
-        assertThat(village.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(1);
 
         // Move to cleanup — both effects wear off
         harness.forceStep(TurnStep.END_STEP);
@@ -248,7 +248,7 @@ class DiminishTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Village is no longer a creature, no longer has base P/T override
-        assertThat(village.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(village.getId())).isFalse();
         assertThat(village.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, village)).isFalse();
     }

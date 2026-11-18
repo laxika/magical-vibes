@@ -114,10 +114,10 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chromatic Star"))
                 .findFirst().orElse(null);
         assertThat(star).isNotNull();
-        assertThat(star.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(star.getAnimatedPower()).isEqualTo(5);
-        assertThat(star.getAnimatedToughness()).isEqualTo(5);
-        assertThat(star.getGrantedCardTypes()).contains(CardType.CREATURE);
+        assertThat(gd.animatedByFloatingEffect(star.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, star)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, star)).isEqualTo(5);
+        assertThat(gqs.isCreature(gd, star)).isTrue();
     }
 
     @Test
@@ -146,12 +146,12 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Ornithopter"))
                 .findFirst().orElse(null);
         assertThat(ornithopter).isNotNull();
-        assertThat(ornithopter.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(ornithopter.getAnimatedPower()).isEqualTo(5);
-        assertThat(ornithopter.getAnimatedToughness()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(ornithopter.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(5);
         // Effective P/T should be 5/5 (base overridden by animation)
-        assertThat(ornithopter.getEffectivePower()).isEqualTo(5);
-        assertThat(ornithopter.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(5);
     }
 
     @Test
@@ -175,10 +175,10 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
-        assertThat(bears.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(bears.getId())).isFalse();
         // Grizzly Bears should remain 2/2
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -202,7 +202,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chromatic Star"))
                 .findFirst().orElse(null);
         assertThat(opponentStar).isNotNull();
-        assertThat(opponentStar.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(opponentStar.getId())).isFalse();
     }
 
     @Test
@@ -232,8 +232,8 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .findFirst().orElse(null);
         assertThat(gnomes).isNotNull();
         // Base 5/5 + 2 from +1/+1 counters = 7/7
-        assertThat(gnomes.getEffectivePower()).isEqualTo(7);
-        assertThat(gnomes.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, gnomes)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, gnomes)).isEqualTo(7);
     }
 
     @Test
@@ -315,10 +315,10 @@ class TheAntiquitiesWarTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "The Antiquities War");
         harness.passBothPriorities();
-        assertThat(existing.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(5);
         Permanent later = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        assertThat(later.getEffectivePower()).isZero();
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     private void setupTopCards(List<Card> cards) {

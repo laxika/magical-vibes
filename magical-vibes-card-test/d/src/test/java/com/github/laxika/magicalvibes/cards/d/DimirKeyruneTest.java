@@ -42,12 +42,12 @@ class DimirKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.HORROR);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.HORROR);
         assertThat(gqs.hasCantBeBlocked(gd, keyrune)).isTrue();
     }
 
@@ -65,7 +65,7 @@ class DimirKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, keyrune)).isFalse();
     }
 

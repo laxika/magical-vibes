@@ -437,19 +437,6 @@ public class Permanent {
     private final Set<CardSubtype> faceDownSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Whether this face-down permanent was put onto the battlefield by manifest. */
     @Setter private boolean manifested;
-    @Setter private boolean animatedUntilEndOfTurn;
-    /** When {@code true}, this permanent is animated as a creature until the combat phase ends
-     *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
-     *  {@link #animatedColor}/{@link #transientSubtypes} storage as {@link #animatedUntilEndOfTurn}.
-     *  Cleared by {@link #clearCombatState()} when combat ends. */
-    @Setter private boolean animatedUntilEndOfCombat;
-    private int animatedPower;
-    /** Whether the animation keeps the permanent's own printed power and toughness (Crew on a Vehicle)
-     *  rather than fixing them, so a copy effect that changes the card also changes the base values.
-     *  Cleared whenever {@link #setAnimatedPower(int)} fixes a value. */
-    @Setter private boolean animatedPtFromCard;
-    @Setter private int animatedToughness;
-    @Setter private CardColor animatedColor;
     @Setter private boolean permanentlyAnimated;
     @Setter private int permanentAnimatedPower;
     @Setter private int permanentAnimatedToughness;
@@ -1094,12 +1081,6 @@ public class Permanent {
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
         this.faceDownSubtypes.addAll(source.faceDownSubtypes);
         this.manifested = source.manifested;
-        this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
-        this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
-        this.animatedPower = source.animatedPower;
-        this.animatedPtFromCard = source.animatedPtFromCard;
-        this.animatedToughness = source.animatedToughness;
-        this.animatedColor = source.animatedColor;
         this.permanentlyAnimated = source.permanentlyAnimated;
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
@@ -1568,23 +1549,6 @@ public class Permanent {
         attackTargetReselected = false;
     }
 
-    /**
-     * Reverts an "until end of combat" animation (e.g. Jade Statue) when the combat phase ends.
-     * Clears the shared animation storage that {@link #animatedUntilEndOfCombat} uses. No-op when
-     * the permanent is not animated until end of combat, so unrelated transient grants are preserved.
-     */
-    public void clearUntilEndOfCombatAnimation() {
-        if (!animatedUntilEndOfCombat) {
-            return;
-        }
-        this.animatedUntilEndOfCombat = false;
-        this.animatedPower = 0;
-        this.animatedToughness = 0;
-        this.animatedColor = null;
-        this.grantedKeywords.clear();
-        this.transientSubtypes.clear();
-        this.grantedCardTypes.clear();
-    }
     public void setAttackedThisTurn(boolean attackedThisTurn) {
         this.attackedThisTurn = attackedThisTurn;
     }
@@ -1799,20 +1763,12 @@ public class Permanent {
      * direct {@code Permanent} readers (views, last-known-information reads, predicate leaves)
      * when no layered 7b entry applies; when only one of these fields is set, the two agree.
      */
-    public void setAnimatedPower(int animatedPower) {
-        this.animatedPower = animatedPower;
-        this.animatedPtFromCard = false;
-    }
-
     public int getBasePower() {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
             return basePowerOverride;
         }
         if (basePowerOverriddenPermanently) {
             return permanentBasePowerOverride;
-        }
-        if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
-            return animatedPtFromCard ? (card.getPower() != null ? card.getPower() : 0) : animatedPower;
         }
         if (animatedUntilNextTurn) {
             return untilNextTurnAnimatedPower;
@@ -1837,9 +1793,6 @@ public class Permanent {
         if (baseToughnessOverriddenPermanently) {
             return permanentBaseToughnessOverride;
         }
-        if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
-            return animatedPtFromCard ? (card.getToughness() != null ? card.getToughness() : 0) : animatedToughness;
-        }
         if (animatedUntilNextTurn) {
             return untilNextTurnAnimatedToughness;
         }
@@ -1858,9 +1811,6 @@ public class Permanent {
     public CardColor getEffectiveColor() {
         if (colorOverridden && !transientColors.isEmpty()) {
             return transientColors.iterator().next();
-        }
-        if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
-            return animatedColor;
         }
         if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return CardColor.GREEN;
@@ -1882,9 +1832,6 @@ public class Permanent {
     public List<CardColor> getEffectiveColors() {
         if (colorOverridden && !transientColors.isEmpty()) {
             return List.copyOf(transientColors);
-        }
-        if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
-            return List.of(animatedColor);
         }
         if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return List.of(CardColor.GREEN);
@@ -2181,11 +2128,6 @@ public class Permanent {
         this.creaturesThatCrewedThisTurn.clear();
         this.temporaryAbilities.clear();
         this.saddled = false;
-        this.animatedUntilEndOfTurn = false;
-        this.animatedUntilEndOfCombat = false;
-        this.animatedPower = 0;
-        this.animatedToughness = 0;
-        this.animatedColor = null;
         this.grantedKeywords.clear();
         this.removedKeywords.clear();
         this.transientColors.clear();
@@ -2246,10 +2188,6 @@ public class Permanent {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
             case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
-            case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn;
-            case ANIMATED_POWER -> animatedPower;
-            case ANIMATED_TOUGHNESS -> animatedToughness;
-            case ANIMATED_COLOR -> animatedColor;
             case GRANTED_KEYWORDS -> grantedKeywords;
             case REMOVED_KEYWORDS -> removedKeywords;
             case TRANSIENT_COLORS -> transientColors;
@@ -2307,10 +2245,6 @@ public class Permanent {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
             case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
-            case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn = true;
-            case ANIMATED_POWER -> animatedPower = (Integer) value;
-            case ANIMATED_TOUGHNESS -> animatedToughness = (Integer) value;
-            case ANIMATED_COLOR -> animatedColor = (CardColor) value;
             case GRANTED_KEYWORDS -> grantedKeywords.addAll((Set<Keyword>) value);
             case REMOVED_KEYWORDS -> removedKeywords.addAll((Set<Keyword>) value);
             case TRANSIENT_COLORS -> transientColors.addAll((Set<CardColor>) value);

@@ -76,7 +76,7 @@ class StrixhavenSkycoachTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skycoach.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(skycoach.getId())).isTrue();
         assertThat(gqs.isCreature(gd, skycoach)).isTrue();
         assertThat(crew.isTapped()).isTrue();
         assertThat(skycoach.isTapped()).isFalse();
@@ -96,7 +96,7 @@ class StrixhavenSkycoachTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(skycoach.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(skycoach.getId())).isFalse();
         assertThat(gqs.isCreature(gd, skycoach)).isFalse();
     }
 

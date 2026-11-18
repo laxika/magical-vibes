@@ -35,7 +35,7 @@ class HoneymoonHearseTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, hearse), null, null);
         harness.passBothPriorities();
 
-        assertThat(hearse.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(hearse.getId())).isTrue();
         assertThat(gqs.isCreature(gd, hearse)).isTrue();
         assertThat(gqs.getEffectivePower(gd, hearse)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, hearse)).isEqualTo(5);
@@ -86,7 +86,7 @@ class HoneymoonHearseTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hearse.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(hearse.getId())).isFalse();
         assertThat(gqs.isCreature(gd, hearse)).isFalse();
     }
 

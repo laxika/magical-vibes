@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+
 
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
@@ -1092,9 +1094,9 @@ class GameQueryServiceTest {
         @DisplayName("returns true for animated permanent")
         void returnsTrueForAnimated() {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
-            perm.setAnimatedUntilEndOfTurn(true);
-            perm.setAnimatedPower(2);
-            perm.setAnimatedToughness(2);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                    new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(),
+                    Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.isCreature(gd, perm)).isTrue();
         }

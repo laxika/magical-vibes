@@ -138,9 +138,7 @@ class GhiredConclaveExileTest extends BaseCardTest {
         SolRing tokenCard = new SolRing();
         tokenCard.setToken(true);
         Permanent animatedToken = harness.addToBattlefieldAndReturn(player1, tokenCard);
-        animatedToken.setAnimatedUntilEndOfTurn(true);
-        animatedToken.setAnimatedPower(1);
-        animatedToken.setAnimatedToughness(1);
+        animateUntilEndOfTurn(animatedToken, 1, 1);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));

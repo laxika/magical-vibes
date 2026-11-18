@@ -41,11 +41,11 @@ class ChronatogTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, totem)).isTrue();
-        assertThat(gqs.isArtifact(totem)).isTrue();
+        assertThat(gqs.isArtifact(gd, totem)).isTrue();
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, totem)).containsExactly(CardColor.BLUE);
-        assertThat(totem.getTransientSubtypes()).contains(CardSubtype.ATOG);
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).contains(CardSubtype.ATOG);
     }
 
     @Test
@@ -95,7 +95,7 @@ class ChronatogTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, totem)).isFalse();
-        assertThat(totem.getTransientSubtypes()).doesNotContain(CardSubtype.ATOG);
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).doesNotContain(CardSubtype.ATOG);
     }
 
     @Test

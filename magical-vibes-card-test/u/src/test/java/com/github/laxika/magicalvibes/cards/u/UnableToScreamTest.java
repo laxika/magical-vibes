@@ -149,7 +149,7 @@ class UnableToScreamTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(factory.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(factory.getId())).isFalse();
         assertThat(gqs.isCreature(gd, factory)).isTrue();
         assertThat(gqs.isLand(gd, factory)).isTrue();
         assertThat(gqs.isArtifact(gd, factory)).isTrue();

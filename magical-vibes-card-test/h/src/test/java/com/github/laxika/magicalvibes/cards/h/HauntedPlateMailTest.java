@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -54,9 +53,8 @@ class HauntedPlateMailTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, mail)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mail)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, mail)).isEqualTo(4);
-        assertThat(mail.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
-        assertThat(mail.getTransientRemovedSubtypes()).contains(CardSubtype.EQUIPMENT);
-        assertThat(GameQueryService.permanentHasSubtype(mail, CardSubtype.EQUIPMENT)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, mail)).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, mail)).doesNotContain(CardSubtype.EQUIPMENT);
     }
 
     @Test
@@ -96,16 +94,15 @@ class HauntedPlateMailTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, mail)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(mail, CardSubtype.EQUIPMENT)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, mail)).doesNotContain(CardSubtype.EQUIPMENT);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mail.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(mail.getId())).isFalse();
         assertThat(gqs.isCreature(gd, mail)).isFalse();
-        assertThat(mail.getTransientRemovedSubtypes()).isEmpty();
-        assertThat(GameQueryService.permanentHasSubtype(mail, CardSubtype.EQUIPMENT)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, mail)).contains(CardSubtype.EQUIPMENT);
     }
 
     private Permanent addMailReady(Player player) {

@@ -63,7 +63,7 @@ class SkarrgGuildmageTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
-        assertThat(land.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
         assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
     }
 
@@ -84,7 +84,7 @@ class SkarrgGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, land)).isFalse();
-        assertThat(land.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

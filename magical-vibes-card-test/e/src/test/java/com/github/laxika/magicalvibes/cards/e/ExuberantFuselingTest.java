@@ -115,9 +115,7 @@ class ExuberantFuselingTest extends BaseCardTest {
     void triggersForAnimatedLand() {
         Permanent fuseling = harness.addToBattlefieldAndReturn(player1, new ExuberantFuseling());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setAnimatedUntilEndOfTurn(true);
-        land.setAnimatedPower(3);
-        land.setAnimatedToughness(3);
+        animateUntilEndOfTurn(land, 3, 3);
 
         putIntoGraveyard(land);
 

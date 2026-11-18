@@ -177,9 +177,7 @@ class ChainOfAcidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castSorcery(player1, 0, target.getId());
 
-        target.setAnimatedUntilEndOfTurn(true);
-        target.setAnimatedPower(2);
-        target.setAnimatedToughness(2);
+        animateUntilEndOfTurn(target, 2, 2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Forest");

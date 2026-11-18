@@ -43,9 +43,7 @@ class SilentSubmersibleTest extends BaseCardTest {
     @DisplayName("Draws a card when it deals combat damage to a player")
     void drawsOnCombatDamageToPlayer() {
         Permanent submersible = addSubmersibleReady(player1);
-        submersible.setAnimatedUntilEndOfTurn(true);
-        submersible.setAnimatedPower(2);
-        submersible.setAnimatedToughness(3);
+        animateUntilEndOfTurn(submersible, 2, 3);
         submersible.setAttacking(true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -61,9 +59,7 @@ class SilentSubmersibleTest extends BaseCardTest {
     @DisplayName("Does not draw a card when blocked")
     void noDrawWhenBlocked() {
         Permanent submersible = addSubmersibleReady(player1);
-        submersible.setAnimatedUntilEndOfTurn(true);
-        submersible.setAnimatedPower(2);
-        submersible.setAnimatedToughness(3);
+        animateUntilEndOfTurn(submersible, 2, 3);
         submersible.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -81,9 +77,7 @@ class SilentSubmersibleTest extends BaseCardTest {
     @DisplayName("Draws a card when it deals combat damage to a planeswalker")
     void drawsOnCombatDamageToPlaneswalker() {
         Permanent submersible = addSubmersibleReady(player1);
-        submersible.setAnimatedUntilEndOfTurn(true);
-        submersible.setAnimatedPower(2);
-        submersible.setAnimatedToughness(3);
+        animateUntilEndOfTurn(submersible, 2, 3);
         submersible.setAttacking(true);
 
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceWielderOfMysteries());

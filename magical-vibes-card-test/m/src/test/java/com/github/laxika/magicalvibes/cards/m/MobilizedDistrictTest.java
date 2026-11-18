@@ -46,7 +46,7 @@ class MobilizedDistrictTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, district)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, district)).isEqualTo(3);
         assertThat(district.getCard().hasType(CardType.LAND)).isTrue();
-        assertThat(district.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        assertThat(gqs.hasKeyword(gd, district, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test

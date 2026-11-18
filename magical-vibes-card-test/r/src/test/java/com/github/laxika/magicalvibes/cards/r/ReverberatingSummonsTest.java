@@ -33,11 +33,11 @@ class ReverberatingSummonsTest extends BaseCardTest {
         advanceToCombat();
         harness.passBothPriorities();
 
-        assertThat(summons.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(summons.getId())).isTrue();
         assertThat(gqs.isCreature(gd, summons)).isTrue();
         assertThat(gqs.getEffectivePower(gd, summons)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, summons)).isEqualTo(3);
-        assertThat(summons.getTransientSubtypes()).contains(CardSubtype.MONK);
+        assertThat(gqs.getEffectiveSubtypes(gd, summons)).contains(CardSubtype.MONK);
         assertThat(gqs.hasKeyword(gd, summons, Keyword.HASTE)).isTrue();
     }
 
@@ -53,7 +53,7 @@ class ReverberatingSummonsTest extends BaseCardTest {
 
         advanceToCombat();
 
-        assertThat(summons.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(summons.getId())).isFalse();
         assertThat(gqs.isCreature(gd, summons)).isFalse();
     }
 
@@ -157,7 +157,7 @@ class ReverberatingSummonsTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, summons)).isFalse();
         assertThat(gqs.hasKeyword(gd, summons, Keyword.HASTE)).isFalse();
-        assertThat(summons.getTransientSubtypes()).doesNotContain(CardSubtype.MONK);
+        assertThat(gqs.getEffectiveSubtypes(gd, summons)).doesNotContain(CardSubtype.MONK);
     }
 
     @Test

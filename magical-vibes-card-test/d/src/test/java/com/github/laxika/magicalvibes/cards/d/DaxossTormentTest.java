@@ -28,7 +28,7 @@ class DaxossTormentTest extends BaseCardTest {
         assertThat(gqs.isEnchantment(gd, torment)).isTrue();
         assertThat(gqs.getEffectivePower(gd, torment)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, torment)).isEqualTo(5);
-        assertThat(torment.getTransientSubtypes()).contains(CardSubtype.DEMON);
+        assertThat(gqs.getEffectiveSubtypes(gd, torment)).contains(CardSubtype.DEMON);
         assertThat(gqs.hasKeyword(gd, torment, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, torment, Keyword.HASTE)).isTrue();
     }
@@ -80,7 +80,7 @@ class DaxossTormentTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, torment)).isFalse();
         assertThat(gqs.isEnchantment(gd, torment)).isTrue();
-        assertThat(torment.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, torment)).doesNotContain(CardSubtype.DEMON);
     }
 
     private Permanent castDaxossTorment() {

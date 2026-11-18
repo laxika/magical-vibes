@@ -37,7 +37,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
-        assertThat(forest.getTransientSubtypes()).containsExactly(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.SPIRIT);
         assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
     }
 
@@ -57,7 +57,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(forest.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.SPIRIT);
     }
 
     @Test

@@ -289,12 +289,13 @@ public class GameActionAvailabilityService {
                 if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
                     manaCost = manaCost.withBlackManaAsPhyrexian();
                 }
-                boolean artifactCtx = gameQueryService.isArtifact(perm);
+                boolean artifactCtx = gameQueryService.isArtifact(gameData, perm);
                 boolean myrCtx = perm.getCard().getSubtypes().contains(CardSubtype.MYR);
                 boolean powerstoneCtx = pool.getPowerstoneOnlyColorless() > 0;
                 Set<CardSubtype> soaCtx = new HashSet<>(perm.getCard().getSubtypes());
                 soaCtx.addAll(perm.getTransientSubtypes());
                 soaCtx.addAll(perm.getGrantedSubtypes());
+                soaCtx.addAll(gameQueryService.getEffectiveSubtypes(gameData, perm));
                 Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, perm)
                         ? soaCtx : Set.of();
                 boolean colorlessPermanentContext = gameQueryService.getEffectiveColors(gameData, perm).isEmpty();

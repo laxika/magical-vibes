@@ -439,9 +439,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     private Permanent addAnimatedSword(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new SwordOfWarAndPeace());
         perm.setSummoningSick(false);
-        perm.setAnimatedUntilEndOfTurn(true);
-        perm.setAnimatedPower(3);
-        perm.setAnimatedToughness(3);
+        animateUntilEndOfTurn(perm, 3, 3);
         return perm;
     }
 

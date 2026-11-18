@@ -55,7 +55,7 @@ class FirdochCoreTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(core.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(core.getId())).isFalse();
         assertThat(gqs.isCreature(gd, core)).isFalse();
     }
 

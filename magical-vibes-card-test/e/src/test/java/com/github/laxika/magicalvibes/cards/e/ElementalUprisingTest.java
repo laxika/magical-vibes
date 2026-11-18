@@ -36,7 +36,7 @@ class ElementalUprisingTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
-        assertThat(land.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(land.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }

@@ -53,11 +53,11 @@ class TheMechanistAerialArtisanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, clue.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(clue)).isTrue();
+        assertThat(gqs.isArtifact(gd, clue)).isTrue();
         assertThat(gqs.isCreature(gd, clue)).isTrue();
         assertThat(gqs.getEffectivePower(gd, clue)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, clue)).isEqualTo(1);
-        assertThat(clue.getTransientSubtypes()).contains(CardSubtype.CONSTRUCT);
+        assertThat(gqs.getEffectiveSubtypes(gd, clue)).contains(CardSubtype.CONSTRUCT);
         assertThat(gqs.hasKeyword(gd, clue, Keyword.FLYING)).isTrue();
     }
 
@@ -85,9 +85,9 @@ class TheMechanistAerialArtisanTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(clue.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(clue.getId())).isFalse();
         assertThat(gqs.isCreature(gd, clue)).isFalse();
-        assertThat(clue.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, clue)).doesNotContain(CardSubtype.CONSTRUCT);
         assertThat(gqs.hasKeyword(gd, clue, Keyword.FLYING)).isFalse();
     }
 

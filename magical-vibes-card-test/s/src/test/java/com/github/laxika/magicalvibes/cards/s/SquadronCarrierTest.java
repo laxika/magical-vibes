@@ -109,9 +109,7 @@ class SquadronCarrierTest extends BaseCardTest {
     @DisplayName("The carrier's flying grant includes itself when it is a creature")
     void animatedCarrierReceivesItsOwnFlyingGrant() {
         Permanent carrier = harness.addToBattlefieldAndReturn(player1, new SquadronCarrier());
-        carrier.setAnimatedUntilEndOfTurn(true);
-        carrier.setAnimatedPower(4);
-        carrier.setAnimatedToughness(4);
+        animateUntilEndOfTurn(carrier, 4, 4);
 
         carrier.setCounterCount(CounterType.CHARGE, 9);
         assertThat(gqs.hasKeyword(gd, carrier, Keyword.FLYING)).isFalse();

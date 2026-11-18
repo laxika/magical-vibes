@@ -369,9 +369,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
     private Permanent addAnimatedSword(Player player) {
         Permanent perm = addSwordReady(player);
-        perm.setAnimatedUntilEndOfTurn(true);
-        perm.setAnimatedPower(3);
-        perm.setAnimatedToughness(3);
+        animateUntilEndOfTurn(perm, 3, 3);
         return perm;
     }
 

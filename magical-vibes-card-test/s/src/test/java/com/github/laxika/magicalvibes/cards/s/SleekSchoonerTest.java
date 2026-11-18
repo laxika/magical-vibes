@@ -32,7 +32,7 @@ class SleekSchoonerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(schooner.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(schooner.getId())).isTrue();
         assertThat(gqs.isCreature(gd, schooner)).isTrue();
         assertThat(gqs.getEffectivePower(gd, schooner)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, schooner)).isEqualTo(3);
@@ -77,7 +77,7 @@ class SleekSchoonerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(schooner.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(schooner.getId())).isFalse();
         assertThat(gqs.isCreature(gd, schooner)).isFalse();
     }
 

@@ -151,11 +151,12 @@ public class ManaChoiceNarrowingService {
         }
         // Mirrors the affordability call in GameActionAvailabilityService.getPotentialPayableAbilityIndices
         // so an ability payment is priced exactly as its "potentially payable" highlight was.
-        boolean artifactContext = gameQueryService.isArtifact(source);
+        boolean artifactContext = gameQueryService.isArtifact(gameData, source);
         boolean myrContext = source.getCard().getSubtypes().contains(CardSubtype.MYR);
         Set<CardSubtype> subtypeContext = new HashSet<>(source.getCard().getSubtypes());
         subtypeContext.addAll(source.getTransientSubtypes());
         subtypeContext.addAll(source.getGrantedSubtypes());
+        subtypeContext.addAll(gameQueryService.getEffectiveSubtypes(gameData, source));
         return new ManaCost(abilityCost).canPay(pool, 0, artifactContext, myrContext, false, false,
                 false, null, subtypeContext, false, artifactContext);
     }

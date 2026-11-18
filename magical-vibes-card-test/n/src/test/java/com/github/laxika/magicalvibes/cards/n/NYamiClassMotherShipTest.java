@@ -28,7 +28,7 @@ class NYamiClassMotherShipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ship.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(ship.getId())).isTrue();
         assertThat(gqs.isCreature(gd, ship)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }
@@ -37,9 +37,7 @@ class NYamiClassMotherShipTest extends BaseCardTest {
     @DisplayName("Combat damage offers a top permanent for the battlefield")
     void combatDamagePutsTopPermanentOntoBattlefield() {
         Permanent ship = addReadyShip();
-        ship.setAnimatedUntilEndOfTurn(true);
-        ship.setAnimatedPower(5);
-        ship.setAnimatedToughness(7);
+        animateUntilEndOfTurn(ship, 5, 7);
         ship.setAttacking(true);
         GrizzlyBears topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
@@ -59,9 +57,7 @@ class NYamiClassMotherShipTest extends BaseCardTest {
     @DisplayName("Declining the top permanent puts it into hand")
     void decliningTopPermanentPutsItIntoHand() {
         Permanent ship = addReadyShip();
-        ship.setAnimatedUntilEndOfTurn(true);
-        ship.setAnimatedPower(5);
-        ship.setAnimatedToughness(7);
+        animateUntilEndOfTurn(ship, 5, 7);
         ship.setAttacking(true);
         Forest topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
@@ -78,9 +74,7 @@ class NYamiClassMotherShipTest extends BaseCardTest {
     @DisplayName("A nonpermanent top card goes into hand without a may choice")
     void nonpermanentTopCardGoesIntoHand() {
         Permanent ship = addReadyShip();
-        ship.setAnimatedUntilEndOfTurn(true);
-        ship.setAnimatedPower(5);
-        ship.setAnimatedToughness(7);
+        animateUntilEndOfTurn(ship, 5, 7);
         ship.setAttacking(true);
         Shock topCard = new Shock();
         harness.setLibrary(player1, List.of(topCard));
@@ -96,9 +90,7 @@ class NYamiClassMotherShipTest extends BaseCardTest {
     @DisplayName("A top land enters untapped and leaves the next card in the library")
     void combatDamagePutsLandOntoBattlefieldUntapped() {
         Permanent ship = addReadyShip();
-        ship.setAnimatedUntilEndOfTurn(true);
-        ship.setAnimatedPower(5);
-        ship.setAnimatedToughness(7);
+        animateUntilEndOfTurn(ship, 5, 7);
         ship.setAttacking(true);
         Forest land = new Forest();
         Shock nextCard = new Shock();
@@ -119,9 +111,7 @@ class NYamiClassMotherShipTest extends BaseCardTest {
     @DisplayName("Combat damage with an empty library does not draw or offer a choice")
     void emptyLibraryDoesNothing() {
         Permanent ship = addReadyShip();
-        ship.setAnimatedUntilEndOfTurn(true);
-        ship.setAnimatedPower(5);
-        ship.setAnimatedToughness(7);
+        animateUntilEndOfTurn(ship, 5, 7);
         ship.setAttacking(true);
         harness.setLibrary(player1, List.of());
         List<Card> originalHand = List.copyOf(gd.playerHands.get(player1.getId()));

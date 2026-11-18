@@ -24,8 +24,8 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
     void hasBaseStatsWithoutCondition() {
         Permanent wrestlers = harness.addToBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
 
-        assertThat(wrestlers.getEffectivePower()).isEqualTo(3);
-        assertThat(wrestlers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -53,8 +53,8 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wrestlers.getEffectivePower()).isEqualTo(3);
-        assertThat(wrestlers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -68,7 +68,7 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(village.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isTrue();
@@ -83,8 +83,8 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
 
         harness.playLand(player2, 0);
 
-        assertThat(wrestlers.getEffectivePower()).isEqualTo(3);
-        assertThat(wrestlers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
     }
 

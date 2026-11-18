@@ -122,7 +122,7 @@ class FearlessSwashbucklerTest extends BaseCardTest {
     void grantsHasteToNewlyEnteredVehicleSoItCanAttack() {
         harness.addToBattlefield(player1, new FearlessSwashbuckler());
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
-        vehicle.setAnimatedUntilEndOfTurn(true);
+        animateUntilEndOfTurn(vehicle);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
 
@@ -137,7 +137,7 @@ class FearlessSwashbucklerTest extends BaseCardTest {
 
     private Permanent addDreadnoughtReady() {
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
-        vehicle.setAnimatedUntilEndOfTurn(true);
+        animateUntilEndOfTurn(vehicle);
         return vehicle;
     }
 }

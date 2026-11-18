@@ -151,9 +151,7 @@ class FirefluxSquadTest extends BaseCardTest {
     void exilesAnimatedArtifactCreature() {
         addCreatureReady(player1, new FirefluxSquad());
         Permanent attacker = addCreatureReady(player1, new FountainOfYouth());
-        attacker.setAnimatedUntilEndOfTurn(true);
-        attacker.setAnimatedPower(2);
-        attacker.setAnimatedToughness(2);
+        animateUntilEndOfTurn(attacker, 2, 2);
         GrizzlyBears creature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(creature));
 

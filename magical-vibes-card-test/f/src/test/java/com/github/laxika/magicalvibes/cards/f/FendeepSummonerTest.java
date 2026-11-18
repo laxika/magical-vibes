@@ -30,7 +30,7 @@ class FendeepSummonerTest extends BaseCardTest {
 
         assertThat(summoner.isTapped()).isTrue();
         for (Permanent swamp : List.of(swampA, swampB)) {
-            assertThat(swamp.isAnimatedUntilEndOfTurn()).isTrue();
+            assertThat(gd.animatedByFloatingEffect(swamp.getId())).isTrue();
             assertThat(gqs.isCreature(gd, swamp)).isTrue();
             assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(5);
@@ -106,7 +106,7 @@ class FendeepSummonerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(swamp.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(swamp.getId())).isFalse();
         assertThat(gqs.isCreature(gd, swamp)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, swamp))
                 .doesNotContain(CardSubtype.TREEFOLK, CardSubtype.WARRIOR);
@@ -172,7 +172,7 @@ class FendeepSummonerTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, second)).isTrue();
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
-        assertThat(first.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(first.getId())).isFalse();
     }
 
     @Test

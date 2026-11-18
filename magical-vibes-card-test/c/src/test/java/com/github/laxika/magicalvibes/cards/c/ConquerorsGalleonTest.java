@@ -236,9 +236,7 @@ class ConquerorsGalleonTest extends BaseCardTest {
     }
 
     private void animateAsCreature(Permanent perm) {
-        perm.setAnimatedUntilEndOfTurn(true);
-        perm.setAnimatedPower(2);
-        perm.setAnimatedToughness(10);
+        animateUntilEndOfTurn(perm, 2, 10);
     }
 
 }

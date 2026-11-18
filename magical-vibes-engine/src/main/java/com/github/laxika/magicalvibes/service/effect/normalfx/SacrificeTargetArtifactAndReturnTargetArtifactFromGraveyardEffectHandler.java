@@ -55,7 +55,7 @@ public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHa
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetPermanentId);
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardIds.getFirst());
         if (targetPermanent == null || targetCard == null
-                || !gameQueryService.isArtifact(targetPermanent)
+                || !gameQueryService.isArtifact(gameData, targetPermanent)
                 || !targetCard.hasType(CardType.ARTIFACT)) {
             return;
         }

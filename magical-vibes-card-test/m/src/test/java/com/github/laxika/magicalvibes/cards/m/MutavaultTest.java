@@ -39,7 +39,7 @@ class MutavaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(mutavault.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(mutavault.getId())).isTrue();
         assertThat(gqs.isCreature(gd, mutavault)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mutavault)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mutavault)).isEqualTo(2);
@@ -88,7 +88,7 @@ class MutavaultTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mutavault.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(mutavault.getId())).isFalse();
         assertThat(gqs.isCreature(gd, mutavault)).isFalse();
         assertThat(gqs.hasKeyword(gd, mutavault, Keyword.CHANGELING)).isFalse();
     }

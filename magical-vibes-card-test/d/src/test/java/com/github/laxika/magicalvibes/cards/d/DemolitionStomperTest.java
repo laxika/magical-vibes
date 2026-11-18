@@ -29,7 +29,7 @@ class DemolitionStomperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(stomper.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(stomper.getId())).isTrue();
         assertThat(gqs.isCreature(gd, stomper)).isTrue();
         assertThat(giant.isTapped()).isTrue();
         assertThat(bears.isTapped()).isTrue();
@@ -160,9 +160,7 @@ class DemolitionStomperTest extends BaseCardTest {
 
     private Permanent addAttackingStomper() {
         Permanent stomper = addStomperReady(player1);
-        stomper.setAnimatedUntilEndOfTurn(true);
-        stomper.setAnimatedPower(10);
-        stomper.setAnimatedToughness(7);
+        animateUntilEndOfTurn(stomper, 10, 7);
         stomper.setAttacking(true);
         return stomper;
     }

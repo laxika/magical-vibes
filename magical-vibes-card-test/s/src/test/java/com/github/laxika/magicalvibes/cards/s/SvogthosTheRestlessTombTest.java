@@ -47,7 +47,7 @@ class SvogthosTheRestlessTombTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, svogthos)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, svogthos))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-        assertThat(svogthos.getTransientSubtypes())
+        assertThat(gqs.getEffectiveSubtypes(gd, svogthos))
                 .containsExactlyInAnyOrder(CardSubtype.PLANT, CardSubtype.ZOMBIE);
         assertThat(svogthos.isTapped()).isFalse();
     }
@@ -94,7 +94,7 @@ class SvogthosTheRestlessTombTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, svogthos)).isFalse();
         assertThat(gqs.isLand(gd, svogthos)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, svogthos)).isEmpty();
-        assertThat(svogthos.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, svogthos)).isEmpty();
     }
 
     @Test

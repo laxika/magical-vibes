@@ -287,10 +287,11 @@ instances for the mass setter — locks the affected set per CR 611.2c).
 
 **Animation-flag 7b migration status (step 6):** migrated (flag still written; a floating
 `SetBasePowerToughnessEffect` at the animation's timestamp drives 7b ordering — all writers
-funnel through `AnimationSupport.addAnimationBasePtFloatingEffect`):
-`animatedUntilEndOfTurn`/`animatedPower` (`animateSingle` UEOT branch — manlands, Crew,
-Chimeric Staff/Mass; `animateOwnLands` UEOT branch; `animateAllLands` — Natural Affinity;
-`animateControlledPermanents` — The Antiquities War III → `UNTIL_END_OF_TURN`),
+funnel through `AnimationSupport.addAnimationBasePtFloatingEffect`). An until-end-of-turn or
+until-end-of-combat animation (manlands, Crew, Chimeric Staff/Mass, Natural Affinity, The Antiquities War III,
+Jade Statue) writes no flag: each characteristic it changes is its own floating effect
+(`AnimationSupport.addAnimationFloatingEffects`), so readers outside the pass ask
+`GameData.animatedByFloatingEffect`. Still flags:
 `animatedUntilNextTurn` (`animateOwnLands` — Sylvan Awakening → `UNTIL_YOUR_NEXT_TURN`), and
 `permanentlyAnimated` (`animatePermanentTarget` — Tezzeret, Waker of the Wilds → `PERMANENT`;
 `animateWhileSource` — Awakener Druid → `WHILE_SOURCE_ON_BATTLEFIELD` with the source id, so
@@ -809,8 +810,7 @@ authoritative per-step record; this section is the reconciled summary.
   LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. `transientSubtypes`/
   `transientLandTypeOverride` are still field-only (one-shot type state is not floating).
 - **Flag-only 7b stragglers**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
-  real 7b entry beats it regardless of relative order. (`animatedUntilEndOfCombat` now also
-  adds an `UNTIL_END_OF_COMBAT` floating base P/T, expired with the other end-of-combat effects.)
+  real 7b entry beats it regardless of relative order.
 - **LKI misses layered state**: a dying creature's last-known power
   (read by the trigger pipeline, `TriggerMatcher`/`TriggeredAbilityStackService`) misses an active 7d switch — the departed permanent has no
   state in the pass.

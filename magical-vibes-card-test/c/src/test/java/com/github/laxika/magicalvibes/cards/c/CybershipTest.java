@@ -30,9 +30,7 @@ class CybershipTest extends BaseCardTest {
         Card remainingCard = new Forest();
         harness.setLibrary(player2, List.of(firstCard, secondCard, remainingCard));
 
-        cybership.setAnimatedUntilEndOfTurn(true);
-        cybership.setAnimatedPower(8);
-        cybership.setAnimatedToughness(8);
+        animateUntilEndOfTurn(cybership, 8, 8);
         cybership.setAttacking(true);
 
         resolveCombat();
@@ -61,9 +59,7 @@ class CybershipTest extends BaseCardTest {
         Card onlyCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(onlyCard));
 
-        cybership.setAnimatedUntilEndOfTurn(true);
-        cybership.setAnimatedPower(8);
-        cybership.setAnimatedToughness(8);
+        animateUntilEndOfTurn(cybership, 8, 8);
         cybership.setAttacking(true);
 
         resolveCombat();
@@ -193,9 +189,7 @@ class CybershipTest extends BaseCardTest {
     }
 
     private void dealCombatDamage(Permanent cybership) {
-        cybership.setAnimatedUntilEndOfTurn(true);
-        cybership.setAnimatedPower(8);
-        cybership.setAnimatedToughness(8);
+        animateUntilEndOfTurn(cybership, 8, 8);
         cybership.setAttacking(true);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);

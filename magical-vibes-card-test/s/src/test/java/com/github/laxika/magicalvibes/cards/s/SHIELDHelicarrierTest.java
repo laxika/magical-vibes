@@ -48,7 +48,7 @@ class SHIELDHelicarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(helicarrier.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(helicarrier.getId())).isTrue();
         assertThat(gqs.isCreature(gd, helicarrier)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }
@@ -65,7 +65,7 @@ class SHIELDHelicarrierTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(helicarrier.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(helicarrier.getId())).isFalse();
         assertThat(gqs.isCreature(gd, helicarrier)).isFalse();
     }
 

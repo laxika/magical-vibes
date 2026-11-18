@@ -42,13 +42,13 @@ class AzoriusKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.FLYING)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.BIRD);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.BIRD);
     }
 
     @Test
@@ -65,7 +65,7 @@ class AzoriusKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.FLYING)).isFalse();
     }
 

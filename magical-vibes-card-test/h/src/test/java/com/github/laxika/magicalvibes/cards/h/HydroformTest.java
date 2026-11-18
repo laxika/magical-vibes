@@ -29,11 +29,11 @@ class HydroformTest extends BaseCardTest {
         Permanent land = addLand(player1);
         castHydroform(land);
 
-        assertThat(land.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
-        assertThat(land.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, land, Keyword.FLYING)).isTrue();
         assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
     }
@@ -57,9 +57,9 @@ class HydroformTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(land.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isFalse();
         assertThat(gqs.isCreature(gd, land)).isFalse();
-        assertThat(land.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

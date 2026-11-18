@@ -453,7 +453,7 @@ public class BoardEvaluator {
 
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR)) {
             boolean opponentCanBlockFear = opponentCreatures.stream()
-                    .anyMatch(p -> gameQueryService.isArtifact(p)
+                    .anyMatch(p -> gameQueryService.isArtifact(gameData, p)
                             || p.getEffectiveColor() == CardColor.BLACK);
             if (!opponentCanBlockFear) {
                 bonus += 6.0;
@@ -463,7 +463,7 @@ public class BoardEvaluator {
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE)) {
             CardColor attackerColor = perm.getEffectiveColor();
             boolean opponentCanBlockIntimidate = opponentCreatures.stream()
-                    .anyMatch(p -> gameQueryService.isArtifact(p)
+                    .anyMatch(p -> gameQueryService.isArtifact(gameData, p)
                             || p.getEffectiveColor() == attackerColor);
             if (!opponentCanBlockIntimidate) {
                 bonus += 6.0;
@@ -590,7 +590,7 @@ public class BoardEvaluator {
             if (opponentId != null) {
                 boolean opponentCanBlockFear = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .anyMatch(p -> gameQueryService.isArtifact(p)
+                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p)
                                 || p.getEffectiveColor() == CardColor.BLACK);
                 bonus += opponentCanBlockFear ? 2 : 8;
             } else {
@@ -604,7 +604,7 @@ public class BoardEvaluator {
                 CardColor attackerColor = perm.getEffectiveColor();
                 boolean opponentCanBlockIntimidate = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .anyMatch(p -> gameQueryService.isArtifact(p)
+                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p)
                                 || p.getEffectiveColor() == attackerColor);
                 bonus += opponentCanBlockIntimidate ? 2 : 8;
             } else {

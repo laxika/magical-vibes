@@ -32,7 +32,7 @@ class MajesticMetamorphosisTest extends BaseCardTest {
 
         assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(target, CardSubtype.ANGEL)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, target).contains(CardSubtype.ANGEL)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
@@ -42,7 +42,7 @@ class MajesticMetamorphosisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isArtifact(gd, target)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(target, CardSubtype.ANGEL)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, target).contains(CardSubtype.ANGEL)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -111,7 +111,7 @@ class MajesticMetamorphosisTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isFalse();
         assertThat(GameQueryService.permanentHasSubtype(target, CardSubtype.EQUIPMENT)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(target, CardSubtype.ANGEL)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, target).contains(CardSubtype.ANGEL)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 

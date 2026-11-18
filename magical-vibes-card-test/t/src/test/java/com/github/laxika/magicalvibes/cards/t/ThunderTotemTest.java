@@ -39,11 +39,11 @@ class ThunderTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, totem)).isTrue();
-        assertThat(gqs.isArtifact(totem)).isTrue();
+        assertThat(gqs.isArtifact(gd, totem)).isTrue();
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, totem)).containsExactly(CardColor.WHITE);
-        assertThat(totem.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).contains(CardSubtype.SPIRIT);
         assertThat(gqs.hasKeyword(gd, totem, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, totem, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -63,7 +63,7 @@ class ThunderTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, totem)).isFalse();
-        assertThat(totem.getTransientSubtypes()).doesNotContain(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).doesNotContain(CardSubtype.SPIRIT);
         assertThat(gqs.hasKeyword(gd, totem, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, totem, Keyword.FIRST_STRIKE)).isFalse();
     }

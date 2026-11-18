@@ -3465,8 +3465,7 @@ public class GameQueryService {
                                         UUID enteringControllerId) {
         if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
         if (bonus.cardTypeOverriding()) return false;
-        if (permanent.isAnimatedUntilEndOfTurn()) return true;
-        if (permanent.isAnimatedUntilEndOfCombat()) return true;
+        if (gameData.animatedByFloatingEffect(permanent.getId())) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
@@ -3595,8 +3594,6 @@ public class GameQueryService {
                 ? state.hasCardType(CardType.CREATURE)
                 : hasCardType(permanent, CardType.CREATURE);
         return typeCreature
-                || permanent.isAnimatedUntilEndOfTurn()
-                || permanent.isAnimatedUntilEndOfCombat()
                 || permanent.isAnimatedUntilNextTurn()
                 || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
@@ -7587,7 +7584,7 @@ public class GameQueryService {
 
         boolean layeredTouched = state != null
                 && (board.l56Touched().contains(target.getId()) || basePt7b != null || ptSwitched);
-        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilEndOfCombat() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
+        boolean isSelfAnimated = gameData.animatedByFloatingEffect(target.getId()) || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
@@ -8200,7 +8197,7 @@ public class GameQueryService {
             }
         }
         if (protectedTypes.isEmpty()) return false;
-        if (protectedTypes.contains(CardType.ARTIFACT) && isArtifact(source)) return true;
+        if (protectedTypes.contains(CardType.ARTIFACT) && isArtifact(gameData, source)) return true;
         if (protectedTypes.contains(CardType.CREATURE) && isCreature(gameData, source)) return true;
         if (protectedTypes.contains(source.getCard().getType())) return true;
         for (CardType type : source.getCard().getAdditionalTypes()) {

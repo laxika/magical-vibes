@@ -33,7 +33,7 @@ class AradaraExpressTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(express.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(express.getId())).isTrue();
         assertThat(gqs.isCreature(gd, express)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }
@@ -61,7 +61,7 @@ class AradaraExpressTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(express.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(express.getId())).isFalse();
         assertThat(gqs.isCreature(gd, express)).isFalse();
     }
 

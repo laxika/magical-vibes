@@ -100,7 +100,7 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         permanents.put("landCreature", battlefield(player2, landCreatureCard));
 
         Permanent animatedLand = battlefield(player1, card("Mutavault", CardType.LAND));
-        animatedLand.setAnimatedUntilEndOfTurn(true);
+        animateUntilEndOfTurn(animatedLand);
         permanents.put("animatedLand", animatedLand);
 
         ownGraveyardCard = card("Own Graveyard Card", CardType.SORCERY);

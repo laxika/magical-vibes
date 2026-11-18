@@ -30,7 +30,7 @@ class ConsulateDreadnoughtTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dreadnought.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(dreadnought.getId())).isTrue();
         assertThat(gqs.isCreature(gd, dreadnought)).isTrue();
         assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(11);
@@ -60,7 +60,7 @@ class ConsulateDreadnoughtTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dreadnought.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(dreadnought.getId())).isFalse();
         assertThat(gqs.isCreature(gd, dreadnought)).isFalse();
     }
 

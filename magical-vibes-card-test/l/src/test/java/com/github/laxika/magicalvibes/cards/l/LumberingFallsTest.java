@@ -79,7 +79,7 @@ class LumberingFallsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, falls)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, falls)).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
         assertThat(gqs.effectiveCreatureSubtypes(gd, falls)).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(falls.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, falls)).containsExactly(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, falls, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -100,7 +100,7 @@ class LumberingFallsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, falls)).isFalse();
-        assertThat(falls.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, falls)).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.isLand(gd, falls)).isTrue();
         assertThat(gqs.hasKeyword(gd, falls, Keyword.HEXPROOF)).isFalse();
     }

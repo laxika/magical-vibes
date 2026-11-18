@@ -47,10 +47,10 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         activateGenju();
 
         assertThat(gqs.isCreature(gd, island)).isTrue();
-        assertThat(island.getEffectivePower()).isEqualTo(3);
-        assertThat(island.getEffectiveToughness()).isEqualTo(2);
-        assertThat(island.getTransientSubtypes()).contains(CardSubtype.SPIRIT);
-        assertThat(island.getAnimatedColor()).isEqualTo(CardColor.BLUE);
+        assertThat(gqs.getEffectivePower(gd, island)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, island)).isEqualTo(2);
+        assertThat(gqs.getEffectiveSubtypes(gd, island)).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveColor(gd, island)).isEqualTo(CardColor.BLUE);
         assertThat(gqs.hasKeyword(gd, island, Keyword.FLYING)).isTrue();
         assertThat(gqs.isLand(gd, island)).isTrue();
     }
@@ -130,8 +130,8 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, island)).isTrue();
-        assertThat(island.getEffectivePower()).isEqualTo(3);
-        assertThat(island.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, island)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, island)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, island, Keyword.FLYING)).isTrue();
         assertThat(gqs.isLand(gd, island)).isTrue();
     }
@@ -147,8 +147,8 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Genju of the Falls"));
 
         assertThat(gqs.isCreature(gd, island)).isTrue();
-        assertThat(island.getEffectivePower()).isEqualTo(3);
-        assertThat(island.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, island)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, island)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, island, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Genju of the Falls");
         harness.assertNotInHand(player1, "Genju of the Falls");
@@ -170,7 +170,7 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         activateGenju();
         Permanent island = findPermanent(player2, "Island");
         assertThat(gqs.isCreature(gd, island)).isTrue();
-        assertThat(island.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, island)).isEqualTo(3);
 
         destroyIsland(island);
         harness.passBothPriorities();

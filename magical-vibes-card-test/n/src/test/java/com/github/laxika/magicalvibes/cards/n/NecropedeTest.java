@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
@@ -277,14 +279,12 @@ class NecropedeTest extends BaseCardTest {
     void deathTriggerFizzlesWhenTargetStopsBeingCreature() {
         harness.addToBattlefield(player1, new Necropede());
         Permanent clasp = harness.addToBattlefieldAndReturn(player2, new ContagionClasp());
-        clasp.setAnimatedUntilEndOfTurn(true);
-        clasp.setAnimatedPower(2);
-        clasp.setAnimatedToughness(2);
+        animateUntilEndOfTurn(clasp, 2, 2);
         setupCombatWhereNecropedeDies();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, clasp.getId());
 
-        clasp.setAnimatedUntilEndOfTurn(false);
+        gd.endFloatingEffectsOnPermanent(clasp.getId(), GrantCardTypeEffect.class);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

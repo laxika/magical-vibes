@@ -59,8 +59,8 @@ class NogiDracoZealotTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(nogi.getId());
         resolveAllTriggers();
 
-        assertThat(nogi.getEffectivePower()).isEqualTo(5);
-        assertThat(nogi.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, nogi)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, nogi)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, nogi, Keyword.FLYING)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, nogi)).containsExactly(CardSubtype.DRAGON);
 
@@ -68,8 +68,8 @@ class NogiDracoZealotTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(nogi.getEffectivePower()).isEqualTo(3);
-        assertThat(nogi.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nogi)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nogi)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, nogi, Keyword.FLYING)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, nogi)).doesNotContain(CardSubtype.DRAGON);
     }
@@ -85,7 +85,7 @@ class NogiDracoZealotTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(nogi.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nogi)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, nogi, Keyword.FLYING)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, nogi)).doesNotContain(CardSubtype.DRAGON);
     }
@@ -126,8 +126,8 @@ class NogiDracoZealotTest extends BaseCardTest {
         gd.playerHands.get(player1.getId()).add(departedDragon.getCard());
         resolveAllTriggers();
 
-        assertThat(nogi.getEffectivePower()).isEqualTo(3);
-        assertThat(nogi.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nogi)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nogi)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, nogi, Keyword.FLYING)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, nogi)).doesNotContain(CardSubtype.DRAGON);
     }
@@ -144,7 +144,7 @@ class NogiDracoZealotTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DragonEgg());
         resolveAllTriggers();
 
-        assertThat(nogi.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nogi)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, nogi, Keyword.FLYING)).isFalse();
     }
 }

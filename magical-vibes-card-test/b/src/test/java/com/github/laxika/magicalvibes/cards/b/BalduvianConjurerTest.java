@@ -49,7 +49,7 @@ class BalduvianConjurerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, snowLand.getId());
         harness.passBothPriorities();
 
-        assertThat(snowLand.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(snowLand.getId())).isTrue();
         assertThat(gqs.isCreature(gd, snowLand)).isTrue();
         assertThat(gqs.getEffectivePower(gd, snowLand)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, snowLand)).isEqualTo(2);
@@ -83,7 +83,7 @@ class BalduvianConjurerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(snowLand.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(snowLand.getId())).isFalse();
         assertThat(gqs.isCreature(gd, snowLand)).isFalse();
     }
 

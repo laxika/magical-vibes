@@ -30,7 +30,7 @@ class HedgeShredderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shredder.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(shredder.getId())).isTrue();
         assertThat(creature.isTapped()).isTrue();
     }
 

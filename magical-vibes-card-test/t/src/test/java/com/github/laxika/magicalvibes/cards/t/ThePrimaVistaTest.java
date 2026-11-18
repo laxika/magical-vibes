@@ -29,7 +29,7 @@ class ThePrimaVistaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, primaVista)).isTrue();
-        assertThat(primaVista.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(primaVista.getId())).isTrue();
     }
 
     @Test

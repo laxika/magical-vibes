@@ -42,7 +42,7 @@ class CavernousMawTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
         assertThat(gqs.isLand(gd, maw)).isTrue();
-        assertThat(maw.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, maw)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test

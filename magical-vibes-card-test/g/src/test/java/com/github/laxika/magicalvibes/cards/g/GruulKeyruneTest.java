@@ -43,13 +43,13 @@ class GruulKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isTrue();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, keyrune))
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.TRAMPLE)).isTrue();
-        assertThat(keyrune.getTransientSubtypes()).contains(CardSubtype.BEAST);
+        assertThat(gqs.getEffectiveSubtypes(gd, keyrune)).contains(CardSubtype.BEAST);
     }
 
     @Test
@@ -65,7 +65,7 @@ class GruulKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, keyrune)).isFalse();
-        assertThat(gqs.isArtifact(keyrune)).isTrue();
+        assertThat(gqs.isArtifact(gd, keyrune)).isTrue();
         assertThat(gqs.hasKeyword(gd, keyrune, Keyword.TRAMPLE)).isFalse();
     }
 

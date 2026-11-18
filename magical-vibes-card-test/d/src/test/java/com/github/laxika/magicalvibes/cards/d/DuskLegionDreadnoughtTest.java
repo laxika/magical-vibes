@@ -35,7 +35,7 @@ class DuskLegionDreadnoughtTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dreadnought.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(dreadnought.getId())).isTrue();
         assertThat(gqs.isCreature(gd, dreadnought)).isTrue();
         assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(6);
@@ -67,7 +67,7 @@ class DuskLegionDreadnoughtTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dreadnought.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(dreadnought.getId())).isFalse();
         assertThat(gqs.isCreature(gd, dreadnought)).isFalse();
     }
 

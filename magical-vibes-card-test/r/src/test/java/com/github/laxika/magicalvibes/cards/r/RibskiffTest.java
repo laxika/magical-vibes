@@ -40,7 +40,7 @@ class RibskiffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ribskiff.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(ribskiff.getId())).isTrue();
         assertThat(gqs.isCreature(gd, ribskiff)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }

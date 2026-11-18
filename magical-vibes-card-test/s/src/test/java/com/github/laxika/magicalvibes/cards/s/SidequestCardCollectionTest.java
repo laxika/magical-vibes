@@ -78,7 +78,7 @@ class SidequestCardCollectionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(source.getId())).isTrue();
         assertThat(gqs.isCreature(gd, source)).isTrue();
         assertThat(creature.isTapped()).isTrue();
     }

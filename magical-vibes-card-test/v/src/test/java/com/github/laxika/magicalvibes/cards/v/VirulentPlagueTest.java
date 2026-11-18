@@ -115,9 +115,7 @@ class VirulentPlagueTest extends BaseCardTest {
         VirulentPlague tokenCopy = new VirulentPlague();
         tokenCopy.setToken(true);
         Permanent animatedPlague = harness.addToBattlefieldAndReturn(player1, tokenCopy);
-        animatedPlague.setAnimatedUntilEndOfTurn(true);
-        animatedPlague.setAnimatedPower(3);
-        animatedPlague.setAnimatedToughness(3);
+        animateUntilEndOfTurn(animatedPlague, 3, 3);
 
         assertThat(gqs.getEffectivePower(gd, animatedPlague)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, animatedPlague)).isEqualTo(1);

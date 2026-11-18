@@ -848,7 +848,7 @@ public class BlockLegalityService {
                 blocksLandwalkAsThoughNoLandwalk,
                 blocksAsThoughReachForAttackers.isEmpty()
                         ? List.of() : List.copyOf(blocksAsThoughReachForAttackers),
-                gameQueryService.isArtifact(blocker),
+                gameQueryService.isArtifact(gameData, blocker),
                 gameQueryService.getEffectiveColors(gameData, blocker),
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,
                 cantBlockStatic || gameQueryService.hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)

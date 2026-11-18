@@ -54,7 +54,7 @@ class HissingQuagmireTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, quagmire)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, quagmire))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-        assertThat(quagmire.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, quagmire)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, quagmire, Keyword.DEATHTOUCH)).isTrue();
         assertThat(quagmire.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
@@ -77,7 +77,7 @@ class HissingQuagmireTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, quagmire)).isFalse();
         assertThat(gqs.isLand(gd, quagmire)).isTrue();
-        assertThat(quagmire.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, quagmire)).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, quagmire, Keyword.DEATHTOUCH)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, quagmire)).isEmpty();
     }

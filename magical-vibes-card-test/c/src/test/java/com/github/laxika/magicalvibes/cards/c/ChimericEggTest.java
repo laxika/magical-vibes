@@ -75,20 +75,20 @@ class ChimericEggTest extends BaseCardTest {
 
         assertThat(egg.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(gqs.isCreature(gd, egg)).isTrue();
-        assertThat(gqs.isArtifact(egg)).isTrue();
+        assertThat(gqs.isArtifact(gd, egg)).isTrue();
         assertThat(gqs.getEffectivePower(gd, egg)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, egg)).isEqualTo(6);
-        assertThat(egg.getTransientSubtypes()).contains(CardSubtype.CONSTRUCT);
-        assertThat(egg.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.getEffectiveSubtypes(gd, egg)).contains(CardSubtype.CONSTRUCT);
+        assertThat(gqs.hasKeyword(gd, egg, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, egg)).isFalse();
-        assertThat(gqs.isArtifact(egg)).isTrue();
-        assertThat(egg.getTransientSubtypes()).doesNotContain(CardSubtype.CONSTRUCT);
-        assertThat(egg.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(gqs.isArtifact(gd, egg)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, egg)).doesNotContain(CardSubtype.CONSTRUCT);
+        assertThat(gqs.hasKeyword(gd, egg, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -157,7 +157,7 @@ class ChimericEggTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, egg)).isTrue();
         assertThat(gqs.getEffectivePower(gd, egg)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, egg)).isEqualTo(6);
-        assertThat(egg.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, egg, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

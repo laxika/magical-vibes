@@ -29,7 +29,7 @@ class IrontreadCrusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crusher.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(crusher.getId())).isTrue();
         assertThat(gqs.isCreature(gd, crusher)).isTrue();
         assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(6);
@@ -61,7 +61,7 @@ class IrontreadCrusherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crusher.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(crusher.getId())).isFalse();
         assertThat(gqs.isCreature(gd, crusher)).isFalse();
     }
 

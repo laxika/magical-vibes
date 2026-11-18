@@ -38,14 +38,14 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent land : List.of(first, second, third)) {
-            assertThat(land.isAnimatedUntilEndOfTurn()).isTrue();
-            assertThat(land.getEffectivePower()).isEqualTo(2);
-            assertThat(land.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
+            assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
             assertThat(gqs.isCreature(gd, land)).isTrue();
             assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
-            assertThat(land.getTransientSubtypes()).contains(CardSubtype.WARRIOR);
+            assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.WARRIOR);
         }
-        assertThat(opponentLand.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(opponentLand.getId())).isFalse();
     }
 
     @Test
@@ -63,8 +63,8 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities();
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(otherForest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isTrue();
+        assertThat(gd.animatedByFloatingEffect(otherForest.getId())).isFalse();
     }
 
     @Test
@@ -77,7 +77,7 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
     }
 
     @Test
@@ -133,8 +133,8 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
-        assertThat(forest.getTransientSubtypes()).doesNotContain(CardSubtype.WARRIOR);
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.WARRIOR);
         harness.assertOnBattlefield(player1, "Forest");
     }
 }

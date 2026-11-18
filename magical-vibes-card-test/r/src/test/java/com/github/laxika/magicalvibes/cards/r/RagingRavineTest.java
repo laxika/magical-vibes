@@ -51,7 +51,7 @@ class RagingRavineTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ravine)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, ravine))
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
-        assertThat(ravine.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, ravine)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test
@@ -83,7 +83,7 @@ class RagingRavineTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, ravine)).isFalse();
         assertThat(gqs.isLand(gd, ravine)).isTrue();
-        assertThat(ravine.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, ravine)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     private void addAnimationMana(Player player) {

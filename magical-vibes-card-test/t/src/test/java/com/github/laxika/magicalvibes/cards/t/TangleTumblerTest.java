@@ -55,7 +55,7 @@ class TangleTumblerTest extends BaseCardTest {
         assertThat(secondToken.isTapped()).isTrue();
         assertThat(ordinaryCreature.isTapped()).isFalse();
         assertThat(gqs.isCreature(gd, tumbler)).isTrue();
-        assertThat(tumbler.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(tumbler.getId())).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class TangleTumblerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tumbler.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(tumbler.getId())).isFalse();
         assertThat(gqs.isCreature(gd, tumbler)).isFalse();
     }
 

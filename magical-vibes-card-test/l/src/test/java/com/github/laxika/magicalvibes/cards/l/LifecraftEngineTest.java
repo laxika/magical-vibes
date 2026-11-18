@@ -83,7 +83,7 @@ class LifecraftEngineTest extends BaseCardTest {
     @DisplayName("The Engine itself is not boosted when it becomes a creature")
     void doesNotBoostItself() {
         Permanent engine = addEngine(CardSubtype.GOBLIN);
-        engine.setAnimatedUntilEndOfTurn(true);
+        animateUntilEndOfTurn(engine);
 
         var bonus = gqs.computeStaticBonus(gd, engine);
 
@@ -93,9 +93,7 @@ class LifecraftEngineTest extends BaseCardTest {
     }
 
     private void animateAsCrewed(Permanent vehicle) {
-        vehicle.setAnimatedUntilEndOfTurn(true);
-        vehicle.setAnimatedPower(4);
-        vehicle.setAnimatedToughness(4);
+        animateUntilEndOfTurn(vehicle, 4, 4);
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player, CardSubtype subtype) {
@@ -180,7 +178,7 @@ class LifecraftEngineTest extends BaseCardTest {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GreasewrenchGoblin());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new LifecraftEngine());
         other.setChosenSubtype(CardSubtype.ELF);
-        other.setAnimatedUntilEndOfTurn(true);
+        animateUntilEndOfTurn(other);
 
         assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.GOBLIN)).isTrue();
         assertThat(gqs.computeStaticBonus(gd, goblin).power()).isEqualTo(1);

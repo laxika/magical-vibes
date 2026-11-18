@@ -39,11 +39,11 @@ class WeatherseedTotemTest extends BaseCardTest {
         animate();
 
         assertThat(gqs.isCreature(gd, totem)).isTrue();
-        assertThat(gqs.isArtifact(totem)).isTrue();
+        assertThat(gqs.isArtifact(gd, totem)).isTrue();
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, totem)).containsExactly(CardColor.GREEN);
-        assertThat(totem.getTransientSubtypes()).contains(CardSubtype.TREEFOLK);
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).contains(CardSubtype.TREEFOLK);
         assertThat(gqs.hasKeyword(gd, totem, Keyword.TRAMPLE)).isTrue();
     }
 

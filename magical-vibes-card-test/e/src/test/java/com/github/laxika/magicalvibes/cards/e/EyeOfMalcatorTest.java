@@ -47,11 +47,11 @@ class EyeOfMalcatorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, eye)).isTrue();
-        assertThat(gqs.isArtifact(eye)).isTrue();
+        assertThat(gqs.isArtifact(gd, eye)).isTrue();
         assertThat(gqs.getEffectivePower(gd, eye)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, eye)).isEqualTo(4);
-        assertThat(eye.getTransientSubtypes())
-                .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.EYE);
+        assertThat(gqs.getEffectiveSubtypes(gd, eye))
+                .contains(CardSubtype.PHYREXIAN, CardSubtype.EYE);
     }
 
     @Test
@@ -70,7 +70,7 @@ class EyeOfMalcatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, eye)).isFalse();
-        assertThat(eye.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, eye)).doesNotContain(CardSubtype.PHYREXIAN, CardSubtype.EYE);
     }
 
     @Test

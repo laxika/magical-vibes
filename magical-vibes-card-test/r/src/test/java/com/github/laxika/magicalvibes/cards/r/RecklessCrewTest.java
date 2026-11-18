@@ -122,9 +122,7 @@ class RecklessCrewTest extends BaseCardTest {
     void movesAlreadyAttachedEquipmentToANewTokenWithoutPayingEquipCost() {
         Permanent hammer = harness.addToBattlefieldAndReturn(player1, new DwarvenHammer());
         Permanent oldHost = harness.addToBattlefieldAndReturn(player1, new TheOmenkeel());
-        oldHost.setAnimatedUntilEndOfTurn(true);
-        oldHost.setAnimatedPower(3);
-        oldHost.setAnimatedToughness(3);
+        animateUntilEndOfTurn(oldHost, 3, 3);
         hammer.setAttachedTo(oldHost.getId());
 
         castRecklessCrew();

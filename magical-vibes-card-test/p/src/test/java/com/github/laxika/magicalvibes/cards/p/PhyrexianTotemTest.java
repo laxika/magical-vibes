@@ -75,11 +75,11 @@ class PhyrexianTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, totem)).isTrue();
-        assertThat(gqs.isArtifact(totem)).isTrue();
+        assertThat(gqs.isArtifact(gd, totem)).isTrue();
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(5);
         assertThat(gqs.getEffectiveColors(gd, totem)).containsExactly(CardColor.BLACK);
-        assertThat(totem.getTransientSubtypes()).containsExactlyInAnyOrder(
+        assertThat(gqs.getEffectiveSubtypes(gd, totem)).containsExactlyInAnyOrder(
                 CardSubtype.PHYREXIAN, CardSubtype.HORROR);
         assertThat(gqs.hasKeyword(gd, totem, Keyword.TRAMPLE)).isTrue();
 

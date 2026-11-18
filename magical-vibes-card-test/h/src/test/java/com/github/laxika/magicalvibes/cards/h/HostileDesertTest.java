@@ -48,7 +48,7 @@ class HostileDesertTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, desert)).isTrue();
         assertThat(gqs.getEffectivePower(gd, desert)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, desert)).isEqualTo(4);
-        assertThat(desert.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, desert)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.isLand(gd, desert)).isTrue();
     }
 
@@ -68,9 +68,9 @@ class HostileDesertTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(desert.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(desert.getId())).isFalse();
         assertThat(gqs.isCreature(gd, desert)).isFalse();
-        assertThat(desert.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.getEffectiveSubtypes(gd, desert)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

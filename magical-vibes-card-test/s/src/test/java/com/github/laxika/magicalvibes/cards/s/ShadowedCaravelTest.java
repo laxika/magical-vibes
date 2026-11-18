@@ -124,7 +124,7 @@ class ShadowedCaravelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(caravel.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(caravel.getId())).isTrue();
         assertThat(gqs.isCreature(gd, caravel)).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }

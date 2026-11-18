@@ -58,9 +58,7 @@ class TheThanosCopterTest extends BaseCardTest {
     void vehicleCombatDamageDraws() {
         Permanent thanosCopter = harness.addToBattlefieldAndReturn(player1, new TheThanosCopter());
         thanosCopter.setSummoningSick(false);
-        thanosCopter.setAnimatedUntilEndOfTurn(true);
-        thanosCopter.setAnimatedPower(5);
-        thanosCopter.setAnimatedToughness(5);
+        animateUntilEndOfTurn(thanosCopter, 5, 5);
         thanosCopter.setAttacking(true);
 
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -132,9 +130,7 @@ class TheThanosCopterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheThanosCopter());
         Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new DuskLegionDreadnought());
         vehicle.setSummoningSick(false);
-        vehicle.setAnimatedUntilEndOfTurn(true);
-        vehicle.setAnimatedPower(4);
-        vehicle.setAnimatedToughness(6);
+        animateUntilEndOfTurn(vehicle, 4, 6);
         vehicle.setAttacking(true);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 

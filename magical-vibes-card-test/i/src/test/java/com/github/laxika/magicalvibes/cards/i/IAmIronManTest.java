@@ -27,7 +27,7 @@ class IAmIronManTest extends BaseCardTest {
 
         castAt(target);
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
@@ -56,7 +56,7 @@ class IAmIronManTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);

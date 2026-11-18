@@ -124,7 +124,7 @@ class TarriansSoulcleaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, factory)).isTrue();
-        assertThat(gqs.isArtifact(factory)).isTrue();
+        assertThat(gqs.isArtifact(gd, factory)).isTrue();
 
         putIntoGraveyard(factory);
 

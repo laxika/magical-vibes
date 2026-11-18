@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CelestialColonnade.class})
+@CardUsed({CelestialColonnade.class, Humility.class})
 class CelestialColonnadeTest extends BaseCardTest {
 
     @Test
@@ -52,9 +53,28 @@ class CelestialColonnadeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, colonnade)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, colonnade))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
-        assertThat(colonnade.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, colonnade)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, colonnade, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, colonnade, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated after Humility, it keeps the animation's flying, vigilance and 4/4 (CR 613.7)")
+    void animationAfterHumilityKeepsItsAbilities() {
+        harness.addToBattlefield(player2, new Humility());
+        Permanent colonnade = addCreatureReady(player1, new CelestialColonnade());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, colonnade)).isTrue();
+        assertThat(gqs.hasKeyword(gd, colonnade, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, colonnade, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, colonnade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, colonnade)).isEqualTo(4);
     }
 
     @Test
@@ -73,7 +93,7 @@ class CelestialColonnadeTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, colonnade)).isFalse();
         assertThat(gqs.isLand(gd, colonnade)).isTrue();
-        assertThat(colonnade.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, colonnade)).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, colonnade, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, colonnade, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, colonnade)).isEmpty();

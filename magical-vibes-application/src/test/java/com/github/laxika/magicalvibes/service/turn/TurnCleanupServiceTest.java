@@ -245,19 +245,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears animatedUntilEndOfTurn flag on permanents")
-        void clearsAnimatedUntilEndOfTurn() {
-            Card card = createCardWithName("Mutavault");
-            Permanent perm = new Permanent(card);
-            perm.setAnimatedUntilEndOfTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isAnimatedUntilEndOfTurn()).isFalse();
-        }
-
-        @Test
         @DisplayName("Clears granted card types on permanents")
         void clearsGrantedCardTypes() {
             Card card = createCardWithName("Mutavault");

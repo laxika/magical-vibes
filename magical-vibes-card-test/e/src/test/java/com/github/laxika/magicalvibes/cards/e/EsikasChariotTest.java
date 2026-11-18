@@ -54,7 +54,7 @@ class EsikasChariotTest extends BaseCardTest {
         List<Permanent> cats = findPermanents(player1, "Cat");
         assertThat(cats).hasSize(2);
         assertThat(cats).filteredOn(cat -> cat.getCard().isToken()).hasSize(2);
-        assertThat(chariot.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(chariot.getId())).isTrue();
         assertThat(crew.isTapped()).isTrue();
     }
 
@@ -89,7 +89,7 @@ class EsikasChariotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(cats).allMatch(Permanent::isTapped);
-        assertThat(chariot.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(chariot.getId())).isTrue();
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }

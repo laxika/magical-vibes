@@ -34,10 +34,10 @@ class DreadStatuaryTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, statuary)).isTrue();
         assertThat(gqs.isLand(gd, statuary)).isTrue();
-        assertThat(gqs.isArtifact(statuary)).isTrue();
+        assertThat(gqs.isArtifact(gd, statuary)).isTrue();
         assertThat(gqs.getEffectivePower(gd, statuary)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, statuary)).isEqualTo(2);
-        assertThat(statuary.getTransientSubtypes()).containsExactly(CardSubtype.GOLEM);
+        assertThat(gqs.getEffectiveSubtypes(gd, statuary)).containsExactly(CardSubtype.GOLEM);
     }
 
     @Test
@@ -53,8 +53,8 @@ class DreadStatuaryTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, statuary)).isFalse();
         assertThat(gqs.isLand(gd, statuary)).isTrue();
-        assertThat(gqs.isArtifact(statuary)).isFalse();
-        assertThat(statuary.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.isArtifact(gd, statuary)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, statuary)).isEmpty();
     }
 
     @Test
