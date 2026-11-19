@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -1567,7 +1566,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                 watch("this is milled", "milled", () -> Triggers.milled(ObjectRelation.THIS), CardType.CREATURE,
                         (test, cards) -> {
                             test.harness.setLibrary(test.player1, cards);
-                            test.helperEntersAndItsAbilityResolves(new MillEffect(2, MillRecipient.CONTROLLER));
+                            test.helperEntersAndItsAbilityResolves(new MillEffect(2, Subjects.you()));
                         }),
                 watch("a noncreature artifact is sacrificed or destroyed", "sacrificedOrDestroyed",
                         () -> Triggers.sacrificedOrDestroyed(Triggers.NONCREATURE_ARTIFACT, ObjectRelation.ANY),
@@ -1610,7 +1609,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 ObjectRelation.ANY),
                         CardType.ENCHANTMENT, (test, cards) -> {
                             test.harness.setLibrary(test.player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-                            test.helperAbilityResolves(cards, new MillEffect(1, MillRecipient.CONTROLLER));
+                            test.helperAbilityResolves(cards, new MillEffect(1, Subjects.you()));
                         }),
                 watch("another nontoken creature you own is put into a graveyard from anywhere but your library",
                         "putIntoGraveyardFromAnywhereBut",
@@ -1621,7 +1620,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         () -> Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY), CardType.ENCHANTMENT,
                         (test, cards) -> {
                             test.harness.setLibrary(test.player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-                            test.helperAbilityResolves(cards, new MillEffect(1, MillRecipient.EACH_OPPONENT));
+                            test.helperAbilityResolves(cards, new MillEffect(1, Subjects.eachOpponent()));
                         }),
                 watch("this is exiled while you activate a craft ability", "exiledWhileActivatingCraftAbility",
                         () -> Triggers.exiledWhileActivatingCraftAbility(ObjectRelation.THIS), CardType.CREATURE,

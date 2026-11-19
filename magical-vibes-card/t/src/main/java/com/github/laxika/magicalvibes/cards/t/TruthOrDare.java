@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTargetPlayerHandRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -30,7 +30,7 @@ public class TruthOrDare extends Card {
                 new ChooseOneEffect.ChooseOneOption("Dare", new MillEffect(
                         new Max(new Fixed(0), new Sum(
                                 new CardsInLibrary(CountScope.TARGET_PLAYER), new Fixed(-10))),
-                        MillRecipient.TARGET_PLAYER))
+                        Subjects.targetPlayer()))
         )));
     }
 }

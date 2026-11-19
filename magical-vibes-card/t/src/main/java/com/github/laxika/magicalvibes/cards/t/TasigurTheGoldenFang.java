@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -28,7 +28,7 @@ public class TasigurTheGoldenFang extends Card {
                 false,
                 "{2}{G/U}{G/U}",
                 List.of(
-                        new MillEffect(2, MillRecipient.CONTROLLER),
+                        new MillEffect(2, Subjects.you()),
                         new OpponentChoosesCardFromGraveyardToHandEffect(
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)))
                 ),

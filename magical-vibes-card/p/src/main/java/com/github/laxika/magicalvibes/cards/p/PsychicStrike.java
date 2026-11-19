@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GTC", collectorNumber = "189")
 public class PsychicStrike extends Card {
@@ -14,6 +14,6 @@ public class PsychicStrike extends Card {
         // so the countered spell enters the graveyard before the milled cards; the mill still finds the
         // spell's controller through the countered-spell record kept on the stack entry.
         addSpellEffect(new CounterSpellEffect());
-        addSpellEffect(new MillEffect(2, MillRecipient.TARGET_SPELL_CONTROLLER));
+        addSpellEffect(new MillEffect(2, Subjects.controllerOf(Subjects.targetSpell())));
     }
 }

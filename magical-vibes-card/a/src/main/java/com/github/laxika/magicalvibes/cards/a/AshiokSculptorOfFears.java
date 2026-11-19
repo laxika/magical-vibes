@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -27,8 +27,8 @@ public class AshiokSculptorOfFears extends Card {
                 +2,
                 List.of(
                         new DrawCardEffect(1),
-                        new MillEffect(2, MillRecipient.CONTROLLER),
-                        new MillEffect(2, MillRecipient.EACH_OPPONENT)),
+                        new MillEffect(2, Subjects.you()),
+                        new MillEffect(2, Subjects.eachOpponent())),
                 "+2: Draw a card. Each player mills two cards."));
 
         addActivatedAbility(new ActivatedAbility(

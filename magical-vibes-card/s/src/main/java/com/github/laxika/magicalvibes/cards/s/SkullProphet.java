@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "IKO", collectorNumber = "206")
 @CardRegistration(set = "TDC", collectorNumber = "304")
@@ -24,7 +24,7 @@ public class SkullProphet extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillEffect(2, MillRecipient.CONTROLLER)),
+                List.of(new MillEffect(2, Subjects.you())),
                 "{T}: Mill two cards."
         ));
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,6 +23,6 @@ public class SagesRowDenizen extends Card {
                                 Triggers.CREATURE,
                                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MillEffect(2, MillRecipient.TARGET_PLAYER));
+                new MillEffect(2, Subjects.targetPlayer()));
     }
 }

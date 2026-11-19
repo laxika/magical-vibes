@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
@@ -135,7 +135,7 @@ class TriggerTargetCollectorTest {
     @Test
     @DisplayName("Player-only effect with no target filter yields every player")
     void playerOnlyNoFilterYieldsAllPlayers() {
-        List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        List<CardEffect> effects = List.of(new MillEffect(1, Subjects.targetPlayer()));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -151,7 +151,7 @@ class TriggerTargetCollectorTest {
     void opponentOnlyExcludesController() {
         TargetFilter filter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must be an opponent");
-        List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        List<CardEffect> effects = List.of(new MillEffect(1, Subjects.targetPlayer()));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -165,7 +165,7 @@ class TriggerTargetCollectorTest {
     void opponentOnlyHonouredForEveryOptionPreset() {
         TargetFilter filter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must be an opponent");
-        List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        List<CardEffect> effects = List.of(new MillEffect(1, Subjects.targetPlayer()));
 
         assertThat(collector.collect(gd, effects, filter, player1Id, sourceCard,
                 TriggerTargetCollector.Options.ATTACK).validTargets())
@@ -180,7 +180,7 @@ class TriggerTargetCollectorTest {
     void conditionalEffectDelegatesTargeting() {
         // The generic ConditionalEffect delegates canTargetPlayer to its wrapped effect,
         // so target visibility no longer depends on the unwrapConditional option.
-        List<CardEffect> effects = List.of(new ConditionalEffect(new DidntAttack(), new MillEffect(1, MillRecipient.TARGET_PLAYER)));
+        List<CardEffect> effects = List.of(new ConditionalEffect(new DidntAttack(), new MillEffect(1, Subjects.targetPlayer())));
 
         TriggerTargetCollector.Result withUnwrap = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.END_STEP);

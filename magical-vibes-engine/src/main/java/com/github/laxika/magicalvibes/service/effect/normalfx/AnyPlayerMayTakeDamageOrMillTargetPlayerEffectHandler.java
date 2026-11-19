@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrMillT
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -106,7 +105,7 @@ public class AnyPlayerMayTakeDamageOrMillTargetPlayerEffectHandler implements No
 
     public void millTargetPlayer(GameData gameData, Card sourceCard, UUID controllerId,
                                  UUID targetPlayerId, int millCount) {
-        MillEffect mill = new MillEffect(millCount, MillRecipient.TARGET_PLAYER);
+        MillEffect mill = new MillEffect(millCount, Subjects.targetPlayer());
         StackEntry millEntry = new StackEntry(
                 StackEntryType.SORCERY_SPELL,
                 sourceCard,

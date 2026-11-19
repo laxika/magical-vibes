@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KLD", collectorNumber = "227")
 @CardRegistration(set = "SOC", collectorNumber = "354")
@@ -19,7 +19,7 @@ public class PerpetualTimepiece extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillEffect(2, MillRecipient.CONTROLLER)),
+                List.of(new MillEffect(2, Subjects.you())),
                 "{T}: Mill two cards."
         ));
 

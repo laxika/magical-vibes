@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -41,7 +40,7 @@ public class DoesMachines extends Card {
 
     public DoesMachines() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillEffect(2, MillRecipient.CONTROLLER),
+                new MillEffect(2, Subjects.you()),
                 new DrawCardEffect(2),
                 new DiscardEffect(2, Subjects.you()));
 

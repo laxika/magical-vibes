@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromGraveyardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +29,7 @@ public class AdvancedReconstruction extends Card {
 
     public AdvancedReconstruction() {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), SequenceEffect.of(
-                new MillEffect(1, MillRecipient.CONTROLLER),
+                new MillEffect(1, Subjects.you()),
                 new ExileRandomCardFromGraveyardMayPlayThisTurnEffect()));
 
         addActivatedAbility(new ActivatedAbility(

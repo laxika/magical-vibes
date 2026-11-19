@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class SkolaGrovedancer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{G}",
-                List.of(new MillEffect(1, MillRecipient.CONTROLLER)),
+                List.of(new MillEffect(1, Subjects.you())),
                 "{2}{G}: Mill a card."
         ));
     }

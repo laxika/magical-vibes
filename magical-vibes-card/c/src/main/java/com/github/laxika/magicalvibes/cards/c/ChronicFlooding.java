@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class ChronicFlooding extends Card {
         target(TargetFilters.land());
         // Whenever enchanted land becomes tapped, its controller mills three cards.
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new MillEffect(3, MillRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new MillEffect(3, Subjects.controllerOf(Subjects.triggering())));
     }
 }

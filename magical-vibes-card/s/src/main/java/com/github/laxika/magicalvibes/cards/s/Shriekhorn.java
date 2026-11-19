@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MBS", collectorNumber = "130")
 public class Shriekhorn extends Card {
@@ -25,7 +25,7 @@ public class Shriekhorn extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new MillEffect(2, MillRecipient.TARGET_PLAYER)
+                        new MillEffect(2, Subjects.targetPlayer())
                 ),
                 "{T}, Remove a charge counter from Shriekhorn: Target player mills two cards."
         ));

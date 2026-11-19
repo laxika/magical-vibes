@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -18,8 +17,8 @@ public class InvasionOfAmonkhet extends Card {
         setBackFaceCard(new LazotepConvert());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillEffect(3, MillRecipient.CONTROLLER),
-                new MillEffect(3, MillRecipient.EACH_OPPONENT),
+                new MillEffect(3, Subjects.you()),
+                new MillEffect(3, Subjects.eachOpponent()),
                 new DiscardEffect(1, Subjects.eachOpponent()),
                 new DrawCardEffect(1));
     }

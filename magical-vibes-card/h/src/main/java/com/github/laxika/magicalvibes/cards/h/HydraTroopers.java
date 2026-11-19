@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class HydraTroopers extends Card {
     public HydraTroopers() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalReplacementEffect(
                 new GraveyardCardThreshold(2, new CardTypePredicate(CardType.CREATURE)),
-                new MillEffect(2, MillRecipient.CONTROLLER),
+                new MillEffect(2, Subjects.you()),
                 new CreateTokenEffect(
                         1, "Villain", 2, 1, CardColor.BLACK,
                         List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of(), true)));

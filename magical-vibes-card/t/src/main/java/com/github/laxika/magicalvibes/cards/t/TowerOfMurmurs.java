@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MRD", collectorNumber = "268")
 public class TowerOfMurmurs extends Card {
@@ -15,7 +15,7 @@ public class TowerOfMurmurs extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{8}",
-                List.of(new MillEffect(8, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(8, Subjects.targetPlayer())),
                 "{8}, {T}: Target player mills eight cards."
         ));
     }

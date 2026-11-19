@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class EyeblightCullers extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new CreateTokenEffect(3, "Elf Warrior", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()),
-                new MillEffect(3, MillRecipient.CONTROLLER)));
+                new MillEffect(3, Subjects.you())));
     }
 }

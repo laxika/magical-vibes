@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +19,7 @@ public class DawnhandEulogist extends Card {
 
     public DawnhandEulogist() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new MillEffect(3, MillRecipient.CONTROLLER),
+                new MillEffect(3, Subjects.you()),
                 new ConditionalEffect(
                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.ELF)),
                         SequenceEffect.of(

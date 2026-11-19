@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -44,7 +44,7 @@ public class PestilentCauldron extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new MillEffect(new LifeGainedThisTurn(CountScope.CONTROLLER), MillRecipient.EACH_OPPONENT)),
+                List.of(new MillEffect(new LifeGainedThisTurn(CountScope.CONTROLLER), Subjects.eachOpponent())),
                 "{1}, {T}: Each opponent mills cards equal to the amount of life you gained this turn."
         ));
         addActivatedAbility(new ActivatedAbility(

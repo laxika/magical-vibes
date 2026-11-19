@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LRW", collectorNumber = "54")
 public class BrokenAmbitions extends Card {
 
     public BrokenAmbitions() {
         addSpellEffect(new CounterUnlessPaysEffect(0, true, false));
-        addSpellEffect(new ClashEffect(new MillEffect(4, MillRecipient.TARGET_SPELL_CONTROLLER)));
+        addSpellEffect(new ClashEffect(new MillEffect(4, Subjects.controllerOf(Subjects.targetSpell()))));
     }
 }

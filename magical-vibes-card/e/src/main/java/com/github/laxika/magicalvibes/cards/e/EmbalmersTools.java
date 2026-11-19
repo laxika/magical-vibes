@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReduceGraveyardCardActivatedAbilityCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class EmbalmersTools extends Card {
                 false,
                 null,
                 List.of(new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
-                        new MillEffect(1, MillRecipient.TARGET_PLAYER)),
+                        new MillEffect(1, Subjects.targetPlayer())),
                 "Tap an untapped Zombie you control: Target player mills a card."
         ));
     }

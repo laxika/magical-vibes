@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,8 +33,8 @@ public class ExhibitionTidecaller extends Card {
                         ))),
                 new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
-                        new MillEffect(3, MillRecipient.TARGET_PLAYER),
-                        new MillEffect(10, MillRecipient.TARGET_PLAYER)
+                        new MillEffect(3, Subjects.targetPlayer()),
+                        new MillEffect(10, Subjects.targetPlayer())
                 ));
     }
 }

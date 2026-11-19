@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,7 +30,7 @@ public class RealmbreakerTheInvasionTree extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new MillEffect(3, MillRecipient.TARGET_PLAYER),
+                        new MillEffect(3, Subjects.targetPlayer()),
                         new TargetPlayerChoosesCardFromGraveyardToBattlefieldEffect(
                                 new CardTypePredicate(CardType.LAND), true, true)
                 ),

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,8 +22,8 @@ public class TheBindingOfTheTitans extends Card {
 
     public TheBindingOfTheTitans() {
         addTrigger(Triggers.chapter(1), SequenceEffect.of(
-                new MillEffect(3, MillRecipient.CONTROLLER),
-                new MillEffect(3, MillRecipient.EACH_OPPONENT)));
+                new MillEffect(3, Subjects.you()),
+                new MillEffect(3, Subjects.eachOpponent())));
         addTrigger(Triggers.chapter(2),
                 ExileGraveyardCardsEffect.targetedFromAnyGraveyardWithEventValue(
                         2, new CardTypePredicate(CardType.CREATURE)),

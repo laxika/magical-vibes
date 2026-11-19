@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class LordOfTheForsaken extends Card {
                 "{B}",
                 List.of(
                         new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "another creature"),
-                        new MillEffect(3, MillRecipient.TARGET_PLAYER)),
+                        new MillEffect(3, Subjects.targetPlayer())),
                 "{B}, Sacrifice another creature: Target player mills three cards."
         ));
         addActivatedAbility(new ActivatedAbility(

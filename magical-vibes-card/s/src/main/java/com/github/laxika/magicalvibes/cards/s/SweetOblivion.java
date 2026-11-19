@@ -5,15 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "THB", collectorNumber = "70")
 public class SweetOblivion extends Card {
 
     public SweetOblivion() {
-        addSpellEffect(new MillEffect(4, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(4, Subjects.targetPlayer()));
         addCastingOption(new GraveyardCast(null, "{3}{U}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)),
                 null, false, false, true));

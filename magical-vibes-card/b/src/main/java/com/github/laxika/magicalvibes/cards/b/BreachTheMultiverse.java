@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -20,8 +20,8 @@ import java.util.List;
 public class BreachTheMultiverse extends Card {
 
     public BreachTheMultiverse() {
-        addSpellEffect(new MillEffect(10, MillRecipient.CONTROLLER));
-        addSpellEffect(new MillEffect(10, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(10, Subjects.you()));
+        addSpellEffect(new MillEffect(10, Subjects.eachOpponent()));
         addSpellEffect(new EachPlayerChoosesCardFromGraveyardToBattlefieldEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

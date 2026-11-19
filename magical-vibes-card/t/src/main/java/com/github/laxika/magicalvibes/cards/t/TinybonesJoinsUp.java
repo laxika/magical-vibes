@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -28,7 +27,7 @@ public class TinybonesJoinsUp extends Card {
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new MillEffect(1, MillRecipient.TARGET_PLAYER),
+                        new MillEffect(1, Subjects.targetPlayer()),
                         new LoseLifeEffect(1, Subjects.targetPlayer())));
     }
 }

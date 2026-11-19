@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class CephalidIllusionist extends Card {
 
     public CephalidIllusionist() {
         addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
-                new MillEffect(3, MillRecipient.CONTROLLER));
+                new MillEffect(3, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ISD", collectorNumber = "54")
 @CardRegistration(set = "EMA", collectorNumber = "47")
 public class DreamTwist extends Card {
 
     public DreamTwist() {
-        addSpellEffect(new MillEffect(3, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(3, Subjects.targetPlayer()));
         addCastingOption(new FlashbackCast("{1}{U}"));
     }
 }

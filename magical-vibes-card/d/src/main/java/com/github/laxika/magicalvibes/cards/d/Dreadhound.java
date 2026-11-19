@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Dreadhound extends Card {
 
     public Dreadhound() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, Subjects.you()));
         // "Whenever a creature dies" includes this creature's own death (it looks back, CR 603.10a).
         LoseLifeEffect loseLife = new LoseLifeEffect(1, Subjects.eachOpponent());
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY), loseLife);

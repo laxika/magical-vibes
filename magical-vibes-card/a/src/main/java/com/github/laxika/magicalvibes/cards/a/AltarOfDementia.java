@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TMP", collectorNumber = "276")
 @CardRegistration(set = "MH1", collectorNumber = "218")
@@ -23,7 +23,7 @@ public class AltarOfDementia extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, true),
-                        new MillEffect(new XValue(), MillRecipient.TARGET_PLAYER)
+                        new MillEffect(new XValue(), Subjects.targetPlayer())
                 ),
                 "Sacrifice a creature: Target player mills cards equal to the sacrificed creature's power."
         ));

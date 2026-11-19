@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M13", collectorNumber = "216")
 public class SandsOfDelirium extends Card {
@@ -17,7 +17,7 @@ public class SandsOfDelirium extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}",
-                List.of(new MillEffect(new XValue(), MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(new XValue(), Subjects.targetPlayer())),
                 "{X}, {T}: Target player mills X cards."
         ));
     }

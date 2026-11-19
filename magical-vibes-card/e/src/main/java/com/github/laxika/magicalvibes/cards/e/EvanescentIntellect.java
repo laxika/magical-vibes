@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class EvanescentIntellect extends Card {
                         new ActivatedAbility(
                                 true,
                                 "{1}{U}",
-                                List.of(new MillEffect(3, MillRecipient.TARGET_PLAYER)),
+                                List.of(new MillEffect(3, Subjects.targetPlayer())),
                                 "{1}{U}, {T}: Target player mills three cards."
                         ),
                         GrantScope.ENCHANTED_CREATURE

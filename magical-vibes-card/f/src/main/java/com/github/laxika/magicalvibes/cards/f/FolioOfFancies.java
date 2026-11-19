@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ELD", collectorNumber = "46")
 @CardRegistration(set = "ELD", collectorNumber = "343")
@@ -31,7 +31,7 @@ public class FolioOfFancies extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{U}",
-                List.of(new MillEffect(new CardsInHand(CountScope.OPPONENTS), MillRecipient.EACH_OPPONENT)),
+                List.of(new MillEffect(new CardsInHand(CountScope.OPPONENTS), Subjects.eachOpponent())),
                 "{2}{U}, {T}: Each opponent mills cards equal to the number of cards in their hand."
         ));
     }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "EMA", collectorNumber = "200")
@@ -19,8 +19,8 @@ public class ExtractFromDarkness extends Card {
 
     public ExtractFromDarkness() {
         // Each player mills two cards.
-        addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER));
-        addSpellEffect(new MillEffect(2, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(2, Subjects.you()));
+        addSpellEffect(new MillEffect(2, Subjects.eachOpponent()));
         // Then put a creature card from a graveyard onto the battlefield under your control.
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

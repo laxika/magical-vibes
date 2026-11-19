@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "41")
 public class IncreasingConfusion extends Card {
@@ -19,8 +19,8 @@ public class IncreasingConfusion extends Card {
         // that player mills twice X cards instead.
         addSpellEffect(new ConditionalReplacementEffect(
                 new CastFromZone(Zone.GRAVEYARD),
-                new MillEffect(new XValue(), MillRecipient.TARGET_PLAYER),
-                new MillEffect(new Scaled(new XValue(), 2), MillRecipient.TARGET_PLAYER)
+                new MillEffect(new XValue(), Subjects.targetPlayer()),
+                new MillEffect(new Scaled(new XValue(), 2), Subjects.targetPlayer())
         ));
         addCastingOption(new FlashbackCast("{X}{U}"));
     }

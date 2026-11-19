@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "152")
 @CardRegistration(set = "SLD", collectorNumber = "75")
@@ -33,7 +33,7 @@ public class PhenaxGodOfDeception extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new MillEffect(new SourceToughness(), MillRecipient.TARGET_PLAYER)),
+                        List.of(new MillEffect(new SourceToughness(), Subjects.targetPlayer())),
                         "{T}: Target player mills X cards, where X is this creature's toughness."
                 ),
                 GrantScope.ALL_OWN_CREATURES

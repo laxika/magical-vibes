@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -25,7 +25,7 @@ public class CropSigil extends Card {
 
     public CropSigil() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"));
+                new MayEffect(new MillEffect(1, Subjects.you()), "Mill a card?"));
 
         CardAnyOfPredicate creatureOrLand = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

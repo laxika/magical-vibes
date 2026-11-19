@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfChosenTypeBecomeChosenBasicTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class VisionCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player mills four cards",
-                        new MillEffect(4, MillRecipient.TARGET_PLAYER)),
+                        new MillEffect(4, Subjects.targetPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose a land type and a basic land type. Each land of the first chosen type becomes the second chosen type until end of turn",
                         new LandsOfChosenTypeBecomeChosenBasicTypeUntilEndOfTurnEffect()),

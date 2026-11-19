@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,7 +34,7 @@ public class SongOfStupefaction extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"))
+                        new MayEffect(new MillEffect(2, Subjects.you()), "Mill two cards?"))
                 .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(permanentCardsInGraveyard, -1),
                         new Fixed(0),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class MillControllerThenEffectHandler implements NormalEffectHandlerBean 
         }
 
         entry.insertEffectsToResolve(effectIndex + 1, List.of(
-                new MillEffect(millThen.count(), MillRecipient.CONTROLLER),
+                new MillEffect(millThen.count(), Subjects.you()),
                 new QueueReflexiveAbilityEffect(millThen.thenEffect())));
     }
 }

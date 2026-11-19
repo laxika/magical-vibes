@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "52")
 @CardRegistration(set = "DDM", collectorNumber = "21")
@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class ThoughtScour extends Card {
 
     public ThoughtScour() {
-        addSpellEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(2, Subjects.targetPlayer()));
         addSpellEffect(new DrawCardEffect(1));
     }
 }

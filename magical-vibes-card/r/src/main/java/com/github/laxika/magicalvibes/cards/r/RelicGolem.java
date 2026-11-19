@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZNR", collectorNumber = "249")
 public class RelicGolem extends Card {
@@ -21,7 +21,7 @@ public class RelicGolem extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(2, Subjects.targetPlayer())),
                 "{2}, {T}: Target player mills two cards."
         ));
     }

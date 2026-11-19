@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -1443,7 +1442,7 @@ class CombatDamageServiceTest {
         @DisplayName("MillEffect (target player) stack entry has defenderId as targetId")
         void millTargetPlayerEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    Triggers.dealsCombatDamageToPlayer(), new MillEffect(10, MillRecipient.TARGET_PLAYER));
+                    Triggers.dealsCombatDamageToPlayer(), new MillEffect(10, Subjects.targetPlayer()));
 
             combatDamageService.resolveCombatDamage(gameData);
 

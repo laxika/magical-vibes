@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class ChancellorOfTheSpires extends Card {
         // You may reveal this card from your opening hand. If you do, at the beginning of
         // the first upkeep, each opponent mills seven cards.
         addStaticEffect(new MayEffect(
-                new RegisterOpeningHandUpkeepTriggerEffect(new MillEffect(7, MillRecipient.EACH_OPPONENT)),
+                new RegisterOpeningHandUpkeepTriggerEffect(new MillEffect(7, Subjects.eachOpponent())),
                 "Reveal this card from your opening hand?"
         ));
 

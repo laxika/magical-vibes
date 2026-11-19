@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,7 +44,7 @@ public class NightmaresAndDaydreams extends Card {
 
     private void addMillChapter(int chapter) {
         addTrigger(Triggers.chapter(chapter), RegisterDelayedControllerSpellCastTriggerEffect.untilYourNextTurn(
-                INSTANT_OR_SORCERY, List.of(new MillEffect(new EventValue(), MillRecipient.TARGET_PLAYER)))
+                INSTANT_OR_SORCERY, List.of(new MillEffect(new EventValue(), Subjects.targetPlayer())))
                 .withTargetFilter(ANY_PLAYER));
     }
 }

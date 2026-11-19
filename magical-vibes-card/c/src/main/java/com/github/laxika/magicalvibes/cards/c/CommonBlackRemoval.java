@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -43,7 +43,7 @@ public class CommonBlackRemoval extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then its controller mills cards equal to its power",
                         destroyThen(EventStat.POWER,
-                                new MillEffect(new EventValue(), MillRecipient.CONTROLLER),
+                                new MillEffect(new EventValue(), Subjects.you()),
                                 ThenEffectRecipient.TARGET_CONTROLLER),
                         creatureTargetFilter())
         )));

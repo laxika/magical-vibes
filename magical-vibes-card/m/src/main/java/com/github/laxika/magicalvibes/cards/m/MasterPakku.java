@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class MasterPakku extends Card {
                 new MillEffect(
                         new CardsInGraveyard(
                                 new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER),
-                        MillRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,8 +33,8 @@ public class SyrKonradTheGrim extends Card {
                 false,
                 "{1}{B}",
                 List.of(
-                        new MillEffect(1, MillRecipient.CONTROLLER),
-                        new MillEffect(1, MillRecipient.EACH_OPPONENT)),
+                        new MillEffect(1, Subjects.you()),
+                        new MillEffect(1, Subjects.eachOpponent())),
                 "{1}{B}: Each player mills a card."
         ));
     }

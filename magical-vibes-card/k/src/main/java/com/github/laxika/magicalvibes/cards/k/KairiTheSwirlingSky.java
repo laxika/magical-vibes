@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsWithinTotalManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -41,7 +41,7 @@ public class KairiTheSwirlingSky extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Mill six cards, then return up to two instant and/or sorcery cards from your graveyard to your hand",
                         List.of(
-                                new MillEffect(6, MillRecipient.CONTROLLER),
+                                new MillEffect(6, Subjects.you()),
                                 new ReturnCardsFromControllerGraveyardToHandEffect(
                                         instantOrSorcery, new Fixed(2)))))));
     }

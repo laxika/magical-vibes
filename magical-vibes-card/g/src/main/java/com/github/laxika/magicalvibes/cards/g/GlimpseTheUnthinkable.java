@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RAV", collectorNumber = "208")
 @CardRegistration(set = "GK1", collectorNumber = "15")
@@ -14,6 +14,6 @@ public class GlimpseTheUnthinkable extends Card {
 
     public GlimpseTheUnthinkable() {
         // Target player mills ten cards.
-        addSpellEffect(new MillEffect(10, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(10, Subjects.targetPlayer()));
     }
 }

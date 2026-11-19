@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -40,7 +39,7 @@ public class LostMonarchOfIfnir extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AnyPlayerDealtCombatDamageBySubtypeThisTurn(CardSubtype.ZOMBIE)),
                 SequenceEffect.of(
-                        new MillEffect(3, MillRecipient.CONTROLLER),
+                        new MillEffect(3, Subjects.you()),
                         new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)

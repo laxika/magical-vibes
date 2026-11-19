@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -36,7 +35,7 @@ public class DrownInDreams extends Card {
                         targetPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player mills twice X cards",
-                        new MillEffect(new Scaled(new XValue(), 2), MillRecipient.TARGET_PLAYER),
+                        new MillEffect(new Scaled(new XValue(), 2), Subjects.targetPlayer()),
                         targetPlayer)
         ), new ControlledCommanderAsCast()));
     }

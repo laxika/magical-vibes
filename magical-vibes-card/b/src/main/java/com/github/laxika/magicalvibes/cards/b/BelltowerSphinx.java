@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class BelltowerSphinx extends Card {
 
     public BelltowerSphinx() {
         addTrigger(Triggers.dealtDamage(), TriggerOptions.EACH_SOURCE,
-                new MillEffect(new EventValue(), MillRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new MillEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering())));
     }
 }

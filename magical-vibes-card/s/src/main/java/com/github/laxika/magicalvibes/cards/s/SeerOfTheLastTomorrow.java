@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOU", collectorNumber = "44")
 @CardRegistration(set = "AKR", collectorNumber = "77")
@@ -18,7 +18,7 @@ public class SeerOfTheLastTomorrow extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new DiscardCardTypeCost(null, null), new MillEffect(3, MillRecipient.TARGET_PLAYER)),
+                List.of(new DiscardCardTypeCost(null, null), new MillEffect(3, Subjects.targetPlayer())),
                 "{U}, {T}, Discard a card: Target player mills three cards."
         ));
     }

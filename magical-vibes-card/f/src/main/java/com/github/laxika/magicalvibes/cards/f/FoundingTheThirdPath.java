@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -36,7 +36,7 @@ public class FoundingTheThirdPath extends Card {
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(lowManaInstantOrSorcery));
 
         // Chapter II: Target player mills four cards.
-        addTrigger(Triggers.chapter(2), new MillEffect(4, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.chapter(2), new MillEffect(4, Subjects.targetPlayer()));
 
         // Chapter III: Exile target instant or sorcery card from your graveyard. Copy it.
         // You may cast the copy.

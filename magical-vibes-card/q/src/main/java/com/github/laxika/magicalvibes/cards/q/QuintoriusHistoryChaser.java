@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -40,7 +40,7 @@ public class QuintoriusHistoryChaser extends Card {
                                 null,
                                 SequenceEffect.of(
                                         new DrawCardEffect(2),
-                                        new MillEffect(1, MillRecipient.CONTROLLER)),
+                                        new MillEffect(1, Subjects.you())),
                                 "a card"),
                         "Discard a card?")),
                 "+1: You may discard a card. If you do, draw two cards, then mill a card."

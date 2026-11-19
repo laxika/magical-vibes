@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardsInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -28,7 +28,7 @@ public class AdvancedFloralInvocations extends Card {
 
     public AdvancedFloralInvocations() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new MillEffect(2, MillRecipient.CONTROLLER));
+                new MillEffect(2, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

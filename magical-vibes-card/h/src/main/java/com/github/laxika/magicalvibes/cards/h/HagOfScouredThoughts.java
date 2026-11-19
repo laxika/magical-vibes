@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class HagOfScouredThoughts extends Card {
     public HagOfScouredThoughts() {
         // At the beginning of your upkeep, each opponent mills five cards. Then exile each opponent's graveyard.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new MillEffect(5, MillRecipient.EACH_OPPONENT),
+                new MillEffect(5, Subjects.eachOpponent()),
                 new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)));
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnFrontEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,7 +41,7 @@ public class TheTrueScriptures extends Card {
 
         addTrigger(Triggers.chapter(2),
                 new DiscardEffect(3, Subjects.eachOpponent()),
-                new MillEffect(3, MillRecipient.EACH_OPPONENT));
+                new MillEffect(3, Subjects.eachOpponent()));
 
         addTrigger(Triggers.chapter(3),
                 ReturnCardFromGraveyardEffect.builder()

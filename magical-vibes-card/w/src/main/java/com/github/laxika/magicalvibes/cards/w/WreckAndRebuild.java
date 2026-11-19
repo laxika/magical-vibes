@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -38,7 +38,7 @@ public class WreckAndRebuild extends Card {
                         new DestroyTargetPermanentEffect(), artifactOrEnchantment),
                 new ChooseOneEffect.ChooseOneOption(
                                 "Mill five cards, then you may put a land card from your graveyard onto the battlefield tapped.",
-                                List.of(new MillEffect(5, MillRecipient.CONTROLLER), new MayEffect(
+                                List.of(new MillEffect(5, Subjects.you()), new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(new CardTypePredicate(CardType.LAND))

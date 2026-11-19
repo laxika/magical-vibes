@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "USG", collectorNumber = "316")
 public class Whetstone extends Card {
@@ -16,8 +16,8 @@ public class Whetstone extends Card {
                 false,
                 "{3}",
                 List.of(
-                        new MillEffect(2, MillRecipient.CONTROLLER),
-                        new MillEffect(2, MillRecipient.EACH_OPPONENT)
+                        new MillEffect(2, Subjects.you()),
+                        new MillEffect(2, Subjects.eachOpponent())
                 ),
                 "{3}: Each player mills two cards."
         ));

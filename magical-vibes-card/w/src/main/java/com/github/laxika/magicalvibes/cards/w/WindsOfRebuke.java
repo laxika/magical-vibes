@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -20,7 +20,7 @@ public class WindsOfRebuke extends Card {
                 "Target must be a nonland permanent"
         )).addSpellEffect(ReturnToHandEffect.target());
         // Each player mills two cards.
-        addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER));
-        addSpellEffect(new MillEffect(2, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(2, Subjects.you()));
+        addSpellEffect(new MillEffect(2, Subjects.eachOpponent()));
     }
 }

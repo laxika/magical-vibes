@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,8 +22,8 @@ public class BondOfInsight extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addSpellEffect(new MillEffect(4, MillRecipient.CONTROLLER));
-        addSpellEffect(new MillEffect(4, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(4, Subjects.you()));
+        addSpellEffect(new MillEffect(4, Subjects.eachOpponent()));
         addSpellEffect(new ReturnCardsFromControllerGraveyardToHandEffect(
                 instantOrSorcery, new Fixed(2)));
         addSpellEffect(new ExileSpellEffect());

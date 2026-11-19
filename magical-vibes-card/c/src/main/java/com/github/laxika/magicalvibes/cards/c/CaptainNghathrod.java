@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class CaptainNghathrod extends Card {
         // Whenever a Horror you control deals combat damage to a player, that player mills that many cards.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.HORROR)),
-                new MillEffect(new EventValue(), MillRecipient.TARGET_PLAYER));
+                new MillEffect(new EventValue(), Subjects.targetPlayer()));
 
         // At the beginning of your end step, return target artifact or creature card from an opponent's
         // graveyard that was put there from their library this turn to the battlefield under your control.

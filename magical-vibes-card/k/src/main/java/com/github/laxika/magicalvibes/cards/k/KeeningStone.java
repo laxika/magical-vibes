@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ROE", collectorNumber = "219")
 @CardRegistration(set = "BRR", collectorNumber = "26")
@@ -20,7 +20,7 @@ public class KeeningStone extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}",
-                List.of(new MillEffect(new CardsInGraveyard(null, CountScope.TARGET_PLAYER), MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(new CardsInGraveyard(null, CountScope.TARGET_PLAYER), Subjects.targetPlayer())),
                 "{5}, {T}: Target player mills X cards, where X is the number of cards in that player's graveyard."
         ));
     }

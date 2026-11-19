@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -257,7 +257,7 @@ class MayAbilityHandlerServiceTest {
         sourceCard.setName("Cloudhoof Kirin");
         sourceCard.setType(CardType.CREATURE);
         UUID spellCardId = UUID.randomUUID();
-        CardEffect mill = new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_PLAYER);
+        CardEffect mill = new MillEffect(new TargetSpellManaValue(), Subjects.targetPlayer());
 
         gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(mill),
                 "Cloudhoof Kirin — mill?", PLAYER2_ID, null, UUID.randomUUID())

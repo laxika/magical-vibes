@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureCardFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FIC", collectorNumber = "49")
 @CardRegistration(set = "FIC", collectorNumber = "118")
 public class RejoinTheFight extends Card {
 
     public RejoinTheFight() {
-        addSpellEffect(new MillEffect(3, MillRecipient.CONTROLLER));
+        addSpellEffect(new MillEffect(3, Subjects.you()));
         addSpellEffect(new EachOpponentChoosesCreatureCardFromControllerGraveyardToBattlefieldEffect());
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +20,7 @@ public class KrydleOfBaldursGate extends Card {
     public KrydleOfBaldursGate() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new LoseLifeEffect(1, Subjects.targetPlayer()),
-                new MillEffect(1, MillRecipient.TARGET_PLAYER),
+                new MillEffect(1, Subjects.targetPlayer()),
                 new GainLifeEffect(1),
                 new ScryEffect(1)));
 

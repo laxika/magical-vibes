@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -20,7 +20,7 @@ public class DrownerOfSecrets extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
-                        new MillEffect(1, MillRecipient.TARGET_PLAYER)),
+                        new MillEffect(1, Subjects.targetPlayer())),
                 "Tap an untapped Merfolk you control: Target player mills a card."
         ));
     }

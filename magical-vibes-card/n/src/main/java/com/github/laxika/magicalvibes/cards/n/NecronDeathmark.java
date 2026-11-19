@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,7 +24,7 @@ public class NecronDeathmark extends Card {
 
         var destroyTargetPermanent = new DestroyTargetPermanentEffect();
         creatureTarget.bindEffect(destroyTargetPermanent);
-        var mill = new MillEffect(3, MillRecipient.TARGET_PLAYER);
+        var mill = new MillEffect(3, Subjects.targetPlayer());
         playerTarget.bindEffect(mill);
         addTrigger(Triggers.enters(ObjectRelation.THIS), destroyTargetPermanent, mill);
     }

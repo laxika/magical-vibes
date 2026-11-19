@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOI", collectorNumber = "95")
 public class VesselOfParamnesia extends Card {
@@ -19,7 +19,7 @@ public class VesselOfParamnesia extends Card {
                 "{U}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new MillEffect(3, MillRecipient.TARGET_PLAYER),
+                        new MillEffect(3, Subjects.targetPlayer()),
                         new DrawCardEffect()
                 ),
                 "{U}, Sacrifice this enchantment: Target player mills three cards. Draw a card."

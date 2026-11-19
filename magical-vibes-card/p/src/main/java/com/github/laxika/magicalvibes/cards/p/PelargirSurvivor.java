@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOC", collectorNumber = "182")
 public class PelargirSurvivor extends Card {
@@ -24,7 +24,7 @@ public class PelargirSurvivor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}{U}",
-                List.of(new MillEffect(3, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(3, Subjects.targetPlayer())),
                 "{5}{U}, {T}: Target player mills three cards."
         ));
     }

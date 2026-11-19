@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -25,7 +25,7 @@ public class CrawlingInfestation extends Card {
     public CrawlingInfestation() {
         // At the beginning of your upkeep, you may mill two cards.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"));
+                new MayEffect(new MillEffect(2, Subjects.you()), "Mill two cards?"));
 
         // Whenever one or more creature cards are put into your graveyard from anywhere during your
         // turn, create a 1/1 green Insect creature token. This ability triggers only once each turn.

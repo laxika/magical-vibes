@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,8 +28,8 @@ public class KingNarfisBetrayal extends Card {
 
     public KingNarfisBetrayal() {
         addTrigger(Triggers.chapter(1),
-                new MillEffect(4, MillRecipient.CONTROLLER),
-                new MillEffect(4, MillRecipient.EACH_OPPONENT),
+                new MillEffect(4, Subjects.you()),
+                new MillEffect(4, Subjects.eachOpponent()),
                 new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

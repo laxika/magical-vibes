@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GhostlyCastigator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class CovetousCastaway extends Card {
         setBackFaceCard(new GhostlyCastigator());
 
         // When this creature dies, mill three cards.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MillEffect(3, Subjects.you()));
 
         // Disturb {3}{U}{U}
         addCastingOption(new DisturbCast("{3}{U}{U}"));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NPH", collectorNumber = "144")
@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Mindcrank extends Card {
 
     public Mindcrank() {
-        addTrigger(Triggers.opponentLosesLife(), new MillEffect(new EventValue(), MillRecipient.TRIGGERING_PLAYER));
+        addTrigger(Triggers.opponentLosesLife(), new MillEffect(new EventValue(), Subjects.triggeringPlayer()));
     }
 }

@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -49,7 +49,7 @@ public class ImperiousMindbreaker extends Card {
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
-                        new MillEffect(new SourceToughness(), MillRecipient.EACH_OPPONENT)),
+                        new MillEffect(new SourceToughness(), Subjects.eachOpponent())),
                         GrantScope.SELF_AND_PAIRED)));
     }
 }

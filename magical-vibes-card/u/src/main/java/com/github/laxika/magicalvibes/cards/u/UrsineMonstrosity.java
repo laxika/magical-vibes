@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseRandomOpponentMustAttac
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class UrsineMonstrosity extends Card {
     public UrsineMonstrosity() {
         CardTypesAmongCardsInGraveyard cardTypes = new CardTypesAmongCardsInGraveyard();
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
-                new MillEffect(1, MillRecipient.CONTROLLER),
+                new MillEffect(1, Subjects.you()),
                 new ChooseRandomOpponentMustAttackThisCombatEffect(),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
                 new BoostSelfEffect(cardTypes, cardTypes)));

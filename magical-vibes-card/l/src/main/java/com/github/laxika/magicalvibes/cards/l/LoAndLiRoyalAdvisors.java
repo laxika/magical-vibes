@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -32,7 +32,7 @@ public class LoAndLiRoyalAdvisors extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U/B}",
-                List.of(new MillEffect(4, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(4, Subjects.targetPlayer())),
                 "{2}{U/B}: Target player mills four cards."
         ));
     }

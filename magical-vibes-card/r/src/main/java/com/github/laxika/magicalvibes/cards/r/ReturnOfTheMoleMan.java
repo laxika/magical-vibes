@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class ReturnOfTheMoleMan extends Card {
 
     public ReturnOfTheMoleMan() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"));
+                new MayEffect(new MillEffect(2, Subjects.you()), "Mill two cards?"));
 
         CardsInGraveyard permanentCardsInGraveyard = new CardsInGraveyard(
                 new CardIsPermanentPredicate(), CountScope.CONTROLLER);
@@ -55,7 +55,7 @@ public class ReturnOfTheMoleMan extends Card {
                 false,
                 false,
                 List.of(new TriggeredAbility(Triggers.attacks(),
-                        new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))),
+                        new MayEffect(new MillEffect(1, Subjects.you()), "Mill a card?"))),
                 List.of(),
                 false,
                 false,

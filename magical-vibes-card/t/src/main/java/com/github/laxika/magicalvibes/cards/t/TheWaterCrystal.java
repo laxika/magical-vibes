@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AdditionalMillForOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class TheWaterCrystal extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{U}{U}",
-                List.of(new MillEffect(new CardsInHand(CountScope.CONTROLLER), MillRecipient.EACH_OPPONENT)),
+                List.of(new MillEffect(new CardsInHand(CountScope.CONTROLLER), Subjects.eachOpponent())),
                 "{4}{U}{U}, {T}: Each opponent mills cards equal to the number of cards in your hand."));
     }
 }

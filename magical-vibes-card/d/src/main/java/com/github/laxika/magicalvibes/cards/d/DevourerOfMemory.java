@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -28,7 +28,7 @@ public class DevourerOfMemory extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}{B}",
-                List.of(new MillEffect(1, MillRecipient.CONTROLLER)),
+                List.of(new MillEffect(1, Subjects.you())),
                 "{1}{U}{B}: Mill a card."));
     }
 }

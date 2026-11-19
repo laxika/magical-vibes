@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -24,7 +24,7 @@ public class AwakenTheHonoredDead extends Card {
     public AwakenTheHonoredDead() {
         addTrigger(Triggers.chapter(1),
                 new DestroyTargetPermanentEffect(new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addTrigger(Triggers.chapter(2), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(2), new MillEffect(3, Subjects.you()));
         addTrigger(Triggers.chapter(3), new MayEffect(
                 new DiscardCardThenEffect(
                         null,

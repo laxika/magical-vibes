@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +22,7 @@ public class DeathbonnetSprout extends Card {
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 SequenceEffect.of(
-                        new MillEffect(1, MillRecipient.CONTROLLER),
+                        new MillEffect(1, Subjects.you()),
                         new ConditionalEffect(
                                 new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE)),
                                 new TransformSelfEffect())));

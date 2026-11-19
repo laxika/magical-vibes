@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class PatchworkBeastie extends Card {
                 "there are four or more card types among cards in your graveyard"
         ));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"));
+                new MayEffect(new MillEffect(1, Subjects.you()), "Mill a card?"));
     }
 }

@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WAR", collectorNumber = "228")
 @CardRegistration(set = "SLD", collectorNumber = "399")
@@ -21,7 +21,7 @@ public class AshiokDreamRender extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new MillEffect(4, MillRecipient.TARGET_PLAYER),
+                List.of(new MillEffect(4, Subjects.targetPlayer()),
                         new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)),
                 "−1: Target player mills four cards. Then exile each opponent's graveyard."
         ));

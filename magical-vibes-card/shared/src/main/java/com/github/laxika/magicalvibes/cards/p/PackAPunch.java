@@ -6,15 +6,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /** Pack a Punch, the prepare spell of Kirol, History Buff // Pack a Punch (SOS 198). */
 public class PackAPunch extends Card {
 
     public PackAPunch() {
-        addSpellEffect(new MillEffect(1, MillRecipient.CONTROLLER));
+        addSpellEffect(new MillEffect(1, Subjects.you()));
 
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))

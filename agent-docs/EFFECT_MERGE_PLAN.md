@@ -1662,7 +1662,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 | `TargetPlayerCantThisTurnEffect(TurnRestriction)` | `TargetPlayerCantPlayLandsThisTurnEffect`, `TargetPlayerCantCastCreatureSpellsThisTurnEffect` | 2 + 1 |
 | `SacrificeCreatureForTokenEffect(CreateTokenEffect, PermanentPredicate, SacrificedStat, TokenScaling)` | **Moot**: `SacrificeCreatureCreateSizedTokenEqualToPowerEffect` had no card left and was deleted (`effect-cleanup-refactor.md` step 2); `SacrificeCreatureToCreateTokensEqualToToughnessEffect` stays alone | 0 + 1 |
 | `SacrificeAllYouControlCost(PermanentPredicate, boolean trackTotalPower)` | `SacrificeAllCreaturesYouControlCost`, `SacrificeAllPermanentsYouControlCost` | 1 + 1 |
-| `MillEffect` + `MillRecipient.DEFENDING_PLAYER` | `MillDefendingPlayerEffect` | 1 |
+| `MillEffect` + `MillRecipient.DEFENDING_PLAYER` | **Done** (effect-cleanup run 4f): `MillEffect(n, Subjects.defendingPlayer())` absorbed `MillDefendingPlayerEffect` | 3 |
 | `GainLifeEffect` — replace `boolean targetsPlayer` with `TargetPredicate declaredTarget` | `GainLifeEqualToTargetCreatureStatEffect` | 2 |
 
 **Notes**

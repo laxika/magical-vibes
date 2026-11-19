@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -20,7 +20,7 @@ public class GnawingVermin extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new MillEffect(2, MillRecipient.TARGET_PLAYER));
+                        new MillEffect(2, Subjects.targetPlayer()));
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(-1, -1));
     }

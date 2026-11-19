@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LCI", collectorNumber = "266")
 @CardRegistration(set = "LCI", collectorNumber = "313")
@@ -23,7 +23,7 @@ public class ThroneOfTheGrimCaptain extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillEffect(2, MillRecipient.CONTROLLER)),
+                List.of(new MillEffect(2, Subjects.you())),
                 "{T}: Mill two cards."
         ));
 

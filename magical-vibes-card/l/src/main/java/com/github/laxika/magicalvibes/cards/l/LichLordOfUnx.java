@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -41,7 +40,7 @@ public class LichLordOfUnx extends Card {
                 false, "{U}{U}{B}{B}",
                 List.of(
                         new LoseLifeEffect(zombiesYouControl, Subjects.targetPlayer()),
-                        new MillEffect(zombiesYouControl, MillRecipient.TARGET_PLAYER)
+                        new MillEffect(zombiesYouControl, Subjects.targetPlayer())
                 ),
                 "{U}{U}{B}{B}: Target player loses X life and mills X cards, where X is the number of Zombies you control.",
                 new PlayerPredicateTargetFilter(

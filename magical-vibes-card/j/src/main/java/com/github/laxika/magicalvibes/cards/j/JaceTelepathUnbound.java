@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -59,7 +59,7 @@ public class JaceTelepathUnbound extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(new CreateEmblemEffect(
-                        new TriggeredAbility(Triggers.youCastSpell(), new MillEffect(5, MillRecipient.TARGET_PLAYER))
+                        new TriggeredAbility(Triggers.youCastSpell(), new MillEffect(5, Subjects.targetPlayer()))
                                 .withTargetFilter(new PlayerPredicateTargetFilter(
                                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                         "Target must be an opponent")),

@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -38,7 +38,7 @@ public class DeathInHeaven extends Card {
 
     private CardEffect millThenExileTargetPlayerGraveyard() {
         return SequenceEffect.of(
-                new MillEffect(2, MillRecipient.TARGET_PLAYER),
+                new MillEffect(2, Subjects.targetPlayer()),
                 new ExileGraveyardCardsEffect(
                         0, GraveyardExileScope.TARGET_PLAYER_ENTIRE,
                         null, false, true, false));

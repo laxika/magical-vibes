@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +29,7 @@ public class DuskmantleGuildmage extends Card {
                         + "that player loses 1 life."));
 
         addActivatedAbility(new ActivatedAbility(false, "{2}{U}{B}",
-                List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(2, Subjects.targetPlayer())),
                 "{2}{U}{B}: Target player mills two cards."));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -33,7 +33,7 @@ public class SokkasHaiku extends Card {
         )).addSpellEffect(new CounterSpellEffect());
 
         addSpellEffect(new DrawCardEffect());
-        addSpellEffect(new MillEffect(3, MillRecipient.CONTROLLER));
+        addSpellEffect(new MillEffect(3, Subjects.you()));
 
         target(TargetFilters.land())
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET));

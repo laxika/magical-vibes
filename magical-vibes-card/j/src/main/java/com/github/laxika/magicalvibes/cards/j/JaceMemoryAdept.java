@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,14 +22,14 @@ public class JaceMemoryAdept extends Card {
         // +1: Draw a card. Target player mills a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(1), new MillEffect(1, MillRecipient.TARGET_PLAYER)),
+                List.of(new DrawCardEffect(1), new MillEffect(1, Subjects.targetPlayer())),
                 "+1: Draw a card. Target player mills a card."
         ));
 
         // 0: Target player mills ten cards.
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new MillEffect(10, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(10, Subjects.targetPlayer())),
                 "0: Target player mills ten cards."
         ));
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostContr
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class QuagFeast extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)
                 )),
                 "Target must be a creature, planeswalker, or Vehicle"))
-                .addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER))
+                .addSpellEffect(new MillEffect(2, Subjects.you()))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetManaValueAtMostControllerGraveyardCount(),
                         new DestroyTargetPermanentEffect()));

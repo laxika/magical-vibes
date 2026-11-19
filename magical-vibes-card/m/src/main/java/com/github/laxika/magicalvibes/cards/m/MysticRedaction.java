@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +13,6 @@ public class MysticRedaction extends Card {
 
     public MysticRedaction() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ScryEffect(1));
-        addTrigger(Triggers.youDiscardCard(), new MillEffect(2, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.youDiscardCard(), new MillEffect(2, Subjects.eachOpponent()));
     }
 }

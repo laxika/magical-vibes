@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class FrayingSanity extends Card {
         // At the beginning of each end step, enchanted player mills X cards, where X is the number
         // of cards put into their graveyard from anywhere this turn.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new MillEffect(new CardsPutIntoGraveyardByTargetPlayerThisTurn(), MillRecipient.TARGET_PLAYER));
+                new MillEffect(new CardsPutIntoGraveyardByTargetPlayerThisTurn(), Subjects.targetPlayer()));
     }
 }

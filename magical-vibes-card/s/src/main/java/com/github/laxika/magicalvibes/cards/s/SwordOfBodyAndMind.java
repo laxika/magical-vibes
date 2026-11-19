@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public class SwordOfBodyAndMind extends Card {
                 new CreateTokenEffect(1, "Wolf", 2, 2,
                         CardColor.GREEN, List.of(CardSubtype.WOLF),
                         Set.of(), Set.of()),
-                new MillEffect(10, MillRecipient.TARGET_PLAYER));
+                new MillEffect(10, Subjects.targetPlayer()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

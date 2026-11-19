@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class InvertedIceberg extends Card {
         setBackFaceCard(new IcebergTitan());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillEffect(1, MillRecipient.CONTROLLER),
+                new MillEffect(1, Subjects.you()),
                 new DrawCardEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 false,

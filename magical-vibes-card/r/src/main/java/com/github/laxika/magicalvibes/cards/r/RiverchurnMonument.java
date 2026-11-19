@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,7 +20,7 @@ public class RiverchurnMonument extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(2, Subjects.targetPlayer())),
                 "{1}, {T}: Any number of target players each mill two cards.",
                 List.of(anyPlayer()),
                 0,
@@ -32,7 +32,7 @@ public class RiverchurnMonument extends Card {
                 "{2}{U}{U}",
                 List.of(new MillEffect(
                         new CardsInGraveyard(null, CountScope.TARGET_PLAYER),
-                        MillRecipient.TARGET_PLAYER
+                        Subjects.targetPlayer()
                 )),
                 "Exhaust — {2}{U}{U}, {T}: Any number of target players each mill cards equal to the number of cards in their graveyard.",
                 List.of(anyPlayer()),

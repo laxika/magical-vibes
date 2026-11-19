@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 public class MerfolkWindrobber extends Card {
 
     public MerfolkWindrobber() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(1, Subjects.targetPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

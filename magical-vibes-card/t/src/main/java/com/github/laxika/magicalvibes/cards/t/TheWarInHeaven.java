@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +25,7 @@ public class TheWarInHeaven extends Card {
     public TheWarInHeaven() {
         addTrigger(Triggers.chapter(1), new DrawCardEffect(3), new LoseLifeEffect(3, Subjects.you()));
 
-        addTrigger(Triggers.chapter(2), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(2), new MillEffect(3, Subjects.you()));
 
         addTrigger(Triggers.chapter(3),
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(

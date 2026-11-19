@@ -7,19 +7,21 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/** Resolves {@link MillHalfLibraryEffect}: each player its subject names mills half their own library. */
 @Component
 @RequiredArgsConstructor
 public class MillHalfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,12 +31,7 @@ public class MillHalfLibraryEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MillHalfLibraryEffect) effect;
-        List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
-        if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
-            targetPlayerIds = Collections.singletonList(entry.getTargetId());
-        }
-
-        for (UUID targetPlayerId : targetPlayerIds) {
+        for (UUID targetPlayerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);
             String playerName = gameData.playerIdToName.get(targetPlayerId);
 

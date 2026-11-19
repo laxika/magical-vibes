@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALA", collectorNumber = "50")
@@ -14,6 +14,6 @@ public class MemoryErosion extends Card {
     public MemoryErosion() {
         // Whenever an opponent casts a spell, that player mills two cards.
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
-                new MillEffect(2, MillRecipient.TRIGGERING_PLAYER));
+                new MillEffect(2, Subjects.triggeringPlayer()));
     }
 }

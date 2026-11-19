@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,7 +20,7 @@ public class EnterTheGodEternals extends Card {
         target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureThenGainLifeEffect(4));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
-                .addSpellEffect(new MillEffect(4, MillRecipient.TARGET_PLAYER));
+                .addSpellEffect(new MillEffect(4, Subjects.targetPlayer()));
 
         addSpellEffect(new AmassGoblinsEffect(4, CardSubtype.ZOMBIE));
     }

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ import java.util.Set;
 public class VilespawnSpider extends Card {
 
     public VilespawnSpider() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MillEffect(1, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MillEffect(1, Subjects.you()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{G}{U}",

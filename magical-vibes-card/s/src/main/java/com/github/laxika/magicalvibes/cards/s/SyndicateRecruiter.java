@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCar
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class SyndicateRecruiter extends Card {
 
     public SyndicateRecruiter() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new MillEffect(4, MillRecipient.CONTROLLER),
+                new MillEffect(4, Subjects.you()),
                 new ConditionalEffect(
                         new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
                         new ConjureCardToHandEffect("SNC", "76"))));

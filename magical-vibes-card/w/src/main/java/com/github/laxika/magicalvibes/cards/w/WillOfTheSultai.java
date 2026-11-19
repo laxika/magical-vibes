@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -40,7 +40,7 @@ public class WillOfTheSultai extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player mills three cards. Return all land cards from your graveyard to the battlefield tapped",
                         List.of(
-                                new MillEffect(3, MillRecipient.TARGET_PLAYER),
+                                new MillEffect(3, Subjects.targetPlayer()),
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(new CardTypePredicate(CardType.LAND))

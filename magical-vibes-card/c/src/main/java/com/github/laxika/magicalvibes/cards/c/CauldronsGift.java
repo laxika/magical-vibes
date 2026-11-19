@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "83")
@@ -19,7 +19,7 @@ public class CauldronsGift extends Card {
     public CauldronsGift() {
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK, 3),
-                new MillEffect(4, MillRecipient.CONTROLLER)));
+                new MillEffect(4, Subjects.you())));
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CastSpellFromEachOpponentGrav
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /** Flotsam // Jetsam, a split spell with one mode for each half. */
 @CardRegistration(set = "MKM", collectorNumber = "247")
@@ -16,10 +16,10 @@ public class FlotsamJetsam extends Card {
 
     public FlotsamJetsam() {
         List<CardEffect> flotsam = List.of(
-                new MillEffect(3, MillRecipient.CONTROLLER),
+                new MillEffect(3, Subjects.you()),
                 CreateTokenEffect.ofClueToken(1));
         List<CardEffect> jetsam = List.of(
-                new MillEffect(3, MillRecipient.EACH_OPPONENT),
+                new MillEffect(3, Subjects.eachOpponent()),
                 new CastSpellFromEachOpponentGraveyardEffect());
 
         addSpellEffect(new ChooseOneEffect(List.of(

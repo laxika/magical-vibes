@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DKA", collectorNumber = "49")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Shriekgeist extends Card {
 
     public Shriekgeist() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(2, Subjects.targetPlayer()));
     }
 }

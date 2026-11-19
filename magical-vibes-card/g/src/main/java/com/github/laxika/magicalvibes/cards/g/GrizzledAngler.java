@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
@@ -33,7 +33,7 @@ public class GrizzledAngler extends Card {
                 true,
                 null,
                 List.of(
-                        new MillEffect(2, MillRecipient.CONTROLLER),
+                        new MillEffect(2, Subjects.you()),
                         new ConditionalEffect(
                                 new GraveyardCardThreshold(1, colorlessCreature),
                                 new TransformSelfEffect())),

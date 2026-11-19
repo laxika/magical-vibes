@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -17,7 +17,7 @@ public class TrystanPenitentCuller extends Card {
 
     public TrystanPenitentCuller() {
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS), SequenceEffect.of(
-                new MillEffect(3, MillRecipient.CONTROLLER),
+                new MillEffect(3, Subjects.you()),
                 new ExileOwnGraveyardCardThenEachOpponentLosesLifeEffect(
                         new CardSubtypePredicate(CardSubtype.ELF), 2)));
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),

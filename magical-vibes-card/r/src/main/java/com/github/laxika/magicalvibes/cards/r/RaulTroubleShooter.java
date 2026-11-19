@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CastMilledSpellFromGraveyardOncePerYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class RaulTroubleShooter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillEffect(1, MillRecipient.EACH_PLAYER)),
+                List.of(new MillEffect(1, Subjects.eachPlayer())),
                 "{T}: Each player mills a card."));
     }
 }

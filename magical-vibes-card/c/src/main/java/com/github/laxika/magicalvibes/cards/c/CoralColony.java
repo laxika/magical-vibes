@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class CoralColony extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}",
-                List.of(new MillEffect(defenderCreaturesYouControl, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(defenderCreaturesYouControl, Subjects.targetPlayer())),
                 "{1}{U}, {T}: Target player mills X cards, where X is the number of creatures you control with defender."
         ));
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class TheAncientOne extends Card {
                         new DrawCardEffect(1),
                         new DiscardCardThenEffect(
                                 null,
-                                new MillEffect(new LastDiscardedCardManaValue(), MillRecipient.TARGET_PLAYER),
+                                new MillEffect(new LastDiscardedCardManaValue(), Subjects.targetPlayer()),
                                 "a card")),
                 "{2}{U}{B}: Draw a card, then discard a card. When you discard a card this way, target "
                         + "player mills cards equal to its mana value."));

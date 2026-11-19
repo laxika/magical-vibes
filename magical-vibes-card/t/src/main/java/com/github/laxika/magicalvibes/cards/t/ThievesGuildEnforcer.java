@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,13 +30,13 @@ public class ThievesGuildEnforcer extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MillEffect(2, MillRecipient.EACH_OPPONENT));
+                new MillEffect(2, Subjects.eachOpponent()));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MillEffect(2, MillRecipient.EACH_OPPONENT));
+                new MillEffect(2, Subjects.eachOpponent()));
         addStaticEffect(new ConditionalEffect(
                         new OpponentGraveyardAtLeast(8),
                         new StaticBoostEffect(2, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));

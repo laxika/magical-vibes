@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -41,7 +41,7 @@ public class JaceThePerfectedMind extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
-                        new MillEffect(3, MillRecipient.TARGET_PLAYER),
+                        new MillEffect(3, Subjects.targetPlayer()),
                         new ConditionalEffect(twentyCards, new DrawCardEffect(3)),
                         new ConditionalEffect(new NotCondition(twentyCards), new DrawCardEffect(1))
                 ),
@@ -52,7 +52,7 @@ public class JaceThePerfectedMind extends Card {
 
         // −X: Target player mills three times X cards.
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new MillEffect(new Scaled(new XValue(), 3), MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(new Scaled(new XValue(), 3), Subjects.targetPlayer())),
                 "−X: Target player mills three times X cards.",
                 anyPlayer()
         ));

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DGM", collectorNumber = "90")
 @CardRegistration(set = "MM3", collectorNumber = "178")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class PilferedPlans extends Card {
 
     public PilferedPlans() {
-        addSpellEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(2, Subjects.targetPlayer()));
         addSpellEffect(new DrawCardEffect(2));
     }
 }

@@ -5,16 +5,24 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link MillEffect}: the players {@link SubjectResolutionService} finds for its subject mill. A target,
+ * triggering or chosen player ("target player mills cards equal to the number of cards in their hand") has the amount
+ * evaluated for each milling player with that player as its target, and each mills in turn. Any other subject's
+ * amount is evaluated once in the entry's context; when it names several players ("each opponent mills two cards")
+ * they mill at once, as one event (CR 101.4), so a "one or more cards are milled" trigger sees one mill.
+ */
 @Component
 @RequiredArgsConstructor
 public class MillEffectHandler implements NormalEffectHandlerBean {
@@ -22,6 +30,7 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,80 +49,29 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        switch (mill.recipient()) {
-            case CONTROLLER -> graveyardService.resolveMillPlayer(gameData, entry.getControllerId(),
-                    evaluateCount(gameData, entry, mill, source, null));
-            case CHOSEN_PLAYER -> {
-                UUID chosenPlayerId = source == null ? null : source.getRememberedTargetPlayerId();
-                if (chosenPlayerId != null && gameData.playerIds.contains(chosenPlayerId)) {
-                    graveyardService.resolveMillPlayer(gameData, chosenPlayerId,
-                            evaluateCount(gameData, entry, mill, source, chosenPlayerId));
-                }
+        List<UUID> players = subjectResolutionService.players(gameData, entry, effect, mill.player());
+        if (millingPlayerIsAmountTarget(mill.player())) {
+            for (UUID playerId : players) {
+                graveyardService.resolveMillPlayer(gameData, playerId,
+                        evaluateCount(gameData, entry, mill, source, playerId));
             }
-            case TRIGGERING_PLAYER -> {
-                UUID triggeringPlayerId = entry.getTargetId();
-                if (triggeringPlayerId != null && gameData.playerIds.contains(triggeringPlayerId)) {
-                    graveyardService.resolveMillPlayer(gameData, triggeringPlayerId,
-                            evaluateCount(gameData, entry, mill, source, triggeringPlayerId));
-                }
-            }
-            case TARGET_PLAYER, ACTIVE_PLAYER -> {
-                List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
-                if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
-                    targetPlayerIds = Collections.singletonList(entry.getTargetId());
-                }
-                for (UUID targetPlayerId : targetPlayerIds) {
-                    graveyardService.resolveMillPlayer(gameData, targetPlayerId,
-                            evaluateCount(gameData, entry, mill, source, targetPlayerId));
-                }
-            }
-            case EACH_OPPONENT -> {
-                UUID controllerId = entry.getControllerId();
-                int count = evaluateCount(gameData, entry, mill, source, null);
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    if (playerId.equals(controllerId)) continue;
-                    graveyardService.resolveMillPlayer(gameData, playerId, count);
-                }
-            }
-            case EACH_PLAYER -> graveyardService.resolveMillPlayersSimultaneously(gameData,
-                    List.copyOf(gameData.orderedPlayerIds), evaluateCount(gameData, entry, mill, source, null));
-            case TARGET_SPELL_CONTROLLER -> {
-                int count = evaluateCount(gameData, entry, mill, source, null);
-                UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
-                if (spellControllerId == null) {
-                    spellControllerId = entry.getCounteredSpellControllerId();
-                }
-                if (spellControllerId == null) {
-                    spellControllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
-                }
-                if (spellControllerId != null) {
-                    graveyardService.resolveMillPlayer(gameData, spellControllerId, count);
-                }
-            }
-            case TARGET_PERMANENT_CONTROLLER -> {
-                int count = evaluateCount(gameData, entry, mill, source, null);
-                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                UUID targetControllerId = target != null
-                        ? gameQueryService.findPermanentController(gameData, target.getId())
-                        : entry.getTriggeringPermanentId() != null
-                        && entry.getTriggeringPermanentId().equals(entry.getTargetId())
-                        ? entry.getTriggeringPermanentControllerId()
-                        : null;
-                if (targetControllerId != null) {
-                    graveyardService.resolveMillPlayer(gameData, targetControllerId, count);
-                }
-            }
-            case TRIGGERING_PERMANENT_CONTROLLER -> {
-                int count = evaluateCount(gameData, entry, mill, source, null);
-                UUID controllerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
-                if (controllerId == null && !entry.getEventPlayerIds().isEmpty()) {
-                    controllerId = entry.getEventPlayerIds().getFirst();
-                }
-                if (controllerId != null) {
-                    graveyardService.resolveMillPlayer(gameData, controllerId, count);
-                }
-            }
+            return;
         }
+        if (players.isEmpty()) {
+            return;
+        }
+        int count = evaluateCount(gameData, entry, mill, source, null);
+        if (players.size() == 1) {
+            graveyardService.resolveMillPlayer(gameData, players.getFirst(), count);
+        } else {
+            graveyardService.resolveMillPlayersSimultaneously(gameData, players, count);
+        }
+    }
+
+    private static boolean millingPlayerIsAmountTarget(PlayerSubject player) {
+        return player instanceof PlayerSubject.TargetPlayer
+                || player instanceof PlayerSubject.TriggeringPlayer
+                || player instanceof PlayerSubject.ChosenPlayer;
     }
 
     private int evaluateCount(GameData gameData, StackEntry entry, MillEffect mill,
@@ -124,16 +82,5 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
                 ? AmountContext.forStackEntry(entry, source)
                 : AmountContext.forStackEntry(entry, source).withTargetPermanentId(targetPlayerId);
         return Math.max(0, amountEvaluationService.evaluate(gameData, mill.count(), context));
-    }
-
-    /** Controller of the spell on the stack whose card id matches {@code targetCardId}, or null. */
-    private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
-        if (targetCardId == null) return null;
-        for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetCardId)) {
-                return se.getControllerId();
-            }
-        }
-        return null;
     }
 }

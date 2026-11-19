@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class ThroneOfDeath extends Card {
 
     public ThroneOfDeath() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MillEffect(1, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MillEffect(1, Subjects.you()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{B}",

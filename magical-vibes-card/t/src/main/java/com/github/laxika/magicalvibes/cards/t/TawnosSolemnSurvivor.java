@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCar
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,7 +31,7 @@ public class TawnosSolemnSurvivor extends Card {
                 "{2}",
                 List.of(
                         new CreateTokenCopyOfTargetPermanentEffect(),
-                        new MillEffect(2, MillRecipient.CONTROLLER)
+                        new MillEffect(2, Subjects.you())
                 ),
                 "{2}, {T}: Create a token that's a copy of up to one target artifact token you control. Mill two cards.",
                 List.of(new ControlledPermanentPredicateTargetFilter(

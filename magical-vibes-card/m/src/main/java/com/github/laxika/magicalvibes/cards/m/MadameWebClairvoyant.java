@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -27,6 +27,6 @@ public class MadameWebClairvoyant extends Card {
                 new CardSubtypePredicate(CardSubtype.SPIDER),
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))))));
         addTrigger(Triggers.youAttack(),
-                new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"));
+                new MayEffect(new MillEffect(1, Subjects.you()), "Mill a card?"));
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WillOfThePlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,8 +21,8 @@ public class PathOfTheSchemer extends Card {
 
     public PathOfTheSchemer() {
         // Each player mills two cards.
-        addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER));
-        addSpellEffect(new MillEffect(2, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(2, Subjects.you()));
+        addSpellEffect(new MillEffect(2, Subjects.eachOpponent()));
         // Then put a creature card from a graveyard onto the battlefield under your control (not optional).
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

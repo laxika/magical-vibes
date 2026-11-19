@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class Trenchpost extends Card {
                         new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.LOCUS),
                                 CountScope.CONTROLLER),
-                        MillRecipient.TARGET_PLAYER)),
+                        Subjects.targetPlayer())),
                 "{3}, {T}: Target player mills a card for each Locus you control."
         ));
     }

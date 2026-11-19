@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONE", collectorNumber = "51")
 public class FontOfProgress extends Card {
@@ -21,7 +21,7 @@ public class FontOfProgress extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new MillEffect(new CountersOnSource(CounterType.OIL), MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(new CountersOnSource(CounterType.OIL), Subjects.targetPlayer())),
                 "{3}, {T}: Target player mills X cards, where X is the number of oil counters on this artifact."
         ));
     }

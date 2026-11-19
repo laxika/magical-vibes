@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class RainveilRejuvenator extends Card {
 
     public RainveilRejuvenator() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"));
+                new MayEffect(new MillEffect(3, Subjects.you()), "Mill three cards?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

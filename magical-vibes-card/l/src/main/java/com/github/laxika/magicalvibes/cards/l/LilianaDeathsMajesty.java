@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -36,7 +36,7 @@ public class LilianaDeathsMajesty extends Card {
                 List.of(
                         new CreateTokenEffect(1, "Zombie", 2, 2,
                                 CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()),
-                        new MillEffect(2, MillRecipient.CONTROLLER)
+                        new MillEffect(2, Subjects.you())
                 ),
                 "+1: Create a 2/2 black Zombie creature token. Mill two cards."
         ));

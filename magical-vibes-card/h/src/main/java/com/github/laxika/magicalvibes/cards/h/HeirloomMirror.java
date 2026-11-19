@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Heirloom Mirror's front face.
@@ -32,7 +32,7 @@ public class HeirloomMirror extends Card {
                         new PayLifeCost(1),
                         new DiscardCardTypeCost(null, null),
                         new DrawCardEffect(1),
-                        new MillEffect(1, MillRecipient.CONTROLLER),
+                        new MillEffect(1, Subjects.you()),
                         new PutCounterOnSelfThenTransformIfThresholdEffect(CounterType.RITUAL, 3)
                 ),
                 "{1}, {T}, Pay 1 life, Discard a card: Draw a card, mill a card, then put a ritual counter on this artifact. Then if it has three or more ritual counters on it, remove them and transform it. Activate only as a sorcery.",

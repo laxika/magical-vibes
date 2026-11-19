@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -54,7 +53,7 @@ public class WitherbloomCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player mills three cards, then you return a land card from your graveyard to your hand",
                         List.of(
-                                new MillEffect(3, MillRecipient.TARGET_PLAYER),
+                                new MillEffect(3, Subjects.targetPlayer()),
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)
                                         .filter(new CardTypePredicate(CardType.LAND))

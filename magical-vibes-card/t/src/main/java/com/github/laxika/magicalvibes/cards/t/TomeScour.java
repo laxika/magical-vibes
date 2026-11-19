@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M10", collectorNumber = "76")
 @CardRegistration(set = "M11", collectorNumber = "76")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class TomeScour extends Card {
 
     public TomeScour() {
-        addSpellEffect(new MillEffect(5, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(5, Subjects.targetPlayer()));
     }
 }

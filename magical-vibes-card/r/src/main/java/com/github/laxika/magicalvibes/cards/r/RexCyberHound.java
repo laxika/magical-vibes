@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardWithBrainCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class RexCyberHound extends Card {
 
     public RexCyberHound() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                new MillEffect(2, MillRecipient.TARGET_PLAYER),
+                new MillEffect(2, Subjects.targetPlayer()),
                 new EnergyCountersEffect(2)));
         addStaticEffect(new GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect());
 

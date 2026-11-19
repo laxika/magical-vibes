@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,7 +31,7 @@ public class GrislySpectacle extends Card {
                 "Target must be a nonartifact creature"
         )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.POWER,
-                new MillEffect(new EventValue(), MillRecipient.CONTROLLER),
+                new MillEffect(new EventValue(), Subjects.you()),
                 ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

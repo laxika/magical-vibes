@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
@@ -40,7 +39,7 @@ public class JaceBeleren extends Card {
         // −10: Target player mills twenty cards.
         addActivatedAbility(new ActivatedAbility(
                 -10,
-                List.of(new MillEffect(20, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(20, Subjects.targetPlayer())),
                 "\u221210: Target player mills twenty cards."
         ));
     }

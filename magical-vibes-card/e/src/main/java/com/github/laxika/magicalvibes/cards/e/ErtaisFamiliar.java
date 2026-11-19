@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventPhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,8 +27,8 @@ import java.util.List;
 public class ErtaisFamiliar extends Card {
 
     public ErtaisFamiliar() {
-        addTrigger(Triggers.phasesOut(null, ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.phasesOut(null, ObjectRelation.THIS), new MillEffect(3, Subjects.you()));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MillEffect(3, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",
                 List.of(new PreventPhaseOutEffect(PhaseOutSubject.SOURCE)),

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZNR", collectorNumber = "67")
 @CardRegistration(set = "SLD", collectorNumber = "2322")
@@ -20,10 +20,10 @@ public class MaddeningCacophony extends Card {
         addStaticEffect(new KickerEffect("{3}{U}"));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
-                new MillEffect(8, MillRecipient.EACH_OPPONENT),
+                new MillEffect(8, Subjects.eachOpponent()),
                 new MillEffect(
                         new HalvedRoundedUp(new CardsInLibrary(CountScope.OPPONENTS)),
-                        MillRecipient.EACH_OPPONENT)
+                        Subjects.eachOpponent())
         ));
     }
 }

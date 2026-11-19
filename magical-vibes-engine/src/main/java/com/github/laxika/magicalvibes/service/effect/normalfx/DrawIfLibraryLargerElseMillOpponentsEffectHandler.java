@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawIfLibraryLargerElseMillOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +35,7 @@ public class DrawIfLibraryLargerElseMillOpponentsEffectHandler implements Normal
         if (gameData.playerDecks.get(controllerId).size() > gameData.playerDecks.get(targetId).size()) {
             drawCardEffectHandler.resolve(gameData, entry, new DrawCardEffect(1));
         } else {
-            millEffectHandler.resolve(gameData, entry, new MillEffect(5, MillRecipient.EACH_OPPONENT));
+            millEffectHandler.resolve(gameData, entry, new MillEffect(5, Subjects.eachOpponent()));
         }
     }
 }

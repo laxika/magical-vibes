@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LCI", collectorNumber = "83")
 public class WaterloggedHulk extends Card {
@@ -22,7 +22,7 @@ public class WaterloggedHulk extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillEffect(1, MillRecipient.CONTROLLER)),
+                List.of(new MillEffect(1, Subjects.you())),
                 "{T}: Mill a card."));
 
         addActivatedAbility(new ActivatedAbility(

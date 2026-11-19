@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 
@@ -25,7 +25,7 @@ public class JaceWielderOfMysteries extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new MillEffect(2, MillRecipient.TARGET_PLAYER),
+                        new MillEffect(2, Subjects.targetPlayer()),
                         new DrawCardEffect(1)
                 ),
                 "+1: Target player mills two cards. Draw a card."

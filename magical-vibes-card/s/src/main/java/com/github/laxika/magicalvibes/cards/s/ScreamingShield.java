@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RNA", collectorNumber = "239")
 public class ScreamingShield extends Card {
@@ -23,7 +23,7 @@ public class ScreamingShield extends Card {
                 new ActivatedAbility(
                         true,
                         "{2}",
-                        List.of(new MillEffect(3, MillRecipient.TARGET_PLAYER)),
+                        List.of(new MillEffect(3, Subjects.targetPlayer())),
                         "{2}, {T}: Target player mills three cards."
                 ),
                 GrantScope.EQUIPPED_CREATURE

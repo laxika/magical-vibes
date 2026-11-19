@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class KaghaShadowArchdruid extends Card {
     public KaghaShadowArchdruid() {
         addTrigger(Triggers.attacks(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF),
-                new MillEffect(2, MillRecipient.CONTROLLER));
+                new MillEffect(2, Subjects.you()));
         addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 new CardIsPermanentPredicate(), null, true, false));
     }

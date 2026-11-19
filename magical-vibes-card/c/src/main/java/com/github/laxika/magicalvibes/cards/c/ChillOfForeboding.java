@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "32")
 public class ChillOfForeboding extends Card {
 
     public ChillOfForeboding() {
-        addSpellEffect(new MillEffect(5, MillRecipient.CONTROLLER));
-        addSpellEffect(new MillEffect(5, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(5, Subjects.you()));
+        addSpellEffect(new MillEffect(5, Subjects.eachOpponent()));
         addCastingOption(new FlashbackCast("{7}{U}"));
     }
 }

@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +34,10 @@ class MillHalfLibraryEffectHandlerTest {
     private GraveyardService graveyardService;
     @Mock
     private GameLogService gameLogService;
+    @Mock
+    private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private PermanentControlSupport permanentControlSupport;
     private GameData gd;
@@ -66,7 +73,8 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        millHalfLibraryEffectHandler = new MillHalfLibraryEffectHandler(graveyardService, gameLogService);
+        millHalfLibraryEffectHandler = new MillHalfLibraryEffectHandler(graveyardService, gameLogService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService));
 
     }
 

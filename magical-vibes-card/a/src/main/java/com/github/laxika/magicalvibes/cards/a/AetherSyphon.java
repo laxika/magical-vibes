@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class AetherSyphon extends Card {
     public AetherSyphon() {
         addTrigger(Triggers.youDrawCard(),
                 TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
-                new MillEffect(2, MillRecipient.EACH_OPPONENT));
+                new MillEffect(2, Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -29,7 +29,7 @@ public class PersistentPetitioners extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER)),
+                List.of(new MillEffect(1, Subjects.targetPlayer())),
                 "{1}, {T}: Target player mills a card."
         ));
 
@@ -40,7 +40,7 @@ public class PersistentPetitioners extends Card {
                 List.of(
                         new TapMultiplePermanentsCost(4,
                                 new PermanentHasSubtypePredicate(CardSubtype.ADVISOR)),
-                        new MillEffect(12, MillRecipient.TARGET_PLAYER)
+                        new MillEffect(12, Subjects.targetPlayer())
                 ),
                 "Tap four untapped Advisors you control: Target player mills twelve cards."
         ));

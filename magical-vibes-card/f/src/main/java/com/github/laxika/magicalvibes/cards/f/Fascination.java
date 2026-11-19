@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FRF", collectorNumber = "34")
 public class Fascination extends Card {
@@ -21,8 +21,8 @@ public class Fascination extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player mills X cards.",
                         List.of(
-                                new MillEffect(new XValue(), MillRecipient.CONTROLLER),
-                                new MillEffect(new XValue(), MillRecipient.EACH_OPPONENT)))
+                                new MillEffect(new XValue(), Subjects.you()),
+                                new MillEffect(new XValue(), Subjects.eachOpponent())))
         )));
     }
 }

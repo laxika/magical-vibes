@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class HedgeShredder extends Card {
     public HedgeShredder() {
         addTrigger(Triggers.attacks(),
                 new ConditionalEffect(new CardsInLibraryAtLeast(2),
-                        new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?")));
+                        new MayEffect(new MillEffect(2, Subjects.you()), "Mill two cards?")));
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.LAND_CARD,
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,

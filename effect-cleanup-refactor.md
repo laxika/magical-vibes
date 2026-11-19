@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e, 4f done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -354,7 +354,7 @@ fold in, the enum and the absorbed classes are deleted.
 | 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | done |
 | 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | | done |
 | 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | done |
-| 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | open |
+| 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | done |
 | 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | open |
 | 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | open |
 | 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | open |
@@ -1384,6 +1384,65 @@ Ral Zarek target discards through the single-player path rather than a one-playe
   instruction (step 8), including the subject siblings `{Active,Defending,Target,Each}Player...DiscardsHandThenDraws*`.
 - `DiscardEffect`'s random each-player path discards one player at a time (no choice is made, so only the "at once" half
   of CR 101.4 differs: each player's discards are their own discard event).
+
+### Step 4, run 4f (2026-11-19)
+
+**Survivor.** `MillEffect`'s `MillRecipient recipient` became `PlayerSubject player` (constructors `(DynamicAmount|int,
+PlayerSubject)`). `targetSpec()` is a benign player target iff `player.declaresTarget()`; `LibraryTargetValidators`
+requires a player iff it declares. The handler resolves the players through `SubjectResolutionService` and keeps the
+old amount contexts by subject shape: `targetPlayer()`, `triggeringPlayer()` and `chosenPlayer()` (the old
+`TARGET_PLAYER` / `ACTIVE_PLAYER` / `TRIGGERING_PLAYER` / `CHOSEN_PLAYER`) evaluate the amount per milling player with
+that player as the amount's target and mill one player after another; every other subject evaluates it once in the
+entry's context. The mill itself is unchanged: the same `GraveyardService.resolveMillPlayer` /
+`resolveMillPlayersSimultaneously` calls, so milled cards, `cardsMilledThisTurn`, the cards a caller gets back, the
+replacement-order journal and the graveyard / exile triggers are recorded exactly as before (`MillEffectHandler` itself
+records nothing on the entry; the fused `Mill...And...` handlers that read "cards milled this way" were not touched).
+
+**Deleted**: the enum `MillRecipient`, `MillDefendingPlayerEffect` and `MillHalfDefendingPlayerEffect` with their
+handlers (ratchet 4,928 / 4,161). Mapping: `CONTROLLER` → `you()`; `TARGET_PLAYER` → `targetPlayer()` everywhere (it
+always declared; engine-built payloads too); `TRIGGERING_PLAYER` (Mindcrank, The Master of Lake-town, Memory Erosion) and
+`ACTIVE_PLAYER` (Worry Beads, Dreamborn Muse, Curse of the Bloody Tome: "that player" of an upkeep trigger, the baked
+player) → `triggeringPlayer()`; `CHOSEN_PLAYER` → `chosenPlayer()`; `EACH_OPPONENT` / `EACH_PLAYER` → `eachOpponent()` /
+`eachPlayer()`; `TARGET_SPELL_CONTROLLER` → `controllerOf(targetSpell())` (non-declaring, as before: the counter effect
+declares the spell; the resolver's stack → countered → last-known chain is the old one, and 4e's no-target fallback to
+the countered controller is the old `getCounteredSpellControllerId()` step, so no mill card needed anything more);
+`TARGET_PERMANENT_CONTROLLER` → `controllerOf(target())` (Zulaport Duelist, Riddlekeeper, Glacial Grasp);
+`TRIGGERING_PERMANENT_CONTROLLER` → `controllerOf(triggering())` (Mesmeric Orb, Chronic Flooding, Belltower Sphinx).
+`MillDefendingPlayerEffect(n)` → `MillEffect(n, defendingPlayer())` (Nemesis of Reason, Specimen Freighter, Flint
+Golem); `MillHalfDefendingPlayerEffect(r)` → `MillHalfLibraryEffect(r, defendingPlayer())` (Terisian Mindbreaker, Lord
+Xander, the Collector): `MillHalfLibraryEffect` gained a `PlayerSubject player` (default `targetPlayer()`, which keeps
+its benign player spec). `RevealUntilLandsMillTargetPlayerEffect` (same enum) now takes a `PlayerSubject`:
+`targetPlayer()` (default, harmful spec as before; Mirko Vosk's combat-damage binding unchanged), `controllerOf(target())`
+(Destroy the Evidence), `eachOpponent()` (Mind Grind, Consuming Aberration). 424 card files rewritten by a deleted
+scratch script (419 named the enum, 5 the absorbed records), 7 engine and 8 application-test files.
+
+**AI and other readers.** No AI code read `MillEffect` or the enum. The mana-ability classifier
+(`AbilityActivationService.movesCardToOrFromLibrary`) treats every `MillEffect` as moving a library card, as before.
+
+**Behaviour changes.** (1) `eachOpponent()` mills all opponents at once as one event, like `EACH_PLAYER` always did
+(CR 101.4, CR 608.2e); `EACH_OPPONENT` milled one opponent after another, so with two or more opponents a
+"one or more cards are milled" batch saw separate events. Test: `MillEffectHandlerTest$EachOpponent.severalOpponentsMillSimultaneously`.
+Not tested, no card depends on them (two-player harness): several players mill / reveal in APNAP order instead of seat
+order (Mind Grind and Consuming Aberration still reveal one opponent after another: a reveal-until loop, not a count);
+`triggeringPlayer()` prefers the recorded triggering player over the baked target (the same player for every collector
+these cards use; their tests pass unchanged); `controllerOf(target())` falls back to the target's last-known controller
+once it left (CR 608.2h; old `TARGET_PERMANENT_CONTROLLER` had only the triggering-controller fallback);
+`controllerOf(triggering())` lost the old last fallback to `eventPlayerIds.first` (every collector the three cards use
+records the triggering controller: `TapTriggers.tappedRecord`, `DamageTriggers.collectDealtDamageAbilities`; its
+hand-built handler test was removed); the defending-player mills no longer need `attackedTargetId` when
+`defendingPlayerId` is set and handle a battle's protector; a defending player's empty library logs "mills nothing"
+like the target-player half mill.
+
+**For later runs.**
+
+- "Each player mills N" is still written on older cards as `MillEffect(N, you())` + `MillEffect(N, eachOpponent())`
+  (Ghoulcaller's Bell, Chill of Foreboding, ...): two events where the rules make one. `MillEffect(N, eachPlayer())` is
+  the rules-correct form; converting them changes "one or more cards are milled" batching, so it needs its own run with
+  tests.
+- `MillHalfLibraryEffect` could become `MillEffect` with a `Halved(DynamicAmount, roundUp)` amount over the milling
+  player's library (`EFFECT_MERGE_PLAN.md`'s blocked row), evaluated per player like the target-player mill.
+- The rest of the family (ledger) is fused mill + an instruction on "the cards milled this way": step 7 gives
+  `resolveMillPlayer`'s returned cards a step result, then step 8 splits them.
 
 ## Prompt
 

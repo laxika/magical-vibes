@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,7 +29,7 @@ public class LasydProwler extends Card {
     public LasydProwler() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new MillEffect(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
-                        MillRecipient.CONTROLLER),
+                        Subjects.you()),
                 "Mill cards equal to the number of lands you control?"));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

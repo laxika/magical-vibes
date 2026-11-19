@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RAV", collectorNumber = "56")
 public class InduceParanoia extends Card {
@@ -19,6 +19,6 @@ public class InduceParanoia extends Card {
         addSpellEffect(new CounterSpellEffect());
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK),
-                new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_SPELL_CONTROLLER)));
+                new MillEffect(new TargetSpellManaValue(), Subjects.controllerOf(Subjects.targetSpell()))));
     }
 }

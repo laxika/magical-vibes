@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -27,7 +27,7 @@ public class RootsOfWisdom extends Card {
                 new CardTypePredicate(CardType.LAND),
                 new CardSubtypePredicate(CardSubtype.ELF)));
 
-        addSpellEffect(new MillEffect(3, MillRecipient.CONTROLLER));
+        addSpellEffect(new MillEffect(3, Subjects.you()));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new GraveyardCardThreshold(1, returnableCard)),
                 new DrawCardEffect()));

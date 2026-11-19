@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -43,7 +43,7 @@ public class AshcoatOfTheShadowSwarm extends Card {
                 new CardSubtypePredicate(CardSubtype.RAT)));
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
-                        new MillEffect(4, MillRecipient.CONTROLLER),
+                        new MillEffect(4, Subjects.you()),
                         new ReturnCardsFromControllerGraveyardToHandEffect(ratCreatureCard, new Fixed(2))
                 ),
                 "Mill four cards?"

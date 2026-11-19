@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
@@ -2240,7 +2239,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Navigator's Ruin");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     com.github.laxika.magicalvibes.model.trigger.TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
-                    new MillEffect(4, MillRecipient.TARGET_PLAYER));
+                    new MillEffect(4, Subjects.targetPlayer()));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -2264,7 +2263,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Navigator's Ruin");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     com.github.laxika.magicalvibes.model.trigger.TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
-                    new MillEffect(4, MillRecipient.TARGET_PLAYER));
+                    new MillEffect(4, Subjects.targetPlayer()));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));

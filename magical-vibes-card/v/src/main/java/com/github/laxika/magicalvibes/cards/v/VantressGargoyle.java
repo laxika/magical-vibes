@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ELD", collectorNumber = "71")
 @CardRegistration(set = "ELD", collectorNumber = "349")
@@ -27,8 +27,8 @@ public class VantressGargoyle extends Card {
                 true,
                 null,
                 List.of(
-                        new MillEffect(1, MillRecipient.CONTROLLER),
-                        new MillEffect(1, MillRecipient.EACH_OPPONENT)),
+                        new MillEffect(1, Subjects.you()),
+                        new MillEffect(1, Subjects.eachOpponent())),
                 "{T}: Each player mills a card."));
     }
 }

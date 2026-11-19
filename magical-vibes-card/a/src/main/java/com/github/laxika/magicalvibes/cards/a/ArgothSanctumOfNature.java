@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -43,7 +43,7 @@ public class ArgothSanctumOfNature extends Card {
                 List.of(
                         new CreateTokenEffect("Bear", 2, 2, CardColor.GREEN,
                                 List.of(CardSubtype.BEAR), Set.of(), Set.of()),
-                        new MillEffect(3, MillRecipient.CONTROLLER)
+                        new MillEffect(3, Subjects.you())
                 ),
                 "{2}{G}{G}, {T}: Create a 2/2 green Bear creature token, then mill three cards. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

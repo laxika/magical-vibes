@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class ShaunRebeccaAgents extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.COLORLESS),
-                        new QueueReflexiveAbilityEffect(new MillEffect(2, MillRecipient.CONTROLLER))),
+                        new QueueReflexiveAbilityEffect(new MillEffect(2, Subjects.you()))),
                 "{T}: Add {C}. When you do, mill two cards."
         ));
     }

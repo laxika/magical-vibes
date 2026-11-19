@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SHM", collectorNumber = "170")
 public class MemorySluice extends Card {
@@ -11,6 +11,6 @@ public class MemorySluice extends Card {
     public MemorySluice() {
         // Target player mills four cards.
         // (Conspire is driven by the Scryfall-loaded CONSPIRE keyword and handled by the casting flow.)
-        addSpellEffect(new MillEffect(4, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(4, Subjects.targetPlayer()));
     }
 }

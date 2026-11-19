@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -30,7 +30,7 @@ public class EdenSeatOfTheSanctum extends Card {
                 true,
                 "{5}",
                 List.of(
-                        new MillEffect(2, MillRecipient.CONTROLLER),
+                        new MillEffect(2, Subjects.you()),
                         new MayEffect(
                                 new SacrificePermanentThenEffect(
                                         new PermanentIsSourceCardPredicate(),
