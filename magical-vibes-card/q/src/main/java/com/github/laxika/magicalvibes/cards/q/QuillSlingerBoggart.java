@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +21,6 @@ public class QuillSlingerBoggart extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addTrigger(Triggers.playerCastsSpell().withFilter(new CardSubtypePredicate(CardSubtype.KITHKIN)),
-                new MayEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER), "Have target player lose 1 life?"));
+                new MayEffect(new LoseLifeEffect(1, Subjects.targetPlayer()), "Have target player lose 1 life?"));
     }
 }

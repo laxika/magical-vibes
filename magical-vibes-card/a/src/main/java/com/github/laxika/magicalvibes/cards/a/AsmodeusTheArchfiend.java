@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class AsmodeusTheArchfiend extends Card {
                 "{B}",
                 List.of(
                         new PutAllCardsExiledWithSourceIntoOwnersHandsEffect(),
-                        new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER)
+                        new LoseLifeEffect(new EventValue(), Subjects.you())
                 ),
                 "{B}: Return all cards exiled with Asmodeus the Archfiend to their owner's hand and you lose that much life."
         ));

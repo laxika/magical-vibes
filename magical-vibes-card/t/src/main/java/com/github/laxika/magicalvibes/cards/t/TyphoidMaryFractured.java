@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +31,7 @@ public class TyphoidMaryFractured extends Card {
                 new ChooseOneEffect.ChooseOneOption(MARY_MODE, CreateTokenEffect.ofTreasureToken(1)),
                 new ChooseOneEffect.ChooseOneOption(TYPHOID_MARY_MODE, new DrawCardEffect()),
                 new ChooseOneEffect.ChooseOneOption(BLOODY_MARY_MODE, List.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2)))
         ));
 
@@ -39,7 +39,7 @@ public class TyphoidMaryFractured extends Card {
                 List.of(CreateTokenEffect.ofTreasureToken(1)),
                 List.of(new DrawCardEffect()),
                 List.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2))
         ));
 

@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -59,7 +59,7 @@ public class LolthSpiderQueen extends Card {
                                 new NotCondition(new TargetPlayerLostLifeThisTurn(8))),
                         new LoseLifeEffect(new Sum(new Fixed(8),
                                 new Scaled(new LifeLostThisTurn(CountScope.TARGET_PLAYER), -1)),
-                                LoseLifeRecipient.TRIGGERING_PLAYER)), EMBLEM_TEXT)),
+                                Subjects.triggeringPlayer())), EMBLEM_TEXT)),
                 "−8: You get an emblem with \"" + EMBLEM_TEXT + "\"."));
     }
 }

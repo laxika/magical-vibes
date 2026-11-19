@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "71")
@@ -16,6 +16,6 @@ public class MinionsMurmurs extends Card {
     public MinionsMurmurs() {
         PermanentCount creatures = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addSpellEffect(new DrawCardEffect(creatures));
-        addSpellEffect(new LoseLifeEffect(creatures, LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(creatures, Subjects.you()));
     }
 }

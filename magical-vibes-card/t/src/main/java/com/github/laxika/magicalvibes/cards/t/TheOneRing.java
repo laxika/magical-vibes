@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,7 +28,7 @@ public class TheOneRing extends Card {
                 new GrantProtectionFromEverythingUntilNextTurnEffect());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new LoseLifeEffect(new CountersOnSource(CounterType.BURDEN), LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(new CountersOnSource(CounterType.BURDEN), Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

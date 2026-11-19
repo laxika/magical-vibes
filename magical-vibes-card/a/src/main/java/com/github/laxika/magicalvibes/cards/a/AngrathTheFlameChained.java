@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepIfManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -29,7 +29,7 @@ public class AngrathTheFlameChained extends Card {
                 +1,
                 List.of(
                         new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(2, Subjects.eachOpponent())
                 ),
                 "+1: Each opponent discards a card and loses 2 life."
         ));

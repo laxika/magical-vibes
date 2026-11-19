@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class SouthWindAvatar extends Card {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new GainLifeEffect(new TriggeringPermanentToughness()));
         addTrigger(Triggers.youGainLife(),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(1, Subjects.eachOpponent()));
     }
 }

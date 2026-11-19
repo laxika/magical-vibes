@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class TheMeathookMassacre extends Card {
 
         // Whenever a creature you control dies, each opponent loses 1 life.
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(1, Subjects.eachOpponent()));
 
         // Whenever a creature an opponent controls dies, you gain 1 life.
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new GainLifeEffect(1));

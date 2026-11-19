@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class OrganGrinder extends Card {
                 null,
                 List.of(
                         new ExileNCardsFromGraveyardCost(3, null),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(3, Subjects.targetPlayer())
                 ),
                 "{T}, Exile three cards from your graveyard: Target player loses 3 life."
         ));

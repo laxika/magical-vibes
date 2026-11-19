@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class InfernalIdol extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new DrawCardEffect(2),
-                        new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER)
+                        new LoseLifeEffect(2, Subjects.you())
                 ),
                 "{1}{B}{B}, {T}, Sacrifice this artifact: You draw two cards and lose 2 life."
         ));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class TheDarkBarony extends Card {
     public TheDarkBarony() {
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER),
                 // "That player" is the graveyard's owner, the card's owner (CR 400.3).
-                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_CARD_OWNER));
+                new LoseLifeEffect(1, Subjects.ownerOf(Subjects.triggeringCard())));
         addTrigger(Triggers.chaosEnsues(),
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
     }

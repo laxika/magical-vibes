@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,7 +27,7 @@ public class GhostCouncilOfOrzhova extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(1, Subjects.targetPlayer()),
                         new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

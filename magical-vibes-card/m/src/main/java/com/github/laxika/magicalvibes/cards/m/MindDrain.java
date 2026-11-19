@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -22,7 +22,7 @@ public class MindDrain extends Card {
                 "Target must be an opponent"));
         addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
         addSpellEffect(new MillEffect(1, MillRecipient.TARGET_PLAYER));
-        addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(1, Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(1));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -19,9 +19,9 @@ public class ContaminatedBond extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addTrigger(Triggers.attacks(), new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER))
+                .addTrigger(Triggers.attacks(), new LoseLifeEffect(3, Subjects.controllerOf(Subjects.triggering())))
                 .addTrigger(Triggers.blocks(),
                         TriggerOptions.ONE_OR_MORE,
-                        new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                        new LoseLifeEffect(3, Subjects.controllerOf(Subjects.triggering())));
     }
 }

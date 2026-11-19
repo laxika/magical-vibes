@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,7 +17,7 @@ public class LocthwainLancer extends Card {
 
     public LocthwainLancer() {
         SequenceEffect deathEffect = SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(1, Subjects.eachOpponent()),
                 new DrawCardEffect(1));
 
         addTrigger(Triggers.nontokenCreatureDies(

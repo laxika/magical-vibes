@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class VampireOpportunist extends Card {
                 false,
                 "{6}{B}",
                 List.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2)
                 ),
                 "{6}{B}: Each opponent loses 2 life and you gain 2 life."

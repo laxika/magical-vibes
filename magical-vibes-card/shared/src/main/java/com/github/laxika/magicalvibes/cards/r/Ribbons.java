@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Ribbons — back half of Cut // Ribbons.
@@ -16,7 +16,7 @@ public class Ribbons extends Card {
 
     public Ribbons() {
         // Each opponent loses X life.
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.eachOpponent()));
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{X}{B}{B}"));

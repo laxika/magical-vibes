@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -40,7 +40,7 @@ public class TheScarabGod extends Card {
         // At the beginning of your upkeep, each opponent loses X life and you scry X,
         // where X is the number of Zombies you control.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new LoseLifeEffect(zombiesYouControl, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(zombiesYouControl, Subjects.eachOpponent()),
                 new ScryEffect(zombiesYouControl)));
 
         // {2}{U}{B}: Exile target creature card from a graveyard. Create a token that's a copy of it,

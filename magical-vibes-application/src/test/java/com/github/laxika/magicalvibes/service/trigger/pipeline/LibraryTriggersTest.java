@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -193,7 +193,7 @@ class LibraryTriggersTest {
         @DisplayName("an ability of two effects is one stack entry recording the draw")
         void abilityOfTwoEffectsIsOneEntry() {
             Card card = createCard("Gixian Puppeteer", CardType.CREATURE);
-            LoseLifeEffect loss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            LoseLifeEffect loss = new LoseLifeEffect(2, Subjects.eachOpponent());
             GainLifeEffect gain = new GainLifeEffect(2);
             card.addTrigger(Triggers.youDrawCard(), loss, gain);
             Permanent puppeteer = new Permanent(card);
@@ -397,7 +397,7 @@ class LibraryTriggersTest {
             Card source = createCard("Ob Nixilis Reignited", CardType.PLANESWALKER);
             gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
                     List.of(new TriggeredAbility(Triggers.playerDrawsCard(),
-                            new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER)))));
+                            new LoseLifeEffect(2, Subjects.you())))));
 
             draw(player2Id, null);
             draw(player1Id, null);

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -44,6 +44,6 @@ public class SummonPrimalOdin extends Card {
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), new TargetPlayerLosesGameEffect(null)),
                 Duration.PERMANENT, false, GrantScope.SELF));
 
-        addTrigger(Triggers.chapter(3), new DrawCardEffect(2), new LoseLifeEffect(2, LoseLifeRecipient.EACH_PLAYER));
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(2), new LoseLifeEffect(2, Subjects.eachPlayer()));
     }
 }

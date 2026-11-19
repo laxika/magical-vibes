@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -37,7 +37,7 @@ public class BubblingCauldron extends Card {
                                 "Sacrifice a creature named Festering Newt",
                                 false
                         ),
-                        new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT, true)
+                        new LoseLifeEffect(4, Subjects.eachOpponent(), true)
                 ),
                 "{1}, {T}, Sacrifice a creature named Festering Newt: Each opponent loses 4 life. "
                         + "You gain life equal to the life lost this way."

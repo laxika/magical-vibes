@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class CutOfTheProfits extends Card {
                 new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(3));
         addSpellEffect(new DrawCardEffect(new XValue()));
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
     }
 }

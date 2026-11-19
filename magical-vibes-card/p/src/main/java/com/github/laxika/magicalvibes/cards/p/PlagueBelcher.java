@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,6 +27,6 @@ public class PlagueBelcher extends Card {
         addTrigger(Triggers.creatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(1, Subjects.eachOpponent()));
     }
 }

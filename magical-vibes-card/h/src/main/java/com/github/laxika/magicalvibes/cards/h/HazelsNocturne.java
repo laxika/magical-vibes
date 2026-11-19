@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -15,7 +15,7 @@ public class HazelsNocturne extends Card {
     public HazelsNocturne() {
         addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardTypePredicate(CardType.CREATURE), 2));
-        addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+        addSpellEffect(new LoseLifeEffect(2, Subjects.eachOpponent()));
         addSpellEffect(new GainLifeEffect(2));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnUnderOpponentControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -40,7 +40,7 @@ public class SolKanarTheTainted extends Card {
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses 2 life and you gain 2 life",
-                        List.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(2))),
+                        List.of(new LoseLifeEffect(2, Subjects.eachOpponent()), new GainLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sol'Kanar deals 3 damage to up to one other target creature or planeswalker",
                         List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(

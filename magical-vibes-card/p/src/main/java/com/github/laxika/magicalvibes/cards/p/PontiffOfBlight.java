@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,6 +27,6 @@ public class PontiffOfBlight extends Card {
 
     private static MayPayManaEffect extort() {
         return new MayPayManaEffect("{W/B}",
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true), "Pay {W/B} to extort?");
+                new LoseLifeEffect(1, Subjects.eachOpponent(), true), "Pay {W/B} to extort?");
     }
 }

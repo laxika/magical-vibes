@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -30,6 +31,6 @@ public class StarseerMentor extends Card {
                         new AnyOf(List.of(
                                 new GainedLifeThisTurn(),
                                 new NotCondition(new ControllerDidntLoseLifeThisTurn())))),
-                new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, true));
+                new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, Subjects.targetPlayer()));
     }
 }

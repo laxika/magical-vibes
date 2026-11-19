@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class RotwidowPack extends Card {
                                 new PermanentCount(
                                         new PermanentHasSubtypePredicate(CardSubtype.SPIDER),
                                         CountScope.CONTROLLER),
-                                LoseLifeRecipient.EACH_OPPONENT)
+                                Subjects.eachOpponent())
                 ),
                 "{3}{B}{G}, Exile a creature card from your graveyard: Create a 1/2 green Spider creature token with reach, then each opponent loses 1 life for each Spider you control."
         ));

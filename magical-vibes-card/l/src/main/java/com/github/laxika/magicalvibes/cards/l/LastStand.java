@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -37,7 +37,7 @@ public class LastStand extends Card {
                 "Target must be an opponent"
         )).addSpellEffect(new LoseLifeEffect(new Scaled(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER), 2),
-                LoseLifeRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
 
         target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER)));

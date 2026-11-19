@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "86")
@@ -19,6 +19,6 @@ public class CruelBargain extends Card {
         // "Lose half your life, rounded up" — ceil(life/2) == floor((life+1)/2).
         addSpellEffect(new LoseLifeEffect(
                 new Divided(new Sum(new ControllerLifeTotal(), new Fixed(1)), 2),
-                LoseLifeRecipient.CONTROLLER));
+                Subjects.you()));
     }
 }

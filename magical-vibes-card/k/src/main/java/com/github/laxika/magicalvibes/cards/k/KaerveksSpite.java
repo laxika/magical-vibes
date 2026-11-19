@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouControlCost;
 
 @CardRegistration(set = "VIS", collectorNumber = "63")
@@ -15,6 +15,6 @@ public class KaerveksSpite extends Card {
         addCastingCost(new SacrificeAllPermanentsYouControlCost());
         addCastingCost(new DiscardHandCost());
         // Target player loses 5 life.
-        addSpellEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(5, Subjects.targetPlayer()));
     }
 }

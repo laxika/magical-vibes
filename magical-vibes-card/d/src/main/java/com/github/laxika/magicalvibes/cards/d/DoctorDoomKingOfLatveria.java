@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,7 +26,7 @@ public class DoctorDoomKingOfLatveria extends Card {
     public DoctorDoomKingOfLatveria() {
         addTrigger(Triggers.youDiscardOneOrMoreCards()
                 .withFilter(new CardTypePredicate(CardType.LAND)),
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(2, Subjects.eachOpponent()));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

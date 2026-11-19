@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -40,7 +40,7 @@ public class LichLordOfUnx extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{U}{U}{B}{B}",
                 List.of(
-                        new LoseLifeEffect(zombiesYouControl, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(zombiesYouControl, Subjects.targetPlayer()),
                         new MillEffect(zombiesYouControl, MillRecipient.TARGET_PLAYER)
                 ),
                 "{U}{U}{B}{B}: Target player loses X life and mills X cards, where X is the number of Zombies you control.",

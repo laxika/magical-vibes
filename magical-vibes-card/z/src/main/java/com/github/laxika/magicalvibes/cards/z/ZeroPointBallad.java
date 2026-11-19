@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class ZeroPointBallad extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentToughnessAtMostXPredicate()));
         addSpellEffect(new DestroyAllPermanentsEffect(creatureWithToughnessAtMostX));
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(6),
                 ReturnCardFromGraveyardEffect.builder()

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -33,7 +33,7 @@ public class ZimoneAndDina extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.youDrawSecondCardEachTurn(), SequenceEffect.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                new LoseLifeEffect(2, Subjects.targetPlayer()),
                 new GainLifeEffect(2)));
 
         CardTypePredicate landCard = new CardTypePredicate(CardType.LAND);

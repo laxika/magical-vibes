@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
@@ -44,6 +44,6 @@ public class GolbezCrystalCollector extends Card {
                         new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.POWER),
                         new ConditionalEffect(
                                 new ControlsPermanentCount(8, artifact),
-                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT))));
+                                new LoseLifeEffect(new EventValue(), Subjects.eachOpponent()))));
     }
 }

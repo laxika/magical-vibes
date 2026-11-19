@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 
@@ -23,7 +23,7 @@ public class BloodletterQuill extends Card {
                 List.of(
                         new PutTypedCounterOnSourceCost(CounterType.BLOOD),
                         new DrawCardEffect(1),
-                        new LoseLifeEffect(new CountersOnSource(CounterType.BLOOD), LoseLifeRecipient.CONTROLLER)
+                        new LoseLifeEffect(new CountersOnSource(CounterType.BLOOD), Subjects.you())
                 ),
                 "{2}, {T}, Put a blood counter on this artifact: Draw a card, then you lose 1 life for each blood counter on this artifact."
         ));

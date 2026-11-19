@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -63,7 +63,7 @@ public class InallaArchmageRitualist extends Card {
                 List.of(
                         new TapMultiplePermanentsCost(5,
                                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
-                        new LoseLifeEffect(7, LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(7, Subjects.targetPlayer())
                 ),
                 "Tap five untapped Wizards you control: Target player loses 7 life.",
                 new PlayerPredicateTargetFilter(

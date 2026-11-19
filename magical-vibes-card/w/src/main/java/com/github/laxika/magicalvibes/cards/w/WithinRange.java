@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class WithinRange extends Card {
                         List.of(CardSubtype.WARRIOR), Set.of(), Set.of()));
         addTrigger(Triggers.youAttackPlayer(),
                 new LoseLifeEffect(new PermanentCount(new PermanentIsAttackingDefendingPlayerPredicate(), CountScope.ANY_PLAYER),
-                        LoseLifeRecipient.DEFENDING_PLAYER));
+                        Subjects.defendingPlayer()));
     }
 }

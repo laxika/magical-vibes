@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -45,7 +45,7 @@ public class VindictiveLich extends Card {
                         opponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent loses 5 life",
-                        new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(5, Subjects.targetPlayer()),
                         opponent)
         )));
     }

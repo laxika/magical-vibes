@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +35,7 @@ public class WretchedConfluence extends Card {
                         "Target player draws a card and loses 1 life",
                         () -> SequenceEffect.of(
                                 new DrawCardEffect(1, Subjects.targetPlayer()),
-                                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                                new LoseLifeEffect(1, Subjects.targetPlayer())),
                         anyPlayer()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target creature gets -2/-2 until end of turn",

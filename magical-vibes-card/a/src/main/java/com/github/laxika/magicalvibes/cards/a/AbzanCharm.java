@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -40,7 +40,7 @@ public class AbzanCharm extends Card {
                         creatureFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "You draw two cards and you lose 2 life",
-                        List.of(new DrawCardEffect(2), new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER))),
+                        List.of(new DrawCardEffect(2), new LoseLifeEffect(2, Subjects.you()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Distribute two +1/+1 counters among one or two target creatures",
                         List.of(DistributeCountersAmongTargetsEffect.evenlyAmongTargets(

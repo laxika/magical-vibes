@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
@@ -23,7 +23,7 @@ public class CecilDarkKnight extends Card {
         setBackFaceCard(new CecilRedeemedPaladin());
 
         addTrigger(Triggers.dealsDamage(), SequenceEffect.of(
-                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
+                new LoseLifeEffect(new EventValue(), Subjects.you()),
                 new ConditionalEffect(
                         ControllerLifeAtMost.atHalfStartingLife(),
                         SequenceEffect.of(

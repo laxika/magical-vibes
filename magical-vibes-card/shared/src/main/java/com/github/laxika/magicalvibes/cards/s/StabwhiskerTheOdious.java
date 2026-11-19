@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,6 +26,6 @@ public class StabwhiskerTheOdious extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new LoseLifeEffect(
                 new Max(new Fixed(0),
                         new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),
-                LoseLifeRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -36,7 +36,7 @@ public class VoharVodalianDesecrator extends Card {
                         new DiscardCardThenEffect(
                                 null,
                                 SequenceEffect.of(
-                                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                                        new LoseLifeEffect(1, Subjects.eachOpponent()),
                                         new GainLifeEffect(1)),
                                 "a card",
                                 INSTANT_OR_SORCERY,

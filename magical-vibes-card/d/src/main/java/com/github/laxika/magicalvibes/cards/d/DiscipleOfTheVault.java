@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -21,7 +21,7 @@ public class DiscipleOfTheVault extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
                 new MayEffect(
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(1, Subjects.targetPlayer()),
                         "Have target opponent lose 1 life?"
                 ));
     }

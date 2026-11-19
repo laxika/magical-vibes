@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBlockersThisCombatEffec
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatureBlocksThisTurnIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class BrutalHordechief extends Card {
     public BrutalHordechief() {
         // Whenever a creature you control attacks, defending player loses 1 life and you gain 1 life.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new LoseLifeEffect(1, LoseLifeRecipient.DEFENDING_PLAYER),
+                new LoseLifeEffect(1, Subjects.defendingPlayer()),
                 new GainLifeEffect(1));
 
         // {3}{R/W}{R/W}: Creatures your opponents control block this turn if able, and you choose

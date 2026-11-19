@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -31,7 +30,7 @@ public class ReverentHowl extends Card {
                         "Target player draws two cards and loses 2 life",
                         List.of(
                                 new DrawCardEffect(2, Subjects.targetPlayer()),
-                                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)),
+                                new LoseLifeEffect(2, Subjects.targetPlayer())),
                         targetPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/+2 and gains lifelink until end of turn",

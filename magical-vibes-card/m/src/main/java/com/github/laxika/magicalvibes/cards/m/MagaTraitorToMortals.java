@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -26,7 +26,7 @@ public class MagaTraitorToMortals extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LoseLifeEffect(
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                        LoseLifeRecipient.TARGET_PLAYER
+                        Subjects.targetPlayer()
                 ));
     }
 }

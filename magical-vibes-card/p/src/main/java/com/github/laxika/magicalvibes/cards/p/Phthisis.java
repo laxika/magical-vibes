@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class Phthisis extends Card {
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                 .addSpellEffect(new LoseLifeEffect(
                         new Max(new Fixed(0), new TargetPowerPlusToughness()),
-                        LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                        Subjects.controllerOf(Subjects.target())));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

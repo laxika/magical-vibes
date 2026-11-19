@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,7 +22,7 @@ public class DeathCultist extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(1, Subjects.targetPlayer()),
                         new GainLifeEffect(1)
                 ),
                 "Sacrifice Death Cultist: Target player loses 1 life and you gain 1 life.",

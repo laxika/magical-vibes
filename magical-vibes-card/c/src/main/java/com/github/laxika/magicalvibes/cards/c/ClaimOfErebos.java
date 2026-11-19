@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,7 +22,7 @@ public class ClaimOfErebos extends Card {
                 new ActivatedAbility(
                         true,
                         "{1}{B}",
-                        List.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)),
+                        List.of(new LoseLifeEffect(2, Subjects.targetPlayer())),
                         "{1}{B}, {T}: Target player loses 2 life.",
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),

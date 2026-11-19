@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class FalseCure extends Card {
     public FalseCure() {
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.playerGainsLife(),
-                        new LoseLifeEffect(new Scaled(new EventValue(), 2), LoseLifeRecipient.TRIGGERING_PLAYER))));
+                        new LoseLifeEffect(new Scaled(new EventValue(), 2), Subjects.triggeringPlayer()))));
     }
 }

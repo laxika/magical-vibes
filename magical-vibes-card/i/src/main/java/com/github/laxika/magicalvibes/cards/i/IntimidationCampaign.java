@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -17,7 +17,7 @@ public class IntimidationCampaign extends Card {
 
     public IntimidationCampaign() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(1, Subjects.eachOpponent()),
                 new GainLifeEffect(1),
                 new DrawCardEffect(1)));
         addTrigger(Triggers.youCommitCrime(),

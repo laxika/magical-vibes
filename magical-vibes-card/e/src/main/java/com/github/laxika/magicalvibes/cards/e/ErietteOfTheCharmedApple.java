@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
@@ -29,7 +29,7 @@ public class ErietteOfTheCharmedApple extends Card {
         PermanentCount aurasYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA), CountScope.CONTROLLER);
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new LoseLifeEffect(aurasYouControl, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(aurasYouControl, Subjects.eachOpponent()),
                 new GainLifeEffect(aurasYouControl)));
     }
 }

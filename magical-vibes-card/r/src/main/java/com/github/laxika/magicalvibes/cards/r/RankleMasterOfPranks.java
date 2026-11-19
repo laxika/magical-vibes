@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class RankleMasterOfPranks extends Card {
 
     public RankleMasterOfPranks() {
         CardEffect discard = new DiscardEffect(1, DiscardRecipient.EACH_PLAYER);
-        CardEffect loseLifeAndDraw = new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER);
+        CardEffect loseLifeAndDraw = new LoseLifeEffect(1, Subjects.eachPlayer());
         CardEffect draw = new EachPlayerDrawsCardEffect(1);
         CardEffect sacrifice = new SacrificePermanentsEffect(
                 1, new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),

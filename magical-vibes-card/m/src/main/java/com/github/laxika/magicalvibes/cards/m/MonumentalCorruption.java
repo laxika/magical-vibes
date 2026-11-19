@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -24,6 +23,6 @@ public class MonumentalCorruption extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new DrawCardEffect(artifactsYouControl, Subjects.targetPlayer()));
-        addSpellEffect(new LoseLifeEffect(artifactsYouControl, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(artifactsYouControl, Subjects.targetPlayer()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -31,7 +31,7 @@ public class BlitzwingCruelTormentor extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new LoseLifeEffect(new LifeLostThisTurn(CountScope.TARGET_PLAYER),
-                        LoseLifeRecipient.TARGET_PLAYER, false, null, null, true),
+                        Subjects.targetPlayer(), false, null, null, true),
                 new ConditionalEffect(
                         new NotCondition(new EventValueAtLeast(1)),
                         new TransformSelfEffect())));

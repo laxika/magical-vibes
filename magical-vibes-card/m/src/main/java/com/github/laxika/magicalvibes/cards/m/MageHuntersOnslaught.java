@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,6 +28,6 @@ public class MageHuntersOnslaught extends Card {
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                 .addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.creatureBlocks(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))));
+                        new LoseLifeEffect(1, Subjects.controllerOf(Subjects.target())))));
     }
 }

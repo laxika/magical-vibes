@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RemoveAnyNumberOfCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -17,6 +17,6 @@ public class EventidesShadow extends Card {
         addSpellEffect(SequenceEffect.of(
                 new RemoveAnyNumberOfCountersFromAllPermanentsEffect(),
                 new DrawCardEffect(new EventValue()),
-                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER)));
+                new LoseLifeEffect(new EventValue(), Subjects.you())));
     }
 }

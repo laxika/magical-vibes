@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnOneCardPerFilterFromGraveyardOnResolutionEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -27,7 +27,7 @@ public class RevivalExperiment extends Card {
                         new CardTypePredicate(CardType.BATTLE)),
                 List.of("artifact card", "creature card", "enchantment card", "land card", "planeswalker card", "battle card")));
         addSpellEffect(new LoseLifeEffect(
-                new Scaled(new EventValue(), 3), LoseLifeRecipient.CONTROLLER));
+                new Scaled(new EventValue(), 3), Subjects.you()));
         addSpellEffect(new ExileSpellEffect());
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -28,7 +28,7 @@ public class UnderworldCoinsmith extends Card {
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(new GainLifeEffect(1)))));
 
         addActivatedAbility(new ActivatedAbility(false, "{W}{B}",
-                List.of(new PayLifeCost(1), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
+                List.of(new PayLifeCost(1), new LoseLifeEffect(1, Subjects.eachOpponent())),
                 "{W}{B}, Pay 1 life: Each opponent loses 1 life."));
     }
 }

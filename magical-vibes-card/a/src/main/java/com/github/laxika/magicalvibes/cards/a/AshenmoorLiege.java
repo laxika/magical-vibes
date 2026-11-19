@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,6 +29,6 @@ public class AshenmoorLiege extends Card {
         // that player loses 4 life. (The opponent-spell slot's non-counter path also fires on
         // opponent-controlled abilities; EACH_OPPONENT resolves to the triggering opponent in a duel.)
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(4, Subjects.eachOpponent()));
     }
 }

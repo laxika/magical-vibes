@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,6 +20,6 @@ public class FinalPunishment extends Card {
                 "Target must be a player"
         ))
                 .addSpellEffect(new LoseLifeEffect(
-                        new DamageDealtToTargetPlayerThisTurn(), LoseLifeRecipient.TARGET_PLAYER));
+                        new DamageDealtToTargetPlayerThisTurn(), Subjects.targetPlayer()));
     }
 }

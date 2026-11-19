@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class SphinxSovereign extends Card {
         // Otherwise, each opponent loses 3 life. (Flying is auto-loaded from Scryfall.)
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalReplacementEffect(
                 new SourceUntapped(),
-                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(3, Subjects.eachOpponent()),
                 new GainLifeEffect(3)));
     }
 }

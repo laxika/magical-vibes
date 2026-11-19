@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SCG", collectorNumber = "75")
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TendrilsOfAgony extends Card {
 
     public TendrilsOfAgony() {
-        addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(2, Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(2));
         addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm());
     }

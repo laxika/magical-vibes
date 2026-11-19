@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class ShadowsOfThePast extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{B}",
-                List.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(2)),
+                List.of(new LoseLifeEffect(2, Subjects.eachOpponent()), new GainLifeEffect(2)),
                 "{4}{B}: Each opponent loses 2 life and you gain 2 life. Activate only if there are "
                         + "four or more creature cards in your graveyard.")
                 .withRequiredGraveyardCards(new CardTypePredicate(CardType.CREATURE), 4, "creature cards in your graveyard"));

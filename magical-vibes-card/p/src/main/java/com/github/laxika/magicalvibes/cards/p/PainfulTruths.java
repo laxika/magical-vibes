@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BFZ", collectorNumber = "120")
 @CardRegistration(set = "C17", collectorNumber = "118")
@@ -22,6 +22,6 @@ public class PainfulTruths extends Card {
 
     public PainfulTruths() {
         addSpellEffect(new DrawCardEffect(new XValue()));
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
     }
 }

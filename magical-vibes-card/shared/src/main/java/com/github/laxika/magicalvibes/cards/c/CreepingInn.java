@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
@@ -24,7 +24,7 @@ public class CreepingInn extends Card {
                 ExileOwnGraveyardCardThenEffect.ifYouDo(
                         new CardTypePredicate(CardType.CREATURE),
                         SequenceEffect.of(
-                                new LoseLifeEffect(new CreatureCardsExiledWithSource(), LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(new CreatureCardsExiledWithSource(), Subjects.eachOpponent()),
                                 new GainLifeEffect(new CreatureCardsExiledWithSource())
                         ),
                         true

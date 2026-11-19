@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -154,14 +154,14 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
 
     private void applyLifeLoss(GameData gameData, StackEntry contextEntry, UUID playerId,
             DynamicAmount amount) {
-        var lifeLoss = new LoseLifeEffect(amount, LoseLifeRecipient.TARGET_PLAYER);
+        var lifeLoss = new LoseLifeEffect(amount, Subjects.targetPlayer());
         loseLifeEffectHandler.resolve(gameData, lifeLossEntry(contextEntry, playerId, lifeLoss), lifeLoss);
     }
 
     /** The life {@link #applyLifeLoss} would make {@code playerId} lose now, evaluated as the loss itself evaluates it. */
     private int lifeLossAmount(GameData gameData, StackEntry contextEntry, UUID playerId, DynamicAmount amount) {
         StackEntry lifeLossEntry = lifeLossEntry(contextEntry, playerId,
-                new LoseLifeEffect(amount, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(amount, Subjects.targetPlayer()));
         Permanent source = lifeLossEntry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, lifeLossEntry.getSourcePermanentId())
                 : null;

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -25,7 +25,7 @@ public class NihilisticGlee extends Card {
                 "{2}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(1, Subjects.targetPlayer()),
                         new GainLifeEffect(1)
                 ),
                 "{2}{B}, Discard a card: Target opponent loses 1 life and you gain 1 life.",

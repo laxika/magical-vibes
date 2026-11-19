@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class CybermanPatrol extends Card {
         // Artifact creatures you control have afflict 3.
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesBlocked(),
-                new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER)),
+                new LoseLifeEffect(3, Subjects.defendingPlayer())),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));
     }

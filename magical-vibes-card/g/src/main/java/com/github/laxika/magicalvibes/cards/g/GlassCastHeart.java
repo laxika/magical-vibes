@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -59,7 +59,7 @@ public class GlassCastHeart extends Card {
                                 new PermanentIsTokenPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.BLOOD)
                         ))),
-                        new LoseLifeEffect(13, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(13, Subjects.eachOpponent()),
                         new GainLifeEffect(13)
                 ),
                 "{B}{B}, {T}, Sacrifice this artifact and thirteen Blood tokens: Each opponent loses 13 life and you gain 13 life."

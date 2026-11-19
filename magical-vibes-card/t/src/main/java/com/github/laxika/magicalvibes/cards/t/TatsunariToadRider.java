@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -52,7 +52,7 @@ public class TatsunariToadRider extends Card {
                         List.of(
                                 new TriggeredAbility(Triggers.youCastSpell()
                                                 .withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
-                                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true))),
+                                        new LoseLifeEffect(1, Subjects.eachOpponent(), true))),
                         List.of(), false, false, true, 0, Set.of()));
 
         addActivatedAbility(new ActivatedAbility(

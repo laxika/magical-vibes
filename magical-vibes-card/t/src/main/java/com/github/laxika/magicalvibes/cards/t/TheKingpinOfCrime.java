@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughne
 import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
@@ -20,7 +20,7 @@ public class TheKingpinOfCrime extends Card {
     public TheKingpinOfCrime() {
         addTrigger(Triggers.youCastSpell().anySpell(),
                 new MayPayManaEffect("{W/B}",
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true),
+                        new LoseLifeEffect(1, Subjects.eachOpponent(), true),
                         "Pay {W/B} to extort?"));
 
         addTrigger(Triggers.youAttack(), new MayPayLifeEffect(

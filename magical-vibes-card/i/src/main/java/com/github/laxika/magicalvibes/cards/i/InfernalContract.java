@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MIR", collectorNumber = "129")
 @CardRegistration(set = "7ED", collectorNumber = "143")
@@ -21,6 +21,6 @@ public class InfernalContract extends Card {
         // "You lose half your life, rounded up." ceil(n/2) == floor((n + 1) / 2).
         addSpellEffect(new LoseLifeEffect(
                 new Divided(new Sum(new ControllerLifeTotal(), new Fixed(1)), 2),
-                LoseLifeRecipient.CONTROLLER));
+                Subjects.you()));
     }
 }

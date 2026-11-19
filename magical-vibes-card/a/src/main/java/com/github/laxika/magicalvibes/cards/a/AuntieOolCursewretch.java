@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,6 +24,6 @@ public class AuntieOolCursewretch extends Card {
         addTrigger(Triggers.minusOneCountersPutOnCreature(),
                 new ConditionalEffect(controlsAffectedCreature, new DrawCardEffect()),
                 new ConditionalEffect(new NotCondition(controlsAffectedCreature),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
+                        new LoseLifeEffect(1, Subjects.controllerOf(Subjects.target()))));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,6 +30,6 @@ public class TinybonesJoinsUp extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new MillEffect(1, MillRecipient.TARGET_PLAYER),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));
+                        new LoseLifeEffect(1, Subjects.targetPlayer())));
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -41,7 +41,7 @@ public class IshkanahGrafwidow extends Card {
                 List.of(new LoseLifeEffect(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SPIDER),
                                 CountScope.CONTROLLER),
-                        LoseLifeRecipient.TARGET_PLAYER)),
+                        Subjects.targetPlayer())),
                 "{6}{B}: Target opponent loses 1 life for each Spider you control.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

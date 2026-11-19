@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -34,6 +34,6 @@ public class NecraSanctuary extends Card {
         ));
         targetPlayer.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(controlsGreen, controlsWhite))),
-                new LoseLifeEffect(new FixedIfCondition(controlsGreenAndWhite, 3, 1), LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(new FixedIfCondition(controlsGreenAndWhite, 3, 1), Subjects.targetPlayer()));
     }
 }

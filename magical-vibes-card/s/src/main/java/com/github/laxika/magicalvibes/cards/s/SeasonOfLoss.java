@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -52,7 +52,7 @@ public class SeasonOfLoss extends Card {
         for (int i = 0; i < lifeLosses; i++) {
             effects.add(new LoseLifeEffect(
                     new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
-                    LoseLifeRecipient.EACH_OPPONENT));
+                    Subjects.eachOpponent()));
         }
         return new ChooseOneEffect.ChooseOneOption(modeLabel(sacrifices, draws, lifeLosses), effects);
     }

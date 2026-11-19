@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "10E", collectorNumber = "179")
 @CardRegistration(set = "9ED", collectorNumber = "164")
@@ -16,7 +16,7 @@ public class SoulFeast extends Card {
 
     public SoulFeast() {
         // Target player loses 4 life and you gain 4 life.
-        addSpellEffect(new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(4, Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(4));
     }
 }

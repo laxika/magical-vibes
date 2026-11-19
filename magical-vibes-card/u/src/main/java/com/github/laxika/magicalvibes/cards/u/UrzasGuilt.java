@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PLS", collectorNumber = "130")
 public class UrzasGuilt extends Card {
@@ -14,6 +14,6 @@ public class UrzasGuilt extends Card {
     public UrzasGuilt() {
         addSpellEffect(new EachPlayerDrawsCardEffect(2));
         addSpellEffect(new DiscardEffect(3, DiscardRecipient.EACH_PLAYER));
-        addSpellEffect(new LoseLifeEffect(4, LoseLifeRecipient.EACH_PLAYER));
+        addSpellEffect(new LoseLifeEffect(4, Subjects.eachPlayer()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -47,7 +47,7 @@ public class AnjeMaidOfDishonor extends Card {
                                 )),
                                 "another creature or a Blood token"
                         ),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2)
                 ),
                 "{2}, Sacrifice another creature or a Blood token: Each opponent loses 2 life and you gain 2 life."

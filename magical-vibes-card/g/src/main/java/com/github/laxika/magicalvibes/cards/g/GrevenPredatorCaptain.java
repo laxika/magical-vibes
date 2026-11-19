@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -37,7 +37,7 @@ public class GrevenPredatorCaptain extends Card {
                         )),
                         SequenceEffect.of(
                                 new DrawCardEffect(new SacrificedPermanentPower()),
-                                new LoseLifeEffect(new SacrificedPermanentToughness(), LoseLifeRecipient.CONTROLLER)),
+                                new LoseLifeEffect(new SacrificedPermanentToughness(), Subjects.you())),
                         "another creature"),
                 "Sacrifice another creature?"));
     }

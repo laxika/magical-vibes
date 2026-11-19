@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayingShieldUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class DelayingShieldUpkeepEffectHandler implements NormalEffectHandlerBea
         for (int i = 0; i < removed; i++) {
             payments.add(new ForcedCostOrElseEffect(
                     new PayManaCost("{1}{W}"),
-                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)),
+                    List.of(new LoseLifeEffect(1, Subjects.you())),
                     true));
         }
         entry.getEffectsToResolve().addAll(payments);

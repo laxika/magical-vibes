@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class NecrogenCenser extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(2, Subjects.targetPlayer())
                 ),
                 "{T}, Remove a charge counter from Necrogen Censer: Target player loses 2 life."
         ));

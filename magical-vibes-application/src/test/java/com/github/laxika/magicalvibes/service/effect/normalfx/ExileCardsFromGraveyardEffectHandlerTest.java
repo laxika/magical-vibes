@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -179,7 +179,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
                 assertThat(entry.getEffectsToResolve()).containsExactly(effect,
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(2));
+                        new LoseLifeEffect(2, Subjects.eachOpponent()), new GainLifeEffect(2));
                 verifyNoInteractions(lifeSupport);
             }
 

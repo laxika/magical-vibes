@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class WallOfLimbs extends Card {
                 false,
                 "{5}{B}{B}",
                 List.of(new SacrificeSelfCost(true),
-                        new LoseLifeEffect(new XValue(), LoseLifeRecipient.TARGET_PLAYER)),
+                        new LoseLifeEffect(new XValue(), Subjects.targetPlayer())),
                 "{5}{B}{B}, Sacrifice this creature: Target player loses X life, where X is this "
                         + "creature's power."
         ));

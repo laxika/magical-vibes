@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -44,10 +44,10 @@ public class JunjiTheMidnightSky extends Card {
                         "Each opponent discards two cards and loses 2 life",
                         List.of(
                                 new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT),
-                                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT))),
+                                new LoseLifeEffect(2, Subjects.eachOpponent()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put target non-Dragon creature card from a graveyard onto the battlefield under your control. You lose 2 life",
-                        List.of(returnCreature, new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER)))
+                        List.of(returnCreature, new LoseLifeEffect(2, Subjects.you())))
         )));
     }
 }

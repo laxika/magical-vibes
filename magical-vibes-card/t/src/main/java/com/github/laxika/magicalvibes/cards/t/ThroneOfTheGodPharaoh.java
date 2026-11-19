@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -28,6 +28,6 @@ public class ThroneOfTheGodPharaoh extends Card {
                 )),
                 CountScope.CONTROLLER);
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new LoseLifeEffect(tappedCreaturesYouControl, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(tappedCreaturesYouControl, Subjects.eachOpponent()));
     }
 }

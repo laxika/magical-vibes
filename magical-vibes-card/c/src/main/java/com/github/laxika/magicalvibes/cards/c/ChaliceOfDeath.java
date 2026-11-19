@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class ChaliceOfDeath extends Card {
         // {T}: Target player loses 5 life.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER)),
+                List.of(new LoseLifeEffect(5, Subjects.targetPlayer())),
                 "{T}: Target player loses 5 life."
         ));
     }

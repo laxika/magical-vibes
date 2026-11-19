@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class TombBlade extends Card {
                         new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature"),
                         List.of(new LoseLifeEffect(
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER),
-                                LoseLifeRecipient.TARGET_PLAYER))));
+                                Subjects.targetPlayer()))));
 
         addUnearth("{6}{B}{B}");
     }

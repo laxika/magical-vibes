@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,7 +40,7 @@ public class DimensionXPizzasaur extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new GainLifeEffect(3),
-                        new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(3, Subjects.eachOpponent())
                 ),
                 "{2}, {T}, Sacrifice Dimension X Pizzasaur: You gain 3 life and each opponent loses 3 life."
         ));

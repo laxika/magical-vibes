@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -32,7 +32,7 @@ public class VitoFanaticOfAclazotz extends Card {
                                 new ConditionalEffect(new NthAbilityResolutionThisTurn(1),
                                         new GainLifeEffect(2)),
                                 new ConditionalEffect(new NthAbilityResolutionThisTurn(2),
-                                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)),
+                                        new LoseLifeEffect(2, Subjects.eachOpponent())),
                                 new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
                                         new CreateTokenEffect(
                                                 1, "Vampire Demon", 4, 3, CardColor.WHITE,

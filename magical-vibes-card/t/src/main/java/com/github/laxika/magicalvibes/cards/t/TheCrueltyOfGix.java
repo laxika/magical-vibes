@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -43,7 +43,7 @@ public class TheCrueltyOfGix extends Card {
         addTrigger(Triggers.chapter(2),
                 new SearchLibraryEffect(
                         null, LibrarySearchDestination.HAND),
-                new LoseLifeEffect(3, LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(3, Subjects.you()));
 
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

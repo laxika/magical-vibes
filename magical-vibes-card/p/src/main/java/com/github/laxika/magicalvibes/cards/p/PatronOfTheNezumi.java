@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +28,6 @@ public class PatronOfTheNezumi extends Card {
         // Whenever a permanent is put into an opponent's graveyard, that player loses 1 life.
         // The slot bakes the graveyard's owner as the entry's target, so TARGET_PLAYER is "that player".
         addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_OWNS),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(1, Subjects.targetPlayer()));
     }
 }

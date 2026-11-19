@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,7 +22,7 @@ public class DreadRider extends Card {
                 "{1}{B}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(3, Subjects.targetPlayer())
                 ),
                 "{1}{B}, {T}, Exile a creature card from your graveyard: Target opponent loses 3 life.",
                 new PlayerPredicateTargetFilter(

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -21,7 +21,7 @@ public class SiegeZombie extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(3, new PermanentIsCreaturePredicate()),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(1, Subjects.eachOpponent())
                 ),
                 "Tap three untapped creatures you control: Each opponent loses 1 life."
         ));

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -24,7 +24,7 @@ public class RoilingHorror extends Card {
                 new Scaled(new HighestOpponentLifeTotal(), -1));
         addStaticEffect(new SetPowerToughnessToAmountEffect(lifeDifference, lifeDifference));
         addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new LoseLifeEffect(1, Subjects.targetPlayer()),
                 new GainLifeEffect(1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

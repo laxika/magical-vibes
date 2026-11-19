@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,6 +30,6 @@ public class ArchfiendOfTheDross extends Card {
                         new ControllerLosesGameEffect())));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
+                new LoseLifeEffect(2, Subjects.triggeringPlayer()));
     }
 }

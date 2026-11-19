@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,7 +59,7 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
                     // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery
                     // sacrifice asks (CR 616.1f) reruns only the loss, not the tap.
                     entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                            List.of(new LoseLifeEffect(e.lifeLoss(), LoseLifeRecipient.CONTROLLER)));
+                            List.of(new LoseLifeEffect(e.lifeLoss(), Subjects.you())));
                     return;
                 }
 

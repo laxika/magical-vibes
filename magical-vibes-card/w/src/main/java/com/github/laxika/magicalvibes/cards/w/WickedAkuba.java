@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 
@@ -20,7 +20,7 @@ public class WickedAkuba extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                List.of(new LoseLifeEffect(1, Subjects.targetPlayer())),
                 "{B}: Target player dealt damage by Wicked Akuba this turn loses 1 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerDamagedBySourceThisTurnPredicate(),

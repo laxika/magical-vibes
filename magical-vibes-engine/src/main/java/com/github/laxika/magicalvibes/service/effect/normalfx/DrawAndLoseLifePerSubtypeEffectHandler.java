@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -64,6 +64,6 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
         // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery sacrifice
         // asks (CR 616.1f) reruns only the loss, not the draws.
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                List.of(new LoseLifeEffect(count, LoseLifeRecipient.CONTROLLER)));
+                List.of(new LoseLifeEffect(count, Subjects.you())));
     }
 }

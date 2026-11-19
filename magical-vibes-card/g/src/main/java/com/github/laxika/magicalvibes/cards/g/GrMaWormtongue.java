@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -65,7 +65,7 @@ public class GrMaWormtongue extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(1, Subjects.targetPlayer()),
                         amassOrcs
                 ),
                 "{T}, Sacrifice another creature: Target player loses 1 life. If the sacrificed creature was "

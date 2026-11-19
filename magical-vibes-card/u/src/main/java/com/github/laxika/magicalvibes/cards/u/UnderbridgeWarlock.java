@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class UnderbridgeWarlock extends Card {
                 CreateBoonEffect.usedAsItResolves(new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withInterveningIf(new CreaturesDiedThisTurnAtLeast(3)),
                         SequenceEffect.of(
-                                new LoseLifeEffect(5, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(5, Subjects.eachOpponent()),
                                 new GainLifeEffect(5),
                                 new ConsumeBoonEffect()))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

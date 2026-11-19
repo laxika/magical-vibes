@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -22,7 +22,7 @@ public class HopelessNightmare extends Card {
     public HopelessNightmare() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)
+                new LoseLifeEffect(2, Subjects.eachOpponent())
         ));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), new ScryEffect(2));
 

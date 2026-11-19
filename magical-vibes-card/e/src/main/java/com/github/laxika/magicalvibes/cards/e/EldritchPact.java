@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,7 +24,7 @@ public class EldritchPact extends Card {
                 "Target must be a player"
         ))
                 .addSpellEffect(new LoseLifeEffect(
-                        cardsInTargetGraveyard, LoseLifeRecipient.TARGET_PLAYER))
+                        cardsInTargetGraveyard, Subjects.targetPlayer()))
                 .addSpellEffect(new DrawCardEffect(cardsInTargetGraveyard, Subjects.targetPlayer()));
     }
 }

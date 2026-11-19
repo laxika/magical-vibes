@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALA", collectorNumber = "217")
@@ -26,7 +26,7 @@ public class QuietusSpike extends Card {
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player loses half their life, rounded up
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()), LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()), Subjects.targetPlayer()));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

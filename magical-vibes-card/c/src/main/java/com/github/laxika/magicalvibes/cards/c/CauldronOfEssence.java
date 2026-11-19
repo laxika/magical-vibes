@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,7 +23,7 @@ public class CauldronOfEssence extends Card {
     public CauldronOfEssence() {
         // Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(1, Subjects.eachOpponent()),
                 new GainLifeEffect(1));
 
         // {1}{B}{G}, {T}, Sacrifice a creature: Return target creature card from your graveyard

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -39,6 +39,6 @@ public class ZurgoStormrender extends Card {
         addTrigger(Triggers.leavesBattlefield(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, nonattackingToken)),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(1, Subjects.eachOpponent()));
     }
 }

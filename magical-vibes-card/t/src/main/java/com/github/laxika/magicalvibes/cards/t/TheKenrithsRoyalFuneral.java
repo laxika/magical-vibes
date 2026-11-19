@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -36,7 +36,7 @@ public class TheKenrithsRoyalFuneral extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileCardsFromGraveyardEffect(2, legendaryCreature, true, true, true),
                 new DrawCardEffect(greatestExiledManaValue),
-                new LoseLifeEffect(greatestExiledManaValue, LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(greatestExiledManaValue, Subjects.you()));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSupertypePredicate(CardSupertype.LEGENDARY),
                 new CardsExiledWithSource(), CostModificationScope.SELF));

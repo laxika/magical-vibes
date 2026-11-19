@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExactLifeLoseGameThenAdjustLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -120,7 +120,7 @@ public class ExactLifeLoseGameThenAdjustLifeEffectHandler implements NormalEffec
             // the battlefield. As a step of their own, every Lich's Duel Mastery sacrifice replacing one of them is
             // asked about (CR 616.1) without checking the life totals again.
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                    List.of(new LoseLifeEffect(-delta, LoseLifeRecipient.EACH_PLAYER)));
+                    List.of(new LoseLifeEffect(-delta, Subjects.eachPlayer())));
         }
     }
 }

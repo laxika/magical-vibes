@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,6 +35,6 @@ public class SelfInflictedWound extends Card {
                         .withRecordedSacrificeCount())
                 .addSpellEffect(new ConditionalEffect(
                         new EventValueAtLeast(1),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
+                        new LoseLifeEffect(2, Subjects.targetPlayer())));
     }
 }

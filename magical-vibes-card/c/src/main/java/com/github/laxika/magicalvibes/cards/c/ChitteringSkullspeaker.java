@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifyNamedCardsEffect;
@@ -19,6 +19,6 @@ public class ChitteringSkullspeaker extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new IntensifyNamedCardsEffect(CARD_NAME),
                 new DrawCardEffect(new SourceIntensity()),
-                new LoseLifeEffect(new SourceIntensity(), LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(new SourceIntensity(), Subjects.you()));
     }
 }

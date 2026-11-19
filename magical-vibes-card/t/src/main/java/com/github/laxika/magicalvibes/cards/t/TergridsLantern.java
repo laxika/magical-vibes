@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -19,7 +19,7 @@ public class TergridsLantern extends Card {
                 true,
                 null,
                 List.of(new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3,
-                        LoseLifeRecipient.TARGET_PLAYER)),
+                        Subjects.targetPlayerDeclaredElsewhere())),
                 "{T}: Target player loses 3 life unless they sacrifice a nonland permanent of their choice or discard a card.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

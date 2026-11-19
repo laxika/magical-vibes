@@ -58,7 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -446,13 +446,13 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 TurnStep.BEGINNING_OF_COMBAT)),
                 watch("you lose life", "youLoseLife", Triggers::youLoseLife, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER))),
+                                new LoseLifeEffect(1, Subjects.you()))),
                 watch("an opponent gains life", "opponentGainsLife", Triggers::opponentGainsLife, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
                                 new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT))),
                 watch("an opponent loses life", "opponentLosesLife", Triggers::opponentLosesLife, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT))),
+                                new LoseLifeEffect(1, Subjects.eachOpponent()))),
                 watch("you draw a card", "youDrawCard", Triggers::youDrawCard, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards, new DrawCardEffect(1))),
                 watch("you discard a card", "youDiscardCard", Triggers::youDiscardCard, CardType.ENCHANTMENT,
@@ -1760,7 +1760,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.fixturePermanents(cards);
                             Card helper = card("Helper", CardType.CREATURE);
                             helper.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                                    new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+                                    new LoseLifeEffect(1, Subjects.eachOpponent()));
                             test.mainPhaseOf(test.player2);
                             test.harness.enterBattlefieldAndReturn(test.player1, helper);
                             test.harness.passBothPriorities();

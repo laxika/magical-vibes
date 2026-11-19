@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class NehebTheEternal extends Card {
     public NehebTheEternal() {
         // Afflict 3 — whenever this creature becomes blocked, defending player loses 3 life
         // (once per becoming blocked, not per blocker).
-        addTrigger(Triggers.becomesBlocked(), new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER));
+        addTrigger(Triggers.becomesBlocked(), new LoseLifeEffect(3, Subjects.defendingPlayer()));
 
         // At the beginning of each of your postcombat main phases, add {R} for each 1 life
         // your opponents have lost this turn (damage counts as life loss).

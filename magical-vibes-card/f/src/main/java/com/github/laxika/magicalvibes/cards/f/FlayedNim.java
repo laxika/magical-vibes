@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class FlayedNim extends Card {
 
     public FlayedNim() {
         addTrigger(Triggers.dealsDamageToCreature().withCombatDamageOnly(),
-                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new LoseLifeEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering())));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{B}",

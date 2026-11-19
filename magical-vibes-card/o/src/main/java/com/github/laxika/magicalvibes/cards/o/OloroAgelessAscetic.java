@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +28,7 @@ public class OloroAgelessAscetic extends Card {
                 "{1}",
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
+                        new LoseLifeEffect(1, Subjects.eachOpponent())),
                 "Pay {1} to draw a card and have each opponent lose 1 life?"));
     }
 }

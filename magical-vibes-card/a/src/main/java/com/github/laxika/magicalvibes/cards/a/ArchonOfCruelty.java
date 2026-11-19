@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,7 +35,7 @@ public class ArchonOfCruelty extends Card {
     private static final SequenceEffect CRUELTY = SequenceEffect.of(
             new SacrificePermanentsEffect(1, CREATURE_OR_PLANESWALKER, SacrificeRecipient.TARGET_PLAYER),
             new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
-            new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER),
+            new LoseLifeEffect(3, Subjects.targetPlayer()),
             new DrawCardEffect(1),
             new GainLifeEffect(3));
 

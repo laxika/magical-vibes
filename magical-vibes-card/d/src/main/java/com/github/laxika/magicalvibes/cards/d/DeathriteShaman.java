@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -48,7 +48,7 @@ public class DeathriteShaman extends Card {
                 List.of(
                         new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
                                 instantOrSorcery),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(2, Subjects.eachOpponent())
                 ),
                 "{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life."
         ));

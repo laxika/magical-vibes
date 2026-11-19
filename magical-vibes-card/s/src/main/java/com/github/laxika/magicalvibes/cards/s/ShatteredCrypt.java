@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -15,6 +15,6 @@ public class ShatteredCrypt extends Card {
     public ShatteredCrypt() {
         addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardTypePredicate(CardType.CREATURE), 0, true));
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
     }
 }

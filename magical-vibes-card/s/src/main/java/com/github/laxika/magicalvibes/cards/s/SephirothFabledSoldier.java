@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -40,7 +40,7 @@ public class SephirothFabledSoldier extends Card {
             "Target must be an opponent");
 
     static final SequenceEffect DRAIN = SequenceEffect.of(
-            new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+            new LoseLifeEffect(1, Subjects.targetPlayer()),
             new GainLifeEffect(1));
 
     private static final MayEffect SACRIFICE_ANOTHER_AND_DRAW = new MayEffect(

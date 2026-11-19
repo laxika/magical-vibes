@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -43,7 +43,7 @@ public class CultOfSkaro extends Card {
                 List.of(new DrawCardEffect(2)),
                 List.of(new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,
                         List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT))),
-                List.of(new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT))
+                List.of(new LoseLifeEffect(4, Subjects.eachOpponent()))
         )));
     }
 }

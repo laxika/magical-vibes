@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -27,7 +27,7 @@ public class Blightspeaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                List.of(new LoseLifeEffect(1, Subjects.targetPlayer())),
                 "{T}: Target player loses 1 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

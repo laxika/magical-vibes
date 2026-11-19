@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,7 +18,7 @@ public class WildfireEternal extends Card {
     public WildfireEternal() {
         // Afflict 4 — whenever this creature becomes blocked, defending player loses 4 life
         // (once per becoming blocked, not per blocker).
-        addTrigger(Triggers.becomesBlocked(), new LoseLifeEffect(4, LoseLifeRecipient.DEFENDING_PLAYER));
+        addTrigger(Triggers.becomesBlocked(), new LoseLifeEffect(4, Subjects.defendingPlayer()));
 
         // Whenever this creature attacks and isn't blocked, you may cast an instant or sorcery
         // spell from your hand without paying its mana cost.

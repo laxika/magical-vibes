@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -33,7 +33,7 @@ public class ObNixilisReignited extends Card {
     public ObNixilisReignited() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(1), new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(1), new LoseLifeEffect(1, Subjects.you())),
                 "+1: You draw a card and you lose 1 life."
         ));
 
@@ -52,7 +52,7 @@ public class ObNixilisReignited extends Card {
                         EmblemRecipient.TARGET_PLAYER,
                         List.of(),
                         List.of(new TriggeredAbility(Triggers.playerDrawsCard(),
-                                new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER))))),
+                                new LoseLifeEffect(2, Subjects.you()))))),
                 "−8: Target opponent gets an emblem with \"" + EMBLEM_TEXT + "\".",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

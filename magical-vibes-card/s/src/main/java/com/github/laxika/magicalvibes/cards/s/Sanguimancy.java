@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "81")
 public class Sanguimancy extends Card {
@@ -15,6 +15,6 @@ public class Sanguimancy extends Card {
         ColorManaSymbolsAmongControlledPermanents blackDevotion =
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLACK);
         addSpellEffect(new DrawCardEffect(blackDevotion));
-        addSpellEffect(new LoseLifeEffect(blackDevotion, LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(blackDevotion, Subjects.you()));
     }
 }

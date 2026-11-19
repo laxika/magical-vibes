@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -217,7 +217,7 @@ class EtbTriggerServiceTest {
         creature.setName("Graveyard Target Creature");
         creature.setType(CardType.CREATURE);
         ExileGraveyardCardsEffect exile = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
-        LoseLifeEffect lifeLoss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+        LoseLifeEffect lifeLoss = new LoseLifeEffect(2, Subjects.eachOpponent());
         // One ability of two effects (CR 603.3): two addTrigger calls would be two abilities.
         creature.addTrigger(Triggers.enters(ObjectRelation.THIS), exile, lifeLoss);
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));

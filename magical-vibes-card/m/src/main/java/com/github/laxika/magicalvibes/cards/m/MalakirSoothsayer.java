@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -22,7 +22,7 @@ public class MalakirSoothsayer extends Card {
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.ALLY), true, false),
                         new DrawCardEffect(1),
-                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)
+                        new LoseLifeEffect(1, Subjects.you())
                 ),
                 "{T}, Tap an untapped Ally you control: You draw a card and you lose 1 life."
         ));

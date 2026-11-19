@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +20,7 @@ public class ArbiterOfWoe extends Card {
         addCastingCost(new SacrificeCreatureCost());
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(2, Subjects.eachOpponent()),
                 new DrawCardEffect(1),
                 new GainLifeEffect(2)
         ));

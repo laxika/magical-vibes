@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureThenLoseLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -60,7 +60,7 @@ public class ExileTargetCreatureThenLoseLifeEqualToToughnessEffectHandler
             // the Lich's Duel Mastery sacrifice that replaces it would have), so that sacrifice's CR 616.1
             // questions are asked before any life is lost and a rerun doesn't exile again.
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                    List.of(new LoseLifeEffect(toughness, LoseLifeRecipient.CONTROLLER)));
+                    List.of(new LoseLifeEffect(toughness, Subjects.you())));
         }
     }
 

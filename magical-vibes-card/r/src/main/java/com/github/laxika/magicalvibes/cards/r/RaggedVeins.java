@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class RaggedVeins extends Card {
         // Amount 0 is a placeholder: the collector bakes in the damage just dealt.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                        new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                        new LoseLifeEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering())));
     }
 }

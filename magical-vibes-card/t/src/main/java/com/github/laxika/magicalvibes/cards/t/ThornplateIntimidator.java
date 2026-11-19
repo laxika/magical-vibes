@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -25,6 +26,6 @@ public class ThornplateIntimidator extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, true));
+                new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, Subjects.targetPlayer()));
     }
 }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenMillControllerAndRepeatIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -64,7 +64,7 @@ public class GristTheHungerTide extends Card {
                 -5,
                 List.of(new LoseLifeEffect(
                         new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
-                        LoseLifeRecipient.EACH_OPPONENT)),
+                        Subjects.eachOpponent())),
                 "−5: Each opponent loses life equal to the number of creature cards in your graveyard."
         ));
     }

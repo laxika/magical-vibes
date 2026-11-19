@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -49,7 +49,7 @@ public class GeyadroneDihada extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2),
                         new PutCounterOnTargetPermanentEffect(CounterType.CORRUPTION)
                 ),

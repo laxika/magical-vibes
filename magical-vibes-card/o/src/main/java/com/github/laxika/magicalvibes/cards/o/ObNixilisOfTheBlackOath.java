@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class ObNixilisOfTheBlackOath extends Card {
         // +2: Each opponent loses 1 life. You gain life equal to the life lost this way.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),
+                List.of(new LoseLifeEffect(1, Subjects.eachOpponent(), true)),
                 "+2: Each opponent loses 1 life. You gain life equal to the life lost this way."
         ));
 

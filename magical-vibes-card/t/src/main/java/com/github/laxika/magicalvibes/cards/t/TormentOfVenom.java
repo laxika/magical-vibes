@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,6 +19,6 @@ public class TormentOfVenom extends Card {
         // the battlefield at resolution (lethal counters are cleaned up only by the trailing SBA).
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 3))
-                .addSpellEffect(new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                .addSpellEffect(new LoseLifeUnlessSacrificeNonlandOrDiscardEffect(3, Subjects.controllerOf(Subjects.target())));
     }
 }

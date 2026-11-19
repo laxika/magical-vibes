@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandTh
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeAloraEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -74,7 +74,7 @@ public class AloraRogueCompanion extends Card {
                     new ChooseOpponentCreatureAndPerpetuallyBoostEffect(-1, 0),
                     ThenEffectRecipient.CONTROLLER);
             case BLACK -> new ReturnTargetPermanentToHandThenEffect(
-                    new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                    new LoseLifeEffect(2, Subjects.eachOpponent()),
                     ThenEffectRecipient.CONTROLLER);
             case RED -> new ReturnTargetPermanentToHandThenEffect(
                     CreateTokenEffect.ofTreasureToken(1), ThenEffectRecipient.CONTROLLER);

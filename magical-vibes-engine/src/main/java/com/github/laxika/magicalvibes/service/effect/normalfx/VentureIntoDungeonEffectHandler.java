@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -183,7 +183,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 3 -> List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
                 case 4 -> List.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1));
                 case 5 -> List.of(new com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect(-4, 0,
                         com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_YOUR_NEXT_TURN));
@@ -197,7 +197,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                     new PermanentIsCreaturePredicate(),
                     new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate()));
             return switch (progress.roomIndex()) {
-                case 0 -> List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER));
+                case 0 -> List.of(new LoseLifeEffect(1, Subjects.eachPlayer()));
                 case 1 -> List.of(new com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardOrLoseLifeEffect(2));
                 case 2 -> List.of(new com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentOrLosesLifeEffect(
                         eligibleSacrifice, 2, "an artifact, creature, or land"));
@@ -244,7 +244,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 1 -> List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()));
                 case 2 -> List.of(new ScryEffect(2));
-                case 3 -> List.of(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
+                case 3 -> List.of(new LoseLifeEffect(5, Subjects.targetPlayer()));
                 case 4 -> List.of(new GoadTargetCreatureUntilNextTurnEffect());
                 case 5 -> List.of(CreateTokenEffect.ofTreasureToken(1));
                 case 6 -> List.of(new DrawCardEffect(1));

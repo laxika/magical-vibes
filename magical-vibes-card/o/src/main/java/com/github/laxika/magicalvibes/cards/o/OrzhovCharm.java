@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetAndAttachedMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -47,7 +47,7 @@ public class OrzhovCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature and you lose life equal to its toughness",
                         new DestroyTargetPermanentThenEffect(EventStat.TOUGHNESS,
-                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
+                                new LoseLifeEffect(new EventValue(), Subjects.you()),
                                 ThenEffectRecipient.CONTROLLER),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),

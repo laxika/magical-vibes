@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -23,6 +23,6 @@ public class TomikWielderOfLaw extends Card {
                 new PermanentCount(new PermanentIsPlaneswalkerPredicate(), CountScope.CONTROLLER)));
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksWithAtLeastCreatures(2, true, false)),
-                SequenceEffect.of(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), new DrawCardEffect()));
+                SequenceEffect.of(new LoseLifeEffect(3, Subjects.targetPlayer()), new DrawCardEffect()));
     }
 }

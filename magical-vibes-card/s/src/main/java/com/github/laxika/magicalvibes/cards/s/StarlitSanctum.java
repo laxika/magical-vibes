@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -43,7 +43,7 @@ public class StarlitSanctum extends Card {
                 "{B}",
                 List.of(
                         clericSacrificeCost(true, false),
-                        new LoseLifeEffect(new XValue(), LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(new XValue(), Subjects.targetPlayer())
                 ),
                 "{B}, {T}, Sacrifice a Cleric creature: Target player loses life equal to the sacrificed creature's power."
         ));

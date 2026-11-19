@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,6 +24,6 @@ public class PsychosisCrawler extends Card {
     public PsychosisCrawler() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
-        addTrigger(Triggers.youDrawCard(), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.youDrawCard(), new LoseLifeEffect(1, Subjects.eachOpponent()));
     }
 }

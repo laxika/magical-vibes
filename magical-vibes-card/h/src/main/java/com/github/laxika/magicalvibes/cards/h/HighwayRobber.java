@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,6 +22,6 @@ public class HighwayRobber extends Card {
         // When Highway Robber enters, target opponent loses 2 life and you gain 2 life.
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent")).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(2)));
+                new LoseLifeEffect(2, Subjects.targetPlayer()), new GainLifeEffect(2)));
     }
 }

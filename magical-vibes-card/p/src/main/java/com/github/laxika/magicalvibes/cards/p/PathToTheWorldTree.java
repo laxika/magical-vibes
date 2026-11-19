@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -39,7 +39,7 @@ public class PathToTheWorldTree extends Card {
                         new SacrificeSelfCost(),
                         new GainLifeEffect(2),
                         new DrawCardEffect(2),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(2, Subjects.targetPlayer()),
                         new DealDamageToTargetCreatureEffect(2),
                         new CreateTokenEffect("Bear", 2, 2, CardColor.GREEN,
                                 List.of(CardSubtype.BEAR), Set.of(), Set.of())

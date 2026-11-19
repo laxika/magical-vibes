@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class LathrilBladeOfTheElves extends Card {
                 true, null,
                 List.of(
                         new TapMultiplePermanentsCost(10, new PermanentHasSubtypePredicate(CardSubtype.ELF), true),
-                        new LoseLifeEffect(10, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(10, Subjects.eachOpponent()),
                         new GainLifeEffect(10)),
                 "{T}, Tap ten untapped Elves you control: Each opponent loses 10 life and you gain 10 life."));
     }

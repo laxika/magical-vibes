@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileNonlandCardFromTargetHandOrGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -23,6 +23,6 @@ public class AgonizingRemorse extends Card {
                 "Target must be an opponent."
         )).addSpellEffect(new ExileNonlandCardFromTargetHandOrGraveyardEffect(false, false,
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)), new CardTruePredicate()));
-        addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(1, Subjects.you()));
     }
 }

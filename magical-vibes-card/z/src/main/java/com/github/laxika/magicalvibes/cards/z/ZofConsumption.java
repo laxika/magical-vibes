@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class ZofConsumption extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Zof Consumption",
                         List.of(
-                                new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(4, Subjects.eachOpponent()),
                                 new GainLifeEffect(4))),
                 new ChooseOneEffect.ChooseOneOption("Zof Bloodbog", List.of())
         )));

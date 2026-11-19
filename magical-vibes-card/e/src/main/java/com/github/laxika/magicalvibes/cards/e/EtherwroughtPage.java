@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class EtherwroughtPage extends Card {
                 new ChooseOneEffect.ChooseOneOption("You gain 2 life.", new GainLifeEffect(2)),
                 new ChooseOneEffect.ChooseOneOption("Surveil 1.", new SurveilEffect(1)),
                 new ChooseOneEffect.ChooseOneOption("Each opponent loses 1 life.",
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT))
+                        new LoseLifeEffect(1, Subjects.eachOpponent()))
         )));
     }
 }

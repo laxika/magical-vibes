@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedBlockOrBecomesBlockedTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
@@ -884,14 +884,14 @@ public class DestructionSupport {
                 // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
                 phaseOutSource(gameData, entry);
             } else if (elseEffect instanceof LoseLifeEffect loseLife
-                    && loseLife.recipient() == LoseLifeRecipient.CONTROLLER
+                    && loseLife.player() instanceof PlayerSubject.You
                     && loseLife.amount() instanceof Fixed lifeAmount) {
                 // "unless you pay {cost}, you lose N life" (Nafs Asp). Life loss, not damage
-                // (CR 118.2) — never routed through damage plumbing.
+                // (CR 119.3) — never routed through damage plumbing.
                 lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), lifeAmount.value(), entry.getCard().getName());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof LoseLifeEffect loseLife
-                    && loseLife.recipient() == LoseLifeRecipient.TARGET_PLAYER
+                    && loseLife.player() instanceof PlayerSubject.TargetPlayer
                     && loseLife.amount() instanceof Fixed lifeAmount) {
                 // "that player loses N life" (Pillar Tombs of Aku) — targetId is the acting player.
                 UUID victim = entry.getTargetId();

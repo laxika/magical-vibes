@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -18,7 +18,7 @@ public class BobReluctantHYDRAAgent extends Card {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new ReturnSelfToHandThenEffect(SequenceEffect.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2))));
     }
 }

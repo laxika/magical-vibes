@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -23,7 +23,7 @@ public class JundBattlemage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                List.of(new LoseLifeEffect(1, Subjects.targetPlayer())),
                 "{B}, {T}: Target player loses 1 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

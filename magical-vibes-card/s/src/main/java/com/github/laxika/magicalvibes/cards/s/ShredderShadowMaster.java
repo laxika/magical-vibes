@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,6 +24,6 @@ public class ShredderShadowMaster extends Card {
                 new SacrificeCreatedPermanentsAtEndOfCombatEffect());
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
-                        LoseLifeRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

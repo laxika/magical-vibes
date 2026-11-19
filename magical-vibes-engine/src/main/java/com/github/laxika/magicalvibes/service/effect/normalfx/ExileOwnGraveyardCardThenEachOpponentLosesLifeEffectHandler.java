@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -105,6 +105,6 @@ public class ExileOwnGraveyardCardThenEachOpponentLosesLifeEffectHandler impleme
         // The opponents' life loss is a step of its own after the exile (CR 608.2c), so the Lich's Duel Mastery
         // sacrifices that replace it ask their CR 616.1 questions before any life is lost.
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                List.of(new LoseLifeEffect(lifeLoss, LoseLifeRecipient.EACH_OPPONENT)));
+                List.of(new LoseLifeEffect(lifeLoss, Subjects.eachOpponent())));
     }
 }

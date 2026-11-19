@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -33,7 +33,7 @@ public class HauntTheNetwork extends Card {
                 .addSpellEffect(new CreateTokenEffect(2, "Thopter", 1, 1, null,
                                 List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING),
                                 Set.of(CardType.ARTIFACT)))
-                .addSpellEffect(new LoseLifeEffect(artifactsYouControl, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new LoseLifeEffect(artifactsYouControl, Subjects.targetPlayer()))
                 .addSpellEffect(new GainLifeEffect(artifactsYouControl));
     }
 }

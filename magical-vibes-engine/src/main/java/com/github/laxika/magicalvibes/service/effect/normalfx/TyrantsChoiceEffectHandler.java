@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TyrantsChoiceEffect;
@@ -68,7 +68,7 @@ public class TyrantsChoiceEffectHandler implements NormalEffectHandlerBean {
                     > votes.getOrDefault(ChoiceContext.TyrantsChoiceChoice.TORTURE, 0)
                     ? new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                             SacrificeRecipient.EACH_OPPONENT).withSimultaneousChoices()
-                    : new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT);
+                    : new LoseLifeEffect(4, Subjects.eachOpponent());
             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(result));
             return;
         }

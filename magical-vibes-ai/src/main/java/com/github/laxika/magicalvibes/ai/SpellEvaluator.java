@@ -773,28 +773,25 @@ public class SpellEvaluator {
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof LoseLifeEffect lose) {
-            switch (lose.recipient()) {
-                case CONTROLLER -> {
-                    // Controller loses life — a cost/drawback (formerly LoseLifeEffect).
-                    int amount = amountEvaluationService.evaluate(gameData, lose.amount(),
-                            AmountContext.forEstimation(aiPlayerId));
-                    return -amount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
-                }
-                case EACH_OPPONENT -> {
-                    // Formerly only the X-scaled drain (Exsanguinate) was scored; the fixed
-                    // "each opponent loses N life" variants were not — kept faithful.
-                    if (lose.controllerGainsLifeLost() && amountEvaluationService.referencesXValue(lose.amount())) {
-                        int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-                        if (estimatedX <= 0) return 0;
-                        return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
-                    }
-                    return 0;
-                }
-                default -> {
-                    // TARGET_PLAYER / EACH_PLAYER were not scored before.
-                    return 0;
-                }
+            if (lose.player() instanceof PlayerSubject.You) {
+                // Controller loses life — a cost/drawback (formerly LoseLifeEffect).
+                int amount = amountEvaluationService.evaluate(gameData, lose.amount(),
+                        AmountContext.forEstimation(aiPlayerId));
+                return -amount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
             }
+            if (lose.player() instanceof PlayerSubject.Each each
+                    && each.relation() == PlayerSubject.Relation.OPPONENTS) {
+                // Formerly only the X-scaled drain (Exsanguinate) was scored; the fixed
+                // "each opponent loses N life" variants were not — kept faithful.
+                if (lose.controllerGainsLifeLost() && amountEvaluationService.referencesXValue(lose.amount())) {
+                    int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+                    if (estimatedX <= 0) return 0;
+                    return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
+                }
+                return 0;
+            }
+            // Target player / each player were not scored before.
+            return 0;
         }
 
         // Discard

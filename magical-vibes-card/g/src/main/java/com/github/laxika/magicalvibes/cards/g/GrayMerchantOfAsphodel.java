@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class GrayMerchantOfAsphodel extends Card {
         // Each opponent loses life equal to your black devotion, and you gain that much life.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLACK),
-                LoseLifeRecipient.EACH_OPPONENT,
+                Subjects.eachOpponent(),
                 true));
     }
 }

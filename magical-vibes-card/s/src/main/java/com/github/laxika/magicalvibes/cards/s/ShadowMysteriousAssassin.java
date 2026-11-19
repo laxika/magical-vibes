@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,7 +35,7 @@ public class ShadowMysteriousAssassin extends Card {
                                 new DrawCardEffect(2),
                                 new LoseLifeEffect(
                                         new SacrificedPermanentManaValue(),
-                                        LoseLifeRecipient.EACH_OPPONENT)),
+                                        Subjects.eachOpponent())),
                         "another nonland permanent",
                         false,
                         false),

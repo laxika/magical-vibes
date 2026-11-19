@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamage
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -28,11 +28,11 @@ public class LostMonarchOfIfnir extends Card {
 
     public LostMonarchOfIfnir() {
         addTrigger(Triggers.becomesBlocked(),
-                new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER));
+                new LoseLifeEffect(3, Subjects.defendingPlayer()));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesBlocked(),
-                new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER)),
+                new LoseLifeEffect(3, Subjects.defendingPlayer())),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 

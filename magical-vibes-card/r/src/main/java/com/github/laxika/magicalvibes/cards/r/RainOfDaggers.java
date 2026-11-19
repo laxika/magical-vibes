@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,6 +27,6 @@ public class RainOfDaggers extends Card {
                 .addSpellEffect(new DestroyAllPermanentsEffect(
                         new PermanentIsCreaturePredicate(),
                         EachPermanentScope.TARGET_PLAYER,
-                        new LoseLifeEffect(new Scaled(new EventValue(), 2), LoseLifeRecipient.CONTROLLER)));
+                        new LoseLifeEffect(new Scaled(new EventValue(), 2), Subjects.you())));
     }
 }

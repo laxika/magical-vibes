@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class AgentOfMasks extends Card {
 
     public AgentOfMasks() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true));
+                new LoseLifeEffect(1, Subjects.eachOpponent(), true));
     }
 }

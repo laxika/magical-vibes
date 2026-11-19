@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,7 +33,7 @@ public class RetreatToHagra extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses 1 life and you gain 1 life.",
                         List.of(
-                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(1, Subjects.eachOpponent()),
                                 new GainLifeEffect(1)
                         ))
         ))));

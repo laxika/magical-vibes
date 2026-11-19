@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -43,6 +43,6 @@ public class DarkLeoShredder extends Card {
                 new ConditionalEffect(
                         new ControlsPermanentCount(5, new PermanentHasSubtypePredicate(CardSubtype.NINJA)),
                         new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
-                                LoseLifeRecipient.TARGET_PLAYER))));
+                                Subjects.targetPlayer()))));
     }
 }

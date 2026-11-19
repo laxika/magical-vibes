@@ -71,7 +71,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -1275,7 +1275,7 @@ class SpellTriggersTest {
             StackEntry copiedSpell = copyOf(createInstant("Lightning Bolt"), player2Id);
 
             boolean result = collectCopy(perm, SpellFilter.ANY, copiedSpell,
-                    player2Id, new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
+                    player2Id, new LoseLifeEffect(1, Subjects.triggeringPlayer()));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1729,7 +1729,7 @@ class SpellTriggersTest {
         @DisplayName("a card-advantage ability goes on the stack as written, recording the spell that resolved")
         void cardAdvantageAbilityGoesOnTheStackAsWritten() {
             Permanent perm = createPermanent("Toofer, Keeper of the Full Grip");
-            CardEffect loseLife = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            CardEffect loseLife = new LoseLifeEffect(2, Subjects.eachOpponent());
             TriggeredAbility ability = new TriggeredAbility(Triggers.yourSpellCausesYouToGainCardAdvantage(), loseLife);
             Card spellCard = createInstant("Divination");
             StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player1Id, "Divination",
@@ -1752,7 +1752,7 @@ class SpellTriggersTest {
         @DisplayName("a card-advantage ability's intervening \"if\" is judged by the stack door")
         void cardAdvantageAbilityInterveningIfIsJudged() {
             Permanent perm = createPermanent("Toofer, Keeper of the Full Grip");
-            CardEffect loseLife = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            CardEffect loseLife = new LoseLifeEffect(2, Subjects.eachOpponent());
             TriggeredAbility ability = new TriggeredAbility(Triggers.yourSpellCausesYouToGainCardAdvantage(),
                     TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), loseLife);
             StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, createInstant("Divination"), player1Id,

@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -90,7 +90,7 @@ public class GaleConduitOfTheArcane extends Card {
             case BLUE -> card.addTrigger(instantOrSorcery,
                     new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
             case BLACK -> card.addTrigger(instantOrSorcery,
-                    new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+                    new LoseLifeEffect(2, Subjects.eachOpponent()));
             case RED -> card.addTrigger(instantOrSorcery,
                     new PerpetuallyGrantStaticEffectToSourceEffect(
                             new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));

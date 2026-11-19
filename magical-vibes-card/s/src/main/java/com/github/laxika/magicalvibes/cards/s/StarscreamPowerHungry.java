@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -26,7 +26,7 @@ public class StarscreamPowerHungry extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.youDrawCard(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerIsMonarch()),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(2, Subjects.targetPlayer()));
 
         addTrigger(Triggers.creatureDealsCombatDamageToYou(), TriggerOptions.ONE_OR_MORE, new TransformSelfEffect());
     }

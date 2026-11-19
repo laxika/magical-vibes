@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermane
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -20,9 +19,9 @@ public class LifeTargetValidators {
 
     @ValidatesTarget(LoseLifeEffect.class)
     public void validateLoseLife(TargetValidationContext ctx, LoseLifeEffect effect) {
-        // Only the target-player recipient targets a player; controller / each-player / each-opponent
-        // take no target and must not have a player-target requirement forced on them.
-        if (effect.recipient() == LoseLifeRecipient.TARGET_PLAYER) {
+        // Only a declared target player targets a player; the other subjects take no target and must not
+        // have a player-target requirement forced on them.
+        if (effect.player().declaresTarget()) {
             tvs.requireTargetPlayer(ctx);
         }
     }

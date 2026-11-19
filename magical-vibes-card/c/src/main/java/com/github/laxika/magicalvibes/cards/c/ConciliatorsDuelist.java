@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class ConciliatorsDuelist extends Card {
         // When this creature enters, draw a card. Each player loses 1 life.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER));
+                new LoseLifeEffect(1, Subjects.eachPlayer()));
 
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // exile up to one target creature. Return that card to the battlefield under its

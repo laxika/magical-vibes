@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class HeraldOfHadar extends Card {
 
     public HeraldOfHadar() {
-        LoseLifeEffect eachOpponentLosesTwo = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+        LoseLifeEffect eachOpponentLosesTwo = new LoseLifeEffect(2, Subjects.eachOpponent());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{B}",

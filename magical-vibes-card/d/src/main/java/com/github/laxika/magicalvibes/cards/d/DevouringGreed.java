@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -24,6 +24,6 @@ public class DevouringGreed extends Card {
         // Target player loses 2 life plus 2 life for each Spirit sacrificed this way.
         // You gain that much life.
         Sum drain = new Sum(new Fixed(2), new Scaled(new XValue(), 2));
-        addSpellEffect(new LoseLifeEffect(drain, LoseLifeRecipient.TARGET_PLAYER, true));
+        addSpellEffect(new LoseLifeEffect(drain, Subjects.targetPlayer(), true));
     }
 }

@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /** Bloodletting, the prepare spell of Leech Collector // Bloodletting. */
 public class Bloodletting extends Card {
 
     public Bloodletting() {
-        addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+        addSpellEffect(new LoseLifeEffect(2, Subjects.eachOpponent()));
     }
 }

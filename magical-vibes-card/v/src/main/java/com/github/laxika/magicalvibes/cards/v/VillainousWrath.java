@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -24,7 +24,7 @@ public class VillainousWrath extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
         ))
-                .addSpellEffect(new LoseLifeEffect(targetOpponentCreatureCount, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new LoseLifeEffect(targetOpponentCreatureCount, Subjects.targetPlayer()))
                 .addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
     }
 }

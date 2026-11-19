@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSourceIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,7 +33,7 @@ public class NylaShirshuSleuth extends Card {
                         creature,
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                         SequenceEffect.of(
-                                new LoseLifeEffect(manaValue, LoseLifeRecipient.CONTROLLER),
+                                new LoseLifeEffect(manaValue, Subjects.you()),
                                 CreateTokenEffect.ofClueToken(manaValue))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

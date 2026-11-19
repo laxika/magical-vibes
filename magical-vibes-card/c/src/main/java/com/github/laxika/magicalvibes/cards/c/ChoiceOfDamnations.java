@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -30,7 +30,7 @@ public class ChoiceOfDamnations extends Card {
                 "Target must be an opponent"))
                 .addSpellEffect(new TargetPlayerChoosesNumberEffect())
                 .addSpellEffect(new MayEffect(
-                        new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(new EventValue(), Subjects.targetPlayer()),
                         "Have that player lose that much life?",
                         new SacrificePermanentsEffect(
                                 new Max(new Fixed(0), new Sum(

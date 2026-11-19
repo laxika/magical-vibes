@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +25,7 @@ public class UnderhandedDesigns extends Card {
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL), new MayPayManaEffect(
                 "{1}",
                 SequenceEffect.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1)
                 ),
                 "Pay {1} to have each opponent lose 1 life and you gain 1 life?"

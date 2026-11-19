@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class CagedZombie extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}",
-                List.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)),
+                List.of(new LoseLifeEffect(2, Subjects.eachOpponent())),
                 "{1}{B}, {T}: Each opponent loses 2 life. Activate only if a creature died this turn.",
                 ActivationTimingRestriction.MORBID
         ));

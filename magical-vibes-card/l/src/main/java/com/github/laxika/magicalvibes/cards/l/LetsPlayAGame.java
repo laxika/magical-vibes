@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -30,7 +30,7 @@ public class LetsPlayAGame extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses 3 life and you gain 3 life",
                         List.of(
-                                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(3, Subjects.eachOpponent()),
                                 new GainLifeEffect(3)))
         ), new Delirium()));
     }

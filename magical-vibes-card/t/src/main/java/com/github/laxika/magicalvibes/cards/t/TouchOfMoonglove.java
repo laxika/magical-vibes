@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDamagedCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,6 +22,6 @@ public class TouchOfMoonglove extends Card {
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
                 .addSpellEffect(RegisterDelayedDamagedCreatureDeathTriggerEffect.byTargetCreature(
-                        new LoseLifeEffect(2, LoseLifeRecipient.DYING_CREATURE_CONTROLLER)));
+                        new LoseLifeEffect(2, Subjects.controllerOf(Subjects.triggering()))));
     }
 }

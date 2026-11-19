@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class CommissarSeverinaRaine extends Card {
         PermanentCount otherAttackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER, true);
         addTrigger(Triggers.attacks(),
-                new LoseLifeEffect(otherAttackingCreatures, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(otherAttackingCreatures, Subjects.eachOpponent()));
 
         // {2}, Sacrifice another creature: You gain 2 life and draw a card.
         addActivatedAbility(new ActivatedAbility(

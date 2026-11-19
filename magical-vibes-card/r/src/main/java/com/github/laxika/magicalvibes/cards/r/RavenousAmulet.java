@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -36,7 +36,7 @@ public class RavenousAmulet extends Card {
                 "{4}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new LoseLifeEffect(new CountersOnSource(CounterType.SOUL), LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(new CountersOnSource(CounterType.SOUL), Subjects.eachOpponent())
                 ),
                 "{4}, {T}, Sacrifice this artifact: Each opponent loses life equal to the number of soul counters on this artifact."
         ));

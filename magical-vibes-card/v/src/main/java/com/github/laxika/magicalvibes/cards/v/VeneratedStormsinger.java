@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +19,7 @@ import java.util.List;
 public class VeneratedStormsinger extends Card {
 
     private static final SequenceEffect DEATH_TRIGGER = SequenceEffect.of(
-            new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+            new LoseLifeEffect(1, Subjects.eachOpponent()),
             new GainLifeEffect(1));
 
     public VeneratedStormsinger() {

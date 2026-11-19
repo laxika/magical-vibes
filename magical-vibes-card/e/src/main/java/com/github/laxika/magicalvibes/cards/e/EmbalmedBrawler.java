@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class EmbalmedBrawler extends Card {
                 1, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
 
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
-                new LoseLifeEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), Subjects.you()));
     }
 }

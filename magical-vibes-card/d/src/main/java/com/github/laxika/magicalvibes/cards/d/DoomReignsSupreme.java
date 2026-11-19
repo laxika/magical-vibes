@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
@@ -30,7 +30,7 @@ public class DoomReignsSupreme extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1),
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 

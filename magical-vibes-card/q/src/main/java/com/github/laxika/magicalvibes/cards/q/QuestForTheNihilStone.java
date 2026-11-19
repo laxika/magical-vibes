@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,6 +28,6 @@ public class QuestForTheNihilStone extends Card {
                         new AllOf(List.of(
                                 new ActivePlayerHandEmpty(),
                                 new SourceCounterThreshold(2, CounterType.QUEST)))),
-                new MayEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER), "Have that player lose 5 life?"));
+                new MayEffect(new LoseLifeEffect(5, Subjects.targetPlayer()), "Have that player lose 5 life?"));
     }
 }

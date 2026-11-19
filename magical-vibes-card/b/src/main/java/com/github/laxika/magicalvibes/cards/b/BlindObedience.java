@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class BlindObedience extends Card {
                 Set.of(CardType.ARTIFACT, CardType.CREATURE), true));
         addTrigger(Triggers.youCastSpell().anySpell(),
                 new MayPayManaEffect("{W/B}",
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true),
+                        new LoseLifeEffect(1, Subjects.eachOpponent(), true),
                         "Pay {W/B} to extort?"));
     }
 }

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -58,7 +58,7 @@ public class HearthhullTheWorldseed extends Card {
         ).withRequiredSourceCounters(CounterType.CHARGE, 2));
 
         addTrigger(Triggers.sacrificed(new PermanentIsLandPredicate(), ObjectRelation.YOU_CONTROL),
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(2, Subjects.eachOpponent()));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),

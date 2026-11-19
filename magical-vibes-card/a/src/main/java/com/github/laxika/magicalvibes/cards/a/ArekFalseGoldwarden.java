@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifyNamedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -35,7 +35,7 @@ public class ArekFalseGoldwarden extends Card {
                 "{3}{W}{B}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new LoseLifeEffect(new SourceIntensity(), LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(new SourceIntensity(), Subjects.targetPlayer()),
                         new GainLifeEffect(new SourceIntensity())
                 ),
                 "{3}{W}{B}, {T}, Sacrifice Arek, False Goldwarden: Target opponent loses X life and "

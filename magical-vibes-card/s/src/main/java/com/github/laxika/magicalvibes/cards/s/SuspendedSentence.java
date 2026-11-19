@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class SuspendedSentence extends Card {
         // creature's controller is still recorded on the stack entry, so the life loss reaches it.
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new DestroyTargetPermanentEffect())
-                .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
+                .addSpellEffect(new LoseLifeEffect(3, Subjects.controllerOf(Subjects.target())))
                 .addSpellEffect(new ExileSpellEffect(3));
 
         // Suspend follows the card's own timing (CR 702.62a), so an instant can be suspended at instant speed.

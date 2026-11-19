@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -88,7 +88,7 @@ public class JaheiraHarperEmissary extends Card {
         CardEffect rider = switch (color) {
             case WHITE -> new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
             case BLUE -> new ScryEffect(2);
-            case BLACK -> new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT);
+            case BLACK -> new LoseLifeEffect(3, Subjects.eachOpponent());
             case RED -> RegisterDelayedControllerSpellCastTriggerEffect.boon(
                     new CardTypePredicate(CardType.CREATURE),
                     List.of(new PerpetuallyBoostTriggeringCardEffect(1, 0),

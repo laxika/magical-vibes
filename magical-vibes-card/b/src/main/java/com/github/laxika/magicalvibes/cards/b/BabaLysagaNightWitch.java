@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -26,7 +26,7 @@ public class BabaLysagaNightWitch extends Card {
                                 new PermanentTruePredicate(), false, false, 3, true),
                         new ConditionalEffect(
                                 new SpellXAtLeast(3),
-                                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT)),
+                                new LoseLifeEffect(3, Subjects.eachOpponent())),
                         new ConditionalEffect(new SpellXAtLeast(3), new GainLifeEffect(3)),
                         new ConditionalEffect(new SpellXAtLeast(3), new DrawCardEffect(3))),
                 "{T}, Sacrifice up to three permanents: If there were three or more card types among "

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,6 +26,6 @@ public class MassacreWurm extends Card {
 
         // Whenever a creature an opponent controls dies, that player loses 2 life
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
+                new LoseLifeEffect(2, Subjects.triggeringPlayer()));
     }
 }

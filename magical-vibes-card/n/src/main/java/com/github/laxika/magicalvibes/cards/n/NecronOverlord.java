@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class NecronOverlord extends Card {
                 "{X}",
                 List.of(
                         new TapMultiplePermanentsCost(new XValue(), new PermanentIsArtifactPredicate(), true),
-                        new LoseLifeEffect(new XValue(), LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(new XValue(), Subjects.targetPlayer())
                 ),
                 "{X}, {T}, Tap X untapped artifacts you control: Target opponent loses X life.",
                 new PlayerPredicateTargetFilter(

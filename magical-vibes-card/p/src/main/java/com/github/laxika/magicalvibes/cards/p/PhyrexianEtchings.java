@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,6 +23,6 @@ public class PhyrexianEtchings extends Card {
                 new DrawCardEffect(new CountersOnSource(CounterType.AGE)));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
                 new LoseLifeEffect(new Scaled(new CountersOnSource(CounterType.AGE), 2),
-                        LoseLifeRecipient.CONTROLLER));
+                        Subjects.you()));
     }
 }

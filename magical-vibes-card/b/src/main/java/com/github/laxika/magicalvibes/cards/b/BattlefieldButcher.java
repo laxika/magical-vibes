@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -25,7 +25,7 @@ public class BattlefieldButcher extends Card {
                 "{5}",
                 List.of(
                         new ReduceActivationCostEffect(creatureCardsInGraveyard),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(2, Subjects.eachOpponent())
                 ),
                 "{5}, {T}: Each opponent loses 2 life. This ability costs {1} less to activate for each creature card in your graveyard."
         ));

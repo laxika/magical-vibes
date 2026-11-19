@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
@@ -43,7 +43,7 @@ public class JaradGolgariLichLord extends Card {
                 "{1}{B}{G}",
                 List.of(
                         new SacrificeCreatureCost(false, true, false, true),
-                        new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(new XValue(), Subjects.eachOpponent())
                 ),
                 "{1}{B}{G}, Sacrifice another creature: Each opponent loses life equal to the "
                         + "sacrificed creature's power."

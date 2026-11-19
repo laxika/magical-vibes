@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -46,7 +46,7 @@ public class CelestineCaveWitch extends Card {
                 CardType.ENCHANTMENT, 1, "Curse", 0, 0, CardColor.BLACK, null,
                 List.of(CardSubtype.AURA, CardSubtype.CURSE), Set.of(), Set.of(), false, false,
                 List.of(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER))),
+                        new LoseLifeEffect(1, Subjects.you()))),
                 List.of(), false, false, false, 0, Set.<Keyword>of());
     }
 }

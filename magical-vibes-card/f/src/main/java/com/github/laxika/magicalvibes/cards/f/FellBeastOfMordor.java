@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -25,7 +25,7 @@ public class FellBeastOfMordor extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
         var counters = new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE);
-        var loseLife = new LoseLifeEffect(counters, LoseLifeRecipient.TARGET_PLAYER);
+        var loseLife = new LoseLifeEffect(counters, Subjects.targetPlayer());
         var gainLife = new GainLifeEffect(counters);
 
         target(targetOpponent)

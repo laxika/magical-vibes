@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithLessLifeThanController;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class GreatUncleanOne extends Card {
 
     public GreatUncleanOne() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(2, Subjects.eachOpponent()),
                 new CreateTokenEffect(
                         new OpponentsWithLessLifeThanController(), "Plaguebearer of Nurgle", 1, 3,
                         CardColor.BLACK, List.of(CardSubtype.DEMON), Set.of(), Set.of())));

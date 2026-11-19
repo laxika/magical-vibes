@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,6 +32,6 @@ public class HighFaeNegotiator extends Card {
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                SequenceEffect.of(new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(3)));
+                SequenceEffect.of(new LoseLifeEffect(3, Subjects.eachOpponent()), new GainLifeEffect(3)));
     }
 }

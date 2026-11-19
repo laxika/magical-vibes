@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachOpponentAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -33,7 +33,7 @@ public class CityOfTheDaleks extends Card {
                 .addTrigger(Triggers.youAttack(),
                         new LoseLifeEffect(
                                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
-                                LoseLifeRecipient.TARGET_PLAYER));
+                                Subjects.targetPlayer()));
 
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(new CreateTokensForEachOpponentAttackingEffect(
                 new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,

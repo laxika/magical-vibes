@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +28,7 @@ public class InsatiableAvarice extends Card {
                         "Target player draws three cards and loses 3 life",
                         List.of(
                                 new DrawCardEffect(3, Subjects.targetPlayer()),
-                                new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER)),
+                                new LoseLifeEffect(3, Subjects.targetPlayer())),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player."))

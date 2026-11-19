@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -33,7 +33,7 @@ public class CryptolithFragment extends Card {
                 true, null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER)
+                        new LoseLifeEffect(1, Subjects.eachPlayer())
                 ),
                 "{T}: Add one mana of any color. Each player loses 1 life."
         ));

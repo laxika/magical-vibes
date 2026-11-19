@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfS
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureWhileControllerControlsItEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,6 +30,6 @@ public class VislorTurlough extends Card {
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new DrawCardEffect(),
-                new LoseLifeEffect(new CardsInHand(CountScope.CONTROLLER), LoseLifeRecipient.CONTROLLER)));
+                new LoseLifeEffect(new CardsInHand(CountScope.CONTROLLER), Subjects.you())));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class LimDLsPaladin extends Card {
         // turn and defending player loses 4 life. The defending player is the trigger's
         // non-targeting targetId.
         addTrigger(Triggers.attacksUnblocked(), new AssignNoCombatDamageEffect(),
-                new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(4, Subjects.targetPlayer()));
     }
 }

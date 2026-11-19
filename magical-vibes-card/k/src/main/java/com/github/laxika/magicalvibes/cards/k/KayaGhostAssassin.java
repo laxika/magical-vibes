@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class KayaGhostAssassin extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(2)),
+                List.of(new LoseLifeEffect(2, Subjects.eachOpponent()), new GainLifeEffect(2)),
                 "−1: Each opponent loses 2 life and you gain 2 life."));
 
         addActivatedAbility(new ActivatedAbility(

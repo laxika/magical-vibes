@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndDrainOpponentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class RevealTopCardPutIntoHandAndDrainOpponentsEffectHandler implements N
         // The life losses and the gain are steps of their own, so a death replacement question a Lich's Duel
         // Mastery sacrifice asks (CR 616.1f) reruns only the losses, not the reveal.
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
-                new LoseLifeEffect(manaValue, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(manaValue, Subjects.eachOpponent()),
                 new GainLifeEffect(manaValue)));
 
         log.info("Game {} - {} drains opponents for {} after revealing {} via {}",

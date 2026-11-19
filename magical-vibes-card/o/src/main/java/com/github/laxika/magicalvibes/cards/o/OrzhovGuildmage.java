@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -33,7 +33,7 @@ public class OrzhovGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{B}",
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER)),
+                List.of(new LoseLifeEffect(1, Subjects.eachPlayer())),
                 "{2}{B}: Each player loses 1 life."
         ));
     }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -49,6 +49,6 @@ public class RakishCrew extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARLOCK))),
                         ObjectRelation.YOU_CONTROL),
-                SequenceEffect.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
+                SequenceEffect.of(new LoseLifeEffect(1, Subjects.eachOpponent()), new GainLifeEffect(1)));
     }
 }

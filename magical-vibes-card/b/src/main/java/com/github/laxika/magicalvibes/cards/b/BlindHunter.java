@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -21,12 +21,12 @@ public class BlindHunter extends Card {
     public BlindHunter() {
         target(anyPlayer())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(2, Subjects.targetPlayer()),
                         new GainLifeEffect(2));
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(anyPlayer())
                 .addTrigger(Triggers.dies(ObjectRelation.HAUNTED),
-                        SequenceEffect.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                        SequenceEffect.of(new LoseLifeEffect(2, Subjects.targetPlayer()),
                                 new GainLifeEffect(2)));
     }
 

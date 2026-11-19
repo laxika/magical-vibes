@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class RanklesPrank extends Card {
                         new DiscardEffect(2, DiscardRecipient.EACH_PLAYER)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player loses 4 life",
-                        new LoseLifeEffect(4, LoseLifeRecipient.EACH_PLAYER)),
+                        new LoseLifeEffect(4, Subjects.eachPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player sacrifices two creatures of their choice",
                         new SacrificePermanentsEffect(2, new PermanentIsCreaturePredicate(),

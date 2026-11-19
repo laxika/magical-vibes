@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -36,7 +36,7 @@ public class CruelUltimatum extends Card {
                 .addSpellEffect(new SacrificePermanentsEffect(
                         1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER))
                 .addSpellEffect(new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER))
-                .addSpellEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
+                .addSpellEffect(new LoseLifeEffect(5, Subjects.targetPlayer()));
 
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

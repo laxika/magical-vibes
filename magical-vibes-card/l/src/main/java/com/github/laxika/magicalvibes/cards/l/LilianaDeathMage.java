@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -38,7 +38,7 @@ public class LilianaDeathMage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -3,
                 List.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER),
+                        new LoseLifeEffect(2, Subjects.controllerOf(Subjects.target())),
                         new DestroyTargetPermanentEffect()
                 ),
                 "\u22123: Destroy target creature. Its controller loses 2 life.",
@@ -50,7 +50,7 @@ public class LilianaDeathMage extends Card {
                 List.of(new LoseLifeEffect(
                         new Scaled(new CardsInGraveyard(
                                 new CardTypePredicate(CardType.CREATURE), CountScope.TARGET_PLAYER), 2),
-                        LoseLifeRecipient.TARGET_PLAYER)),
+                        Subjects.targetPlayer())),
                 "\u22127: Target opponent loses 2 life for each creature card in their graveyard.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

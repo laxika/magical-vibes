@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
@@ -36,7 +36,7 @@ public class MacCreadyLamplightMayor extends Card {
                                 new PermanentIsAttackingSourceControllerPredicate(),
                                 new PermanentPowerAtLeastPredicate(4)))),
                 SequenceEffect.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER),
+                        new LoseLifeEffect(2, Subjects.controllerOf(Subjects.target())),
                         new GainLifeEffect(2)));
     }
 }

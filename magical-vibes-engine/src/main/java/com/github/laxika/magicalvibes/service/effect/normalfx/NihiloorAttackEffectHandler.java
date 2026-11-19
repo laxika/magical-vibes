@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.NihiloorAttackEffect;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +37,6 @@ public class NihiloorAttackEffectHandler implements NormalEffectHandlerBean {
         entry.setTargetId(ownerId);
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
                 new GainLifeEffect(2),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
+                new LoseLifeEffect(2, Subjects.targetPlayer())));
     }
 }

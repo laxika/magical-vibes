@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "6ED", collectorNumber = "121")
 @CardRegistration(set = "WTH", collectorNumber = "66")
@@ -26,6 +26,6 @@ public class Doomsday extends Card {
         addSpellEffect(new DoomsdayEffect());
         addSpellEffect(new LoseLifeEffect(
                 new Divided(new Sum(new ControllerLifeTotal(), new Fixed(1)), 2),
-                LoseLifeRecipient.CONTROLLER));
+                Subjects.you()));
     }
 }

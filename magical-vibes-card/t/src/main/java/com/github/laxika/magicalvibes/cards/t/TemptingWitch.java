@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class TemptingWitch extends Card {
                                 "Sacrifice a Food",
                                 false
                         ),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(3, Subjects.targetPlayer())
                 ),
                 "{2}, {T}, Sacrifice a Food: Target player loses 3 life.",
                 new PlayerPredicateTargetFilter(

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class LampadOfDeathsVigil extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1)
                 ),
                 "{1}, Sacrifice a creature: Each opponent loses 1 life and you gain 1 life."

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class LilianasUndeadMinion extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
+                List.of(new LoseLifeEffect(1, Subjects.eachOpponent())),
                 "+1: Each opponent loses 1 life."
         ));
 

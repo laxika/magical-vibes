@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,6 +31,6 @@ public class PersonalIncarnation extends Card {
                 .withActivatableOnlyByOwner());
 
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new LoseLifeEffect(new HalfControllerLifeRoundedUp(), LoseLifeRecipient.OWNER));
+                new LoseLifeEffect(new HalfControllerLifeRoundedUp(), Subjects.ownerOf(Subjects.source())));
     }
 }

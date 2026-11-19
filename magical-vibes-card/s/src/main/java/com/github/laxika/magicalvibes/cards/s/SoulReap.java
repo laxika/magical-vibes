@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpell
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -39,6 +39,6 @@ public class SoulReap extends Card {
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                 .addSpellEffect(new ConditionalEffect(
                         new ControllerCastAnotherSpellThisTurn(new CardColorPredicate(CardColor.BLACK)),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
+                        new LoseLifeEffect(3, Subjects.controllerOf(Subjects.target()))));
     }
 }

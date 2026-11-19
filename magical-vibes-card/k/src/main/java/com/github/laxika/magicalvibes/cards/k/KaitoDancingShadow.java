@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnOneOfCombatDamageDealersToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -59,7 +59,7 @@ public class KaitoDancingShadow extends Card {
 
         List<Ability> tokenEffects = List.of(
                 new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(2, Subjects.eachOpponent()),
                         new GainLifeEffect(2))));
         addActivatedAbility(new ActivatedAbility(
                 -2,

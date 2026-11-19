@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class SanctumOfStoneFangs extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER);
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new LoseLifeEffect(shrinesYouControl, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(shrinesYouControl, Subjects.eachOpponent()),
                 new GainLifeEffect(shrinesYouControl));
     }
 }

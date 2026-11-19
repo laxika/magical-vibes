@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class RankOfficer extends Card {
                 "{1}{B}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(2, Subjects.eachOpponent())
                 ),
                 "{1}{B}, {T}, Exile a creature card from your graveyard: Each opponent loses 2 life."
         ));

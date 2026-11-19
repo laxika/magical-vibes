@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDrawsAndLosesLifePerChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -74,7 +74,7 @@ public class TargetPlayerDrawsAndLosesLifePerChosenTypeEffectHandler implements 
             drawService.resolveDrawCards(gameData, targetPlayerId, count);
             if (targetPlayerIds.size() == 1) {
                 entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                        List.of(new LoseLifeEffect(count, LoseLifeRecipient.TARGET_PLAYER)));
+                        List.of(new LoseLifeEffect(count, Subjects.targetPlayer())));
             } else {
                 losses.put(targetPlayerId, count);
             }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -36,7 +36,7 @@ public class AbundantMaw extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.youCastThisSpell(),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(3, Subjects.targetPlayer()),
                         new GainLifeEffect(3));
     }
 }

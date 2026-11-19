@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class PutridWarrior extends Card {
         addTrigger(Triggers.dealsDamage(), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player loses 1 life.",
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER)),
+                        new LoseLifeEffect(1, Subjects.eachPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player gains 1 life.",
                         SequenceEffect.of(

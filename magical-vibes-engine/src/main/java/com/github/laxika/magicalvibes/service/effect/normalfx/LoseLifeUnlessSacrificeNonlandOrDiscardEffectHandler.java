@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TormentState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -24,8 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link LoseLifeUnlessSacrificeNonlandOrDiscardEffect}: the player on the stack entry's
- * {@code targetId} (the enchanted player, for a Curse upkeep trigger) loses N life unless they
+ * Resolves {@link LoseLifeUnlessSacrificeNonlandOrDiscardEffect}: its player, found by
+ * {@link SubjectResolutionService}, loses N life unless they
  * sacrifice a nonland permanent of their choice or discard a card.
  *
  * <p>The single-player, single-pass slice of {@link TormentOfHailfireEffectHandler}: it reuses the
@@ -55,6 +57,7 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
     private final DestructionSupport destructionSupport;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,18 +71,11 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
         TormentState state = gameData.torment;
         String sourceName = entry.getCard().getName();
 
-        // Resolve the affected player (and, for the TARGET_PERMANENT_CONTROLLER variant, the targeted
-        // permanent that must be excluded from the sacrifice options — "another nonland permanent").
-        UUID excludedPermanentId = null;
-        UUID playerId;
-        if (e.recipient() == LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER) {
-            excludedPermanentId = entry.getTargetId();
-            playerId = excludedPermanentId == null
-                    ? null
-                    : gameQueryService.findPermanentController(gameData, excludedPermanentId);
-        } else {
-            playerId = entry.getTargetId();
-        }
+        // Resolve the affected player (and, for "its controller" of the targeted permanent, that permanent, which
+        // must be excluded from the sacrifice options — "another nonland permanent").
+        UUID excludedPermanentId = e.player() instanceof PlayerSubject.ControllerOf(PermanentSubject.Target ignored)
+                ? entry.getTargetId() : null;
+        UUID playerId = subjectResolutionService.player(gameData, entry, e, e.player());
         if (playerId == null || !gameData.playerIds.contains(playerId)) {
             finish(gameData, state);
             return;

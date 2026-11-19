@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpel
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -64,7 +64,7 @@ public class ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOf
                 entry.getControllerId(), entry.getCard(),
                 RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(null,
                                 List.of(new LoseLifeEffect(new TargetSpellManaValue(),
-                                        LoseLifeRecipient.TRIGGERING_CARD_OWNER)))
+                                        Subjects.ownerOf(Subjects.triggeringCard()))))
                         .withStackEntryFilter(new StackEntryCardIdPredicate(topCard.getId())).delayedAbility(),
                 entry.getSourcePermanentId()));
 

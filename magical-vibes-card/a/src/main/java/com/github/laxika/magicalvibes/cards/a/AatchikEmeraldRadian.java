@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -42,6 +42,6 @@ public class AatchikEmeraldRadian extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
+                        new LoseLifeEffect(1, Subjects.eachOpponent())));
     }
 }

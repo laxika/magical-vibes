@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -50,7 +50,7 @@ public class ProfessorDellianFel extends Card {
                 -6,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.youGainLife(),
-                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER))
+                                new LoseLifeEffect(new EventValue(), Subjects.targetPlayer()))
                                 .withTargetFilter(new PlayerPredicateTargetFilter(
                                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                         "Target must be an opponent")),

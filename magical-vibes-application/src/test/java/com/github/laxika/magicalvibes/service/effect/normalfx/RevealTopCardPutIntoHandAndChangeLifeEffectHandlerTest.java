@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,7 +102,7 @@ class RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest {
 
         assertThat(gd.playerHands.get(player1Id)).contains(topCard);
         assertThat(entry.getEffectsToResolve())
-                .containsExactly(effect, new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
+                .containsExactly(effect, new LoseLifeEffect(2, Subjects.you()));
         verifyNoInteractions(lifeSupport);
     }
 

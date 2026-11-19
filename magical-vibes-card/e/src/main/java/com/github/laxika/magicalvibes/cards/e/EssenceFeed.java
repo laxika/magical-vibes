@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class EssenceFeed extends Card {
 
     public EssenceFeed() {
-        addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(3, Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(3));
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,

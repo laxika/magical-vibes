@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -54,6 +54,6 @@ public class TheTricksterGodsHeist extends Card {
                         "Target must be a nonbasic, noncreature permanent"), 1, 1)
         ));
 
-        addTrigger(Triggers.chapter(3), new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(3));
+        addTrigger(Triggers.chapter(3), new LoseLifeEffect(3, Subjects.targetPlayer()), new GainLifeEffect(3));
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
@@ -56,7 +56,7 @@ public class RushOfDread extends Card {
                         "Target opponent loses half their life, rounded up",
                         new LoseLifeEffect(
                                 new HalvedRoundedUp(new TargetPlayerLifeTotal()),
-                                LoseLifeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         opponentFilter)
         )));
     }

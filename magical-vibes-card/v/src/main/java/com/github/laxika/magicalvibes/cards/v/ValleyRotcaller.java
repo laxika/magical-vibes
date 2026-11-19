@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class ValleyRotcaller extends Card {
                 CountScope.CONTROLLER,
                 true);
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new LoseLifeEffect(otherValleyCreatures, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(otherValleyCreatures, Subjects.eachOpponent()),
                 new GainLifeEffect(otherValleyCreatures)));
     }
 }

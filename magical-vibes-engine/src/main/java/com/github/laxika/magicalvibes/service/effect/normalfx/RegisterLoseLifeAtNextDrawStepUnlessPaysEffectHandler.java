@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,7 +43,7 @@ public class RegisterLoseLifeAtNextDrawStepUnlessPaysEffectHandler implements No
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
-                        new LoseLifeEffect(e.lifeLoss(), LoseLifeRecipient.TRIGGERING_PLAYER)),
+                        new LoseLifeEffect(e.lifeLoss(), Subjects.triggeringPlayer())),
                 entry.getSourcePermanentId(), null, playerId, "{" + e.payAmount() + "}"));
 
         String playerName = gameData.playerIdToName.get(playerId);

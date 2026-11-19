@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -26,6 +26,6 @@ public class Thoughtseize extends Card {
         // Target player reveals their hand; you choose a nonland card; that player discards it.
         addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
         // You lose 2 life.
-        addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(2, Subjects.you()));
     }
 }

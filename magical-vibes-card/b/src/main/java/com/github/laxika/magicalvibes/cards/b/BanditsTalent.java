@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsTwoUnlessNonlandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -54,7 +54,7 @@ public class BanditsTalent extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL),
                                 new ActivePlayerHandAtMost(1)))),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(2, Subjects.targetPlayer()));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
                 new DrawCardEffect(new PlayersWithCardsInHandAtMost(CountScope.OPPONENTS, 1)));

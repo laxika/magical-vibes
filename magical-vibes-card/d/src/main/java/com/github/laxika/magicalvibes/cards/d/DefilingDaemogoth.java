@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class DefilingDaemogoth extends Card {
     public DefilingDaemogoth() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new GainLifeEffect(1));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new LoseLifeEffect(new LifeGainedThisTurn(CountScope.CONTROLLER), LoseLifeRecipient.EACH_OPPONENT));
+                new LoseLifeEffect(new LifeGainedThisTurn(CountScope.CONTROLLER), Subjects.eachOpponent()));
     }
 }

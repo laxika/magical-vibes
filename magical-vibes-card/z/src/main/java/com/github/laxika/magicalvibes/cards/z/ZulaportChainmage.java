@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class ZulaportChainmage extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.ALLY), true, false),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(2, Subjects.targetPlayer())
                 ),
                 "{T}, Tap an untapped Ally you control: Target opponent loses 2 life.",
                 new PlayerPredicateTargetFilter(

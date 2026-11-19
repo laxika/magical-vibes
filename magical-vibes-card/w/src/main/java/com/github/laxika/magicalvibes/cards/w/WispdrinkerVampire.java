@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class WispdrinkerVampire extends Card {
 
     private static final SequenceEffect SMALL_CREATURE_TRIGGER = SequenceEffect.of(
-            new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+            new LoseLifeEffect(1, Subjects.eachOpponent()),
             new GainLifeEffect(1));
 
     public WispdrinkerVampire() {

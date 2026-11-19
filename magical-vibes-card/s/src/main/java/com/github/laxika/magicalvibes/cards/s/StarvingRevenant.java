@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -26,7 +26,7 @@ public class StarvingRevenant extends Card {
     public StarvingRevenant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SurveilThenEffect.direct(2, SequenceEffect.of(
                 new DrawCardEffect(new EventValue()),
-                new LoseLifeEffect(new Scaled(new EventValue(), 3), LoseLifeRecipient.CONTROLLER))));
+                new LoseLifeEffect(new Scaled(new EventValue(), 3), Subjects.you()))));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
@@ -34,7 +34,7 @@ public class StarvingRevenant extends Card {
         )).addTrigger(Triggers.youDrawCard(),
                 TriggerOptions.DEFAULT.withInterveningIf(new GraveyardCardThreshold(8, new CardIsPermanentPredicate())),
                 SequenceEffect.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new LoseLifeEffect(1, Subjects.targetPlayer()),
                         new GainLifeEffect(1)));
     }
 }

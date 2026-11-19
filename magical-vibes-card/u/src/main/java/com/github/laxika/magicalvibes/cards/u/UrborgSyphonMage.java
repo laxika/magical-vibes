@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class UrborgSyphonMage extends Card {
                 "{2}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT, true)
+                        new LoseLifeEffect(2, Subjects.eachOpponent(), true)
                 ),
                 "{2}{B}, {T}, Discard a card: Each other player loses 2 life. You gain life equal to the life lost this way."
         ));

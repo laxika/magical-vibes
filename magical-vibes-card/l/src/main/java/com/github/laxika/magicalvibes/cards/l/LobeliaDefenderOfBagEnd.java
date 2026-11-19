@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -42,7 +42,7 @@ public class LobeliaDefenderOfBagEnd extends Card {
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Each opponent loses 2 life and you gain 2 life",
                                         List.of(
-                                                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                                                new LoseLifeEffect(2, Subjects.eachOpponent()),
                                                 new GainLifeEffect(2))))
                 )),
                 "{T}, Sacrifice an artifact: Choose one — Until end of turn, you may play a card exiled with Lobelia without paying its mana cost. Each opponent loses 2 life and you gain 2 life."

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -39,7 +39,7 @@ public class DamoclesBaseSwordOfKang extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Lose 2 life and draw two cards",
                                 SequenceEffect.of(
-                                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                                        new LoseLifeEffect(2, Subjects.targetPlayer()),
                                         new DrawCardEffect(2))))));
 
         addActivatedAbility(new ActivatedAbility(

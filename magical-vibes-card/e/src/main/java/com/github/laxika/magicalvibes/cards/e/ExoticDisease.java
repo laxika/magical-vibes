@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -19,7 +19,7 @@ public class ExoticDisease extends Card {
                 "Target must be a player"
         ));
         addSpellEffect(new LoseLifeEffect(
-                new BasicLandTypesAmongControlledLands(), LoseLifeRecipient.TARGET_PLAYER));
+                new BasicLandTypesAmongControlledLands(), Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(new BasicLandTypesAmongControlledLands()));
     }
 }

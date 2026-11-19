@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class TalionTheKindlyLord extends Card {
         addStaticEffect(new ChooseNumberOnEnterEffect(1, 10));
         addTrigger(Triggers.opponentCastsSpell()
                         .withStackEntryFilter(new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate()),
-                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER),
+                new LoseLifeEffect(2, Subjects.triggeringPlayer()),
                 new DrawCardEffect(1));
     }
 }

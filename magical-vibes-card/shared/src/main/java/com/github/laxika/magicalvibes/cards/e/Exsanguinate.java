@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOM", collectorNumber = "61")
 @CardRegistration(set = "FDN", collectorNumber = "173")
@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class Exsanguinate extends Card {
 
     public Exsanguinate() {
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT, true));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.eachOpponent(), true));
     }
 }

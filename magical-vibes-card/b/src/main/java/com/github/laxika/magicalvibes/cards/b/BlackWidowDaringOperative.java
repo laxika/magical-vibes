@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,6 +25,6 @@ public class BlackWidowDaringOperative extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new LoseLifeEffect(
                         new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
-                        LoseLifeRecipient.EACH_OPPONENT));
+                        Subjects.eachOpponent()));
     }
 }

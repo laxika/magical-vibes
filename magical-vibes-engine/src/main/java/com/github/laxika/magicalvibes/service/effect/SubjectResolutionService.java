@@ -284,6 +284,18 @@ public class SubjectResolutionService {
                 Permanent source = sourceAsItIsOrWas(ctx);
                 yield listOf(source == null ? null : source.getRememberedTargetPlayerId());
             }
+            case PlayerSubject.ChosenPlayers ignored -> {
+                Permanent source = sourceAsItIsOrWas(ctx);
+                yield source == null ? List.of() : source.getRememberedTargetPlayerIds().stream()
+                        .filter(gameData.playerIds::contains)
+                        .toList();
+            }
+            case PlayerSubject.Except except -> {
+                List<UUID> excluded = players(ctx, except.excluded());
+                yield players(ctx, except.players()).stream()
+                        .filter(playerId -> !excluded.contains(playerId))
+                        .toList();
+            }
         };
         return inApnapOrder(gameData, players);
     }
@@ -321,13 +333,25 @@ public class SubjectResolutionService {
      */
     private List<UUID> owners(Context ctx, PermanentSubject permanent) {
         if (permanent instanceof PermanentSubject.TriggeringCard) {
-            return listOf(gameQueryService.findTriggeringCardOwner(ctx.gameData(), ctx.entry()));
+            return listOf(triggeringCardOwner(ctx));
         }
         List<UUID> owners = new ArrayList<>();
         for (UUID id : ids(ctx, permanent)) {
             owners.add(ownerOf(ctx, id));
         }
         return owners.stream().filter(Objects::nonNull).toList();
+    }
+
+    /**
+     * The owner of the spell cast or land played; else of the card the event put into a graveyard or moved, recorded as
+     * it happened; else of the permanent that entered, as it is or as it last existed (CR 608.2h).
+     */
+    private UUID triggeringCardOwner(Context ctx) {
+        UUID owner = gameQueryService.findTriggeringCardOwner(ctx.gameData(), ctx.entry());
+        if (owner == null) {
+            owner = ctx.entry().getTriggeringPermanentOwnerId();
+        }
+        return owner != null ? owner : gameQueryService.findTriggeringPermanentOwner(ctx.gameData(), ctx.entry());
     }
 
     private UUID ownerOf(Context ctx, UUID permanentId) {

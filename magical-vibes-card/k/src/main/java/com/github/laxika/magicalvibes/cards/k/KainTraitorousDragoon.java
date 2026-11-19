@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,6 +31,6 @@ public class KainTraitorousDragoon extends Card {
                         SequenceEffect.of(
                                 new DrawCardEffect(damage),
                                 CreateTokenEffect.ofTreasureToken(damage, true),
-                                new LoseLifeEffect(damage, LoseLifeRecipient.CONTROLLER))));
+                                new LoseLifeEffect(damage, Subjects.you()))));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class EngineRat extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{B}",
-                List.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)),
+                List.of(new LoseLifeEffect(2, Subjects.eachOpponent())),
                 "{5}{B}: Each opponent loses 2 life."
         ));
     }

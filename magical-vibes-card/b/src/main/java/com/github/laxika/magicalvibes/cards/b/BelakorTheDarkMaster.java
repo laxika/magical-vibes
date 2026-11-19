@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class BelakorTheDarkMaster extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON), CountScope.CONTROLLER);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(demons),
-                new LoseLifeEffect(demons, LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(demons, Subjects.you()));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

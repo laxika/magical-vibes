@@ -86,7 +86,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     /**
      * "That card" of a "whenever you play a card" event: the spell cast or the land played that the trigger event was
      * about, which need not be a permanent. Its permanent is the land on the battlefield; {@code ownerOf} reads the
-     * card's owner wherever the card is.
+     * card's owner wherever the card is, and for an event about no spell or land, the owner of the card or permanent
+     * the event was about (a card put into a graveyard, a permanent that entered, as it is or last was).
      */
     record TriggeringCard() implements PermanentSubject {
 

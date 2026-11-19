@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class ScrollOfGriselbrand extends Card {
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
                         new ConditionalEffect(
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DEMON)),
-                                new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))),
+                                new LoseLifeEffect(3, Subjects.targetPlayer()))),
                 "{1}, Sacrifice Scroll of Griselbrand: Target opponent discards a card. If you control a Demon, that player loses 3 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

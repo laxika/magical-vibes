@@ -53,7 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
@@ -360,7 +360,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("Targeting MayEffect waits at the door for its target (CR 603.3d)")
     void targetingGoesToPendingTargets() {
         Card card = createCreature("Targeted May", 2, 2);
-        var may = new MayEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), "Drain?");
+        var may = new MayEffect(new LoseLifeEffect(3, Subjects.targetPlayer()), "Drain?");
         Permanent perm = new Permanent(card);
         var ctx = dies(card, PLAYER1_ID, perm);
 

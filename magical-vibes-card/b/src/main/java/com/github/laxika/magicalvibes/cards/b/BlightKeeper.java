@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -20,7 +20,7 @@ public class BlightKeeper extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{7}{B}",
-                List.of(new SacrificeSelfCost(), new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER),
+                List.of(new SacrificeSelfCost(), new LoseLifeEffect(4, Subjects.targetPlayer()),
                         new GainLifeEffect(4)),
                 "{7}{B}, {T}, Sacrifice Blight Keeper: Target opponent loses 4 life and you gain 4 life.",
                 new PlayerPredicateTargetFilter(

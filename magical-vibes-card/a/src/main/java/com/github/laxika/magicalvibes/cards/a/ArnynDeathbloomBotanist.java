@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -29,7 +29,7 @@ public class ArnynDeathbloomBotanist extends Card {
 
     private static final SequenceEffect DRAIN =
             SequenceEffect.of(
-                    new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                    new LoseLifeEffect(2, Subjects.targetPlayer()),
                     new GainLifeEffect(2));
 
     private static final CardEffect CONDITIONAL_DRAIN =

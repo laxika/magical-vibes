@@ -30,6 +30,7 @@ public final class Subjects {
     private static final PlayerSubject DEFENDING_PLAYER = new PlayerSubject.DefendingPlayer();
     private static final PlayerSubject ENCHANTED_PLAYER = new PlayerSubject.EnchantedPlayer();
     private static final PlayerSubject CHOSEN_PLAYER = new PlayerSubject.ChosenPlayer();
+    private static final PlayerSubject CHOSEN_PLAYERS = new PlayerSubject.ChosenPlayers();
 
     private Subjects() {
     }
@@ -67,7 +68,10 @@ public final class Subjects {
         return TRIGGERING;
     }
 
-    /** "That card" of a "whenever you play a card" event: the spell cast or land played the trigger was about. */
+    /**
+     * "That card": the spell cast or land played the trigger was about; with {@link #ownerOf}, also the card a
+     * graveyard or zone-change event was about, or the permanent that entered, as it is or last was.
+     */
     public static PermanentSubject triggeringCard() {
         return TRIGGERING_CARD;
     }
@@ -178,5 +182,15 @@ public final class Subjects {
     /** "The chosen player": the player the source chose as it entered. */
     public static PlayerSubject chosenPlayer() {
         return CHOSEN_PLAYER;
+    }
+
+    /** "The chosen players": every player the source chose as it entered. */
+    public static PlayerSubject chosenPlayers() {
+        return CHOSEN_PLAYERS;
+    }
+
+    /** The players {@code players} names but those {@code excluded} names ("the other chosen player"). */
+    public static PlayerSubject except(PlayerSubject players, PlayerSubject excluded) {
+        return new PlayerSubject.Except(players, excluded);
     }
 }

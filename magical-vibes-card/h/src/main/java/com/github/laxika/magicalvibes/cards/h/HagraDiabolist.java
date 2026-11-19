@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +32,7 @@ public class HagraDiabolist extends Card {
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new MayEffect(new LoseLifeEffect(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER),
-                        LoseLifeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                         "Have target player lose life equal to the number of Allies you control?"));
     }
 }

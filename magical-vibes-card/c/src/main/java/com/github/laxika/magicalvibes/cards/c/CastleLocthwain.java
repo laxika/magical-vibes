@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class CastleLocthwain extends Card {
                 "{1}{B}{B}",
                 List.of(
                         new DrawCardEffect(),
-                        new LoseLifeEffect(new CardsInHand(CountScope.CONTROLLER), LoseLifeRecipient.CONTROLLER)),
+                        new LoseLifeEffect(new CardsInHand(CountScope.CONTROLLER), Subjects.you())),
                 "{1}{B}{B}, {T}: Draw a card, then you lose life equal to the number of cards in your hand."
         ));
     }

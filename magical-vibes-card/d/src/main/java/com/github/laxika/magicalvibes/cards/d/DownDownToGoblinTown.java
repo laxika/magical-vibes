@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -33,7 +33,7 @@ public class DownDownToGoblinTown extends Card {
 
     private void addLifeDrainChapter(int chapter) {
         addTrigger(Triggers.chapter(chapter),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new LoseLifeEffect(1, Subjects.targetPlayer()),
                 new GainLifeEffect(1));
         setSagaChapterTargetFilter(chapter, Set.of(opponentTargetFilter()));
     }

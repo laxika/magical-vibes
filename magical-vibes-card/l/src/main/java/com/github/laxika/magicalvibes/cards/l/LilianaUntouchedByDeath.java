@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGra
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -34,7 +34,7 @@ public class LilianaUntouchedByDeath extends Card {
                         3,
                         new CardSubtypePredicate(CardSubtype.ZOMBIE),
                         new SequenceEffect(List.of(
-                                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(2, Subjects.eachOpponent()),
                                 new GainLifeEffect(2))))),
                 "+1: Mill three cards. If at least one Zombie card is milled this way, "
                         + "each opponent loses 2 life and you gain 2 life."

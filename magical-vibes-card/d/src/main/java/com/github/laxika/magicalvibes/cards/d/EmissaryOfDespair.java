@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class EmissaryOfDespair extends Card {
         // TARGET_PLAYER count scope reads that player's artifacts.
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new LoseLifeEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.TARGET_PLAYER),
-                LoseLifeRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
     }
 }

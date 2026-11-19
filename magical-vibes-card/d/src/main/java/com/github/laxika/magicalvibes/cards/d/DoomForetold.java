@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -41,7 +41,7 @@ public class DoomForetold extends Card {
     private static SequenceEffect fallbackEffect() {
         return SequenceEffect.of(
                 new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER),
-                new LoseLifeEffect(2, LoseLifeRecipient.ACTIVE_PLAYER),
+                new LoseLifeEffect(2, Subjects.activePlayer()),
                 new DrawCardEffect(),
                 new GainLifeEffect(2),
                 new CreateTokenEffect("Knight", 2, 2, CardColor.WHITE,

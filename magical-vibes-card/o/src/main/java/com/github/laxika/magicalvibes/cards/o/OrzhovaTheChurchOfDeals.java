@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class OrzhovaTheChurchOfDeals extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{W}{B}",
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(1)),
+                List.of(new LoseLifeEffect(1, Subjects.targetPlayer()), new GainLifeEffect(1)),
                 "{3}{W}{B}, {T}: Target player loses 1 life and you gain 1 life."
         ));
     }

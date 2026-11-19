@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,6 +19,6 @@ public class MonumentToEndurance extends Card {
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1)),
                 new ChooseOneEffect.ChooseOneOption("Create a Treasure token", CreateTokenEffect.ofTreasureToken(1)),
                 new ChooseOneEffect.ChooseOneOption("Each opponent loses 3 life",
-                        new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT)))));
+                        new LoseLifeEffect(3, Subjects.eachOpponent())))));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenDrawAndLoseLifePerCounterEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -48,6 +48,6 @@ public class PutCounterOnSelfThenDrawAndLoseLifePerCounterEffectHandler implemen
         // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery sacrifice
         // asks (CR 616.1f) reruns only the loss, not the counter or the draw.
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                List.of(new LoseLifeEffect(amount, LoseLifeRecipient.CONTROLLER)));
+                List.of(new LoseLifeEffect(amount, Subjects.you())));
     }
 }

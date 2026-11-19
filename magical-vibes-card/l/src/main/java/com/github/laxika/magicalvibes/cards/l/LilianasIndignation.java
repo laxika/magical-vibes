@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,6 +25,6 @@ public class LilianasIndignation extends Card {
         )).addSpellEffect(new MillControllerThenIfMilledEffect(
                 new XValue(),
                 new CardTypePredicate(CardType.CREATURE),
-                new LoseLifeEffect(new Scaled(new EventValue(), 2), LoseLifeRecipient.TARGET_PLAYER)));
+                new LoseLifeEffect(new Scaled(new EventValue(), 2), Subjects.targetPlayer())));
     }
 }

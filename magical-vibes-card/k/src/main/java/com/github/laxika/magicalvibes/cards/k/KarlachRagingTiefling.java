@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekInstantOrSorceryAndMayCastFreeEffect;
@@ -80,7 +80,7 @@ public class KarlachRagingTiefling extends Card {
                     new SacrificePermanentThenEffect(
                             new PermanentIsCreaturePredicate(),
                             SequenceEffect.of(new DrawCardEffect(2),
-                                    new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)),
+                                    new LoseLifeEffect(2, Subjects.eachOpponent())),
                             "a creature", false, false),
                     "Sacrifice a creature?");
             case BLUE -> new SeekInstantOrSorceryAndMayCastFreeEffect();

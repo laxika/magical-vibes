@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +22,7 @@ public class DeathWatch extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                 SequenceEffect.of(
                         new LoseLifeEffect(new TriggeringPermanentPower(),
-                                LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER),
+                                Subjects.controllerOf(Subjects.triggering())),
                         new GainLifeEffect(new TriggeringPermanentToughness())));
     }
 }

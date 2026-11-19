@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CON", collectorNumber = "47")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class InfectiousHorror extends Card {
 
     public InfectiousHorror() {
-        addTrigger(Triggers.attacks(), new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.attacks(), new LoseLifeEffect(2, Subjects.eachOpponent()));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public final class DelayedObligations {
                                                                                int payAmount) {
         return TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(controllerId, source,
                 new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
-                        new LoseLifeEffect(lifeLoss, LoseLifeRecipient.TRIGGERING_PLAYER)),
+                        new LoseLifeEffect(lifeLoss, Subjects.triggeringPlayer())),
                 null, null, playerId, "{" + payAmount + "}");
     }
 }

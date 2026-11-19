@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -54,10 +54,10 @@ public class RevivalRevenge extends Card {
                                         new GainLifeEffect(new ControllerLifeTotal())),
                                 new ConditionalEffect(new ControllerLifeAtMost(-1),
                                         new LoseLifeEffect(new Scaled(new ControllerLifeTotal(), -1),
-                                                LoseLifeRecipient.CONTROLLER)),
+                                                Subjects.you())),
                                 new LoseLifeEffect(
                                         new HalvedRoundedUp(new TargetPlayerLifeTotal()),
-                                        LoseLifeRecipient.TARGET_PLAYER)
+                                        Subjects.targetPlayer())
                         ),
                         opponent
                 ).withManaCost("{4}{W}{B}")

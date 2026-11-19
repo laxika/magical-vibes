@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class ShriekingAffliction extends Card {
         // hand, they lose 3 life."
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(1)),
-                new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(3, Subjects.targetPlayer()));
     }
 }

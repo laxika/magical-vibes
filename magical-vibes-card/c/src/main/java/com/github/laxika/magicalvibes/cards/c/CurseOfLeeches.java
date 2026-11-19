@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LeechingLurker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +17,7 @@ public class CurseOfLeeches extends Card {
     public CurseOfLeeches() {
         setBackFaceCard(new LeechingLurker());
         addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER), SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER),
+                new LoseLifeEffect(1, Subjects.activePlayer()),
                 new GainLifeEffect(1)));
     }
 

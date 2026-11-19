@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -20,6 +20,6 @@ public class GethsVerdict extends Card {
                 "Target must be a player"
         )).addSpellEffect(new SacrificePermanentsEffect(
                   1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER))
-          .addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+          .addSpellEffect(new LoseLifeEffect(1, Subjects.targetPlayer()));
     }
 }

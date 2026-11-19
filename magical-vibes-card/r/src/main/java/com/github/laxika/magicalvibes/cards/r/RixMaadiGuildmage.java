@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
@@ -33,7 +33,7 @@ public class RixMaadiGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{R}",
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                List.of(new LoseLifeEffect(1, Subjects.targetPlayer())),
                 "{B}{R}: Target player who lost life this turn loses 1 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerLostLifeThisTurnPredicate(),

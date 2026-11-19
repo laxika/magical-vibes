@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.amount.PileGroupingOrGuessCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class TheCelestialToymaker extends Card {
                 true, false, true, true));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new LoseLifeEffect(
                 new Scaled(new PileGroupingOrGuessCountThisTurn(), 2),
-                LoseLifeRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
     }
 }

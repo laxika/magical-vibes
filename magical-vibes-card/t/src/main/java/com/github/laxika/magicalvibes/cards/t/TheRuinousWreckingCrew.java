@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class TheRuinousWreckingCrew extends Card {
         PlayerPredicateTargetFilter opponentTargetFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
         SpellTarget opponentTarget = target(opponentTargetFilter);
-        LoseLifeEffect loseLife = new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER);
+        LoseLifeEffect loseLife = new LoseLifeEffect(2, Subjects.targetPlayer());
         registerEffectTargetIndex(loseLife, opponentTarget.getIndex());
 
         PermanentIsTokenPredicate tokenPredicate = new PermanentIsTokenPredicate();

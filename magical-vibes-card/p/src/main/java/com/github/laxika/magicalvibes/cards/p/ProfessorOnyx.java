@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseL
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -30,7 +30,7 @@ public class ProfessorOnyx extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
         List<CardEffect> magecraft = List.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(2, Subjects.eachOpponent()),
                 new GainLifeEffect(2));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));
@@ -39,7 +39,7 @@ public class ProfessorOnyx extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER),
+                        new LoseLifeEffect(1, Subjects.you()),
                         LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1)),
                 "+1: You lose 1 life. Look at the top three cards of your library. Put one of them "
                         + "into your hand and the rest into your graveyard."

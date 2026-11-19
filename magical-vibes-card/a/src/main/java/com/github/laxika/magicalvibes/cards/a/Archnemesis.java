@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetPlaye
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
@@ -32,7 +32,7 @@ public class Archnemesis extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentIsAttackingEnchantedPlayerPredicate())),
                 SequenceEffect.of(
-                                new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER),
+                                new LoseLifeEffect(2, Subjects.defendingPlayer()),
                                 new DrawCardEffect(1),
                                 new GainLifeEffect(2)
                         ));

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,6 +31,6 @@ public class ShrivelingRot extends Card {
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
                                 new LoseLifeEffect(new TriggeringPermanentToughness(),
-                                        LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER)))))));
+                                        Subjects.controllerOf(Subjects.triggering()))))))));
     }
 }

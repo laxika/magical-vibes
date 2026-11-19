@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingCardTypeWithTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -25,6 +25,6 @@ public class Skybreen extends Card {
                 "Target must be a player"
         )).addTrigger(Triggers.chaosEnsues(),
                 new LoseLifeEffect(new CardsInHand(CountScope.TARGET_PLAYER),
-                        LoseLifeRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

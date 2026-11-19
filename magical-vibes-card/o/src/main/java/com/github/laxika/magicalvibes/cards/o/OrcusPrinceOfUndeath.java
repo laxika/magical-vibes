@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -31,7 +31,7 @@ public class OrcusPrinceOfUndeath extends Card {
                                         new Scaled(new XValue(), -1),
                                         new Scaled(new XValue(), -1),
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
-                                new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER))),
+                                new LoseLifeEffect(new XValue(), Subjects.you()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return up to X target creature cards with total mana value X or less from your graveyard to the battlefield. They gain haste until end of turn",
                         ReturnTargetCardsFromGraveyardToBattlefieldEffect.withinTotalManaValue(

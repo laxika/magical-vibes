@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class EmberwildeCaliph extends Card {
         addStaticEffect(new MustAttackEffect());
 
         // Whenever this creature deals damage, you lose that much life.
-        addTrigger(Triggers.dealsDamage(), new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER, false));
+        addTrigger(Triggers.dealsDamage(), new LoseLifeEffect(new EventValue(), Subjects.you(), false));
     }
 }

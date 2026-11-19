@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentsPutIntoGraveyardFro
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +22,7 @@ public class OminousHarvest extends Card {
                 "Target must be a player"
         ))
                 .addSpellEffect(new DrawCardEffect(1, Subjects.targetPlayer()))
-                .addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new LoseLifeEffect(1, Subjects.targetPlayer()))
                 .addTrigger(Triggers.youCastThisSpell(),
                         new CopyTriggeringSpellEffect().withCopies(new PermanentsPutIntoGraveyardFromBattlefieldThisTurn()));
     }

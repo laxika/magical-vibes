@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 
@@ -12,7 +12,7 @@ public class ChancellorOfTheDross extends Card {
 
     public ChancellorOfTheDross() {
         addStaticEffect(new MayEffect(
-                new RegisterOpeningHandUpkeepTriggerEffect(new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT, true)),
+                new RegisterOpeningHandUpkeepTriggerEffect(new LoseLifeEffect(3, Subjects.eachOpponent(), true)),
                 "Reveal this card from your opening hand?"
         ));
     }

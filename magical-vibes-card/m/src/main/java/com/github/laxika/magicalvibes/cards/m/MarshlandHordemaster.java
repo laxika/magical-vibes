@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +23,7 @@ import java.util.List;
 public class MarshlandHordemaster extends Card {
 
     private static final SequenceEffect DEATH_TRIGGER = SequenceEffect.of(
-            new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+            new LoseLifeEffect(1, Subjects.targetPlayer()),
             new GainLifeEffect(1));
 
     public MarshlandHordemaster() {

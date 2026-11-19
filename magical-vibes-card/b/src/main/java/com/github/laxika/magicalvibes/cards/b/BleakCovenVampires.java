@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -17,6 +17,6 @@ public class BleakCovenVampires extends Card {
     public BleakCovenVampires() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()),
-                SequenceEffect.of(new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(4)));
+                SequenceEffect.of(new LoseLifeEffect(4, Subjects.targetPlayer()), new GainLifeEffect(4)));
     }
 }

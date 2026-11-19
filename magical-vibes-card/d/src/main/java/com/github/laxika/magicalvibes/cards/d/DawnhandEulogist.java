@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class DawnhandEulogist extends Card {
                 new ConditionalEffect(
                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.ELF)),
                         SequenceEffect.of(
-                                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(2, Subjects.eachOpponent()),
                                 new GainLifeEffect(2))
                 )
         ));

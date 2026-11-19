@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveEndeavorEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -82,7 +82,7 @@ public class GraveEndeavorEffectHandler implements NormalEffectHandlerBean {
                         .mandatory(true)
                         .plusOneCounterCount(chosenRoll)
                         .build(),
-                new LoseLifeEffect(otherRoll, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(otherRoll, Subjects.eachOpponent()),
                 new GainLifeEffect(otherRoll)));
     }
 }

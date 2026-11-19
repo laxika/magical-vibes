@@ -45,7 +45,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -975,7 +975,7 @@ class ValidTargetServiceTest {
 
         private ActivatedAbility damagedPlayerLifeLossAbility() {
             return new ActivatedAbility(false, "{B}",
-                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                    List.of(new LoseLifeEffect(1, Subjects.targetPlayer())),
                     "Target player dealt damage by this creature this turn loses 1 life",
                     new PlayerPredicateTargetFilter(new PlayerDamagedBySourceThisTurnPredicate(),
                             "Target player must have been dealt damage by this creature this turn"));

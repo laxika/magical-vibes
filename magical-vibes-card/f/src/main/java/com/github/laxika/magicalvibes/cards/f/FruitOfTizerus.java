@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -19,7 +19,7 @@ public class FruitOfTizerus extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        )).addSpellEffect(new LoseLifeEffect(2, Subjects.targetPlayer()));
         addCastingOption(new GraveyardCast(null, "{3}{B}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
     }

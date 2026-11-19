@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "84")
@@ -17,7 +17,7 @@ public class CertainDeath extends Card {
     public CertainDeath() {
         target(TargetFilters.creature())
                 .addSpellEffect(new DestroyTargetPermanentEffect())
-                .addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
+                .addSpellEffect(new LoseLifeEffect(2, Subjects.controllerOf(Subjects.target())))
                 .addSpellEffect(new GainLifeEffect(2));
     }
 }

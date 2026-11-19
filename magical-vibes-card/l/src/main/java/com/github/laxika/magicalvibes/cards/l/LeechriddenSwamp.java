@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class LeechriddenSwamp extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
+                List.of(new LoseLifeEffect(1, Subjects.eachOpponent())),
                 "{B}, {T}: Each opponent loses 1 life. Activate only if you control two or more black permanents."
         ).withRequiredControlledPermanents(
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)), 2, "black permanents"));

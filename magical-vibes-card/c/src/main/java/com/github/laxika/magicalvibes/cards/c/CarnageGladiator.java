@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class CarnageGladiator extends Card {
         // The blocking creature is baked onto the trigger as its non-targeting target, so
         // TARGET_PERMANENT_CONTROLLER is "that creature's controller".
         addTrigger(Triggers.creatureBlocks(),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                new LoseLifeEffect(1, Subjects.controllerOf(Subjects.target())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

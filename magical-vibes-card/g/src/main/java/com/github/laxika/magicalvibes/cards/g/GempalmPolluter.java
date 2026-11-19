@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class GempalmPolluter extends Card {
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(
                 new LoseLifeEffect(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), CountScope.ANY_PLAYER),
-                        LoseLifeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 "Have target player lose life equal to the number of Zombies on the battlefield?"));
         addCycling("{B}{B}");
     }

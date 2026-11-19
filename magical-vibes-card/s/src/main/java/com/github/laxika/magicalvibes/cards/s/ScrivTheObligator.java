@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -54,7 +54,7 @@ public class ScrivTheObligator extends Card {
                         new ConditionalEffect(new AttackedTargetIsOpponent(),
                                 new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(2, 0)),
                         new ConditionalEffect(new NotCondition(new AttackedTargetIsOpponent()),
-                                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER))))),
+                                new LoseLifeEffect(2, Subjects.controllerOf(Subjects.triggering())))))),
                 List.of(),
                 false,
                 false,

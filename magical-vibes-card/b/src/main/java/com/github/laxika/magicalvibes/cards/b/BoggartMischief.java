@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BlightEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,6 +31,6 @@ public class BoggartMischief extends Card {
         addTrigger(Triggers.creatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         ObjectRelation.YOU_CONTROL),
-                SequenceEffect.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
+                SequenceEffect.of(new LoseLifeEffect(1, Subjects.eachOpponent()), new GainLifeEffect(1)));
     }
 }

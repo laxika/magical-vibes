@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "EOE", collectorNumber = "94")
@@ -17,9 +17,9 @@ public class DecodeTransmissions extends Card {
                 new VoidCondition(),
                 SequenceEffect.of(
                         new DrawCardEffect(2),
-                        new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER)),
+                        new LoseLifeEffect(2, Subjects.you())),
                 SequenceEffect.of(
                         new DrawCardEffect(2),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT))));
+                        new LoseLifeEffect(2, Subjects.eachOpponent()))));
     }
 }

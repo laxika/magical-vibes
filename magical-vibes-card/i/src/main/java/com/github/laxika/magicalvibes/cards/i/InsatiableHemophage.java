@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class InsatiableHemophage extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
                 "Mutate requires a non-Human creature with the spell's owner")));
         addTrigger(Triggers.mutates(), SequenceEffect.of(
-                new LoseLifeEffect(new TimesSourceMutated(), LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(new TimesSourceMutated(), Subjects.eachOpponent()),
                 new GainLifeEffect(new TimesSourceMutated())));
     }
 }

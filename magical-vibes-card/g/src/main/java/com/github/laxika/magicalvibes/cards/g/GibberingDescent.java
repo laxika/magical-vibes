@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,7 +19,7 @@ public class GibberingDescent extends Card {
         addCastingOption(new MadnessCast("{2}{B}{B}"));
         addStaticEffect(PlayersSkipUpkeepStepEffect.controllerWithEmptyHand());
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER),
+                new LoseLifeEffect(1, Subjects.activePlayer()),
                 new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER)));
     }
 }

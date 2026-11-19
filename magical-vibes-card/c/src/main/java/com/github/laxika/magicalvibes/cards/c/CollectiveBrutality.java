@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -54,7 +54,7 @@ public class CollectiveBrutality extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent loses 2 life and you gain 2 life",
                         List.of(
-                                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                                new LoseLifeEffect(2, Subjects.targetPlayer()),
                                 new GainLifeEffect(2)),
                         opponentFilter)
         )));

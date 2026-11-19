@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
                 assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
                 assertThat(entry.getEffectsToResolve())
-                        .containsExactly(effect, new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
+                        .containsExactly(effect, new LoseLifeEffect(2, Subjects.you()));
             }
 
             @Test

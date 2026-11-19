@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,7 +21,7 @@ public class PowerTaint extends Card {
         target(TargetFilters.enchantment()).addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                 ForcedCostOrElseEffect.enchantedControllerMayPay(
                         new PayManaCost("{2}"),
-                        List.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))));
+                        List.of(new LoseLifeEffect(2, Subjects.targetPlayer()))));
 
         // Cycling {2} ({2}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{2}");

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "BRC", collectorNumber = "9")
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class TerisiaresDevastation extends Card {
 
     public TerisiaresDevastation() {
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
         addSpellEffect(CreateTokenEffect.ofPowerstoneToken(new XValue()));
 
         // All creatures get -1/-1 until end of turn for each artifact you control.

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -20,7 +20,7 @@ import java.util.List;
 public class DeathCloud extends Card {
 
     public DeathCloud() {
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_PLAYER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.eachPlayer()));
         addSpellEffect(new DiscardEffect(new XValue(), DiscardRecipient.EACH_PLAYER));
         addSpellEffect(new SacrificePermanentsEffect(
                 new XValue(), new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),

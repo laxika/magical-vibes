@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class GontisMachinations extends Card {
                 List.of(
                         new PayEnergyCost(2),
                         new SacrificeSelfCost(),
-                        new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT, true)
+                        new LoseLifeEffect(3, Subjects.eachOpponent(), true)
                 ),
                 "Pay {E}{E}, Sacrifice this enchantment: Each opponent loses 3 life. You gain life equal to the life lost this way."
         ).withActivationCondition(new ControllerEnergyAtLeast(2),

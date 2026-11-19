@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -72,7 +72,7 @@ public class WitherbloomCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent loses 2 life and you gain 2 life",
                         List.of(
-                                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                                new LoseLifeEffect(2, Subjects.targetPlayer()),
                                 new GainLifeEffect(2)),
                         opponent)
         ), 2));

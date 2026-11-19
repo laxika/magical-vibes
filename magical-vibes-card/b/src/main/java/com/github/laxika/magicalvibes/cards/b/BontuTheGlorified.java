@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourContr
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
@@ -31,7 +31,7 @@ public class BontuTheGlorified extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
                         new ScryEffect(1),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1)
                 ),
                 "{1}{B}, Sacrifice another creature: Scry 1. Each opponent loses 1 life and you gain 1 life."

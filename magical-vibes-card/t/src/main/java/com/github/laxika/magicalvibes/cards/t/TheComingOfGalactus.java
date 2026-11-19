@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,8 +25,8 @@ public class TheComingOfGalactus extends Card {
     public TheComingOfGalactus() {
         addTrigger(Triggers.chapter(1), new DestroyTargetPermanentEffect(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addTrigger(Triggers.chapter(2), new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(3), new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2), new LoseLifeEffect(2, Subjects.eachOpponent()));
+        addTrigger(Triggers.chapter(3), new LoseLifeEffect(2, Subjects.eachOpponent()));
 
         CreateTokenEffect galactus = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Galactus", 16, 16,

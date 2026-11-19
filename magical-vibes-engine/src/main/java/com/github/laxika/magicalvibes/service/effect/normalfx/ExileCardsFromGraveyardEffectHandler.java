@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -97,7 +97,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                 // questions without exiling again.
                 List<CardEffect> steps = new ArrayList<>();
                 steps.add(new LoseLifeEffect(e.conditionalLifeLossEachOpponent() * riderMultiplier,
-                        LoseLifeRecipient.EACH_OPPONENT));
+                        Subjects.eachOpponent()));
                 if (e.conditionalLifeGain() > 0) {
                     steps.add(new GainLifeEffect(e.conditionalLifeGain() * riderMultiplier));
                 }

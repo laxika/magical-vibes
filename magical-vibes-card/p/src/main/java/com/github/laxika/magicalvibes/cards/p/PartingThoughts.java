@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class PartingThoughts extends Card {
                         EventStat.TOTAL_COUNTERS,
                         SequenceEffect.of(
                                 new DrawCardEffect(new EventValue()),
-                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER)),
+                                new LoseLifeEffect(new EventValue(), Subjects.you())),
                         ThenEffectRecipient.CONTROLLER));
     }
 }

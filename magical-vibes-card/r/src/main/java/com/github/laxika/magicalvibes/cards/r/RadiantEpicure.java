@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ public class RadiantEpicure extends Card {
 
     public RadiantEpicure() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(new XValue(), Subjects.eachOpponent()),
                 new GainLifeEffect(new XValue()));
     }
 }

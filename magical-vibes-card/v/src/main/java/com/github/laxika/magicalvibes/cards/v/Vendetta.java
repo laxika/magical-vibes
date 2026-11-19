@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -31,7 +31,7 @@ public class Vendetta extends Card {
                 "Target must be a nonblack creature"
         )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.TOUGHNESS,
-                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
+                new LoseLifeEffect(new EventValue(), Subjects.you()),
                 ThenEffectRecipient.CONTROLLER,
                 true
         ));

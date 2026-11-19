@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -60,7 +59,7 @@ public class SilverquillCommand extends Card {
                         "Target player draws a card and loses 1 life",
                         List.of(
                                 new DrawCardEffect(1, Subjects.targetPlayer()),
-                                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                                new LoseLifeEffect(1, Subjects.targetPlayer())),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices a creature of their choice",

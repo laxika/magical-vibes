@@ -72,7 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -434,7 +434,7 @@ public class ActivatedAbilityExecutionService {
                     if (amount <= 0) {
                         continue;
                     }
-                    for (UUID victimId : lifeLossRecipients(gameData, playerId, permanent, loss.recipient())) {
+                    for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.player())) {
                         losses.merge(victimId, 1, Integer::sum);
                     }
                 }
@@ -1949,7 +1949,7 @@ public class ActivatedAbilityExecutionService {
                 // here rather than on the stack.
                 int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                for (UUID victimId : lifeLossRecipients(gameData, playerId, permanent, loss.recipient())) {
+                for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.player())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
@@ -2077,14 +2077,11 @@ public class ActivatedAbilityExecutionService {
 
     /**
      * Whether a {@link LoseLifeEffect} bundled into a mana ability can be applied without the
-     * stack. Only the recipients that need no chosen target qualify; a {@code TARGET_*} recipient
-     * would make the ability targeted, which disqualifies it as a mana ability (CR 605.1a).
+     * stack. Only "you" and "each player" / "each opponent" qualify; a target player would make the
+     * ability targeted, which disqualifies it as a mana ability (CR 605.1a).
      */
     private static boolean isNonTargetedLifeLoss(LoseLifeEffect effect) {
-        return effect.recipient() == LoseLifeRecipient.CONTROLLER
-                || effect.recipient() == LoseLifeRecipient.SOURCE_CONTROLLER
-                || effect.recipient() == LoseLifeRecipient.EACH_PLAYER
-                || effect.recipient() == LoseLifeRecipient.EACH_OPPONENT;
+        return effect.player() instanceof PlayerSubject.You || effect.player() instanceof PlayerSubject.Each;
     }
 
     private static boolean isNonTargetedLifeGain(GainLifeEffect effect) {
@@ -2093,17 +2090,13 @@ public class ActivatedAbilityExecutionService {
                 || effect.recipient() == GainLifeRecipient.EACH_PLAYER;
     }
 
-    /** The players losing life, in turn order, for a non-targeted {@link LoseLifeRecipient}. */
-    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, Permanent source,
-                                                  LoseLifeRecipient recipient) {
-        return switch (recipient) {
-            case CONTROLLER -> List.of(controllerId);
-            case SOURCE_CONTROLLER -> {
-                UUID sourceControllerId = source == null ? null : gameData.findControllerOf(source);
-                yield sourceControllerId == null ? List.of() : List.of(sourceControllerId);
-            }
-            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
-            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
+    /** The players losing life, in turn order, for a non-targeted life loss's player subject. */
+    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, PlayerSubject player) {
+        return switch (player) {
+            case PlayerSubject.You ignored -> List.of(controllerId);
+            case PlayerSubject.Each each when each.relation() == PlayerSubject.Relation.ALL ->
+                    List.copyOf(gameData.orderedPlayerIds);
+            case PlayerSubject.Each ignored -> gameData.orderedPlayerIds.stream()
                     .filter(pid -> !pid.equals(controllerId))
                     .toList();
             default -> List.of();

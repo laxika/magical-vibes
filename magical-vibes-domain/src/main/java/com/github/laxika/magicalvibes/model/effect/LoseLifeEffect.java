@@ -5,81 +5,88 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Objects;
+
 /**
- * Makes one or more players lose life. A single record covers the whole life-loss family: the
- * {@link LoseLifeRecipient} routes who loses life (controller / target player / triggering player /
- * each player / each opponent / each other player) and the {@link DynamicAmount} covers fixed amounts ("loses 3 life"), an X value
- * (Exsanguinate), or a relational amount such as {@code PermanentCount} ("1 life for each Vampire
- * you control", Bishop of the Bloodstained) or {@code EventValue} ("equal to the life you gained",
- * Sanguine Bond). When {@code controllerGainsLifeLost} is set the controller then gains life equal
- * to the total life lost this way (the "each opponent loses N life, you gain that much" drain
- * pattern — Blood Tithe, Chancellor of the Dross, Exsanguinate).
+ * {@code player} loses {@code amount} life. One record covers the whole life-loss family: the {@link PlayerSubject}
+ * names who loses life (you, target player, that player, each opponent, its controller, ...) and the
+ * {@link DynamicAmount} covers fixed amounts ("loses 3 life"), an X value (Exsanguinate), or a relational amount such
+ * as {@code PermanentCount} ("1 life for each Vampire you control", Bishop of the Bloodstained) or {@code EventValue}
+ * ("equal to the life you gained", Sanguine Bond). When {@code controllerGainsLifeLost} is set the controller then gains
+ * life equal to the total life lost this way (the "each opponent loses N life, you gain that much" drain pattern —
+ * Blood Tithe, Chancellor of the Dross, Exsanguinate).
  *
- * <p>Life loss is <em>not</em> damage (CR 118.2): it is applied through the shared life-loss
- * primitive and feeds "loses life" triggers, never through damage plumbing.
+ * <p>Life loss is <em>not</em> damage: it adjusts the life total (CR 119.3), it is applied through the shared life-loss primitive and feeds
+ * "loses life" triggers, never through damage plumbing.
  *
- * <p>{@code exemptIfControls} narrows the {@code EACH_PLAYER} / {@code EACH_OPPONENT} scopes to the
- * players who control no permanent matching that predicate — "each opponent who doesn't control an
- * Elf loses 1 life" (Thornbow Archer). It is ignored by the single-player recipients.
+ * <p>{@code exemptIfControls} narrows an "each player" / "each opponent" subject ({@link PlayerSubject.Each},
+ * {@link PlayerSubject.OpponentsOf}) to the players who control no permanent matching that predicate — "each opponent
+ * who doesn't control an Elf loses 1 life" (Thornbow Archer). The other subjects ignore it.
+ *
+ * <p>Only {@link Subjects#targetPlayer()} declares a target (benign, any player).
  *
  * @param amount                  amount of life to lose
- * @param recipient               who loses life
+ * @param player                  who loses life
  * @param controllerGainsLifeLost when {@code true} the controller gains the total life lost
  * @param exemptIfControls        when non-null, players controlling a matching permanent are skipped
  * @param controllerGainsLifeLostCondition optional condition gating the controller's life gain
- * @param recordTargetLifeLost record the actual single-target life loss as the resolution event value
+ * @param recordTargetLifeLost record the actual life lost as the resolution event value
  */
-public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
+public record LoseLifeEffect(DynamicAmount amount, PlayerSubject player,
                              boolean controllerGainsLifeLost,
                              PermanentPredicate exemptIfControls,
                              Condition controllerGainsLifeLostCondition,
                              boolean recordTargetLifeLost) implements CardEffect {
 
-    public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
+    public LoseLifeEffect {
+        Objects.requireNonNull(player, "player");
+    }
+
+    public LoseLifeEffect(DynamicAmount amount, PlayerSubject player,
             boolean controllerGainsLifeLost, PermanentPredicate exemptIfControls,
             Condition controllerGainsLifeLostCondition) {
-        this(amount, recipient, controllerGainsLifeLost, exemptIfControls,
+        this(amount, player, controllerGainsLifeLost, exemptIfControls,
                 controllerGainsLifeLostCondition, false);
     }
 
-    public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
+    public LoseLifeEffect(DynamicAmount amount, PlayerSubject player,
             boolean controllerGainsLifeLost, PermanentPredicate exemptIfControls) {
-        this(amount, recipient, controllerGainsLifeLost, exemptIfControls, null);
+        this(amount, player, controllerGainsLifeLost, exemptIfControls, null);
     }
 
     /** Dynamic amount, with drain flag, no exemption. */
-    public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient, boolean controllerGainsLifeLost) {
-        this(amount, recipient, controllerGainsLifeLost, null, null);
+    public LoseLifeEffect(DynamicAmount amount, PlayerSubject player, boolean controllerGainsLifeLost) {
+        this(amount, player, controllerGainsLifeLost, null, null);
     }
 
     /** Fixed amount, with drain flag. */
-    public LoseLifeEffect(int amount, LoseLifeRecipient recipient, boolean controllerGainsLifeLost) {
-        this(new Fixed(amount), recipient, controllerGainsLifeLost, null, null);
+    public LoseLifeEffect(int amount, PlayerSubject player, boolean controllerGainsLifeLost) {
+        this(new Fixed(amount), player, controllerGainsLifeLost, null, null);
     }
 
     /** Dynamic amount, non-drain. */
-    public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient) {
-        this(amount, recipient, false, null, null);
+    public LoseLifeEffect(DynamicAmount amount, PlayerSubject player) {
+        this(amount, player, false, null, null);
     }
 
     /** Fixed amount, non-drain. */
-    public LoseLifeEffect(int amount, LoseLifeRecipient recipient) {
-        this(new Fixed(amount), recipient, false, null, null);
+    public LoseLifeEffect(int amount, PlayerSubject player) {
+        this(new Fixed(amount), player, false, null, null);
     }
 
     /** Fixed amount, non-drain, skipping players who control a matching permanent. */
-    public LoseLifeEffect(int amount, LoseLifeRecipient recipient, PermanentPredicate exemptIfControls) {
-        this(new Fixed(amount), recipient, false, exemptIfControls);
+    public LoseLifeEffect(int amount, PlayerSubject player, PermanentPredicate exemptIfControls) {
+        this(new Fixed(amount), player, false, exemptIfControls);
     }
 
     /** Fixed amount, controller loses life, non-drain (self life-loss cost/drawback). */
     public LoseLifeEffect(int amount) {
-        this(new Fixed(amount), LoseLifeRecipient.CONTROLLER, false, null, null);
+        this(new Fixed(amount), Subjects.you(), false, null, null);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return recipient == LoseLifeRecipient.TARGET_PLAYER
+        return player.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }

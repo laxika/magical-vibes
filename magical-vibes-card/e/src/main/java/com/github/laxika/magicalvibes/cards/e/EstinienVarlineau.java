@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -33,7 +33,7 @@ public class EstinienVarlineau extends Card {
                 "Estinien Varlineau", CardSubtype.DRAGON);
         addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU), SequenceEffect.of(
                 new DrawCardEffect(qualifyingCombatDamage),
-                new LoseLifeEffect(qualifyingCombatDamage, LoseLifeRecipient.CONTROLLER)
+                new LoseLifeEffect(qualifyingCombatDamage, Subjects.you())
         ));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,7 +31,7 @@ public class BolassCitadel extends Card {
                 List.of(
                         new SacrificeMultiplePermanentsCost(10,
                                 new PermanentNotPredicate(new PermanentIsLandPredicate())),
-                        new LoseLifeEffect(10, LoseLifeRecipient.EACH_OPPONENT)
+                        new LoseLifeEffect(10, Subjects.eachOpponent())
                 ),
                 "{T}, Sacrifice ten nonland permanents: Each opponent loses 10 life."
         ));

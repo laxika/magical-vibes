@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -218,11 +217,11 @@ class StepTriggerServiceTest {
         Card source = new Card();
         TemporaryGlobalTriggeredAbility activeObligation = TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
                 player1Id, source, new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER)),
+                        new LoseLifeEffect(1, Subjects.triggeringPlayer())),
                 null, null, player1Id, "{1}");
         TemporaryGlobalTriggeredAbility opponentObligation = TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
                 player1Id, source, new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER)),
+                        new LoseLifeEffect(1, Subjects.triggeringPlayer())),
                 null, null, player2Id, "{1}");
         gd.temporaryGlobalTriggeredAbilities.add(activeObligation);
         gd.temporaryGlobalTriggeredAbilities.add(opponentObligation);
@@ -1327,7 +1326,7 @@ class StepTriggerServiceTest {
             // Create the aura with the trigger (owned by player2)
             Card auraCard = createCardWithName("Numbing Dose");
             auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
+                    new LoseLifeEffect(1, Subjects.triggeringPlayer()));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
             gd.playerBattlefields.get(player2Id).add(auraPerm);
@@ -1374,7 +1373,7 @@ class StepTriggerServiceTest {
 
             Card auraCard = createCardWithName("Numbing Dose");
             auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
+                    new LoseLifeEffect(1, Subjects.triggeringPlayer()));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
             gd.playerBattlefields.get(player1Id).add(auraPerm);

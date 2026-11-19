@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,7 @@ public class DaiLiAgents extends Card {
                 )),
                 CountScope.CONTROLLER);
         addTrigger(Triggers.attacks(),
-                new LoseLifeEffect(creaturesWithCounters, LoseLifeRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(creaturesWithCounters, Subjects.eachOpponent()),
                 new GainLifeEffect(creaturesWithCounters));
     }
 }

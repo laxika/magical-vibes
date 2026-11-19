@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "161")
 @CardRegistration(set = "C14", collectorNumber = "162")
@@ -16,6 +16,6 @@ public class SkeletalScrying extends Card {
     public SkeletalScrying() {
         addCastingCost(new ExileXCardsFromGraveyardCost());
         addSpellEffect(new DrawCardEffect(new XValue()));
-        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
     }
 }

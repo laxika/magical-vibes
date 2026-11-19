@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardAndBoostEquippedCreatureByManaValueEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -64,7 +64,7 @@ public class RevealDrawnCardAndBoostEquippedCreatureByManaValueEffectHandler imp
         // asks its CR 616.1 questions without boosting the creature again.
         if (manaValue > 0) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                    List.of(new LoseLifeEffect(manaValue, LoseLifeRecipient.CONTROLLER)));
+                    List.of(new LoseLifeEffect(manaValue, Subjects.you())));
         }
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class RestlessFortress extends Card {
                         + "It's still a land."
         ));
         addTrigger(Triggers.attacks(),
-                new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER),
+                new LoseLifeEffect(2, Subjects.defendingPlayer()),
                 new GainLifeEffect(2));
     }
 }

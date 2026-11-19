@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -350,7 +350,7 @@ fold in, the enum and the absorbed classes are deleted.
 | Run | Verb and survivor | Old enum | Known siblings | Status |
 |---|---|---|---|---|
 | 4a | Draw: `DrawCardEffect` | none (plus `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` to check) | `DrawCardFor{Owner,TargetPlayer,DefendingPlayer,TriggeringPlayer,Player}Effect`, `DrawCardsForEachOpponentOfTriggeringPlayerEffect` | | done |
-| 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | open |
+| 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | done |
 | 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | open |
 | 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | open |
 | 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | open |
@@ -1098,6 +1098,75 @@ resolution (Standstill, Zenith Chronicler); the owner draw no longer re-bases a 
 - The non-declaring player read is what most "`TARGET_PLAYER`" constants without a declared target are (4b–4i): use
   `targetPlayerDeclaredElsewhere()` where a card's target filter or a companion effect declares the player, and
   `triggeringPlayer()` where a trigger baked it.
+
+### Step 4, run 4b (2026-11-19)
+
+**Survivor.** `LoseLifeEffect`'s `LoseLifeRecipient recipient` became `PlayerSubject player` (every constructor kept
+with the subject in the recipient's place; `(int)` is `you()`). Its handler asks `SubjectResolutionService` for the
+players and applies one `LifeSupport.applyLifeLosses` map; it keeps the amount context: one evaluation in the
+entry's context, re-based to the receiving player as target for `defendingPlayer()` and as controller for
+`ownerOf(source())` (Personal Incarnation), and once per target for a `targetPlayer` whose effect has several targets
+(raw `targetsForEffect` size, as before). The "each player" subjects are **not** evaluated per receiving player (they
+never were; the plan's note was wrong for this verb). `exemptIfControls` applies to `Each` / `OpponentsOf` only.
+`targetSpec()` is a benign player target iff `player.declaresTarget()`. The drain (`controllerGainsLifeLost`) and
+`recordTargetLifeLost` no longer check the recipient: every card using them had a recipient that allowed them, the
+drain always goes to the controller (the owner branch was only for `EACH_OTHER_PLAYER`, whose one card doesn't drain),
+and the Exsanguinate early-out on X ≤ 0 is gone (`applyLifeLoss` ignores a non-positive loss, so nothing drains).
+
+**Deleted**: the enum `LoseLifeRecipient` (no record or handler, so the ratchet stays 4,935 / 4,168). Mapping (step 3's
+table): `TARGET_PLAYER` → `targetPlayer()` everywhere it was used (it always declared, nested ones too; Pillar Tombs
+of Aku's `ForcedCostOrElseEffect` else-branch therefore still declares a benign player target, as before, for a
+"that player"; a later run can make it `triggeringPlayer()` once `DestructionSupport`'s else-branch reads it);
+`TRIGGERING_PLAYER` → `triggeringPlayer()` (35 cards plus Nafs Asp's delayed draw-step loss; every collector their
+triggers use writes the same player as `triggeringPlayerId` and the baked `targetId`); `ACTIVE_PLAYER` →
+`activePlayer()` (live; the entry's recorded active player is the same player for all ten cards: upkeep and combat
+triggers resolve in their turn); `DYING_CREATURE_CONTROLLER` / `TRIGGERING_PERMANENT_CONTROLLER` →
+`controllerOf(triggering())`; `TARGET_PERMANENT_CONTROLLER` → `controllerOf(target())` (all 24 are single-target);
+`TRIGGERING_CARD_OWNER` → `ownerOf(triggeringCard())`; `OWNER` → `ownerOf(source())`; `EACH_OTHER_PLAYER` →
+`opponentsOf(ownerOf(source()))`; `OTHER_CHOSEN_PLAYER` → `except(chosenPlayers(), triggeringPlayer())`;
+`SOURCE_CONTROLLER` was dead. `LoseLifeUnlessSacrificeNonlandOrDiscardEffect` (same enum) now takes a `PlayerSubject`:
+`triggeringPlayer()` (Torment of Scarabs, the `(int)` default), `targetPlayer()` (Thornplate Intimidator, Starseer
+Mentor; was the `targetsPlayer` flag), `targetPlayerDeclaredElsewhere()` (Tergrid's Lantern), `controllerOf(target())`
+(Torment of Venom, which still excludes the target from the sacrifice options). 742 card files rewritten by a
+deleted scratch script (740 named the enum, plus the two `targetsPlayer` cards), 25 engine and 12 application-test
+files.
+
+**New variants.** `chosenPlayers()` (every player the source remembered, in play, APNAP order) and
+`except(players, excluded)`. `ownerOf(triggeringCard())` now falls back like the old `TRIGGERING_CARD_OWNER`:
+spell or land played → the entry's recorded triggering-permanent owner → the triggering permanent's owner as it is or
+last was (Liability, The Dark Barony, Brainstealer Dragon); Apple of Eden always has a played card, so it is unchanged.
+
+**AI and other readers.** `SpellEvaluator` scores `you()` as before and `eachOpponent()` drains as before; the mana
+ability path (`ActivatedAbilityExecutionService.isNonTargetedLifeLoss` / `lifeLossRecipients`) accepts `you()` and
+`each*` (it still applies them inline, seat order, no exemption); `DestructionSupport`'s unless-branches match `You` /
+`TargetPlayer`; `LifeTargetValidators` requires a player target iff the subject declares one. `AiDecisionEngine`
+reads only the amount.
+
+**Behaviour differences** (none changes a tested outcome): several players lose life in APNAP order instead of seat
+order (life-loss triggers are put on the stack in that order); several target players likewise; `controllerOf(target())`
+also finds a target that left through the entry's last-known controller (Torment of Venom: only if the creature left
+before the loss, which no card does); the owner of Personal Incarnation is `GameData.ownerOf` (honours owner overrides)
+instead of the raw card owner; a `targetPlayer()` whose bound target group is empty no longer falls back to the first
+flat target.
+
+**Doc fix.** The old Javadoc and `DestructionSupport` cited CR 118.2 for "life loss is not damage"; 118.2 is about
+paying mana. Now CR 119.3 (an effect makes a player lose life; the total is adjusted).
+
+**For later runs.**
+
+- The lose-life siblings stay (ledger, `blocked-other`): the per-receiving-player amounts
+  (`EachPlayerLosesLifePer{Creature,Permanent}Controlled`, `EachOpponentLosesLifeEqualTo{CardsInTheirGraveyard,LifeLostThisTurn}`)
+  need the survivor to evaluate the amount per player with that player as target, which changes nothing for today's
+  each-player cards only if their amounts don't read the target: check before adding it. Filtered each
+  (`EachOpponentWith{EmptyHand,PoisonCounters}LosesLife`, `LoseLifeToOpponentsWhoCastNamedSpellThisTurn`) needs a
+  filtered `each`. `TargetSpellControllerLosesLife` needs `controllerOf(targetSpell())`.
+- `TARGET_PLAYER`-style constants on trigger entries whose player is baked: LoseLife kept `targetPlayer()` (declared)
+  where the old recipient declared, even in `ForcedCostOrElseEffect` else-branches (Pillar Tombs of Aku). 4d's
+  `DealDamageToPlayersEffect` should check the same `DestructionSupport` branches.
+- No LoseLife constant had the Paroxysm "baked player vs current controller of the triggering permanent" split:
+  upkeep `ENCHANTED_CONTROLLER` entries leave `triggeringPermanentId` unset at upkeep, and the five Aura upkeep cards
+  (Stab Wound, Soul Bleed, One Thousand Lashes, Numbing Dose, Torment of Scarabs) read the baked player through
+  `triggeringPlayer()`.
 
 ## Prompt
 

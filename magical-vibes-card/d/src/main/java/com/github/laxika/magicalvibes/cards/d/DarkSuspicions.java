@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,6 +25,6 @@ public class DarkSuspicions extends Card {
                         new Max(new Fixed(0), new Sum(
                                 new CardsInHand(CountScope.TARGET_PLAYER),
                                 new Scaled(new CardsInHand(CountScope.CONTROLLER), -1))),
-                        LoseLifeRecipient.TRIGGERING_PLAYER));
+                        Subjects.triggeringPlayer()));
     }
 }

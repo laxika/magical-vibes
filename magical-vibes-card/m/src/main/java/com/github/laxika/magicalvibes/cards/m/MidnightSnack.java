@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -34,7 +34,7 @@ public class MidnightSnack extends Card {
                 "{2}{B}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new LoseLifeEffect(new LifeGainedThisTurn(CountScope.CONTROLLER), LoseLifeRecipient.TARGET_PLAYER)
+                        new LoseLifeEffect(new LifeGainedThisTurn(CountScope.CONTROLLER), Subjects.targetPlayer())
                 ),
                 "{2}{B}, Sacrifice this enchantment: Target opponent loses X life, where X is the amount of life you gained this turn.",
                 new PlayerPredicateTargetFilter(

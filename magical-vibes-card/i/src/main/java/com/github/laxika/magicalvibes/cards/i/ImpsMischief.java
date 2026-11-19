@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
@@ -24,6 +24,6 @@ public class ImpsMischief extends Card {
                 "Target spell must have a single target."
         ))
                 .addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect())
-                .addSpellEffect(new LoseLifeEffect(new TargetSpellManaValue(), LoseLifeRecipient.CONTROLLER));
+                .addSpellEffect(new LoseLifeEffect(new TargetSpellManaValue(), Subjects.you()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class AyaraFirstOfLocthwain extends Card {
                                 Triggers.CREATURE,
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                SequenceEffect.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
+                SequenceEffect.of(new LoseLifeEffect(1, Subjects.eachOpponent()), new GainLifeEffect(1)));
 
         // {T}, Sacrifice another black creature: Draw a card.
         addActivatedAbility(new ActivatedAbility(

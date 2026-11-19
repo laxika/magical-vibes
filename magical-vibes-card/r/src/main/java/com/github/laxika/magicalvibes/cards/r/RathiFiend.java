@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -21,7 +21,7 @@ import java.util.List;
 public class RathiFiend extends Card {
 
     public RathiFiend() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3, LoseLifeRecipient.EACH_PLAYER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3, Subjects.eachPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

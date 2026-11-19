@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseSameNameToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport.TopCardsResult;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -104,7 +104,7 @@ public class LookAtTopCardsChooseSameNameToHandEffectHandler implements NormalEf
     private static void loseLifeAsNextStep(StackEntry entry, int amount) {
         if (amount > 0) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
-                    List.of(new LoseLifeEffect(amount, LoseLifeRecipient.CONTROLLER)));
+                    List.of(new LoseLifeEffect(amount, Subjects.you())));
         }
     }
 }

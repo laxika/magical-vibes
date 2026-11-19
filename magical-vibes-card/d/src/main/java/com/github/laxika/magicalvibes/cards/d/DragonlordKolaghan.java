@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
@@ -35,6 +35,6 @@ public class DragonlordKolaghan extends Card {
         ));
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardAllOfPredicate(List.of(creatureOrPlaneswalker,
                         new CardNameInControllerGraveyardPredicate()))),
-                new LoseLifeEffect(10, LoseLifeRecipient.TRIGGERING_PLAYER));
+                new LoseLifeEffect(10, Subjects.triggeringPlayer()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -29,7 +29,7 @@ public class HYDRAInfiltration extends Card {
                 .addTrigger(Triggers.creatureYouControlAttacks(),
                         TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         SequenceEffect.of(
-                                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                                new LoseLifeEffect(1, Subjects.targetPlayer()),
                                 new GainLifeEffect(1)));
     }
 }

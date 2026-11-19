@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
@@ -25,7 +25,7 @@ public class TreacherousGreed extends Card {
                 )),
                 "a creature that dealt damage this turn"));
         addSpellEffect(new DrawCardEffect(3));
-        addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
+        addSpellEffect(new LoseLifeEffect(3, Subjects.eachOpponent()));
         addSpellEffect(new GainLifeEffect(3));
     }
 }

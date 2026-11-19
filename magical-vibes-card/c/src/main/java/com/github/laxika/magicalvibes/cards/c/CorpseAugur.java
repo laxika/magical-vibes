@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -35,7 +35,7 @@ public class CorpseAugur extends Card {
                 DrawCardEffect.rememberingAmount(new CardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.TARGET_PLAYER)),
                 new LoseLifeEffect(new EventValue(),
-                        LoseLifeRecipient.CONTROLLER)
+                        Subjects.you())
         ));
     }
 }

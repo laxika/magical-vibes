@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,10 +19,10 @@ public class NettlingCurse extends Card {
 
     public NettlingCurse() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.attacks(), new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER))
+                .addTrigger(Triggers.attacks(), new LoseLifeEffect(3, Subjects.controllerOf(Subjects.triggering())))
                 .addTrigger(Triggers.blocks(),
                         TriggerOptions.ONE_OR_MORE,
-                        new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                        new LoseLifeEffect(3, Subjects.controllerOf(Subjects.triggering())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

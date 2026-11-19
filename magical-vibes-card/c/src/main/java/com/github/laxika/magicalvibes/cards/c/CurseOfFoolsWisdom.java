@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C19", collectorNumber = "16")
@@ -15,6 +15,6 @@ public class CurseOfFoolsWisdom extends Card {
     public CurseOfFoolsWisdom() {
         addCastingOption(new MadnessCast("{3}{B}"));
         addTrigger(Triggers.enchantedPlayerDrawsCard(),
-                SequenceEffect.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(2)));
+                SequenceEffect.of(new LoseLifeEffect(2, Subjects.targetPlayer()), new GainLifeEffect(2)));
     }
 }

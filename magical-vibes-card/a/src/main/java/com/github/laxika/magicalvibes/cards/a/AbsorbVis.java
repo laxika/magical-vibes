@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
@@ -20,7 +20,7 @@ public class AbsorbVis extends Card {
 
     public AbsorbVis() {
         // Target player loses 4 life and you gain 4 life.
-        addSpellEffect(new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(4, Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(4));
 
         // Basic landcycling {1}{B} ({1}{B}, Discard this card: Search your library for a basic land

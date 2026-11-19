@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -95,7 +95,7 @@ public class LuluForgetfulHollyphant extends Card {
                     new DrawCardEffect(new EventValue()),
                     new DiscardEffect(1, DiscardRecipient.CONTROLLER));
             case BLACK -> SequenceEffect.of(
-                    new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT),
+                    new LoseLifeEffect(new EventValue(), Subjects.eachOpponent()),
                     new GainLifeEffect(new EventValue()));
             case RED -> new CreateTokenEffect(CardType.CREATURE, new EventValue(), "Soldier", 1, 1,
                     CardColor.WHITE, null, List.of(CardSubtype.SOLDIER), Set.of(), Set.of(),

@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M19", collectorNumber = "120")
 public class SovereignsBite extends Card {
 
     public SovereignsBite() {
         // Target player loses 3 life and you gain 3 life.
-        addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new LoseLifeEffect(3, Subjects.targetPlayer()));
         addSpellEffect(new GainLifeEffect(3));
     }
 }

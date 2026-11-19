@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "52")
@@ -15,6 +15,6 @@ public class KeeperOfTresserhorn extends Card {
         // turn and defending player loses 2 life. The trigger is non-targeting; the defending
         // player is baked in as the stack entry's targetId.
         addTrigger(Triggers.attacksUnblocked(), new AssignNoCombatDamageEffect(),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(2, Subjects.targetPlayer()));
     }
 }

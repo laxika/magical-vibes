@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerChosenBySourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class SowerOfDiscord extends Card {
         addStaticEffect(new ChoosePlayerOnEnterEffect(2));
         addTrigger(Triggers.playerDealtDamage()
                         .withDamagedPlayerFilter(new PlayerChosenBySourcePredicate()),
-                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.OTHER_CHOSEN_PLAYER));
+                new LoseLifeEffect(new EventValue(), Subjects.except(Subjects.chosenPlayers(), Subjects.triggeringPlayer())));
     }
 }

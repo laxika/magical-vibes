@@ -16,7 +16,7 @@ import java.util.Objects;
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
-        PlayerSubject.ChosenPlayer {
+        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.Except {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -146,5 +146,30 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
 
     /** "The chosen player": the player the source permanent chose as it entered. */
     record ChosenPlayer() implements PlayerSubject {
+    }
+
+    /** "The chosen players": every player the source permanent chose as it entered, in APNAP order. */
+    record ChosenPlayers() implements PlayerSubject {
+    }
+
+    /**
+     * The players {@code players} names but those {@code excluded} names: "the other chosen player" is
+     * {@code except(chosenPlayers(), triggeringPlayer())}.
+     */
+    record Except(PlayerSubject players, PlayerSubject excluded) implements PlayerSubject {
+
+        public Except {
+            Objects.requireNonNull(players, "players");
+            Objects.requireNonNull(excluded, "excluded");
+            if (players.declaresTarget() || excluded.declaresTarget()) {
+                throw new IllegalArgumentException("An exception can't declare a target: " + players + ", "
+                        + excluded);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return players.needsStackEntry() || excluded.needsStackEntry();
+        }
     }
 }

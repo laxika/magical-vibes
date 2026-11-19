@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -26,6 +25,6 @@ public class PeerIntoTheAbyss extends Card {
                 "Target must be a player"
         )).addSpellEffect(new DrawCardEffect(new HalvedRoundedUp(new CardsInLibrary(CountScope.TARGET_PLAYER)), Subjects.targetPlayer()))
                 .addSpellEffect(new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
-                                LoseLifeRecipient.TARGET_PLAYER));
+                                Subjects.targetPlayer()));
     }
 }

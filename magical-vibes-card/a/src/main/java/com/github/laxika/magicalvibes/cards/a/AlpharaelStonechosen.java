@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class AlpharaelStonechosen extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new VoidCondition()),
                 new LoseLifeEffect(
                         new HalvedRoundedUp(new TargetPlayerLifeTotal()),
-                        LoseLifeRecipient.DEFENDING_PLAYER));
+                        Subjects.defendingPlayer()));
     }
 }

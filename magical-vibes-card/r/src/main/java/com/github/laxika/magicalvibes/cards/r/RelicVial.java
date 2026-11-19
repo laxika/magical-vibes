@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,7 +37,7 @@ public class RelicVial extends Card {
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                         SequenceEffect.of(
-                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                                new LoseLifeEffect(1, Subjects.eachOpponent()),
                                 new GainLifeEffect(1))),
                         GrantScope.SELF)));
     }

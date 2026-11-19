@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -62,7 +63,7 @@ class ETBTokenTargetServiceTest {
         Card card = new Card();
         card.setName("Player targeting trigger");
         var effect = new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient.TARGET_PLAYER);
+                1, Subjects.targetPlayer());
         card.target(0, 2).addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, List.of(effect), null, List.of(), 0, 0);

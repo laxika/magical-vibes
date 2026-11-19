@@ -214,7 +214,7 @@ reads the controller's emblems as watchers. No emblem ability has its own reader
   turn" as tokens created (`CREATE`) or land cards put into a graveyard (anything else throws), and "that player" by
   relation: controller for `OPPONENT_CONTROLS` / `ENCHANTED_PLAYER_CONTROLS`, owner for `OPPONENT_OWNS` and an `ANY` /
   `ANOTHER` return to hand, caster (else controller) for an `ANY` entry, sacrificer for an `ANY` / `ANOTHER` sacrifice.
-  Any other "that player" is declared on the effect (Liability's `LoseLifeRecipient.TRIGGERING_CARD_OWNER`) or as a
+  Any other "that player" is declared on the effect (Liability's `Subjects.ownerOf(Subjects.triggeringCard())`) or as a
   target (Lucy MacLean).
 - `ZoneChangeRequests.zoneChangeRecord`: "that card" with its graveyard and exile incarnations, the permanent as it
   last existed (controller, power, toughness, mana value), the source snapshot, a non-targeting "that player"; an entry

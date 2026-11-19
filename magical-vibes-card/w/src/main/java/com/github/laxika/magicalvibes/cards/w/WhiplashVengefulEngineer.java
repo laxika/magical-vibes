@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class WhiplashVengefulEngineer extends Card {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new Equipped()),
                 SequenceEffect.of(
-                        new LoseLifeEffect(equipmentCount, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(equipmentCount, Subjects.eachOpponent()),
                         new GainLifeEffect(equipmentCount)));
     }
 }

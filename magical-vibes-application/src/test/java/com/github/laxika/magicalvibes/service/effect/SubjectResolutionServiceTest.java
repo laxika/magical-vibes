@@ -31,11 +31,13 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.allOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attached;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedAtTrigger;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.chosenPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.chosenPlayers;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.controllerOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.defendingPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachOpponent;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.enchantedPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.ownerOf;
@@ -408,6 +410,22 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(players(entry(player1, null, bears.getId()), chosenPlayer())).containsExactly(player2.getId());
         }
+
+        @Test
+        @DisplayName("The chosen players are every player the source remembered, and the other one excludes that player")
+        void chosenPlayersAndExcept() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            bears.getRememberedTargetPlayerIds().addAll(List.of(player2.getId(), player1.getId()));
+            StackEntry entry = entry(player1, null, bears.getId());
+            entry.setTriggeringPlayerId(player2.getId());
+
+            assertThat(players(entry, chosenPlayers())).containsExactly(player1.getId(), player2.getId());
+            assertThat(players(entry, except(chosenPlayers(), triggeringPlayer()))).containsExactly(player1.getId());
+
+            leaveBattlefield(bears);
+
+            assertThat(players(entry, except(chosenPlayers(), triggeringPlayer()))).containsExactly(player1.getId());
+        }
     }
 
     @Nested
@@ -461,6 +479,23 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(players(entry, ownerOf(triggeringCard()))).containsExactly(player2.getId());
             assertThat(permanents(entry, triggeringCard())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Without a triggering spell or land, the triggering card's owner is the recorded owner, else the triggering permanent's owner")
+        void ownerOfTriggeringCardFallsBackToTheTriggeringPermanent() {
+            StackEntry recorded = entry(player1, null, null);
+            recorded.setTriggeringPermanentOwnerId(player2.getId());
+
+            assertThat(players(recorded, ownerOf(triggeringCard()))).containsExactly(player2.getId());
+
+            Card card = new GrizzlyBears();
+            card.setOwnerId(player2.getId());
+            Permanent bears = addCreatureReady(player2, card);
+            StackEntry entered = entry(player1, null, null);
+            entered.setTriggeringPermanentId(bears.getId());
+
+            assertThat(players(entered, ownerOf(triggeringCard()))).containsExactly(player2.getId());
         }
 
         @Test

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CloseGraveyardReturnBatchEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpenGraveyardReturnBatchEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -28,7 +28,7 @@ public class LilianaTheNecromancer extends Card {
     public LilianaTheNecromancer() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)),
+                List.of(new LoseLifeEffect(2, Subjects.targetPlayer())),
                 "+1: Target player loses 2 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

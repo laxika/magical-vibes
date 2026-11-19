@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class SkirsdagSupplicant extends Card {
                 "{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_PLAYER)
+                        new LoseLifeEffect(2, Subjects.eachPlayer())
                 ),
                 "{B}, {T}, Discard a card: Each player loses 2 life."
         ));

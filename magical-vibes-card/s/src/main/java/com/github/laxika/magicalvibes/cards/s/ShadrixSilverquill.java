@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,7 +41,7 @@ public class ShadrixSilverquill extends Card {
                 Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
                 Set.of(Keyword.FLYING), Set.of()));
         var drawEffect = new DrawCardEffect(1, Subjects.targetPlayer());
-        var loseLifeEffect = new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER);
+        var loseLifeEffect = new LoseLifeEffect(1, Subjects.targetPlayer());
         var counterEffect = new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate(),
                 EachPermanentScope.TARGET_PLAYER);

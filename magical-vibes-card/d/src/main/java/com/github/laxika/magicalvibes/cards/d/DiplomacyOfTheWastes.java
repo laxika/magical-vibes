@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,6 +28,6 @@ public class DiplomacyOfTheWastes extends Card {
                 1, List.of(CardType.LAND), HandChoiceDestination.DISCARD))
                 .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
+                        new LoseLifeEffect(2, Subjects.targetPlayer())));
     }
 }

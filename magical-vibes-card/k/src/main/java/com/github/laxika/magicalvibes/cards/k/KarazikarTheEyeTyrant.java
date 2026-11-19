@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -38,7 +37,7 @@ public class KarazikarTheEyeTyrant extends Card {
                                 new DrawCardEffect(),
                                 new LoseLifeEffect(1),
                                 new DrawCardEffect(1, Subjects.triggeringPlayer()),
-                                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER)
+                                new LoseLifeEffect(1, Subjects.triggeringPlayer())
                         ));
     }
 }

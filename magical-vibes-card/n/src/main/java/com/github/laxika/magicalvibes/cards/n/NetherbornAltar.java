@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCommanderIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 
@@ -24,7 +24,7 @@ public class NetherbornAltar extends Card {
                         new PutTypedCounterOnSourceCost(CounterType.SOUL),
                         new PutCommanderIntoHandEffect(),
                         new LoseLifeEffect(new Scaled(new CountersOnSource(CounterType.SOUL), 3),
-                                LoseLifeRecipient.CONTROLLER)
+                                Subjects.you())
                 ),
                 "{T}, Put a soul counter on this artifact: Put your commander into your hand from the command zone. "
                         + "Then you lose 3 life for each soul counter on this artifact."

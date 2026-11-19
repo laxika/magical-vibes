@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,7 +27,7 @@ public class RequiemMonolith extends Card {
                 new TriggeredAbility(Triggers.dealtDamage(),
                 SequenceEffect.of(
                         new DrawCardEffect(new EventValue()),
-                        new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER))));
+                        new LoseLifeEffect(new EventValue(), Subjects.you()))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
