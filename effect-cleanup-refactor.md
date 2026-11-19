@@ -13,7 +13,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Inventory script, audit ledger and count ratchet | open |
+| 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | open |
 | 3 | Subject types and the one resolver | open |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | open |
@@ -569,7 +569,52 @@ Depends on: everything above that is going to be done.
 
 ## Findings
 
-(Nothing yet.)
+### Step 1 (2026-11-19, at `2d1c6d681a` plus the step's files)
+
+`scripts/effect-inventory.py` summary, against Measurements:
+
+| What | Script | Measurements | Why it differs |
+|---|---|---|---|
+| Types in `model/effect/` | 5,305: 4,979 records, 69 enums, 255 interfaces, 2 classes | 5,305 (105 enums) | the script counts top-level types only; about 48 more enums are nested in 41 files |
+| Handler files in `normalfx` | 3,879 files, 323,886 lines | same | |
+| Records used by exactly one card | 2,980 (1,675 with no components) | same | |
+| ... their own handlers | 2,571 handlers, 184,667 lines | 2,407, 175,808 | the script maps a handler by its `handledEffect()`, in `normalfx`, `mayfx` and `staticfx` |
+| Records used by exactly two cards | 552 | 558 | |
+| Dead records | 47: 9 named by nothing, 38 only by their own handler | 49 (12 + 37) | |
+| Subject-sibling groups | 191 groups, 474 classes, 283 removable | 121, 285, 164 | the script's subject words include the player subjects (`Opponents`, `Players`, `Controller`, `ActivePlayer`, ...) |
+| Records with a nested `CardEffect` component | 191 (36 more hold a `List<CardEffect>`) | 111 (44) | the script parses multi-line record headers; a grep of component declarations agrees (191) |
+| Names with `Then` / `And` | 326 / 654 | 326 / 661 | |
+| `GrantScope` | 62 records have the component; 87 effect types name it; 5,581 card files; 234 engine files | 85; 5,581; 227 | 25 of the 87 use it only inside a method, not as a component |
+| `PermanentReference` component | 15 (126 card files) | same | |
+| Handlers that `switch` on a subject component | 63 | 62 | |
+| `*EffectHandlerTest` | 153 | same | |
+| Ratchet: records / handler classes | 4,979 / 4,205 | | `EffectCountRatchetTest` baselines |
+
+Verb families (records and effect classes; "rare" = at most two cards, zero included): Exile 436/346/1,983 cards,
+Grant 191/129/4,411, Return 177/134/2,344, Sacrifice 104/68/3,097, Destroy 86/70/1,665, DealDamage 83/60/2,312,
+Double 60/46/128, Mill 57/47/533, Boost 45/28/3,171, PutCounter(s) 49/29/2,793, Draw 45/39/3,003, Counter 36/27/692,
+Discard 51/34/1,299, Copy 43/29/348, Attach 36/24/175, CreateTokenCopy 35/25/284, Tap/Untap 45/36/1,533,
+RemoveCounter(s) 26/13/444, GainControl 21/18/223. A family is matched on a camel-word boundary
+(`Sacrifice` takes `SacrificeSelf`, not `Sacrifices...`); `--family` matches the same way.
+
+For later steps:
+
+- **Step 2.** `--dead` also lists the dead records whose handler other main code names as a bean (10 of the 38):
+  `ChooseAttackTargetsForCreatedTokensEffectHandler` is called by four token handlers and
+  `PermanentChoiceTriggerHandlerService`; `EachPlayerReturnsPermanentToHandEffect`,
+  `EachPlayerChoosesCreatureThenSacrificesRestEffect`, `OpponentChoosesCreatureTheyControlTokenCopyEffect`,
+  `ReboundCastFromExileEffect`, `PutExiledCardsIntoOwnersGraveyardEffect`,
+  `PutStillExiledCardsIntoGraveyardAndCreateTokensEffect`, `TargetPlayerChoosesCardsFromHandThenMayCastOneEffect`
+  are the rest, plus `AnyPlayerMayTakeDamageOrDrawTargetPlayerEffect` and
+  `DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect`, whose `normalfx` and `mayfx` handlers name each other (a
+  dead pair). For the first eight the handler's code is still used by others; deleting them is a move, not a delete.
+- **Counting.** "Names it" is a whole-word match of the simple name anywhere in the file, comments included, so
+  the script errs towards "used". Two effects live outside `model/effect/`
+  (`magical-vibes-card/core/.../effect/{l,w}`: `LivingDeathEffect`, `WarpWorldEffect`) and are not inventoried.
+- **`--tests-for`** prints one line of Gradle arguments: each effect's own `<Effect>Test` /
+  `<Effect>HandlerTest` under `:magical-vibes-application:test`, then one task per card-test letter module with
+  its `--tests` filters. Cards without a `<Card>Test` class are listed on stderr (57 of `DrawCardEffect`'s 2,772).
+- **Ledger.** `scripts/effect-audit-ledger.csv` has its header only: step 1 audits no class.
 
 ## Prompt
 
