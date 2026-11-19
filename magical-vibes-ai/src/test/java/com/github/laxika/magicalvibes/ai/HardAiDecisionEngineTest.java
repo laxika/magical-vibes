@@ -2435,7 +2435,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Tear");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(Permanent::isTapped)

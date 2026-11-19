@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
@@ -662,6 +663,10 @@ public class SpellEvaluator {
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
             return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
+        }
+        // "Destroy target X and target Y" (Reign of Chaos): scored by its best creature target.
+        if (effect instanceof DestroyEachTargetPermanentEffect) {
+            return removalScore(gameData, card, RemovalKind.DESTROY, oppBattlefield, opponentId, aiPlayerId);
         }
 
         if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {

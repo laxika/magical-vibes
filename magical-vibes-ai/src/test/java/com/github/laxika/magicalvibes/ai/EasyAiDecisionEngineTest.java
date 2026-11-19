@@ -697,7 +697,7 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
-        @DisplayName("Easy AI uses the base X when paying no multikicker payments")
+        @DisplayName("Easy AI spends its spare mana on X when paying no multikicker payments")
         void castsStrengthOfTheTajuruWithoutMultikicker() {
             giveAiPriority();
             testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 4);
@@ -709,9 +709,9 @@ class EasyAiDecisionEngineTest {
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
-            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
-            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
-            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(creature.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
+            assertThat(testGd.stack.getFirst().getTargetIds()).isEmpty();
             assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
         }
 
@@ -806,7 +806,7 @@ class EasyAiDecisionEngineTest {
             easyAi.handleEvent(AiDecisionKind.GAME_STATE);
 
             assertThat(testGd.stack).hasSize(1);
-            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Tear");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
             assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
                     .filteredOn(Permanent::isTapped)

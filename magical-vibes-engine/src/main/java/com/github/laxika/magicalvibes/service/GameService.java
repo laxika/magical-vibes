@@ -1537,6 +1537,8 @@ public class GameService {
      * permanents it sacrifices (CR 616.1); the sacrifices consume the answers.
      */
     public void completeTurnFaceUpAfterCostSacrificeAnswers(GameData gameData, GameData.TurnFaceUpReplay replay) {
+        if (runAsActionIfNeeded(gameData,
+                () -> completeTurnFaceUpAfterCostSacrificeAnswers(gameData, replay))) return;
         List<Permanent> battlefield = gameData.playerBattlefields.get(replay.player().getId());
         Permanent permanent = gameQueryService.findPermanentById(gameData, replay.permanentId());
         if (battlefield == null || permanent == null || !battlefield.contains(permanent)) {

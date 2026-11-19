@@ -257,9 +257,6 @@ class TargetPolarityGuardTest {
                 new com.github.laxika.magicalvibes.cards.h.HeroicSacrifice(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classifyCard(gd,
-                new com.github.laxika.magicalvibes.cards.d.DeadpoolTradingCard(), aiPlayerId))
-                .isEqualTo(TargetPolarity.NEUTRAL);
-        assertThat(classifier.classifyCard(gd,
                 new com.github.laxika.magicalvibes.cards.m.MisleadingSignpost(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,

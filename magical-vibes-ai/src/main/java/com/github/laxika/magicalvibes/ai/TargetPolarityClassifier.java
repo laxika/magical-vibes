@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,7 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
@@ -27,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -196,10 +202,19 @@ public class TargetPolarityClassifier {
         if (effect instanceof PerpetuallyGrantStaticEffectToTargetCreatureEffect grant) {
             return classify(gameData, grant.staticEffect(), aiPlayerId);
         }
-        if (effect instanceof PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect grant
-                && grant.triggeredAbility() instanceof PerpetuallyBoostSourceEffect boost) {
-            return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
-                    ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
+        if (effect instanceof PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect grant) {
+            return classifyGrantedAbility(grant.grantedAbility());
+        }
+        if (effect instanceof GrantTriggeredAbilityEffect grant) {
+            return classifyGrantedAbility(grant.grantedAbility());
+        }
+        if (effect instanceof EnterWithCountersEffect counters) {
+            if (counters.type() == CounterType.MINUS_ONE_MINUS_ONE) {
+                return TargetPolarity.HARMFUL;
+            }
+            return counters.type() == CounterType.PLUS_ONE_PLUS_ONE || counters.type() == CounterType.SHIELD
+                    ? TargetPolarity.BENEFICIAL
+                    : TargetPolarity.NEUTRAL;
         }
         if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
             return classify(gameData, exileThen.thenEffect(), aiPlayerId);
@@ -269,8 +284,10 @@ public class TargetPolarityClassifier {
         if (effect instanceof CantBlockThisTurnEffect cantBlock) {
             // TARGET_CONTROLLERS_OTHER_CREATURES (Mark for Death) shuts down the rest of the
             // target's controller's defence, so it aims at the opponent just like TARGET does.
+            // TARGET_PLAYERS_PERMANENTS (Ember Gale) shuts down the targeted player's blockers.
             return cantBlock.scope() == TapUntapScope.TARGET
                     || cantBlock.scope() == TapUntapScope.TARGET_CONTROLLERS_OTHER_CREATURES
+                    || cantBlock.scope() == TapUntapScope.TARGET_PLAYERS_PERMANENTS
                     ? TargetPolarity.HARMFUL
                     : null;
         }
@@ -405,6 +422,41 @@ public class TargetPolarityClassifier {
     }
 
     /**
+     * Polarity of a triggered ability granted to the target, read from what the ability does to the creature that
+     * has it: a perpetual boost of its sign, or damage to its controller (Traumatic Prank's upkeep ping). An ability
+     * whose effects carry no direction (Duelist's Flame's combat-damage card advantage, Town-Razer Tyrant's
+     * sacrifice-or-damage) is NEUTRAL, and the card's other effects decide the target.
+     */
+    private static TargetPolarity classifyGrantedAbility(Ability grantedAbility) {
+        if (grantedAbility == null) {
+            return TargetPolarity.NEUTRAL;
+        }
+        TargetPolarity best = null;
+        for (CardEffect granted : AbilityEffects.effectsOf(grantedAbility)) {
+            best = higherPriority(best, classifyGrantedEffect(granted));
+        }
+        return best == null ? TargetPolarity.NEUTRAL : best;
+    }
+
+    private static TargetPolarity classifyGrantedEffect(CardEffect granted) {
+        if (granted instanceof SequenceEffect sequence) {
+            TargetPolarity best = null;
+            for (CardEffect step : sequence.steps()) {
+                best = higherPriority(best, classifyGrantedEffect(step));
+            }
+            return best;
+        }
+        if (granted instanceof PerpetuallyBoostSourceEffect boost) {
+            return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
+                    ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
+        }
+        if (granted instanceof DealDamageToPlayersEffect damage && damage.recipient() == DamageRecipient.CONTROLLER) {
+            return TargetPolarity.HARMFUL;
+        }
+        return null;
+    }
+
+    /**
      * Fixed polarity for shapes whose direction never depends on instance state. Keyed by
      * simple class name to keep the table readable; this trades compile-time rename safety
      * for legibility, and {@code TargetPolarityGuardTest} makes the trade safe — a renamed
@@ -484,6 +536,7 @@ public class TargetPolarityClassifier {
             entry("ExileTopCardMayDealDamageOrPlayEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandToHandRestToBottomDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
 
@@ -495,6 +548,10 @@ public class TargetPolarityClassifier {
             entry("ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect", TargetPolarity.HARMFUL),
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
+            // Scab-Clan Giant: the random opposing creature is the target.
+            entry("SourceFightsRandomOpponentCreatureEffect", TargetPolarity.HARMFUL),
+            // Perpetually granted by Traumatic Prank.
+            entry("CantBlockEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetUntilRansomEffect", TargetPolarity.HARMFUL),
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
@@ -562,6 +619,7 @@ public class TargetPolarityClassifier {
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
+            entry("DoubleTargetCreaturePowerToughnessEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("ConniveEachTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PhaseOutChosenTargetCreaturesEffect", TargetPolarity.BENEFICIAL),
@@ -592,6 +650,7 @@ public class TargetPolarityClassifier {
             entry("PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantProtectionFromOpponentsUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GuardianAngelPermissionEffect", TargetPolarity.BENEFICIAL),
             entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
@@ -671,6 +730,14 @@ public class TargetPolarityClassifier {
             entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SacrificeTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
+            // Reality Scramble: a permanent its caster owns, traded for a random one sharing a card type.
+            entry("PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect",
+                    TargetPolarity.NEUTRAL),
+            // Fateful Handoff: the caster's own artifact or creature is handed away for cards.
+            entry("ChooseAnotherPlayerGainsControlOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            // Fallaji Antiquarian: a duplicate of any artifact or creature, best aimed at the strongest one.
+            entry("ConjureDuplicateOfTargetPermanentIntoGraveyardWithUnearthEffect", TargetPolarity.NEUTRAL),
+            entry("GrantAllCreatureTypesToOwnCreaturesEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetPermanentNameEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetPermanentSupertypeEffect", TargetPolarity.NEUTRAL),

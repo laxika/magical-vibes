@@ -479,10 +479,19 @@ class RandomAiDecisionEngineTest {
             assertThat(watcher.drainFailures()).isEmpty();
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getCard()).isSameAs(barrage);
-            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(gameData.stack.getFirst().isKicked()).isFalse();
+            // Goblin Barrage declares two target groups (the creature, and the kicked player or
+            // planeswalker), so the creature is announced as group 0 of the target list.
+            assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(target.getId());
         } finally {
             watcher.uninstall();
         }
+
+        harness.passBothPriorities();
+
+        assertThat(gameData.playerBattlefields.get(opponent.getId())).doesNotContain(target);
+        assertThat(gameData.playerGraveyards.get(opponent.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 
     @Test
@@ -1092,9 +1101,9 @@ class RandomAiDecisionEngineTest {
 
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
-        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
-        assertThat(gameData.stack.getFirst().getTargetId()).isNull();
-        assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(creature.getId());
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(2);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
+        assertThat(gameData.stack.getFirst().getTargetIds()).isEmpty();
         assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 

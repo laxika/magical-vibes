@@ -696,6 +696,25 @@ public abstract class AiDecisionEngine {
             send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentsChosen(chosen)));
             return true;
         }
+        if (active instanceof PendingInteraction.MultiPermanentChoice choice && aiPlayerId.equals(choice.playerId())
+                && choice.context() instanceof MultiPermanentChoiceContext.AttackTriggerTargets group) {
+            // "Up to N targets" on a triggered ability (Expedition Raptor's support 2).
+            List<UUID> plan = targetSelector.chooseMultiTargets(
+                    gameData, group.pending().sourceCard(), aiPlayerId, group.pending().xValue());
+            if (plan == null) {
+                return false;
+            }
+            List<UUID> chosen = plan.stream()
+                    .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id))
+                    .distinct()
+                    .limit(choice.maxCount())
+                    .toList();
+            if (chosen.size() < group.minTargets()) {
+                return false;
+            }
+            send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentsChosen(chosen)));
+            return true;
+        }
         return false;
     }
 
