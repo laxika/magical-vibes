@@ -11,27 +11,25 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * them are destroyed with no choice; otherwise they pick which to destroy (multi-select) and the
  * chosen ones are destroyed simultaneously.
  *
- * <p>{@link DestroyRecipient} routes who destroys (controller / target player). {@code TARGET_PLAYER}
- * makes the effect target a player.
- *
  * <p>Example: "You destroy four lands you control" →
- * {@code new PlayerDestroysPermanentsEffect(4, new PermanentIsLandPredicate(), DestroyRecipient.CONTROLLER)}
+ * {@code new PlayerDestroysPermanentsEffect(4, new PermanentIsLandPredicate(), Subjects.you())}
  *
- * @param count     number of permanents to destroy
- * @param filter    which permanents are eligible
- * @param recipient who destroys
+ * @param count  number of permanents to destroy
+ * @param filter which permanents are eligible
+ * @param player who destroys (one player, the first the subject names); only {@code targetPlayer()} declares a
+ *               (benign) player target
  */
 public record PlayerDestroysPermanentsEffect(DynamicAmount count, PermanentPredicate filter,
-        DestroyRecipient recipient) implements CardEffect {
+        PlayerSubject player) implements CardEffect {
 
     /** Fixed count. */
-    public PlayerDestroysPermanentsEffect(int count, PermanentPredicate filter, DestroyRecipient recipient) {
-        this(new Fixed(count), filter, recipient);
+    public PlayerDestroysPermanentsEffect(int count, PermanentPredicate filter, PlayerSubject player) {
+        this(new Fixed(count), filter, player);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return recipient == DestroyRecipient.TARGET_PLAYER
+        return player.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

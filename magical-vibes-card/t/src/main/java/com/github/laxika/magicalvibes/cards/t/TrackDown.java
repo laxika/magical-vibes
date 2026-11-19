@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
@@ -19,7 +19,7 @@ public class TrackDown extends Card {
     public TrackDown() {
         // Scry 3, then reveal the top card of your library. If it's a creature or land card, draw a card.
         addSpellEffect(new ScryEffect(3));
-        addSpellEffect(new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER));
+        addSpellEffect(new RevealTopCardOfLibraryEffect(Subjects.you()));
         addSpellEffect(new ConditionalEffect(
                 new AnyOf(List.of(
                         new TopCardOfLibraryType(CardType.CREATURE),

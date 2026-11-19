@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class TrickeryCharm extends Card {
                         new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope.TARGET, Set.of()), creature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top four cards of your library, then put them back in any order",
-                        new ReorderTopCardsOfLibraryEffect(4, LibraryOwner.CONTROLLER))
+                        new ReorderTopCardsOfLibraryEffect(4, Subjects.you()))
         )));
     }
 }

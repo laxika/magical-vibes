@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +25,6 @@ public class ShisatoWhisperingHunter extends Card {
         // Whenever this creature deals combat damage to a player, that player skips their next
         // untap step. The damaged player is bound as the trigger's target, not chosen.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new SkipNextEffect(SkipKind.UNTAP_STEP, SkipRecipient.DAMAGED_PLAYER));
+                new SkipNextEffect(SkipKind.UNTAP_STEP, Subjects.triggeringPlayer()));
     }
 }

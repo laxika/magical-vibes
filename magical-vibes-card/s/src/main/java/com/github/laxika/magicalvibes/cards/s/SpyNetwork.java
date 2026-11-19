@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerHandTopCardAndFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -18,6 +18,6 @@ public class SpyNetwork extends Card {
                 "Target must be a player"
         )).addSpellEffect(new LookAtTargetPlayerHandTopCardAndFaceDownCreaturesEffect());
 
-        addSpellEffect(new ReorderTopCardsOfLibraryEffect(4, LibraryOwner.CONTROLLER));
+        addSpellEffect(new ReorderTopCardsOfLibraryEffect(4, Subjects.you()));
     }
 }

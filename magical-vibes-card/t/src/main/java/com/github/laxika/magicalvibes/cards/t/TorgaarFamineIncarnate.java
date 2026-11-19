@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.StartingLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,6 +24,6 @@ public class TorgaarFamineIncarnate extends Card {
                 "Target must be a player"
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 // "half their starting life total, rounded down"
-                new SetLifeTotalEffect(new Divided(new StartingLifeTotal(), 2), SetLifeTotalRecipient.TARGET_PLAYER));
+                new SetLifeTotalEffect(new Divided(new StartingLifeTotal(), 2), Subjects.targetPlayer()));
     }
 }

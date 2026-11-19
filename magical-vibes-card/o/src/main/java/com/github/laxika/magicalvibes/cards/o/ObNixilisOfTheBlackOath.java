@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -53,7 +52,7 @@ public class ObNixilisOfTheBlackOath extends Card {
                 List.of(new CreateEmblemEffect(
                         List.of(),
                         EMBLEM_TEXT,
-                        EmblemRecipient.CONTROLLER,
+                        Subjects.you(),
                         List.of(new ActivatedAbility(
                                 false,
                                 "{1}{B}",

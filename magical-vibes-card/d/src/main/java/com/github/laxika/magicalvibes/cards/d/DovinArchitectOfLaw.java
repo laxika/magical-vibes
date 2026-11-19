@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -42,7 +42,7 @@ public class DovinArchitectOfLaw extends Card {
                 -9,
                 List.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS),
-                        new SkipNextEffect(SkipKind.UNTAP_STEP, SkipRecipient.TARGET_PLAYER)
+                        new SkipNextEffect(SkipKind.UNTAP_STEP, Subjects.targetPlayer())
                 ),
                 "−9: Tap all permanents target opponent controls. That player skips their next untap step.",
                 new PlayerPredicateTargetFilter(

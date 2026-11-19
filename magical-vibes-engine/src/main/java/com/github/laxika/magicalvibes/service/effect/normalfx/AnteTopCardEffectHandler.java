@@ -4,23 +4,27 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AnteRecipient;
 import com.github.laxika.magicalvibes.model.effect.AnteTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves the mandatory ante of one or more players' top library cards. */
+/**
+ * Resolves the mandatory ante of the top library card of each player {@link SubjectResolutionService} finds for the
+ * effect's subject, in APNAP order.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AnteTopCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,14 +34,9 @@ public class AnteTopCardEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         AnteTopCardEffect anteEffect = (AnteTopCardEffect) effect;
-        if (anteEffect.recipient() == AnteRecipient.EACH_PLAYER) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                anteTopCard(gameData, entry, playerId);
-            }
-            return;
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, anteEffect.player())) {
+            anteTopCard(gameData, entry, playerId);
         }
-
-        anteTopCard(gameData, entry, entry.getControllerId());
     }
 
     private void anteTopCard(GameData gameData, StackEntry entry, UUID playerId) {

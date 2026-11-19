@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 
@@ -22,7 +22,7 @@ public class IronLadDivergingDestiny extends Card {
                 true,
                 null,
                 List.of(
-                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.ARTIFACT),
                                 new DrawCardEffect(1))),

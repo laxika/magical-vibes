@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -30,7 +30,7 @@ public class HarshDeceiver extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.LAND),
                                 SequenceEffect.of(

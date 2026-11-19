@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,7 +35,7 @@ public class YouCompleatMe extends Card {
         addSpellEffect(new CreateEmblemEffect(
                 List.of(),
                 EMBLEM_TEXT,
-                EmblemRecipient.CONTROLLER,
+                Subjects.you(),
                 List.of(new ActivatedAbility(
                         false,
                         null,

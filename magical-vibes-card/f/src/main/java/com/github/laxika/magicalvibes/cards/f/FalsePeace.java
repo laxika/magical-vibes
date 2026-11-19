@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "POR", collectorNumber = "14")
 @CardRegistration(set = "S99", collectorNumber = "16")
@@ -12,6 +12,6 @@ public class FalsePeace extends Card {
 
     public FalsePeace() {
         // Target player skips all combat phases of their next turn.
-        addSpellEffect(new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, true));
+        addSpellEffect(new SkipNextEffect(SkipKind.COMBAT_PHASE, Subjects.targetPlayer(), true));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -49,7 +48,7 @@ public class ObNixilisReignited extends Card {
                 List.of(new CreateEmblemEffect(
                         List.of(),
                         EMBLEM_TEXT,
-                        EmblemRecipient.TARGET_PLAYER,
+                        Subjects.targetPlayer(),
                         List.of(),
                         List.of(new TriggeredAbility(Triggers.playerDrawsCard(),
                                 new LoseLifeEffect(2, Subjects.you()))))),

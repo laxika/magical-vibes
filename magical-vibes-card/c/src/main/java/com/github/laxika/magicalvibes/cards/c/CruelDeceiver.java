@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -31,7 +31,7 @@ public class CruelDeceiver extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.LAND),
                                 new GrantEffectToSourceUntilEndOfTurnEffect(

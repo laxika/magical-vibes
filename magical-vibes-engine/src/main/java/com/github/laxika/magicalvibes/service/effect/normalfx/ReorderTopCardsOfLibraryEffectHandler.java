@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -33,6 +33,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
     private CardRevealService cardRevealService;
 
     @Autowired
@@ -59,7 +60,10 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         }
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, reorder.count(),
                 AmountContext.forStackEntry(entry, source)));
-        UUID deckOwnerId = resolveDeckOwner(entry, reorder.owner(), controllerId);
+        UUID deckOwnerId = subjectResolutionService.player(gameData, entry, effect, reorder.player());
+        if (deckOwnerId == null) {
+            deckOwnerId = controllerId;
+        }
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
         String decisionMakerName = gameData.playerIdToName.get(decisionMakerId);
         boolean ownLibrary = deckOwnerId.equals(decisionMakerId);
@@ -93,12 +97,6 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         gameLogService.append(gameData, GameLog.text(
                 decisionMakerName + " looks at the top " + count + " cards of " + libraryOf + "."));
         log.info("Game {} - {} reordering top {} cards of {}", gameData.id, decisionMakerName, count, libraryOf);
-    }
-
-    /** Falls back to the controller when a target-player form resolves without a target. */
-    private static UUID resolveDeckOwner(StackEntry entry, LibraryOwner owner, UUID controllerId) {
-        if (owner != LibraryOwner.TARGET_PLAYER) return controllerId;
-        return entry.getTargetId() != null ? entry.getTargetId() : controllerId;
     }
 
     /** Falls back to the controller when a target-player decision resolves without a target. */

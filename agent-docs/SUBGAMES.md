@@ -1,7 +1,7 @@
 # Subgames
 
 Shahrazad (`ARN 10`) composes `StartSubgameEffect` with
-`EachPlayerLosesFractionOfLifeRoundedUpEffect(2, SUBGAME_NON_WINNERS)`.
+`EachPlayerLosesFractionOfLifeRoundedUpEffect(2, Subjects.except(Subjects.eachPlayer(), Subjects.subgameWinners()))`.
 Deck legality continues to use the normal format validator. Subgames support
 Casual games, including AI opponents and the optional Planechase variant.
 

@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.DraftCardRecipient;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,6 +28,7 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
     private final CardCatalog cardCatalog;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,8 +51,10 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
         List<Card> offeredCards = draft.conjure()
                 ? spellbook
                 : new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
-        UUID draftPlayerId = draft.recipient() == DraftCardRecipient.TARGET_PLAYER
-                ? entry.getTargetId() : entry.getControllerId();
+        UUID draftPlayerId = subjectResolutionService.player(gameData, entry, effect, draft.player());
+        if (draftPlayerId == null) {
+            return;
+        }
 
         if (draft.makeSelectedArtifactCreature() || draft.battlefieldSelectionFollowUp() != null) {
             beginSelectionWithFollowUp(gameData, draft, draftPlayerId, offeredCards);

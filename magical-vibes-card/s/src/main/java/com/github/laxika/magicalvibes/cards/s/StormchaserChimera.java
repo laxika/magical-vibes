@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
@@ -21,7 +21,7 @@ public class StormchaserChimera extends Card {
                 "{2}{U}{R}",
                 List.of(
                         new ScryEffect(1),
-                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new BoostSelfEffect(new TopCardOfLibraryManaValue(), new Fixed(0))),
                 "{2}{U}{R}: Scry 1, then reveal the top card of your library. This creature gets +X/+0 until end "
                         + "of turn, where X is that card's mana value."));

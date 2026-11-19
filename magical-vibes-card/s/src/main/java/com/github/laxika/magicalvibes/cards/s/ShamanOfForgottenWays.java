@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPo
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class ShamanOfForgottenWays extends Card {
                 "{9}{G}{G}",
                 List.of(new SetLifeTotalEffect(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                        SetLifeTotalRecipient.EACH_PLAYER)),
+                        Subjects.eachPlayer())),
                 "Formidable — {9}{G}{G}, {T}: Each player's life total becomes the number of creatures they control."
         ).withActivationCondition(
                 new ControlledCreaturesTotalPowerAtLeast(8),

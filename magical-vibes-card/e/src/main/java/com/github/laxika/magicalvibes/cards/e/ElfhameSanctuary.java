@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class ElfhameSanctuary extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new SearchLibraryEffect(CardPredicateUtils.basicLand()),
-                        new SkipNextEffect(SkipKind.DRAW_STEP, SkipRecipient.CONTROLLER, false, true)),
+                        new SkipNextEffect(SkipKind.DRAW_STEP, Subjects.you(), false, true)),
                 "Search your library for a basic land card?"));
     }
 }

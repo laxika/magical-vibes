@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ import java.util.UUID;
 
 /**
  * Resolves {@link SkipNextEffect}: increments the queue matching the effect's {@link SkipKind} for
- * the player its {@link SkipRecipient} names. The turn engine drains each queue when the
+ * each player {@link SubjectResolutionService} finds for the effect's subject (APNAP order). The turn engine drains each queue when the
  * corresponding turn, step or phase would begin.
  */
 @Slf4j
@@ -29,6 +29,7 @@ import java.util.UUID;
 public class SkipNextEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,29 +40,9 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SkipNextEffect) effect;
 
-        if (e.recipient() == SkipRecipient.EACH_OPPONENT) {
-            for (UUID playerId : gameData.playerIds) {
-                if (!playerId.equals(entry.getControllerId())) {
-                    resolveForPlayer(gameData, entry, e, playerId);
-                }
-            }
-            return;
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
+            resolveForPlayer(gameData, entry, e, playerId);
         }
-
-        UUID affectedPlayerId = e.recipient() == SkipRecipient.CONTROLLER
-                ? entry.getControllerId()
-                : entry.getTargetId();
-        if (e.recipient() == SkipRecipient.TARGET_PLAYER
-                && (affectedPlayerId == null || !gameData.playerIds.contains(affectedPlayerId))) {
-            affectedPlayerId = entry.getTargetIds().stream()
-                    .filter(gameData.playerIds::contains)
-                    .findFirst().orElse(null);
-        }
-        if (affectedPlayerId == null || !gameData.playerIds.contains(affectedPlayerId)) {
-            return;
-        }
-
-        resolveForPlayer(gameData, entry, e, affectedPlayerId);
     }
 
     private void resolveForPlayer(GameData gameData, StackEntry entry, SkipNextEffect e,

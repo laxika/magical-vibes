@@ -19,8 +19,8 @@ import java.util.Objects;
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
-        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.Except,
-        PlayerSubject.AllOf, PlayerSubject.Matching {
+        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers,
+        PlayerSubject.PlayersDealtDamage, PlayerSubject.SubgameWinners, PlayerSubject.Except, PlayerSubject.AllOf, PlayerSubject.Matching {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -164,6 +164,32 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
      * recorded them ("each opponent who discarded their hand this way"); a step result.
      */
     record AcceptedPlayers() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * The players an earlier step of the same resolution dealt damage to, as the stack entry recorded them ("each
+     * player dealt damage this way", Chandra, Roaring Flame); a player whose damage was all prevented is not one. A
+     * step result.
+     */
+    record PlayersDealtDamage() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * The players who won the subgame an earlier step of the same resolution played, as the stack entry recorded its
+     * result (Shahrazad: "each player who doesn't win that game" is {@code except(eachPlayer(), subgameWinners())}); a
+     * step result. Resolving it without a recorded result is an engine error.
+     */
+    record SubgameWinners() implements PlayerSubject {
 
         @Override
         public boolean needsStackEntry() {

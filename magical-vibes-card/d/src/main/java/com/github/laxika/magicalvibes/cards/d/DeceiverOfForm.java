@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherControlledCreaturesBecomeCopiesOfTopCreatureCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTopCardsOfLibraryOnBottomEffect;
@@ -20,7 +20,7 @@ public class DeceiverOfForm extends Card {
 
     public DeceiverOfForm() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
-                new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                new RevealTopCardOfLibraryEffect(Subjects.you()),
                 new ConditionalEffect(
                         new TopCardOfLibraryType(CardType.CREATURE),
                         new MayEffect(

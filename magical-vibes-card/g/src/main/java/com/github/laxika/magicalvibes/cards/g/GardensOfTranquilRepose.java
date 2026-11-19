@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class GardensOfTranquilRepose extends Card {
     public GardensOfTranquilRepose() {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY), SequenceEffect.of(
                 new ExileTriggeringCreatureAndTrackWithSourceEffect(),
-                new ScryEffect(1, LibraryOwner.DYING_CREATURE_CONTROLLER)));
+                new ScryEffect(1, Subjects.controllerOf(Subjects.triggering()))));
 
         addTrigger(Triggers.chaosEnsues(), new CreateTokenEffect(
                 new Sum(new Fixed(1), new CardsExiledWithSource()),

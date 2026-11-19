@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "158")
@@ -19,6 +19,6 @@ public class Worldfire extends Card {
         addSpellEffect(new ExileAllPermanentsEffect(new PermanentTruePredicate()));
         addSpellEffect(new ExileAllHandsEffect());
         addSpellEffect(new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
-        addSpellEffect(new SetLifeTotalEffect(1, SetLifeTotalRecipient.EACH_PLAYER));
+        addSpellEffect(new SetLifeTotalEffect(1, Subjects.eachPlayer()));
     }
 }

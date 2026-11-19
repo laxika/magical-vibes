@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GraveyardOwner;
 import com.github.laxika.magicalvibes.model.effect.ReturnTopCreatureCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class MistmoonGriffin extends Card {
         // creature card.
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new ExileSourceCardFromGraveyardEffect(),
-                new ReturnTopCreatureCardFromGraveyardToBattlefieldEffect(GraveyardOwner.CONTROLLER, false)));
+                new ReturnTopCreatureCardFromGraveyardToBattlefieldEffect(Subjects.you(), false)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import java.util.List;
 
 /**
- * Creates an emblem carrying {@code staticEffects} and {@code triggeredAbilities} under {@code recipient}'s control
+ * Creates an emblem carrying {@code staticEffects} and {@code triggeredAbilities} under the control of each player {@code player} names
  * ({@code com.github.laxika.magicalvibes.model.Emblem}). The single effect behind every "you get an
  * emblem with …" ultimate; the emblem's contents are declared on the card, not baked into a
  * per-card effect class.
@@ -36,14 +36,14 @@ import java.util.List;
  *
  * @param staticEffects      the emblem's static effects, stored verbatim
  * @param reminderText       the emblem's rules text, unquoted, used for the game log
- * @param recipient          who gets the emblem; {@link EmblemRecipient#TARGET_PLAYER} makes the effect
- *                           declare a benign {@link TargetPredicates#player()} target
+ * @param player             who gets an emblem (one each); only {@code targetPlayer()} makes the effect declare a
+ *                           benign {@link TargetPredicates#player()} target
  * @param activatedAbilities the emblem's activated abilities
  * @param triggeredAbilities the emblem's triggered abilities
  */
 public record CreateEmblemEffect(List<CardEffect> staticEffects,
                                  String reminderText,
-                                 EmblemRecipient recipient,
+                                 PlayerSubject player,
                                  List<ActivatedAbility> activatedAbilities,
                                  List<TriggeredAbility> triggeredAbilities) implements CardEffect {
 
@@ -53,28 +53,28 @@ public record CreateEmblemEffect(List<CardEffect> staticEffects,
         triggeredAbilities = List.copyOf(triggeredAbilities);
     }
 
-    public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText, EmblemRecipient recipient,
+    public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText, PlayerSubject player,
                               List<ActivatedAbility> activatedAbilities) {
-        this(staticEffects, reminderText, recipient, activatedAbilities, List.of());
+        this(staticEffects, reminderText, player, activatedAbilities, List.of());
     }
 
-    public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText, EmblemRecipient recipient) {
-        this(staticEffects, reminderText, recipient, List.of());
+    public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText, PlayerSubject player) {
+        this(staticEffects, reminderText, player, List.of());
     }
 
-    /** "You get an emblem with …" — the controller is the recipient. */
+    /** "You get an emblem with …" — the controller gets it. */
     public CreateEmblemEffect(List<CardEffect> staticEffects, String reminderText) {
-        this(staticEffects, reminderText, EmblemRecipient.CONTROLLER, List.of());
+        this(staticEffects, reminderText, Subjects.you(), List.of());
     }
 
-    /** "You get an emblem with '[triggered ability]'" — the controller is the recipient. */
+    /** "You get an emblem with '[triggered ability]'" — the controller gets it. */
     public CreateEmblemEffect(TriggeredAbility triggeredAbility, String reminderText) {
-        this(List.of(), reminderText, EmblemRecipient.CONTROLLER, List.of(), List.of(triggeredAbility));
+        this(List.of(), reminderText, Subjects.you(), List.of(), List.of(triggeredAbility));
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return recipient == EmblemRecipient.TARGET_PLAYER
+        return player.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }

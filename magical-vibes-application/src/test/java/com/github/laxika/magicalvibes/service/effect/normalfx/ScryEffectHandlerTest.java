@@ -94,7 +94,10 @@ class ScryEffectHandlerTest {
                 gameLogService,
                 interactionHandlerRegistry,
                 new AmountEvaluationService(mock(PredicateEvaluationService.class), gameQueryService),
-                gameQueryService);
+                gameQueryService,
+                new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
+                        mock(PredicateEvaluationService.class),
+                        mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
 
     }
 

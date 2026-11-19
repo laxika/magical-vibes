@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GraveyardOwner;
 import com.github.laxika.magicalvibes.model.effect.ReturnTopCreatureCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Puts the topmost creature card of the selected graveyard onto the battlefield under the effect
+ * Puts the topmost creature card of the graveyard of the player {@link SubjectResolutionService} finds onto the battlefield under the effect
  * controller's control. Cards above it that are not creature cards are skipped, so a graveyard whose
  * literal top card is a noncreature still reanimates the creature card below it. No-op when that
  * graveyard holds no creature card.
@@ -36,6 +36,7 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,9 +49,7 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
                 (ReturnTopCreatureCardFromGraveyardToBattlefieldEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        UUID graveyardOwnerId = returnEffect.graveyard() == GraveyardOwner.TARGET_PLAYER
-                ? entry.getTargetId()
-                : controllerId;
+        UUID graveyardOwnerId = subjectResolutionService.player(gameData, entry, effect, returnEffect.graveyardOwner());
         if (graveyardOwnerId == null) {
             return;
         }

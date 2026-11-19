@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -53,7 +53,7 @@ public class SarkhanTheDragonspeaker extends Card {
                 List.of(new CreateEmblemEffect(
                         List.of(),
                         DRAW_EMBLEM_TEXT + " " + END_EMBLEM_TEXT,
-                        EmblemRecipient.CONTROLLER,
+                        Subjects.you(),
                         List.of(),
                         List.of(
                                 new TriggeredAbility(Triggers.drawStep(ActivePlayer.YOU),

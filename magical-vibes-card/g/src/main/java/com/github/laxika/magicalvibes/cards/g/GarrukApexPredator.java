@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -79,7 +79,7 @@ public class GarrukApexPredator extends Card {
                 -8,
                 List.of(new CreateEmblemEffect(List.of(),
                         "Whenever a creature attacks you, it gets +5/+5 and gains trample until end of turn.",
-                        EmblemRecipient.TARGET_PLAYER, List.of(),
+                        Subjects.targetPlayer(), List.of(),
                         List.of(new TriggeredAbility(Triggers.creatureAttacksYou(),
                                 new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING,
                                         new Fixed(5), new Fixed(5), Set.of(Keyword.TRAMPLE)))))),

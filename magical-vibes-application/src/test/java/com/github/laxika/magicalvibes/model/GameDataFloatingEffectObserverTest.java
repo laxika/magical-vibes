@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import org.junit.jupiter.api.BeforeEach;
@@ -131,7 +131,7 @@ class GameDataFloatingEffectObserverTest {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Blinding Angel", null, player,
                 new SkipNextEffect(SkipKind.COMBAT_PHASE), player, Duration.PERMANENT));
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Moment of Silence", null, player,
-                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, false, true), player,
+                new SkipNextEffect(SkipKind.COMBAT_PHASE, Subjects.targetPlayer(), false, true), player,
                 Duration.UNTIL_END_OF_TURN));
         reported.clear();
 

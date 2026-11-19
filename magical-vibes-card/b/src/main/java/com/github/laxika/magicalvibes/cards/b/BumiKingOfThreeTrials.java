@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -34,7 +34,7 @@ public class BumiKingOfThreeTrials extends Card {
         SpellTarget earthbendTarget = target(TargetFilters.landYouControl());
 
         PutCountersOnSourceEffect counters = new PutCountersOnSourceEffect(1, 1, 3);
-        ScryEffect scry = new ScryEffect(3, LibraryOwner.TARGET_PLAYER);
+        ScryEffect scry = new ScryEffect(3, Subjects.targetPlayer());
         EarthbendTargetLandEffect earthbend = new EarthbendTargetLandEffect(3);
         registerEffectTargetIndex(scry, scryTarget.getIndex());
         registerEffectTargetIndex(earthbend, earthbendTarget.getIndex());

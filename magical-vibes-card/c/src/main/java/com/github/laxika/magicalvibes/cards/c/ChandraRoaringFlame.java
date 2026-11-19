@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -49,7 +48,7 @@ public class ChandraRoaringFlame extends Card {
                         new CreateEmblemEffect(
                                 List.of(),
                                 EMBLEM_TEXT,
-                                EmblemRecipient.EACH_PLAYER_DEALT_DAMAGE_THIS_WAY,
+                                Subjects.playersDealtDamageThisResolution(),
                                 List.of(),
                                 List.of(
                                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),

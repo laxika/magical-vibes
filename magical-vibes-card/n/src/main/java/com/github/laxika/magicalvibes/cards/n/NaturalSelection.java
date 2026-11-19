@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 public class NaturalSelection extends Card {
 
     public NaturalSelection() {
-        addSpellEffect(new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.TARGET_PLAYER));
+        addSpellEffect(new ReorderTopCardsOfLibraryEffect(3, Subjects.targetPlayer()));
         addSpellEffect(new MayEffect(new ShuffleLibraryEffect(true), "You may have that player shuffle their library."));
     }
 }

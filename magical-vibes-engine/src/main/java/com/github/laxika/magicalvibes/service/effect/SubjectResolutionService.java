@@ -290,6 +290,17 @@ public class SubjectResolutionService {
             case PlayerSubject.AcceptedPlayers ignored -> ctx.entry().getAcceptedPlayerIds().stream()
                     .filter(gameData.playerIds::contains)
                     .toList();
+            case PlayerSubject.PlayersDealtDamage ignored -> ctx.entry().getPlayersDealtDamageThisResolution().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            case PlayerSubject.SubgameWinners ignored -> {
+                if (ctx.entry().getSubgameResult() == null) {
+                    throw new IllegalStateException("Missing subgame result");
+                }
+                yield ctx.entry().getSubgameResult().winners().stream()
+                        .filter(gameData.playerIds::contains)
+                        .toList();
+            }
             case PlayerSubject.ChosenPlayers ignored -> {
                 Permanent source = sourceAsItIsOrWas(ctx);
                 yield source == null ? List.of() : source.getRememberedTargetPlayerIds().stream()

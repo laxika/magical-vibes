@@ -9,14 +9,15 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link PlayerDestroysPermanentsEffect}: the {@code recipient} routes who destroys their
- * own permanents (controller / target player), and {@link DestructionSupport#destroyPlayerMatchingPermanents}
+ * Resolves {@link PlayerDestroysPermanentsEffect}: the player subject, resolved through
+ * {@link SubjectResolutionService}, names who destroys their own permanents, and {@link DestructionSupport#destroyPlayerMatchingPermanents}
  * either destroys all matching (≤ count) or prompts the player to choose which to destroy. Destruction
  * respects regeneration/indestructible; when a choice is needed resolution pauses and resumes via the
  * {@code MultiPermanentChoiceContext.ForcedDestroy} completion. Used by Burning of Xinye.
@@ -29,6 +30,7 @@ public class PlayerDestroysPermanentsEffectHandler implements NormalEffectHandle
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,11 +41,8 @@ public class PlayerDestroysPermanentsEffectHandler implements NormalEffectHandle
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PlayerDestroysPermanentsEffect) effect;
 
-        UUID playerId = switch (e.recipient()) {
-            case CONTROLLER -> entry.getControllerId();
-            case TARGET_PLAYER -> entry.getTargetId();
-        };
-        if (playerId == null || !gameData.playerIds.contains(playerId)) {
+        UUID playerId = subjectResolutionService.player(gameData, entry, effect, e.player());
+        if (playerId == null) {
             return;
         }
 

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesC
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -37,7 +37,7 @@ public class PlaneMergeElf extends Card {
                 new TopCardOfLibraryType(CardType.LAND),
                 new MayEffect(
                         SequenceEffect.of(
-                                new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                                new RevealTopCardOfLibraryEffect(Subjects.you()),
                                 elfWarrior),
                         "Reveal the land card?")));
 

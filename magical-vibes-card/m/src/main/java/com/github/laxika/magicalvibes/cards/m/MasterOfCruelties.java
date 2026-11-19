@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceAttackingPlayer;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,11 +22,11 @@ public class MasterOfCruelties extends Card {
         addStaticEffect(new CanOnlyAttackAloneEffect());
 
         // Whenever this creature attacks a player and isn't blocked, that player's life total
-        // becomes 1. This creature assigns no combat damage this combat. The defending player is
-        // the trigger's non-targeting targetId.
+        // becomes 1. This creature assigns no combat damage this combat. "That player" is the
+        // defending player; the trigger does not target.
         addTrigger(Triggers.attacksUnblocked(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceAttackingPlayer()),
-                new SetLifeTotalEffect(1, SetLifeTotalRecipient.TARGET_PLAYER),
+                new SetLifeTotalEffect(1, Subjects.defendingPlayer()),
                 AssignNoCombatDamageEffect.thisCombat());
     }
 }

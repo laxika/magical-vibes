@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -18,7 +18,7 @@ public class Prophecy extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addSpellEffect(new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER, 1));
+        addSpellEffect(new RevealTopCardOfLibraryEffect(Subjects.targetPlayer(), 1));
         addSpellEffect(new ShuffleLibraryEffect(true));
         addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect(1));
     }

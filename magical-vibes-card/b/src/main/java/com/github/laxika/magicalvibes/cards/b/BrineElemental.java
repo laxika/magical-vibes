@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class BrineElemental extends Card {
     public BrineElemental() {
         addMorph("{5}{U}{U}");
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                new SkipNextEffect(SkipKind.UNTAP_STEP, SkipRecipient.EACH_OPPONENT));
+                new SkipNextEffect(SkipKind.UNTAP_STEP, Subjects.eachOpponent()));
     }
 }

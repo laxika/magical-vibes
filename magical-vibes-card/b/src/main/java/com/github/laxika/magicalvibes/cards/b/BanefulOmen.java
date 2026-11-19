@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,7 +17,7 @@ public class BanefulOmen extends Card {
     public BanefulOmen() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(SequenceEffect.of(
-                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new LoseLifeEffect(new TopCardOfLibraryManaValue(), Subjects.eachOpponent())
                 ), "Reveal the top card of your library?"));
     }

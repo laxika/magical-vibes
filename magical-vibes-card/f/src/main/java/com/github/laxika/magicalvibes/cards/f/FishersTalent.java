@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -41,7 +42,7 @@ public class FishersTalent extends Card {
                         new TopCardOfLibraryType(CardType.LAND, LibraryOwner.CONTROLLER),
                         new MayEffect(
                                 SequenceEffect.of(
-                                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                                         fishToken),
                                 "Reveal the land card?")),
                 new DrawCardEffect(1)));

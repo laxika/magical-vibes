@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryMatchesPredicate;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -24,7 +24,7 @@ public class InvasionOfPyrulea extends Card {
     public InvasionOfPyrulea() {
         setBackFaceCard(new GargantuanSlabhorn());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3),
-                new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                new RevealTopCardOfLibraryEffect(Subjects.you()),
                 new ConditionalEffect(
                 new TopCardOfLibraryMatchesPredicate(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.LAND),

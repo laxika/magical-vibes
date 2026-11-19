@@ -5,23 +5,26 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Resolves the whole "life total becomes" family via {@link SetLifeTotalEffect}: the
- * {@code SetLifeTotalRecipient} routes whose total is set and the {@code DynamicAmount} computes the
+ * Resolves the whole "life total becomes" family via {@link SetLifeTotalEffect}: the players are the ones
+ * {@link SubjectResolutionService} finds for the effect's subject (APNAP order) and the {@code DynamicAmount} computes the
  * new value. Every path ends in {@link LifeSupport#applySetLifeTotal}, which implements CR 119.5 —
  * the player gains or loses the necessary amount, so "can't change life" / "can't gain life" and the
  * gain/loss triggers all apply.
@@ -38,6 +41,7 @@ public class SetLifeTotalEffectHandler implements NormalEffectHandlerBean, AsksD
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,17 +62,19 @@ public class SetLifeTotalEffectHandler implements NormalEffectHandlerBean, AsksD
         }
         AmountContext context = AmountContext.forStackEntry(entry, source);
 
-        switch (e.recipient()) {
-            case CONTROLLER -> setOnePlayer(gameData, entry.getControllerId(), evaluate(gameData, e, context));
-            // null target: "up to one target player" with none chosen (Torgaar), or a fizzled entry.
-            case TARGET_PLAYER -> setOnePlayer(gameData, entry.getTargetId(), evaluate(gameData, e, context));
-            case EACH_PLAYER -> setEachPlayer(gameData, e, context);
+        // No player: "up to one target player" with none chosen (Torgaar), or a fizzled entry.
+        List<UUID> players = subjectResolutionService.players(gameData, entry, effect, e.player());
+        if (e.player() instanceof PlayerSubject.Each) {
+            setEachPlayer(gameData, players, e, context);
+        } else if (players.size() == 1) {
+            applyAndLog(gameData, players.getFirst(), evaluate(gameData, e, context));
+        } else if (!players.isEmpty()) {
+            int newLife = evaluate(gameData, e, context);
+            Map<UUID, Integer> newLifeTotals = new LinkedHashMap<>();
+            players.forEach(playerId -> newLifeTotals.put(playerId, newLife));
+            lifeSupport.askBeforeLifeTotalsChange(gameData, newLifeTotals);
+            newLifeTotals.forEach((playerId, total) -> applyAndLog(gameData, playerId, total));
         }
-    }
-
-    private void setOnePlayer(GameData gameData, UUID playerId, int newLife) {
-        if (playerId == null) return;
-        applyAndLog(gameData, playerId, newLife);
     }
 
     /**
@@ -79,9 +85,9 @@ public class SetLifeTotalEffectHandler implements NormalEffectHandlerBean, AsksD
      * among all players"). Every Lich's Duel Mastery sacrifice the new totals cause is asked about before
      * the first total changes, since a total that rises first would close the question window.
      */
-    private void setEachPlayer(GameData gameData, SetLifeTotalEffect e, AmountContext context) {
+    private void setEachPlayer(GameData gameData, List<UUID> players, SetLifeTotalEffect e, AmountContext context) {
         Map<UUID, Integer> newLifeTotals = new LinkedHashMap<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : players) {
             newLifeTotals.put(playerId, evaluate(gameData, e, context.withControllerId(playerId)));
         }
         lifeSupport.askBeforeLifeTotalsChange(gameData, newLifeTotals);

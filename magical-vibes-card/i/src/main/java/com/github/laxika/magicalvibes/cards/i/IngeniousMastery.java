@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
@@ -27,7 +27,7 @@ public class IngeniousMastery extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(3),
                         new TargetOpponentCreatesTokenEffect(CreateTokenEffect.ofTreasureToken(2)),
-                        new ScryEffect(2, LibraryOwner.OPPONENT))));
+                        new ScryEffect(2, Subjects.eachOpponent()))));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()), new DrawCardEffect(new XValue())));
     }

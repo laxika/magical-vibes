@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -78,7 +78,10 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        revealTopCardOfLibraryEffectHandler = new RevealTopCardOfLibraryEffectHandler(gameLogService, lifeSupport);
+        revealTopCardOfLibraryEffectHandler = new RevealTopCardOfLibraryEffectHandler(gameLogService, lifeSupport,
+                new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
+                        mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                        mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
 
     }
 
@@ -114,7 +117,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 Card topCard = createCard("Grizzly Bears");
                 gd.playerDecks.get(player2Id).add(topCard);
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(Subjects.targetPlayer());
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Aven Windreader"),
                         player1Id, "Aven Windreader", List.of(effect), 0,
                         player2Id, null);
@@ -128,7 +131,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
             @Test
             @DisplayName("Empty library logs appropriately")
             void emptyLibraryLogged() {
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(Subjects.targetPlayer());
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Aven Windreader"),
                         player1Id, "Aven Windreader", List.of(effect), 0,
                         player2Id, null);
@@ -145,7 +148,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 Card topCard = createCard("Forest", CardType.LAND);
                 gd.playerDecks.get(player2Id).add(topCard);
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER, 1);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(Subjects.targetPlayer(), 1);
                 Card source = createCard("Prophecy", CardType.SORCERY);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, source,
                         player1Id, "Prophecy", List.of(effect), 0,
@@ -161,7 +164,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
             void noLifeGainOnNonLand() {
                 gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER, 1);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(Subjects.targetPlayer(), 1);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Prophecy", CardType.SORCERY),
                         player1Id, "Prophecy", List.of(effect), 0,
                         player2Id, null);
@@ -177,7 +180,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
                 gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(Subjects.you());
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Cruel Deceiver"),
                         player1Id, "Cruel Deceiver", List.of(effect), 0,
                         player2Id, null);

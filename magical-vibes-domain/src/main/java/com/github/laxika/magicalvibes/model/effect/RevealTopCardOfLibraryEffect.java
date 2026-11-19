@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * Reveals the top card of the {@link LibraryOwner}'s library. The card stays on top — no draw, no
+ * Reveals the top card of the library of the player {@code player} names (the controller's own when it names
+ * nobody). The card stays on top — no draw, no
  * reorder. Pair with a {@code ConditionalEffect} reading the revealed card for an "if it's a land
  * card …" rider (the Deceivers and Paroxysm).
  *
@@ -13,18 +14,20 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * {@link LifeGainEffect} capability therefore reports {@code Fixed(0)} for every reveal that has no
  * rider, which is a fact and not a score — consumers that ask "is this a life-gain card" must treat
  * a zero amount as "no".
+ *
+ * @param player whose top card is revealed; only {@code targetPlayer()} declares a (benign) player target
  */
-public record RevealTopCardOfLibraryEffect(LibraryOwner owner, int lifeGainIfLand)
+public record RevealTopCardOfLibraryEffect(PlayerSubject player, int lifeGainIfLand)
         implements LifeGainEffect {
 
     /** Convenience constructor for a reveal with no life-gain rider. */
-    public RevealTopCardOfLibraryEffect(LibraryOwner owner) {
-        this(owner, 0);
+    public RevealTopCardOfLibraryEffect(PlayerSubject player) {
+        this(player, 0);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return owner == LibraryOwner.TARGET_PLAYER
+        return player.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }

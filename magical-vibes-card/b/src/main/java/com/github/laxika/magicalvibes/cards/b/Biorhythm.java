@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "231")
@@ -17,6 +17,6 @@ public class Biorhythm extends Card {
         // evaluates the amount once per player, so CountScope.CONTROLLER reads "they".
         addSpellEffect(new SetLifeTotalEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                SetLifeTotalRecipient.EACH_PLAYER));
+                Subjects.eachPlayer()));
     }
 }

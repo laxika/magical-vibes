@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExchangeHandAndLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -52,7 +52,7 @@ public class Mordenkainen extends Card {
                         new ExchangeHandAndLibraryEffect(),
                         new ShuffleLibraryEffect(false),
                         new CreateEmblemEffect(List.of(new NoMaximumHandSizeEffect()),
-                                "You have no maximum hand size.", EmblemRecipient.CONTROLLER)
+                                "You have no maximum hand size.", Subjects.you())
                 ),
                 "\u221210: Exchange your hand and library, then shuffle. You get an emblem with \"You have no maximum hand size.\""
         ));

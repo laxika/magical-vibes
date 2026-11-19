@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BOK", collectorNumber = "54")
 public class SwayOfTheStars extends Card {
@@ -21,6 +21,6 @@ public class SwayOfTheStars extends Card {
         addSpellEffect(new EachPlayerDrawsCardEffect(CARDS_DRAWN));
 
         // Each player's life total becomes 7.
-        addSpellEffect(new SetLifeTotalEffect(NEW_LIFE_TOTAL, SetLifeTotalRecipient.EACH_PLAYER));
+        addSpellEffect(new SetLifeTotalEffect(NEW_LIFE_TOTAL, Subjects.eachPlayer()));
     }
 }

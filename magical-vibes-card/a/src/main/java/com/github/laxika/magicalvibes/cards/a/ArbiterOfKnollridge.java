@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class ArbiterOfKnollridge extends Card {
     public ArbiterOfKnollridge() {
         // When this creature enters, each player's life total becomes the highest life total among all players.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SetLifeTotalEffect(
-                new HighestLifeTotalAmongPlayers(), SetLifeTotalRecipient.EACH_PLAYER));
+                new HighestLifeTotalAmongPlayers(), Subjects.eachPlayer()));
     }
 }

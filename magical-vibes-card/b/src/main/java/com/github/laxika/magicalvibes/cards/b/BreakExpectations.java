@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.DraftCardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealMatchingCardsFromTargetHandAndExileEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -40,6 +40,6 @@ public class BreakExpectations extends Card {
                 .addSpellEffect(new RevealMatchingCardsFromTargetHandAndExileEffect(
                                 new CardMinManaValuePredicate(2),
                                 new DraftCardFromSpellbookEffect(
-                                        SPELLBOOK, DraftCardRecipient.TARGET_PLAYER, true)));
+                                        SPELLBOOK, Subjects.targetPlayerDeclaredElsewhere(), true)));
     }
 }

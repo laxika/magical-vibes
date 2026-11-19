@@ -5,18 +5,24 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesFractionOfLifeRoundedUpEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 import java.util.LinkedHashMap;
-import com.github.laxika.magicalvibes.model.effect.FractionalLifeLossRecipient;
 
+/**
+ * Resolves {@link EachPlayerLosesFractionOfLifeRoundedUpEffect}: asks {@link SubjectResolutionService} for the
+ * players, computes every loss from the current life totals and applies them as one {@link LifeSupport#applyLifeLosses}
+ * map. A subgame result the entry carries (Shahrazad) is consumed here.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerLosesFractionOfLifeRoundedUpEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,20 +33,12 @@ public class EachPlayerLosesFractionOfLifeRoundedUpEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerLosesFractionOfLifeRoundedUpEffect) effect;
         var amounts = new LinkedHashMap<UUID, Integer>();
-        if (e.recipient() == FractionalLifeLossRecipient.SUBGAME_NON_WINNERS && entry.getSubgameResult() == null) {
-            throw new IllegalStateException("Missing subgame result");
-        }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (e.opponentsOnly() && playerId.equals(entry.getControllerId())) {
-                continue;
-            }
-            if (e.recipient() == FractionalLifeLossRecipient.SUBGAME_NON_WINNERS
-                    && entry.getSubgameResult().winners().contains(playerId)) continue;
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
             int currentLife = gameData.getLife(playerId);
             int lifeLoss = currentLife <= 0 ? 0 : (int) (((long) currentLife + e.divisor() - 1) / e.divisor());
             amounts.put(playerId, lifeLoss);
         }
         lifeSupport.applyLifeLosses(gameData, amounts, entry.getCard().getName());
-        if (e.recipient() == FractionalLifeLossRecipient.SUBGAME_NON_WINNERS) entry.setSubgameResult(null);
+        entry.setSubgameResult(null);
     }
 }

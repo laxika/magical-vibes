@@ -514,11 +514,11 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDestroysPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -2722,7 +2722,7 @@ public class ConditionEvaluationService {
             return controlsMatchingLand(gameData, controllerId, destroyAll.filter(), targetSpellContext);
         }
         if (effect instanceof PlayerDestroysPermanentsEffect playerDestroys) {
-            UUID affectedPlayerId = playerDestroys.recipient() == DestroyRecipient.CONTROLLER
+            UUID affectedPlayerId = playerDestroys.player() instanceof PlayerSubject.You
                     ? targetSpell.getControllerId() : targetSpell.getTargetId();
             return controllerId.equals(affectedPlayerId)
                     && controlsMatchingLand(gameData, controllerId, playerDestroys.filter(), targetSpellContext);
@@ -4884,9 +4884,7 @@ public class ConditionEvaluationService {
     private UUID resolveLibraryOwner(GameData gameData, ConditionContext ctx, LibraryOwner owner) {
         return switch (owner) {
             case CONTROLLER -> ctx.controllerId();
-            case OPPONENT -> gameQueryService.getOpponentId(gameData, ctx.controllerId());
-            case TARGET_PLAYER, ENCHANTED_PERMANENT_CONTROLLER -> ctx.targetId();
-            case DYING_CREATURE_CONTROLLER -> ctx.targetId() != null ? ctx.targetId() : ctx.controllerId();
+            case ENCHANTED_PERMANENT_CONTROLLER -> ctx.targetId();
         };
     }
 

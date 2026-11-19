@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e, 4f, 4g, 4h done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a–4h done, 4i partly done (`LibraryScope` left) |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -357,7 +357,7 @@ fold in, the enum and the absorbed classes are deleted.
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | done |
 | 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | done |
 | 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | done |
-| 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | open |
+| 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | partly done: all but `LibraryScope` (`LibraryOwner` kept for conditions) |
 
 Notes for every run:
 
@@ -1570,6 +1570,75 @@ the effect's bound targets before the entry's `targetId`.
   counters" triggers is undecided (All Will Be One's rulings only settle simultaneous toxic damage).
 - `CounterUnlessGetsPoisonCountersEffect` is fused (step 8); `EachOpponentWithPoisonCountersLosesLifeEffect` can now use
   `matching(eachOpponent(), <has poison counters>)` (4b's ledger row).
+
+### Step 4, run 4i (2026-11-19, partly done)
+
+**Survivors** (each replaced its enum with a `PlayerSubject` component, every constructor kept with the subject in the
+enum's place, and resolves it through `SubjectResolutionService`; each declares a benign player target iff
+`declaresTarget()`): `PlayerDestroysPermanentsEffect` (`DestroyRecipient`; one player), `DraftCardFromSpellbookEffect`
+(`DraftCardRecipient`), `AnteTopCardEffect` (`AnteRecipient`; rejects a declaring subject),
+`EachPlayerLosesFractionOfLifeRoundedUpEffect` (`FractionalLifeLossRecipient`; the unused `(int, boolean)` constructor and
+`opponentsOnly()` accessor are gone, the `opponentsOnly(int)` factory stays), `ReturnTopCreatureCardFromGraveyardToBattlefieldEffect`
+(`GraveyardOwner`, component `graveyardOwner`), `CreateEmblemEffect` (`EmblemRecipient`), `SetLifeTotalEffect`
+(`SetLifeTotalRecipient`), `SkipNextEffect` (`SkipRecipient`), and the library-inspection trio `ScryEffect`,
+`ReorderTopCardsOfLibraryEffect`, `RevealTopCardOfLibraryEffect` (`LibraryOwner`; component `player`, the old silent
+fallback to the controller when the subject names nobody kept). No record or handler deleted: ratchet unchanged
+(4,920 / 4,153).
+
+**Deleted enums**: `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient`,
+`GraveyardOwner`, `EmblemRecipient`, `SetLifeTotalRecipient`, `SkipRecipient`. Mapping: `CONTROLLER` → `you()`;
+`TARGET_PLAYER` → `targetPlayer()` everywhere it declared (Burning of Xinye, Garruk, Apex Predator, the `SetLifeTotal` /
+`SkipNext` / library spell and ability targets, Ral Zarek, Guest Lecturer's nested skip), except
+`DraftCardRecipient.TARGET_PLAYER` (never declared) → `targetPlayerDeclaredElsewhere()` (Break Expectations) and
+`GraveyardOwner.TARGET_PLAYER` → `defendingPlayer()` (Bone Dancer: the unblocked-attack collector records the defender
+as `defendingPlayerId`); `SetLifeTotalRecipient.TARGET_PLAYER` on Master of Cruelties ("that player's life total
+becomes 1", a non-targeting attack trigger whose collector baked the defender) → `defendingPlayer()`;
+`EACH_PLAYER` / `EACH_OPPONENT` / `OPPONENTS` / `ALL` → `eachPlayer()` / `eachOpponent()`; `SkipRecipient.DAMAGED_PLAYER`
+→ `triggeringPlayer()`; `EmblemRecipient.EACH_PLAYER_DEALT_DAMAGE_THIS_WAY` → `playersDealtDamageThisResolution()`;
+`FractionalLifeLossRecipient.SUBGAME_NON_WINNERS` → `except(eachPlayer(), subgameWinners())`. `LibraryOwner` on effects:
+`OPPONENT` → `eachOpponent()` (Ingenious Mastery; first opponent, as the two-player `getOpponentId` was),
+`DYING_CREATURE_CONTROLLER` → `controllerOf(triggering())` (Gardens of Tranquil Repose), `ENCHANTED_PERMANENT_CONTROLLER`
+→ `triggeringPlayer()` (Paroxysm's reveal). The scrying player is the library's owner except for a `targetPlayer()`
+library with a `LibraryDecisionMaker.CONTROLLER` (Ransack), exactly the old switch. 73 card files rewritten (a deleted
+scratch script for `LibraryOwner`, sed for the rest), the engine reader (`ConditionEvaluationService`'s
+Burning of Xinye check matches `You`), `LibraryTargetValidators`, 4 application test files.
+
+**`LibraryOwner` kept** (ledger `blocked-other`), trimmed to `CONTROLLER` and `ENCHANTED_PERMANENT_CONTROLLER`: only the
+conditions `TopCardOfLibraryType` / `TopCardOfLibraryMatchesPredicate` read it now (subjects in conditions are a
+follow-up). Paroxysm reads the same player in both places: its reveal's `triggeringPlayer()` falls back to the entry's
+baked `targetId` (the upkeep `ENCHANTED_CONTROLLER` record sets no triggering player), and the condition reads
+`ConditionContext.targetId()`, the same id; `ParoxysmTest` passes.
+
+**New variants** (step results, `needsStackEntry()`): `playersDealtDamageThisResolution()` (`StackEntry.playersDealtDamageThisResolution`)
+and `subgameWinners()` (the entry's `SubgameResult.winners()`; resolving it with no recorded result throws, as the old
+handler did). Tests: `SubjectResolutionServiceTest$Players.playersDealtDamageVariant` / `subgameWinnersVariant`.
+`EachPlayerLosesFractionOfLifeRoundedUpEffectHandler` now clears any subgame result the entry carries (only Shahrazad
+sets one).
+
+**AI and other readers.** No AI code reads a converted subject (`SpellEvaluator` reads only `ScryEffect.count()`).
+
+**Behaviour differences** (none changes a tested outcome): several players ante, skip, get emblems, set life totals or
+lose a fraction of life in APNAP order (CR 101.4) instead of seat order (`SkipNext` used the unordered `playerIds`);
+`targetPlayer()` reads the effect's bound or flat targets before the entry's `targetId`, so a skip with several player
+targets skips each (no card has several); Master of Cruelties' trigger no longer carries a player target spec (its
+collector already made the entry non-targeting); Gardens of Tranquil Repose's "its controller" is the dying creature's
+controller through `findTriggeringPermanentController` (same player, step 3).
+
+**Lesson.** A `targetPlayer()` nested in a `SequenceEffect` bound to another target group reads that group: Yosei, the
+Morning Star's skip (player in group 0, the permanents in group 1) needs `targetPlayer(0)`; the old handler's
+`getTargetId()` → first player in `getTargetIds()` hid this. `YoseiTheMorningStarTest` caught it.
+
+**Tests**: 261 classes (every rewritten card's test, a 30-card sample of `ScryEffect`, all cards of the other
+survivors, the touched handler / resolver / floating-effect / route / ratchet tests, `SpellEvaluatorTest`): 4,748 test
+cases, all pass after the Yosei fix.
+
+**Left for a run 4j**: `LibraryScope` (7 records: `ExileTopCardsToSource`, `ExileBottomCardsToSource`,
+`ExileTopCardsAndMayCastSpells`, `ExileTopCardsChooseOneMayPlayUntil{NextEndStep,NextTurn}`,
+`EachPlayerExilesTopUntilNonlandAndMayCastSpells`, `LookAtTopCardsRevealTwoTypesToHandThenRest`; about 40 cards, plus
+`GameViewProjectionFactory` and `ExileTopCardsToSourceEffectHandlerTest`). Its 16 `TARGET_OPPONENT` uses must be split
+by Oracle text (step 3's table: `defendingPlayer()` for attack triggers, `triggeringPlayer()` for combat damage, a
+declared `targetPlayer` for `targetedOpponent`, `eachOpponent()` for the sole opponent), and each handler supports a
+different subset, so it is a run of its own. When it is done, step 4 is done.
 
 ## Prompt
 

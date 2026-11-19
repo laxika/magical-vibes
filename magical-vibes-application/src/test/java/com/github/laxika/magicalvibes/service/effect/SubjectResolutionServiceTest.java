@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.SubgameResult;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.github.laxika.magicalvibes.model.effect.Subjects.acceptedPlayers;
@@ -42,6 +44,8 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.defendingPlay
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachOpponent;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.playersDealtDamageThisResolution;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.subgameWinners;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.enchantedPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.matching;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
@@ -464,6 +468,30 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(players(entry, acceptedPlayers())).containsExactly(player1.getId(), player2.getId());
             assertThat(players(entry, except(acceptedPlayers(), you()))).containsExactly(player2.getId());
             assertThat(players(entry(player1, null, null), acceptedPlayers())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Players dealt damage this resolution are those the entry recorded, in APNAP order")
+        void playersDealtDamageVariant() {
+            StackEntry entry = entry(player1, null, null);
+            entry.recordPlayerDealtDamage(player2.getId());
+            entry.recordPlayerDealtDamage(player1.getId());
+
+            assertThat(players(entry, playersDealtDamageThisResolution()))
+                    .containsExactly(player1.getId(), player2.getId());
+            assertThat(players(entry(player1, null, null), playersDealtDamageThisResolution())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Subgame winners are read from the entry's subgame result; without one it is an engine error")
+        void subgameWinnersVariant() {
+            StackEntry entry = entry(player1, null, null);
+            entry.setSubgameResult(new SubgameResult(UUID.randomUUID(), Set.of(player2.getId())));
+
+            assertThat(players(entry, subgameWinners())).containsExactly(player2.getId());
+            assertThat(players(entry, except(eachPlayer(), subgameWinners()))).containsExactly(player1.getId());
+            assertThatThrownBy(() -> players(entry(player1, null, null), subgameWinners()))
+                    .isInstanceOf(IllegalStateException.class);
         }
 
         @Test

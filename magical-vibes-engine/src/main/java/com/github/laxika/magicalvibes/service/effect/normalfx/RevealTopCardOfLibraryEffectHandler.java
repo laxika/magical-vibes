@@ -6,15 +6,19 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Reveals the top card of the library of the player {@link SubjectResolutionService} finds for the effect's subject
+ * (the controller's own when it names nobody), with Prophecy's land life-gain rider.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
 
     private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +37,10 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RevealTopCardOfLibraryEffect revealEffect = (RevealTopCardOfLibraryEffect) effect;
 
-        UUID deckOwnerId = resolveDeckOwner(entry, revealEffect.owner());
+        UUID deckOwnerId = subjectResolutionService.player(gameData, entry, effect, revealEffect.player());
+        if (deckOwnerId == null) {
+            deckOwnerId = entry.getControllerId();
+        }
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
         String playerName = gameData.playerIdToName.get(deckOwnerId);
 
@@ -50,14 +58,5 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
-    }
-
-    /** Falls back to the controller when a target-player form resolves without a target. */
-    private static UUID resolveDeckOwner(StackEntry entry, LibraryOwner owner) {
-        if (owner != LibraryOwner.TARGET_PLAYER
-                && owner != LibraryOwner.ENCHANTED_PERMANENT_CONTROLLER) {
-            return entry.getControllerId();
-        }
-        return entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
     }
 }

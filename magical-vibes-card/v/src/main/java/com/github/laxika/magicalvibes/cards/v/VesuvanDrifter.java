@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTopCreatureCardUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -25,7 +25,7 @@ public class VesuvanDrifter extends Card {
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new MayEffect(
                 SequenceEffect.of(
-                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new BecomeCopyOfTopCreatureCardUntilEndOfTurnEffect(Set.of(Keyword.FLYING))),
                 "Reveal the top card of your library?")
         );

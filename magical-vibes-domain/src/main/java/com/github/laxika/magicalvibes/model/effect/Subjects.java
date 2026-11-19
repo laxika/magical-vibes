@@ -35,6 +35,8 @@ public final class Subjects {
     private static final PlayerSubject CHOSEN_PLAYER = new PlayerSubject.ChosenPlayer();
     private static final PlayerSubject CHOSEN_PLAYERS = new PlayerSubject.ChosenPlayers();
     private static final PlayerSubject ACCEPTED_PLAYERS = new PlayerSubject.AcceptedPlayers();
+    private static final PlayerSubject PLAYERS_DEALT_DAMAGE = new PlayerSubject.PlayersDealtDamage();
+    private static final PlayerSubject SUBGAME_WINNERS = new PlayerSubject.SubgameWinners();
 
     private Subjects() {
     }
@@ -206,6 +208,16 @@ public final class Subjects {
     /** The players who said yes to the preceding "each player may" choice of this resolution. */
     public static PlayerSubject acceptedPlayers() {
         return ACCEPTED_PLAYERS;
+    }
+
+    /** The players an earlier step of this resolution dealt damage to ("each player dealt damage this way"). */
+    public static PlayerSubject playersDealtDamageThisResolution() {
+        return PLAYERS_DEALT_DAMAGE;
+    }
+
+    /** The players who won the subgame an earlier step of this resolution played. */
+    public static PlayerSubject subgameWinners() {
+        return SUBGAME_WINNERS;
     }
 
     /** The players {@code players} names but those {@code excluded} names ("the other chosen player"). */

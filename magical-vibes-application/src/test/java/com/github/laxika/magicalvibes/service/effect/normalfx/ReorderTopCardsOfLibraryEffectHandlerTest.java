@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -92,7 +92,10 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         reorderTopCardsOfLibraryEffectHandler = new ReorderTopCardsOfLibraryEffectHandler(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
-                gameQueryService, amountEvaluationService);
+                gameQueryService, amountEvaluationService,
+                new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
+                        predicateEvaluationService,
+                        mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
         lenient().when(amountEvaluationService.evaluate(
                         any(GameData.class), argThat(amount -> amount instanceof Fixed), any()))
                 .thenAnswer(invocation -> ((Fixed) invocation.getArgument(1)).value());
@@ -221,7 +224,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                 gd.playerDecks.get(player2Id).add(createCard("Llanowar Elves"));
 
                 ReorderTopCardsOfLibraryEffect effect =
-                        new ReorderTopCardsOfLibraryEffect(2, LibraryOwner.TARGET_PLAYER);
+                        new ReorderTopCardsOfLibraryEffect(2, Subjects.targetPlayer());
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Portent"),
                         player1Id, "Portent", List.of(effect), 0,
                         player2Id, null);
@@ -244,7 +247,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
 
                 ReorderTopCardsOfLibraryEffect effect = new ReorderTopCardsOfLibraryEffect(
-                        2, LibraryOwner.CONTROLLER, LibraryDecisionMaker.TARGET_PLAYER);
+                        2, Subjects.you(), LibraryDecisionMaker.TARGET_PLAYER);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Tahngarth's Glare"),
                         player1Id, "Tahngarth's Glare", List.of(effect), 0,
                         player2Id, null);

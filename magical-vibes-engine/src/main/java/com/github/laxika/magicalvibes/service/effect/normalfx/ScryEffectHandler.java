@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
-import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -30,6 +30,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,21 +42,14 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         ScryEffect e = (ScryEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        boolean targetLibrary = e.owner() == LibraryOwner.TARGET_PLAYER;
-        UUID libraryOwnerId = switch (e.owner()) {
-            case TARGET_PLAYER -> entry.getTargetId() != null ? entry.getTargetId() : controllerId;
-            case OPPONENT -> gameQueryService.getOpponentId(gameData, controllerId);
-            case DYING_CREATURE_CONTROLLER -> entry.getTriggeringPermanentControllerId() != null
-                    ? entry.getTriggeringPermanentControllerId() : controllerId;
-            default -> controllerId;
-        };
-        UUID scryingPlayerId = e.owner() == LibraryOwner.TARGET_PLAYER
-                && e.decisionMaker() == LibraryDecisionMaker.CONTROLLER
+        boolean targetLibrary = e.player().declaresTarget();
+        UUID libraryOwnerId = subjectResolutionService.player(gameData, entry, effect, e.player());
+        if (libraryOwnerId == null) {
+            libraryOwnerId = controllerId;
+        }
+        UUID scryingPlayerId = targetLibrary && e.decisionMaker() == LibraryDecisionMaker.CONTROLLER
                 ? controllerId
-                : e.owner() == LibraryOwner.TARGET_PLAYER
-                || e.owner() == LibraryOwner.OPPONENT
-                || e.owner() == LibraryOwner.DYING_CREATURE_CONTROLLER
-                ? libraryOwnerId : controllerId;
+                : libraryOwnerId;
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         Permanent source = entry.getSourcePermanentId() != null

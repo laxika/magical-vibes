@@ -9,15 +9,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
- * Adds the emblem to {@code gameData.emblems} under the recipient's control. The effect's static effects and
+ * Adds an emblem to {@code gameData.emblems} under the control of each player {@link SubjectResolutionService} finds
+ * for the effect's subject. The effect's static effects and
  * abilities are stored verbatim; nothing here resolves or registers them: the trigger readers read the emblem's
  * triggered abilities from the command zone.
  */
@@ -27,6 +28,7 @@ import java.util.UUID;
 public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +39,7 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateEmblemEffect emblemEffect = (CreateEmblemEffect) effect;
 
-        for (UUID recipientId : recipients(gameData, entry, emblemEffect)) {
+        for (UUID recipientId : subjectResolutionService.players(gameData, entry, effect, emblemEffect.player())) {
             createEmblem(gameData, recipientId, entry.getCard() != null ? entry.getCard().getName() : "",
                     emblemEffect);
         }
@@ -66,19 +68,5 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(
                 playerName + " gets an emblem with \"" + emblemEffect.reminderText() + "\"."));
         log.info("Game {} - {} gets an emblem from {}", gameData.id, playerName, sourceName);
-    }
-
-    private static List<UUID> recipients(GameData gameData, StackEntry entry,
-                                         CreateEmblemEffect emblemEffect) {
-        return switch (emblemEffect.recipient()) {
-            case TARGET_PLAYER -> List.of(entry.getTargetId());
-            case CONTROLLER -> List.of(entry.getControllerId());
-            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                    .toList();
-            // "Each player dealt damage this way": the damage effect earlier in this same entry logged
-            // exactly who took damage, so fully-prevented players are skipped.
-            case EACH_PLAYER_DEALT_DAMAGE_THIS_WAY -> List.copyOf(entry.getPlayersDealtDamageThisResolution());
-        };
     }
 }
