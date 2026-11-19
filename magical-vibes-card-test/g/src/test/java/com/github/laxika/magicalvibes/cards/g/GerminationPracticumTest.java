@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ParadigmCastCopyEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,14 +62,12 @@ class GerminationPracticumTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         // Original resolved: exiled and a delayed paradigm trigger registered.
-        assertThat(gd.paradigmDelayedTriggers).hasSize(1);
+        assertThat(paradigmAbilityCount()).isEqualTo(1);
         assertThat(gd.exiledCards.stream()
                 .filter(e -> e.card().getName().equals("Germination Practicum")).count()).isEqualTo(1);
 
-        // Fire the beginning-of-precombat-main paradigm trigger for the active player.
-        harness.forceActivePlayer(player1);
-        ParadigmService paradigmService = GameTestEngineContext.get().getBean(ParadigmService.class);
-        harness.inMutationScope(() -> paradigmService.firePrecombatMainTriggers(gd));
+        // The paradigm ability triggers as player1's precombat main phase begins.
+        advanceToFirstMainPhase(player1);
         harness.passBothPriorities(); // resolve the trigger -> copy created in exile + may-cast prompt
 
         harness.handleMayAbilityChosen(player1, true); // cast the copy (no target)
@@ -103,9 +102,7 @@ class GerminationPracticumTest extends BaseCardTest {
 
         assertThat(findPermanent(player2, "Grizzly Bears")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        harness.forceActivePlayer(player2);
-        ParadigmService paradigmService = GameTestEngineContext.get().getBean(ParadigmService.class);
-        harness.inMutationScope(() -> paradigmService.firePrecombatMainTriggers(gd));
+        advanceToFirstMainPhase(player2);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
@@ -123,10 +120,7 @@ class GerminationPracticumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castAndResolveSorcery(player1, 0, 0);
-
-        ParadigmService paradigmService = GameTestEngineContext.get().getBean(ParadigmService.class);
-        harness.forceActivePlayer(player1);
-        harness.inMutationScope(() -> paradigmService.firePrecombatMainTriggers(gd));
+        advanceToFirstMainPhase(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -134,7 +128,7 @@ class GerminationPracticumTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.exiledCards).hasSize(1);
 
-        harness.inMutationScope(() -> paradigmService.firePrecombatMainTriggers(gd));
+        advanceToFirstMainPhase(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -142,7 +136,7 @@ class GerminationPracticumTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Grizzly Bears")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.exiledCards).hasSize(1);
-        assertThat(gd.paradigmDelayedTriggers).hasSize(1);
+        assertThat(paradigmAbilityCount()).isEqualTo(1);
     }
 
     @Test
@@ -156,12 +150,24 @@ class GerminationPracticumTest extends BaseCardTest {
 
         assertThat(gd.exiledCards).hasSize(2);
         harness.assertNotInGraveyard(player1, "Germination Practicum");
-        harness.forceActivePlayer(player1);
-        ParadigmService paradigmService = GameTestEngineContext.get().getBean(ParadigmService.class);
-        harness.inMutationScope(() -> paradigmService.firePrecombatMainTriggers(gd));
+        advanceToFirstMainPhase(player1);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.exiledCards).hasSize(2);
+    }
+
+    private void advanceToFirstMainPhase(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
+    }
+
+    private long paradigmAbilityCount() {
+        return gd.temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> delayed.ability().effects().stream()
+                        .anyMatch(registration -> registration.effect() instanceof ParadigmCastCopyEffect))
+                .count();
     }
 }

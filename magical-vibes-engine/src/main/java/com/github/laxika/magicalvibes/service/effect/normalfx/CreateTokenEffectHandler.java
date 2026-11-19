@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
@@ -182,10 +183,15 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 deathReturn == null ? e : withoutDeathReturn(e), amount, entry.getCard().getSetCode(), power,
                 toughness);
         if (deathReturn != null) {
+            // "Return [this] to the battlefield when that token dies" (Tatsumasa, the Dragon's Fang): a delayed triggered
+            // ability about the token, with no stated duration, controlled by the resolving ability's controller
+            // (CR 603.7a, 603.7b, 603.7e).
             for (UUID createdId : createdIds) {
-                Permanent created = gameQueryService.findPermanentById(gameData, createdId);
-                if (created != null) {
-                    created.addDelayedDeathEffect(deathReturn);
+                if (gameQueryService.findPermanentById(gameData, createdId) != null) {
+                    gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                            entry.getControllerId(), entry.getCard(),
+                            new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), deathReturn), createdId,
+                            entry.getSourcePermanentId(), false));
                 }
             }
         }

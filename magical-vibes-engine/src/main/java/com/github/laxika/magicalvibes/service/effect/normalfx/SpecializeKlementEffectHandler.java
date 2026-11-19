@@ -9,13 +9,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekThreeNonlandPermanentAndChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKlementEffect;
@@ -26,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 import java.util.Set;
 
@@ -117,9 +117,10 @@ public class SpecializeKlementEffectHandler implements NormalEffectHandlerBean {
         }
         source.exchangeCard(specialized);
         if (specialize.color() == CardColor.WHITE) {
-            enqueueSpecializationTrigger(gameData, entry, specialized, new CreateBoonEffect(1,
-                    new GrantAdditionalCounterToTriggeringCreatureSpellEffect(CounterType.LIFELINK, 1),
-                    BoonTrigger.CREATURE_CAST, null));
+            enqueueSpecializationTrigger(gameData, entry, specialized,
+                    RegisterDelayedControllerSpellCastTriggerEffect.boon(new CardTypePredicate(CardType.CREATURE),
+                            List.of(new GrantAdditionalCounterToTriggeringCreatureSpellEffect(
+                                    CounterType.LIFELINK, 1))));
         } else if (specialize.color() == CardColor.BLACK) {
             enqueueSpecializationTrigger(gameData, entry, specialized, CreateTokenEffect.blackZombie(2));
         } else if (specialize.color() == CardColor.BLUE) {

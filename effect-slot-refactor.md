@@ -860,6 +860,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Moments: Peace Talks, Kang's restriction and the pile restrictions end at cleanup (CR 514.2), not as the next turn begins.
 - Ledger (151 card test classes, route tests): only converted `floating` lines (copy lines renamed); triggers differ by route-fixture draws and the new tests. No `Permanent`/`GameData` field holds a resolution's continuous-effect duration; `scripts/duration-inventory.py`'s field regex misses `WhileSource`, `TurnsRemaining`, `Revealed`.
 
+**D (part 24: the last delayed-ability lists).**
+- Every remaining delayed list is a `TemporaryGlobalTriggeredAbility`: Duskmantle's, Vizkopa's and First Day of Class's watchers register a "this turn" ability with an ordinary trigger; the control-loss unattach and tap abilities are about the permanent (`youLoseControlOfThis`, matched by `ControlChangeTriggers`), and cleanup ends a "this turn" one after control is recomputed (CR 514.2); paradigm is `atEveryStep` of your precombat main phase (CR 702.192a); the delayed death effects are about the permanent. Gone: `GameData.boons`, `Boon`, `BoonTrigger`, `SacrificeBoonWatcher`, the Guildmage, ally-enters and control-loss records, `paradigmDelayedTriggers`, `ParadigmService`, `Permanent.delayedDeathEffects`, 4 `EndOfTurnStateField`s.
+- Boons are delayed abilities with `uses`, spent by the door as they trigger (`GameData.useDelayedAbility`): `CreateBoonEffect(uses, ability)`; Underbridge Warlock's boon is spent as it resolves (`usedAsItResolves`, `ConsumeBoonEffect`) so its "if you have a boon" rider still sees it (no ruling; today's behaviour kept). Cast boons are `RegisterDelayedControllerSpellCastTriggerEffect.boon`. `Triggers.youSacrificeOneOrMorePermanents`. A delayed "one or more … enter" ability is matched as its entry batch closes.
+- Rules fixes (tests fail before): Ogre Geargrabber's "when you lose control of that Equipment" triggers whether or not it is still attached (CR 603.7b); Dunbarrow Revivalist's "attached to one of them" is chosen as it resolves, not targeted; Tatsumasa's and The Deck of Many Things' delayed abilities have their maker's source and controller (CR 603.7e). Torpor Orb still stops First Day of Class's ability (new coverage).
+- Moments: paradigm's ability goes on the stack with the step's delayed abilities; its controller still orders their own triggers (CR 603.3b).
+- Ledger (74 card test classes, route tests; the 1,895-class set of part 22 too): no ability gained or lost but the new tests'; other lines gain the family's record fields, renamed effects or the maker as source, or differ by random route draws.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.RegenerationShield;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
@@ -70,10 +71,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
-import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.PendingMysticReflection;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect;
@@ -103,6 +101,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffe
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -1416,37 +1415,25 @@ class RunedTerrorTest extends BaseCardTest {
     }
 
     @Test
-    void thisTurnTriggerWatchersEndAtTheCleanupOfThePlayerActiveWhenTheyWereRegistered() {
+    @DisplayName("\"This turn\" delayed abilities end at the cleanup of the player active when they were made")
+    void thisTurnDelayedAbilitiesEndAtTheCleanupOfThePlayerActiveWhenTheyWereRegistered() {
         harness.addToBattlefield(player1, new RunedTerror());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Card source = new GrizzlyBears();
         var effect = new GainLifeEffect(1);
-        gd.opponentGraveyardLifeLossWatchers.add(new OpponentGraveyardLifeLossWatcher(player1.getId(), source));
         gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
                 player1.getId(), source, new TriggeredAbility(Triggers.creatureBlocks(), effect)));
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        var graveyardWatcher = new OpponentGraveyardLifeLossWatcher(player2.getId(), source);
-        var lifeGainWatcher = new LifeGainOpponentLifeLossWatcher(player2.getId(), source);
-        var entersWatcher = new CreatureEntersTriggerWatcher(player2.getId(), source, effect);
         var globalTrigger = new TemporaryGlobalTriggeredAbility(
                 player2.getId(), source, new TriggeredAbility(Triggers.creatureBlocks(), effect));
-        gd.opponentGraveyardLifeLossWatchers.add(graveyardWatcher);
-        gd.lifeGainOpponentLifeLossWatchers.add(lifeGainWatcher);
-        gd.allyCreatureEntersTriggerWatchers.add(entersWatcher);
         gd.temporaryGlobalTriggeredAbilities.add(globalTrigger);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.opponentGraveyardLifeLossWatchers).containsExactly(graveyardWatcher);
-        assertThat(gd.lifeGainOpponentLifeLossWatchers).containsExactly(lifeGainWatcher);
-        assertThat(gd.allyCreatureEntersTriggerWatchers).containsExactly(entersWatcher);
         assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(globalTrigger);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.opponentGraveyardLifeLossWatchers).isEmpty();
-        assertThat(gd.lifeGainOpponentLifeLossWatchers).isEmpty();
-        assertThat(gd.allyCreatureEntersTriggerWatchers).isEmpty();
         assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
@@ -1612,6 +1599,8 @@ class RunedTerrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice restrictions and control-loss delayed abilities end at the cleanup of the player active "
+            + "when they began")
     void sacrificeRestrictionsAndControlLossTriggersEndAtTheCleanupOfThePlayerActiveWhenTheyBegan() {
         harness.addToBattlefield(player1, new RunedTerror());
         harness.forceActivePlayer(player1);
@@ -1623,12 +1612,13 @@ class RunedTerrorTest extends BaseCardTest {
         UUID otherEquipment = UUID.randomUUID();
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
                 new ControllerCantSacrificeTargetThisTurnEffect(), ownCreature, Duration.UNTIL_END_OF_TURN));
-        gd.registerControlLossUnattachTrigger(ownEquipment, player1.getId(), source);
+        gd.temporaryGlobalTriggeredAbilities.add(controlLossUnattach(player1, source, ownEquipment));
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player2.getId(),
                 new ControllerCantSacrificeTargetThisTurnEffect(), otherCreature, Duration.UNTIL_END_OF_TURN));
-        gd.registerControlLossUnattachTrigger(otherEquipment, player2.getId(), source);
+        var otherUnattach = controlLossUnattach(player2, source, otherEquipment);
+        gd.temporaryGlobalTriggeredAbilities.add(otherUnattach);
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
@@ -1637,13 +1627,21 @@ class RunedTerrorTest extends BaseCardTest {
                 .isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(otherCreature, ControllerCantSacrificeTargetThisTurnEffect.class))
                 .isTrue();
-        assertThat(gd.controlLossUnattachTriggersFor(ownEquipment)).isEmpty();
-        assertThat(gd.controlLossUnattachTriggersFor(otherEquipment)).hasSize(1);
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(otherUnattach);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.hasFloatingEffectOnPermanent(otherCreature, ControllerCantSacrificeTargetThisTurnEffect.class))
                 .isFalse();
-        assertThat(gd.controlLossUnattachTriggersFor(otherEquipment)).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+    }
+
+    /** "When you lose control of that Equipment this turn, unattach it", of {@code controller}. */
+    private static TemporaryGlobalTriggeredAbility controlLossUnattach(Player controller, Card source,
+                                                                       UUID equipmentId) {
+        return TemporaryGlobalTriggeredAbility.about(controller.getId(), source,
+                new TriggeredAbility(Triggers.youLoseControlOfThis(),
+                        new UnattachEquipmentIfAttachedToControlledCreatureEffect(equipmentId)),
+                equipmentId, null, true);
     }
 
     private void castQuicken(Player caster) {

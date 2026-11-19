@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.rules.RulesEventLog;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellColorUntilEndOfTurnEffect;
@@ -42,11 +41,9 @@ import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -54,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChosenLandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
@@ -727,12 +723,6 @@ public class GameData {
      *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the
      *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
     public int manaAbilityResolutionDepth;
-    /**
-     * Set while several tokens from one effect are entering together. "One or more creatures enter"
-     * boons then wait for the whole batch instead of firing for the first token alone, so their
-     * controller can choose among every creature that entered.
-     */
-    public boolean deferCreatureEntersBoons;
     private int activeTriggeredAbilityCopies = 1;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>() {
         @Override public List<Card> put(UUID id, List<Card> cards) {
@@ -1417,12 +1407,6 @@ public class GameData {
      *  their current owner. A frozen {@link Card} keeps its stamped owner, so this record overrides
      *  it; read it through {@link #ownerOf(Card)}. */
     public final Map<UUID, UUID> cardOwnerOverrides = new ConcurrentHashMap<>();
-    /** Reflexive Equipment-unattach triggers registered until the end of the current turn. */
-    public final Map<UUID, List<ControlLossUnattachTrigger>> controlLossUnattachTriggers =
-            new ConcurrentHashMap<>();
-    /** Delayed tap triggers registered until the watched permanent changes controllers. */
-    public final Map<UUID, List<ControlLossTapTrigger>> controlLossTapTriggers =
-            new ConcurrentHashMap<>();
     /** Number of end steps that have begun during the current turn. */
     public int endStepsThisTurn;
     /** Extra end steps waiting to occur during the current turn. */
@@ -1579,31 +1563,16 @@ public class GameData {
      * the multiplier is {@code 2^count}. Cleared at turn cleanup.
      */
     /**
-     * Active "whenever a card is put into an opponent's graveyard from anywhere this turn, that
-     * player loses 1 life" delayed triggers (Duskmantle Guildmage). One entry per activation, so
-     * repeated activations stack. Cleared at turn cleanup.
+     * The delayed triggered abilities resolutions made (CR 603.7a), each until its duration ends or it has triggered
+     * as often as it may (CR 603.7b).
      */
-    public final List<OpponentGraveyardLifeLossWatcher> opponentGraveyardLifeLossWatchers =
-            Collections.synchronizedList(new ArrayList<>());
-    /**
-     * Active "whenever you gain life this turn, each opponent loses that much life" delayed triggers
-     * (Vizkopa Guildmage). One entry per activation, so repeated activations stack. Cleared at turn
-     * cleanup.
-     */
-    public final List<LifeGainOpponentLifeLossWatcher> lifeGainOpponentLifeLossWatchers =
-            Collections.synchronizedList(new ArrayList<>());
-    /** Global triggered abilities registered by resolving spells until the current turn ends. */
     public final List<TemporaryGlobalTriggeredAbility> temporaryGlobalTriggeredAbilities =
             Collections.synchronizedList(new ArrayList<>());
-    /** Finite sacrifice-trigger boons, retained until all of their uses have fired. */
-    public final List<SacrificeBoonWatcher> sacrificeBoonWatchers =
-            Collections.synchronizedList(new ArrayList<>());
-    /** Depth of simultaneous-sacrifice batches; a "one or more permanents" boon fires once per player per batch. */
+    /** Depth of simultaneous-sacrifice batches; "whenever you sacrifice one or more permanents" triggers once per
+     *  player per batch. */
     public int simultaneousSacrificeDepth;
-    /** Players whose sacrifice boon has already fired during the current simultaneous-sacrifice batch. */
+    /** Players whose sacrificing during the current simultaneous-sacrifice batch has already been an event. */
     public final Set<UUID> sacrificeBoonBatchPlayerIds = new HashSet<>();
-    public final List<CreatureEntersTriggerWatcher> allyCreatureEntersTriggerWatchers =
-            Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService,
             consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
@@ -1725,8 +1694,6 @@ public class GameData {
     /** The Ring emblem state for players who have been tempted by the Ring. */
     public final Map<UUID, RingState> ringStates = new ConcurrentHashMap<>();
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
-    /** Finite-use triggered abilities granted directly to players. */
-    public final List<Boon> boons = Collections.synchronizedList(new ArrayList<>());
 
 
     /** Temporary characteristic changes applied to a card while it remains in a graveyard: an effect on that card. */
@@ -2078,14 +2045,6 @@ public class GameData {
     /** Spells whose mana was paid using a pending any-type mana permission. */
     public final Set<UUID> spellsPaidUsingPendingAnyManaTypeThisTurn = ConcurrentHashMap.newKeySet();
 
-
-    /**
-     * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
-     * controller's precombat main phases for the rest of the game.
-     */
-    public final List<ParadigmDelayedTrigger> paradigmDelayedTriggers = Collections.synchronizedList(new ArrayList<>());
-
-    public record ParadigmDelayedTrigger(UUID controllerId, Card spellPrototype) {}
 
     /**
      * A spell exiled with delay counters by Ertai's Meddling.
@@ -4261,50 +4220,38 @@ public class GameData {
     }
 
     /**
-     * Drops the "when you lose control of that Equipment this turn" triggers (Stolen Uniform) that end at this
-     * cleanup step, keeping only those still credited to another player under Runed Terror's sequential phases
-     * (Runed Terror ruling, CR 514.2). The cleanup step calls this after recomputing control, so a trigger can
-     * still fire as its control effect ends.
+     * Uses {@code delayed}, a delayed triggered ability that triggers only a limited number of times, once as it
+     * triggers (CR 603.7b): one with uses left stays listed with one fewer ("a two-time boon"), and its last use ends it.
      */
-    public void retainControlLossUnattachTriggers() {
-        List<Map.Entry<UUID, ControlLossUnattachTrigger>> retained = runedTerrorPhaseSequenceActive
+    public void useDelayedAbility(TemporaryGlobalTriggeredAbility delayed) {
+        synchronized (temporaryGlobalTriggeredAbilities) {
+            for (int index = 0; index < temporaryGlobalTriggeredAbilities.size(); index++) {
+                if (temporaryGlobalTriggeredAbilities.get(index) == delayed) {
+                    if (delayed.uses() > 1) {
+                        temporaryGlobalTriggeredAbilities.set(index, delayed.withUses(delayed.uses() - 1));
+                    } else {
+                        temporaryGlobalTriggeredAbilities.remove(index);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Ends the "this turn" delayed triggered abilities that wait for their controller to lose control of a permanent
+     * ("when you lose control of that Equipment this turn", Stolen Uniform). The cleanup step calls this after
+     * recomputing control, so one can trigger as the control effect that ends with it ends (CR 514.2); under Runed
+     * Terror's sequential phases those still credited to another player stay (Runed Terror ruling).
+     */
+    public void endControlLossDelayedAbilitiesOfThisTurn() {
+        List<TemporaryGlobalTriggeredAbility> retained = runedTerrorPhaseSequenceActive
                 ? phaseSequenceAttributedEndOfTurnState.getOrDefault(GAME_END_OF_TURN_STATE_ID,
-                        EndOfTurnStateShare.EMPTY).elements(EndOfTurnStateField.GAME_CONTROL_LOSS_UNATTACH_TRIGGERS)
+                        EndOfTurnStateShare.EMPTY).elements(
+                        EndOfTurnStateField.GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN)
                 : List.of();
-        controlLossUnattachTriggers.clear();
-        addSynchronizedListMapEntries(controlLossUnattachTriggers, retained);
-    }
-
-    public void registerControlLossUnattachTrigger(UUID equipmentId, UUID controllerId, Card sourceCard) {
-        controlLossUnattachTriggers
-                .computeIfAbsent(equipmentId, ignored -> Collections.synchronizedList(new ArrayList<>()))
-                .add(new ControlLossUnattachTrigger(controllerId, sourceCard));
-    }
-
-    public List<ControlLossUnattachTrigger> controlLossUnattachTriggersFor(UUID equipmentId) {
-        List<ControlLossUnattachTrigger> triggers = controlLossUnattachTriggers.get(equipmentId);
-        if (triggers == null) {
-            return List.of();
-        }
-        synchronized (triggers) {
-            return List.copyOf(triggers);
-        }
-    }
-
-    public void registerControlLossTapTrigger(UUID permanentId, UUID controllerId, Card sourceCard) {
-        controlLossTapTriggers
-                .computeIfAbsent(permanentId, ignored -> Collections.synchronizedList(new ArrayList<>()))
-                .add(new ControlLossTapTrigger(controllerId, sourceCard));
-    }
-
-    public List<ControlLossTapTrigger> controlLossTapTriggersFor(UUID permanentId) {
-        List<ControlLossTapTrigger> triggers = controlLossTapTriggers.get(permanentId);
-        if (triggers == null) {
-            return List.of();
-        }
-        synchronized (triggers) {
-            return List.copyOf(triggers);
-        }
+        temporaryGlobalTriggeredAbilities.removeIf(delayed -> delayed.endsThisTurn() && delayed.watchesControlLoss()
+                && retained.stream().noneMatch(kept -> kept.equals(delayed)));
     }
 
         /** The id under which {@link #phaseSequenceEndOfTurnShares} tracks the game-wide {@code GAME_} stores; it is
@@ -4328,11 +4275,9 @@ public class GameData {
      * ability this turn" copy triggers with their sources, Sen Triplets' hand permission, the per-card exile / graveyard
      * play permissions that end this turn with their current-turn any-mana-type riders, the source-linked "until end
      * of turn, you may play cards exiled with it" grants, and the shield lists whose records are rewritten in place or
-     * replaced by a reduced copy when partly used, the "this turn" delayed-trigger watchers and "until end of turn"
-     * global triggered abilities, the pending "the next time you would draw a card this turn" replacements and
+     * replaced by a reduced copy when partly used, the "this turn" delayed triggered abilities, the pending "the next time you would draw a card this turn" replacements and
      * Mystic Reflection's pending entry copies, Plagiarize's draw redirections, the permanents whose
-     * source subtype choice lasts until end of turn, Call for Aid's sacrifice restriction, Stolen Uniform's
-     * control-loss unattach triggers, the chosen skipped steps or phases, and the turn-history records of speed
+     * source subtype choice lasts until end of turn, Call for Aid's sacrifice restriction, the chosen skipped steps or phases, and the turn-history records of speed
      * increases, plays from exile or outside the hand, foretelling, first-non-draw-step draw replacements, exiled
      * cards, cards leaving graveyards and creature exiles), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
@@ -4357,14 +4302,10 @@ public class GameData {
 
     private Object gameEndOfTurnStateValue(EndOfTurnStateField field) {
         return switch (field) {
-            case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS -> synchronizedCopy(opponentGraveyardLifeLossWatchers);
-            case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS -> synchronizedCopy(lifeGainOpponentLifeLossWatchers);
-            case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS -> synchronizedCopy(allyCreatureEntersTriggerWatchers);
             case GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN -> synchronizedCopy(temporaryGlobalTriggeredAbilities)
                     .stream()
                     .filter(TemporaryGlobalTriggeredAbility::endsThisTurn)
                     .toList();
-            case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> synchronizedListMapEntries(controlLossUnattachTriggers);
             case GAME_PLAYERS_WHOSE_SPEED_INCREASED -> playersWhoseSpeedIncreasedThisTurn;
             case GAME_PLAYERS_WHO_PLAYED_CARD_FROM_EXILE -> playersWhoPlayedCardFromExileThisTurn;
             case GAME_PLAYERS_WHO_PLAYED_OR_CAST_FROM_OUTSIDE_HAND -> playersWhoPlayedOrCastFromOutsideHandThisTurn;
@@ -4382,18 +4323,12 @@ public class GameData {
     @SuppressWarnings("unchecked")
     private void addGameEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
         switch (field) {
-            case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS ->
-                    opponentGraveyardLifeLossWatchers.addAll((List<OpponentGraveyardLifeLossWatcher>) value);
-            case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS ->
-                    lifeGainOpponentLifeLossWatchers.addAll((List<LifeGainOpponentLifeLossWatcher>) value);
-            case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS ->
-                    allyCreatureEntersTriggerWatchers.addAll((List<CreatureEntersTriggerWatcher>) value);
+            // The cleanup step keeps the control-loss ones until control is recomputed, so they may still be listed.
             case GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN ->
-                    temporaryGlobalTriggeredAbilities.addAll((List<TemporaryGlobalTriggeredAbility>) value);
-            // Not cleared before the retained state is re-applied: the cleanup step drops only the ending triggers,
-            // after control is recomputed (see retainControlLossUnattachTriggers).
-            case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> {
-            }
+                    ((List<TemporaryGlobalTriggeredAbility>) value).stream()
+                            .filter(delayed -> temporaryGlobalTriggeredAbilities.stream()
+                                    .noneMatch(listed -> listed == delayed))
+                            .forEach(temporaryGlobalTriggeredAbilities::add);
             case GAME_PLAYERS_WHOSE_SPEED_INCREASED -> playersWhoseSpeedIncreasedThisTurn.addAll((Set<UUID>) value);
             case GAME_PLAYERS_WHO_PLAYED_CARD_FROM_EXILE ->
                     playersWhoPlayedCardFromExileThisTurn.addAll((Set<UUID>) value);
@@ -4450,21 +4385,6 @@ public class GameData {
         List<Map.Entry<K, V>> entries = new ArrayList<>();
         map.forEach((key, values) -> values.forEach(value -> entries.add(Map.entry(key, value))));
         return entries;
-    }
-
-    private static <K, V> List<Map.Entry<K, V>> synchronizedListMapEntries(Map<K, List<V>> map) {
-        List<Map.Entry<K, V>> entries = new ArrayList<>();
-        map.forEach((key, values) -> {
-            synchronized (values) {
-                values.forEach(value -> entries.add(Map.entry(key, value)));
-            }
-        });
-        return entries;
-    }
-
-    private static <K, V> void addSynchronizedListMapEntries(Map<K, List<V>> map, List<Map.Entry<K, V>> entries) {
-        entries.forEach(entry -> map.computeIfAbsent(entry.getKey(),
-                key -> Collections.synchronizedList(new ArrayList<>())).add(entry.getValue()));
     }
 
     private static <K, V> void addListMapEntries(Map<K, List<V>> map, List<Map.Entry<K, V>> entries) {
@@ -10123,11 +10043,7 @@ public class GameData {
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.playersWhoActivatedArtifactAbilityThisTurn.addAll(this.playersWhoActivatedArtifactAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
-        copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
-        copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
-        copy.sacrificeBoonWatchers.addAll(this.sacrificeBoonWatchers);
-        copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.sourceRedirectShieldsUsedInOpenEvent.addAll(this.sourceRedirectShieldsUsedInOpenEvent);
         copy.playerSourceShieldsUsedInOpenEvent.addAll(this.playerSourceShieldsUsedInOpenEvent);
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
@@ -10359,12 +10275,6 @@ public class GameData {
         copy.playersWhoUsedMaxSpeedFreeUnearthThisTurn.addAll(this.playersWhoUsedMaxSpeedFreeUnearthThisTurn);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.cardOwnerOverrides.putAll(this.cardOwnerOverrides);
-        this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
-                copy.controlLossUnattachTriggers.put(equipmentId,
-                        Collections.synchronizedList(new ArrayList<>(triggers))));
-        this.controlLossTapTriggers.forEach((permanentId, triggers) ->
-                copy.controlLossTapTriggers.put(permanentId,
-                        Collections.synchronizedList(new ArrayList<>(triggers))));
         copy.drawRedirectsAppliedToCurrentDraw.addAll(this.drawRedirectsAppliedToCurrentDraw);
         copy.chainsDrawReplacementsApplied.putAll(this.chainsDrawReplacementsApplied);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
@@ -11076,7 +10986,6 @@ public class GameData {
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
         copy.ringStates.putAll(this.ringStates);
-        copy.boons.addAll(this.boons);
 
         // --- Floating continuous effects (immutable records, safe to share) ---
         copy.floatingEffects.addAll(this.floatingEffects);
@@ -11180,7 +11089,6 @@ public class GameData {
         copy.openingHandManaTriggers.addAll(this.openingHandManaTriggers);
         copy.openingHandUpkeepTriggers.addAll(this.openingHandUpkeepTriggers);
         copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
-        copy.paradigmDelayedTriggers.addAll(this.paradigmDelayedTriggers);
         this.paradigmResolvedSpellNames.forEach((k, v) -> {
             Set<String> names = ConcurrentHashMap.newKeySet();
             names.addAll(v);
@@ -11212,7 +11120,6 @@ public class GameData {
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.playersWhoInvestigatedThisTurn.addAll(this.playersWhoInvestigatedThisTurn);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
-        copy.deferCreatureEntersBoons = this.deferCreatureEntersBoons;
         copy.activeTriggeredAbilityCopies = this.activeTriggeredAbilityCopies;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));

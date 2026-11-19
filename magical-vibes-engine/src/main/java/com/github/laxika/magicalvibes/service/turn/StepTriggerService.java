@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.Boon;
-import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -36,7 +34,6 @@ import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
@@ -51,7 +48,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -61,7 +57,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -129,7 +124,6 @@ public class StepTriggerService {
     private final GraveyardService graveyardService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerTargetCollector triggerTargetCollector;
-    private final ParadigmService paradigmService;
     private final ValidTargetService validTargetService;
     private final CreatureControlService creatureControlService;
     private final ETBTokenTargetService etbTokenTargetService;
@@ -151,7 +145,6 @@ public class StepTriggerService {
                               GraveyardService graveyardService,
                               TriggeredAbilityQueueService triggeredAbilityQueueService,
                               TriggerTargetCollector triggerTargetCollector,
-                              @Lazy ParadigmService paradigmService,
                               ValidTargetService validTargetService,
                               CreatureControlService creatureControlService,
                               @Lazy ETBTokenTargetService etbTokenTargetService,
@@ -172,7 +165,6 @@ public class StepTriggerService {
         this.graveyardService = graveyardService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.triggerTargetCollector = triggerTargetCollector;
-        this.paradigmService = paradigmService;
         this.validTargetService = validTargetService;
         this.creatureControlService = creatureControlService;
         this.etbTokenTargetService = etbTokenTargetService;
@@ -621,8 +613,6 @@ public class StepTriggerService {
 
         beginStep(gameData, StepTrigger.Moment.PRECOMBAT_MAIN_PHASE);
 
-        paradigmService.firePrecombatMainTriggers(gameData);
-
         // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
         if (!gameData.openingHandManaTriggers.isEmpty()) {
             UUID activePlayerId = gameData.activePlayerId;
@@ -1066,28 +1056,6 @@ public class StepTriggerService {
         }
         handleBedtimeStoryLoreCounters(gameData);
         UUID activePlayerId = gameData.activePlayerId;
-
-        // End-step boons go on the stack before the step's printed abilities: a permanent's ability that triggers
-        // with a boon resolves first, while the boon still exists.
-        for (Boon boon : List.copyOf(gameData.boons)) {
-            if (boon.trigger() != BoonTrigger.CONTROLLER_END_STEP
-                    || !boon.controllerId().equals(activePlayerId)) {
-                continue;
-            }
-            if (boon.effect() instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forCard(boon.sourceCard(), activePlayerId))) {
-                continue;
-            }
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                    boon.sourceCard(),
-                    boon.controllerId(),
-                    boon.sourceCard().getName() + "'s boon",
-                    new ArrayList<>(List.of(boon.effect())));
-            trigger.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
-        }
 
         beginStep(gameData, StepTrigger.Moment.END_STEP);
 

@@ -106,7 +106,7 @@ public class TurnSupport {
         }
         gameData.currentStep = TurnStep.CLEANUP;
         creatureControlService.reconcileControl(gameData);
-        gameData.controlLossUnattachTriggers.clear();
+        gameData.endControlLossDelayedAbilitiesOfThisTurn();
         gameData.resetPriorityToActivePlayer();
 
         UUID activePlayerId = gameData.activePlayerId;

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -40,7 +39,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -99,7 +97,7 @@ public class TurnCleanupService {
         sacrificePermanentsFlaggedForCleanup(gameData);
         resetEndOfTurnModifiers(gameData);
         creatureControlService.reconcileControl(gameData);
-        gameData.retainControlLossUnattachTriggers();
+        gameData.endControlLossDelayedAbilitiesOfThisTurn();
     }
 
     /**
@@ -209,11 +207,11 @@ public class TurnCleanupService {
         gameData.pendingSourceDamageForReflection.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
-        gameData.opponentGraveyardLifeLossWatchers.clear();
-        gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
+        // A "this turn" one that waits for its controller to lose control of a permanent ends after control is
+        // recomputed (applyCleanupResets), so it triggers as the control effect that ends with it ends.
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
-                watcher.endsThisTurn()
+                watcher.endsThisTurn() && !watcher.watchesControlLoss()
                         || watcher.untilTriggered() && watcher.watchedPermanentId() != null
                         && !watcher.waitsForStep()
                         && gameQueryService.findPermanentById(gameData, watcher.watchedPermanentId()) == null
@@ -221,7 +219,6 @@ public class TurnCleanupService {
                         && gameData.activePlayerId.equals(watcher.expirationPlayerId() != null
                         ? watcher.expirationPlayerId() : watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
-        gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();

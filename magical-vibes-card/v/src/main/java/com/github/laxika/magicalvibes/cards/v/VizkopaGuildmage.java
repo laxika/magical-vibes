@@ -4,11 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.RegisterLifeGainOpponentLifeLossThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 /**
@@ -30,7 +35,9 @@ public class VizkopaGuildmage extends Card {
                         "Target must be a creature")));
 
         addActivatedAbility(new ActivatedAbility(false, "{1}{W}{B}",
-                List.of(new RegisterLifeGainOpponentLifeLossThisTurnEffect()),
+                List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                        Triggers.youGainLife(),
+                        new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT)))),
                 "{1}{W}{B}: Whenever you gain life this turn, each opponent loses that much life."));
     }
 }

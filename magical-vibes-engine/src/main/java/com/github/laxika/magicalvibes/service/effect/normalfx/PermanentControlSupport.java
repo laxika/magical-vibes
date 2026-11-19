@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +30,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -347,7 +345,6 @@ public class PermanentControlSupport {
                 tokenBlueprints.add(CreateTokenEffect.ofClueToken(1));
             }
         }
-        gameData.deferCreatureEntersBoons = fireTokenTriggers && !hasNativeDevour && tokenBlueprints.size() > 1;
         for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
             boolean originalBlueprint = originalTokenBlueprint == evaluatedToken;
             // An ordered event already applied Divine Visitation and Fisher's Talent in the creator's order (CR 616.1).
@@ -451,7 +448,6 @@ public class PermanentControlSupport {
             }
         }
 
-        gameData.deferCreatureEntersBoons = false;
         if (hasNativeDevour) battlefieldEntryBatchSupport.begin(gameData, nativeEntries);
 
         if (addedClueTokens > 0 && !hasNativeDevour) {
@@ -459,13 +455,6 @@ public class PermanentControlSupport {
                     addedClueTokens, sourceSetCode, 0, 0, false, false, false));
         }
 
-        UUID tokenControllerId = createdIds.isEmpty()
-                ? controllerId
-                : gameQueryService.findPermanentController(gameData, createdIds.get(createdIds.size() - 1));
-        if (fireTokenTriggers && !hasNativeDevour) {
-            battlefieldEntryService.checkAllyTokenEntersTriggers(
-                    gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds);
-        }
 
         log.info("Game {} - {} token(s) created for player {}", gameData.id, createdIds.size(), controllerId);
         return createdIds;

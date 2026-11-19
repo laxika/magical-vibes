@@ -8,19 +8,9 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
-import com.github.laxika.magicalvibes.model.BoonTrigger;
-import com.github.laxika.magicalvibes.model.Boon;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -43,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -93,10 +82,6 @@ public class EtbTriggerService {
     private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired
-    @Lazy
-    private PredicateEvaluationService predicateEvaluationService;
-
-    @Autowired
     void setLegendRuleService(@Lazy LegendRuleService legendRuleService) {
         this.legendRuleService = legendRuleService;
     }
@@ -119,12 +104,6 @@ public class EtbTriggerService {
     @Autowired
     void setFlipCoinOnEnterEffectHandler(@Lazy FlipCoinOnEnterEffectHandler flipCoinOnEnterEffectHandler) {
         this.flipCoinOnEnterEffectHandler = flipCoinOnEnterEffectHandler;
-    }
-
-    /** The boons the tokens {@code permanentIds} entering together under {@code controllerId}'s control use. */
-    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
-                                              List<UUID> permanentIds) {
-        collectAllyBoonTriggers(gameData, controllerId, permanentIds, true);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -499,164 +478,17 @@ public class EtbTriggerService {
 
     /**
      * What the entering permanent triggers: the abilities that see it enter, matched by the trigger pipeline, face-up
-     * planes, emblems, schemes and delayed abilities among them, then the watchers, boons and exiled voyages kept
-     * outside it.
+     * planes, emblems, schemes and delayed abilities among them, then the exiled voyages kept outside it.
      */
     private void collectEntersTriggers(GameData gameData, UUID controllerId, Card card, boolean faceDown) {
         Permanent entering = findEnteringPermanent(gameData, card);
         if (entering != null && rulesEventPipeline != null) {
             rulesEventPipeline.triggerEnteringObservers(gameData, entering, controllerId);
         }
-        checkAllyPermanentEntersTriggers(gameData, controllerId, card);
-        checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         if (!faceDown && (enteringPermanent == null ? card.hasType(CardType.LAND)
                 : gameQueryService.isLand(gameData, enteringPermanent))) {
             collectExiledVoyageTriggers(gameData, controllerId);
-        }
-    }
-
-    /**
-     * What a creature entering under {@code controllerId}'s control triggers besides the abilities the trigger pipeline
-     * matches: the "whenever a creature you control enters this turn" watchers a resolved spell left (First Day of
-     * Class), each with the creature as its non-targeting object, and the boons it uses.
-     */
-    private void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
-        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
-        boolean creature = enteringPermanent == null ? enteringCreature.hasType(CardType.CREATURE)
-                : gameQueryService.isCreature(gameData, enteringPermanent);
-        if (!creature || enteringPermanent == null) return;
-
-        for (CreatureEntersTriggerWatcher watcher : List.copyOf(gameData.allyCreatureEntersTriggerWatchers)) {
-            if (!watcher.controllerId().equals(controllerId)) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(), watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
-            entry.setTargetId(enteringPermanent.getId());
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        }
-
-        if (!gameData.deferCreatureEntersBoons) {
-            collectAllyBoonTriggers(gameData, controllerId, List.of(enteringPermanent.getId()), true);
-        }
-    }
-
-    /** The boons a noncreature permanent entering under {@code controllerId}'s control uses. */
-    private void checkAllyPermanentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
-        if (enteringPermanent != null && !gameQueryService.isCreature(gameData, enteringPermanent)) {
-            collectAllyBoonTriggers(gameData, controllerId, List.of(enteringPermanent.getId()), false);
-        }
-    }
-
-    /**
-     * Puts the controller's boons that fire when permanents enter on the stack. {@link BoonTrigger#CREATURE_ENTERS}
-     * boons watch creatures only; {@link BoonTrigger#PERMANENT_ENTERS} boons watch every permanent, so the creature
-     * entries ({@code creatureEntries}) and the noncreature entries are offered separately.
-     */
-    private void collectAllyBoonTriggers(GameData gameData, UUID controllerId,
-                                         List<UUID> enteringPermanentIds, boolean creatureEntries) {
-        if (enteringPermanentIds == null || enteringPermanentIds.isEmpty()) return;
-
-        for (Boon boon : List.copyOf(gameData.boons)) {
-            if ((boon.trigger() != BoonTrigger.CREATURE_ENTERS
-                    && boon.trigger() != BoonTrigger.ONE_OR_MORE_CREATURES_ENTER
-                    && boon.trigger() != BoonTrigger.PERMANENT_ENTERS)
-                    || !boon.controllerId().equals(controllerId)) continue;
-
-            Permanent enteringPermanent = null;
-            CardEffect resolved = null;
-            List<UUID> matchingEnteringIds = new ArrayList<>();
-            for (UUID enteringPermanentId : enteringPermanentIds) {
-                Permanent candidate = gameQueryService.findPermanentById(gameData, enteringPermanentId);
-                if (candidate == null) continue;
-                boolean candidateIsCreature = gameQueryService.isCreature(gameData, candidate);
-                if ((boon.trigger() == BoonTrigger.CREATURE_ENTERS
-                        || boon.trigger() == BoonTrigger.ONE_OR_MORE_CREATURES_ENTER)
-                        ? !candidateIsCreature
-                        : candidateIsCreature != creatureEntries) {
-                    continue;
-                }
-                // "Whenever one or more Merfolk enter under your control": the boon's filter on the entering card.
-                if (boon.filter() != null && !predicateEvaluationService.matchesCardPredicate(candidate.getCard(),
-                        boon.filter(), boon.sourceCard().getId(), gameData, controllerId)) {
-                    continue;
-                }
-                if (enteringPermanent == null) {
-                    enteringPermanent = candidate;
-                    resolved = boon.effect();
-                }
-                matchingEnteringIds.add(candidate.getId());
-            }
-            if (enteringPermanent == null || resolved == null) continue;
-
-            if (matchingEnteringIds.size() > 1 && boon.targetFilter() == null
-                    && boon.trigger() != BoonTrigger.ONE_OR_MORE_CREATURES_ENTER
-                    && resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                // "Whenever a creature you control enters, [do something to] it": every creature that entered
-                // together triggers the boon separately and consumes its own use.
-                gameData.boons.remove(boon);
-                int usesLeft = boon.remainingUses();
-                for (UUID matchingId : matchingEnteringIds) {
-                    if (usesLeft <= 0) break;
-                    Permanent matching = gameQueryService.findPermanentById(gameData, matchingId);
-                    if (matching == null) continue;
-                    usesLeft--;
-                    StackEntry perCreatureEntry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(),
-                            boon.controllerId(), boon.sourceCard().getName() + "'s boon", List.of(resolved));
-                    perCreatureEntry.setTargetId(matching.getId());
-                    perCreatureEntry.setTriggeringPermanentId(matching.getId());
-                    perCreatureEntry.setTriggeringCardId(matching.getCard().getId());
-                    perCreatureEntry.setNonTargeting(true);
-                    triggeredAbilityStackService.putDelayed(gameData, perCreatureEntry);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
-                }
-                if (usesLeft > 0) {
-                    gameData.boons.add(boon.withRemainingUses(usesLeft));
-                }
-                continue;
-            }
-
-            gameData.boons.remove(boon);
-            if (boon.remainingUses() > 1) {
-                gameData.boons.add(boon.withRemainingUses(boon.remainingUses() - 1));
-            }
-
-            Permanent sourcePermanent = findPermanentByCard(gameData, boon.sourceCard());
-            // "attached to one of them": when several creatures entered together the controller picks which.
-            TargetFilter boonTargetFilter = boon.targetFilter();
-            if (matchingEnteringIds.size() > 1
-                    && resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    && (boonTargetFilter == null || boonTargetFilter instanceof PermanentPredicateTargetFilter)) {
-                PermanentPredicate entered = new PermanentAnyOfPredicate(matchingEnteringIds.stream()
-                        .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new).toList());
-                boonTargetFilter = new PermanentPredicateTargetFilter(
-                        boonTargetFilter instanceof PermanentPredicateTargetFilter existing
-                                ? new PermanentAllOfPredicate(List.of(existing.predicate(), entered)) : entered,
-                        "Target must be one of the creatures that entered");
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(), boon.controllerId(),
-                    boon.sourceCard().getName() + "'s boon", List.of(resolved), enteringPermanent.getId(),
-                    sourcePermanent == null ? null : sourcePermanent.getId());
-            entry.setTriggeringPermanentId(enteringPermanent.getId());
-            entry.setTriggeringPermanentControllerId(controllerId);
-            entry.setTriggeringCardId(enteringPermanent.getCard().getId());
-            entry.rememberLastKnownPermanentCard(enteringPermanent.getId(), enteringPermanent.getCard());
-            entry.setNonTargeting(true);
-            if (boonTargetFilter != null
-                    && resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                // "Attached to one of them": its target, restricted by the boon's filter, is chosen as it goes on the
-                // stack (CR 603.3d).
-                entry.setTargetFilter(boonTargetFilter);
-                triggeredAbilityStackService.putMade(gameData, entry);
-            } else {
-                triggeredAbilityStackService.putDelayed(gameData, entry);
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
     }
 

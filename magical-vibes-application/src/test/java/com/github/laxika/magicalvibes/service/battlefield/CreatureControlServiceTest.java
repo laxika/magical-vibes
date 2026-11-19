@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -38,7 +36,6 @@ import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -91,9 +88,6 @@ class CreatureControlServiceTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
-        org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService,
-                "triggeredAbilityStackService", triggeredAbilityStackService);
         org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService, "durationClock",
                 new DurationClock(predicateEvaluationService, gameQueryService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.PhasingService.class)));
@@ -320,31 +314,6 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player2Id);
-        }
-
-        @Test
-        @DisplayName("Queues the registered Equipment unattach trigger when temporary control ends")
-        void queuesEquipmentUnattachTriggerOnControlLoss() {
-            Permanent creature = addCreature(player1Id, "Grizzly Bears");
-            Card equipmentCard = createCreatureCard("Test Equipment");
-            equipmentCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
-            Permanent equipment = new Permanent(equipmentCard);
-            equipment.setAttachedTo(creature.getId());
-            gd.playerBattlefields.get(player2Id).add(equipment);
-            Card sourceCard = createCreatureCard("Stolen Uniform");
-            gd.registerControlLossUnattachTrigger(equipment.getId(), player1Id, sourceCard);
-            // "If it's attached to a creature you control": the creature and its controller as the game sees them.
-            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
-            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
-
-            applySteal(player1Id, equipment, Duration.UNTIL_END_OF_TURN, null);
-            gd.expireFloatingEffects(fe -> Duration.UNTIL_END_OF_TURN.equals(fe.duration()));
-            creatureControlService.reconcileControl(gd);
-
-            assertThat(gd.playerBattlefields.get(player2Id)).contains(equipment);
-            assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         }
 
         @Test

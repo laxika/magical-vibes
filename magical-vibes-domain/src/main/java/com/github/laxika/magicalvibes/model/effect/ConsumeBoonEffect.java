@@ -1,13 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.BoonTrigger;
-
-/** Consumes one boon created by the resolving source card after its trigger resolves. */
-public record ConsumeBoonEffect(BoonTrigger trigger) implements CardEffect {
-
-    public ConsumeBoonEffect {
-        if (trigger == null) {
-            throw new IllegalArgumentException("A boon trigger is required");
-        }
-    }
+/**
+ * Uses up, as it resolves, the boon whose ability this is: one made by {@link CreateBoonEffect#usedAsItResolves}, of
+ * the resolving ability's controller and source card.
+ */
+public record ConsumeBoonEffect() implements CardEffect {
 }

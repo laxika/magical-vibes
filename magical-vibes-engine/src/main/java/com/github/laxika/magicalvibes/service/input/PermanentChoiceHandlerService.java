@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGrav
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromChosenOwnPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAllMireCountersFromChosenLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenAttachedToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffectHandler;
@@ -110,6 +111,7 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler
             gildedAmbusherEffectHandler;
     private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
+    private final CreateTokenAttachedToTargetEffectHandler createTokenAttachedToTargetEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfTargetPermanentEffectHandler
             createTokenCopyOfTargetPermanentEffectHandler;
     private final ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler
@@ -1191,6 +1193,9 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopyOfOneOfTriggeringPermanents) {
             createTokenCopyOfTargetPermanentEffectHandler.completeTriggeringPermanentChoice(gameData, permanentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.CreateTokenAttachedToOneOfTriggeringPermanents attach) {
+            createTokenAttachedToTargetEffectHandler.completeTriggeringPermanentChoice(gameData, permanentId, attach);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.SuspectChosenOtherCreature) {
             suspectChosenOtherCreatureEffectHandler.completeChoice(gameData, permanentId);

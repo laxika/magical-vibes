@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +41,10 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenAttachedToTargetEffect) effect;
+        if (e.oneOfTriggeringPermanents()) {
+            resolveOneOfTriggeringPermanents(gameData, entry, e);
+            return;
+        }
         List<UUID> targetIds = entry.targetsForEffect(e);
         // Unbound effects may store their single target separately from the flat target list.
         // An empty bound group must stay empty even if another group still has a target.
@@ -45,6 +52,51 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             targetIds = List.of(entry.getTargetId());
         }
         resolve(gameData, entry, e, targetIds);
+    }
+
+    /**
+     * "Attached to one of them": the token is attached to one of the permanents whose event made the ability trigger
+     * that still fit it, which its controller chooses as it resolves when there are several (not a target).
+     */
+    private void resolveOneOfTriggeringPermanents(GameData gameData, StackEntry entry,
+                                                  CreateTokenAttachedToTargetEffect e) {
+        List<UUID> candidates = triggeringCandidates(gameData, entry, e);
+        if (candidates.size() > 1) {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.CreateTokenAttachedToOneOfTriggeringPermanents(e));
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
+                    "Choose one of the creatures that entered to attach the token to.");
+            return;
+        }
+        candidates.forEach(candidateId -> createAttachedToken(gameData, entry, e, candidateId));
+    }
+
+    /** Attaches the token of the effect waiting in {@code context} to the chosen {@code chosenPermanentId}. */
+    public void completeTriggeringPermanentChoice(
+            GameData gameData, UUID chosenPermanentId,
+            PermanentChoiceContext.CreateTokenAttachedToOneOfTriggeringPermanents context) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No effect is waiting for a creature choice");
+        }
+        if (!triggeringCandidates(gameData, entry, context.effect()).contains(chosenPermanentId)) {
+            throw new IllegalStateException("Choose one of the creatures that entered");
+        }
+        createAttachedToken(gameData, entry, context.effect(), chosenPermanentId);
+    }
+
+    private List<UUID> triggeringCandidates(GameData gameData, StackEntry entry,
+                                            CreateTokenAttachedToTargetEffect e) {
+        List<UUID> triggeringIds = !entry.getTriggeringPermanentIds().isEmpty() ? entry.getTriggeringPermanentIds()
+                : entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
+        return triggeringIds.stream()
+                .filter(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent != null && (e.targetFilter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                            e.targetFilter()));
+                })
+                .toList();
     }
 
     void resolve(GameData gameData, StackEntry entry, CreateTokenAttachedToTargetEffect e,

@@ -351,12 +351,6 @@ public class BattlefieldEntryBatchSupport {
                 gameData.simultaneousCreatureEntryTriggers.clear();
             }
         }
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            List<UUID> tokenIds = entered.stream().filter(permanent -> permanent.getCard().isToken())
-                    .filter(permanent -> controllerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
-                    .map(Permanent::getId).toList();
-            if (!tokenIds.isEmpty()) battlefieldEntryService.checkAllyTokenEntersTriggers(gameData, controllerId, tokenIds);
-        }
     }
 
     private boolean entersWithPlayerChoice(Permanent permanent) {

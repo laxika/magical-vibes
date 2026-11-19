@@ -38,6 +38,10 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
             targetIds = entry.getSourcePermanentId() == null
                     ? List.of()
                     : List.of(entry.getSourcePermanentId());
+        } else if (switchEffect.triggering()) {
+            targetIds = entry.getTriggeringPermanentId() == null
+                    ? List.of()
+                    : List.of(entry.getTriggeringPermanentId());
         } else {
             targetIds = entry.targetsForEffect(switchEffect);
             if (targetIds.isEmpty() && entry.getTargetId() != null) {

@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -47,8 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplac
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
@@ -838,9 +835,6 @@ public class GraveyardService {
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone,
                     battlefieldSnapshot, creatureDeathTriggersSuppressed);
             updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
-            if (!isToken(gameData, card) && !creatureDeathTriggersSuppressed) {
-                collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
-            }
             // These abilities all trigger on this one event (CR 603.2) and go on the stack later (CR 603.3); their
             // collectors write nothing the layered board or the static-bonus assembly reads (the land-entry count is
             // read only by trigger collection), so their per-permanent queries share one query scope instead of each
@@ -943,34 +937,6 @@ public class GraveyardService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} cards from graveyard", gameData.id, playerName, count);
         return true;
-    }
-
-    /**
-     * Fires the turn-scoped "whenever a card is put into an opponent's graveyard from anywhere this
-     * turn, that player loses 1 life" delayed triggers (Duskmantle Guildmage). One trigger per active
-     * watcher whose controller is an opponent of the graveyard's owner, so repeated activations
-     * stack. Tokens count too â€” they are cards put into a graveyard before they cease to exist.
-     */
-    private void collectOpponentGraveyardLifeLossTriggers(GameData gameData, UUID ownerId) {
-        for (OpponentGraveyardLifeLossWatcher watcher : List.copyOf(gameData.opponentGraveyardLifeLossWatchers)) {
-            if (watcher.controllerId().equals(ownerId)) {
-                continue;
-            }
-            // A delayed triggered ability its activation made (CR 603.7), about "that player".
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
-                    ownerId,
-                    (UUID) null
-            );
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} triggers (card put into an opponent's graveyard)",
-                    gameData.id, watcher.sourceCard().getName());
-        }
     }
 
     /**

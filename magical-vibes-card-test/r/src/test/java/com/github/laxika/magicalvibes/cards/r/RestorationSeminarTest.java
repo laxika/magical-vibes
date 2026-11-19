@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.ParadigmCastCopyEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -79,7 +80,7 @@ class RestorationSeminarTest extends BaseCardTest {
 
         harness.assertNotInGraveyard(player1, "Restoration Seminar");
         assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Restoration Seminar"))).isTrue();
-        assertThat(gd.paradigmDelayedTriggers).hasSize(1);
+        assertThat(paradigmAbilityCount()).isEqualTo(1);
         assertThat(gd.paradigmResolvedSpellNames.get(player1.getId())).contains("Restoration Seminar");
     }
 
@@ -135,7 +136,7 @@ class RestorationSeminarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Restoration Seminar");
         assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Restoration Seminar"));
-        assertThat(gd.paradigmDelayedTriggers).isEmpty();
+        assertThat(paradigmAbilityCount()).isZero();
     }
 
     @Test
@@ -222,8 +223,8 @@ class RestorationSeminarTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getId().equals(first.getId()));
         harness.assertInGraveyard(player1, "Restoration Seminar");
         advanceToFirstMainPhase();
-        assertThat(gd.stack).anyMatch(entry ->
-                entry.getDescription().equals("Restoration Seminar paradigm"));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Restoration Seminar")
+                && entry.getEffectsToResolve().stream().anyMatch(ParadigmCastCopyEffect.class::isInstance));
     }
 
     @Test
@@ -296,5 +297,12 @@ class RestorationSeminarTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+    }
+
+    private long paradigmAbilityCount() {
+        return gd.temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> delayed.ability().effects().stream()
+                        .anyMatch(registration -> registration.effect() instanceof ParadigmCastCopyEffect))
+                .count();
     }
 }

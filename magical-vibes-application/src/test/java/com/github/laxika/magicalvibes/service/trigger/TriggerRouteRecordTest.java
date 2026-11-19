@@ -833,6 +833,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 test.player1.getId(), new GrizzlyBears())),
                 collected("you forage", "youForage", Triggers::youForage,
                         (test, collection) -> ActionEvents.foraged(test.gd, test.player1.getId())),
+                collected("you sacrifice one or more permanents", "youSacrificeOneOrMorePermanents",
+                        Triggers::youSacrificeOneOrMorePermanents,
+                        (test, collection) -> ActionEvents.sacrificed(test.gd, test.player1.getId(),
+                                new GrizzlyBears())),
                 collected("players finish voting", "playersFinishVoting", Triggers::playersFinishVoting,
                         (test, collection) -> ActionEvents.votingFinished(test.gd, new VotingResult(
                                 Map.of(test.player1.getId(), Set.of("first"),

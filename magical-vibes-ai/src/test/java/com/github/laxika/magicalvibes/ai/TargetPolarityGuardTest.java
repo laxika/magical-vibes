@@ -193,7 +193,7 @@ class TargetPolarityGuardTest {
                 new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
-                new RegisterControlLossUnattachTriggerEffect(), aiPlayerId))
+                RegisterControlLossUnattachTriggerEffect.whenControlLost(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,
                 new DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect(), aiPlayerId))

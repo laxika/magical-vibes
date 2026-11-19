@@ -6,10 +6,21 @@ package com.github.laxika.magicalvibes.model.effect;
  * When {@code self} is false the effect targets a creature (e.g. Twisted Image);
  * when {@code self} is true it affects the source permanent with no target
  * (e.g. Turtleshell Changeling's "Switch this creature's power and toughness").
- * When {@code indefinite} is true the switch has no duration and lasts for the rest of the game
- * (e.g. Mangled Soulrager's boon: "switch its power and toughness").
+ * When {@code indefinite} is true the switch has no duration and lasts for the rest of the game.
+ * When {@code triggering} is true it affects, with no target, the permanent whose event made the ability trigger
+ * (Mangled Soulrager's boon: "whenever a creature you control enters, switch its power and toughness").
  */
-public record SwitchPowerToughnessEffect(boolean self, boolean indefinite) implements CardEffect {
+public record SwitchPowerToughnessEffect(boolean self, boolean indefinite, boolean triggering) implements CardEffect {
+
+    /** A switch of the given target mode and duration. */
+    public SwitchPowerToughnessEffect(boolean self, boolean indefinite) {
+        this(self, indefinite, false);
+    }
+
+    /** "Switch its power and toughness" for the rest of the game, "it" the ability's triggering permanent. */
+    public static SwitchPowerToughnessEffect ofTriggeringPermanent() {
+        return new SwitchPowerToughnessEffect(false, true, true);
+    }
 
     /** Until-end-of-turn switch of the given target mode. */
     public SwitchPowerToughnessEffect(boolean self) {
@@ -23,6 +34,9 @@ public record SwitchPowerToughnessEffect(boolean self, boolean indefinite) imple
 
     @Override
     public TargetSpec targetSpec() {
+        if (triggering) {
+            return TargetSpec.NONE;
+        }
         return self
                 ? new TargetSpec(null, false, null, true, 1)
                 : TargetSpec.benign(TargetPredicates.creature());

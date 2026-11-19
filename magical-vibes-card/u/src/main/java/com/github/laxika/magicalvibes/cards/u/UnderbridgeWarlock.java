@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasBoon;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConsumeBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -25,12 +24,12 @@ public class UnderbridgeWarlock extends Card {
 
     public UnderbridgeWarlock() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                CreateBoonEffect.atControllerEndStep(1,
-                        new ConditionalEffect(new CreaturesDiedThisTurnAtLeast(3),
-                                SequenceEffect.of(
-                                        new LoseLifeEffect(5, LoseLifeRecipient.EACH_OPPONENT),
-                                        new GainLifeEffect(5),
-                                        new ConsumeBoonEffect(BoonTrigger.CONTROLLER_END_STEP)))));
+                CreateBoonEffect.usedAsItResolves(new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                        TriggerOptions.DEFAULT.withInterveningIf(new CreaturesDiedThisTurnAtLeast(3)),
+                        SequenceEffect.of(
+                                new LoseLifeEffect(5, LoseLifeRecipient.EACH_OPPONENT),
+                                new GainLifeEffect(5),
+                                new ConsumeBoonEffect()))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerHasBoon()),
                 SequenceEffect.of(

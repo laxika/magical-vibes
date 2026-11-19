@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -914,8 +913,6 @@ public class TokenCopySupport {
                     sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
                 }
             }
-            battlefieldEntryService.checkAllyTokenEntersTriggers(
-                    gameData, tokenControllerId, enteredTokens.stream().map(Permanent::getId).toList());
         };
         if (gameData.deferredTokenEntryNotifications != null) {
             gameData.deferredTokenEntryNotifications.add(entryNotifications);

@@ -663,11 +663,16 @@ public class RulesEventPipeline {
      * Whether an ability that sees another permanent enter is matched as the entering permanent's enters abilities
      * are processed ({@link #triggerEnteringObservers}) rather than as its entry's batch closes: every one but those
      * about tokens ("whenever you create one or more tokens", "whenever a token you control enters", a filter of
-     * tokens and their narrowings), which see a token creation as one event.
+     * tokens and their narrowings), which see a token creation as one event, and a delayed "one or more" one, which
+     * may be used up as it triggers (a one-time boon: "when one or more creatures enter under your control, create a
+     * Wicked Role token attached to one of them") and so triggers once, naming every permanent of the event, as it
+     * closes (CR 603.2c).
      */
     private static boolean matchedAsItsEntryIsProcessed(TriggerCandidate candidate, ZoneChangeTrigger trigger) {
         return trigger.entersBattlefield() && !trigger.causes().contains(ZoneChangeCause.CREATE)
-                && !Triggers.TOKEN.equals(narrowedFrom(trigger.filter()));
+                && !Triggers.TOKEN.equals(narrowedFrom(trigger.filter()))
+                && !(candidate.delayed() != null
+                && candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE);
     }
 
     /** The filter {@code filter} narrows: the first of an all-of filter's parts, or the filter itself. */

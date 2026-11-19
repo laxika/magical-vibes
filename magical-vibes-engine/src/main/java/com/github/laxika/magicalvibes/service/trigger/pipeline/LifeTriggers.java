@@ -2,15 +2,9 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.rules.LifeEvent;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
@@ -19,7 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -46,8 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *       life".</li>
  *   <li>A payment: the paying player's "whenever you pay life".</li>
  *   <li>A gain: the gaining player's "whenever you gain life", the other players' "whenever an opponent gains life",
- *       the graveyard abilities of both, the delayed "whenever you gain life this turn" abilities, and every
- *       watcher's "whenever a player gains life".</li>
+ *       the graveyard abilities of both, and every watcher's "whenever a player gains life".</li>
  * </ul>
  */
 @Slf4j
@@ -64,19 +56,14 @@ public class LifeTriggers {
     private final EventAbilitySupport abilities;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameLogService gameLogService;
-    private final TriggeredAbilityStackService stackService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     public LifeTriggers(EventAbilitySupport abilities, @Lazy PredicateEvaluationService predicateEvaluationService,
-                        @Lazy GameOutcomeService gameOutcomeService, @Lazy GameLogService gameLogService,
-                        @Lazy TriggeredAbilityStackService stackService,
+                        @Lazy GameOutcomeService gameOutcomeService,
                         @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
         this.abilities = abilities;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameOutcomeService = gameOutcomeService;
-        this.gameLogService = gameLogService;
-        this.stackService = stackService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
@@ -189,7 +176,6 @@ public class LifeTriggers {
         }
         graveyardControllerLifeGain(gameData, gainingPlayerId, lifeGainedAmount);
         graveyardOpponentLifeGain(gameData, gainingPlayerId, lifeGainedAmount);
-        lifeGainOpponentLifeLoss(gameData, gainingPlayerId, lifeGainedAmount);
         playerGainsLife(gameData, gainingPlayerId, lifeGainedAmount);
         triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
@@ -279,29 +265,6 @@ public class LifeTriggers {
             entry.setTriggeringPlayerId(playerId);
             entry.setSourceGraveyardEntryVersion(graveyardEntryVersion);
         });
-    }
-
-    /**
-     * The turn-scoped "whenever you gain life this turn, each opponent loses that much life" delayed abilities
-     * (Vizkopa Guildmage): one for each watcher whose controller gained the life, the amount its event value.
-     */
-    private void lifeGainOpponentLifeLoss(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount) {
-        for (LifeGainOpponentLifeLossWatcher watcher : List.copyOf(gameData.lifeGainOpponentLifeLossWatchers)) {
-            if (!watcher.controllerId().equals(gainingPlayerId)) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT))),
-                    (UUID) null,
-                    (UUID) null);
-            entry.setEventValue(lifeGainedAmount);
-            stackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} triggers (controller gained {} life), each opponent loses that much life",
-                    gameData.id, watcher.sourceCard().getName(), lifeGainedAmount);
-        }
     }
 
     /**

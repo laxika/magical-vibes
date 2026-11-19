@@ -109,6 +109,11 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, Ca
         LOSES_GAME,
         /** The player commits a crime (CR 700.13). */
         COMMITS_CRIME,
+        /**
+         * The player sacrifices one or more permanents (CR 701.21a): the permanents they sacrifice at once are one
+         * event.
+         */
+        SACRIFICES_ONE_OR_MORE_PERMANENTS,
         /** The player fully unlocks a Room: it gets its second unlocked designation, or both at once (CR 709.5i). */
         FULLY_UNLOCKS_ROOM
     }

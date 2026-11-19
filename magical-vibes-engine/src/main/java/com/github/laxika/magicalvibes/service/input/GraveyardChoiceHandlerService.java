@@ -583,7 +583,8 @@ public class GraveyardChoiceHandlerService {
                                 gameData, perm.getId(), battlefieldControllerId, cardGraveyardOwnerId);
                     }
 
-                    graveyardReturnSupport.grantOnDeathEffect(perm, grantOnDeathEffect, cardGraveyardOwnerId);
+                    graveyardReturnSupport.grantOnDeathEffect(gameData, perm, grantOnDeathEffect,
+                            cardGraveyardOwnerId, null);
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());

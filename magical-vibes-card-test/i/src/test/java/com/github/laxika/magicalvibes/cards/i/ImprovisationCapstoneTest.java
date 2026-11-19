@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.ParadigmCastCopyEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -219,7 +220,8 @@ class ImprovisationCapstoneTest extends BaseCardTest {
 
         assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getControllerId()).isEqualTo(player2.getId());
-            assertThat(entry.getDescription()).isEqualTo("Improvisation Capstone paradigm");
+            assertThat(entry.getCard().getName()).isEqualTo("Improvisation Capstone");
+            assertThat(entry.getEffectsToResolve()).hasOnlyElementsOfType(ParadigmCastCopyEffect.class);
         });
     }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -886,7 +887,8 @@ public class GraveyardReturnSupport {
                                 new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost())),
                         p.getId(), Duration.PERMANENT);
             }
-            grantOnDeathEffect(p, effect.grantOnDeathEffect(), cardOwnerId != null ? cardOwnerId : card.getOwnerId());
+            grantOnDeathEffect(gameData, p, effect.grantOnDeathEffect(),
+                    cardOwnerId != null ? cardOwnerId : card.getOwnerId(), entry);
             if (effect.battlefieldEffectGrants() != null) {
                 String sourceCardName = entry == null ? card.getName() : entry.getCard().getName();
                 UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
@@ -927,7 +929,14 @@ public class GraveyardReturnSupport {
         }
     }
 
-    public void grantOnDeathEffect(Permanent permanent, CardEffect effect, UUID cardOwnerId) {
+    /**
+     * Creates the delayed triggered ability "when that creature dies, {@code effect}" about {@code permanent} (CR 603.7a,
+     * 603.7c), with no stated duration (CR 603.7b): The Deck of Many Things' "when that creature dies, its owner loses
+     * the game", "its owner" bound to {@code cardOwnerId}. Its source and controller are those of {@code maker}, the
+     * resolving spell or ability (CR 603.7d, 603.7e), or, when {@code null}, of the resolution in progress.
+     */
+    public void grantOnDeathEffect(GameData gameData, Permanent permanent, CardEffect effect, UUID cardOwnerId,
+                                   StackEntry maker) {
         if (permanent == null || effect == null) {
             return;
         }
@@ -936,7 +945,14 @@ public class GraveyardReturnSupport {
                 && cardOwnerId != null) {
             boundEffect = new TargetPlayerLosesGameEffect(cardOwnerId);
         }
-        permanent.addDelayedDeathEffect(boundEffect);
+        StackEntry made = maker != null ? maker
+                : gameData.resolvingEntry != null ? gameData.resolvingEntry : gameData.pendingEffectResolutionEntry;
+        UUID controllerId = made != null ? made.getControllerId()
+                : gameQueryService.findPermanentController(gameData, permanent.getId());
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(controllerId,
+                made != null ? made.getCard() : permanent.getCard(),
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), boundEffect), permanent.getId(),
+                made == null ? null : made.getSourcePermanentId(), false));
     }
 
     /**

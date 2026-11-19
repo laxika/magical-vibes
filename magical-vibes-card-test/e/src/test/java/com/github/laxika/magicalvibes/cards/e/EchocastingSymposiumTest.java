@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.ParadigmCastCopyEffect;
 import com.github.laxika.magicalvibes.cards.a.AzizaMageTowerCaptain;
 import com.github.laxika.magicalvibes.cards.h.HoodedHydra;
 import com.github.laxika.magicalvibes.cards.i.ImprovisationCapstone;
@@ -292,10 +293,10 @@ class EchocastingSymposiumTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().isToken() && p.getCard().getName().equals("Noxious Newt"));
-        assertThat(gd.paradigmDelayedTriggers).hasSize(1);
+        assertThat(paradigmAbilityCount()).isEqualTo(1);
 
         harness.passBothPriorities();
-        assertThat(gd.paradigmDelayedTriggers).hasSize(1);
+        assertThat(paradigmAbilityCount()).isEqualTo(1);
     }
 
     @Test
@@ -342,5 +343,12 @@ class EchocastingSymposiumTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player2, choice.options().stream()
                 .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private long paradigmAbilityCount() {
+        return gd.temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> delayed.ability().effects().stream()
+                        .anyMatch(registration -> registration.effect() instanceof ParadigmCastCopyEffect))
+                .count();
     }
 }

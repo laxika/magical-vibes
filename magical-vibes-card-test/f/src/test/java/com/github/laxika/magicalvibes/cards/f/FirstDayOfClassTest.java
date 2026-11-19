@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.t.TorporOrb;
 import com.github.laxika.magicalvibes.cards.e.EnvironmentalSciences;
 import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FirstDayOfClass.class, EnvironmentalSciences.class, SpinedKarok.class})
+@CardUsed({FirstDayOfClass.class, EnvironmentalSciences.class, SpinedKarok.class, TorporOrb.class})
 class FirstDayOfClassTest extends BaseCardTest {
 
     @Test
@@ -173,6 +174,23 @@ class FirstDayOfClassTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature entering under Torpor Orb doesn't make the delayed ability trigger")
+    void torporOrbStopsTheDelayedAbility() {
+        harness.addToBattlefield(player2, new TorporOrb());
+        castFirstDayOfClass();
+
+        harness.setHand(player1, List.of(new SpinedKarok()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent karok = findPermanent(player1, "Spined Karok");
+        assertThat(gd.stack).isEmpty();
+        assertThat(karok.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, karok, Keyword.HASTE)).isFalse();
     }
 
     private void castFirstDayOfClass() {

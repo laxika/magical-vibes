@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.service.paradigm;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.ParadigmCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -37,7 +41,6 @@ public class ParadigmService {
     private final ParadigmCastSupport paradigmCastSupport;
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
-    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     // @Lazy breaks cycles through InputCompletionService/TurnProgressionService and PlayerInputService.
     public ParadigmService(CopySupport copySupport,
@@ -45,15 +48,13 @@ public class ParadigmService {
                            GameLogService gameLogService,
                            ParadigmCastSupport paradigmCastSupport,
                            @Lazy InputCompletionService inputCompletionService,
-                           @Lazy PlayerInputService playerInputService,
-                           @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
+                           @Lazy PlayerInputService playerInputService) {
         this.copySupport = copySupport;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.paradigmCastSupport = paradigmCastSupport;
         this.inputCompletionService = inputCompletionService;
         this.playerInputService = playerInputService;
-        this.triggeredAbilityStackService = triggeredAbilityStackService;
     }
 
     /**
@@ -74,9 +75,12 @@ public class ParadigmService {
                 .computeIfAbsent(controllerId, id -> ConcurrentHashMap.newKeySet());
         if (!resolved.contains(spellName)) {
             resolved.add(spellName);
+            // Paradigm's delayed triggered ability, made by the spell as it resolved, its source a copy of it
+            // (CR 702.192a, 603.7d): "at the beginning of each of your precombat main phases for the rest of the game".
             Card prototype = copySupport.createCopyCard(card);
-            gameData.paradigmDelayedTriggers.add(
-                    new GameData.ParadigmDelayedTrigger(controllerId, prototype));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atEveryStep(controllerId,
+                    prototype, new TriggeredAbility(Triggers.precombatMainPhase(ActivePlayer.YOU),
+                            new ParadigmCastCopyEffect()), null, null, DelayedReferents.NONE, null));
             gameLogService.append(gameData, GameLog.cardThen(card, " paradigm is registered."));
             log.info("Game {} - {} paradigm registered for {}", gameData.id, spellName, controllerId);
         }
@@ -84,24 +88,6 @@ public class ParadigmService {
         if (!entry.isCopy()) {
             exileService.exileCard(gameData, controllerId, card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled (paradigm)."));
-        }
-    }
-
-    /**
-     * Fires paradigm delayed triggers for the active player at the beginning of the precombat main phase.
-     */
-    public void firePrecombatMainTriggers(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        for (GameData.ParadigmDelayedTrigger trigger : gameData.paradigmDelayedTriggers) {
-            if (!trigger.controllerId().equals(activePlayerId)) {
-                continue;
-            }
-            Card prototype = trigger.spellPrototype();
-            // Paradigm's delayed triggered ability, made by the spell as it resolved (CR 702.192a, 603.7d).
-            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(prototype,
-                    activePlayerId, prototype.getName() + " paradigm", List.of(new ParadigmCastCopyEffect())));
-            gameLogService.append(gameData, GameLog.cardThen(prototype, "'s paradigm triggers."));
-            log.info("Game {} - {} paradigm trigger pushed onto stack", gameData.id, prototype.getName());
         }
     }
 

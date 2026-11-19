@@ -4,9 +4,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -303,9 +300,6 @@ public class Permanent {
     @Setter private boolean phasedOutIndirectly;
     /** The id of the exiled prepare-spell copy linked to this permanent while it is prepared (null otherwise). */
     @Setter private UUID preparedSpellCardId;
-    /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). They are not
-     *  abilities of the permanent, so losing all abilities does not stop them. */
-    private final List<CardEffect> delayedDeathEffects = new ArrayList<>();
     /** Current base toughness used as loyalty by an attached Planeswalkerificate-style Aura. */
     @Setter private Integer toughnessAsLoyalty;
     private boolean faceDown;
@@ -686,7 +680,6 @@ public class Permanent {
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
-        this.delayedDeathEffects.addAll(source.delayedDeathEffects);
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextUntapPlayerId = source.returnToHandAtNextUntapPlayerId;
         this.toughnessAsLoyalty = source.toughnessAsLoyalty;
@@ -1393,14 +1386,6 @@ public class Permanent {
             transformationSequence++;
         }
         this.transformed = transformed;
-    }
-
-    public void addDelayedDeathEffect(CardEffect effect) {
-        delayedDeathEffects.add(effect);
-    }
-
-    public List<CardEffect> getDelayedDeathEffects() {
-        return List.copyOf(delayedDeathEffects);
     }
 
     public void recordTappedPermanentForAbility(UUID permanentId) {

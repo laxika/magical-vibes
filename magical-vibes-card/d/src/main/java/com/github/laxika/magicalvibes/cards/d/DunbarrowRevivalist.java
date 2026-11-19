@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,8 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -45,8 +44,9 @@ public class DunbarrowRevivalist extends Card {
                 "an artifact, enchantment, or token"
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new CreateBoonEffect(1, new CreateTokenAttachedToTargetEffect(
-                        wickedRoleToken(), PlayerRelation.ANY), BoonTrigger.ONE_OR_MORE_CREATURES_ENTER, null),
+                new CreateBoonEffect(1, new TriggeredAbility(
+                        Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL), TriggerOptions.ONE_OR_MORE,
+                        CreateTokenAttachedToTargetEffect.attachedToOneOfTriggeringCreatures(wickedRoleToken()))),
                 new ConditionalEffect(new Kicked(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))

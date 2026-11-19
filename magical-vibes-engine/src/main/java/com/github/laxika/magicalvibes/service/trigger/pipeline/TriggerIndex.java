@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -516,9 +515,6 @@ public class TriggerIndex {
         // The abilities it was granted as the layers left it as it left: one granted after a "loses all abilities"
         // effect (Infuse with Vitality after Humble) stays (CR 613.7).
         triggered(event.grantedAbilities(), gained);
-        for (CardEffect delayed : lastKnown.getDelayedDeathEffects()) {
-            gained.add(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), delayed));
-        }
         for (TriggeredAbility ability : printed) {
             into.add(new TriggerCandidate(printedSource, lastKnown, event.controllerId(), Zone.BATTLEFIELD, ability));
         }

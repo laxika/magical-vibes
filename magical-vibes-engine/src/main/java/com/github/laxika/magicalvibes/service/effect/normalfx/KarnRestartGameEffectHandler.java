@@ -173,7 +173,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.TriggeredModalTrigger.class);
         gameData.emblems.clear();
         gameData.ringStates.clear();
-        gameData.boons.clear();
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
         gameData.extraTurnSkipsAllUntapSteps = false;

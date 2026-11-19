@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.model.ControlLossTapTrigger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -20,9 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -68,10 +62,6 @@ public class CreatureControlService {
     @Autowired
     @Lazy
     private DurationClock durationClock;
-
-    @Autowired
-    @Lazy
-    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired
     @Lazy
@@ -267,9 +257,6 @@ public class CreatureControlService {
                         : ringState);
         queueSelfControlLossTriggers(gameData, permanent, current);
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
-        queueControlLossUnattachTriggers(gameData, permanent, current);
-
-        queueControlLossTapTriggers(gameData, permanent, current);
 
         removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
@@ -341,70 +328,6 @@ public class CreatureControlService {
             if (affected != null) {
                 recomputeControl(gameData, affected);
             }
-        }
-    }
-
-    private boolean queueControlLossUnattachTriggers(GameData gameData, Permanent permanent,
-                                                     UUID previousController) {
-        boolean queued = false;
-        for (var registration : gameData.controlLossUnattachTriggersFor(permanent.getId())) {
-            if (!previousController.equals(registration.controllerId())
-                    || !isAttachedToCreatureControlledBy(gameData, permanent, registration.controllerId())) {
-                continue;
-            }
-            // A delayed triggered ability its maker registered (CR 603.7): it keeps that source and controller.
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                    registration.sourceCard(),
-                    registration.controllerId(),
-                    registration.sourceCard().getName() + "'s reflexive ability",
-                    List.of(new UnattachEquipmentIfAttachedToControlledCreatureEffect(permanent.getId())));
-            trigger.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
-            queued = true;
-        }
-        return queued;
-    }
-
-    /** Intervening-if for "if it's attached to a creature you control": checked when control is lost. */
-    private boolean isAttachedToCreatureControlledBy(GameData gameData, Permanent equipment, UUID controllerId) {
-        if (equipment.getAttachedTo() == null) {
-            return false;
-        }
-        Permanent creature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
-        return creature != null && gameQueryService.isCreature(gameData, creature)
-                && controllerId.equals(gameQueryService.findPermanentController(gameData, creature.getId()));
-    }
-
-    private void queueControlLossTapTriggers(GameData gameData, Permanent permanent,
-                                             UUID previousController) {
-        List<ControlLossTapTrigger> registrations = gameData.controlLossTapTriggersFor(permanent.getId());
-        if (registrations.isEmpty()) {
-            return;
-        }
-
-        List<ControlLossTapTrigger> remaining = new ArrayList<>();
-        for (ControlLossTapTrigger registration : registrations) {
-            if (!previousController.equals(registration.controllerId())) {
-                remaining.add(registration);
-                continue;
-            }
-            // "When you lose control of it, tap it": a delayed triggered ability about the permanent (CR 603.7c).
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                    registration.sourceCard(),
-                    registration.controllerId(),
-                    registration.sourceCard().getName() + "'s delayed triggered ability",
-                    List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), permanent.getId(), (UUID) null);
-            trigger.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
-        }
-
-        if (remaining.isEmpty()) {
-            gameData.controlLossTapTriggers.remove(permanent.getId());
-        } else {
-            gameData.controlLossTapTriggers.put(permanent.getId(),
-                    java.util.Collections.synchronizedList(remaining));
         }
     }
 

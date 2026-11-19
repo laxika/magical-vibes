@@ -2,8 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.Boon;
-import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -173,7 +171,6 @@ public class SpellTriggers {
         Card spellCard = event.spellCard();
         UUID castingPlayerId = event.castingPlayerId();
         Zone castZone = event.castZone();
-        putCreatureSpellBoons(gameData, event);
         putOpeningHandRevealAbilities(gameData, event);
         gameData.forEachPermanent((playerId, perm) -> dispatchSpellWatch(gameData, perm, playerId, PLAYER_CASTS,
                 event));
@@ -325,32 +322,6 @@ public class SpellTriggers {
         putCopyCostAbilities(gameData, event, castSpellEntry, event.casualtyCopies(), "Casualty");
         putSpellOrAbilityManaCopies(gameData, event, castSpellEntry);
         putGrantedSelfCastAbilities(gameData, event, castSpellEntry, selfCastContext);
-    }
-
-    /**
-     * The boons {@code event}'s caster has that a creature spell uses ("you get a one-time boon with 'when you cast a
-     * creature spell, ...'"), a face-down spell among them: each triggers once for the spell and uses one of its uses,
-     * with the spell as its triggering card.
-     */
-    private void putCreatureSpellBoons(GameData gameData, SpellEvent.Cast event) {
-        Card spellCard = event.spellCard();
-        if (!event.castFaceDown() && !spellCard.hasType(CardType.CREATURE)) return;
-        for (Boon boon : List.copyOf(gameData.boons)) {
-            if (boon.trigger() != BoonTrigger.CREATURE_CAST || !event.castingPlayerId().equals(boon.controllerId())) {
-                continue;
-            }
-            gameData.boons.remove(boon);
-            if (boon.remainingUses() > 1) {
-                gameData.boons.add(boon.withRemainingUses(boon.remainingUses() - 1));
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(),
-                    boon.controllerId(), boon.sourceCard().getName() + "'s boon",
-                    new ArrayList<>(List.of(boon.effect())));
-            entry.setTriggeringCardId(spellCard.getId());
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
-        }
     }
 
     /**

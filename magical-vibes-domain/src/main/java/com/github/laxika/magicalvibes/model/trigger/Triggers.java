@@ -2089,6 +2089,12 @@ public final class Triggers {
         return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.LOSES_GAME, PlayerRelation.ANY);
     }
 
+    /** "Whenever you sacrifice one or more permanents" */
+    public static PlayerActionTrigger youSacrificeOneOrMorePermanents() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.SACRIFICES_ONE_OR_MORE_PERMANENTS,
+                PlayerRelation.YOU);
+    }
+
     /** "Whenever you commit a crime" */
     public static PlayerActionTrigger youCommitCrime() {
         return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.COMMITS_CRIME, PlayerRelation.YOU);

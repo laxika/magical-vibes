@@ -501,6 +501,22 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a boon's remaining uses, and using it in the copy leaves the original's")
+    void deepCopyKeepsBoonUses() {
+        TemporaryGlobalTriggeredAbility boon = TemporaryGlobalTriggeredAbility.boon(player1.getId(), new SerraAngel(),
+                new TriggeredAbility(Triggers.youSacrificeOneOrMorePermanents(), new DrawCardEffect(1)), null, 2);
+        gd.temporaryGlobalTriggeredAbilities.add(boon);
+
+        GameData copy = gd.simulationCopy();
+        copy.useDelayedAbility(copy.temporaryGlobalTriggeredAbilities.getFirst());
+
+        assertThat(copy.temporaryGlobalTriggeredAbilities).singleElement()
+                .satisfies(delayed -> assertThat(delayed.uses()).isEqualTo(1));
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(boon);
+        assertThat(boon.uses()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps a parked record's mark of an ability a resolution made")
     void deepCopyKeepsMadeByResolutionMark() {
         StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Reflexive ability", List.of());

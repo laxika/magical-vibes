@@ -1015,11 +1015,8 @@ public class ConditionEvaluationService {
                             : gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of())
                             .contains(completed.dungeon()));
             case ControllerHasBoon ignored ->
-                    ctx.controllerId() != null
-                            && (gameData.boons.stream()
-                            .anyMatch(boon -> ctx.controllerId().equals(boon.controllerId()))
-                            || gameData.temporaryGlobalTriggeredAbilities.stream()
-                            .anyMatch(delayed -> delayed.boon() && ctx.controllerId().equals(delayed.controllerId())));
+                    ctx.controllerId() != null && gameData.temporaryGlobalTriggeredAbilities.stream()
+                            .anyMatch(delayed -> delayed.boon() && ctx.controllerId().equals(delayed.controllerId()));
             case ControllerHasEmblem ignored ->
                     ctx.controllerId() != null
                             && gameData.emblems.stream()

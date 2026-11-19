@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -96,11 +101,14 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                     e, e.duration(), null, entry.getCard().getName());
 
-            // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
-            // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
+            // "When you lose control of the creature, tap it" (Ray of Command, Magus of the Unseen): a delayed
+            // triggered ability about the stolen permanent, with no stated duration (CR 603.7b, 603.7c).
             if (controlApplied && e.tapWhenControlLost()) {
-                gameData.registerControlLossTapTrigger(
-                        target.getId(), entry.getControllerId(), entry.getCard());
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                        entry.getControllerId(), entry.getCard(),
+                        new TriggeredAbility(Triggers.youLoseControlOfThis(),
+                                new TapPermanentsEffect(TapUntapScope.TRIGGERING)),
+                        target.getId(), entry.getSourcePermanentId(), false));
             }
         }
     }

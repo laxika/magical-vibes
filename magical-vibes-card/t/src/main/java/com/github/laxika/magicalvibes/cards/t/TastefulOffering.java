@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterSacrificeBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -14,14 +15,14 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBLB", collectorNumber = "12")
 public class TastefulOffering extends Card {
 
     public TastefulOffering() {
-        addSpellEffect(new RegisterSacrificeBoonEffect(2,
-                new SeekLibraryEffect(1,
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+        addSpellEffect(new CreateBoonEffect(2, new TriggeredAbility(Triggers.youSacrificeOneOrMorePermanents(),
+                new SeekLibraryEffect(1, new CardNotPredicate(new CardTypePredicate(CardType.LAND))))));
         addSpellEffect(foodToken());
     }
 

@@ -259,8 +259,9 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   (`BattlefieldEntryBatchSupport.placeCards`, graveyard return-all paths, Living Death, one token creation, …) a "one or
   more … enter" ability that already triggered names the next permanent too (`GameData.simultaneousCreatureEntryTriggers`,
   keyed by the whole ability). A new mass-entry path that skips the flag triggers it once per entrant.
-- Then `EtbTriggerService` runs what the pipeline doesn't match (boons, First Day of Class's watchers, Cosima's exiled
-  voyage) and emits an `EntryCausedTriggerEvent` per ability the entry caused (Strict Proctor).
+- A delayed "one or more … enter" ability (a one-time boon) is matched as the entry's batch closes, once, naming every
+  permanent of the event (`matchedAsItsEntryIsProcessed`, CR 603.2c), since it may be used up as it triggers.
+- Then `EtbTriggerService` runs what the pipeline doesn't match (Cosima's exiled voyage) and emits an `EntryCausedTriggerEvent` per ability the entry caused (Strict Proctor).
 - "Put counters on it", "it gets +X/+Y", "transform it", "attach this to it", "become a copy of that creature", "deals
   N damage to it" (`DealDamageToTriggeringPermanentEffect`), graft, Agent's Toolkit, soulbond, "it connives", endure,
   Madame Null, Mana
@@ -288,7 +289,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   triggering player, Curse of Oblivion (non-targeting) its `targetId`.
 - Each step handler ends with `beginNextStepTriggerChoice` (the door's queued choices begin before priority); a test
   that triggers by calling a service directly uses `GameTestHarness.beginTriggerChoices()`.
-- Engine-made step abilities (echo, initiative, rad, boons, opening-hand reveals, suspend delay counters) are put by
+- Engine-made step abilities (echo, initiative, rad, opening-hand reveals, suspend delay counters) are put by
   `StepTriggerService` around the event.
 
 ### Combat
@@ -391,7 +392,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
 - `SpellEvents.cast` (CR 601.2i) records the cast for the turn, moves what the payment leaves (conspire and casualty
   paid, spell-copying mana, the game's first spell) into the `Cast` event, emits it and clears the payment records;
   `SpellEvents.activated` likewise (`Activated.manaLinkedCopies`).
-- A cast puts, in order: the caster's creature-spell boons and opening-hand reveal delayed abilities, the matched
+- A cast puts, in order: the opening-hand reveal delayed abilities, the matched
   abilities, then the copies the payment made (Primal Wellspring, Pyromancer's Goggles, conspire, casualty, Sunken
   Palace) and a granted replicate or demonstrate; controllers order them (CR 603.3b).
 - "When you cast this spell" (`putSelfCastAbility`): own, perpetual and granted replicate/demonstrate abilities, each
@@ -482,9 +483,10 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
 - `PlayerActionTrigger` (crime, CR 700.13, and other player actions) and `ObjectActionTrigger` (exploits, CR 702.110b;
   becomes plotted, functioning from exile, CR 702.170a; crew, saddle, station, door unlocks). `ActionEvents` keeps the
   bookkeeping first (first investigation, a scheme set in motion N times as N events, CR 701.32c, a player's
-  simultaneous sacrifices as one `ActionEvent.Sacrificed`). `ActionTriggers` reads abilities as the layers leave them
-  (none face down or ability-less, CR 708.2, 613.1f) in this order: the actor's "you", schemes, opponents', everyone's,
-  then graveyard abilities; it judges explore/exploit/scheme filters, a Ring-bearer other than the source (Gandalf,
+  simultaneous sacrifices as one `ActionEvent.Sacrificed`, "whenever you sacrifice one or more permanents").
+  `ActionTriggers` reads abilities as the layers leave them (none face down or ability-less, CR 708.2, 613.1f) in this
+  order: the actor's "you", schemes, opponents', everyone's, delayed abilities that watch no object, then graveyard
+  abilities; it judges explore/exploit/scheme filters, a Ring-bearer other than the source (Gandalf,
   Friend of the Shire), a tax paid to the taxing player's permanents, and reads a departed source as printed (an
   exploiter that sacrificed itself, a mutated pile).
 - Control change, attachment (Siona sees Cloudform as an Aura), crew/saddle/station (cost-payment abilities held by
@@ -811,19 +813,23 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   the next time (CR 603.7b); a cast-and-activation one (Repeated Reverberation, Magus Lucea Kane) is used up by the
   first. Registrations (`RegisterDelayedControllerSpellCastTriggerEffect`, `RegisterDelayedTargetPlayerSpellCastTriggerEffect`,
   Molten Impact's, Gift of Tiamat's, The Ruinous Powers' and Medomai's Prophecy's handlers) make one from
-  `delayedAbility()` for their `Duration` (`thisTurn`, `nextThisTurn`, `untilYourNextTurn`, `boon`: one-time, counted by
-  `ControllerHasBoon` with `GameData.boons`).
-- Player-scoped lists are matched by their family, each a made ability (`putDelayed`): `GameData.boons`
-  (`SpellTriggers`, `EtbTriggerService`), First Day of Class's watchers and Cosima's voyage (`EtbTriggerService`),
-  sacrifice boons (`ActionTriggers` on `ActionEvent.Sacrificed`). A duration, requirement or replacement a resolution
-  schedules is a floating effect with a later `Duration.start`, not an ability.
+  `delayedAbility()` for their `Duration` (`thisTurn`, `nextThisTurn`, `untilYourNextTurn`, `boon`).
+- **Boons** are delayed abilities with no stated duration (`boon`, `CreateBoonEffect`), counted by `ControllerHasBoon`;
+  an N-time boon has `uses`, and the door uses one as it triggers (`GameData.useDelayedAbility`). `boonUsedAsItResolves`
+  (Underbridge Warlock) instead triggers at each of its steps whose "if" holds until its `ConsumeBoonEffect` resolves.
+- "When you lose control of that Equipment [this turn]" and "when you lose control of it, tap it" are about the
+  permanent, matched by `ControlChangeTriggers` (the permanent its triggering permanent). The cleanup step ends a "this
+  turn" one only after control is recomputed (`GameData.endControlLossDelayedAbilitiesOfThisTurn`, CR 514.2), so it
+  triggers as the control effect that ends with it ends.
+- A duration, requirement or replacement a resolution schedules is a floating effect with a later `Duration.start`,
+  not an ability.
 - **Step.** `atNextStep`, `atNextStepUnlessPaid`, `atEveryStep` with a `StepTrigger` go on the stack before every other
   step ability. `TriggerMatcher.delayedStepMatch` reads `ANY` as "the next", `YOU` as "your next", `CHOSEN_PLAYER` as the
   named player's (`watchedPlayerId`). `DelayedReferents` names its objects and the turn, extra turn or combat phase it
   waits for (CR 500.8; `combatPhase` counts combat phases begun this turn, and adding a phase moves later waits back),
   what its permanent had attached (`permanentAttachments`) and a different triggering object (`triggeringPermanentId`);
   `RulesEventPipeline.delayedStepRecord` stamps them. It triggers once (CR 603.7b), even if its objects left, which it
-  then doesn't affect (CR 603.7c); a false "if" as the step begins removes it. `atEveryStep` repeats (CR 603.7b); its
+  then doesn't affect (CR 603.7c); a false "if" as the step begins removes it. `atEveryStep` repeats (CR 603.7b; paradigm's, CR 702.192a); its
   `lastsWhile` (`CardsStillInZone`, `SourceRemainsTapped`) is judged in `RulesEventPipeline.putStepAbility`, false
   removing it untriggered.
 - **Grouping.** A delayed ability belongs to its resolution (CR 603.7a): `resolveTopOfStack` counts resolutions
@@ -896,9 +902,8 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
 - Inherent abilities with no source (monarch, CR 726.2; initiative, CR 727.2; rad; speed; planeswalking) use
   `putInherent`: the holder controls it, no doubler, no target; the initiative's combat-damage ability names the taker
   non-targeting (`TakeInitiativeEffect(true)`).
-- A spell's, reveal's or rule's "at the beginning of …" (epic, paradigm, rebound, Ertai's Meddling, opening-hand
-  reveals, Judgment of Alexander, control-loss unattach and tap, regeneration shields, exile returns, Gaze of Pain) is
-  `madeAbility` + `putDelayed` (CR 603.7d, 603.7e). "Combat damage uses the stack" is one `putMade` object.
+- A spell's, reveal's or rule's "at the beginning of …" (epic, rebound, Ertai's Meddling, opening-hand reveals,
+  Judgment of Alexander, regeneration shields, exile returns, Gaze of Pain) is `madeAbility` + `putDelayed` (CR 603.7d, 603.7e). "Combat damage uses the stack" is one `putMade` object.
 
 ## Doublers: `TriggerCause`
 

@@ -21,7 +21,7 @@ public class StolenUniform extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"))
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
-                .addSpellEffect(new RegisterControlLossUnattachTriggerEffect());
+                .addSpellEffect(RegisterControlLossUnattachTriggerEffect.thisTurnIfAttachedToCreatureYouControl());
         addSpellEffect(AttachTargetEquipmentToTargetCreatureEffect.creatureFirst());
     }
 }

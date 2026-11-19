@@ -1,39 +1,45 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.BoonTrigger;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 /**
- * Grants the controller a finite-use boon whose ability resolves whenever its event occurs.
+ * Gives the resolving spell or ability's controller a boon: a delayed triggered ability (CR 603.7a) with no stated
+ * duration that triggers {@code uses} times ("you get a two-time boon with 'whenever you sacrifice one or more
+ * permanents, seek a nonland card'", Tasteful Offering), its source the maker's (CR 603.7d, 603.7e).
  *
- * @param filter what the object of the boon's event must be, or {@code null} for any ({@code Boon#filter})
+ * @param uses             how many times it triggers before it ends
+ * @param ability          the boon's ability
+ * @param targetFilter     what its targets, chosen as it goes on the stack (CR 603.3d), must match; {@code null} = the
+ *                         effects' own
+ * @param usedAsItResolves whether its own ability uses it up as it resolves ({@link ConsumeBoonEffect}) instead of
+ *                         as it triggers: "you get a one-time boon with 'at the beginning of your end step, if ...,
+ *                         ...'" (Underbridge Warlock) triggers at each such step whose "if" holds until it has resolved
  */
-public record CreateBoonEffect(int uses, CardEffect triggeredEffect, BoonTrigger trigger,
-                               TargetFilter targetFilter, CardPredicate filter) implements CardEffect {
-
-    public CreateBoonEffect(int uses, CardEffect triggeredEffect, BoonTrigger trigger, TargetFilter targetFilter) {
-        this(uses, triggeredEffect, trigger, targetFilter, null);
-    }
-
-    public CreateBoonEffect(int uses, CardEffect triggeredEffect) {
-        this(uses, triggeredEffect, BoonTrigger.CREATURE_ENTERS, null);
-    }
-
-    public static CreateBoonEffect atControllerEndStep(int uses, CardEffect triggeredEffect) {
-        return new CreateBoonEffect(uses, triggeredEffect, BoonTrigger.CONTROLLER_END_STEP, null);
-    }
-
-    public CreateBoonEffect(int uses, CardEffect triggeredEffect, TargetFilter targetFilter) {
-        this(uses, triggeredEffect, BoonTrigger.CREATURE_ENTERS, targetFilter);
-    }
+public record CreateBoonEffect(int uses, TriggeredAbility ability, TargetFilter targetFilter,
+                               boolean usedAsItResolves) implements CardEffect {
 
     public CreateBoonEffect {
         if (uses <= 0) {
             throw new IllegalArgumentException("A boon must have at least one use");
         }
-        if (trigger == null) {
-            throw new IllegalArgumentException("A boon trigger is required");
+        if (ability == null) {
+            throw new IllegalArgumentException("A boon has an ability");
         }
+    }
+
+    /** A {@code uses}-time boon with {@code ability}. */
+    public CreateBoonEffect(int uses, TriggeredAbility ability) {
+        this(uses, ability, null, false);
+    }
+
+    /** A {@code uses}-time boon with {@code ability}, its targets restricted to {@code targetFilter}. */
+    public CreateBoonEffect(int uses, TriggeredAbility ability, TargetFilter targetFilter) {
+        this(uses, ability, targetFilter, false);
+    }
+
+    /** A one-time boon with {@code ability}, which its ability uses up as it resolves ({@link ConsumeBoonEffect}). */
+    public static CreateBoonEffect usedAsItResolves(TriggeredAbility ability) {
+        return new CreateBoonEffect(1, ability, null, true);
     }
 }

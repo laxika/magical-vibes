@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -74,7 +75,7 @@ class MerfolkTunnelGuideTest extends BaseCardTest {
         }
 
         assertThat(guide.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(gd.boons).isEmpty();
+        assertThat(boonCount()).isZero();
     }
 
     @Test
@@ -158,7 +159,7 @@ class MerfolkTunnelGuideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(guide.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(gd.boons).isEmpty();
+        assertThat(boonCount()).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
@@ -170,7 +171,7 @@ class MerfolkTunnelGuideTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
-        assertThat(gd.boons).hasSize(1);
+        assertThat(boonCount()).isEqualTo(1);
 
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.enterBattlefieldAndReturn(player1, new MerfolkSpy());
@@ -199,5 +200,9 @@ class MerfolkTunnelGuideTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, guide.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
+    }
+
+    private long boonCount() {
+        return gd.temporaryGlobalTriggeredAbilities.stream().filter(TemporaryGlobalTriggeredAbility::boon).count();
     }
 }

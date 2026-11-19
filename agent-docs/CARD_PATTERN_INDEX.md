@@ -287,7 +287,7 @@
 | perpetual keyword grant to an enter-trigger source | `m/MarshlandHordemaster.java` + `PerpetuallyGrantKeywordToSourceEffect` |
 | once-per-turn non-flying creature cast duplicate with perpetual flying | `a/AceFlockbringer.java` + `ConjureDuplicateOfTriggeringCreatureToHandEffect` |
 | one-time boon that makes the next non-flying creature spell perpetually gain flying | `l/LuluForgetfulHollyphant.java` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyGrantKeywordsToTriggeringCardEffect` |
-| one-time end-step boon with a death-count condition plus a boon-presence end-step rider | `u/UnderbridgeWarlock.java` + `CreateBoonEffect.atControllerEndStep` + `ConsumeBoonEffect` + `ControllerHasBoon` |
+| one-time end-step boon with a death-count condition plus a boon-presence end-step rider | `u/UnderbridgeWarlock.java` + `CreateBoonEffect.usedAsItResolves` + `ConsumeBoonEffect` + `ControllerHasBoon` |
 | excess-damage note that becomes a one-time instant/sorcery damage boon | `m/MoltenImpact.java` + `ConditionalEffect(EventValueAtLeast(1), RegisterOneShotInstantSorcerySpellDamageBoonEffect)` |
 | Gift a named card onto an opponent's battlefield | `a/ArchivalWhorl.java` + `ConjureCardToOpponentBattlefieldEffect` |
 | ETB forage conjures a named card onto your battlefield; batched Squirrel combat damage may sacrifice a token to add acorn counters | `e/EuruAcornScrounger.java` + `ConjureCardToBattlefieldEffect` |

@@ -249,6 +249,28 @@ class OgreGeargrabberTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isNull();
     }
     @Test
+    @DisplayName("Losing control of the Equipment triggers the unattach ability even once it is no longer attached")
+    void controlLossTriggersEvenWhenTheEquipmentIsNoLongerAttached() {
+        Permanent ogre = addCreatureReady(player1, new OgreGeargrabber());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ogre));
+        equipment.setAttachedTo(null);
+
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(equipment);
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getCard().getName()).isEqualTo("Ogre Geargrabber");
+        });
+    }
+
+    @Test
     @DisplayName("Attack trigger fizzles if Equipment is no longer controlled by an opponent")
     void targetBecomesIllegalWhenItsControllerChanges() {
         Permanent ogre = addCreatureReady(player1, new OgreGeargrabber());

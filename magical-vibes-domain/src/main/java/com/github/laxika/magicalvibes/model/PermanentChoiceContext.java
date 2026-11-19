@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -3060,6 +3059,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Twilight Diviner: choose which of the creatures that entered together a token copy is made of. */
     record CreateTokenCopyOfOneOfTriggeringPermanents() implements PermanentChoiceContext {}
+
+    /**
+     * Choose which of the creatures that entered together {@code effect}'s token is attached to ("create a Wicked Role
+     * token attached to one of them").
+     */
+    record CreateTokenAttachedToOneOfTriggeringPermanents(
+            com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect effect)
+            implements PermanentChoiceContext {}
 
     /** Contractual Safeguard: choose the creature whose counter kind is copied. */
     record ContractualSafeguardReference() implements PermanentChoiceContext {}

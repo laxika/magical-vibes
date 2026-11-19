@@ -29,7 +29,7 @@ public class OgreGeargrabber extends Card {
         ))
                 .addTrigger(Triggers.attacks(),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new RegisterControlLossUnattachTriggerEffect(),
+                        RegisterControlLossUnattachTriggerEffect.whenControlLost(),
                         new AttachTargetToSourcePermanentEffect());
     }
 }

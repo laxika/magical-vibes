@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -142,5 +143,24 @@ class DunbarrowRevivalistTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Wicked").getAttachedTo()).isEqualTo(soldiers.get(1).getId());
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Wicked"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The creature the Role is attached to is chosen as the boon's ability resolves, not targeted")
+    void roleCreatureIsChosenAsTheAbilityResolves() {
+        harness.enterBattlefieldAndReturn(player1, new DunbarrowRevivalist());
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new RaiseTheAlarm(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard().getName()).isEqualTo("Dunbarrow Revivalist");
+            assertThat(entry.getTargetIds()).isEmpty();
+            assertThat(entry.getTriggeringPermanentIds()).hasSize(2);
+        });
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.d.DragonbornImmolator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +29,7 @@ class UnderbridgeWarlockTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.boons).isEmpty();
+        assertThat(boonCount()).isZero();
     }
 
     @Test
@@ -44,7 +45,7 @@ class UnderbridgeWarlockTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.boons).hasSize(1);
+        assertThat(boonCount()).isEqualTo(1);
     }
 
     @Test
@@ -72,7 +73,7 @@ class UnderbridgeWarlockTest extends BaseCardTest {
 
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 15);
-        assertThat(gd.boons).isEmpty();
+        assertThat(boonCount()).isZero();
     }
 
     @Test
@@ -89,7 +90,7 @@ class UnderbridgeWarlockTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(gd.boons).hasSize(1);
+        assertThat(boonCount()).isEqualTo(1);
     }
 
     @Test
@@ -108,7 +109,7 @@ class UnderbridgeWarlockTest extends BaseCardTest {
         harness.assertLife(player2, 15);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(gd.boons).isEmpty();
+        assertThat(boonCount()).isZero();
     }
 
     @Test
@@ -147,5 +148,9 @@ class UnderbridgeWarlockTest extends BaseCardTest {
     private void triggerEndStep() {
         harness.forceActivePlayer(player1);
         harness.passUntil(player1, TurnStep.CLEANUP);
+    }
+
+    private long boonCount() {
+        return gd.temporaryGlobalTriggeredAbilities.stream().filter(TemporaryGlobalTriggeredAbility::boon).count();
     }
 }

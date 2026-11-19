@@ -471,8 +471,8 @@ public class TriggeredAbilityStackService extends StackDoor {
         TriggerOptions options = ability.options();
         if (request.record() instanceof EventAbilitySupport.DelayedRecord delayed && delayed.delayed().triggersOnce()) {
             // Its trigger event occurred: one with no stated duration, or a "when you next ...", triggers only this
-            // once, whether or not its "if" holds as it does (CR 603.7b, 603.4).
-            gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed.delayed());
+            // once, whether or not its "if" holds as it does (CR 603.7b, 603.4); a boon with uses left stays.
+            gameData.useDelayedAbility(delayed.delayed());
         }
         Condition interveningIf = options.interveningIf();
         if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf, request.ifContext())) {
