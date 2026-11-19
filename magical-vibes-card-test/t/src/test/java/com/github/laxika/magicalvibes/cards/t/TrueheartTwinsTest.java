@@ -56,7 +56,7 @@ class TrueheartTwinsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(twins.isTapped()).isTrue();
-        assertThat(twins.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(twins.getId())).isGreaterThan(0);
 
         harness.performUntapStep(player2);
         assertThat(twins.isTapped()).isTrue();
@@ -77,7 +77,7 @@ class TrueheartTwinsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(3);
-        assertThat(twins.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(twins.getId())).isZero();
     }
 
     @Test
@@ -113,7 +113,7 @@ class TrueheartTwinsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(6);
-        assertThat(twins.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(twins.getId())).isZero();
     }
 
 

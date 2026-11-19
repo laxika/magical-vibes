@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.cards.b.BarrinsCodex;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
@@ -32,7 +33,7 @@ class OriginOfIronManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), DoesntUntapEffect.class)).isTrue();
     }
 
     @Test
@@ -45,7 +46,7 @@ class OriginOfIronManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isEmpty();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), DoesntUntapEffect.class)).isFalse();
     }
 
     @Test

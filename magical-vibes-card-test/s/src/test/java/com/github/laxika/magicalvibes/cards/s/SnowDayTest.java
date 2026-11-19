@@ -36,9 +36,9 @@ class SnowDayTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
         assertThat(second.isTapped()).isTrue();
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
@@ -61,7 +61,7 @@ class SnowDayTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 

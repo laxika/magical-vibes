@@ -24,7 +24,7 @@ class VecTownshipsTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(land.getSkipUntapCount()).isEqualTo(0);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isEqualTo(0);
 
         harness.performUntapStep(player1);
 
@@ -40,7 +40,7 @@ class VecTownshipsTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(land.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -52,7 +52,7 @@ class VecTownshipsTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(land.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -68,8 +68,8 @@ class VecTownshipsTest extends BaseCardTest {
 
         assertThat(greenLand.isTapped()).isTrue();
         assertThat(whiteLand.isTapped()).isTrue();
-        assertThat(greenLand.getSkipUntapCount()).isZero();
-        assertThat(whiteLand.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(greenLand.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(whiteLand.getId())).isZero();
 
         harness.performUntapStep(player1);
 

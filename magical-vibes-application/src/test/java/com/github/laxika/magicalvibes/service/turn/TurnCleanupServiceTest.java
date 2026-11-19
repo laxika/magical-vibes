@@ -139,35 +139,6 @@ class TurnCleanupServiceTest {
             assertThat(perm.getMarkedDamage()).isZero();
             verify(creatureControlService).reconcileControl(gd);
         }
-
-        @Test
-        @DisplayName("Sheds counters scheduled for the cleanup step, keeping pre-existing ones")
-        void shedsCountersScheduledForCleanup() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
-            perm.getCountersToRemoveAtNextCleanup().put(CounterType.PLUS_ONE_PLUS_ONE, 3);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.applyCleanupResets(gd);
-
-            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-            assertThat(perm.getCountersToRemoveAtNextCleanup()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clamps the shed at the counters the permanent still has")
-        void clampsShedToRemainingCounters() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-            perm.getCountersToRemoveAtNextCleanup().put(CounterType.PLUS_ONE_PLUS_ONE, 3);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.applyCleanupResets(gd);
-
-            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        }
     }
 
     @Nested

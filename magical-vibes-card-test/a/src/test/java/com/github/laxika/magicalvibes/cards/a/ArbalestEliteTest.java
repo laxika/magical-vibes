@@ -50,7 +50,7 @@ class ArbalestEliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elite.isTapped()).isTrue();
-        assertThat(elite.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(elite.getId())).isEqualTo(1);
     }
 
     @Test

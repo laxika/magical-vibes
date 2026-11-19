@@ -33,8 +33,8 @@ class IcyBlastTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isZero();
-        assertThat(second.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isZero();
     }
 
     @Test
@@ -49,7 +49,7 @@ class IcyBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -63,7 +63,7 @@ class IcyBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 
     @Test
@@ -109,7 +109,7 @@ class IcyBlastTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof IcyBlast);
     }
 
@@ -155,7 +155,7 @@ class IcyBlastTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.performUntapStep(player2);
         assertThat(opposing.isTapped()).isTrue();
-        assertThat(own.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(own.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(own.isTapped()).isTrue();
         harness.performUntapStep(player2);
@@ -206,7 +206,7 @@ class IcyBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(removed.isTapped()).isFalse();
-        assertThat(removed.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(removed.getId())).isZero();
         assertThat(remaining.isTapped()).isTrue();
         harness.performUntapStep(player2);
         assertThat(remaining.isTapped()).isTrue();

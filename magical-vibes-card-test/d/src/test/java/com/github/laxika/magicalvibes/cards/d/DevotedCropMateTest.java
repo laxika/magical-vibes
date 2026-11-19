@@ -188,7 +188,7 @@ class DevotedCropMateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(cropMate.getSkipUntapCount()).isPositive();
+        assertThat(gd.nextUntapStepsSkipped(cropMate.getId())).isPositive();
         harness.performUntapStep(player1);
         assertThat(cropMate.isTapped()).isTrue();
         harness.performUntapStep(player1);

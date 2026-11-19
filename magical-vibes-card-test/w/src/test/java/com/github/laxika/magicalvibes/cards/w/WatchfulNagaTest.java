@@ -56,7 +56,7 @@ class WatchfulNagaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(naga.isTapped()).isTrue();
-        assertThat(naga.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(naga.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -69,7 +69,7 @@ class WatchfulNagaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotInHand(player1, "Colossapede");
-        assertThat(naga.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(naga.getId())).isZero();
     }
 
     @Test
@@ -117,7 +117,7 @@ class WatchfulNagaTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(naga.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(naga.getId())).isEqualTo(1);
         harness.assertNotInHand(player1, "Colossapede");
 
         harness.castInstant(player2, 0, naga.getId());

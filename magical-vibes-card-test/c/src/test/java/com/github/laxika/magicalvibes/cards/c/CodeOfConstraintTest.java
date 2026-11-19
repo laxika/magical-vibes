@@ -32,7 +32,7 @@ class CodeOfConstraintTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -49,7 +49,7 @@ class CodeOfConstraintTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(bear.isTapped()).isFalse();
-        assertThat(bear.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isZero();
     }
 
     @Test
@@ -98,7 +98,7 @@ class CodeOfConstraintTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
         harness.assertInHand(player1, "Forest");
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 
     @Test
@@ -135,6 +135,6 @@ class CodeOfConstraintTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 }

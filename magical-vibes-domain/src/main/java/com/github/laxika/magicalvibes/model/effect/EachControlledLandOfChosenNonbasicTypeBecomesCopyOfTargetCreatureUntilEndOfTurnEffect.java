@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
  * copy of the targeted creature they control until end of turn and gains haste.
  */
 public record EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect()
-        implements TemporaryCopyEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

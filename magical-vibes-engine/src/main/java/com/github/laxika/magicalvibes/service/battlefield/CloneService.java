@@ -800,12 +800,8 @@ public class CloneService {
                     perm.tap();
                 }
                 if (copyUntilEndOfTurn) {
-                    perm.setPreCopyCard(preCopyCard);
-                    perm.setCopyUntilEndOfTurn(true);
-                    gameData.addFloatingEffect(new FloatingContinuousEffect(
-                            UUID.randomUUID(), card.getName(), perm.getId(), controllerId,
-                            new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                            perm.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+                    PermanentCopierService.beginCopy(gameData, card.getName(), perm.getId(), controllerId, perm,
+                            preCopyCard, Duration.UNTIL_END_OF_TURN);
                 }
         }
 

@@ -28,7 +28,7 @@ class RushOfIceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,7 +44,7 @@ class RushOfIceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.isCreature(gd, land)).isTrue();
@@ -79,11 +79,11 @@ class RushOfIceTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isFalse();
@@ -102,7 +102,7 @@ class RushOfIceTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isFalse();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(land.isTapped()).isFalse();
-        assertThat(land.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isZero();
     }
 
     @Test
@@ -125,7 +125,7 @@ class RushOfIceTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(land.isTapped()).isFalse();
-        assertThat(land.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isZero();
     }
 
     @Test
@@ -143,7 +143,7 @@ class RushOfIceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

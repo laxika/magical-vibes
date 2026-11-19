@@ -49,18 +49,12 @@ public class BecomeCopyOfCardInGraveyardUntilEndOfTurnEffectHandler implements N
             return;
         }
 
-        if (!source.isCopyUntilEndOfTurn()) {
-            source.setPreCopyCard(source.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(source, graveyardCard, null, null, Set.of());
-        source.setCopyUntilEndOfTurn(true);
         UUID sourcePermanentId = source.getId();
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
-                entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                sourcePermanentId, null, null,
-                Duration.UNTIL_END_OF_TURN, 0));
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
+                source, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData,
                 GameLog.textCardText(originalName + " becomes a copy of ", graveyardCard,

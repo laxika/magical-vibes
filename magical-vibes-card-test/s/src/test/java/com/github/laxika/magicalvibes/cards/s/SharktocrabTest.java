@@ -37,7 +37,7 @@ class SharktocrabTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -72,7 +72,7 @@ class SharktocrabTest extends BaseCardTest {
         assertThat(sharktocrab.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -157,7 +157,7 @@ class SharktocrabTest extends BaseCardTest {
 
         assertThat(sharktocrab.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -174,7 +174,7 @@ class SharktocrabTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(opponentCreature.isTapped()).isFalse();
-        assertThat(opponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

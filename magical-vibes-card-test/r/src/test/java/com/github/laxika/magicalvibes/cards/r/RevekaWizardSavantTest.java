@@ -45,12 +45,12 @@ class RevekaWizardSavantTest extends BaseCardTest {
         assertThat(reveka.isTapped()).isTrue();
 
         harness.passBothPriorities();
-        assertThat(reveka.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(reveka.getId())).isEqualTo(1);
 
         advanceToUpkeep(player1);
 
         assertThat(reveka.isTapped()).isTrue();
-        assertThat(reveka.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(reveka.getId())).isZero();
     }
 
     @Test

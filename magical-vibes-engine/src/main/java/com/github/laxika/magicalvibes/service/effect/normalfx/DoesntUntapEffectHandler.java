@@ -20,8 +20,9 @@ import java.util.UUID;
 
 /**
  * Resolves the stack-based, source-linked {@link DoesntUntapEffect} variants (TARGET scope with a
- * {@code WHILE_SOURCE_*} condition): records an untap-prevention lock on the target permanent that
- * the untap step reads and cleans up once the source leaves the battlefield / is no longer tapped.
+ * {@code WHILE_SOURCE_*} condition): a floating effect on the target permanent, with this record as its payload, that
+ * keeps it tapped during its controller's untap step (CR 502.3) for as long as its source is controlled, remains on
+ * the battlefield or remains tapped; the duration clock ends it as that stops (CR 611.2b).
  *
  * <p>The {@code SELF}/{@code ENCHANTED} + {@code ALWAYS} variants are continuous static effects read
  * directly in {@code UntapStepService} and never reach this handler.
@@ -77,12 +78,17 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             case WHILE_SOURCE_ON_BATTLEFIELD -> {
+                // A source that already left never starts the duration (CR 611.2b).
+                if (gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+                    return;
+                }
                 for (UUID targetId : targetIds) {
                     Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                     if (target == null) {
                         continue;
                     }
-                    target.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourcePermanentId);
+                    // "For as long as [this] remains on the battlefield", whoever controls it (Somnophore).
+                    gameData.addEffectOnPermanent(entry, doesntUntap, targetId, Duration.WHILE_SOURCE_REMAINS);
                     gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as you control ", entry.getCard(), "."));
                     log.info("Game {} - {} untap prevented while {} on battlefield", gameData.id, target.getCard().getName(), entry.getCard().getName());
                 }
@@ -99,7 +105,8 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
                     if (target == null) {
                         continue;
                     }
-                    target.getUntapPreventedByPermanentIds().add(sourcePermanentId);
+                    // "For as long as [this] remains tapped", whoever controls it (Rust Tick).
+                    gameData.addEffectOnPermanent(entry, doesntUntap, targetId, Duration.WHILE_SOURCE_REMAINS_TAPPED);
                     gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as ", entry.getCard(), " remains tapped."));
                     log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
                 }

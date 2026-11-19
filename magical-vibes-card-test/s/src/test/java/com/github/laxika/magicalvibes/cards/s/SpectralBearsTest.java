@@ -30,7 +30,7 @@ class SpectralBearsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -42,7 +42,7 @@ class SpectralBearsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 
     @Test
@@ -56,7 +56,7 @@ class SpectralBearsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +68,7 @@ class SpectralBearsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -79,7 +79,7 @@ class SpectralBearsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +107,7 @@ class SpectralBearsTest extends BaseCardTest {
         addCreatureReady(player2, new BlackCarriage());
         resolveAllTriggers();
 
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 
     @Test

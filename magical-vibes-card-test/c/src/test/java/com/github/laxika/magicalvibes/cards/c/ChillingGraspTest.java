@@ -29,9 +29,9 @@ class ChillingGraspTest extends BaseCardTest {
         castChillingGrasp(List.of(first.getId(), second.getId()));
 
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
         assertThat(second.isTapped()).isTrue();
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -41,7 +41,7 @@ class ChillingGraspTest extends BaseCardTest {
         castChillingGrasp(List.of(bears.getId()));
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +82,7 @@ class ChillingGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Chilling Grasp");
     }
@@ -94,7 +94,7 @@ class ChillingGraspTest extends BaseCardTest {
         castChillingGrasp(List.of());
 
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
         harness.assertInGraveyard(player1, "Chilling Grasp");
     }
 

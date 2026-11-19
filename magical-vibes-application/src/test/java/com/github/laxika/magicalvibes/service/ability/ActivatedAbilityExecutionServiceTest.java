@@ -645,7 +645,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(perm.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gameData.nextUntapStepsSkipped(perm.getId())).isEqualTo(1);
             assertThat(gameData.stack).isEmpty();
             verify(interactionHandlerRegistry).begin(eq(gameData),
                     any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));

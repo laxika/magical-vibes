@@ -43,7 +43,7 @@ class AhnCropChampionTest extends BaseCardTest {
 
         assertThat(otherCreature.isTapped()).isFalse();
         assertThat(champion.isTapped()).isTrue();
-        assertThat(champion.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(champion.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -58,7 +58,7 @@ class AhnCropChampionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(otherCreature.isTapped()).isTrue();
-        assertThat(champion.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(champion.getId())).isZero();
     }
 
     @Test
@@ -75,7 +75,7 @@ class AhnCropChampionTest extends BaseCardTest {
 
         assertThat(other.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(champion.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(champion.getId())).isGreaterThan(0);
     }
 
     @Test

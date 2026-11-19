@@ -94,8 +94,7 @@ class DrumbellowerTest extends BaseCardTest {
     @DisplayName("Untapping during an opponent's turn does not consume a controller's next-untap restriction")
     void opponentsUntapDoesNotConsumeControllersUntapRestriction() {
         Permanent drumbellower = addCreatureReady(player1, new Drumbellower());
-        drumbellower.setSkipUntapCount(1);
-        drumbellower.setSkipUntapControllerId(player1.getId());
+        gd.skipNextUntapSteps("Test", null, player1.getId(), drumbellower.getId(), 1, player1.getId());
         drumbellower.tap();
 
         harness.performUntapStep(player2);

@@ -838,6 +838,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Effects on a permanent end as it leaves (CR 400.7) and stay in `departedPermanentEffects` as last-known information until their own durations end; effects on what it does (damage prevention, Runesword's riders) go on. Ledger (7,791 card test classes, route tests): only `floating` lines added, renamed or ended at departure or phase-out; trigger lines differ only by random draws, drafts, coins and dice.
 - Left: step 6.
 
+**D (part 21: the last durations outside floating effects).**
+- Floating effects now: "doesn't untap during its next untap step(s)" (`DoesntUntapDuringNextUntapStepsEffect`, one per resolution, used up per step; exert's is owed to its player's untap step, CR 701.43a/b); source-linked untap locks (`DoesntUntapEffect`, `WHILE_SOURCE_REMAINS[_TAPPED]`); Spatial Binding (`PreventPhaseOutEffect`, until the controller's next upkeep); Soul Echo (`SoulEchoUpkeepEffect` alone); Kaito's and Comet's extra loyalty activations (until end of turn); Bombardment's originals (`BombardmentEffect`); every copy a resolution makes, whatever its duration (`ResolvedCopyEffect(copiedCard, preCopyCard)`; the newest one left applies, CR 613.7). Gone: 12 `Permanent`/`GameData` fields, `UntapLockReleaseService`, `TemporaryCopyEffect`, the dead `returnToHandAtNextCleanup`/`countersToRemoveAtNextCleanup`.
+- Rules fixes (tests fail before): exert no longer shortens Telekinesis's longer skip; untap locks keep a permanent tapped only during its untap step (CR 502.3), so Burst of Energy untaps a Somnophore'd creature and Spider-Woman, Secret Agent is a `CantBecomeUntappedEffect` as printed; Soul Echo's replacement stays with its player; Mizzium Transreliquat's permanent copy outlives an earlier temporary one; a newer until-next-turn copy outlives an older end-of-turn copy; March from Velis Vel's haste is a layer-6 grant, not part of the copy (its Oracle text has no "except", CR 707.9a); Static Orb can choose a permanent skipping another player's untap step; a lock whose source already left never begins (CR 611.2b).
+- Moments: Kaito's/Comet's extras and Runesword's rider on a departed creature end at cleanup (CR 514.2), not as the next turn begins.
+- Ledger (1,243 card test classes, route tests; 10,911 tests pass): only converted `floating` lines added; triggers differ only by random draws, coins and the new tests.
+- Left: while-attached copies (Blade of Shared Souls, Assimilation Aegis: `copyWhileAttached`, `whileAttachedPreCopyCard`), Peace Talks' `peaceTalksTurnsRemaining`, `onlyAggressiveCreaturesCanAttackThisCombat`.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

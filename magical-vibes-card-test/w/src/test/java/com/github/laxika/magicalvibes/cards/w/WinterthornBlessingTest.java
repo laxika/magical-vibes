@@ -24,7 +24,7 @@ class WinterthornBlessingTest extends BaseCardTest {
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingCreature.isTapped()).isTrue();
-        assertThat(opposingCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opposingCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +68,7 @@ class WinterthornBlessingTest extends BaseCardTest {
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(ownCreature.getId())).isZero();
     }
 
     @Test
@@ -113,7 +113,7 @@ class WinterthornBlessingTest extends BaseCardTest {
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingCreature.isTapped()).isFalse();
-        assertThat(opposingCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opposingCreature.getId())).isZero();
     }
 
     @Test
@@ -131,7 +131,7 @@ class WinterthornBlessingTest extends BaseCardTest {
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingCreature.isTapped()).isTrue();
-        assertThat(opposingCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opposingCreature.getId())).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
         harness.assertNotInGraveyard(player1, "Winterthorn Blessing");
     }

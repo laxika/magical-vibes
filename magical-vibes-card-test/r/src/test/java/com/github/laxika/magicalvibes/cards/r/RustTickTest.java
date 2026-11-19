@@ -133,7 +133,7 @@ class RustTickTest extends BaseCardTest {
         assertThat(targetArtifact.isTapped()).isTrue();
 
         // Remove Rust Tick from the battlefield
-        gd.playerBattlefields.get(player1.getId()).remove(rustTick);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, rustTick);
 
         // Advance to player2's turn — artifact should untap (source gone)
         advanceToNextTurn(player1);
@@ -237,7 +237,7 @@ class RustTickTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(rustTick);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, rustTick);
         harness.passBothPriorities();
 
         assertThat(artifact.isTapped()).isTrue();

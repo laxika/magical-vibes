@@ -30,7 +30,7 @@ class TelekinesisTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(2);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(2);
 
         target.untap();
         target.setAttacking(true);
@@ -91,12 +91,12 @@ class TelekinesisTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
 
         advanceToUpkeep(player1);
         advanceToUpkeep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
 
         advanceToUpkeep(player1);
         advanceToUpkeep(player2);

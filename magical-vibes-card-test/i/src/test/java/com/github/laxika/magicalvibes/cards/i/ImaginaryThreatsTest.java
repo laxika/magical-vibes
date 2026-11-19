@@ -44,8 +44,8 @@ class ImaginaryThreatsTest extends BaseCardTest {
         castImaginaryThreats(player2.getId());
 
         assertThat(als.getMustAttackRequirementCount(gd, ownBear)).isZero();
-        assertThat(ownBear.getSkipUntapCount()).isZero();
-        assertThat(enemyArtifact.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(ownBear.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(enemyArtifact.getId())).isZero();
     }
 
     @Test

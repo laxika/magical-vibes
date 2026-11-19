@@ -763,8 +763,6 @@ public class AnimationSupport {
                     Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
 
-        gameData.sourceLinkedAnimations.put(target.getId(), sourcePermanentId);
-
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes a " + power + "/" + toughness + " creature for as long as "
                         + entry.getCard().getName() + " remains on the battlefield."));

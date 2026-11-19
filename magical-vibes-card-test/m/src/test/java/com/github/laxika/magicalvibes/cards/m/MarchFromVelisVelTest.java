@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -31,7 +33,7 @@ class MarchFromVelisVelTest extends BaseCardTest {
         castAndChooseDesert(target);
 
         assertThat(desert.getCard().getName()).isEqualTo("Grizzly Bears");
-        assertThat(desert.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, desert, Keyword.HASTE)).isTrue();
         assertThat(desert.getCard().getPower()).isEqualTo(2);
         assertThat(desert.getCard().getToughness()).isEqualTo(2);
         assertThat(forest.getCard().getName()).isEqualTo("Forest");
@@ -51,7 +53,21 @@ class MarchFromVelisVelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(desert.getCard().getName()).isEqualTo("Desert");
-        assertThat(desert.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, desert, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({Humility.class})
+    @DisplayName("The haste is granted after the copy, so an earlier Humility doesn't remove it (CR 613.7)")
+    void hasteIsAGrantNewerThanAnEarlierHumility() {
+        harness.addToBattlefield(player2, new Humility());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+
+        castAndChooseDesert(target);
+
+        assertThat(desert.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, desert, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -98,8 +114,8 @@ class MarchFromVelisVelTest extends BaseCardTest {
                 .filter(permanent -> permanent.getOriginalCard().getName().equals("Clone"))
                 .findFirst().orElseThrow();
         assertThat(clone.getCard().getName()).isEqualTo("Grizzly Bears");
-        assertThat(clone.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
-        assertThat(desert.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, desert, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -126,7 +142,7 @@ class MarchFromVelisVelTest extends BaseCardTest {
         castAndChooseDesert(target);
 
         assertThat(forest.getCard().getName()).isEqualTo("Forest");
-        assertThat(target.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "March from Velis Vel");
     }
 

@@ -82,7 +82,7 @@ class MatsuTribeDecoyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
     }
 
     @Test

@@ -40,7 +40,7 @@ class SirenStormtamerTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Watertrap Weaver");
         var survivor = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(survivor.isTapped()).isFalse();
-        assertThat(survivor.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(survivor.getId())).isZero();
         harness.assertInGraveyard(player1, "Siren Stormtamer");
     }
 

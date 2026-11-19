@@ -31,11 +31,11 @@ class MatsuTribeBirdstalkerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(blocker.isTapped()).isFalse();
@@ -51,7 +51,7 @@ class MatsuTribeBirdstalkerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 
     @Test
@@ -106,7 +106,7 @@ class MatsuTribeBirdstalkerTest extends BaseCardTest {
             assertThat(blocker.isTapped()).isFalse();
             harness.passBothPriorities();
             assertThat(blocker.isTapped()).isTrue();
-            assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
             assertThat(gd.stack).isEmpty();
         });
     }

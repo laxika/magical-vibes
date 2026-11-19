@@ -26,7 +26,7 @@ class SleepOfTheDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -40,7 +40,7 @@ class SleepOfTheDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test

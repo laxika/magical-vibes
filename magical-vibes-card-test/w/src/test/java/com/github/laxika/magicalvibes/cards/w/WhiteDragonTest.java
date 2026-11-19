@@ -25,7 +25,7 @@ class WhiteDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -48,11 +48,11 @@ class WhiteDragonTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();

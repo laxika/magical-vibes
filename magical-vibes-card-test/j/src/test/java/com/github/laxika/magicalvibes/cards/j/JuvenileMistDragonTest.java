@@ -22,12 +22,12 @@ class JuvenileMistDragonTest extends BaseCardTest {
         castJuvenileMistDragon(List.of(bear.getId()));
 
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
 
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isZero();
     }
 
     @Test

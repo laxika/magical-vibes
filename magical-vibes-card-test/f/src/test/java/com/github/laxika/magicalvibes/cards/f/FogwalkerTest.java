@@ -34,7 +34,7 @@ class FogwalkerTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.passBothPriorities();
 
-            assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         }
     }
 

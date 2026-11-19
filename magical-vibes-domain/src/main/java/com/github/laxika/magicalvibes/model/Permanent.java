@@ -303,11 +303,6 @@ public class Permanent {
      *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
      *  {@link #resetModifiers()} runs, so the flag deliberately survives that reset. */
     @Setter private boolean sacrificeAtNextCleanup;
-    /** If true, this permanent is returned to its owner's hand at the beginning of the next cleanup step
-     *  ({@code ReturnSourceToHandAtNextCleanupEffect}, Thawing Glaciers). Like
-     *  {@link #sacrificeAtNextCleanup} the sweep runs before {@link #resetModifiers()}, so the flag
-     *  deliberately survives that reset. */
-    @Setter private boolean returnToHandAtNextCleanup;
     /** The player whose next untap step returns this permanent to its owner's hand
      *  ({@code ReturnSourceToHandAtNextUntapEffect}, Undiscovered Paradise), or null. This is the player
      *  who set it up, not whoever controls the permanent at that untap step. Swept by
@@ -325,15 +320,6 @@ public class Permanent {
     @Setter private boolean phasedOutIndirectly;
     /** The id of the exiled prepare-spell copy linked to this permanent while it is prepared (null otherwise). */
     @Setter private UUID preparedSpellCardId;
-    /** Soul Echo: set when the targeted opponent chose that, until this permanent's controller's next
-     *  upkeep, each 1 damage that would be dealt to that controller instead removes an echo counter
-     *  from this permanent. Survives {@link #resetModifiers()} — the duration ends at the next upkeep,
-     *  where upkeep trigger collection clears it before offering the choice again. */
-    @Setter private boolean echoDamageRedirectionActive;
-    /** Spatial Binding: each player whose next upkeep ends one active "can't phase out"
-     *  restriction on this permanent. Multiple activations have independent durations.
-     */
-    private final Set<UUID> cantPhaseOutUntilUpkeepsOf = new HashSet<>();
     /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). They are not
      *  abilities of the permanent, so losing all abilities does not stop them. */
     private final List<CardEffect> delayedDeathEffects = new ArrayList<>();
@@ -370,17 +356,7 @@ public class Permanent {
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
     private final Map<CounterType, Long> counterTimestamps = new EnumMap<>(CounterType.class);
-    /** Counters this permanent must shed at the beginning of the next cleanup step, keyed by type.
-     *  Populated by the "for each counter you put on a creature this way, remove a counter from that
-     *  creature at the beginning of the next cleanup step" rider (Bounty of the Hunt) and swept by
-     *  {@code TurnCleanupService}. Absent keys mean nothing pending. */
-    private final Map<CounterType, Integer> countersToRemoveAtNextCleanup = new EnumMap<>(CounterType.class);
     @Setter private int loyaltyActivationsThisTurn;
-    /** Extra loyalty activations granted to this planeswalker this turn on top of the normal
-     *  allowance ("you may activate one of its loyalty abilities once this turn as though none of its
-     *  loyalty abilities have been activated this turn" — The Chain Veil). Reset in the untap step
-     *  alongside {@link #loyaltyActivationsThisTurn}. */
-    @Setter private int extraLoyaltyActivationsThisTurn;
     /**
      * Siege battles: the opponent chosen to protect this battle as it entered. Only that player
      * may block attackers attacking this battle; everyone else (including the controller) may attack it.
@@ -408,26 +384,8 @@ public class Permanent {
     /** The permanent whose leaving the battlefield returned this one from the exile it was in "until" that permanent
      *  left (Lagrella, the Magpie: "when an exiled card enters under your control this way"), or {@code null}. */
     @Setter private UUID returnedWhenSourceLeftId;
-    /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
-     *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
-    private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
-    /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
-     *  Each entry means: "this permanent doesn't untap for as long as that source permanent is on the battlefield."
-     *  Unlike {@link #untapPreventedByPermanentIds}, the tapped state of the source does not matter. */
-    private final Set<UUID> untapPreventedWhileSourceOnBattlefieldIds = new HashSet<>();
     /** Land permanent ids that this Cyclopean Tomb put mire counters onto while it was on the battlefield. */
     private final Set<UUID> mireCounterLandIds = new HashSet<>();
-    /**
-     * The player whose untap step an exert-style untap skip applies to: the controller of the
-     * resolution that chose it (CR 701.43a). The skip counts only during that player's untap step
-     * and expires with it, even if another player controls the permanent by then. Null for a skip
-     * that applies in any untap step.
-     */
-    @Setter private UUID skipUntapControllerId;
-    /** Number of untap steps this permanent should skip. Decremented each untap step.
-     *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
-     *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
-    @Setter private int skipUntapCount;
     /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
     private int markedDamage;
     /**
@@ -570,18 +528,6 @@ public class Permanent {
      * list, while an object that copies this creature's characteristics is a single object without components.
      */
     private final List<Card> mutatedComponentCards = new ArrayList<>();
-    /** When true, this permanent is a temporary copy (until end of turn) of another creature.
-     *  At the cleanup step, the copy's floating layer-1 effect expires and the card reverts to
-     *  {@link #preCopyCard} via {@link #revertEndOfTurnCopy()}.
-     *  Used by Tilonalli's Skinshifter and similar shapeshifters. */
-    @Setter private boolean copyUntilEndOfTurn;
-    /** The card to revert to when the temporary copy effect ends.
-     *  Only non-null when {@link #copyUntilEndOfTurn} is true. */
-    @Setter private Card preCopyCard;
-    /** Keywords on {@link #card} that a temporary copy effect granted separately from the copy itself
-     *  ("becomes a copy ... and gains haste"), so they are not copiable values of this permanent.
-     *  Cleared with the temporary copy by {@link #revertEndOfTurnCopy()}. */
-    private final Set<Keyword> nonCopiableKeywords = EnumSet.noneOf(Keyword.class);
     /** When true, this permanent is a copy of another creature for as long as the Aura that made it
      *  one stays attached to it (Metamorphic Alteration). NOT cleared by {@link #resetModifiers()}.
      *  Reverts to {@link #whileAttachedPreCopyCard} via {@link #revertWhileAttachedCopy()} when that
@@ -768,11 +714,8 @@ public class Permanent {
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
-        this.echoDamageRedirectionActive = source.echoDamageRedirectionActive;
-        this.cantPhaseOutUntilUpkeepsOf.addAll(source.cantPhaseOutUntilUpkeepsOf);
         this.delayedDeathEffects.addAll(source.delayedDeathEffects);
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
-        this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
         this.returnToHandAtNextUntapPlayerId = source.returnToHandAtNextUntapPlayerId;
         this.toughnessAsLoyalty = source.toughnessAsLoyalty;
         this.faceDown = source.faceDown;
@@ -794,9 +737,7 @@ public class Permanent {
         this.timeCountersRemovedSinceTriggerCheck = source.timeCountersRemovedSinceTriggerCheck;
         this.plusOnePlusOneCountersRemovedSinceTriggerCheck = source.plusOnePlusOneCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
-        this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
-        this.extraLoyaltyActivationsThisTurn = source.extraLoyaltyActivationsThisTurn;
         this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.enteredFromExile = source.enteredFromExile;
@@ -808,11 +749,7 @@ public class Permanent {
         this.lastKnownAuraCount = source.lastKnownAuraCount;
         this.lastKnownEquipmentCount = source.lastKnownEquipmentCount;
         this.enteredViaUnearth = source.enteredViaUnearth;
-        this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
-        this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.mireCounterLandIds.addAll(source.mireCounterLandIds);
-        this.skipUntapCount = source.skipUntapCount;
-        this.skipUntapControllerId = source.skipUntapControllerId;
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);
         this.damagedByDeathtouch = source.damagedByDeathtouch;
@@ -865,9 +802,6 @@ public class Permanent {
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.mutatedComponentCards.addAll(source.mutatedComponentCards);
-        this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
-        this.preCopyCard = source.preCopyCard;
-        this.nonCopiableKeywords.addAll(source.nonCopiableKeywords);
         this.copyWhileAttached = source.copyWhileAttached;
         this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
         this.timestamp = source.timestamp;
@@ -1499,18 +1433,6 @@ public class Permanent {
         return List.copyOf(delayedDeathEffects);
     }
 
-    public void preventPhaseOutUntilUpkeepOf(UUID playerId) {
-        cantPhaseOutUntilUpkeepsOf.add(playerId);
-    }
-
-    public void expirePhaseOutPreventionAtUpkeepOf(UUID playerId) {
-        cantPhaseOutUntilUpkeepsOf.remove(playerId);
-    }
-
-    public boolean canPhaseOut() {
-        return cantPhaseOutUntilUpkeepsOf.isEmpty();
-    }
-
     public void recordTappedPermanentForAbility(UUID permanentId) {
         if (permanentId != null && !tappedPermanentsForAbilityThisTurn.contains(permanentId)) {
             tappedPermanentsForAbilityThisTurn.add(permanentId);
@@ -1609,21 +1531,6 @@ public class Permanent {
 
     public boolean isRoomFullyUnlocked() {
         return unlockedRoomDoors.contains(0) && unlockedRoomDoors.contains(1);
-    }
-
-    /**
-     * Reverts an "until end of turn" copy (e.g. Tilonalli's Skinshifter) back to the permanent's
-     * pre-copy card. Driven by the expiry of the copy's floating layer-1 effect at the cleanup
-     * step (CR 613 layer engine), not by {@link #resetModifiers()}. Safe to call more than once
-     * per turn — a second expired copy effect on the same permanent finds the flag cleared.
-     */
-    public void revertEndOfTurnCopy() {
-        if (this.copyUntilEndOfTurn && this.preCopyCard != null) {
-            this.card = this.preCopyCard;
-        }
-        this.copyUntilEndOfTurn = false;
-        this.preCopyCard = null;
-        this.nonCopiableKeywords.clear();
     }
 
     /**

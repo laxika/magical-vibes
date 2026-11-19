@@ -55,7 +55,7 @@ class KhenraScrapperTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(scrapper.isTapped()).isTrue();
-        assertThat(scrapper.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(scrapper.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -68,7 +68,7 @@ class KhenraScrapperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, scrapper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, scrapper)).isEqualTo(3);
-        assertThat(scrapper.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(scrapper.getId())).isZero();
     }
 
     @Test
@@ -94,7 +94,7 @@ class KhenraScrapperTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(scrapper.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(scrapper.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, scrapper)).isEqualTo(2);
             assertThat(gd.stack).hasSize(1);
         });

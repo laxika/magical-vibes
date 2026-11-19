@@ -90,7 +90,7 @@ class StitchedManglerTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(fox.isTapped()).isTrue();
-            assertThat(fox.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(fox.getId())).isEqualTo(1);
         }
 
         @Test

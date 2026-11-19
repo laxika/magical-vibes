@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.cards.c.CoerciveRecruiter;
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetBoarder;
@@ -54,7 +55,7 @@ class MerchantRaidersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isEmpty();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), DoesntUntapEffect.class)).isFalse();
     }
 
     @Test

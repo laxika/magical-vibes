@@ -32,7 +32,7 @@ class DreamshackleGeistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         assertThat(geist.isTapped()).isFalse();
     }
 
@@ -48,7 +48,7 @@ class DreamshackleGeistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +61,7 @@ class DreamshackleGeistTest extends BaseCardTest {
         harness.handleListChoice(player1, ChooseOneEffect.NO_MODE_LABEL);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test

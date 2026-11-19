@@ -54,7 +54,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(warrior.isTapped()).isTrue();
-        assertThat(warrior.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(warrior.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -69,7 +69,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.DEATHTOUCH)).isFalse();
-        assertThat(warrior.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(warrior.getId())).isZero();
     }
 
     @Test
@@ -85,7 +85,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.DEATHTOUCH)).isFalse();
-        assertThat(warrior.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(warrior.getId())).isEqualTo(1);
     }
 
     @Test

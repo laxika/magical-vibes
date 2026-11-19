@@ -37,8 +37,5 @@ public class ExileCreaturesDamagedBySourceInsteadOfDyingEffectHandler implements
         gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, source.getId(),
                 Duration.UNTIL_END_OF_TURN));
-        if (entry.getTargetId() != null) {
-            gameData.exileDamagedCreaturesSourceIdsThisTurn.add(source.getId());
-        }
     }
 }

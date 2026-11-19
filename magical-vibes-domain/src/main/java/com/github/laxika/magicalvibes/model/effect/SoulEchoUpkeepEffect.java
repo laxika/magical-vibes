@@ -7,11 +7,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>The sacrifice clause is checked on resolution, not as an intervening-if — the trigger targets an
  * opponent every upkeep regardless. When counters remain, the targeted opponent is the decision maker
- * and is prompted through the may-ability system; accepting flips
- * {@code Permanent.echoDamageRedirectionActive} on the source, which
- * {@code DamageSupport.applySoulEchoCounterRemoval} reads on both the combat and noncombat
- * damage-to-player paths. The accepted replacement is a floating effect on the controller that
- * ends as their next upkeep begins ("until your next upkeep"), even if Soul Echo has left the battlefield.
+ * and is prompted through the may-ability system. Accepting makes the replacement a floating effect, with this
+ * record as its payload, on the player who controls Soul Echo then (the "you"), whoever controls Soul Echo later. It
+ * ends as that player's next upkeep begins ("until your next upkeep"); {@code DamageSupport.applySoulEchoCounterRemoval}
+ * applies it on both the combat and noncombat damage-to-player paths.
  *
  * <p>Targets the opponent player — the card declares "target opponent" through a
  * {@code PlayerRelationPredicate}; {@link #targetSpec()} declares the harmful player category.

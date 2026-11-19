@@ -60,7 +60,7 @@ class WatertrapWeaverTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears.isTapped()).isTrue();
-            assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         }
 
         @Test

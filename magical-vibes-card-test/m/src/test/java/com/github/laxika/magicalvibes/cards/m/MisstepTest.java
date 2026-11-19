@@ -57,8 +57,8 @@ class MisstepTest extends BaseCardTest {
 
         castMisstep(player2.getId());
 
-        assertThat(ownCreature.getSkipUntapCount()).isZero();
-        assertThat(targetArtifact.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(ownCreature.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(targetArtifact.getId())).isZero();
     }
 
     @Test

@@ -45,7 +45,7 @@ class ScionOfStygiaTest extends BaseCardTest {
         castScion(target);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test
@@ -57,7 +57,7 @@ class ScionOfStygiaTest extends BaseCardTest {
         castScion(target);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -94,11 +94,11 @@ class ScionOfStygiaTest extends BaseCardTest {
         castScion(target);
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();

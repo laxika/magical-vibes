@@ -46,6 +46,27 @@ class StaticOrbTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A permanent that won't untap only during another player's next untap step can be chosen (CR 701.43a)")
+    void permanentSkippingAnotherPlayersUntapStepCanBeChosen() {
+        addCreatureReady(player1, new StaticOrb());
+        Permanent giant = addCreatureReady(player1, new LowlandGiant());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent petal = addCreatureReady(player1, new LotusPetal());
+        giant.tap();
+        forest.tap();
+        petal.tap();
+        // Exerted by player2 before player1 gained control of it: "your next untap step" is player2's.
+        gd.skipNextUntapSteps("Test", null, player2.getId(), giant.getId(), 1, player2.getId());
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId(), forest.getId()));
+
+        assertThat(giant.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(petal.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("A tapped Static Orb imposes no restriction — everything untaps normally")
     void tappedStaticOrbImposesNoRestriction() {
         Permanent orb = addCreatureReady(player1, new StaticOrb());

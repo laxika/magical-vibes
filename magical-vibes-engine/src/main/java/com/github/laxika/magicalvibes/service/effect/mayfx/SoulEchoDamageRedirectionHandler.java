@@ -44,7 +44,6 @@ public class SoulEchoDamageRedirectionHandler implements MayEffectHandlerBean {
                 : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
 
         if (accepted && source != null) {
-            source.setEchoDamageRedirectionActive(true);
             UUID echoControllerId = gameQueryService.findPermanentController(gameData, source.getId());
             if (echoControllerId != null) {
                 gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(ability.sourceCard().getName(),

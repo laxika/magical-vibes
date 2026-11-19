@@ -90,9 +90,7 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
 
         String targetName = targetCard.getName();
         for (Permanent permanent : permanentsToCopy) {
-            if (!permanent.isCopyUntilEndOfTurn()) {
-                permanent.setPreCopyCard(permanent.getCard());
-            }
+            Card preCopyCard = PermanentCopierService.preCopyCard(gameData, permanent);
             permanentCopierService.applyCloneCopy(permanent, targetCard, null, null, Set.of());
             if (copyEffect.removeLegendary()) {
                 var supertypes = EnumSet.noneOf(CardSupertype.class);
@@ -100,11 +98,8 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
                 supertypes.remove(CardSupertype.LEGENDARY);
                 permanent.getCard().setSupertypes(supertypes);
             }
-            permanent.setCopyUntilEndOfTurn(!Duration.PERMANENT.equals(copyEffect.duration()));
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), permanent.getId(),
-                    entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                    permanent.getId(), null, null, copyEffect.duration(), 0));
+            PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), permanent.getId(), entry.getControllerId(),
+                    permanent, preCopyCard, copyEffect.duration());
         }
 
         gameLogService.append(gameData, GameLog.builder()

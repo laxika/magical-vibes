@@ -97,7 +97,7 @@ class SandSquidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).remove(sandSquid);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sandSquid);
         advanceToNextTurn(player1);
 
         assertThat(targetCreature.isTapped()).isFalse();

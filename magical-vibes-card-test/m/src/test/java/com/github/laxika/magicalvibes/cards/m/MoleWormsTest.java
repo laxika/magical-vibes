@@ -172,7 +172,7 @@ class MoleWormsTest extends BaseCardTest {
 
         assertThat(targetLand.isTapped()).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).remove(moleWorms);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, moleWorms);
 
         // player2's turn — land should untap (source gone)
         advanceToNextTurn(player1);
@@ -249,7 +249,7 @@ class MoleWormsTest extends BaseCardTest {
         Permanent targetLand = addReadyLand(player2);
 
         harness.activateAbility(player1, 0, null, targetLand.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(moleWorms);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, moleWorms);
         harness.passBothPriorities();
 
         assertThat(targetLand.isTapped()).isTrue();

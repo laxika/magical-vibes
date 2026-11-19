@@ -225,7 +225,7 @@ class AmberPrisonTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).remove(amberPrison);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, amberPrison);
 
         advanceToNextTurn(player1);
         assertThat(target.isTapped()).isFalse();
@@ -257,7 +257,7 @@ class AmberPrisonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(amberPrison);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, amberPrison);
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();

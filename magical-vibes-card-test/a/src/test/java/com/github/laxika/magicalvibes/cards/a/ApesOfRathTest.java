@@ -38,7 +38,7 @@ class ApesOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(apes.isTapped()).isTrue();
-        assertThat(apes.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(apes.getId())).isEqualTo(1);
     }
 
     @Test
@@ -46,7 +46,7 @@ class ApesOfRathTest extends BaseCardTest {
     void noSkipUntapWithoutAttacking() {
         Permanent apes = addCreatureReady(player1, new ApesOfRath());
 
-        assertThat(apes.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(apes.getId())).isZero();
     }
 
     @Test
@@ -62,7 +62,7 @@ class ApesOfRathTest extends BaseCardTest {
         harness.performUntapStep(player1);
 
         assertThat(apes.isTapped()).isTrue();
-        assertThat(apes.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(apes.getId())).isZero();
         assertThat(otherApes.isTapped()).isFalse();
 
         harness.performUntapStep(player1);

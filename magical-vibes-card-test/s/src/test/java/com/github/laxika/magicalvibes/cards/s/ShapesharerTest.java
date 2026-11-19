@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
+import com.github.laxika.magicalvibes.cards.c.Cytoshape;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -162,6 +164,35 @@ class ShapesharerTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(recipient.getCard().getName()).isEqualTo("Shapesharer");
+    }
+
+    @Test
+    @CardUsed({Cytoshape.class, WoodlandChangeling.class})
+    @DisplayName("Its copy outlasts an older \"until end of turn\" copy of the same creature (CR 613.7)")
+    void copyOutlastsAnOlderEndOfTurnCopy() {
+        addCreatureReady(player1, new Shapesharer());
+        Permanent recipient = addCreatureReady(player1, new AvianChangeling());
+        Permanent changeling = addCreatureReady(player1, new WoodlandChangeling());
+        Permanent stalwart = addCreatureReady(player1, new GoldmeadowStalwart());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, recipient.getId());
+        harness.handlePermanentChosen(player1, changeling.getId());
+        assertThat(recipient.getCard().getName()).isEqualTo("Woodland Changeling");
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(recipient.getId(), stalwart.getId()));
+        harness.passBothPriorities();
+        assertThat(recipient.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(recipient.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThat(recipient.getCard().getName()).isEqualTo("Avian Changeling");
     }
 
     @Test

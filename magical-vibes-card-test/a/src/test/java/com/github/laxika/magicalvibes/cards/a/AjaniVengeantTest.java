@@ -28,7 +28,7 @@ class AjaniVengeantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
     }
 

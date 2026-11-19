@@ -57,13 +57,13 @@ class JunkWinderTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         assertThat(secondTarget.isTapped()).isTrue();
-        assertThat(secondTarget.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(secondTarget.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
         assertThat(secondTarget.isTapped()).isTrue();
 
         harness.performUntapStep(player2);
@@ -83,7 +83,7 @@ class JunkWinderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test
@@ -98,7 +98,7 @@ class JunkWinderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test

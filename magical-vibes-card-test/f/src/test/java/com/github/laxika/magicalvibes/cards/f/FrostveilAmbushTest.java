@@ -28,9 +28,9 @@ class FrostveilAmbushTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
         assertThat(second.isTapped()).isTrue();
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,7 +44,7 @@ class FrostveilAmbushTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -86,7 +86,7 @@ class FrostveilAmbushTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of());
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Frostveil Ambush");
     }
@@ -103,11 +103,11 @@ class FrostveilAmbushTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
@@ -126,7 +126,7 @@ class FrostveilAmbushTest extends BaseCardTest {
         harness.performUntapStep(player1);
         assertThat(own.isTapped()).isTrue();
         assertThat(opposing.isTapped()).isTrue();
-        assertThat(opposing.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opposing.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(opposing.isTapped()).isTrue();
@@ -207,7 +207,7 @@ class FrostveilAmbushTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(unchosen.isTapped()).isFalse();
-        assertThat(unchosen.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(unchosen.getId())).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Frostveil Ambush");
     }

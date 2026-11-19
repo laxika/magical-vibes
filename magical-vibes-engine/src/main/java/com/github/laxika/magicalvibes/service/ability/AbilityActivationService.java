@@ -9076,7 +9076,7 @@ public class AbilityActivationService {
         boolean twiceThisTurn = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId)
                 || gameData.hasFloatingEffectOnPlayer(playerId, AllowTwiceLoyaltyActivationsThisTurnEffect.class);
         int maxActivations = (twiceThisTurn ? 2 : 1)
-                + permanent.getExtraLoyaltyActivationsThisTurn()
+                + gameData.extraLoyaltyActivationsThisTurn(permanent.getId())
                 + gameData.floatingEffectsOnPlayer(playerId,
                 GrantExtraLoyaltyActivationToPlaneswalkersEffect.class).size();
         if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) {

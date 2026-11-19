@@ -81,7 +81,7 @@ class DeepSpawnTest extends BaseCardTest {
 
         assertThat(PermanentGrants.keywordsOf(gd, spawn)).contains(Keyword.SHROUD);
         assertThat(spawn.isTapped()).isTrue();
-        assertThat(spawn.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(spawn.getId())).isEqualTo(1);
     }
 
     @Test
@@ -101,7 +101,7 @@ class DeepSpawnTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
         assertThat(spawn.isTapped()).isTrue();
-        assertThat(spawn.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(spawn.getId())).isZero();
 
         if (gd.interaction.activeInteraction() == null) {
             harness.passBothPriorities();

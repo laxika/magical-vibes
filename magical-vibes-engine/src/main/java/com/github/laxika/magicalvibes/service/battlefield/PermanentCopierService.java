@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -108,14 +108,6 @@ public class PermanentCopierService {
         if (permanent.getFullTextCopyBaseCard() != null) {
             // Text borrowed from the graveyard (Volrath's Shapeshifter) is not copiable (CR 707.2).
             original = permanent.getFullTextCopyBaseCard();
-        }
-        if (!permanent.getNonCopiableKeywords().isEmpty()) {
-            Card withoutGrantedKeywords = original.createRuntimeCopy();
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            keywords.addAll(original.getKeywords());
-            keywords.removeAll(permanent.getNonCopiableKeywords());
-            withoutGrantedKeywords.setKeywords(keywords);
-            original = withoutGrantedKeywords;
         }
         if (original.getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(ability -> ability.getEffects().stream()
                 .anyMatch(LicidEndEffect.class::isInstance))) {
@@ -268,49 +260,71 @@ public class PermanentCopierService {
         permanent.getCard().setType(primaryType);
         permanent.getCard().setAdditionalTypes(exactTypes);
     }
+
     /**
-     * The card {@code permanent} showed before its active copy effects that last until a player's next turn: the one
-     * they keep, or its current card when it has none (the card a new such copy keeps).
+     * The card {@code permanent} showed before its active copy effects from resolutions: the one they keep, or its
+     * current card when it has none (the card a new such copy keeps).
      */
-    public static Card untilNextTurnPreCopyCard(GameData gameData, Permanent permanent) {
-        List<FloatingContinuousEffect> copies = untilNextTurnCopies(gameData, permanent.getId());
+    public static Card preCopyCard(GameData gameData, Permanent permanent) {
+        List<FloatingContinuousEffect> copies = resolvedCopies(gameData, permanent.getId());
         return copies.isEmpty() ? permanent.getCard()
-                : ((MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) copies.getFirst().effect()).preCopyCard();
+                : ((ResolvedCopyEffect) copies.getFirst().effect()).preCopyCard();
     }
 
     /**
-     * Records the copy just applied to {@code permanent} as a layer-1 floating effect (CR 613.1a) that lasts until
-     * {@code controllerId}'s next turn, made by {@code sourceCardName}'s {@code sourcePermanentId}. It keeps the card the
-     * permanent now shows and {@code preCopyCard}, from {@link #untilNextTurnPreCopyCard} before the copy applied.
+     * Records the copy just applied to {@code permanent} as a layer-1 floating effect (CR 613.1a) with
+     * {@code duration}, made by {@code sourceCardName}'s {@code sourcePermanentId} (whose state a "for as long as"
+     * duration follows). It keeps the card the permanent now shows and {@code preCopyCard}, from {@link #preCopyCard}
+     * before the copy applied.
      */
-    public static void beginUntilNextTurnCopy(GameData gameData, String sourceCardName, UUID sourcePermanentId,
-                                              UUID controllerId, Permanent permanent, Card preCopyCard) {
+    public static void beginCopy(GameData gameData, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
+                                 Permanent permanent, Card preCopyCard, Duration duration) {
         gameData.addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId,
-                new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(permanent.getCard(), preCopyCard),
-                permanent.getId(), Duration.UNTIL_YOUR_NEXT_TURN);
+                new ResolvedCopyEffect(permanent.getCard(), preCopyCard), permanent.getId(), duration);
     }
 
     /**
-     * Has the active copy effects of {@code permanent} that last until a player's next turn keep {@code copiedCard}
-     * and {@code preCopyCard} instead (a {@code null} keeps what one kept): a newer copy effect of another kind, or a
-     * merge, changed what they apply and what the permanent reverts to.
+     * Has the active copy effects of {@code permanent} from resolutions keep {@code copiedCard} and {@code preCopyCard}
+     * instead: a newer copy effect of another kind, or a merge, changed what they apply and what the permanent reverts
+     * to.
      */
-    public static void updateUntilNextTurnCopies(GameData gameData, Permanent permanent,
-                                                 java.util.function.UnaryOperator<Card> copiedCard,
-                                                 java.util.function.UnaryOperator<Card> preCopyCard) {
-        for (FloatingContinuousEffect copy : untilNextTurnCopies(gameData, permanent.getId())) {
-            var kept = (MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) copy.effect();
-            gameData.replaceFloatingEffect(copy, copy.withEffect(new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(
+    public static void updateCopies(GameData gameData, Permanent permanent,
+                                    java.util.function.UnaryOperator<Card> copiedCard,
+                                    java.util.function.UnaryOperator<Card> preCopyCard) {
+        for (FloatingContinuousEffect copy : resolvedCopies(gameData, permanent.getId())) {
+            var kept = (ResolvedCopyEffect) copy.effect();
+            gameData.replaceFloatingEffect(copy, copy.withEffect(new ResolvedCopyEffect(
                     copiedCard.apply(kept.copiedCard()), preCopyCard.apply(kept.preCopyCard()))));
         }
     }
 
-    /** The active copy effects on {@code permanentId} that last until a player's next turn, oldest first. */
-    public static List<FloatingContinuousEffect> untilNextTurnCopies(GameData gameData, UUID permanentId) {
-        return gameData.floatingEffectsOnPermanent(permanentId, MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class)
-                .stream()
-                .filter(copy -> ((MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) copy.effect()).copiedCard() != null)
+    /** The active copy effects from resolutions on {@code permanentId}, oldest first. */
+    public static List<FloatingContinuousEffect> resolvedCopies(GameData gameData, UUID permanentId) {
+        return gameData.floatingEffectsOnPermanent(permanentId, ResolvedCopyEffect.class).stream()
                 .sorted(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))
                 .toList();
+    }
+
+    /**
+     * What {@code affected} shows once its copy effects from resolutions in {@code ended} have ended together: when the
+     * newest of them was newer than every copy effect left, the newest one left applies again (CR 613.7), or, with none
+     * left, the card it showed before them. A copy effect ending under a newer one leaves the newer one in place.
+     */
+    public static void endCopies(GameData gameData, Permanent affected, List<FloatingContinuousEffect> ended) {
+        FloatingContinuousEffect newestEnded = ended.stream()
+                .max(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))
+                .orElse(null);
+        if (newestEnded == null) {
+            return;
+        }
+        List<FloatingContinuousEffect> remaining = resolvedCopies(gameData, affected.getId());
+        if (remaining.isEmpty()) {
+            affected.setCard(((ResolvedCopyEffect) newestEnded.effect()).preCopyCard());
+            return;
+        }
+        FloatingContinuousEffect newest = remaining.getLast();
+        if (newest.timestamp() < newestEnded.timestamp()) {
+            affected.setCard(((ResolvedCopyEffect) newest.effect()).copiedCard());
+        }
     }
 }

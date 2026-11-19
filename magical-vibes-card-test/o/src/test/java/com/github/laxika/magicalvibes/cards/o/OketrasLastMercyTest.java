@@ -209,7 +209,7 @@ class OketrasLastMercyTest extends BaseCardTest {
 
             cast();
 
-            assertThat(tender.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(tender.getId())).isZero();
 
             advanceToNextTurn(player1);
             advanceToNextTurn(player2);
@@ -242,7 +242,7 @@ class OketrasLastMercyTest extends BaseCardTest {
 
             cast();
 
-            assertThat(opponentPlains.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(opponentPlains.getId())).isZero();
 
             // Reach player2's untap step — opponent's land untaps normally
             advanceToNextTurn(player1);

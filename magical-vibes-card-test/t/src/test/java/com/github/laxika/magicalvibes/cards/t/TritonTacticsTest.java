@@ -55,7 +55,7 @@ class TritonTacticsTest extends BaseCardTest {
         advanceThroughEndOfCombat();
 
         assertThat(attacker.isTapped()).isTrue();
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         assertThat(targetBlocker.isTapped()).isFalse();
     }
 
@@ -81,8 +81,8 @@ class TritonTacticsTest extends BaseCardTest {
 
         assertThat(firstAttacker.isTapped()).isTrue();
         assertThat(secondAttacker.isTapped()).isTrue();
-        assertThat(firstAttacker.getSkipUntapCount()).isEqualTo(1);
-        assertThat(secondAttacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(firstAttacker.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(secondAttacker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -100,7 +100,7 @@ class TritonTacticsTest extends BaseCardTest {
         advanceThroughEndOfCombat();
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
     }
 
     @Test
@@ -124,9 +124,9 @@ class TritonTacticsTest extends BaseCardTest {
         advanceThroughEndOfCombat();
 
         assertThat(affectedAttacker.isTapped()).isTrue();
-        assertThat(affectedAttacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(affectedAttacker.getId())).isEqualTo(1);
         assertThat(unaffectedAttacker.isTapped()).isFalse();
-        assertThat(unaffectedAttacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(unaffectedAttacker.getId())).isZero();
     }
 
     @Test
@@ -214,7 +214,7 @@ class TritonTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.isTapped()).isFalse();
-        assertThat(attacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
     }
 
     @Test
@@ -236,7 +236,7 @@ class TritonTacticsTest extends BaseCardTest {
         advanceThroughEndOfCombat();
 
         assertThat(attacker.isTapped()).isFalse();
-        assertThat(attacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
     }
 
     @Test
@@ -302,6 +302,6 @@ class TritonTacticsTest extends BaseCardTest {
         });
 
         harness.assertInHand(player1, "Giant Spider");
-        assertThat(attacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
     }
 }

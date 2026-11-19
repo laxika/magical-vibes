@@ -39,7 +39,7 @@ class GlorybringerTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(sandwurm);
         resolveAllTriggers();
 
-        assertThat(glorybringer.getSkipUntapCount()).isPositive();
+        assertThat(gd.nextUntapStepsSkipped(glorybringer.getId())).isPositive();
         harness.performUntapStep(player1);
         assertThat(glorybringer.isTapped()).isTrue();
     }

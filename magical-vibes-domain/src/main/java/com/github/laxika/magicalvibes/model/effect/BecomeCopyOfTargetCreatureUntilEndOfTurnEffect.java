@@ -31,7 +31,7 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         Trigger retainedTrigger,
         List<Ability> additionalAbilitiesOverride,
         boolean triggeringPermanent
-) implements TemporaryCopyEffect {
+) implements CardEffect {
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect {
         additionalSupertypesOverride = additionalSupertypesOverride == null

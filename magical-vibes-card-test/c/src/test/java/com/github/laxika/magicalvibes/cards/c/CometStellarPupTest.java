@@ -212,9 +212,9 @@ class CometStellarPupTest extends BaseCardTest {
 
         boolean observed = false;
         for (int i = 0; i < 60 && !observed; i++) {
-            int extraBefore = comet.getExtraLoyaltyActivationsThisTurn();
+            int extraBefore = gd.extraLoyaltyActivationsThisTurn(comet.getId());
             activateAndResolve(target);
-            observed = comet.getExtraLoyaltyActivationsThisTurn() >= extraBefore + 2;
+            observed = gd.extraLoyaltyActivationsThisTurn(comet.getId()) >= extraBefore + 2;
             comet.setLoyaltyActivationsThisTurn(0);
         }
 

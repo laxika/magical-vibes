@@ -28,7 +28,7 @@ class FrostTricksterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -110,7 +110,7 @@ class FrostTricksterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(replacement.isTapped()).isFalse();
-        assertThat(replacement.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(replacement.getId())).isZero();
         harness.assertOnBattlefield(player1, "Frost Trickster");
     }
 

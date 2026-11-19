@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BeguilerOfWills;
+import com.github.laxika.magicalvibes.cards.b.BurstOfEnergy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -79,6 +80,23 @@ class DungeonGeistsTest extends BaseCardTest {
             advanceToNextTurn(player1); // advance to player2's untap step
 
             assertThat(bears.isTapped()).isTrue();
+        }
+
+        @Test
+        @CardUsed({BurstOfEnergy.class})
+        @DisplayName("The lock only keeps it tapped during its controller's untap step: an untap effect untaps it")
+        void untapEffectUntapsLockedCreature() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            castGeists(player2, "Grizzly Bears");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            assertThat(bears.isTapped()).isTrue();
+
+            harness.setHand(player1, List.of(new BurstOfEnergy()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.castAndResolveInstant(player1, 0, bears.getId());
+
+            assertThat(bears.isTapped()).isFalse();
         }
 
         @Test

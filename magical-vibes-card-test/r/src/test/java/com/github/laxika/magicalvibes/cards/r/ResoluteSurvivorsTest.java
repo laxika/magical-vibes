@@ -54,7 +54,7 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(survivors.isTapped()).isTrue();
-        assertThat(survivors.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(survivors.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -70,7 +70,7 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         // Only combat damage, no ability damage/life gain.
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - combatDamage);
         assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLifeBefore);
-        assertThat(survivors.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(survivors.getId())).isZero();
     }
 
     @Test

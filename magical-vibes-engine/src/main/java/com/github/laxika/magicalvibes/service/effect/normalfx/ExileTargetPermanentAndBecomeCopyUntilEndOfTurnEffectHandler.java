@@ -57,17 +57,12 @@ public class ExileTargetPermanentAndBecomeCopyUntilEndOfTurnEffectHandler implem
             return;
         }
 
-        if (!source.isCopyUntilEndOfTurn()) {
-            source.setPreCopyCard(source.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
 
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(source, targetCard, null, null, Set.of());
-        source.setCopyUntilEndOfTurn(true);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), source.getId(),
-                entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                source.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), source.getId(), entry.getControllerId(),
+                source, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + targetCard.getName() + " until end of turn."));

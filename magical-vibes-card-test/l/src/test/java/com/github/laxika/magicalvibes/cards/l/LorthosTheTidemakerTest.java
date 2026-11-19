@@ -43,12 +43,12 @@ class LorthosTheTidemakerTest extends BaseCardTest {
 
         assertThat(targets).allSatisfy(target -> {
             assertThat(target.isTapped()).isTrue();
-            assertThat(target.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         });
 
         advanceToNextTurn(player1);
         assertThat(targets).allMatch(Permanent::isTapped);
-        assertThat(targets).allMatch(target -> target.getSkipUntapCount() == 0);
+        assertThat(targets).allMatch(target -> gd.nextUntapStepsSkipped(target.getId()) == 0);
     }
 
     @Test
@@ -66,8 +66,8 @@ class LorthosTheTidemakerTest extends BaseCardTest {
 
         assertThat(bear.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
-        assertThat(bear.getSkipUntapCount()).isZero();
-        assertThat(forest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isZero();
     }
 
     @Test
@@ -88,7 +88,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         assertThat(opposingOx.isTapped()).isTrue();
         harness.performUntapStep(player2);
         assertThat(opposingOx.isTapped()).isTrue();
-        assertThat(ownForest.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(ownForest.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(ownForest.isTapped()).isTrue();
         harness.performUntapStep(player2);
@@ -112,7 +112,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         gd.playerBattlefields.get(player1.getId()).add(target);
         harness.performUntapStep(player2);
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
         harness.performUntapStep(player1);
@@ -133,7 +133,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
 
         target.untap();
         harness.performUntapStep(player2);
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         target.tap();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
@@ -152,7 +152,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test
@@ -170,7 +170,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -218,6 +218,6 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 }

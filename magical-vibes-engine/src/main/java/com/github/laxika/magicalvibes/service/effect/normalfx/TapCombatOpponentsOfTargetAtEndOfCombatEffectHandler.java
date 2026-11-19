@@ -61,7 +61,7 @@ public class TapCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements Nor
                 continue;
             }
             tapUntapSupport.tapPermanent(gameData, blocked);
-            blocked.setSkipUntapCount(Math.max(blocked.getSkipUntapCount(), 1));
+            gameData.skipNextUntapSteps(entry, blocked.getId(), 1, null);
             gameLogService.append(gameData, GameLog.cardThen(blocked.getCard(),
                     " is tapped and doesn't untap during its controller's next untap step."));
         }

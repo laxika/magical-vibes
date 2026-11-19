@@ -30,12 +30,12 @@ class OrochiRangerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
 
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isZero();
 
         harness.performUntapStep(player2);
 
@@ -54,7 +54,7 @@ class OrochiRangerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(mossKami.isTapped()).isFalse();
-        assertThat(mossKami.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isZero();
     }
 
     @Test

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,21 +20,17 @@ import java.util.UUID;
 public class TapUntapSupport {
 
     private final CreatureControlService creatureControlService;
-    private final UntapLockReleaseService untapLockReleaseService;
     private final GameQueryService gameQueryService;
 
     @Autowired
     public TapUntapSupport(CreatureControlService creatureControlService,
-                           UntapLockReleaseService untapLockReleaseService,
                            GameQueryService gameQueryService) {
         this.creatureControlService = creatureControlService;
-        this.untapLockReleaseService = untapLockReleaseService;
         this.gameQueryService = gameQueryService;
     }
 
-    public TapUntapSupport(CreatureControlService creatureControlService,
-                           UntapLockReleaseService untapLockReleaseService) {
-        this(creatureControlService, untapLockReleaseService, null);
+    public TapUntapSupport(CreatureControlService creatureControlService) {
+        this(creatureControlService, null);
     }
 
     /**
@@ -80,10 +75,9 @@ public class TapUntapSupport {
         boolean wasTapped = permanent.isTapped();
         permanent.untap();
         if (wasTapped && !permanent.isTapped()) {
-            // A "for as long as this stays tapped" control effect (Seasinger) ends here.
+            // A "for as long as this stays tapped" effect ends here: a control effect (Seasinger), an untap lock
+            // (Rust Tick, Kill Switch).
             creatureControlService.onSourceUntapped(gameData, permanent);
-            // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.
-            untapLockReleaseService.releaseUntapLocks(gameData, permanent);
             gameData.rulesEvents.occur(new TapEvent.BecameUntapped(permanent));
             return true;
         }

@@ -249,7 +249,7 @@ class TapTriggersTest {
 
             assertThat(tapLand(vorinclex, player1Id, effect, player2Id, forest.getId())).isTrue();
 
-            assertThat(forest.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(forest.getId())).isZero();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(forest.getId());
         }

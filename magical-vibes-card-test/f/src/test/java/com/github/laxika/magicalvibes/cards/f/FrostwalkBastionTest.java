@@ -93,7 +93,7 @@ class FrostwalkBastionTest extends BaseCardTest {
         resolveStack();
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -144,7 +144,7 @@ class FrostwalkBastionTest extends BaseCardTest {
 
         assertThat(attacker.isTapped()).isTrue();
         harness.performUntapStep(player2);
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(attacker.isTapped()).isTrue();
         harness.performUntapStep(player1);

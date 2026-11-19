@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -188,17 +188,14 @@ class DurationClockTest extends BaseCardTest {
     void endingCopyEffectRevertsTheCopy() {
         Permanent skinshifter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card bears = skinshifter.getCard();
-        skinshifter.setPreCopyCard(bears);
         skinshifter.setCard(new SerraAngel());
-        skinshifter.setCopyUntilEndOfTurn(true);
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Tilonalli's Skinshifter",
-                skinshifter.getId(), player1.getId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
+                skinshifter.getId(), player1.getId(), new ResolvedCopyEffect(skinshifter.getCard(), bears),
                 skinshifter.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         advance(new TurnEvent.Cleanup(player1.getId()));
 
         assertThat(skinshifter.getCard()).isSameAs(bears);
-        assertThat(skinshifter.isCopyUntilEndOfTurn()).isFalse();
         assertThat(gd.floatingEffects).isEmpty();
     }
 
@@ -206,7 +203,7 @@ class DurationClockTest extends BaseCardTest {
     @DisplayName("An ending copy effect whose permanent left the battlefield just ends")
     void endingCopyEffectOfDepartedPermanent() {
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Tilonalli's Skinshifter",
-                UUID.randomUUID(), player1.getId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
+                UUID.randomUUID(), player1.getId(), new ResolvedCopyEffect(new SerraAngel(), new SerraAngel()),
                 UUID.randomUUID(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         assertThat(advance(new TurnEvent.Cleanup(player1.getId()))).hasSize(1);

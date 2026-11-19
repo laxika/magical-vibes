@@ -40,8 +40,8 @@ class StitchersGraftTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
-        assertThat(graft.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(graft.getId())).isZero();
     }
 
     @Test
@@ -53,7 +53,7 @@ class StitchersGraftTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 
     @Test
@@ -177,7 +177,7 @@ class StitchersGraftTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(graft.getAttachedTo()).isEqualTo(newBearer.getId());
-        assertThat(newBearer.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(newBearer.getId())).isZero();
         assertThat(newBearer.isTapped()).isFalse();
     }
 

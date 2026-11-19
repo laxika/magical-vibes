@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.b.BattlefieldScavenger;
 import com.github.laxika.magicalvibes.cards.k.KefnetsLastWord;
+import com.github.laxika.magicalvibes.cards.t.Telekinesis;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OasisRitualist.class, BattlefieldScavenger.class, KefnetsLastWord.class})
+@CardUsed({OasisRitualist.class, BattlefieldScavenger.class, KefnetsLastWord.class, Telekinesis.class})
 class OasisRitualistTest extends BaseCardTest {
 
     @Test
@@ -32,7 +33,7 @@ class OasisRitualistTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(ritualist.getSkipUntapCount()).isEqualTo(0);
+        assertThat(gd.nextUntapStepsSkipped(ritualist.getId())).isEqualTo(0);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -44,7 +45,7 @@ class OasisRitualistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(ritualist.isTapped()).isTrue();
-        assertThat(ritualist.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(ritualist.getId())).isGreaterThan(0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
         harness.handleListChoice(player1, "GREEN");
@@ -72,6 +73,26 @@ class OasisRitualistTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.performUntapStep(player2);
         assertThat(ritualist.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(ritualist.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        harness.performUntapStep(player1);
+        assertThat(ritualist.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exerting it doesn't end an effect that keeps it tapped for longer (CR 701.43b)")
+    void exertDoesNotShortenALongerUntapSkip() {
+        Permanent ritualist = addCreatureReady(player1, new OasisRitualist());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.setHand(player1, List.of(new Telekinesis()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, ritualist.getId());
+
+        harness.performUntapStep(player1);
+        assertThat(ritualist.isTapped()).isTrue();
+        harness.performUntapStep(player2);
         harness.performUntapStep(player1);
         assertThat(ritualist.isTapped()).isTrue();
         harness.performUntapStep(player2);

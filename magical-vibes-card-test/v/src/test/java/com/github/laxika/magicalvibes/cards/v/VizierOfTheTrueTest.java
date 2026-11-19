@@ -41,7 +41,7 @@ class VizierOfTheTrueTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(dreadmaw.isTapped()).isTrue();
-        assertThat(vizier.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(vizier.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -55,7 +55,7 @@ class VizierOfTheTrueTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(dreadmaw.isTapped()).isFalse();
-        assertThat(vizier.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(vizier.getId())).isZero();
     }
 
     @Test

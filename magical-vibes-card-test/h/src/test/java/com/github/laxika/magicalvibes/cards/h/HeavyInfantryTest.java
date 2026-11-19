@@ -25,7 +25,7 @@ class HeavyInfantryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
         harness.assertOnBattlefield(player1, "Heavy Infantry");
     }
 
@@ -68,7 +68,7 @@ class HeavyInfantryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(wolf.isTapped()).isTrue();
-        assertThat(wolf.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(wolf.getId())).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Heavy Infantry");
     }

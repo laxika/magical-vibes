@@ -32,7 +32,7 @@ class HopeTenderTest extends BaseCardTest {
 
         assertThat(forest.isTapped()).isFalse();
         assertThat(tender.isTapped()).isTrue();
-        assertThat(tender.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(tender.getId())).isZero();
     }
 
     @Test
@@ -63,7 +63,7 @@ class HopeTenderTest extends BaseCardTest {
         assertThat(forest1.isTapped()).isFalse();
         assertThat(forest2.isTapped()).isFalse();
         assertThat(tender.isTapped()).isTrue();
-        assertThat(tender.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(tender.getId())).isEqualTo(1);
     }
 
     @Test
@@ -108,7 +108,7 @@ class HopeTenderTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(forest1.getId(), forest2.getId()));
 
         assertThat(tender.isTapped()).isTrue();
-        assertThat(tender.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(tender.getId())).isEqualTo(1);
         assertThat(forest1.isTapped()).isTrue();
         assertThat(forest2.isTapped()).isTrue();
     }
@@ -160,7 +160,7 @@ class HopeTenderTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(tender.isTapped()).isTrue();
-        assertThat(tender.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(tender.getId())).isZero();
         harness.performUntapStep(player2);
         assertThat(tender.isTapped()).isFalse();
     }
@@ -178,7 +178,7 @@ class HopeTenderTest extends BaseCardTest {
                 player1, 0, 1, List.of(forest.getId(), forest.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(tender.isTapped()).isFalse();
-        assertThat(tender.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(tender.getId())).isZero();
     }
 
     @Test

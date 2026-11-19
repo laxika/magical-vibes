@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureIsCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -172,32 +171,6 @@ public class AuraCopyService {
      */
     public void revertExpiredCopies(GameData gameData, List<FloatingContinuousEffect> expired) {
         for (FloatingContinuousEffect floating : expired) {
-            if (floating.effect() instanceof BecomeCopyOfTargetCreatureWhileTargetTappedEffect) {
-                Permanent copy = findPermanentPhasedOrNot(gameData, floating.affectedPermanentId());
-                if (copy != null && copy.isCopyUntilEndOfTurn()) {
-                    String copyName = copy.getCard().getName();
-                    Permanent newerTarget = gameData.floatingEffects.stream()
-                            .filter(other -> other.effect() instanceof BecomeCopyOfTargetCreatureWhileTargetTappedEffect)
-                            .filter(other -> copy.getId().equals(other.affectedPermanentId()))
-                            .filter(other -> other.sourcePermanentId() != null)
-                            .max(Comparator.comparingLong(FloatingContinuousEffect::timestamp))
-                            .map(other -> gameQueryService.findPermanentById(gameData, other.sourcePermanentId()))
-                            .filter(Permanent::isTapped)
-                            .orElse(null);
-                    if (newerTarget != null) {
-                        permanentCopierService.applyCloneCopy(copy, newerTarget, null, null);
-                        log.info("Game {} - {} keeps copying {} while that creature remains tapped",
-                                gameData.id, copyName, newerTarget.getCard().getName());
-                        continue;
-                    }
-                    copy.revertEndOfTurnCopy();
-                    gameLogService.append(gameData, GameLog.text(
-                            copyName + " is no longer a copy and reverts to " + copy.getCard().getName() + "."));
-                    log.info("Game {} - {} reverts from target-tapped copy back to {}",
-                            gameData.id, copyName, copy.getCard().getName());
-                }
-                continue;
-            }
             if (!(floating.effect() instanceof EnchantedCreatureIsCopyOfChosenCreatureEffect
                     || floating.effect() instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
                     || floating.effect() instanceof AttachedCreatureIsCopyOfExiledCreatureEffect)) {

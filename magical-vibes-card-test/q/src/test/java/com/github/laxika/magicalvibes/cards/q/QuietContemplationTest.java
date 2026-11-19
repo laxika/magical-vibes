@@ -36,7 +36,7 @@ class QuietContemplationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +53,7 @@ class QuietContemplationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 
     @Test
@@ -100,11 +100,11 @@ class QuietContemplationTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isFalse();
@@ -125,7 +125,7 @@ class QuietContemplationTest extends BaseCardTest {
 
         harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 
     @Test
@@ -143,7 +143,7 @@ class QuietContemplationTest extends BaseCardTest {
         }
 
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 
     @Test
@@ -175,7 +175,7 @@ class QuietContemplationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
@@ -197,6 +197,6 @@ class QuietContemplationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(bears.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isZero();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,24 +63,19 @@ public class BecomeCopyOfTargetArtifactUntilEndOfTurnEffectHandler implements No
                 .toList()
                 : List.of();
 
-        boolean temporary = !copyEffect.retainsAbility() || source.isCopyUntilEndOfTurn();
-        if (temporary && !source.isCopyUntilEndOfTurn()) {
-            source.setPreCopyCard(source.getCard());
-        }
-
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
         String originalName = source.getCard().getName();
         String targetName = target.getCard().getName();
         permanentCopierService.applyCloneCopy(source, target.getCard(), null, null, Set.of(),
                 retainedAbilities);
-        if (!temporary) {
+        // The second ability's copy doesn't wear off (CR 611.2a); it is newer than the first ability's copies this
+        // turn, so as those end it stays a copy of what it targeted (CR 613.7).
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), sourceId, entry.getControllerId(),
+                source, preCopyCard, copyEffect.retainsAbility() ? Duration.PERMANENT : Duration.UNTIL_END_OF_TURN);
+        if (copyEffect.retainsAbility()) {
             gameLogService.append(gameData, GameLog.text(originalName + " becomes a copy of " + targetName + "."));
             return;
         }
-        source.setCopyUntilEndOfTurn(true);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), sourceId,
-                entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                sourceId, null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + targetName + " until end of turn."));

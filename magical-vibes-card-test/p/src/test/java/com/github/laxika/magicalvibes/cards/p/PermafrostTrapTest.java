@@ -29,9 +29,9 @@ class PermafrostTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
         assertThat(second.isTapped()).isTrue();
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class PermafrostTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Permafrost Trap");
     }
 
@@ -95,10 +95,10 @@ class PermafrostTrapTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isFalse();
     }
@@ -114,7 +114,7 @@ class PermafrostTrapTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(own.isTapped()).isTrue();
-        assertThat(opposing.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opposing.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(opposing.isTapped()).isTrue();
         harness.performUntapStep(player1);

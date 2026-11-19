@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.cards.g.GnatAlleyCreeper;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.m.MomirVigSimicVisionary;
@@ -43,7 +44,7 @@ class CytoshapeTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, chosen.getId());
 
-        assertThat(target.isCopyUntilEndOfTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), ResolvedCopyEffect.class)).isTrue();
         assertThat(target.getCard()).isNotSameAs(target.getOriginalCard());
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
@@ -61,7 +62,7 @@ class CytoshapeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
                 .isNull();
-        assertThat(target.isCopyUntilEndOfTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), ResolvedCopyEffect.class)).isFalse();
     }
 
     @Test
@@ -77,7 +78,7 @@ class CytoshapeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handlePermanentChosen(player1, chosen.getId());
 
-        assertThat(target.isCopyUntilEndOfTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), ResolvedCopyEffect.class)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceActivePlayer(player1);
@@ -85,7 +86,7 @@ class CytoshapeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isCopyUntilEndOfTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), ResolvedCopyEffect.class)).isFalse();
         assertThat(target.getCard()).isSameAs(target.getOriginalCard());
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }

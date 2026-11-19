@@ -391,16 +391,17 @@ pass with the copied identity automatically. "Copy with exceptions" is baked int
 as part of the copiable value: Quicksilver Gargantuan's 7/7 override (with the CR 707.9d skip of
 P/T-defining CDAs), Phyrexian Metamorph's added ARTIFACT type, Evil Twin's added ability
 (`CloneService`), Cryptoplasm's retained upkeep ability (`MayCopyHandlerService`) — so a Clone
-of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The DURATION copies
-— `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (Tilonalli's Skinshifter) and
-`MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` (Shapesharer) — register a floating
-`L1_COPY` effect alongside the card swap, and the duration clock (`DurationClock`) reverts the
-permanent as the effect ends: `Permanent.revertEndOfTurnCopy()` for the become-copy effect. Every copy that lasts
-until a player's next turn (Shapesharer, The Animus, Absorbing Man, Volrath the Shapestealer, Taskmaster) is one floating
-`MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(copiedCard, preCopyCard)` on the permanent
-(`PermanentCopierService.beginUntilNextTurnCopy`); as one ends, the newest one left applies again (CR 613.7), or with
-none left the permanent shows `preCopyCard`, so an OLDER effect ending cannot revert a NEWER still-active copy. A newer
-permanent copy (Mirrorform) or a merge updates what they keep (`updateUntilNextTurnCopies`). A third duration, WHILE ATTACHED
+of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). Every copy a
+resolution makes, whatever its duration (until end of turn: Tilonalli's Skinshifter, Cytoshape; until your next turn:
+Shapesharer, The Animus, Volrath the Shapestealer; for as long as the target remains tapped; until the next end step;
+none: Mizzium Transreliquat's second ability), is one floating `ResolvedCopyEffect(copiedCard, preCopyCard)` (`L1_COPY`)
+on the permanent alongside the card swap (`PermanentCopierService.beginCopy`, with `preCopyCard` from
+`PermanentCopierService.preCopyCard`). It is the only copy state. As copies end (the duration clock ends those that end
+together as one batch, `PermanentCopierService.endCopies`), the newest one left applies again (CR 613.7), or with none
+left the permanent shows `preCopyCard`, so an OLDER effect ending cannot revert a NEWER still-active copy of any
+duration. A newer permanent copy that isn't a floating effect (Mirrorform) or a merge updates what they keep
+(`PermanentCopierService.updateCopies`). "And gains haste" with a copy is a layer-6 grant beside it, not part of the
+copiable values (CR 707.9a; March from Velis Vel). A third duration, WHILE ATTACHED
 (`EnchantedCreatureIsCopyOfChosenCreatureEffect` — Metamorphic Alteration), follows the same shape
 via `AuraCopyService`: the swap stores `Permanent.whileAttachedPreCopyCard`, a `WHILE_ATTACHED`
 floating effect is keyed to the Aura, and `PermanentRemovalService` reverts off its expiry

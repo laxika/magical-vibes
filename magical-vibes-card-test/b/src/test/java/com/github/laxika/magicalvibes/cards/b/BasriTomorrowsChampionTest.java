@@ -38,7 +38,7 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
         assertThat(cat.getCard().getToughness()).isEqualTo(1);
         assertThat(cat.getCard().getKeywords()).contains(Keyword.LIFELINK);
         assertThat(basri.isTapped()).isTrue();
-        assertThat(basri.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(basri.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -75,7 +75,7 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(basri.isTapped()).isTrue();
-        assertThat(basri.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(basri.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(basri);
     }
 

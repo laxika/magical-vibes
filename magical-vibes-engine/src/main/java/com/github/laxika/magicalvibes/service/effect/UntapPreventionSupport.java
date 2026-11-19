@@ -46,6 +46,18 @@ public class UntapPreventionSupport {
                 .anyMatch(effect -> hasActiveSelfDoesntUntap(gameData, permanent, controllerId, effect));
     }
 
+    /**
+     * Whether a resolved "it doesn't untap during its controller's untap step for as long as [its source] remains on
+     * the battlefield / remains tapped" effect is on {@code permanent} (Somnophore, Rust Tick, Kill Switch). The
+     * duration clock ends each as its source leaves, phases out or untaps, so one in force applies.
+     */
+    public boolean hasSourceLinkedUntapLock(GameData gameData, Permanent permanent) {
+        return gameData.floatingEffectsOnPermanent(permanent.getId(), DoesntUntapEffect.class).stream()
+                .anyMatch(floating -> floating.effect() instanceof DoesntUntapEffect lock
+                        && (lock.condition() == UntapLockCondition.WHILE_SOURCE_ON_BATTLEFIELD
+                        || lock.condition() == UntapLockCondition.WHILE_SOURCE_TAPPED));
+    }
+
     private boolean hasActiveSelfDoesntUntap(GameData gameData, Permanent permanent, UUID controllerId,
                                               CardEffect effect) {
         if (effect instanceof DoesntUntapEffect doesNotUntap) {

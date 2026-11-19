@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -71,7 +72,7 @@ class TheEverflowingWellTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isCopyUntilEndOfTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), ResolvedCopyEffect.class)).isTrue();
         assertThat(target.getCard().getName()).isEqualTo("Grizzly Bears");
     }
 

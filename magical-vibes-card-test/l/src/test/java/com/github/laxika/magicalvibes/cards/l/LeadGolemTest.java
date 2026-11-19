@@ -42,7 +42,7 @@ class LeadGolemTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(attackingGolem.getId());
-        assertThat(nonAttackingGolem.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(nonAttackingGolem.getId())).isZero();
     }
 
     // ===== Attack trigger resolution =====
@@ -55,7 +55,7 @@ class LeadGolemTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(golem.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(golem.getId())).isEqualTo(1);
     }
 
     @Test
@@ -83,7 +83,7 @@ class LeadGolemTest extends BaseCardTest {
         harness.performUntapStep(player1);
 
         assertThat(golem.isTapped()).isTrue();
-        assertThat(golem.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(golem.getId())).isZero();
         assertThat(otherGolem.isTapped()).isFalse();
 
         harness.performUntapStep(player1);

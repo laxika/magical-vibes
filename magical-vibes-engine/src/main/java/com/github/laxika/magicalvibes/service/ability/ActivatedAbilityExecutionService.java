@@ -953,8 +953,8 @@ public class ActivatedAbilityExecutionService {
         for (CardEffect effect : abilityEffects) {
             if (effect instanceof SkipNextUntapEffect skip
                     && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
-                permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
-                permanent.setSkipUntapControllerId(playerId);
+                gameData.skipNextUntapSteps(permanent.getCard().getName(), permanent.getId(), playerId,
+                        permanent.getId(), skip.untapSteps(), playerId);
                 ActionEvents.exerted(gameData, playerId, permanent.getId());
             }
         }
@@ -1983,10 +1983,8 @@ public class ActivatedAbilityExecutionService {
                 // "{T}, Exert this creature: Add …" (Oasis Ritualist). Exert is modeled as
                 // SkipNextUntapEffect(SELF); on a mana ability it must apply inline here because
                 // mana abilities never hit the stack / NormalEffectHandlerBean path.
-                permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
-                if (skip.controllerStepOnly()) {
-                    permanent.setSkipUntapControllerId(player.getId());
-                }
+                gameData.skipNextUntapSteps(permanent.getCard().getName(), permanent.getId(), player.getId(),
+                        permanent.getId(), skip.untapSteps(), skip.controllerStepOnly() ? player.getId() : null);
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " won't untap during its controller's next untap step."));
             } else if (effect instanceof ReturnSourceToHandAtNextUntapEffect) {

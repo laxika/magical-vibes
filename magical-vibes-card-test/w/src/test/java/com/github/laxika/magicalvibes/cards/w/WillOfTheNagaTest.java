@@ -29,9 +29,9 @@ class WillOfTheNagaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
         assertThat(second.isTapped()).isTrue();
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class WillOfTheNagaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
     }
 
     @Test

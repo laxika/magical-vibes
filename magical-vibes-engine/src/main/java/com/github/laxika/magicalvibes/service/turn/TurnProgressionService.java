@@ -1080,7 +1080,6 @@ public class TurnProgressionService {
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
-        gameData.exileDamagedCreaturesSourceIdsThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySource.clear();
         gameData.creatureCardsDamagedThisTurnByController.clear();
         gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();

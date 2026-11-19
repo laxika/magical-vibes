@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,9 +50,7 @@ public class BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler implements N
             return;
         }
 
-        if (!targetPermanent.isCopyUntilEndOfTurn()) {
-            targetPermanent.setPreCopyCard(targetPermanent.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, targetPermanent);
 
         String originalName = targetPermanent.getCard().getName();
         String copySourceName = copySource.getCard().getName();
@@ -65,12 +64,9 @@ public class BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler implements N
             supertypes.removeAll(copyEffect.removedSupertypes());
             targetPermanent.getCard().setSupertypes(supertypes);
         }
-        targetPermanent.setCopyUntilEndOfTurn(true);
 
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                targetPermanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                targetPermanent, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + copySourceName + " until end of turn."));

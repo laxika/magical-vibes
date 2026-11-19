@@ -42,7 +42,7 @@ class ChampionOfRhonasTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(champion.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(champion.getId())).isGreaterThan(0);
         Permanent creature = findPermanent(player1, "Colossapede");
         assertThat(creature).isNotNull();
         assertThat(creature.isTapped()).isFalse();
@@ -61,7 +61,7 @@ class ChampionOfRhonasTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleCardChosen(player1, -1);
 
-        assertThat(champion.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(champion.getId())).isGreaterThan(0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertNotOnBattlefield(player1, "Colossapede");
     }
@@ -75,7 +75,7 @@ class ChampionOfRhonasTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(champion.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(champion.getId())).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -105,7 +105,7 @@ class ChampionOfRhonasTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(champion.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(champion.getId())).isPositive();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
             harness.assertNotOnBattlefield(player1, "Colossapede");

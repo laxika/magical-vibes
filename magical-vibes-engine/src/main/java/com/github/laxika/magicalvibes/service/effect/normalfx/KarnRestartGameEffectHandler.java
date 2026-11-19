@@ -53,6 +53,13 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
+        // The cards go into the new game as themselves: a Bombardment's Missile change ends with the game it was made in.
+        for (var bombardment : gameData.floatingEffectsOfTypes(
+                com.github.laxika.magicalvibes.model.effect.BombardmentEffect.class)) {
+            gameData.restoreBombardmentCards(
+                    ((com.github.laxika.magicalvibes.model.effect.BombardmentEffect) bombardment.effect()).originalCards());
+        }
+
         // Step 1: Collect non-Aura permanent cards exiled with Karn
         List<Card> karnExiledCards = new ArrayList<>();
         if (sourcePermanentId != null) {
@@ -160,7 +167,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.expireFloatingEffects(floating -> true);
         gameData.scheduledFloatingEffects.clear();
         gameData.exileReturnOnPermanentLeave.clear();
-        gameData.sourceLinkedAnimations.clear();
         gameData.pendingMayAbilities.clear();
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);

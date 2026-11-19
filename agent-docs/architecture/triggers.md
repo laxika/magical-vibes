@@ -831,8 +831,8 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
 - **Examples.** Earthbend (CR 701.66a): two durationless abilities about the land, one per zone, independent of its
   abilities; the named object keeps an old trigger from returning a later incarnation. An activation's delayed ability
   is the activator's (CR 603.7e): Giant Oyster's `DelayedDrawStepTriggerWhileSourceTapped` (read by `StepTriggerService`,
-  ended when the source untaps or leaves) and `DelayedSourceUntapsOrLeavesTrigger` per resolution (put by
-  `UntapLockReleaseService`; Tawnos's Coffin uses `ResolvePendingExileReturnEffect`). Cyclopean Tomb's linked lands live in
+  ended when the source untaps or leaves) and `DelayedSourceUntapsOrLeavesTrigger` per resolution (Tawnos's Coffin uses
+  `ResolvePendingExileReturnEffect`). Cyclopean Tomb's linked lands live in
   its effect (`GameData.markCyclopeanTombLandRemoved` / `trackCyclopeanTombLands`).
 
 ## Reflexive abilities and abilities a resolution makes

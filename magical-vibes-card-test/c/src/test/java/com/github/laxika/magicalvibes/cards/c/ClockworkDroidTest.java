@@ -46,7 +46,7 @@ class ClockworkDroidTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(droid.isTapped()).isTrue();
-        assertThat(droid.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(droid.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -58,7 +58,7 @@ class ClockworkDroidTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasCantBeBlocked(gd, droid)).isFalse();
-        assertThat(droid.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(droid.getId())).isZero();
     }
 
     @Test

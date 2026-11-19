@@ -37,7 +37,7 @@ class ArchipelagoreTest extends BaseCardTest {
         resolveOneTrigger();
 
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isEqualTo(1);
         assertThat(elves.isTapped()).isFalse();
 
         harness.inMutationScope(() -> ActionEvents.mutated(
@@ -52,8 +52,8 @@ class ArchipelagoreTest extends BaseCardTest {
         resolveOneTrigger();
 
         assertThat(elves.isTapped()).isTrue();
-        assertThat(elves.getSkipUntapCount()).isEqualTo(1);
-        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(elves.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(bear.isTapped()).isTrue();
@@ -81,9 +81,9 @@ class ArchipelagoreTest extends BaseCardTest {
         resolveOneTrigger();
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
         assertThat(archipelagore.isTapped()).isFalse();
-        assertThat(archipelagore.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(archipelagore.getId())).isZero();
     }
 
     @Test
@@ -99,7 +99,7 @@ class ArchipelagoreTest extends BaseCardTest {
         resolveOneTrigger();
 
         harness.performUntapStep(player2);
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(creature.isTapped()).isTrue();
         harness.performUntapStep(player1);
@@ -117,6 +117,6 @@ class ArchipelagoreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 }

@@ -52,18 +52,13 @@ public class EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffectHandle
         }
 
         Card original = enchanted.getCard();
-        if (!enchanted.isCopyUntilEndOfTurn()) {
-            enchanted.setPreCopyCard(original);
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, enchanted);
         EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect copyEffect =
                 (EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect) effect;
         permanentCopierService.applyCloneCopy(
                 enchanted, exiled.card(), null, null, copyEffect.additionalTypesOverride());
-        enchanted.setCopyUntilEndOfTurn(true);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), enchanted.getId(), entry.getControllerId(),
-                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), enchanted.getId(), null, null,
-                Duration.UNTIL_END_OF_TURN, 0));
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), enchanted.getId(),
+                entry.getControllerId(), enchanted, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData,
                 GameLog.textCardText(original.getName() + " becomes a copy of ", exiled.card(),

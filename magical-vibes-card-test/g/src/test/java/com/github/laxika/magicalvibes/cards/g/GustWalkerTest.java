@@ -58,7 +58,7 @@ class GustWalkerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(walker.isTapped()).isTrue();
-        assertThat(walker.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(walker.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -73,7 +73,7 @@ class GustWalkerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, walker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, walker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, walker, Keyword.FLYING)).isFalse();
-        assertThat(walker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(walker.getId())).isZero();
     }
 
     @Test
@@ -86,7 +86,7 @@ class GustWalkerTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(walker.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(walker.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, walker)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, walker, Keyword.FLYING)).isFalse();
         });

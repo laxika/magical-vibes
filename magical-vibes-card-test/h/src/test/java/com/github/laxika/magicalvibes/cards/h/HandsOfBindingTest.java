@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect;
 import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -28,7 +29,7 @@ class HandsOfBindingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Hands of Binding");
     }
 
@@ -55,7 +56,7 @@ class HandsOfBindingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         assertThat(gd.exiledCards).hasSize(1);
     }
 
@@ -135,13 +136,14 @@ class HandsOfBindingTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         target.untap();
-        target.setSkipUntapCount(0);
+        gd.floatingEffectsOnPermanent(target.getId(), DoesntUntapDuringNextUntapStepsEffect.class)
+                .forEach(gd::endFloatingEffect);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.exiledCards).hasSize(1);
         harness.assertNotInGraveyard(player1, "Hands of Binding");
@@ -157,14 +159,15 @@ class HandsOfBindingTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, attacker.getId());
-        target.setSkipUntapCount(0);
+        gd.floatingEffectsOnPermanent(target.getId(), DoesntUntapDuringNextUntapStepsEffect.class)
+                .forEach(gd::endFloatingEffect);
 
         declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         assertThat(gd.exiledCards).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

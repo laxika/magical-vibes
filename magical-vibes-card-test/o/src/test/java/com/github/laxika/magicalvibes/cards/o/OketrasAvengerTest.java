@@ -80,7 +80,7 @@ class OketrasAvengerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(avenger.isTapped()).isTrue();
-        assertThat(avenger.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(avenger.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -92,7 +92,7 @@ class OketrasAvengerTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(avenger.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(avenger.getId())).isPositive();
             assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(avenger.getId());
         });
     }

@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEff
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
@@ -278,6 +279,7 @@ public final class LayerClassifier {
         map.put(BecomeCopyOfTargetCreatureUntilEndOfTurnEffect.class, fixed(Layer.L1_COPY));
         map.put(BecomeCopyOfTargetLandEffect.class, fixed(Layer.L1_COPY));
         map.put(MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class, fixed(Layer.L1_COPY));
+        map.put(ResolvedCopyEffect.class, fixed(Layer.L1_COPY));
         map.put(CopyPermanentOnEnterEffect.class, fixed(Layer.L1_COPY));
 
         // Layer 2 — control-changing effects (CR 613.2b).

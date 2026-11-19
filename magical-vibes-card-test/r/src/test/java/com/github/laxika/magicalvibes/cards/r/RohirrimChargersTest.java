@@ -38,7 +38,7 @@ class RohirrimChargersTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Forest");
-        assertThat(chargers.getSkipUntapCount()).isPositive();
+        assertThat(gd.nextUntapStepsSkipped(chargers.getId())).isPositive();
     }
 
     @Test
@@ -51,7 +51,7 @@ class RohirrimChargersTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(chargers.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(chargers.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof LothlorienBlade);
         assertThat(gd.playerDecks.get(player1.getId()))

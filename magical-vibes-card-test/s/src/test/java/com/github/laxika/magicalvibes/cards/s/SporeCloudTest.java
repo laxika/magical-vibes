@@ -33,9 +33,9 @@ class SporeCloudTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isFalse();
         assertThat(blocker.isTapped()).isTrue();
         assertThat(uninvolved.isTapped()).isFalse();
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
-        assertThat(uninvolved.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(uninvolved.getId())).isZero();
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
@@ -48,9 +48,9 @@ class SporeCloudTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         castAndResolve(player2);
 
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
 
         resolveCombat(player1);
 
@@ -91,7 +91,7 @@ class SporeCloudTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(attacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
 
         advanceToNextUpkeep(player2);
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
@@ -114,7 +114,7 @@ class SporeCloudTest extends BaseCardTest {
         advanceToNextUpkeep(player2);
         assertThat(blocker.isTapped()).isTrue();
         assertThat(uninvolved.isTapped()).isFalse();
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
 
         advanceToNextUpkeep(player1);
         assertThat(attacker.isTapped()).isTrue();

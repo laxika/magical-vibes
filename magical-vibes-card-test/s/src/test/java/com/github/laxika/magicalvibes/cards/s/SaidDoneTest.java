@@ -75,9 +75,9 @@ class SaidDoneTest extends BaseCardTest {
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
         assertThat(third.isTapped()).isFalse();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
-        assertThat(third.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(third.getId())).isZero();
     }
 
     @Test

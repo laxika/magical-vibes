@@ -35,8 +35,8 @@ class SuddenStormTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(topCard);
 

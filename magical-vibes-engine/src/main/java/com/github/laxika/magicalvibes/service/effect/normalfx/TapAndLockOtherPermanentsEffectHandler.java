@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TapAndLockOtherPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -56,7 +58,8 @@ public class TapAndLockOtherPermanentsEffectHandler implements NormalEffectHandl
                 newlyTappedCount[0]++;
             }
             if (sourceRemainsTapped) {
-                permanent.getUntapPreventedByPermanentIds().add(sourcePermanentId);
+                gameData.addEffectOnPermanent(entry, DoesntUntapEffect.targetWhileSourceTapped(), permanent.getId(),
+                        Duration.WHILE_SOURCE_REMAINS_TAPPED);
                 lockedCount[0]++;
             }
         });

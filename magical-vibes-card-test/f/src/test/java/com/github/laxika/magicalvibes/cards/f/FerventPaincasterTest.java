@@ -31,7 +31,7 @@ class FerventPaincasterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(paincaster.isTapped()).isTrue();
-        assertThat(paincaster.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(paincaster.getId())).isZero();
     }
 
     @Test
@@ -67,7 +67,7 @@ class FerventPaincasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(paincaster.isTapped()).isTrue();
-        assertThat(paincaster.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(paincaster.getId())).isEqualTo(1);
 
         harness.performUntapStep(player1);
         assertThat(paincaster.isTapped()).isTrue();
@@ -107,7 +107,7 @@ class FerventPaincasterTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(paincaster.isTapped()).isTrue();
-        assertThat(paincaster.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(paincaster.getId())).isEqualTo(1);
     }
 
     @Test

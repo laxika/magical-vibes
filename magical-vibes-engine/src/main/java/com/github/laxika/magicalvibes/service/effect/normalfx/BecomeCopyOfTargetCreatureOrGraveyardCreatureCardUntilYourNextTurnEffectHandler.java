@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -65,7 +66,7 @@ public class BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnE
 
         BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect copyEffect =
                 (BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect) effect;
-        Card preCopyCard = PermanentCopierService.untilNextTurnPreCopyCard(gameData, source);
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
 
         String originalName = source.getCard().getName();
         String targetName = targetCard.getName();
@@ -94,8 +95,9 @@ public class BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnE
             source.getCard().setKeywords(keywords);
         }
 
-        PermanentCopierService.beginUntilNextTurnCopy(gameData, entry.getCard().getName(), sourceId,
-                entry.getControllerId(), source, preCopyCard);
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), sourceId,
+                entry.getControllerId(), source, preCopyCard,
+                Duration.UNTIL_YOUR_NEXT_TURN);
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + targetName

@@ -60,7 +60,7 @@ class ThemberchaudTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, themberchaud, Keyword.FLYING)).isTrue();
         assertThat(themberchaud.isTapped()).isTrue();
-        assertThat(themberchaud.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(themberchaud.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -72,7 +72,7 @@ class ThemberchaudTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasKeyword(gd, themberchaud, Keyword.FLYING)).isFalse();
-        assertThat(themberchaud.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(themberchaud.getId())).isZero();
     }
 
     @Test
@@ -117,7 +117,7 @@ class ThemberchaudTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(themberchaud.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(themberchaud.getId())).isEqualTo(1);
         assertThat(gd.permanentsExertedThisTurn).contains(themberchaud.getId());
         assertThat(gqs.hasKeyword(gd, themberchaud, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).hasSize(1);

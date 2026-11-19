@@ -30,7 +30,7 @@ class ChandrasRevolutionTest extends BaseCardTest {
 
         assertThat(creature.getMarkedDamage()).isEqualTo(4);
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isEqualTo(1);
     }
 
     @Test
@@ -121,7 +121,7 @@ class ChandrasRevolutionTest extends BaseCardTest {
 
         assertThat(creature.getMarkedDamage()).isEqualTo(4);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
         harness.assertInGraveyard(player1, "Chandra's Revolution");
     }
 

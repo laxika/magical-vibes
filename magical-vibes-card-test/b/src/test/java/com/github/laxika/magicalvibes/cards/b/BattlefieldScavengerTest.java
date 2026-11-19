@@ -40,7 +40,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(scavenger.isTapped()).isTrue();
-        assertThat(scavenger.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(scavenger.getId())).isGreaterThan(0);
         // The exert-matters ability fires as a second "may" prompt.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -95,7 +95,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(scavenger.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(scavenger.getId())).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }

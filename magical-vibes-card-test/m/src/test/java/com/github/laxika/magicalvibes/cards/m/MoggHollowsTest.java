@@ -43,7 +43,7 @@ class MoggHollowsTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(land.getSkipUntapCount()).isEqualTo(0);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isEqualTo(0);
 
         harness.performUntapStep(player1);
 
@@ -59,7 +59,7 @@ class MoggHollowsTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(land.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -71,7 +71,7 @@ class MoggHollowsTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(land.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -87,8 +87,8 @@ class MoggHollowsTest extends BaseCardTest {
 
         assertThat(redLand.isTapped()).isTrue();
         assertThat(greenLand.isTapped()).isTrue();
-        assertThat(redLand.getSkipUntapCount()).isZero();
-        assertThat(greenLand.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(redLand.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(greenLand.getId())).isZero();
 
         harness.performUntapStep(player1);
 

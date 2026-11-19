@@ -7,19 +7,18 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.BombardmentEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.PhasedOutHeldEffect;
 import com.github.laxika.magicalvibes.model.effect.TapRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -274,6 +273,7 @@ public class DurationClock {
         for (FloatingContinuousEffect effect : ended) {
             undo(gameData, effect);
         }
+        endCopies(gameData, ended);
         if (!ended.isEmpty()) {
             auraCopyService.revertExpiredCopies(gameData, ended);
         }
@@ -372,6 +372,10 @@ public class DurationClock {
 
     /** Undoes what the ended {@code effect} kept on the permanent it affected, phased out or not. */
     private void undo(GameData gameData, FloatingContinuousEffect effect) {
+        if (effect.effect() instanceof BombardmentEffect bombardment) {
+            gameData.restoreBombardmentCards(bombardment.originalCards());
+            return;
+        }
         if (effect.affectedPermanentId() == null) {
             return;
         }
@@ -380,38 +384,32 @@ public class DurationClock {
             return;
         }
         switch (effect.effect()) {
-            // AuraCopyService reverts it, or keeps the copy of a newer target that remains tapped.
-            case BecomeCopyOfTargetCreatureWhileTargetTappedEffect ignored -> {
-            }
-            case TemporaryCopyEffect ignored -> affected.revertEndOfTurnCopy();
             case PhasedOutHeldEffect held when held.phasesInWhenEnded() ->
                     phasingService.phaseInHeld(gameData, affected.getId(), held.tapsOnPhaseIn());
             case TapRestrictionEffect restriction when restriction.preventsTappingUnlessAttacking() ->
                     affected.removeTapRestriction(effect.id());
-            case MakeTargetCopyOfTargetCreatureUntilNextTurnEffect copy when copy.copiedCard() != null ->
-                    endUntilNextTurnCopy(gameData, affected, effect, copy);
             case null, default -> {
             }
         }
     }
 
     /**
-     * Ends a copy effect that lasted until a player's next turn: when it was the newest of its kind on the permanent,
-     * the newest one left applies again (CR 613.7); with none left, the permanent shows the card it showed before them.
-     * An older one ending leaves the newer copy in place.
+     * Reverts the copy effects from resolutions among {@code ended}, per permanent they affected, phased out or not:
+     * those that ended together are judged together, so the copy left is the newest one that remains (CR 613.7).
      */
-    private static void endUntilNextTurnCopy(GameData gameData, Permanent affected, FloatingContinuousEffect ended,
-                                             MakeTargetCopyOfTargetCreatureUntilNextTurnEffect copy) {
-        List<FloatingContinuousEffect> remaining = PermanentCopierService.untilNextTurnCopies(gameData,
-                affected.getId());
-        if (remaining.isEmpty()) {
-            affected.setCard(copy.preCopyCard());
-            return;
+    private static void endCopies(GameData gameData, List<FloatingContinuousEffect> ended) {
+        Map<UUID, List<FloatingContinuousEffect>> copiesByPermanent = new java.util.LinkedHashMap<>();
+        for (FloatingContinuousEffect effect : ended) {
+            if (effect.effect() instanceof ResolvedCopyEffect && effect.affectedPermanentId() != null) {
+                copiesByPermanent.computeIfAbsent(effect.affectedPermanentId(), id -> new java.util.ArrayList<>()).add(effect);
+            }
         }
-        FloatingContinuousEffect newest = remaining.getLast();
-        if (newest.timestamp() < ended.timestamp()) {
-            affected.setCard(((MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) newest.effect()).copiedCard());
-        }
+        copiesByPermanent.forEach((permanentId, copies) -> {
+            Permanent affected = findPermanent(gameData, permanentId);
+            if (affected != null) {
+                PermanentCopierService.endCopies(gameData, affected, copies);
+            }
+        });
     }
 
     private static Permanent findPermanent(GameData gameData, UUID permanentId) {

@@ -73,9 +73,9 @@ class ReduceRubbleTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
-        assertThat(third.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(third.getId())).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Reduce // Rubble"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -91,7 +91,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, land.getId());
 
-        assertThat(land.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isEqualTo(1);
     }
 
     @Test

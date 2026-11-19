@@ -37,17 +37,17 @@ public class TapCombatOpponentAtEndOfCombatEffectHandler implements NormalEffect
         Set<UUID> blockerIds = gameData.combatBlockOpponentIdsThisTurn
                 .getOrDefault(entry.getSourcePermanentId(), Set.of());
         for (UUID blockerId : blockerIds) {
-            tapAndLock(gameData, blockerId);
+            tapAndLock(gameData, entry, blockerId);
         }
     }
 
-    private void tapAndLock(GameData gameData, UUID permanentId) {
+    private void tapAndLock(GameData gameData, StackEntry entry, UUID permanentId) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
         tapUntapSupport.tapPermanent(gameData, target);
-        target.setSkipUntapCount(Math.max(target.getSkipUntapCount(), 1));
+        gameData.skipNextUntapSteps(entry, target.getId(), 1, null);
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " is tapped and doesn't untap during its controller's next untap step."));
     }

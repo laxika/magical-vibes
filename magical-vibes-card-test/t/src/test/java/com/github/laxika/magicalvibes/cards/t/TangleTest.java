@@ -25,8 +25,8 @@ class TangleTest extends BaseCardTest {
         castAndResolve();
 
         assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
-        assertThat(nonAttacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(nonAttacker.getId())).isZero();
 
         advanceToUpkeep(player2);
 
@@ -62,7 +62,7 @@ class TangleTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
     }
 
     @Test

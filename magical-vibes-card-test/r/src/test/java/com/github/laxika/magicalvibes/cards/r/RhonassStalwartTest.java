@@ -57,7 +57,7 @@ class RhonassStalwartTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(stalwart.isTapped()).isTrue();
-        assertThat(stalwart.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(stalwart.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -111,7 +111,7 @@ class RhonassStalwartTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(2);
-        assertThat(stalwart.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(stalwart.getId())).isZero();
 
         prepareDeclareBlockers();
 
@@ -132,7 +132,7 @@ class RhonassStalwartTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(stalwart.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(stalwart.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(2);
             assertThat(gd.stack).hasSize(1);

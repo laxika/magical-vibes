@@ -211,11 +211,6 @@ public class StepTriggerService {
                     List.of(new VentureIntoDungeonEffect(Dungeon.UNDERCITY)), TriggerRecord.NONE);
         }
 
-        // Spatial Binding: "Until your next upkeep, target permanent can't phase out." Phasing is a
-        // turn-based action of the untap step (CR 502.1), which has already passed, so clearing here
-        // still protected the permanent through the marking player's own untap step.
-        expireCantPhaseOut(gameData);
-
         handleOpeningHandUpkeepTriggers(gameData);
 
         UUID activePlayerId = gameData.activePlayerId;
@@ -232,7 +227,6 @@ public class StepTriggerService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
-        battlefield.forEach(permanent -> permanent.setEchoDamageRedirectionActive(false));
 
         // Every "at the beginning of [an] upkeep" ability, printed, granted or of a card in another zone, triggers as
         // the step begins (CR 603.2b), matched by the trigger pipeline.
@@ -334,20 +328,6 @@ public class StepTriggerService {
             return;
         }
         playerInputService.processNextMayAbility(gameData);
-    }
-
-    /**
-     * Ends every "until your next upkeep, target permanent can't phase out" restriction (Spatial
-     * Binding) created by the active player. Phased-out permanents are scanned too so a restriction
-     * never outlives its window on an object that is currently off the battlefield.
-     */
-    private void expireCantPhaseOut(GameData gameData) {
-        gameData.forEachBattlefield((controllerId, permanents) -> permanents.forEach(permanent -> {
-            permanent.expirePhaseOutPreventionAtUpkeepOf(gameData.activePlayerId);
-        }));
-        gameData.phasedOutPermanents.forEach((controllerId, permanents) -> permanents.forEach(permanent -> {
-            permanent.expirePhaseOutPreventionAtUpkeepOf(gameData.activePlayerId);
-        }));
     }
 
     /**

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.i.InBolassClutches;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -122,7 +124,8 @@ class TimeOfIceTest extends BaseCardTest {
 
         // Simulate chapter I resolution: tap creature and add untap lock
         bears.tap();
-        bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(saga.getId());
+        gd.addEffectOnPermanent("Time of Ice", saga.getId(), player1.getId(),
+                DoesntUntapEffect.targetWhileSourceControlled(), bears.getId(), Duration.WHILE_SOURCE_CONTROLLED);
 
         // Advance to player2's turn — their creature should NOT untap
         harness.performUntapStep(player2);
@@ -138,7 +141,8 @@ class TimeOfIceTest extends BaseCardTest {
 
         // Simulate chapter I resolution
         bears.tap();
-        bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(saga.getId());
+        gd.addEffectOnPermanent("Time of Ice", saga.getId(), player1.getId(),
+                DoesntUntapEffect.targetWhileSourceControlled(), bears.getId(), Duration.WHILE_SOURCE_CONTROLLED);
 
         // Remove saga from the battlefield
         gd.playerBattlefields.get(player1.getId()).remove(saga);
@@ -157,7 +161,8 @@ class TimeOfIceTest extends BaseCardTest {
 
         // Simulate chapter I resolution
         bears.tap();
-        bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(saga.getId());
+        gd.addEffectOnPermanent("Time of Ice", saga.getId(), player1.getId(),
+                DoesntUntapEffect.targetWhileSourceControlled(), bears.getId(), Duration.WHILE_SOURCE_CONTROLLED);
 
         // Player2's first untap step — creature stays tapped
         harness.performUntapStep(player2);

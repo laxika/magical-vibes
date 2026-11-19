@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves a one-shot extra loyalty activation for the source planeswalker only. */
+/** Resolves an extra loyalty activation this turn for the source planeswalker only, a floating effect on it. */
 @Component
 @RequiredArgsConstructor
 public class GrantExtraLoyaltyActivationToSourceEffectHandler implements NormalEffectHandlerBean {
@@ -29,8 +30,8 @@ public class GrantExtraLoyaltyActivationToSourceEffectHandler implements NormalE
                 || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
             return;
         }
-        int current = source.getExtraLoyaltyActivationsThisTurn();
-        source.setExtraLoyaltyActivationsThisTurn(
-                ((GrantExtraLoyaltyActivationToSourceEffect) effect).nonStacking() ? Math.max(current, 1) : current + 1);
+        // "You may activate one of its loyalty abilities once this turn as though none had been": an effect on the
+        // planeswalker that lasts the turn (CR 514.2).
+        gameData.addEffectOnPermanent(entry, effect, source.getId(), Duration.UNTIL_END_OF_TURN);
     }
 }

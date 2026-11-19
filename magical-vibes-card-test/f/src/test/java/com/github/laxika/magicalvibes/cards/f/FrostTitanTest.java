@@ -54,7 +54,7 @@ class FrostTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         }
 
         @Test
@@ -120,7 +120,7 @@ class FrostTitanTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, bears.getId());
             harness.passBothPriorities(); // resolve attack trigger
 
-            assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         }
     }
 

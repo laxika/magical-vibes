@@ -235,7 +235,7 @@ class IceFloeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player1.getId()).remove(iceFloe);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, iceFloe);
         assertThat(attacker.isTapped()).isTrue();
         harness.performUntapStep(player2);
         assertThat(attacker.isTapped()).isFalse();

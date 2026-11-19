@@ -36,7 +36,7 @@ class SamiteAlchemistTest extends BaseCardTest {
         Permanent trader = findPermanent(player1, "Dwarven Trader");
         assertThat(gd.permanentDamagePreventionShield(trader.getId())).isEqualTo(4);
         assertThat(trader.isTapped()).isTrue();
-        assertThat(trader.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(trader.getId())).isEqualTo(1);
     }
 
     @Test
@@ -73,7 +73,7 @@ class SamiteAlchemistTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(trader.isTapped()).isTrue();
-        assertThat(trader.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(trader.getId())).isZero();
     }
 
     @Test

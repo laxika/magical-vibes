@@ -152,7 +152,6 @@ public class UntapStepService {
             // controls and activated during its controller's previous turn.
             gameData.playerBattlefields.values().forEach(battlefield -> battlefield.forEach(p -> {
                 p.setLoyaltyActivationsThisTurn(0);
-                p.setExtraLoyaltyActivationsThisTurn(0);
             }));
         }
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
@@ -173,8 +172,7 @@ public class UntapStepService {
                         p.setSummoningSick(false);
                     }
                     p.setLoyaltyActivationsThisTurn(0);
-                    p.setExtraLoyaltyActivationsThisTurn(0);
-                });
+                    });
             }
             // Nor does it count as that player's untap step for "your next untap step" restrictions.
             gameData.untapStepPlayerId = null;
@@ -232,24 +230,6 @@ public class UntapStepService {
         // other way a host leaves the battlefield already sweeps at its own call site.
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // Clean up stale untap-prevention locks on ALL battlefields before untapping.
-        // A lock is stale if the source permanent is no longer on the battlefield or is no longer tapped.
-        gameData.forEachPermanent((pid, p) -> {
-            if (!p.getUntapPreventedByPermanentIds().isEmpty()) {
-                p.getUntapPreventedByPermanentIds().removeIf(sourceId -> {
-                    Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-                    return source == null || !source.isTapped();
-                });
-            }
-            // Clean up "while source on battlefield" locks — only removed when source leaves battlefield.
-            if (!p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty()) {
-                p.getUntapPreventedWhileSourceOnBattlefieldIds().removeIf(sourceId -> {
-                    Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-                    return source == null;
-                });
-            }
-        });
-
         // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
         List<Permanent> mayNotUntapPermanents = new ArrayList<>();
         List<Permanent> untappedDuringStep = new ArrayList<>();
@@ -258,8 +238,7 @@ public class UntapStepService {
         // start of the step. An untap that releases a lock (Kill Switch) must not free the locked
         // permanents that happen to be processed after it.
         Set<UUID> untapLockedAtStart = battlefield == null ? Set.of() : battlefield.stream()
-                .filter(p -> !p.getUntapPreventedByPermanentIds().isEmpty()
-                        || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty())
+                .filter(p -> untapPreventionSupport.hasSourceLinkedUntapLock(gameData, p))
                 .map(Permanent::getId)
                 .collect(java.util.stream.Collectors.toSet());
         if (battlefield != null) {
@@ -270,8 +249,7 @@ public class UntapStepService {
                 boolean hasMayNotUntap = p.isTapped() && gameQueryService.hasActiveStaticEffect(
                         gameData, p, MayNotUntapDuringUntapStepEffect.class);
                 boolean hasUntapLock = untapLockedAtStart.contains(p.getId());
-                boolean skipsNextUntap = p.getSkipUntapCount() > 0
-                        && (p.getSkipUntapControllerId() == null || activePlayerId.equals(p.getSkipUntapControllerId()));
+                boolean skipsNextUntap = !gameData.nextUntapStepSkips(p.getId(), activePlayerId).isEmpty();
                 // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
                 boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
                 // Depletion lands (Land Cap): a self-scoped static lock conditioned on a counter.
@@ -289,8 +267,9 @@ public class UntapStepService {
                         && !chosenUntapIds.contains(p.getId());
 
                 if (skipsNextUntap) {
-                    // Decrement skip counter but don't untap this step (e.g. Vorinclex)
-                    p.setSkipUntapCount(p.getSkipUntapCount() - 1);
+                    // Each "doesn't untap during its next untap step" effect that applies is used up by this step
+                    // (Vorinclex, exert).
+                    gameData.useNextUntapStepSkips(p.getId(), activePlayerId);
                 } else if (blockedByStorageMatrix || blockedByStaticOrb || restrictedPermanentIds.contains(p.getId())) {
                     // Storage Matrix / untap cap: not selected to untap — stays tapped this step
                 } else if (cannotBecomeUntapped) {
@@ -314,7 +293,6 @@ public class UntapStepService {
                     p.setSummoningSick(false);
                 }
                 p.setLoyaltyActivationsThisTurn(0);
-                p.setExtraLoyaltyActivationsThisTurn(0);
             });
         }
         gameData.untapStepUntappedPermanentCount = untappedDuringStep.size();
@@ -448,12 +426,7 @@ public class UntapStepService {
      * untap step even if another player controls the permanent.
      */
     public void expireControllerStepUntapRestrictions(GameData gameData, UUID activePlayerId) {
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (activePlayerId.equals(permanent.getSkipUntapControllerId())) {
-                permanent.setSkipUntapCount(0);
-                permanent.setSkipUntapControllerId(null);
-            }
-        });
+        gameData.endNextUntapStepSkipsOf(activePlayerId);
     }
 
     /** Queues the batched untap-step triggers after all untap choices are complete. */
@@ -625,7 +598,7 @@ public class UntapStepService {
         }
         List<UUID> candidates = new ArrayList<>();
         for (Permanent p : battlefield) {
-            if (!p.isTapped() || p.getSkipUntapCount() > 0) {
+            if (!p.isTapped() || !gameData.nextUntapStepSkips(p.getId(), activePlayerId).isEmpty()) {
                 continue;
             }
             if (effect.filter() != null
@@ -634,8 +607,7 @@ public class UntapStepService {
             }
             boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
             boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
-            boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
-                    || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
+            boolean hasUntapLock = untapPreventionSupport.hasSourceLinkedUntapLock(gameData, p);
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
             boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
             boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);

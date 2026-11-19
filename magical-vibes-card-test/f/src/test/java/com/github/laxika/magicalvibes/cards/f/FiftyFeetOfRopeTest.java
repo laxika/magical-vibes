@@ -57,7 +57,7 @@ class FiftyFeetOfRopeTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 
     @Test

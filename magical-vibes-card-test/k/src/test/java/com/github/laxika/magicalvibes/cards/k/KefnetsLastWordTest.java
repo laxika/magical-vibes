@@ -123,7 +123,7 @@ class KefnetsLastWordTest extends BaseCardTest {
 
             cast(target);
 
-            assertThat(opponentPlains.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(opponentPlains.getId())).isZero();
         }
 
         @Test

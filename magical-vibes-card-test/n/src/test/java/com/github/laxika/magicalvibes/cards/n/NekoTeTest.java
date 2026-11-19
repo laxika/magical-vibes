@@ -32,7 +32,7 @@ class NekoTeTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).remove(nekoTe);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nekoTe);
         advanceToUpkeep(player2);
 
         assertThat(target.isTapped()).isFalse();

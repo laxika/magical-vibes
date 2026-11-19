@@ -44,7 +44,7 @@ class CombatCelebrantTest extends BaseCardTest {
 
         assertThat(otherCreature.isTapped()).isFalse();
         assertThat(celebrant.isTapped()).isTrue();
-        assertThat(celebrant.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(celebrant.getId())).isGreaterThan(0);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
@@ -62,7 +62,7 @@ class CombatCelebrantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(otherCreature.isTapped()).isTrue();
-        assertThat(celebrant.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(celebrant.getId())).isZero();
         harness.forceStep(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
@@ -82,7 +82,7 @@ class CombatCelebrantTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(otherCreature.isTapped()).isTrue();
-        assertThat(celebrant.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(celebrant.getId())).isGreaterThan(0);
     }
 
     @Test

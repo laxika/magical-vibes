@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BurstOfEnergy;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.cards.v.Vanishing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,13 +53,11 @@ class SomnophoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(damagedPlayersCreature.isTapped()).isTrue();
-        assertThat(damagedPlayersCreature.getUntapPreventedWhileSourceOnBattlefieldIds())
-                .contains(somnophore.getId());
 
         advanceToUpkeep(player2);
         assertThat(damagedPlayersCreature.isTapped()).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).remove(somnophore);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, somnophore);
         advanceToUpkeep(player1);
         advanceToUpkeep(player2);
 
@@ -133,6 +135,28 @@ class SomnophoreTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(somnophore.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Somnophore.class, CoralMerfolk.class, BurstOfEnergy.class})
+    @DisplayName("The lock only keeps it tapped during its controller's untap step: an untap effect untaps it")
+    void untapEffectUntapsLockedCreature() {
+        Permanent somnophore = addCreatureReady(player1, new Somnophore());
+        somnophore.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new CoralMerfolk());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
     }
 
     @Test

@@ -45,7 +45,7 @@ class LabyrinthMinotaurTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
     }
 
     @Test

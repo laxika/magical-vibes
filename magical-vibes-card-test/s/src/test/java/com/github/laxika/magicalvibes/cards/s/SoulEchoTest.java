@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -201,6 +202,37 @@ class SoulEchoTest extends BaseCardTest {
 
         harness.assertLife(player1, -2);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @CardUsed({StealEnchantment.class})
+    @DisplayName("The replacement stays with the player who controlled Soul Echo as it was chosen, not its new controller")
+    void replacementStaysWithItsPlayerWhenSoulEchoChangesControl() {
+        Permanent echo = echoAtUpkeep(5);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new StealEnchantment()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castEnchantment(player2, 0, echo.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Soul Echo");
+
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+        assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(5);
+
+        incinerateController();
+
+        harness.assertLife(player1, 20);
+        assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(2);
     }
 
     @Test

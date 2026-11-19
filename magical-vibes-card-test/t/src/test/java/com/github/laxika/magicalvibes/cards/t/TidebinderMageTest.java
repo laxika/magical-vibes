@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -69,7 +71,8 @@ class TidebinderMageTest extends BaseCardTest {
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             bears.tap();
-            bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(mage.getId());
+            gd.addEffectOnPermanent("Tidebinder Mage", mage.getId(), player1.getId(),
+                    DoesntUntapEffect.targetWhileSourceControlled(), bears.getId(), Duration.WHILE_SOURCE_CONTROLLED);
 
             harness.performUntapStep(player2);
 
@@ -83,7 +86,8 @@ class TidebinderMageTest extends BaseCardTest {
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             bears.tap();
-            bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(mage.getId());
+            gd.addEffectOnPermanent("Tidebinder Mage", mage.getId(), player1.getId(),
+                    DoesntUntapEffect.targetWhileSourceControlled(), bears.getId(), Duration.WHILE_SOURCE_CONTROLLED);
 
             gd.playerBattlefields.get(player1.getId()).remove(mage);
 

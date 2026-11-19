@@ -28,7 +28,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -43,7 +43,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(attacker.isTapped()).isTrue();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test
@@ -57,7 +57,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(land.isTapped()).isFalse();
-        assertThat(land.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isZero();
     }
 
     @Test
@@ -72,7 +72,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
 
         assertThat(ojutai.isAttacking()).isFalse();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -90,8 +90,8 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -123,10 +123,10 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }
@@ -142,7 +142,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test
@@ -156,7 +156,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(artifact.isTapped()).isFalse();
-        assertThat(artifact.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(artifact.getId())).isZero();
     }
 
     @Test
@@ -189,7 +189,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

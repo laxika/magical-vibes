@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
 import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -193,18 +194,29 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                         (ctx, permanent) -> damageSupport.getObject().applyDamageToControllerCounterReplacement(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
                 perPermanent("SoulEcho",
-                        ctx -> ctx.gameData().playerBattlefields.getOrDefault(ctx.playerId(), List.of()).stream()
-                                .filter(Permanent::isEchoDamageRedirectionActive).toList(),
+                        ctx -> soulEchoes(ctx.gameData(), ctx.playerId()),
                         permanent -> permanent.getCard().getName() + ": remove echo counters instead",
                         (ctx, permanent) -> damageSupport.getObject().applySoulEchoCounterRemoval(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
                 wholeEventReplacement("SoulEchoGone", "Soul Echo: remove echo counters instead",
                         ctx -> ctx.gameData().hasFloatingEffectOnPlayer(ctx.playerId(), SoulEchoUpkeepEffect.class)
-                                && ctx.gameData().playerBattlefields.getOrDefault(ctx.playerId(), List.of()).stream()
-                                .noneMatch(Permanent::isEchoDamageRedirectionActive),
+                                && soulEchoes(ctx.gameData(), ctx.playerId()).isEmpty(),
                         PlayerDamageContext::amount,
                         " is replaced by a Soul Echo that left the battlefield.").whole(),
                 counterOnSelfPrevention());
+    }
+
+    /**
+     * The Soul Echoes on the battlefield whose "for each 1 damage that would be dealt to you until your next upkeep,
+     * you remove an echo counter from this enchantment instead" applies to {@code playerId}, whoever controls them now.
+     */
+    private List<Permanent> soulEchoes(GameData gameData, UUID playerId) {
+        return gameData.floatingEffectsOnPlayer(playerId, SoulEchoUpkeepEffect.class).stream()
+                .filter(effect -> playerId.equals(effect.affectedPlayerId()) && effect.sourcePermanentId() != null)
+                .map(effect -> gameQueryService.findPermanentById(gameData, effect.sourcePermanentId()))
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
     }
 
     @Override

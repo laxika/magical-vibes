@@ -29,9 +29,9 @@ class SaibaTrespassersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(first.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
         assertThat(second.isTapped()).isTrue();
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Saiba Trespassers");
     }
 
@@ -47,7 +47,7 @@ class SaibaTrespassersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +77,7 @@ class SaibaTrespassersTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
         assertThat(untouched.isTapped()).isFalse();
-        assertThat(untouched.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(untouched.getId())).isZero();
     }
 
     @Test
@@ -91,10 +91,10 @@ class SaibaTrespassersTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }

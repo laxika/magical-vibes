@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventPhaseOutEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -45,7 +46,7 @@ public class PreventPhaseOutEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        subject.preventPhaseOutUntilUpkeepOf(entry.getControllerId());
+        gameData.addEffectOnPermanent(entry, effect, subject.getId(), Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP);
         gameLogService.append(gameData, GameLog.cardThen(subject.getCard(), " can't phase out."));
     }
 }

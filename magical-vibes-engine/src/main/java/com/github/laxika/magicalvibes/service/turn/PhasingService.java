@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.PreventPhaseOutEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -134,7 +135,7 @@ public class PhasingService {
         Deque<Permanent> pending = new ArrayDeque<>();
         permanents.stream()
                 .filter(permanent -> controllerOf(gameData, permanent) != null)
-                .filter(PhasingService::canPhaseOut)
+                .filter(permanent -> canPhaseOut(gameData, permanent))
                 .forEach(permanent -> {
                     permanent.setPhasedOutIndirectly(false);
                     if (phasingOut.add(permanent)) {
@@ -157,7 +158,7 @@ public class PhasingService {
     public void phaseOutUntilPlaneswalk(GameData gameData, Collection<Permanent> permanents) {
         List<Permanent> directPermanents = permanents.stream()
                 .filter(permanent -> controllerOf(gameData, permanent) != null)
-                .filter(PhasingService::canPhaseOut)
+                .filter(permanent -> canPhaseOut(gameData, permanent))
                 .toList();
         phaseOut(gameData, directPermanents);
         directPermanents.stream()
@@ -234,7 +235,7 @@ public class PhasingService {
                                            UUID controllerId) {
         List<Permanent> directPermanents = permanents.stream()
                 .filter(permanent -> controllerOf(gameData, permanent) != null)
-                .filter(PhasingService::canPhaseOut)
+                .filter(permanent -> canPhaseOut(gameData, permanent))
                 .toList();
         phaseOut(gameData, directPermanents);
         directPermanents.stream()
@@ -392,12 +393,6 @@ public class PhasingService {
         preparedSupport.releasePreparedCopyOnPhaseOut(gameData, permanent);
         gameData.playerBattlefields.get(controllerId).remove(permanent);
         phasedOutList(gameData, controllerId).add(permanent);
-        // The untap locks that last for as long as this permanent stays on the battlefield end (CR 702.26f).
-        UUID phasedOutId = permanent.getId();
-        gameData.forEachPermanent((ownerId, other) -> {
-            other.getUntapPreventedWhileSourceOnBattlefieldIds().remove(phasedOutId);
-            other.getUntapPreventedByPermanentIds().remove(phasedOutId);
-        });
     }
 
     /**
@@ -516,7 +511,7 @@ public class PhasingService {
         if (battlefield != null) {
             List.copyOf(battlefield).stream()
                     .filter(permanent -> gameQueryService.hasKeyword(gameData, permanent, Keyword.PHASING))
-                    .filter(PhasingService::canPhaseOut)
+                    .filter(permanent -> canPhaseOut(gameData, permanent))
                     .forEach(permanent -> {
                         permanent.setPhasedOutIndirectly(false);
                         phasingOut.add(permanent);
@@ -567,7 +562,7 @@ public class PhasingService {
         gameData.forEachBattlefield((controllerId, battlefield) -> List.copyOf(battlefield).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .filter(permanent -> gameQueryService.hasKeyword(gameData, permanent, Keyword.PHASING))
-                .filter(PhasingService::canPhaseOut)
+                .filter(permanent -> canPhaseOut(gameData, permanent))
                 .forEach(permanent -> {
                     permanent.setPhasedOutIndirectly(false);
                     phasingOut.add(permanent);
@@ -604,7 +599,7 @@ public class PhasingService {
             Permanent host = pending.poll();
             gameData.forEachBattlefield((controllerId, permanents) -> List.copyOf(permanents).stream()
                     .filter(permanent -> host.getId().equals(permanent.getAttachedTo()))
-                    .filter(PhasingService::canPhaseOut)
+                    .filter(permanent -> canPhaseOut(gameData, permanent))
                     .filter(permanent -> !phasingOut.contains(permanent) || !permanent.isPhasedOutIndirectly())
                     .forEach(permanent -> {
                         permanent.setPhasedOutIndirectly(true);
@@ -616,12 +611,12 @@ public class PhasingService {
     }
 
     /**
-     * Whether {@code permanent} is currently allowed to phase out. Spatial Binding's "target permanent
-     * can't phase out" marks it with the protecting player's id until that player's next upkeep; a
-     * marked permanent is skipped by every phasing pass, direct and indirect (CR 702.26g) alike.
+     * Whether {@code permanent} is currently allowed to phase out: no resolved "it can't phase out" effect is on it
+     * (Spatial Binding, until its controller's next upkeep). Such a permanent is skipped by every phasing pass, direct
+     * and indirect (CR 702.26g) alike.
      */
-    private static boolean canPhaseOut(Permanent permanent) {
-        return permanent.canPhaseOut();
+    private static boolean canPhaseOut(GameData gameData, Permanent permanent) {
+        return !gameData.hasFloatingEffectOnPermanent(permanent.getId(), PreventPhaseOutEffect.class);
     }
 
     private UUID controllerOf(GameData gameData, Permanent permanent) {

@@ -55,7 +55,7 @@ class NefCropEntanglerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(entangler.isTapped()).isTrue();
-        assertThat(entangler.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(entangler.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -68,7 +68,7 @@ class NefCropEntanglerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, entangler)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, entangler)).isEqualTo(1);
-        assertThat(entangler.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(entangler.getId())).isZero();
     }
 
     @Test
@@ -80,7 +80,7 @@ class NefCropEntanglerTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(entangler.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(entangler.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, entangler)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, entangler)).isEqualTo(1);
         });

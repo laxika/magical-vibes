@@ -59,7 +59,7 @@ class GloryBoundInitiateTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(initiate.isTapped()).isTrue();
-        assertThat(initiate.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(initiate.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -74,7 +74,7 @@ class GloryBoundInitiateTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, initiate)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, initiate)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, initiate, Keyword.LIFELINK)).isFalse();
-        assertThat(initiate.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(initiate.getId())).isZero();
     }
 
     @Test
@@ -87,7 +87,7 @@ class GloryBoundInitiateTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(initiate.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(initiate.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, initiate)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, initiate, Keyword.LIFELINK)).isFalse();
         });

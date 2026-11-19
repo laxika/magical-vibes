@@ -28,7 +28,7 @@ class GripOfTheRoilTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Grip of the Roil");
         harness.assertInHand(player1, "Island");
     }
@@ -48,7 +48,7 @@ class GripOfTheRoilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(secondTarget.isTapped()).isTrue();
-        assertThat(secondTarget.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(secondTarget.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -89,10 +89,10 @@ class GripOfTheRoilTest extends BaseCardTest {
         harness.assertInHand(player1, "Island");
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }

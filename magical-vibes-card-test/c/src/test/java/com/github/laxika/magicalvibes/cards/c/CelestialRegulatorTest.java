@@ -27,12 +27,12 @@ class CelestialRegulatorTest extends BaseCardTest {
         castRegulator(target);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test
@@ -43,7 +43,7 @@ class CelestialRegulatorTest extends BaseCardTest {
         castRegulator(target);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 

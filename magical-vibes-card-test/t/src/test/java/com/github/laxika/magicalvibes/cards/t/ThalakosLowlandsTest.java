@@ -25,7 +25,7 @@ class ThalakosLowlandsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(lowlands.isTapped()).isTrue();
-        assertThat(lowlands.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(lowlands.getId())).isZero();
         // Mana ability — does not use the stack
         assertThat(gd.stack).isEmpty();
     }
@@ -39,7 +39,7 @@ class ThalakosLowlandsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(lowlands.isTapped()).isTrue();
-        assertThat(lowlands.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(lowlands.getId())).isGreaterThan(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -52,7 +52,7 @@ class ThalakosLowlandsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(lowlands.isTapped()).isTrue();
-        assertThat(lowlands.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(lowlands.getId())).isGreaterThan(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -67,7 +67,7 @@ class ThalakosLowlandsTest extends BaseCardTest {
         harness.performUntapStep(player1);
 
         assertThat(activatedLowlands.isTapped()).isTrue();
-        assertThat(activatedLowlands.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(activatedLowlands.getId())).isZero();
         assertThat(otherLowlands.isTapped()).isFalse();
 
         harness.performUntapStep(player1);
@@ -86,7 +86,7 @@ class ThalakosLowlandsTest extends BaseCardTest {
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);
         assertThat(lowlands.isTapped()).isTrue();
-        assertThat(lowlands.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(lowlands.getId())).isZero();
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);

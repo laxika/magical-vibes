@@ -48,7 +48,7 @@ class SleepTest extends BaseCardTest {
 
             castAndResolveSleep(player2.getId());
 
-            assertThat(battlefield).allMatch(p -> p.getSkipUntapCount() == 1);
+            assertThat(battlefield).allMatch(p -> gd.nextUntapStepsSkipped(p.getId()) == 1);
         }
 
         @Test
@@ -61,7 +61,7 @@ class SleepTest extends BaseCardTest {
             castAndResolveSleep(player2.getId());
 
             assertThat(artifact.isTapped()).isFalse();
-            assertThat(artifact.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(artifact.getId())).isZero();
         }
 
         @Test
@@ -75,7 +75,7 @@ class SleepTest extends BaseCardTest {
             castAndResolveSleep(player2.getId());
 
             assertThat(bears.isTapped()).isTrue();
-            assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         }
 
         @Test
@@ -88,7 +88,7 @@ class SleepTest extends BaseCardTest {
             castAndResolveSleep(player2.getId());
 
             assertThat(casterCreature.isTapped()).isFalse();
-            assertThat(casterCreature.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(casterCreature.getId())).isZero();
         }
 
         @Test
@@ -100,7 +100,7 @@ class SleepTest extends BaseCardTest {
             castAndResolveSleep(player1.getId());
 
             assertThat(ownCreature.isTapped()).isTrue();
-            assertThat(ownCreature.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(ownCreature.getId())).isEqualTo(1);
         }
 
         @Test

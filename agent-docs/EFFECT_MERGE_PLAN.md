@@ -503,8 +503,8 @@ where a merged handler could read the controller instead), and the sibling-queue
 `FalsePeaceTest.resolvingFlagsTargetPlayer`.
 
 **Do NOT merge**: `SkipDrawStepEffect` (static marker read by `StepTriggerService`, no handler),
-`PlayersSkipUntapStepEffect` (global static, Sands of Time) and `SkipNextUntapEffect` (marks
-per-`Permanent` `skipUntapCount`; the step still happens). The distinction is documented in
+`PlayersSkipUntapStepEffect` (global static, Sands of Time) and `SkipNextUntapEffect` (a
+floating effect on each permanent; the step still happens). The distinction is documented in
 `SkipKind`'s javadoc and in each of their own. Still true after the merge.
 
 ---

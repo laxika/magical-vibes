@@ -48,7 +48,7 @@ class MesmerizingBenthidTest extends BaseCardTest {
         blockWithTokens(attacker, List.of(token));
         harness.passBothPriorities();
 
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -99,7 +99,7 @@ class MesmerizingBenthidTest extends BaseCardTest {
         attacker.tap();
 
         blockWithTokens(attacker, List.of(token));
-        assertThat(attacker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
         gd.playerBattlefields.get(player1.getId()).remove(token);
         resolveAllTriggers();
 

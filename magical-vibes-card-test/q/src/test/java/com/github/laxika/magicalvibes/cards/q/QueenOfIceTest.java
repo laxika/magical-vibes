@@ -31,7 +31,7 @@ class QueenOfIceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
     }
 
@@ -48,7 +48,7 @@ class QueenOfIceTest extends BaseCardTest {
 
         Permanent spider = findPermanent(player2, "Giant Spider");
         assertThat(spider.isTapped()).isTrue();
-        assertThat(spider.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(spider.getId())).isEqualTo(1);
     }
 
     @Test

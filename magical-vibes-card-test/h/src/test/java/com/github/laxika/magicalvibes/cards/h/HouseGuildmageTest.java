@@ -35,7 +35,7 @@ class HouseGuildmageTest extends BaseCardTest {
 
         assertThat(guildmage.isTapped()).isTrue();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
     }
 
     @Test

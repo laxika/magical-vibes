@@ -29,7 +29,7 @@ class TakeIntoCustodyTest extends BaseCardTest {
         castTakeIntoCustody(creature);
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
 
         advanceToNextTurn(player1);
         assertThat(creature.isTapped()).isTrue();

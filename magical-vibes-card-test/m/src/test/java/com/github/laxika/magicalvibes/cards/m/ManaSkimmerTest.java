@@ -32,7 +32,7 @@ class ManaSkimmerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(damagedLand.isTapped()).isTrue();
-        assertThat(damagedLand.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(damagedLand.getId())).isEqualTo(1);
         assertThat(ownLand.isTapped()).isFalse();
     }
 
@@ -62,7 +62,7 @@ class ManaSkimmerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         assertThat(damagedLand.isTapped()).isTrue();
-        assertThat(damagedLand.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(damagedLand.getId())).isZero();
     }
 
     @Test
@@ -123,7 +123,7 @@ class ManaSkimmerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isFalse();
-        assertThat(land.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -99,15 +100,10 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
         }
 
         for (Permanent target : targets) {
-            if (!target.isCopyUntilEndOfTurn()) {
-                target.setPreCopyCard(target.getCard());
-            }
+            Card preCopyCard = PermanentCopierService.preCopyCard(gameData, target);
             permanentCopierService.applyCloneCopy(target, chosen, null, null);
-            target.setCopyUntilEndOfTurn(true);
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), target.getId(),
-                    entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                    target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+            PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), target.getId(), entry.getControllerId(),
+                    target, preCopyCard, Duration.UNTIL_END_OF_TURN);
         }
 
         gameLogService.append(gameData, GameLog.text(

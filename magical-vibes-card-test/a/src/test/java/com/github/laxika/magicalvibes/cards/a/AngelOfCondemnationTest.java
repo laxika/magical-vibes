@@ -73,7 +73,7 @@ class AngelOfCondemnationTest extends BaseCardTest {
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
 
         assertThat(angel.isTapped()).isTrue();
-        assertThat(angel.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(angel.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -138,7 +138,7 @@ class AngelOfCondemnationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
 
         assertThat(angel.isTapped()).isTrue();
-        assertThat(angel.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(angel.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Frilled Sandwalla");
     }
 

@@ -856,11 +856,6 @@ public class GameData {
     /** Sums the last-known effective power of creature deaths by effective subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathPowerThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
-    /**
-     * Source permanent ids whose resolved ability gave them "if a creature dealt damage by this creature this turn
-     * would die, exile it instead" (Runesword). The effect outlives the source leaving the battlefield.
-     */
-    public final Set<UUID> exileDamagedCreaturesSourceIdsThisTurn = ConcurrentHashMap.newKeySet();
     /** Source object id (permanent or spell card) → creature card ids it damaged this turn. */
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySource = new ConcurrentHashMap<>();
     /** Controller id → creature card ids damaged this turn by a source that controller controlled at the time of damage. */
@@ -903,8 +898,6 @@ public class GameData {
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ExileZoneList());
-    /** Original card objects replaced by Bombardment until cleanup. */
-    public final Map<UUID, Card> bombardmentOriginalCardsUntilEndOfTurn = new ConcurrentHashMap<>();
     /** Number of cards put into exile during the current turn. */
     public int cardsExiledThisTurn;
     /** Whether any card has been put into exile during the current turn. */
@@ -1759,10 +1752,6 @@ public class GameData {
     /** Players who play with their hand revealed for the rest of the game (e.g. Truth or Dare). */
     public final Set<UUID> playersWithHandRevealed = ConcurrentHashMap.newKeySet();
 
-    /** Tracks source-linked animations (Awakener Druid-style).
-     *  Maps animated target permanent UUID → source permanent UUID.
-     *  When the source leaves the battlefield, the target's animation is cleared. */
-    public final Map<UUID, UUID> sourceLinkedAnimations = new ConcurrentHashMap<>();
 
     /** Temporary characteristic changes applied to a card while it remains in a graveyard: an effect on that card. */
     public record GraveyardCardAnimation(int power, int toughness, Set<CardColor> grantedColors,
@@ -4749,6 +4738,82 @@ public class GameData {
                 com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
     }
 
+    /**
+     * "It doesn't untap during its controller's next {@code untapSteps} untap steps" on the permanent {@code permanentId},
+     * made by the resolving {@code entry} or, with {@code untapStepPlayerId}, during that player's next untap step only
+     * (exert, CR 701.43a): its own floating effect, used up as it applies (see
+     * {@link com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect}).
+     */
+    public void skipNextUntapSteps(StackEntry entry, UUID permanentId, int untapSteps, UUID untapStepPlayerId) {
+        skipNextUntapSteps(entry.getCard() == null ? null : entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), permanentId, untapSteps, untapStepPlayerId);
+    }
+
+    /**
+     * {@link #skipNextUntapSteps(StackEntry, UUID, int, UUID)} made where no resolving entry is at hand: an exert paid
+     * as a cost, a mana ability.
+     */
+    public void skipNextUntapSteps(String sourceCardName, UUID sourcePermanentId, UUID controllerId, UUID permanentId,
+                                   int untapSteps, UUID untapStepPlayerId) {
+        addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId,
+                new com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect(untapSteps,
+                        untapStepPlayerId), permanentId, Duration.PERMANENT);
+    }
+
+    /** The "doesn't untap during its next untap step" effects on {@code permanentId} that apply during {@code activePlayerId}'s. */
+    public List<FloatingContinuousEffect> nextUntapStepSkips(UUID permanentId, UUID activePlayerId) {
+        return floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect.class).stream()
+                .filter(fe -> ((com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect) fe.effect())
+                        .appliesDuringUntapStepOf(activePlayerId))
+                .toList();
+    }
+
+    /**
+     * For how many of its next untap steps the permanent {@code permanentId} won't untap, by the resolved "doesn't untap
+     * during its next untap step" effects on it: the most any of them still applies to, or 0 for none.
+     */
+    public int nextUntapStepsSkipped(UUID permanentId) {
+        return floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect.class).stream()
+                .mapToInt(fe -> ((com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect)
+                        fe.effect()).untapSteps())
+                .max().orElse(0);
+    }
+
+    /**
+     * Uses up one untap step of each "doesn't untap during its next untap step" effect on {@code permanentId} that
+     * applies during {@code activePlayerId}'s untap step, as that step keeps it tapped: each is replaced by one for a
+     * step fewer, or ends after its last. Returns whether there was one.
+     */
+    public boolean useNextUntapStepSkips(UUID permanentId, UUID activePlayerId) {
+        List<FloatingContinuousEffect> skips = nextUntapStepSkips(permanentId, activePlayerId);
+        for (FloatingContinuousEffect fe : skips) {
+            var skip = (com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect) fe.effect();
+            if (skip.untapSteps() > 1) {
+                replaceFloatingEffect(fe, fe.withEffect(new com.github.laxika.magicalvibes.model.effect
+                        .DoesntUntapDuringNextUntapStepsEffect(skip.untapSteps() - 1, skip.untapStepPlayerId())));
+            } else {
+                endFloatingEffect(fe);
+            }
+        }
+        return !skips.isEmpty();
+    }
+
+    /**
+     * Ends the "doesn't untap during your next untap step" effects owed to {@code playerId}'s untap step as it ends,
+     * wherever their permanents are and whoever controls them (CR 701.43a, 701.43b).
+     */
+    public void endNextUntapStepSkipsOf(UUID playerId) {
+        for (FloatingContinuousEffect fe : floatingEffectsOfTypes(
+                com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect.class)) {
+            if (playerId.equals(((com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect)
+                    fe.effect()).untapStepPlayerId())) {
+                endFloatingEffect(fe);
+            }
+        }
+    }
+
     /** The "don't untap during the next untap step" effects waiting on {@code playerId}'s untap step, oldest first. */
     public List<FloatingContinuousEffect> nextUntapStepRestrictions(UUID playerId) {
         return floatingEffectsOnPlayer(playerId, SkipNextUntapEffect.class).stream()
@@ -5133,6 +5198,21 @@ public class GameData {
     public boolean damageCantBePreventedOrRedirected(UUID permanentId) {
         return hasFloatingEffectOnPermanent(permanentId,
                 com.github.laxika.magicalvibes.model.effect.DamageToTargetCreatureCantBePreventedOrRedirectedThisTurnEffect.class);
+    }
+
+    /**
+     * The loyalty activations the planeswalker {@code permanentId} may make this turn on top of its allowance, by the
+     * resolved effects on it, applied in timestamp order: each adds one (Comet, Stellar Pup), and one that makes it
+     * "twice this turn rather than only once" raises the extra to one at least (Kaito, Dancing Shadow).
+     */
+    public int extraLoyaltyActivationsThisTurn(UUID permanentId) {
+        int extra = 0;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect.class)) {
+            extra = ((com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect) fe.effect())
+                    .nonStacking() ? Math.max(extra, 1) : extra + 1;
+        }
+        return extra;
     }
 
     /** Whether the permanent {@code permanentId} can't be regenerated this turn, by a resolved effect on it. */
@@ -8347,7 +8427,7 @@ public class GameData {
 
     /** Applies Bombardment's temporary characteristic replacement to the controller's card objects. */
     public void applyBombardment(UUID controllerId, StackEntry resolvingEntry) {
-        Map<UUID, Card> replacements = new HashMap<>();
+        BombardmentPass replacements = new BombardmentPass(new HashMap<>(), new HashMap<>());
         transformZoneForBombardment(playerHands.get(controllerId), controllerId, replacements);
         transformZoneForBombardment(playerDecks.get(controllerId), controllerId, replacements);
         transformZoneForBombardment(playerGraveyards.get(controllerId), controllerId, replacements);
@@ -8375,10 +8455,38 @@ public class GameData {
         if (resolvingEntry != null) {
             transformStackEntryForBombardment(resolvingEntry, controllerId, replacements, false);
         }
+        Map<UUID, Card> originals = replacements.originals();
+        if (!originals.isEmpty()) {
+            addFloatingEffect(FloatingContinuousEffect.onPlayer(
+                    resolvingEntry == null || resolvingEntry.getCard() == null ? null : resolvingEntry.getCard().getName(),
+                    resolvingEntry == null ? null : resolvingEntry.getSourcePermanentId(), controllerId,
+                    new com.github.laxika.magicalvibes.model.effect.BombardmentEffect(originals), controllerId,
+                    com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
+        }
+    }
+
+    /**
+     * One Bombardment resolution's changes: the Missile made for each card id, and the card each was before any Missile
+     * change this turn.
+     */
+    private record BombardmentPass(Map<UUID, Card> missiles, Map<UUID, Card> originals) {
+    }
+
+    /** The card {@code cardId} was before a Bombardment effect in force made it a Missile, or {@code null}. */
+    private Card bombardmentOriginal(UUID cardId) {
+        for (FloatingContinuousEffect fe : floatingEffectsOfTypes(
+                com.github.laxika.magicalvibes.model.effect.BombardmentEffect.class)) {
+            Card original = ((com.github.laxika.magicalvibes.model.effect.BombardmentEffect) fe.effect())
+                    .originalCards().get(cardId);
+            if (original != null) {
+                return original;
+            }
+        }
+        return null;
     }
 
     private void transformZoneForBombardment(List<Card> zone, UUID controllerId,
-                                             Map<UUID, Card> replacements) {
+                                             BombardmentPass replacements) {
         if (zone == null) return;
         for (int i = 0; i < zone.size(); i++) {
             Card card = zone.get(i);
@@ -8390,7 +8498,7 @@ public class GameData {
     }
 
     private void transformStackEntryForBombardment(StackEntry entry, UUID controllerId,
-                                                   Map<UUID, Card> replacements,
+                                                   BombardmentPass replacements,
                                                    boolean convertSpellState) {
         if (!controllerId.equals(entry.getOwnerId())) return;
         Card castCard = entry.getCastCard();
@@ -8414,16 +8522,17 @@ public class GameData {
         }
     }
 
-    private Card transformCardForBombardment(Card card, Map<UUID, Card> replacements) {
+    private Card transformCardForBombardment(Card card, BombardmentPass replacements) {
         if (card == null || isCardOnBattlefield(card.getId())) return null;
-        Card replacement = replacements.get(card.getId());
+        Card replacement = replacements.missiles().get(card.getId());
         if (replacement != null) return replacement;
-        Card original = bombardmentOriginalCardsUntilEndOfTurn.putIfAbsent(card.getId(), card);
+        Card original = bombardmentOriginal(card.getId());
         if (original == null) original = card;
+        replacements.originals().put(card.getId(), original);
         Card missile = original.createRuntimeCopy();
         missile.becomeMissile();
         missile.freeze();
-        replacements.put(card.getId(), missile);
+        replacements.missiles().put(card.getId(), missile);
         return missile;
     }
 
@@ -8447,7 +8556,7 @@ public class GameData {
 
     public void restoreBombardmentCardForBattlefield(Permanent permanent) {
         Card original = permanent == null || permanent.getCard() == null
-                ? null : bombardmentOriginalCardsUntilEndOfTurn.get(permanent.getCard().getId());
+                ? null : bombardmentOriginal(permanent.getCard().getId());
         if (original != null) {
             permanent.restoreBombardmentCard(original);
         }
@@ -8455,8 +8564,22 @@ public class GameData {
 
     /** Ends Bombardment's characteristic replacement when the card changes zones. */
     public Card restoreBombardmentCardForZoneChange(Card card) {
-        Card original = bombardmentOriginalCardsUntilEndOfTurn.remove(card.getId());
-        return original != null ? original : card;
+        Card original = bombardmentOriginal(card.getId());
+        if (original == null) {
+            return card;
+        }
+        for (FloatingContinuousEffect fe : floatingEffectsOfTypes(
+                com.github.laxika.magicalvibes.model.effect.BombardmentEffect.class)) {
+            Map<UUID, Card> originals = ((com.github.laxika.magicalvibes.model.effect.BombardmentEffect) fe.effect())
+                    .originalCards();
+            if (originals.containsKey(card.getId())) {
+                Map<UUID, Card> remaining = new HashMap<>(originals);
+                remaining.remove(card.getId());
+                replaceFloatingEffect(fe, fe.withEffect(
+                        new com.github.laxika.magicalvibes.model.effect.BombardmentEffect(remaining)));
+            }
+        }
+        return original;
     }
 
     /** Randomized library cards become new objects and lose their Missile characteristics. */
@@ -8468,18 +8591,21 @@ public class GameData {
         }
     }
 
-    /** Restores all temporary Bombardment replacements at cleanup. */
-    public void restoreBombardmentCards() {
-        restoreZoneFromBombardment(playerHands);
-        restoreZoneFromBombardment(playerDecks);
-        restoreZoneFromBombardment(playerGraveyards);
-        restoreZoneFromBombardment(playerSideboards);
-        restoreZoneFromBombardment(playerCommandZones);
-        restoreZoneFromBombardment(playerCommanders);
+    /**
+     * Gives the cards in {@code originalCards}, by id, their own characteristics back wherever they are outside the
+     * battlefield: a Bombardment effect ended (CR 514.2).
+     */
+    public void restoreBombardmentCards(Map<UUID, Card> originalCards) {
+        restoreZoneFromBombardment(playerHands, originalCards);
+        restoreZoneFromBombardment(playerDecks, originalCards);
+        restoreZoneFromBombardment(playerGraveyards, originalCards);
+        restoreZoneFromBombardment(playerSideboards, originalCards);
+        restoreZoneFromBombardment(playerCommandZones, originalCards);
+        restoreZoneFromBombardment(playerCommanders, originalCards);
         synchronized (exiledCards) {
             for (int i = 0; i < exiledCards.size(); i++) {
                 ExiledCardEntry entry = exiledCards.get(i);
-                Card original = bombardmentOriginalCardsUntilEndOfTurn.get(entry.card().getId());
+                Card original = originalCards.get(entry.card().getId());
                 if (original != null) {
                     exiledCards.set(i, new ExiledCardEntry(original, entry.ownerId(), entry.sourcePermanentId(),
                             entry.faceDown(), entry.exilerId(), entry.exiledTurnNumber(),
@@ -8489,30 +8615,29 @@ public class GameData {
         }
         synchronized (stack) {
             for (StackEntry entry : stack) {
-                restoreStackEntryFromBombardment(entry);
+                restoreStackEntryFromBombardment(entry, originalCards);
             }
         }
-        bombardmentOriginalCardsUntilEndOfTurn.clear();
     }
 
-    private void restoreZoneFromBombardment(Map<UUID, List<Card>> zones) {
+    private void restoreZoneFromBombardment(Map<UUID, List<Card>> zones, Map<UUID, Card> originalCards) {
         for (List<Card> zone : zones.values()) {
             for (int i = 0; i < zone.size(); i++) {
-                Card original = bombardmentOriginalCardsUntilEndOfTurn.get(zone.get(i).getId());
+                Card original = originalCards.get(zone.get(i).getId());
                 if (original != null) zone.set(i, original);
             }
         }
     }
 
-    private void restoreStackEntryFromBombardment(StackEntry entry) {
+    private void restoreStackEntryFromBombardment(StackEntry entry, Map<UUID, Card> originalCards) {
         Card castCard = entry.getCastCard();
-        Card original = castCard == null ? null : bombardmentOriginalCardsUntilEndOfTurn.get(castCard.getId());
+        Card original = castCard == null ? null : originalCards.get(castCard.getId());
         if (original != null) entry.setCastCard(original);
         Card physicalCard = entry.getPhysicalCard();
-        original = physicalCard == null ? null : bombardmentOriginalCardsUntilEndOfTurn.get(physicalCard.getId());
+        original = physicalCard == null ? null : originalCards.get(physicalCard.getId());
         if (original != null) entry.setPhysicalCard(original);
         Card bestowCard = entry.getBestowOriginalCard();
-        original = bestowCard == null ? null : bombardmentOriginalCardsUntilEndOfTurn.get(bestowCard.getId());
+        original = bestowCard == null ? null : originalCards.get(bestowCard.getId());
         if (original != null) entry.setBestowOriginalCard(original);
         entry.restoreBombardmentSpellState();
     }
@@ -10500,7 +10625,6 @@ public class GameData {
         copy.acceptedDecks.putAll(this.acceptedDecks);
         this.commanderDamageReceived.forEach((id, damage) -> copy.commanderDamageReceived.put(id, new java.util.HashMap<>(damage)));
         copy.exiledCards.addAll(this.exiledCards);
-        copy.bombardmentOriginalCardsUntilEndOfTurn.putAll(this.bombardmentOriginalCardsUntilEndOfTurn);
         copy.hauntingCardToPermanentId.putAll(this.hauntingCardToPermanentId);
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.rebirthAnteAcceptedPlayerIds.addAll(this.rebirthAnteAcceptedPlayerIds);
@@ -10636,7 +10760,6 @@ public class GameData {
                 copy.sacrificedPermanentSubtypeCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
-        copy.exileDamagedCreaturesSourceIdsThisTurn.addAll(this.exileDamagedCreaturesSourceIdsThisTurn);
         this.creatureCardsDamagedThisTurnBySource.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySource.put(k, new HashSet<>(v)));
         this.creatureCardsDamagedThisTurnByController.forEach((k, v) ->
@@ -11035,7 +11158,6 @@ public class GameData {
         copy.playersWithHandRevealed.addAll(this.playersWithHandRevealed);
 
         // --- Source-linked animations (Awakener Druid-style) ---
-        copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
 
         // --- Per-player spell/creature color protection (Autumn's Veil style) ---
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);

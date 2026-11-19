@@ -141,6 +141,29 @@ class MizziumTransreliquatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A permanent copy resolving after a temporary copy doesn't wear off with it at end of turn")
+    void permanentCopyAfterTemporaryCopyStaysAfterCleanup() {
+        Permanent transreliquat = harness.addToBattlefieldAndReturn(player1, new MizziumTransreliquat());
+        Permanent izzetSignet = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
+        Permanent gruulSignet = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, izzetSignet.getId());
+        harness.activateAbility(player1, 0, 0, null, gruulSignet.getId());
+        harness.passBothPriorities();
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Gruul Signet");
+        harness.passBothPriorities();
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Izzet Signet");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Izzet Signet");
+    }
+
+    @Test
     @DisplayName("The first ability may copy itself and then copy another artifact")
     void selfCopyRetainsOriginalAbilities() {
         Permanent transreliquat = harness.addToBattlefieldAndReturn(player1, new MizziumTransreliquat());

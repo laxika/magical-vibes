@@ -51,7 +51,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
         assertThat(steward.isTapped()).isTrue();
 
         harness.passBothPriorities();
-        assertThat(steward.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(steward.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -77,7 +77,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(steward.isTapped()).isTrue();
-        assertThat(steward.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(steward.getId())).isEqualTo(1);
         assertThat(findPermanents(player1, "Warrior")).isEmpty();
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Warrior")).hasSize(1);

@@ -74,7 +74,7 @@ class PollenLullabyTest extends BaseCardTest {
 
         castPollenLullaby();
 
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -87,7 +87,7 @@ class PollenLullabyTest extends BaseCardTest {
 
         castPollenLullaby();
 
-        assertThat(ownCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(ownCreature.getId())).isZero();
     }
 
     @Test
@@ -100,7 +100,7 @@ class PollenLullabyTest extends BaseCardTest {
         opponentCreature.tap();
 
         castPollenLullaby();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
 
         advanceToUpkeep(player2);
         assertThat(opponentCreature.isTapped()).isTrue();
@@ -131,7 +131,7 @@ class PollenLullabyTest extends BaseCardTest {
 
         castPollenLullaby();
 
-        assertThat(opponentLand.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentLand.getId())).isZero();
     }
 
     @Test
@@ -145,7 +145,7 @@ class PollenLullabyTest extends BaseCardTest {
 
         castPollenLullaby();
 
-        assertThat(opponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isZero();
     }
 
     @Test
@@ -158,7 +158,7 @@ class PollenLullabyTest extends BaseCardTest {
 
         castPollenLullaby();
 
-        assertThat(opponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isZero();
     }
 
     @Test

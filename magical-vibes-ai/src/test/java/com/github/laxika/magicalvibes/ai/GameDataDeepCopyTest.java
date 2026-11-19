@@ -140,6 +140,19 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a permanent's \"doesn't untap during its next untap steps\" effects independent")
+    void deepCopyKeepsNextUntapStepSkipsIndependent() {
+        UUID permanentId = UUID.randomUUID();
+        gd.skipNextUntapSteps("Test", null, player1.getId(), permanentId, 2, null);
+
+        GameData copy = gd.simulationCopy();
+        copy.useNextUntapStepSkips(permanentId, player1.getId());
+
+        assertThat(copy.nextUntapStepsSkipped(permanentId)).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(permanentId)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the effects a departed permanent had as it left, in independent lists")
     void deepCopyKeepsDepartedPermanentEffectsIndependent() {
         UUID departedId = UUID.randomUUID();

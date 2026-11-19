@@ -31,7 +31,7 @@ class StensiaInnkeeperTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isTrue();
-        assertThat(forest.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isEqualTo(1);
     }
 
     @Test

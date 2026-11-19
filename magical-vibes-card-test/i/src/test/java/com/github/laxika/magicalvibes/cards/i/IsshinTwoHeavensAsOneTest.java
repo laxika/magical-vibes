@@ -70,7 +70,7 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
     }
 
     @Test

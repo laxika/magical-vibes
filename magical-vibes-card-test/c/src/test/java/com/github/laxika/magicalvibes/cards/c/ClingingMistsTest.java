@@ -137,13 +137,13 @@ class ClingingMistsTest extends BaseCardTest {
 
             harness.assertLife(player1, 5);
             assertThat(blocker.isTapped()).isFalse();
-            assertThat(blocker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
             assertThat(blocker.getMarkedDamage()).isZero();
             harness.performUntapStep(player2);
             assertThat(firstAttacker.isTapped()).isTrue();
             assertThat(secondAttacker.isTapped()).isTrue();
-            assertThat(firstAttacker.getSkipUntapCount()).isZero();
-            assertThat(secondAttacker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(firstAttacker.getId())).isZero();
+            assertThat(gd.nextUntapStepsSkipped(secondAttacker.getId())).isZero();
         }
 
         @Test
@@ -160,7 +160,7 @@ class ClingingMistsTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(attacker.isTapped()).isTrue();
-            assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         }
 
         @Test
@@ -177,7 +177,7 @@ class ClingingMistsTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(attacker.isTapped()).isFalse();
-            assertThat(attacker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
             assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         }
 
@@ -193,11 +193,11 @@ class ClingingMistsTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             harness.performUntapStep(player1);
-            assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
             harness.performUntapStep(player2);
 
             assertThat(attacker.isTapped()).isTrue();
-            assertThat(attacker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
             harness.performUntapStep(player2);
             assertThat(attacker.isTapped()).isFalse();
         }
@@ -229,7 +229,7 @@ class ClingingMistsTest extends BaseCardTest {
 
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         }
 
         @Test
@@ -245,7 +245,7 @@ class ClingingMistsTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             assertThat(attacker.isTapped()).isTrue();
-            assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         }
 
         @Test
@@ -261,7 +261,7 @@ class ClingingMistsTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             // Attacker may be tapped from attacking, but not from the spell
-            assertThat(attacker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
         }
 
         @Test
@@ -275,7 +275,7 @@ class ClingingMistsTest extends BaseCardTest {
 
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(attacker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isZero();
         }
 
         @Test
@@ -293,9 +293,9 @@ class ClingingMistsTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             assertThat(nonAttacker.isTapped()).isFalse();
-            assertThat(nonAttacker.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(nonAttacker.getId())).isZero();
             assertThat(attacker.isTapped()).isTrue();
-            assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         }
 
         @Test
@@ -311,7 +311,7 @@ class ClingingMistsTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             assertThat(attacker.isTapped()).isTrue();
-            assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
 
             // Advance to player2's untap step
             harness.performUntapStep(player2);

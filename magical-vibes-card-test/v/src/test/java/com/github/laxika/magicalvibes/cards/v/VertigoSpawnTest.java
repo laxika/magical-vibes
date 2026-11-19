@@ -26,7 +26,7 @@ class VertigoSpawnTest extends BaseCardTest {
 
         assertThat(blocker.isTapped()).isFalse();
         assertThat(attacker.isTapped()).isTrue();
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -43,9 +43,9 @@ class VertigoSpawnTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(firstAttacker.isTapped()).isTrue();
-        assertThat(firstAttacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(firstAttacker.getId())).isEqualTo(1);
         assertThat(secondAttacker.isTapped()).isTrue();
-        assertThat(secondAttacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(secondAttacker.getId())).isEqualTo(1);
     }
 
     @Test

@@ -72,7 +72,7 @@ class UndiscoveredParadiseTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "RED");
-        land.setSkipUntapCount(1);
+        gd.skipNextUntapSteps("Test", null, player1.getId(), land.getId(), 1, null);
 
         advanceTurn();
         advanceTurn();

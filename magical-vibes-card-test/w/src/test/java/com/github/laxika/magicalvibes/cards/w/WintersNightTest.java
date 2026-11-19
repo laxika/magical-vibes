@@ -85,7 +85,7 @@ class WintersNightTest extends BaseCardTest {
         harness.tapPermanent(player2, 0);
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
-        assertThat(land.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(land.getId())).isEqualTo(1);
     }
 
     @Test

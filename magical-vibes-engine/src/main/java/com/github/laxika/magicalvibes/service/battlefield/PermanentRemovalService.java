@@ -134,7 +134,6 @@ public class PermanentRemovalService {
     private final ObjectProvider<LayerSystemService> layerSystemServiceProvider;
     private final GameLogService gameLogService;
     private final ExileService exileService;
-    private final UntapLockReleaseService untapLockReleaseService;
     private final DurationClock durationClock;
     private final CreatureControlService creatureControlService;
     private final UnattachTriggerSupport unattachTriggerSupport;
@@ -162,7 +161,6 @@ public class PermanentRemovalService {
                                    ObjectProvider<LayerSystemService> layerSystemServiceProvider,
                                    GameLogService gameLogService,
                                    ExileService exileService,
-                                   UntapLockReleaseService untapLockReleaseService,
                                    @Lazy DurationClock durationClock,
                                    @Lazy CreatureControlService creatureControlService,
                                    UnattachTriggerSupport unattachTriggerSupport,
@@ -180,7 +178,6 @@ public class PermanentRemovalService {
         this.layerSystemServiceProvider = layerSystemServiceProvider;
         this.gameLogService = gameLogService;
         this.exileService = exileService;
-        this.untapLockReleaseService = untapLockReleaseService;
         this.durationClock = durationClock;
         this.creatureControlService = creatureControlService;
         this.unattachTriggerSupport = unattachTriggerSupport;
@@ -2557,13 +2554,12 @@ public class PermanentRemovalService {
         UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
         gameData.stolenCreatures.remove(target.getId());
         // Its "for as long as" effects end as it leaves (CR 611.2b); a departing Aura's copy reverts with them.
-        durationClock.sourceLeft(gameData, target.getId());
+        List<FloatingContinuousEffect> endedBySourceLeaving = durationClock.sourceLeft(gameData, target.getId());
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
         // The effects on it end as it leaves (CR 400.7); its departure, emitted above, still reads them (CR 603.10a).
         durationClock.affectedLeft(gameData, target.getId());
         creatureControlService.reconcileControl(gameData);
-        untapLockReleaseService.releaseUntapLocks(gameData, target);
-        handleSourceLinkedAnimationCleanup(gameData, target);
+        logSourceLinkedAnimationsEnded(gameData, target, endedBySourceLeaving);
         handlePreparedSpellCleanup(gameData, target);
         clearSoulbondPairing(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId, hadPrintedAbilities, lastKnownCard);
@@ -2825,9 +2821,12 @@ public class PermanentRemovalService {
         if (controlledSourceExilesDyingCreature(gameData, cardId)) {
             return true;
         }
-        if (gameData.exileDamagedCreaturesSourceIdsThisTurn.stream()
-                .anyMatch(sourceId -> gameData.creatureCardsDamagedThisTurnBySourcePermanent
-                        .getOrDefault(sourceId, Set.of()).contains(cardId))) {
+        // A resolved "exile it instead" effect on what a creature does (Runesword) applies to the creature as it last
+        // existed after it leaves the battlefield, until end of turn.
+        if (gameData.floatingEffectsOfTypes(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class).stream()
+                .anyMatch(effect -> effect.affectedPermanentId() != null
+                        && gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(effect.affectedPermanentId(), Set.of()).contains(cardId))) {
             return true;
         }
         for (Permanent source : gameData.simultaneousDyingCreatures.values()) {
@@ -3312,42 +3311,33 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Cleans up source-linked animations (Awakener Druid-style) when a permanent leaves the battlefield.
-     * If the removed permanent was a source, reverts the target land back to a normal land.
-     * If the removed permanent was an animated target, removes the tracking entry.
+     * Logs each permanent that is no longer a creature because {@code removedPermanent}, the source of its "for as long
+     * as this remains on the battlefield" animation (Awakener Druid), left: its animation is among the effects
+     * {@code ended} as it left, and no other such animation still applies to it.
      */
-    private void handleSourceLinkedAnimationCleanup(GameData gameData, Permanent removedPermanent) {
-        UUID removedId = removedPermanent.getId();
-
-        // Check if this permanent was a source for any linked animations
-        var iterator = gameData.sourceLinkedAnimations.entrySet().iterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
-            if (entry.getValue().equals(removedId)) {
-                Permanent animatedTarget = gameQueryService.findPermanentById(gameData, entry.getKey());
-                if (animatedTarget != null) {
-                    FloatingContinuousEffect remainingAnimation = gameData.floatingEffects.stream()
-                            .filter(floating -> animatedTarget.getId().equals(floating.affectedPermanentId())
-                                    && Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(floating.duration())
-                                    && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect
-                                    && floating.sourcePermanentId() != null)
-                            .max(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))
-                            .orElse(null);
-                    if (remainingAnimation != null) {
-                        entry.setValue(remainingAnimation.sourcePermanentId());
-                        continue;
-                    }
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(animatedTarget.getCard(), " is no longer a creature."));
+    private void logSourceLinkedAnimationsEnded(GameData gameData, Permanent removedPermanent,
+                                                List<FloatingContinuousEffect> ended) {
+        ended.stream()
+                .filter(PermanentRemovalService::isSourceLinkedAnimation)
+                .map(FloatingContinuousEffect::affectedPermanentId)
+                .distinct()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .filter(animated -> gameData.floatingEffectsOnPermanent(animated.getId(),
+                        com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect.class).stream()
+                        .noneMatch(PermanentRemovalService::isSourceLinkedAnimation))
+                .forEach(animated -> {
+                    gameLogService.append(gameData, GameLog.cardThen(animated.getCard(), " is no longer a creature."));
                     log.info("Game {} - {} reverts to non-creature (source {} left battlefield)",
-                            gameData.id, animatedTarget.getCard().getName(), removedPermanent.getCard().getName());
-                }
-                iterator.remove();
-            }
-        }
+                            gameData.id, animated.getCard().getName(), removedPermanent.getCard().getName());
+                });
+    }
 
-        // Also clean up if the removed permanent was itself an animated target
-        gameData.sourceLinkedAnimations.remove(removedId);
+    /** Whether {@code effect} is the P/T of a "for as long as this remains on the battlefield" animation. */
+    private static boolean isSourceLinkedAnimation(FloatingContinuousEffect effect) {
+        return effect.sourcePermanentId() != null
+                && Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(effect.duration())
+                && effect.effect() instanceof com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
     }
 
     /**

@@ -28,7 +28,7 @@ class CripplingChillTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         harness.assertInHand(player1, "Raging Poltergeist");
     }
 

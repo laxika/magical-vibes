@@ -38,13 +38,13 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
         assertThat(otherOpponentCreature.isTapped()).isFalse();
-        assertThat(otherOpponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(otherOpponentCreature.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(opponentCreature.isTapped()).isFalse();
@@ -70,7 +70,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(0);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(0);
 
         harness.performUntapStep(player2);
         assertThat(opponentCreature.isTapped()).isFalse();
@@ -93,7 +93,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(opponentCreature.isTapped()).isFalse();
@@ -122,7 +122,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isTapped()).isFalse();
-        assertThat(opponentCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isZero();
     }
 
     // ===== Targeting is restricted to opponent creatures =====

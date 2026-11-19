@@ -40,7 +40,7 @@ class NiblisOfFrostTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, niblis)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, niblis)).isEqualTo(4);
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -130,7 +130,7 @@ class NiblisOfFrostTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, niblis)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, niblis)).isEqualTo(4);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isZero();
     }
 
     @Test

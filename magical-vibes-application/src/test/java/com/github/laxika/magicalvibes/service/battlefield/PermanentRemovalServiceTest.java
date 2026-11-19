@@ -142,9 +142,6 @@ class PermanentRemovalServiceTest {
     private ExileService exileService;
 
     @Mock
-    private UntapLockReleaseService untapLockReleaseService;
-
-    @Mock
     private DurationClock durationClock;
 
     @Mock

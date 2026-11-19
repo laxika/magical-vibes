@@ -55,7 +55,7 @@ class HoodedBrawlerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(brawler.isTapped()).isTrue();
-        assertThat(brawler.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(brawler.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -69,7 +69,7 @@ class HoodedBrawlerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(2);
-        assertThat(brawler.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(brawler.getId())).isZero();
     }
 
     @Test
@@ -82,7 +82,7 @@ class HoodedBrawlerTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(brawler.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(brawler.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(2);
             assertThat(gd.stack).hasSize(1);

@@ -76,7 +76,7 @@ class KefnetsMonumentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ class KefnetsMonumentTest extends BaseCardTest {
         assertThat(gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isZero();
-        assertThat(ownCreature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(ownCreature.getId())).isZero();
     }
 
     @Test

@@ -31,7 +31,7 @@ class KashiTribeReaverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isEqualTo(1);
     }
 
     @Test
@@ -50,13 +50,13 @@ class KashiTribeReaverTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(mossKami.isTapped()).isFalse();
-        assertThat(mossKami.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isZero();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isEqualTo(1);
     }
 
     @Test
@@ -71,7 +71,7 @@ class KashiTribeReaverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(mossKami.isTapped()).isFalse();
-        assertThat(mossKami.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isZero();
     }
 
     @Test
@@ -99,11 +99,11 @@ class KashiTribeReaverTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(mossKami.isTapped()).isFalse();
@@ -131,7 +131,7 @@ class KashiTribeReaverTest extends BaseCardTest {
         assertThat(reaver.getMarkedDamage()).isZero();
         assertThat(reaver.isAttacking()).isFalse();
         assertThat(mossKami.isTapped()).isTrue();
-        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(mossKami.getId())).isEqualTo(1);
     }
 
 }

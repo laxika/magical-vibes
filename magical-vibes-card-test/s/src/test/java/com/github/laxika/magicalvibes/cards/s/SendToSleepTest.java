@@ -55,8 +55,8 @@ class SendToSleepTest extends BaseCardTest {
 
         castSendToSleep(List.of(a.getId(), b.getId()));
 
-        assertThat(a.getSkipUntapCount()).isZero();
-        assertThat(b.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(a.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(b.getId())).isZero();
     }
 
     @Test
@@ -70,8 +70,8 @@ class SendToSleepTest extends BaseCardTest {
 
         assertThat(a.isTapped()).isTrue();
         assertThat(b.isTapped()).isTrue();
-        assertThat(a.getSkipUntapCount()).isEqualTo(1);
-        assertThat(b.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(a.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(b.getId())).isEqualTo(1);
     }
 
     @Test
@@ -83,7 +83,7 @@ class SendToSleepTest extends BaseCardTest {
         castSendToSleep(List.of(a.getId()));
 
         assertThat(a.isTapped()).isTrue();
-        assertThat(a.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(a.getId())).isZero();
     }
 
     @Test
@@ -95,7 +95,7 @@ class SendToSleepTest extends BaseCardTest {
         castSendToSleep(List.of(a.getId()));
 
         assertThat(a.isTapped()).isTrue();
-        assertThat(a.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(a.getId())).isEqualTo(1);
     }
 
     @Test
@@ -119,7 +119,7 @@ class SendToSleepTest extends BaseCardTest {
         castSendToSleep(List.of());
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof SendToSleep);

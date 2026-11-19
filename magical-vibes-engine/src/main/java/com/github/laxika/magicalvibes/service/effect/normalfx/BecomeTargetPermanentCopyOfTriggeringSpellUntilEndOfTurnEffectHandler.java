@@ -62,15 +62,10 @@ public class BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffectHandl
         }
 
         String originalName = target.getCard().getName();
-        if (!target.isCopyUntilEndOfTurn()) {
-            target.setPreCopyCard(target.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, target);
         permanentCopierService.applyCloneCopy(target, spellCard, null, null, Set.of());
-        target.setCopyUntilEndOfTurn(true);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), effect, target.getId(), null, null,
-                Duration.UNTIL_END_OF_TURN, 0));
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                target, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + spellCard.getName() + " until end of turn."));

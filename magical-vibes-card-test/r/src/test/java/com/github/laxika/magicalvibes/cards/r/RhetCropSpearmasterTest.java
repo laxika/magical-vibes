@@ -56,7 +56,7 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(spearmaster.isTapped()).isTrue();
-        assertThat(spearmaster.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(spearmaster.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -70,7 +70,7 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, spearmaster)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, spearmaster)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, spearmaster, Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(spearmaster.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(spearmaster.getId())).isZero();
     }
 
     @Test
@@ -82,7 +82,7 @@ class RhetCropSpearmasterTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(spearmaster.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(spearmaster.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, spearmaster)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, spearmaster, Keyword.FIRST_STRIKE)).isFalse();
         });

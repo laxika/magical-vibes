@@ -25,9 +25,9 @@ class DragonTurtleTest extends BaseCardTest {
 
         assertThat(findDragonTurtle()).isNotNull();
         assertThat(findDragonTurtle().isTapped()).isTrue();
-        assertThat(findDragonTurtle().getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(findDragonTurtle().getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -43,9 +43,9 @@ class DragonTurtleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findDragonTurtle().isTapped()).isTrue();
-        assertThat(findDragonTurtle().getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(findDragonTurtle().getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
     }
 
     @Test
@@ -69,12 +69,12 @@ class DragonTurtleTest extends BaseCardTest {
 
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getSkipUntapCount()).isZero();
-        assertThat(turtle.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(creature.getId())).isZero();
+        assertThat(gd.nextUntapStepsSkipped(turtle.getId())).isEqualTo(1);
 
         harness.performUntapStep(player1);
         assertThat(turtle.isTapped()).isTrue();
-        assertThat(turtle.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(turtle.getId())).isZero();
 
         harness.performUntapStep(player2);
         harness.performUntapStep(player1);
@@ -95,7 +95,7 @@ class DragonTurtleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findDragonTurtle().isTapped()).isFalse();
-        assertThat(findDragonTurtle().getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(findDragonTurtle().getId())).isZero();
     }
 
     @Test

@@ -26,7 +26,7 @@ class CinderMarshTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(marsh.isTapped()).isTrue();
-        assertThat(marsh.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(marsh.getId())).isZero();
         // Mana ability — does not use the stack
         assertThat(gd.stack).isEmpty();
     }
@@ -40,7 +40,7 @@ class CinderMarshTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(marsh.isTapped()).isTrue();
-        assertThat(marsh.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(marsh.getId())).isGreaterThan(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -53,7 +53,7 @@ class CinderMarshTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(marsh.isTapped()).isTrue();
-        assertThat(marsh.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(marsh.getId())).isGreaterThan(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -68,7 +68,7 @@ class CinderMarshTest extends BaseCardTest {
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);
         assertThat(marsh.isTapped()).isTrue();
-        assertThat(marsh.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(marsh.getId())).isZero();
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);

@@ -84,7 +84,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
 
         Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(forest.isTapped()).isTrue();
-        assertThat(forest.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isGreaterThan(0);
 
         // Advance to player2's turn (untap step)
         harness.performUntapStep(player2);
@@ -92,7 +92,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         // Forest should still be tapped (skipped untap)
         assertThat(forest.isTapped()).isTrue();
         // Flag should now be cleared
-        assertThat(forest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isZero();
     }
 
     @Test
@@ -110,7 +110,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         // First untap step — land should stay tapped, flag cleared
         harness.performUntapStep(player2);
         assertThat(forest.isTapped()).isTrue();
-        assertThat(forest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isZero();
 
         harness.performUntapStep(player1);
         harness.performUntapStep(player2);
@@ -127,7 +127,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         Permanent forest = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(forest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isZero();
 
         // Advance to player1's turn — Forest should untap normally
         harness.performUntapStep(player1);
@@ -149,8 +149,8 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         Permanent forest = gd.playerBattlefields.get(player2.getId()).get(0);
         Permanent mountain = gd.playerBattlefields.get(player2.getId()).get(1);
 
-        assertThat(forest.getSkipUntapCount()).isGreaterThan(0);
-        assertThat(mountain.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(mountain.getId())).isGreaterThan(0);
 
         // Advance to opponent's untap step
         harness.performUntapStep(player2);
@@ -172,7 +172,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
 
         Permanent controllerForest = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(controllerForest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(controllerForest.getId())).isZero();
 
         // Opponent taps — should get normal mana, land gets locked
         harness.tapPermanent(player2, 0);
@@ -180,7 +180,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
         Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opponentForest.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(opponentForest.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -201,7 +201,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.tapPermanent(player2, 0);
         resolveAllTriggers();
         Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opponentForest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(opponentForest.getId())).isZero();
     }
 
     @Test
@@ -212,7 +212,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
 
         harness.tapPermanent(player2, 0);
 
-        assertThat(forest.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(forest.getId())).isZero();
         assertThat(gd.stack.size() + gd.pendingManaAbilityTriggers.size()).isEqualTo(1);
         resolveAllTriggers();
         harness.performUntapStep(player2);

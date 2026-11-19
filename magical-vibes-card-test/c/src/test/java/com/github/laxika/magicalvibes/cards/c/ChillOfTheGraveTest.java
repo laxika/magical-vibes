@@ -29,7 +29,7 @@ class ChillOfTheGraveTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Chill of the Grave");
     }

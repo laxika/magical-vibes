@@ -77,11 +77,11 @@ class KashiTribeEliteTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(blocker.isTapped()).isFalse();
@@ -104,7 +104,7 @@ class KashiTribeEliteTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -139,7 +139,7 @@ class KashiTribeEliteTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.performUntapStep(player2);
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(attacker.isTapped()).isTrue();
         harness.performUntapStep(player1);

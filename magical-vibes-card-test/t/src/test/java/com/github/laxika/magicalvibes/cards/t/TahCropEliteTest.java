@@ -57,7 +57,7 @@ class TahCropEliteTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(elite.isTapped()).isTrue();
-        assertThat(elite.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(elite.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -72,7 +72,7 @@ class TahCropEliteTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, companion)).isEqualTo(2);
-        assertThat(elite.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(elite.getId())).isZero();
     }
 
     @Test
@@ -119,7 +119,7 @@ class TahCropEliteTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(elite.getSkipUntapCount()).isPositive();
+            assertThat(gd.nextUntapStepsSkipped(elite.getId())).isPositive();
             assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(2);
             assertThat(gd.stack).hasSize(1);

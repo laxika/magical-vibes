@@ -2246,27 +2246,15 @@ public class DamageSupport {
 
     /**
      * Soul Echo: while the targeted opponent has chosen it, "for each 1 damage that would be dealt to
-     * you until your next upkeep, you remove an echo counter from this enchantment instead". Returns
-     * how much of {@code damage} was replaced this way — one echo counter per 1 damage, up to the
-     * counters actually available on one armed Soul Echo. Running out of counters does not leave a
-     * remainder to be dealt, because the replacement applies to the entire damage event. This is a
-     * replacement, not prevention, so it is not gated on
-     * {@code isDamagePreventable}. Shared by the noncombat ({@link #dealDamageToPlayer}) and combat
-     * ({@code CombatDamageService.applyPlayerDamage}) paths.
+     * you until your next upkeep, you remove an echo counter from this enchantment instead" — a floating
+     * {@code SoulEchoUpkeepEffect} on the player who controlled Soul Echo then. Returns how much of {@code damage}
+     * was replaced this way: the replacement applies to the entire damage event, removing one echo counter per
+     * 1 damage, up to the counters on {@code soulEcho}. Running out of counters does not leave a remainder to be
+     * dealt. This is a replacement, not prevention, so it is not gated on {@code isDamagePreventable}.
      */
-    public int applySoulEchoCounterRemoval(GameData gameData, UUID playerId, int damage) {
-        if (damage <= 0) return 0;
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (permanent.isEchoDamageRedirectionActive()) {
-                return applySoulEchoCounterRemoval(gameData, playerId, permanent, damage);
-            }
-        }
-        return 0;
-    }
-
     /** Applies {@code soulEcho}'s replacement to {@code damage} dealt to {@code playerId}. */
     public int applySoulEchoCounterRemoval(GameData gameData, UUID playerId, Permanent soulEcho, int damage) {
-        if (damage <= 0 || !soulEcho.isEchoDamageRedirectionActive()) return 0;
+        if (damage <= 0) return 0;
 
         int available = soulEcho.getCounterCount(CounterType.ECHO);
         int removed = Math.min(available, damage);

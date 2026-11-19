@@ -23,7 +23,7 @@ class ChillbringerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(opponentCreature.getId())).isEqualTo(1);
     }
 
     @Test

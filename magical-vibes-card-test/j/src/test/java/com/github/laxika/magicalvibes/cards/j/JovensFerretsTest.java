@@ -60,11 +60,11 @@ class JovensFerretsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
 
         harness.performUntapStep(player2);
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
 
         harness.performUntapStep(player2);
         assertThat(blocker.isTapped()).isFalse();
@@ -86,7 +86,7 @@ class JovensFerretsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
     }
 
     @Test
@@ -122,10 +122,10 @@ class JovensFerretsTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
-        assertThat(first.getSkipUntapCount()).isEqualTo(1);
-        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(first.getId())).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(second.getId())).isEqualTo(1);
         assertThat(unrelated.isTapped()).isFalse();
-        assertThat(unrelated.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(unrelated.getId())).isZero();
     }
 
     @Test
@@ -144,6 +144,6 @@ class JovensFerretsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
     }
 }

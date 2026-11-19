@@ -66,9 +66,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             return;
         }
 
-        if (!sourcePermanent.isCopyUntilEndOfTurn()) {
-            sourcePermanent.setPreCopyCard(sourcePermanent.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, sourcePermanent);
 
         String originalName = sourcePermanent.getCard().getName();
         BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect =
@@ -120,14 +118,11 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             }
         }
         copyEffect.additionalAbilitiesOverride().forEach(sourcePermanent.getCard()::addAbility);
-        sourcePermanent.setCopyUntilEndOfTurn(true);
         // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
-        // swap above stores the copiable values; the floating effect carries the CR 613.7
-        // timestamp and drives the revert when it expires at the cleanup step.
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
-                entry.getControllerId(), effect, sourcePermanentId, null, null,
-                Duration.UNTIL_END_OF_TURN, 0));
+        // swap above applies the copiable values; the floating effect keeps them and the CR 613.7
+        // timestamp, and the duration clock ends it at the cleanup step.
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
+                sourcePermanent, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         String targetName = targetPerm != null ? targetPerm.getCard().getName() : lastKnownTarget.getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";

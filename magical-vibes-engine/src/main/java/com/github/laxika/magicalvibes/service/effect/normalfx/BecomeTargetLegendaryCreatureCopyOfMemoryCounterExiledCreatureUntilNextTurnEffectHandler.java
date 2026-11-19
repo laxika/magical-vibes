@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -51,10 +52,11 @@ public class BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntil
         }
 
         String originalName = target.getCard().getName();
-        Card preCopyCard = PermanentCopierService.untilNextTurnPreCopyCard(gameData, target);
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, target);
         permanentCopierService.applyCloneCopy(target, exiled.card(), null, null, Set.of());
-        PermanentCopierService.beginUntilNextTurnCopy(gameData, entry.getCard().getName(),
-                entry.getSourcePermanentId(), entry.getControllerId(), target, preCopyCard);
+        PermanentCopierService.beginCopy(gameData, entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), target, preCopyCard,
+                Duration.UNTIL_YOUR_NEXT_TURN);
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + exiled.card().getName()

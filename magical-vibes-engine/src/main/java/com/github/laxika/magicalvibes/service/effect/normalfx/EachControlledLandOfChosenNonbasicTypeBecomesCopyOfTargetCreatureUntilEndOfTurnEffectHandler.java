@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -96,20 +98,14 @@ public class EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUn
         }
 
         for (Permanent permanent : copies) {
-            if (!permanent.isCopyUntilEndOfTurn()) {
-                permanent.setPreCopyCard(permanent.getCard());
-            }
+            Card preCopyCard = PermanentCopierService.preCopyCard(gameData, permanent);
             permanentCopierService.applyCloneCopy(permanent, targetCard, null, null, Set.of());
-            EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            keywords.addAll(permanent.getCard().getKeywords());
-            if (keywords.add(Keyword.HASTE)) {
-                permanent.getNonCopiableKeywords().add(Keyword.HASTE);
-            }
-            permanent.getCard().setKeywords(Set.copyOf(keywords));
-            permanent.setCopyUntilEndOfTurn(true);
-            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
-                    effect, permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+            PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), permanent.getId(), controllerId,
+                    permanent, preCopyCard, Duration.UNTIL_END_OF_TURN);
+            // "And gains haste" is not part of the copy (CR 707.9a): a layer-6 grant after it (CR 613.1f).
+            gameData.addEffectOnPermanent(entry.getCard().getName(), permanent.getId(), controllerId,
+                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(),
+                    Duration.UNTIL_END_OF_TURN);
         }
 
         gameLogService.append(gameData, GameLog.builder()

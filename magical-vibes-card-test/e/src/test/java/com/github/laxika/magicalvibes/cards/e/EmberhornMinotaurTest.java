@@ -54,7 +54,7 @@ class EmberhornMinotaurTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(minotaur.isTapped()).isTrue();
-        assertThat(minotaur.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(minotaur.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -68,7 +68,7 @@ class EmberhornMinotaurTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.MENACE)).isFalse();
-        assertThat(minotaur.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(minotaur.getId())).isZero();
     }
 
     @Test
@@ -89,7 +89,7 @@ class EmberhornMinotaurTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(minotaur.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(minotaur.getId())).isGreaterThan(0);
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.MENACE)).isFalse();

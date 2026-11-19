@@ -56,7 +56,7 @@ class WallOfFrostTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(atkPerm.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(atkPerm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -135,7 +135,7 @@ class WallOfFrostTest extends BaseCardTest {
 
         harness.performUntapStep(player2);
         assertThat(attacker.isTapped()).isTrue();
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         harness.performUntapStep(player1);
         assertThat(attacker.isTapped()).isTrue();
         harness.performUntapStep(player1);
@@ -182,7 +182,7 @@ class WallOfFrostTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.performUntapStep(player1);
-        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(attacker.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(attacker.isTapped()).isTrue();
         harness.performUntapStep(player2);

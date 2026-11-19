@@ -45,7 +45,7 @@ class AhnCropCrasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isTrue();
-        assertThat(crasher.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(crasher.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -58,7 +58,7 @@ class AhnCropCrasherTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
-        assertThat(crasher.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(crasher.getId())).isZero();
     }
 
     @Test
@@ -109,7 +109,7 @@ class AhnCropCrasherTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(crasher.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(crasher.getId())).isGreaterThan(0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, target.getId());

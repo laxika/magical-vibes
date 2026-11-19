@@ -28,7 +28,7 @@ class MatsuTribeSniperTest extends BaseCardTest {
 
         assertThat(sniper.isTapped()).isTrue();
         assertThat(flyer.isTapped()).isTrue();
-        assertThat(flyer.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(flyer.getId())).isEqualTo(1);
         assertThat(flyer.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -57,7 +57,7 @@ class MatsuTribeSniperTest extends BaseCardTest {
 
         Permanent blocker = findPermanent(player2, "Gnarled Mass");
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -73,7 +73,7 @@ class MatsuTribeSniperTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
-        assertThat(sniper.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(sniper.getId())).isZero();
     }
 
     @Test
@@ -86,10 +86,10 @@ class MatsuTribeSniperTest extends BaseCardTest {
 
         harness.performUntapStep(player1);
         assertThat(flyer.isTapped()).isTrue();
-        assertThat(flyer.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(flyer.getId())).isEqualTo(1);
         harness.performUntapStep(player2);
         assertThat(flyer.isTapped()).isTrue();
-        assertThat(flyer.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(flyer.getId())).isZero();
         harness.performUntapStep(player2);
         assertThat(flyer.isTapped()).isFalse();
     }
@@ -126,6 +126,6 @@ class MatsuTribeSniperTest extends BaseCardTest {
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(3);
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(blocker.getId())).isZero();
     }
 }

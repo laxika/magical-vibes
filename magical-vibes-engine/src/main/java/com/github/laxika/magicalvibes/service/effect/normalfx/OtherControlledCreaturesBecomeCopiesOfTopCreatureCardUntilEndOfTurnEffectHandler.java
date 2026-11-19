@@ -65,15 +65,10 @@ public class OtherControlledCreaturesBecomeCopiesOfTopCreatureCardUntilEndOfTurn
         }
 
         for (Permanent creature : creatures) {
-            if (!creature.isCopyUntilEndOfTurn()) {
-                creature.setPreCopyCard(creature.getCard());
-            }
+            Card preCopyCard = PermanentCopierService.preCopyCard(gameData, creature);
             permanentCopierService.applyCloneCopy(creature, topCard, null, null, Set.of());
-            creature.setCopyUntilEndOfTurn(true);
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), creature.getId(),
-                    entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                    creature.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+            PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), creature.getId(), entry.getControllerId(),
+                    creature, preCopyCard, Duration.UNTIL_END_OF_TURN);
         }
 
         gameLogService.append(gameData, GameLog.builder()

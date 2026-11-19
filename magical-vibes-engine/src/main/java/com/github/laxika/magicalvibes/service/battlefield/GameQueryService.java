@@ -121,10 +121,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeRestOfGameEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
@@ -4708,31 +4706,7 @@ public class GameQueryService {
                 || computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(CantBecomeUntappedEffect.class::isInstance)
                 || stunCountersLocked(gameData, permanent)
-                || hasSpellAppliedUntapLock(gameData, permanent);
-    }
-
-    /**
-     * Returns {@code true} if a source-linked "doesn't untap" lock applied by a resolved spell or
-     * ability still holds the permanent: a floating lock whose source is still in play under the
-     * lock's controller, or a "while source on battlefield" lock whose source is still on the battlefield.
-     */
-    private boolean hasSpellAppliedUntapLock(GameData gameData, Permanent permanent) {
-        synchronized (gameData.floatingEffects) {
-            boolean floatingLock = gameData.floatingEffects.stream().anyMatch(floating ->
-                    permanent.getId().equals(floating.affectedPermanentId())
-                            && floating.effect() instanceof DoesntUntapEffect lock
-                            && (floating.scope() == null || predicateEvaluationService.matchesPermanentPredicate(
-                                    permanent, floating.scope(), FilterContext.of(gameData)))
-                            && (lock.condition() == UntapLockCondition.ALWAYS
-                                    || lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
-                                    && gameData.playerBattlefields.getOrDefault(floating.controllerId(), List.of())
-                                    .stream().anyMatch(source -> source.getId().equals(floating.sourcePermanentId()))));
-            if (floatingLock) {
-                return true;
-            }
-        }
-        return permanent.getUntapPreventedWhileSourceOnBattlefieldIds().stream()
-                .anyMatch(sourceId -> findPermanentById(gameData, sourceId) != null);
+                || gameData.hasFloatingEffectOnPermanent(permanent.getId(), CantBecomeUntappedEffect.class);
     }
 
     /**

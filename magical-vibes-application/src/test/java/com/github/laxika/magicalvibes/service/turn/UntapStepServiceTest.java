@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
@@ -75,8 +76,7 @@ class UntapStepServiceTest {
     // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
     @Spy
     private TapUntapSupport tapUntapSupport =
-            new TapUntapSupport(org.mockito.Mockito.mock(CreatureControlService.class),
-                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService.class));
+            new TapUntapSupport(org.mockito.Mockito.mock(CreatureControlService.class));
 
     @InjectMocks
     private UntapStepService sut;
@@ -156,15 +156,16 @@ class UntapStepServiceTest {
     }
 
     @Test
+    @DisplayName("A skipped untap step doesn't use up a \"doesn't untap during its next untap step\" effect")
     void skippedStepPreservesNextUntapRestriction() {
         Permanent permanent = addPermanent(player1Id, createCardWithName("Creature"));
         permanent.tap();
-        permanent.setSkipUntapCount(1);
+        gd.skipNextUntapSteps("Test", null, player1Id, permanent.getId(), 1, null);
 
         sut.untapPermanents(gd, player1Id, null, true);
 
         assertThat(permanent.isTapped()).isTrue();
-        assertThat(permanent.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(permanent.getId())).isEqualTo(1);
     }
 
     @Test
@@ -331,30 +332,26 @@ class UntapStepServiceTest {
             Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             lockedPerm.tap();
             UUID sourceId = UUID.randomUUID();
-            lockedPerm.getUntapPreventedByPermanentIds().add(sourceId);
-
-            // Source permanent exists and is still tapped — lock is valid
-            Permanent sourcePerm = new Permanent(createCardWithName("Icy Manipulator"));
-            sourcePerm.tap();
-            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(sourcePerm);
+            gd.addEffectOnPermanent("Rust Tick", sourceId, player2Id, DoesntUntapEffect.targetWhileSourceTapped(),
+                    lockedPerm.getId(), Duration.WHILE_SOURCE_REMAINS_TAPPED);
 
             sut.untapPermanents(gd, player1Id);
 
             assertThat(lockedPerm.isTapped()).isTrue();
-            assertThat(lockedPerm.getUntapPreventedByPermanentIds()).containsExactly(sourceId);
+            assertThat(gd.hasFloatingEffectOnPermanent(lockedPerm.getId(), DoesntUntapEffect.class)).isTrue();
         }
 
         @Test
-        @DisplayName("Permanent with skipUntapCount stays tapped and decrements counter")
+        @DisplayName("A permanent that doesn't untap during its next two untap steps stays tapped and has one left")
         void skipsUntapAndDecrementsCounter() {
             Permanent perm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             perm.tap();
-            perm.setSkipUntapCount(2);
+            gd.skipNextUntapSteps("Test", null, player1Id, perm.getId(), 2, null);
 
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isTrue();
-            assertThat(perm.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(perm.getId())).isEqualTo(1);
         }
 
         @Test
@@ -363,33 +360,13 @@ class UntapStepServiceTest {
             Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             lockedPerm.tap();
             UUID sourceId = UUID.randomUUID();
-            lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourceId);
-
-            // Source permanent exists on the battlefield (not tapped — doesn't matter)
-            Permanent sourcePerm = new Permanent(createCardWithName("Time of Ice"));
-            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(sourcePerm);
+            gd.addEffectOnPermanent("Somnophore", sourceId, player2Id,
+                    DoesntUntapEffect.targetWhileSourceOnBattlefield(), lockedPerm.getId(), Duration.WHILE_SOURCE_REMAINS);
 
             sut.untapPermanents(gd, player1Id);
 
             assertThat(lockedPerm.isTapped()).isTrue();
-            assertThat(lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds()).containsExactly(sourceId);
-        }
-
-        @Test
-        @DisplayName("On-battlefield untap lock is removed when source leaves battlefield")
-        void onBattlefieldLockRemovedWhenSourceGone() {
-            Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
-            lockedPerm.tap();
-            UUID sourceId = UUID.randomUUID();
-            lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourceId);
-
-            // Source permanent is gone
-            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
-
-            sut.untapPermanents(gd, player1Id);
-
-            assertThat(lockedPerm.isTapped()).isFalse();
-            assertThat(lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds()).isEmpty();
+            assertThat(gd.hasFloatingEffectOnPermanent(lockedPerm.getId(), DoesntUntapEffect.class)).isTrue();
         }
 
         @Test
@@ -592,47 +569,6 @@ class UntapStepServiceTest {
 
             assertThat(matching.isTapped()).isFalse();
             assertThat(nonMatching.isTapped()).isTrue();
-        }
-    }
-
-    @Nested
-    @DisplayName("Stale untap lock cleanup")
-    class StaleUntapLockCleanup {
-
-        @Test
-        @DisplayName("Removes untap lock when source permanent exists but is no longer tapped")
-        void removesLockWhenSourceUntapped() {
-            Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
-            lockedPerm.tap();
-            UUID sourceId = UUID.randomUUID();
-            lockedPerm.getUntapPreventedByPermanentIds().add(sourceId);
-
-            // Source permanent exists but is untapped — lock is stale
-            Permanent sourcePerm = new Permanent(createCardWithName("Icy Manipulator"));
-            // sourcePerm is untapped by default
-            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(sourcePerm);
-
-            sut.untapPermanents(gd, player1Id);
-
-            assertThat(lockedPerm.getUntapPreventedByPermanentIds()).isEmpty();
-            assertThat(lockedPerm.isTapped()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Removes untap lock when source permanent is no longer on the battlefield")
-        void removesLockWhenSourceGone() {
-            Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
-            lockedPerm.tap();
-            UUID staleSourceId = UUID.randomUUID();
-            lockedPerm.getUntapPreventedByPermanentIds().add(staleSourceId);
-
-            // Source permanent no longer exists on the battlefield
-            when(gameQueryService.findPermanentById(gd, staleSourceId)).thenReturn(null);
-
-            sut.untapPermanents(gd, player1Id);
-
-            assertThat(lockedPerm.getUntapPreventedByPermanentIds()).isEmpty();
-            assertThat(lockedPerm.isTapped()).isFalse();
         }
     }
 }

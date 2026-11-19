@@ -68,7 +68,7 @@ class PrideSovereignTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(sovereign.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(sovereign.getId())).isGreaterThan(0);
 
         var cats = findPermanents(player1, "Cat");
         assertThat(cats).hasSize(2);

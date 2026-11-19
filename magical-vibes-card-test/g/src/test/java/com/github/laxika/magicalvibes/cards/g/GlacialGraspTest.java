@@ -31,7 +31,7 @@ class GlacialGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(target.getId())).isEqualTo(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize - 2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         harness.assertInHand(player1, "Cliffhaven Sell-Sword");

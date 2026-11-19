@@ -94,8 +94,8 @@ class AwakenerDruidTest extends BaseCardTest {
         // It's a creature now
         assertThat(gqs.isCreature(gd, forest)).isTrue();
 
-        // Source-linked animation is tracked
-        assertThat(gd.sourceLinkedAnimations).containsKey(forestId);
+        // The animation lasts for as long as Awakener Druid remains on the battlefield
+        assertThat(gd.animatedByFloatingEffect(forestId)).isTrue();
     }
 
     @Test
@@ -124,7 +124,6 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.TREEFOLK);
         assertThat(PermanentGrants.colorsOf(gd, forest)).isEmpty();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
 
     @Test
@@ -151,7 +150,6 @@ class AwakenerDruidTest extends BaseCardTest {
 
         assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
 
     @Test
@@ -176,7 +174,7 @@ class AwakenerDruidTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.sourceLinkedAnimations).isEmpty();
+        assertThat(gd.animatedByFloatingEffect(forestId)).isFalse();
     }
 
     @Test
@@ -204,7 +202,6 @@ class AwakenerDruidTest extends BaseCardTest {
 
         assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
 
     @Test
@@ -263,7 +260,8 @@ class AwakenerDruidTest extends BaseCardTest {
         resolveAllTriggers();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.sourceLinkedAnimations).hasSize(2);
+        assertThat(gd.animatedByFloatingEffect(forest1Id)).isTrue();
+        assertThat(gd.animatedByFloatingEffect(forest2Id)).isTrue();
 
         // Destroy the first Druid
         List<Permanent> druids = findPermanents(player1, "Awakener Druid");
@@ -278,7 +276,6 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gd.animatedByFloatingEffect(forest2.getId())).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest2)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest2)).isEqualTo(5);
-        assertThat(gd.sourceLinkedAnimations).hasSize(1);
     }
 
     @Test

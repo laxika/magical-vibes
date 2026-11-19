@@ -26,7 +26,7 @@ class RootwaterDepthsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(depths.isTapped()).isTrue();
-        assertThat(depths.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(depths.getId())).isZero();
         // Mana ability — does not use the stack
         assertThat(gd.stack).isEmpty();
     }
@@ -40,7 +40,7 @@ class RootwaterDepthsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(depths.isTapped()).isTrue();
-        assertThat(depths.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(depths.getId())).isGreaterThan(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -53,7 +53,7 @@ class RootwaterDepthsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(depths.isTapped()).isTrue();
-        assertThat(depths.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.nextUntapStepsSkipped(depths.getId())).isGreaterThan(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -68,7 +68,7 @@ class RootwaterDepthsTest extends BaseCardTest {
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);
         assertThat(depths.isTapped()).isTrue();
-        assertThat(depths.getSkipUntapCount()).isZero();
+        assertThat(gd.nextUntapStepsSkipped(depths.getId())).isZero();
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);

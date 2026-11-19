@@ -9,10 +9,15 @@ After any number of extra turns, the next normal turn goes to the player after t
 Owner: `GameData.lastNormalTurnPlayerId`, read by `TurnProgressionService.nextPlayerInTurnOrder`.
 Why: an extra turn taken by another player would otherwise skip or repeat players.
 
-### An exert-style untap skip belongs to the player who chose it (CR 701.43a)
-The skip applies only in the untap step of the controller of the resolution that created it, and expires with that step even if another player controls the permanent.
-Owner: `Permanent.skipUntapControllerId`; `UntapStepService.expireControllerStepUntapRestrictions`.
-Why: a creature that changed controllers would otherwise stay tapped through the wrong player's untap step, or forever.
+### Each "doesn't untap during its next untap step" is its own effect; an exert-style one belongs to the player who chose it (CR 701.43a, 701.43b)
+Every resolution (exert, Vorinclex's lock, "it doesn't untap during its controller's next two untap steps") is its own floating effect on the permanent, used up by each untap step it applies to; two waiting for the same step both end in it, and a longer one outlasts a shorter one. An exert-style one applies only in the untap step of the player who chose it and ends with that step even if another player controls the permanent.
+Owner: `DoesntUntapDuringNextUntapStepsEffect`; `GameData.skipNextUntapSteps`, `useNextUntapStepSkips`, `endNextUntapStepSkipsOf`; `UntapStepService.expireControllerStepUntapRestrictions`.
+Why: merged into one count, an exert ending with its step would end a longer lock too, and a creature that changed controllers would stay tapped through the wrong player's untap step, or forever.
+
+### A "doesn't untap during its controller's untap step" lock affects only that untap step (CR 502.3)
+A resolved lock that lasts for as long as its source remains on the battlefield, remains tapped or is controlled (Somnophore, Rust Tick, Kill Switch, Dungeon Geists) is a floating `DoesntUntapEffect` on the permanent, ended by the duration clock; it keeps the permanent tapped only as its controller untaps, so another untap effect still untaps it. Locks are judged as the step begins, so an untap that ends one doesn't free a permanent untapped after it in the same step.
+Owner: `UntapPreventionSupport.hasSourceLinkedUntapLock` / `hasActiveSelfDoesntUntap`; `UntapStepService`.
+Why: "can't become untapped" is a different, stronger restriction (Blossombind).
 
 ## Dungeons
 

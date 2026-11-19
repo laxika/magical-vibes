@@ -175,8 +175,7 @@ class WhipVineTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, bird.getId());
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player2.getId()).remove(vine);
-        gd.playerGraveyards.get(player2.getId()).add(vine.getCard());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, vine);
         harness.performUntapStep(player1);
 
         assertThat(bird.isTapped()).isFalse();

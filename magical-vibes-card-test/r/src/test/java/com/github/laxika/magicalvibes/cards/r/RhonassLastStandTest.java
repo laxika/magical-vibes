@@ -60,8 +60,8 @@ class RhonassLastStandTest extends BaseCardTest {
 
             cast();
 
-            assertThat(plains.getSkipUntapCount()).isEqualTo(1);
-            assertThat(island.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(plains.getId())).isEqualTo(1);
+            assertThat(gd.nextUntapStepsSkipped(island.getId())).isEqualTo(1);
         }
 
         @Test
@@ -76,7 +76,7 @@ class RhonassLastStandTest extends BaseCardTest {
             advanceToNextTurn(player2);
 
             assertThat(plains.isTapped()).isTrue();
-            assertThat(plains.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(plains.getId())).isZero();
         }
 
         @Test
@@ -90,7 +90,7 @@ class RhonassLastStandTest extends BaseCardTest {
 
             cast();
 
-            assertThat(prowler.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(prowler.getId())).isZero();
 
             advanceToNextTurn(player1);
             advanceToNextTurn(player2);
@@ -151,7 +151,7 @@ class RhonassLastStandTest extends BaseCardTest {
 
             cast();
 
-            assertThat(opponentPlains.getSkipUntapCount()).isZero();
+            assertThat(gd.nextUntapStepsSkipped(opponentPlains.getId())).isZero();
 
             advanceToNextTurn(player1);
 

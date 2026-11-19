@@ -11,15 +11,15 @@ public enum UntapLockCondition {
     ALWAYS,
     /**
      * The target permanent doesn't untap for as long as the source permanent remains on the
-     * battlefield (Dungeon Geists, Time of Ice). Tracked via
-     * {@code Permanent.untapPreventedWhileSourceOnBattlefieldIds}.
+     * battlefield (Somnophore, Origin of Iron Man): a floating effect on the target that lasts
+     * {@code Duration.WHILE_SOURCE_REMAINS}.
      */
     WHILE_SOURCE_ON_BATTLEFIELD,
     /** The prevention ends when the ability's controller loses control of the source. */
     WHILE_SOURCE_CONTROLLED,
     /**
      * The target permanent doesn't untap for as long as the source permanent remains tapped
-     * (Rust Tick). Tracked via {@code Permanent.untapPreventedByPermanentIds}.
+     * (Rust Tick): a floating effect on the target that lasts {@code Duration.WHILE_SOURCE_REMAINS_TAPPED}.
      */
     WHILE_SOURCE_TAPPED
 }

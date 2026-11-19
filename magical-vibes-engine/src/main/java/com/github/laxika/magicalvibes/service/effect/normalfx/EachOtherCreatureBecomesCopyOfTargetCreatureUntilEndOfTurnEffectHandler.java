@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -59,9 +60,7 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
         String targetName = targetPerm.getCard().getName();
         int count = 0;
         for (Permanent creature : creatures) {
-            if (!creature.isCopyUntilEndOfTurn()) {
-                creature.setPreCopyCard(creature.getCard());
-            }
+            Card preCopyCard = PermanentCopierService.preCopyCard(gameData, creature);
             permanentCopierService.applyCloneCopy(creature, targetPerm, null, null);
             if (copyEffect.removeLegendary()) {
                 EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
@@ -69,15 +68,11 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
                 supertypes.remove(CardSupertype.LEGENDARY);
                 creature.getCard().setSupertypes(supertypes);
             }
-            creature.setCopyUntilEndOfTurn(true);
             // CR 613.2a: each temporary copy is a layer-1 continuous effect with a duration. The
-            // card swap stores the copiable values; the floating effect carries the timestamp and
-            // drives the revert (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) at cleanup.
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), creature.getId(),
-                    entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                    creature.getId(), null, null,
-                    Duration.UNTIL_END_OF_TURN, 0));
+            // card swap applies the copiable values; the floating effect keeps them and the timestamp, and
+            // the duration clock ends it at cleanup.
+            PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), creature.getId(), entry.getControllerId(),
+                    creature, preCopyCard, Duration.UNTIL_END_OF_TURN);
             count++;
         }
 

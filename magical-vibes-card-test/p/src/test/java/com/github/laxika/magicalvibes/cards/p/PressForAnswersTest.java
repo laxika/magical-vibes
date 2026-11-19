@@ -28,7 +28,7 @@ class PressForAnswersTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bears.getId())).isEqualTo(1);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 

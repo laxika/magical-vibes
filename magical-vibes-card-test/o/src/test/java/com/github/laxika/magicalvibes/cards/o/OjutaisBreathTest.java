@@ -29,7 +29,7 @@ class OjutaisBreathTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -53,7 +53,7 @@ class OjutaisBreathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+        assertThat(gd.nextUntapStepsSkipped(bear.getId())).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Ojutai's Breath");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
