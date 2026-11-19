@@ -39,6 +39,29 @@ class SelvalaHeartOfTheWildsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The entering creature's current controller both chooses and draws at resolution")
+    void newControllerDrawsAfterControlChangesBeforeResolution() {
+        harness.addToBattlefield(player1, new SelvalaHeartOfTheWilds());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player2, new HillGiant());
+        gd.playerBattlefields.get(player2.getId()).remove(entering);
+        gd.playerBattlefields.get(player1.getId()).add(entering);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("A tied greatest power does not draw")
     void tiedGreatestPowerDoesNotDraw() {
         harness.addToBattlefield(player1, new HillGiant());

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "193")
 public class KavuLair extends Card {
@@ -17,6 +17,6 @@ public class KavuLair extends Card {
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentPowerAtLeastPredicate(4))),
                         ObjectRelation.ANOTHER),
-                new DrawCardForTriggeringPermanentControllerEffect());
+                new DrawCardForTriggeringPlayerEffect());
     }
 }

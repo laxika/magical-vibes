@@ -14,6 +14,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Resolves a draw for the player the trigger was about: the current controller of its triggering permanent, else that
+ * permanent's last known controller (CR 608.2h), else the player the trigger recorded (the attacking player of
+ * "whenever a player attacks"); failing those, the source's controller or the entry's player target.
+ */
 @Component
 @RequiredArgsConstructor
 public class DrawCardForTriggeringPlayerEffectHandler implements NormalEffectHandlerBean {
@@ -30,8 +35,9 @@ public class DrawCardForTriggeringPlayerEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DrawCardForTriggeringPlayerEffect) effect;
-        UUID playerId = entry.getTriggeringPermanentControllerId() != null
-                ? entry.getTriggeringPermanentControllerId()
+        UUID triggeringPlayerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
+        UUID playerId = triggeringPlayerId != null
+                ? triggeringPlayerId
                 : entry.getSourcePermanentId() != null
                         ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
                 : entry.getTargetId();

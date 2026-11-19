@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class SynapseSliver extends Card {
     public SynapseSliver() {
         addTrigger(Triggers.creatureDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SLIVER)),
-                new MayEffect(new DrawCardForTriggeringPermanentControllerEffect(), "Draw a card?", null,
+                new MayEffect(new DrawCardForTriggeringPlayerEffect(), "Draw a card?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }
