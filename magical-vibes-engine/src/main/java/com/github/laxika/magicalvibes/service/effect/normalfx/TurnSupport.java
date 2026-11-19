@@ -89,7 +89,6 @@ public class TurnSupport {
 
     public void endCombatPhase(GameData gameData) {
         clearCombatState(gameData);
-        gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
         if (gameData.additionalCombatReturnActivePlayerId != null) {
             gameData.activePlayerId = gameData.additionalCombatReturnActivePlayerId;
             gameData.additionalCombatReturnActivePlayerId = null;

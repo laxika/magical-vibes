@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.Cytoshape;
 import com.github.laxika.magicalvibes.cards.g.GripOfPhyresis;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.r.RealityRipple;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BladeOfSharedSouls.class, GripOfPhyresis.class, GrizzlyBears.class, HillGiant.class, RealityRipple.class})
+@CardUsed({BladeOfSharedSouls.class, Cytoshape.class, GripOfPhyresis.class, GrizzlyBears.class, HillGiant.class,
+        MistralCharger.class, RealityRipple.class})
 class BladeOfSharedSoulsTest extends BaseCardTest {
 
     @Test
@@ -212,6 +216,45 @@ class BladeOfSharedSoulsTest extends BaseCardTest {
         castRealityRipple(blade);
 
         assertThat(equipped.getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A newer until-end-of-turn copy outlives the copy ending as Blade of Shared Souls moves, then ends at cleanup")
+    void newerTemporaryCopyOutlivesTheBladeCopy() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BladeOfSharedSouls());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        equipAndCopy(0, equipped, giant);
+        assertThat(equipped.getCard().getName()).isEqualTo("Hill Giant");
+
+        harness.setHand(player1, List.of(new Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, equipped.getId());
+        harness.handlePermanentChosen(player1, charger.getId());
+        assertThat(equipped.getCard().getName()).isEqualTo("Mistral Charger");
+
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, giant.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, charger.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(blade.getAttachedTo()).isEqualTo(giant.getId());
+        assertThat(equipped.getCard().getName()).isEqualTo("Mistral Charger");
+        assertThat(gqs.hasKeyword(gd, equipped, Keyword.FLYING)).isTrue();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(equipped.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, equipped, Keyword.FLYING)).isFalse();
     }
 
     private void castRealityRipple(Permanent target) {

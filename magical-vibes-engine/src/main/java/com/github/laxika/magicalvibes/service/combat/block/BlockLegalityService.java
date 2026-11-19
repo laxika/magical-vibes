@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisCombatEffect;
 
 import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
@@ -457,8 +458,9 @@ public class BlockLegalityService {
     }
 
     private boolean isOutsideChosenBlockers(GameData gameData, Permanent creature) {
-        for (Set<UUID> chosen : gameData.blockableCreaturesThisTurn.values()) {
-            if (!chosen.contains(creature.getId())) {
+        for (FloatingContinuousEffect restriction
+                : gameData.floatingEffectsOnPlayer(null, OnlyChosenCreaturesCanBlockEffect.class)) {
+            if (!((OnlyChosenCreaturesCanBlockEffect) restriction.effect()).permanentIds().contains(creature.getId())) {
                 return true;
             }
         }

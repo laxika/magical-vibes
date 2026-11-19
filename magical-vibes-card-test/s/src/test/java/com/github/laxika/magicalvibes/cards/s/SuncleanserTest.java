@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.c.CaressOfPhyrexia;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Suncleanser.class, GreenwoodSentinel.class, BurstOfStrength.class, Murder.class,
-        CaressOfPhyrexia.class, AetherMeltdown.class})
+        CaressOfPhyrexia.class, AetherMeltdown.class, RealityRipple.class})
 class SuncleanserTest extends BaseCardTest {
 
     private static final String CREATURE_MODE =
@@ -29,7 +31,7 @@ class SuncleanserTest extends BaseCardTest {
             "Target opponent loses all counters. That player can't get counters for as long as this creature remains on the battlefield.";
 
     @Nested
-    @CardUsed({Suncleanser.class, GreenwoodSentinel.class, BurstOfStrength.class, Murder.class})
+    @CardUsed({Suncleanser.class, GreenwoodSentinel.class, BurstOfStrength.class, Murder.class, RealityRipple.class})
     @DisplayName("Mode 1: remove all counters from target creature and lock it")
     class CreatureMode {
 
@@ -75,6 +77,32 @@ class SuncleanserTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.BLACK, 3);
             harness.castAndResolveInstant(player2, 0, suncleanser.getId());
 
+            harness.setHand(player1, List.of(new BurstOfStrength()));
+            harness.addMana(player1, ManaColor.GREEN, 2);
+            harness.castAndResolveInstant(player1, 0, bears.getId());
+
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("The lock ends for good as Suncleanser phases out; it doesn't come back as Suncleanser phases in")
+        void lockEndsForGoodAsSuncleanserPhasesOut() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
+
+            castWithCreatureMode(bears.getId());
+            harness.passBothPriorities();
+
+            Permanent suncleanser = findPermanent(player1, "Suncleanser");
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.setHand(player1, List.of(new RealityRipple()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.castAndResolveInstant(player1, 0, suncleanser.getId());
+            harness.performUntapStep(player1);
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(suncleanser);
+
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
             harness.setHand(player1, List.of(new BurstOfStrength()));
             harness.addMana(player1, ManaColor.GREEN, 2);
             harness.castAndResolveInstant(player1, 0, bears.getId());

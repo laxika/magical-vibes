@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurn
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerUpAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RunedTerrorEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -96,7 +99,6 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             combatService.clearCombatState(gameData);
-            gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
 
@@ -135,6 +137,7 @@ public class TurnProgressionService {
         }
 
         boolean additionalCombatPhase = false;
+        boolean aggressiveCombat = false;
 
         if (next == TurnStep.UPKEEP && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
             if (nextUpkeepIsAdditional) {
@@ -247,7 +250,7 @@ public class TurnProgressionService {
             gameData.additionalCombatPhasesOnly--;
             if (gameData.aggressiveCombatPhasesOnly > 0) {
                 gameData.aggressiveCombatPhasesOnly--;
-                gameData.onlyAggressiveCreaturesCanAttackThisCombat = true;
+                aggressiveCombat = true;
             }
             additionalCombatPhase = true;
         }
@@ -320,6 +323,12 @@ public class TurnProgressionService {
         }
 
         next = skipChosenPhases(gameData, next);
+        if (aggressiveCombat && next == TurnStep.BEGINNING_OF_COMBAT) {
+            // Aggressive: "only creatures with aggressive may attack during it", until that combat ends (CR 511.3).
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("", null, gameData.activePlayerId,
+                    new OnlyMatchingCreaturesCanAttackThisCombatEffect(new PermanentHasKeywordPredicate(Keyword.AGGRESSIVE)),
+                    null, Duration.UNTIL_END_OF_COMBAT));
+        }
 
         // An additional combat in which only a Throat Wolf can attack is its controller's combat, not
         // necessarily the player's whose combat just ended. Restore the original active player after the
@@ -698,7 +707,6 @@ public class TurnProgressionService {
                     }
                     next = TurnStep.BEGINNING_OF_COMBAT;
                 } else {
-                    gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
                     next = TurnStep.POSTCOMBAT_MAIN;
                 }
                 continue;
@@ -815,7 +823,6 @@ public class TurnProgressionService {
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
-                gameData.powerUpAbilitiesCantBeActivatedThisTurn = false;
                 advanceTurn(gameData, false);
                 return;
             }
@@ -842,7 +849,10 @@ public class TurnProgressionService {
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
-        gameData.powerUpAbilitiesCantBeActivatedThisTurn = powerUpAbilitiesDisabled;
+        if (powerUpAbilitiesDisabled) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("", null, nextActive,
+                    new PowerUpAbilitiesCantBeActivatedEffect(), null, Duration.UNTIL_END_OF_TURN));
+        }
         if (damageCantBePrevented) {
             gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("", null, nextActive,
                     new DamageCantBePreventedThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
@@ -863,9 +873,7 @@ public class TurnProgressionService {
         gameData.activePlayerId = nextActive;
         gameData.turnStartTimestamp = gameData.timestampCounter + 1;
         if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
-        gameData.attackableCreaturesThisTurn.clear();
         gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.clear();
-        gameData.blockableCreaturesThisTurn.clear();
 
         gameData.turnNumber++;
         gameData.mainPhasesBegunThisTurn = 0;
@@ -1092,7 +1100,6 @@ public class TurnProgressionService {
         gameData.additionalCombatPhasesOnly = 0;
         gameData.aggressiveCombatPhasesOnly = 0;
         gameData.additionalCombatReturnActivePlayerId = null;
-        gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;
@@ -1107,9 +1114,6 @@ public class TurnProgressionService {
         gameData.additionalEndStepsPending = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
-        if (gameData.peaceTalksTurnsRemaining > 0) {
-            gameData.peaceTalksTurnsRemaining--;
-        }
 
         turnCleanupService.drainManaPools(gameData);
 

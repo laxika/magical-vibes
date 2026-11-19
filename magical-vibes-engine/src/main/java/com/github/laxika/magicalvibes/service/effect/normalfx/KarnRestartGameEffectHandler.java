@@ -191,7 +191,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.postcombatMainPhasesBegunThisTurn = 0;
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
-        gameData.playersWithHandRevealed.clear();
         gameData.resetPriorityToActivePlayer();
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.crimeCandidatesThisTurn.clear();

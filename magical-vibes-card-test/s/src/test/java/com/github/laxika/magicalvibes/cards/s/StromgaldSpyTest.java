@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({StromgaldSpy.class, ElvishRanger.class, FlaringPain.class})
+@CardUsed({StromgaldSpy.class, ElvishRanger.class, FlaringPain.class, RealityRipple.class})
 class StromgaldSpyTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -82,8 +83,31 @@ class StromgaldSpyTest extends BaseCardTest {
 
         assertThat(player1SeesOpponentHand()).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.sacrifice(attacker);
 
+        assertThat(player1SeesOpponentHand()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The reveal ends for good as the Spy phases out; it doesn't come back as the Spy phases in")
+    void revealEndsForGoodAsSpyPhasesOut() {
+        harness.setHand(player2, List.of(new ElvishRanger(), new ElvishRanger()));
+        Permanent attacker = addAttacker();
+
+        attackUnblocked();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(player1SeesOpponentHand()).isTrue();
+
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        assertThat(player1SeesOpponentHand()).isFalse();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(player1SeesOpponentHand()).isFalse();
     }
 

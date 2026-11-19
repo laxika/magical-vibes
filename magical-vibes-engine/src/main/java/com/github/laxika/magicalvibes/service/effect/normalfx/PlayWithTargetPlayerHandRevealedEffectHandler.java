@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTargetPlayerHandRevealedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
@@ -23,12 +25,10 @@ public class PlayWithTargetPlayerHandRevealedEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        resolveForPlayer(gameData, entry.getTargetId());
-    }
-
-    private void resolveForPlayer(GameData gameData, UUID playerId) {
+        UUID playerId = entry.getTargetId();
         if (playerId == null || !gameData.playerIds.contains(playerId)) return;
-        gameData.playersWithHandRevealed.add(playerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, playerId, Duration.PERMANENT));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(playerId) + " plays with their hand revealed for the rest of the game."));
     }

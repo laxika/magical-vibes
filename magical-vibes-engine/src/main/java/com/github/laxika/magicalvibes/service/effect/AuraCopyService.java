@@ -6,18 +6,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.AttachedCreatureIsCopyOfExiledCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +27,8 @@ import org.springframework.stereotype.Component;
  * {@link EnchantedCreatureIsCopyOfChosenCreatureEffect} so the entry, choice and removal call sites
  * stay free of concrete-effect knowledge. The copy itself follows the layer-1 model documented in
  * {@code agent-docs/LAYER_SYSTEM.md}: a card swap through {@link PermanentCopierService} applied
- * before the layer pass, paired with a {@code WHILE_ATTACHED} floating effect whose expiry drives
- * the revert as the duration clock ends it.
+ * before the layer pass, recorded as a {@link com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect}
+ * floating effect whose end the duration clock undoes (the newest copy effect left applies again, CR 613.7).
  */
 @Slf4j
 @Component
@@ -100,8 +95,7 @@ public class AuraCopyService {
 
         // The chosen creature's copiable values are locked in now, even when it is the enchanted
         // creature itself and already carries an earlier copy effect (Metamorphic Alteration rulings).
-        applyWhileAttachedCopy(gameData, aura, enchanted, chosen,
-                new EnchantedCreatureIsCopyOfChosenCreatureEffect(), Duration.WHILE_ATTACHED);
+        applyWhileAttachedCopy(gameData, aura, enchanted, chosen, Duration.WHILE_ATTACHED);
     }
 
     /** Applies Blade of Shared Souls' copy effect to the creature that triggered it. */
@@ -114,26 +108,15 @@ public class AuraCopyService {
             return;
         }
 
-        applyWhileAttachedCopy(gameData, equipment, equipped, chosen,
-                new EquippedCreatureBecomesCopyOfTargetCreatureEffect(), Duration.WHILE_REMAINS_ATTACHED);
+        applyWhileAttachedCopy(gameData, equipment, equipped, chosen, Duration.WHILE_REMAINS_ATTACHED);
     }
 
     private void applyWhileAttachedCopy(GameData gameData, Permanent source, Permanent affected,
-                                        Permanent chosen, CardEffect floatingEffect, Duration duration) {
+                                        Permanent chosen, Duration duration) {
         String originalName = affected.getCard().getName();
-        if (!affected.isCopyWhileAttached()) {
-            affected.setWhileAttachedPreCopyCard(affected.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, affected);
         permanentCopierService.applyCloneCopy(affected, chosen, null, null);
-        affected.setCopyWhileAttached(true);
-        floatingEffect = floatingEffect instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
-                ? new EquippedCreatureBecomesCopyOfTargetCreatureEffect(affected.getCard())
-                : new EnchantedCreatureIsCopyOfChosenCreatureEffect(affected.getCard());
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), source.getCard().getName(), source.getId(),
-                gameQueryService.findPermanentController(gameData, source.getId()),
-                floatingEffect, affected.getId(), null, null,
-                duration, 0));
+        beginCopy(gameData, source, affected, preCopyCard, duration);
 
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + chosen.getCard().getName() + "."));
@@ -149,16 +132,9 @@ public class AuraCopyService {
     public void applyExiledCreatureCopy(GameData gameData, Permanent equipment, Permanent attached,
                                          Card exiledCreature, Duration duration) {
         String originalName = attached.getCard().getName();
-        if (!attached.isCopyWhileAttached()) {
-            attached.setWhileAttachedPreCopyCard(attached.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.preCopyCard(gameData, attached);
         permanentCopierService.applyCloneCopy(attached, exiledCreature, null, null, java.util.Set.of());
-        attached.setCopyWhileAttached(true);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), equipment.getCard().getName(), equipment.getId(),
-                gameQueryService.findPermanentController(gameData, equipment.getId()),
-                new AttachedCreatureIsCopyOfExiledCreatureEffect(attached.getCard()), attached.getId(), null, null,
-                duration, 0));
+        beginCopy(gameData, equipment, attached, preCopyCard, duration);
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + exiledCreature.getName() + "."));
         log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,
@@ -166,61 +142,13 @@ public class AuraCopyService {
     }
 
     /**
-     * Reverts every "while attached" copy carried by the given expired floating effects. Called
-     * when an Aura leaves the battlefield or becomes unattached.
+     * Records the copy just applied to {@code affected} as a layer-1 floating effect of {@code source} for
+     * {@code duration}; as it ends, the duration clock has the newest copy effect left apply again, or the card shown
+     * before them all (CR 613.7).
      */
-    public void revertExpiredCopies(GameData gameData, List<FloatingContinuousEffect> expired) {
-        for (FloatingContinuousEffect floating : expired) {
-            if (!(floating.effect() instanceof EnchantedCreatureIsCopyOfChosenCreatureEffect
-                    || floating.effect() instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
-                    || floating.effect() instanceof AttachedCreatureIsCopyOfExiledCreatureEffect)) {
-                continue;
-            }
-            Permanent enchanted = findPermanentPhasedOrNot(gameData, floating.affectedPermanentId());
-            if (enchanted == null || !enchanted.isCopyWhileAttached()) {
-                continue;
-            }
-            String copyName = enchanted.getCard().getName();
-            FloatingContinuousEffect remaining = gameData.floatingEffects.stream()
-                    .filter(other -> enchanted.getId().equals(other.affectedPermanentId()))
-                    .filter(other -> copiedCard(other.effect()) != null)
-                    .max(Comparator.comparingLong(FloatingContinuousEffect::timestamp))
-                    .orElse(null);
-            if (remaining != null) {
-                permanentCopierService.applyCloneCopy(enchanted, copiedCard(remaining.effect()),
-                        null, null, java.util.Set.of());
-                continue;
-            }
-            enchanted.revertWhileAttachedCopy();
-            gameLogService.append(gameData, GameLog.text(
-                    copyName + " is no longer a copy and reverts to " + enchanted.getCard().getName() + "."));
-            log.info("Game {} - {} reverts from copy back to {} ({} left)", gameData.id, copyName,
-                    enchanted.getCard().getName(), floating.sourceCardName());
-        }
-    }
-
-    /** The permanent {@code permanentId} on the battlefield, phased in or out: a copy ends as it phases out too. */
-    private Permanent findPermanentPhasedOrNot(GameData gameData, UUID permanentId) {
-        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (permanent != null) {
-            return permanent;
-        }
-        for (List<Permanent> phasedOut : gameData.phasedOutPermanents.values()) {
-            for (Permanent candidate : phasedOut) {
-                if (candidate.getId().equals(permanentId)) {
-                    return candidate;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static Card copiedCard(CardEffect effect) {
-        return switch (effect) {
-            case EquippedCreatureBecomesCopyOfTargetCreatureEffect copy -> copy.copiedCard();
-            case EnchantedCreatureIsCopyOfChosenCreatureEffect copy -> copy.copiedCard();
-            case AttachedCreatureIsCopyOfExiledCreatureEffect copy -> copy.copiedCard();
-            default -> null;
-        };
+    private void beginCopy(GameData gameData, Permanent source, Permanent affected, Card preCopyCard,
+                           Duration duration) {
+        PermanentCopierService.beginCopy(gameData, source.getCard().getName(), source.getId(),
+                gameQueryService.findPermanentController(gameData, source.getId()), affected, preCopyCard, duration);
     }
 }

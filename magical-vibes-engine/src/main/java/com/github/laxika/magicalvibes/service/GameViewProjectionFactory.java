@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeDefendingPlayerPlayWithHandRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithTargetPlayerHandRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
@@ -511,7 +513,7 @@ public class GameViewProjectionFactory {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
                 List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
                 boolean revealEntireOpponentHand = fullHandRevealed
-                        || gameData.playersWithHandRevealed.contains(opponentId);
+                        || gameData.hasFloatingEffectOnPlayer(opponentId, PlayWithTargetPlayerHandRevealedEffect.class);
                 return opponentHand.stream()
                         .filter(card -> revealEntireOpponentHand
                                 || gameData.isCardRevealedInHand(card.getId(), opponentId))
@@ -524,21 +526,12 @@ public class GameViewProjectionFactory {
     }
 
     /**
-     * {@code true} if an opponent of {@code playerId} was made to play with their hand revealed by a
-     * source permanent (Stromgald Spy) that is still on the battlefield.
+     * {@code true} if an opponent of {@code playerId} plays with their hand revealed for as long as a source permanent
+     * remains on the battlefield (Stromgald Spy).
      */
     private boolean opponentHandRevealedBySource(GameData gameData, UUID playerId) {
-        for (Map.Entry<UUID, Set<UUID>> entry : gameData.handsRevealedWhileSourceOnBattlefield.entrySet()) {
-            if (gameQueryService.findPermanentById(gameData, entry.getKey()) == null) {
-                continue;
-            }
-            for (UUID revealedPlayerId : entry.getValue()) {
-                if (!revealedPlayerId.equals(playerId)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameData.floatingEffectsOfTypes(MakeDefendingPlayerPlayWithHandRevealedEffect.class).stream()
+                .anyMatch(reveal -> reveal.affectedPlayerId() != null && !reveal.affectedPlayerId().equals(playerId));
     }
 
     /**

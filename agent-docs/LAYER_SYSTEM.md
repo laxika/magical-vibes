@@ -401,13 +401,11 @@ together as one batch, `PermanentCopierService.endCopies`), the newest one left 
 left the permanent shows `preCopyCard`, so an OLDER effect ending cannot revert a NEWER still-active copy of any
 duration. A newer permanent copy that isn't a floating effect (Mirrorform) or a merge updates what they keep
 (`PermanentCopierService.updateCopies`). "And gains haste" with a copy is a layer-6 grant beside it, not part of the
-copiable values (CR 707.9a; March from Velis Vel). A third duration, WHILE ATTACHED
-(`EnchantedCreatureIsCopyOfChosenCreatureEffect` — Metamorphic Alteration), follows the same shape
-via `AuraCopyService`: the swap stores `Permanent.whileAttachedPreCopyCard`, a `WHILE_ATTACHED`
-floating effect is keyed to the Aura, and `PermanentRemovalService` reverts off its expiry
-(`Permanent.revertWhileAttachedCopy()`) — same game moments as the old
-ad-hoc timing (revert at cleanup happens alongside damage removal, per the official Tilonalli
-ruling), pinned by the card tests. Cryptoplasm's copy is INDEFINITE (official ruling: "lasts
+copiable values (CR 707.9a; March from Velis Vel). The attachment copies are the same `ResolvedCopyEffect`s
+(`AuraCopyService`): `WHILE_REMAINS_ATTACHED` for Blade of Shared Souls and Assimilation Aegis, `WHILE_ATTACHED` for
+Metamorphic Alteration's static copy, Secret Invasion and Dinosaur Headdress, so a copy of any duration ending under a
+newer one of another leaves the newer one in place. Revert at cleanup happens alongside damage removal, per the
+official Tilonalli ruling. Cryptoplasm's copy is INDEFINITE (official ruling: "lasts
 indefinitely") and correctly gets no duration marker. CR 611.2c verified against the official
 Tilonalli ruling (2017-09-29): an effect that began to apply before the permanent became a copy
 continues to apply — true structurally because pre-copy effects live on the `Permanent` (7c
@@ -445,6 +443,7 @@ A floating effect's **`Duration`** (`model.effect`) is how long it lasts (CR 611
 (`NEVER` for one with no stated duration), or, for a "for as long as" duration, an `AsLongAs` condition it lasts
 while and ends for good once it stops holding (CR 611.2b). Every duration is one of its named constants:
 `UNTIL_END_OF_TURN` (CR 514.2), `UNTIL_END_OF_COMBAT`, `UNTIL_YOUR_NEXT_TURN`, `UNTIL_END_OF_YOUR_NEXT_TURN`,
+`THIS_TURN_AND_NEXT_TURN` (Peace Talks: the next turn's cleanup, whoever's it is),
 the upkeep, untap-step, next-end-step, spell-cast and planeswalk ends, `PERMANENT`, the source-linked
 `WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED` (these "for as long as"
 durations also end as their source phases out, CR 702.26f), `UNTIL_SOURCE_LEAVES` for "until ~ leaves the battlefield"
@@ -576,7 +575,7 @@ those effects as `RulesEventPipeline` hands it each rules event batch, before th
 what the effect kept on its permanent (a copy's card, a tap restriction, mirrored keywords). The events:
 `TurnEvent.Began` (`UNTIL_YOUR_NEXT_TURN`), `TurnEvent.StepEnded` (`UNTIL_END_OF_COMBAT` as the combat phase ends,
 `UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP`, CR 500.5), `TurnEvent.Cleanup` (`UNTIL_END_OF_TURN`,
-`UNTIL_END_OF_YOUR_NEXT_TURN` control effects included, CR 514.2; Runed Terror's per-player share), `StepEvent`
+`UNTIL_END_OF_YOUR_NEXT_TURN` control effects and `THIS_TURN_AND_NEXT_TURN` included, CR 514.2; Runed Terror's per-player share), `StepEvent`
 (`UNTIL_CONTROLLERS_NEXT_UPKEEP`, `UNTIL_NEXT_END_STEP`), `TapEvent.UntappedDuringUntapStep`
 (`UNTIL_CONTROLLERS_NEXT_UNTAP_STEP`), `PermanentChangeEvent` turning a permanent face up (`WHILE_FACE_DOWN`),
 `SpellEvent.Cast` (the spell-cast ends) and `ActionEvent.Planeswalked`
@@ -592,7 +591,7 @@ via `CreatureControlService.onSourceUntapped`), `sourceUnattached`
 `sourceChangedControl` (`CreatureControlService`'s control move). Which effects need their creator to control the
 source is the clock's (`SOURCE_CONTROLLED`, and source-linked control, goad, attack-requirement, lock and grant
 effects). `DurationClock.holds` judges the same conditions on the board for the control reconciliation's safety net.
-Every end, by event or by state, undoes what the effect kept, copies of `AuraCopyService` included; control is
+Every end, by event or by state, undoes what the effect kept, copies included; control is
 recomputed by the caller. As a permanent leaves the battlefield, `affectedLeft` ends the effects on it whatever their
 durations (CR 400.7); they stay readable as its last-known information through `GameData.floatingEffectsOnPermanent`
 (`departedPermanentEffects`) until their own durations would have ended them. The migration notes below name the expiry helpers the clock replaced.

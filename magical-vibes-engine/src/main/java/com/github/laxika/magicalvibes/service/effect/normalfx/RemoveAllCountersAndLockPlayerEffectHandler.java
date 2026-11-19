@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAndLockPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +17,17 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link RemoveAllCountersAndLockPlayerEffect} (Suncleanser): clears every player counter
- * type the engine tracks (poison, energy, experience, rad, spark) from the target player, then records
- * that player under the source permanent's id in {@code GameData.countersLockedPlayersWhileSourceOnBattlefield}
- * so the counter-gain paths (e.g. {@code GameQueryService.canPlayerGetPoisonCounters} and
- * {@code GameQueryService.replaceEnergyCounters}) refuse further counters while the source remains on the battlefield.
+ * type the engine tracks (poison, energy, experience, rad, spark) from the target player, then resolves into itself
+ * as a floating effect on that player lasting {@link Duration#WHILE_SOURCE_REMAINS} (it ends for good as the source
+ * phases out, CR 702.26f), so the counter-gain paths (e.g. {@code GameQueryService.canPlayerGetPoisonCounters} and
+ * {@code GameQueryService.replaceEnergyCounters}) refuse further counters while it lasts.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RemoveAllCountersAndLockPlayerEffectHandler implements NormalEffectHandlerBean {
 
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     @Override
@@ -45,10 +49,10 @@ public class RemoveAllCountersAndLockPlayerEffectHandler implements NormalEffect
         gameData.playerSparkCounters.remove(targetPlayerId);
 
         UUID sourceId = entry.getSourcePermanentId();
-        if (sourceId != null) {
-            gameData.countersLockedPlayersWhileSourceOnBattlefield
-                    .computeIfAbsent(sourceId, id -> ConcurrentHashMap.newKeySet())
-                    .add(targetPlayerId);
+        // A "for as long as" lock whose source already left never begins (CR 611.2b).
+        if (sourceId != null && gameQueryService.findPermanentById(gameData, sourceId) != null) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(), sourceId,
+                    entry.getControllerId(), effect, targetPlayerId, Duration.WHILE_SOURCE_REMAINS));
         }
 
         gameLogService.append(gameData,

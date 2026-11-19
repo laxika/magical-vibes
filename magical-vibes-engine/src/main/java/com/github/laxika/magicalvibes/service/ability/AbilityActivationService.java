@@ -7063,7 +7063,7 @@ public class AbilityActivationService {
         if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
-        if (gameData.powerUpAbilitiesCantBeActivatedThisTurn && ability.isPowerUpAbility()) {
+        if (gameData.powerUpAbilitiesCantBeActivatedThisTurn() && ability.isPowerUpAbility()) {
             throw new IllegalStateException("Power-up abilities can't be activated this turn");
         }
 

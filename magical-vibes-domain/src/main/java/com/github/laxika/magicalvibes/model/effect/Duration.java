@@ -65,6 +65,8 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
         NEXT_TURN,
         /** The cleanup step of its controller's next turn. */
         END_OF_YOUR_NEXT_TURN,
+        /** The cleanup step of the next turn, whoever's it is: "this turn and next turn". */
+        END_OF_NEXT_TURN,
         /** The next untap step of the affected permanent's controller, not the effect's controller. */
         AFFECTED_CONTROLLERS_NEXT_UNTAP_STEP,
         /** The beginning of its controller's next upkeep. */
@@ -171,6 +173,10 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
     public static final Duration UNTIL_YOUR_NEXT_TURN = new Duration(End.YOUR_NEXT_TURN, null);
     /** "Until the end of your next turn". */
     public static final Duration UNTIL_END_OF_YOUR_NEXT_TURN = new Duration(End.END_OF_YOUR_NEXT_TURN, null);
+    /**
+     * "This turn and next turn" (Peace Talks): through the cleanup step of the next turn, whoever's it is (CR 514.2).
+     */
+    public static final Duration THIS_TURN_AND_NEXT_TURN = new Duration(End.END_OF_NEXT_TURN, null);
     /** "Until its controller's next untap step" (Orcish Farmer), keyed to the affected permanent's controller. */
     public static final Duration UNTIL_CONTROLLERS_NEXT_UNTAP_STEP =
             new Duration(End.AFFECTED_CONTROLLERS_NEXT_UNTAP_STEP, null);

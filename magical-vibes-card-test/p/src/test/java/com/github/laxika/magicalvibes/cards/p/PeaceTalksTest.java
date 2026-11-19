@@ -35,7 +35,6 @@ class PeaceTalksTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
-        assertThat(gd.peaceTalksTurnsRemaining).isEqualTo(2);
         assertThat(warthog.isTapped()).isFalse();
     }
 
@@ -44,12 +43,10 @@ class PeaceTalksTest extends BaseCardTest {
     void lastsThisTurnAndNextThenClears() {
         Permanent warthog = addCreatureReady(player1, new Warthog());
         castPeaceTalks(player1);
-        assertThat(gd.peaceTalksTurnsRemaining).isEqualTo(2);
 
-        // Leave player1's turn → still active on player2's turn (1 remaining)
+        // Leave player1's turn → still active on player2's turn
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.peaceTalksTurnsRemaining).isEqualTo(1);
 
         Permanent oppWarthog = addCreatureReady(player2, new Warthog());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -60,7 +57,6 @@ class PeaceTalksTest extends BaseCardTest {
         // Leave player2's turn → Peace Talks expires
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.peaceTalksTurnsRemaining).isEqualTo(0);
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId()))
                 .contains(indexOf(player1, warthog));
@@ -230,7 +226,10 @@ class PeaceTalksTest extends BaseCardTest {
     }
 
     private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }

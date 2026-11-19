@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -52,8 +55,9 @@ public class SeparateCreaturesIntoPilesAndChooseBlockersEffectHandler implements
             log.info("Game {} - {} has no creatures to separate", gameData.id, playerName);
             // Both piles are empty, so a creature the defending player gets later is in neither pile and
             // cannot block this turn.
-            gameData.blockableCreaturesThisTurn.merge(defendingPlayerId, Set.<UUID>of(),
-                    (existing, next) -> Set.<UUID>of());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new OnlyChosenCreaturesCanBlockEffect(Set.of()), null, Duration.UNTIL_END_OF_TURN));
             return;
         }
 

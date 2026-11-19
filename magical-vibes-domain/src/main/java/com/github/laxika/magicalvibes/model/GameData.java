@@ -229,8 +229,6 @@ public class GameData {
     public boolean extraTurnSkipsAllUntapSteps;
     /** Whether the draw step most recently entered was skipped, so it offers no priority window (rule 500.11). */
     public boolean drawStepSkippedThisStep;
-    /** Whether Power-up abilities are prohibited during the current turn. */
-    public boolean powerUpAbilitiesCantBeActivatedThisTurn;
     public Long currentExtraTurnSequence;
     public long nextExtraTurnSequence = 1;
     /**
@@ -1513,8 +1511,6 @@ public class GameData {
     public int aggressiveCombatPhasesOnly;
     /** Original active player while an additional combat is being conducted for another controller. */
     public UUID additionalCombatReturnActivePlayerId;
-    /** Whether only creatures with Aggressive may attack during the current additional combat. */
-    public boolean onlyAggressiveCreaturesCanAttackThisCombat;
     /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
     public int additionalCombatPhasesAfterMain;
     /** The normal phase to resume after {@link #additionalCombatPhasesAfterMain} is exhausted. */
@@ -1568,24 +1564,6 @@ public class GameData {
     public ResolutionDamageEvent openDamageEvent;
     /** Suppresses re-offering an optional creature-damage redirect while a declined event resumes. */
     public boolean resolvingDeclinedAllCreatureDamageRedirect;
-    /**
-     * Players who play with their hand revealed for as long as a given source permanent remains on
-     * the battlefield (Stromgald Spy), keyed by that source permanent's id. Entries stay until the
-     * source leaves the battlefield; readers must check that the source is still there.
-     */
-    public final Map<UUID, Set<UUID>> handsRevealedWhileSourceOnBattlefield = new ConcurrentHashMap<>();
-    /**
-     * Permanents that can't have counters put on them for as long as a given source permanent
-     * remains on the battlefield (Suncleanser's first mode), keyed by that source permanent's id.
-     * Entries stay until the source leaves; readers must check that the source is still there.
-     */
-    public final Map<UUID, Set<UUID>> countersLockedPermanentsWhileSourceOnBattlefield = new ConcurrentHashMap<>();
-    /**
-     * Players who can't get counters for as long as a given source permanent remains on the
-     * battlefield (Suncleanser's second mode), keyed by that source permanent's id. Same lifetime
-     * rule as {@link #countersLockedPermanentsWhileSourceOnBattlefield}.
-     */
-    public final Map<UUID, Set<UUID>> countersLockedPlayersWhileSourceOnBattlefield = new ConcurrentHashMap<>();
     /**
      */
     /**
@@ -1749,8 +1727,6 @@ public class GameData {
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Finite-use triggered abilities granted directly to players. */
     public final List<Boon> boons = Collections.synchronizedList(new ArrayList<>());
-    /** Players who play with their hand revealed for the rest of the game (e.g. Truth or Dare). */
-    public final Set<UUID> playersWithHandRevealed = ConcurrentHashMap.newKeySet();
 
 
     /** Temporary characteristic changes applied to a card while it remains in a graveyard: an effect on that card. */
@@ -3517,29 +3493,8 @@ public class GameData {
                 .anyMatch(effect -> ((SkipChosenStepOrPhaseEffect) effect).kind() == kind);
     }
 
-    /** Active this turn: affectedPlayerId -> creatures allowed to attack by a pile effect. */
-    public final Map<UUID, Set<UUID>> attackableCreaturesThisTurn = new ConcurrentHashMap<>();
-
     /** Creatures that were able to attack as each player reached their declare-attackers step this turn. */
     public final Map<UUID, Set<UUID>> creaturesAbleToAttackAtDeclareAttackersThisTurn = new ConcurrentHashMap<>();
-
-    /** Active this turn: affectedPlayerId -> creatures allowed to block by a pile effect. */
-    public final Map<UUID, Set<UUID>> blockableCreaturesThisTurn = new ConcurrentHashMap<>();
-
-    /** Intimidation Bolt — "Other creatures can't attack this turn." Each resolution appends the
-     *  targeted (exempted) creature's permanent ID; a creature may attack only if its ID equals every
-     *  entry, so multiple copies stack and an empty list means no restriction. A dead target's ID
-     *  matches no living creature, locking everyone (CR-accurate: if the target dies, no creature may
-     *  attack). Enforced in {@code CombatAttackService.canCreatureAttack}, so it also covers creatures
-     *  that enter later this turn. Cleared at each turn transition. */
-
-    /**
-     * Peace Talks — "This turn and next turn, creatures can't attack, and players and permanents
-     * can't be the targets of spells or activated abilities." Set to {@code 2} on resolution
-     * (current + next); decremented at each turn advance. Active while {@code > 0}. Triggered
-     * abilities are unaffected. Enforced in {@code AttackLegalityService} and targeting services.
-     */
-    public int peaceTalksTurnsRemaining = 0;
 
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
@@ -6023,6 +5978,12 @@ public class GameData {
     public final CombatDamagePreventionTokenShield combatDamagePreventionTokenShield(UUID playerId) {
         List<FloatingContinuousEffect> shields = floatingEffectsOnPlayer(playerId, CombatDamagePreventionTokenShield.class);
         return shields.isEmpty() ? null : (CombatDamagePreventionTokenShield) shields.getFirst().effect();
+    }
+
+    /** Whether an effect makes "power-up abilities can't be activated" during this turn (CR 611.2a). */
+    public final boolean powerUpAbilitiesCantBeActivatedThisTurn() {
+        return hasFloatingEffectOnPlayer(null,
+                com.github.laxika.magicalvibes.model.effect.PowerUpAbilitiesCantBeActivatedEffect.class);
     }
 
     /** Whether an effect makes "damage can't be prevented this turn" (CR 615.1, CR 611.2a). */
@@ -9792,7 +9753,6 @@ public class GameData {
         copy.turnUntapStepSkipped = this.turnUntapStepSkipped;
         copy.extraTurnSkipsAllUntapSteps = this.extraTurnSkipsAllUntapSteps;
         copy.drawStepSkippedThisStep = this.drawStepSkippedThisStep;
-        copy.powerUpAbilitiesCantBeActivatedThisTurn = this.powerUpAbilitiesCantBeActivatedThisTurn;
         copy.cardsExiledThisTurn = this.cardsExiledThisTurn;
         copy.pileGroupingOrGuessCountThisTurn = this.pileGroupingOrGuessCountThisTurn;
         copy.currentExtraTurnSequence = this.currentExtraTurnSequence;
@@ -10088,7 +10048,6 @@ public class GameData {
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.aggressiveCombatPhasesOnly = this.aggressiveCombatPhasesOnly;
         copy.additionalCombatReturnActivePlayerId = this.additionalCombatReturnActivePlayerId;
-        copy.onlyAggressiveCreaturesCanAttackThisCombat = this.onlyAggressiveCreaturesCanAttackThisCombat;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
@@ -10164,21 +10123,6 @@ public class GameData {
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.playersWhoActivatedArtifactAbilityThisTurn.addAll(this.playersWhoActivatedArtifactAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
-        this.handsRevealedWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
-            Set<UUID> copied = ConcurrentHashMap.newKeySet();
-            copied.addAll(playerIds);
-            copy.handsRevealedWhileSourceOnBattlefield.put(sourceId, copied);
-        });
-        this.countersLockedPermanentsWhileSourceOnBattlefield.forEach((sourceId, permanentIds) -> {
-            Set<UUID> copied = ConcurrentHashMap.newKeySet();
-            copied.addAll(permanentIds);
-            copy.countersLockedPermanentsWhileSourceOnBattlefield.put(sourceId, copied);
-        });
-        this.countersLockedPlayersWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
-            Set<UUID> copied = ConcurrentHashMap.newKeySet();
-            copied.addAll(playerIds);
-            copy.countersLockedPlayersWhileSourceOnBattlefield.put(sourceId, copied);
-        });
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
@@ -11155,7 +11099,6 @@ public class GameData {
         // --- Permanent no-max-hand-size grants ---
 
         // --- Permanent "can't gain life" grants (Stigma Lasher) ---
-        copy.playersWithHandRevealed.addAll(this.playersWithHandRevealed);
 
         // --- Source-linked animations (Awakener Druid-style) ---
 
@@ -11227,11 +11170,8 @@ public class GameData {
         copy.wordOfCommandPendingResolutionIndex = this.wordOfCommandPendingResolutionIndex;
         copy.wordOfCommandCastingCard = this.wordOfCommandCastingCard;
         copy.wordOfCommandAwaitingCardResolution = this.wordOfCommandAwaitingCardResolution;
-        this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->
                 copy.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, Set.copyOf(ids)));
-        this.blockableCreaturesThisTurn.forEach((playerId, ids) -> copy.blockableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
-        copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
         copy.currentlyResolvingTriggeredAbilityControllerId = this.currentlyResolvingTriggeredAbilityControllerId;
 

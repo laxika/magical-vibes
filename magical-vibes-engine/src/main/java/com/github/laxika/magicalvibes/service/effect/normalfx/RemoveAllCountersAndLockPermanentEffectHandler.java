@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAndLockPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -17,9 +18,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link RemoveAllCountersAndLockPermanentEffect} (Suncleanser): strips every counter of
- * every kind from the target permanent, then records it under the source permanent's id in
- * {@code GameData.countersLockedPermanentsWhileSourceOnBattlefield} so
- * {@code GameQueryService.cantHaveCounters} refuses further counters while the source stays.
+ * every kind from the target permanent, then resolves into itself as a floating effect on it lasting for as long as
+ * the source remains on the battlefield ({@link Duration#WHILE_SOURCE_REMAINS}; it ends for good as the source phases
+ * out, CR 702.26f), so {@code GameQueryService.cantHaveCounters} refuses further counters while it lasts.
  */
 @Slf4j
 @Component
@@ -54,10 +55,10 @@ public class RemoveAllCountersAndLockPermanentEffectHandler implements NormalEff
         gameData.recordOilCounterRemoved(target, oilRemoved);
 
         UUID sourceId = entry.getSourcePermanentId();
-        if (sourceId != null) {
-            gameData.countersLockedPermanentsWhileSourceOnBattlefield
-                    .computeIfAbsent(sourceId, id -> ConcurrentHashMap.newKeySet())
-                    .add(target.getId());
+        // A "for as long as" lock whose source already left never begins (CR 611.2b).
+        if (sourceId != null && gameQueryService.findPermanentById(gameData, sourceId) != null) {
+            gameData.addEffectOnPermanent(entry.getCard().getName(), sourceId, entry.getControllerId(), effect,
+                    target.getId(), Duration.WHILE_SOURCE_REMAINS);
         }
 
         gameLogService.append(gameData, GameLog.textCardText(

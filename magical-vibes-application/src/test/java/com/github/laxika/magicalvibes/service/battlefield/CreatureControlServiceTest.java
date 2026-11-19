@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -97,7 +96,6 @@ class CreatureControlServiceTest {
                 "triggeredAbilityStackService", triggeredAbilityStackService);
         org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService, "durationClock",
                 new DurationClock(predicateEvaluationService, gameQueryService,
-                        org.mockito.Mockito.mock(AuraCopyService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.PhasingService.class)));
         org.mockito.Mockito.doAnswer(invocation -> {
             com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(invocation.getArgument(0), invocation.getArgument(1));

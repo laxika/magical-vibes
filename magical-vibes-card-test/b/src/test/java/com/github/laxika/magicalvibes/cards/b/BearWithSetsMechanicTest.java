@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +52,7 @@ class BearWithSetsMechanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Several aggressive creatures make one aggressive combat, whose restriction ends with it")
     void multipleAggressiveCreaturesCreateOnlyOneAdditionalCombat() {
         addCreatureReady(player1, new BearWithSetsMechanic());
         addCreatureReady(player1, new BearWithSetsMechanic());
@@ -71,7 +73,30 @@ class BearWithSetsMechanicTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.onlyAggressiveCreaturesCanAttackThisCombat).isFalse();
+        assertThat(gd.floatingEffectsOfTypes(OnlyMatchingCreaturesCanAttackThisCombatEffect.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the aggressive combat is restricted: a later added combat this turn lets every creature attack")
+    void restrictionEndsWithTheAggressiveCombat() {
+        addCreatureReady(player1, new BearWithSetsMechanic());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        gd.combatPhasesThisTurn = 1;
+        harness.clearPriorityPassed();
+
+        gs.advanceStep(gd);
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId()))
+                .containsExactly(0);
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        gd.additionalCombatPhasesAfterMain = 1;
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId()))
+                .containsExactly(0, 1);
     }
 
     @Test

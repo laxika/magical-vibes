@@ -5,10 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * creature remains on the battlefield." (Suncleanser's first mode.)
  *
  * <p>Removes every counter of every kind — unlike {@link RemoveAllCountersEffect}, which is scoped
- * to one {@code CounterType}. The lock is recorded in
- * {@code GameData.countersLockedPermanentsWhileSourceOnBattlefield} keyed by the source permanent,
- * and read back by {@code GameQueryService.cantHaveCounters}; it ends on its own when the source
- * leaves the battlefield, so nothing has to clean the entry up.</p>
+ * to one {@code CounterType}. The lock is this effect as a floating effect on the target lasting
+ * {@link Duration#WHILE_SOURCE_REMAINS}, read back by {@code GameQueryService.cantHaveCounters}.</p>
  */
 public record RemoveAllCountersAndLockPermanentEffect() implements CardEffect {
 

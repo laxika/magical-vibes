@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import org.springframework.context.annotation.Lazy;
@@ -75,17 +74,13 @@ public class DurationClock {
 
     private final GameQueryService gameQueryService;
 
-    private final AuraCopyService auraCopyService;
-
     private final PhasingService phasingService;
 
     public DurationClock(@Lazy PredicateEvaluationService predicateEvaluationService,
                          @Lazy GameQueryService gameQueryService,
-                         @Lazy AuraCopyService auraCopyService,
                          @Lazy PhasingService phasingService) {
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
-        this.auraCopyService = auraCopyService;
         this.phasingService = phasingService;
     }
 
@@ -274,9 +269,6 @@ public class DurationClock {
             undo(gameData, effect);
         }
         endCopies(gameData, ended);
-        if (!ended.isEmpty()) {
-            auraCopyService.revertExpiredCopies(gameData, ended);
-        }
         return ended;
     }
 
@@ -318,14 +310,18 @@ public class DurationClock {
 
     /**
      * Whether the cleanup step in {@code activePlayerId}'s turn ends {@code effect}: an "until end of turn" effect, a
-     * reduction of the next matching spell that lasts the turn, and an "until the end of your next turn" effect of
-     * the active player that began before this turn (CR 514.2). While players take their phases one after another
+     * reduction of the next matching spell that lasts the turn, an "until the end of your next turn" effect of the
+     * active player that began before this turn, and a "this turn and next turn" effect that began before this turn
+     * (CR 514.2). While players take their phases one after another
      * (Runed Terror), a turn's effects end only at the cleanup step of the player who was active as they began.
      */
     private boolean endsAtCleanup(GameData gameData, UUID activePlayerId, FloatingContinuousEffect effect) {
         if (ends(effect, Duration.End.END_OF_YOUR_NEXT_TURN)) {
             return activePlayerId != null && activePlayerId.equals(effect.controllerId())
                     && startedBefore(effect, gameData.turnStartTimestamp);
+        }
+        if (ends(effect, Duration.End.END_OF_NEXT_TURN)) {
+            return startedBefore(effect, gameData.turnStartTimestamp);
         }
         boolean endsThisTurn = ends(effect, Duration.End.END_OF_TURN)
                 || (ends(effect, Duration.End.MATCHING_SPELL_CAST)

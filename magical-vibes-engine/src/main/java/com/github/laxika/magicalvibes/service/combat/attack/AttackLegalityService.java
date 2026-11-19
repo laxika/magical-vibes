@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -98,18 +99,21 @@ public class AttackLegalityService {
     private final AmountEvaluationService amountEvaluationService;
 
     /**
-     * Whether a "during that combat" restriction of an added combat phase keeps {@code creature} from attacking: only
-     * land creatures, only the restriction's source, or only the chosen creatures can attack in it.
+     * Whether a floating restriction on which creatures can attack keeps {@code creature} from attacking: "during that
+     * combat" of an added combat phase only land creatures, only the restriction's source, only the chosen creatures or
+     * only matching creatures (the aggressive combat) can attack in it; "this turn" only the creatures of a chosen pile.
      */
     private boolean isExcludedFromThisCombat(GameData gameData, Permanent creature) {
         for (FloatingContinuousEffect restriction : gameData.floatingEffectsOnPlayer(null,
                 OnlyLandCreaturesCanAttackThisCombatEffect.class, OnlySourceCreatureCanAttackThisCombatEffect.class,
-                OnlyTargetCreaturesCanAttackThisCombatEffect.class)) {
+                OnlyTargetCreaturesCanAttackThisCombatEffect.class, OnlyMatchingCreaturesCanAttackThisCombatEffect.class)) {
             boolean excluded = switch (restriction.effect()) {
                 case OnlyLandCreaturesCanAttackThisCombatEffect ignored -> !gameQueryService.isLand(gameData, creature);
                 case OnlySourceCreatureCanAttackThisCombatEffect ignored ->
                         !creature.getId().equals(restriction.sourcePermanentId());
                 case OnlyTargetCreaturesCanAttackThisCombatEffect only -> !only.permanentIds().contains(creature.getId());
+                case OnlyMatchingCreaturesCanAttackThisCombatEffect only -> !predicateEvaluationService
+                        .matchesPermanentPredicate(creature, only.filter(), FilterContext.of(gameData));
                 default -> false;
             };
             if (excluded) {
@@ -128,10 +132,6 @@ public class AttackLegalityService {
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (gameData.hasFloatingEffectOnPlayer(null, MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect.class)) {
-            return false;
-        }
-        if (gameData.onlyAggressiveCreaturesCanAttackThisCombat
-                && !gameQueryService.hasKeyword(gameData, creature, Keyword.AGGRESSIVE)) {
             return false;
         }
         if (isExcludedFromThisCombat(gameData, creature)) {
@@ -680,11 +680,6 @@ public class AttackLegalityService {
         for (FloatingContinuousEffect restriction
                 : gameData.floatingEffectsOfTypes(OnlyChosenCreaturesCanAttackEffect.class)) {
             if (!((OnlyChosenCreaturesCanAttackEffect) restriction.effect()).chosen().contains(creature.getId())) {
-                return true;
-            }
-        }
-        for (Set<UUID> chosen : gameData.attackableCreaturesThisTurn.values()) {
-            if (!chosen.contains(creature.getId())) {
                 return true;
             }
         }

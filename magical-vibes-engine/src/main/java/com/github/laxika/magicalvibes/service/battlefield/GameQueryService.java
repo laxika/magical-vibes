@@ -4765,8 +4765,8 @@ public class GameQueryService {
         if (bonus.grantedEffects().stream().anyMatch(CantHaveCountersEffect.class::isInstance)) {
             return true;
         }
-        if (lockedWhileSourceOnBattlefield(
-                gameData, gameData.countersLockedPermanentsWhileSourceOnBattlefield, permanent.getId())) {
+        if (gameData.hasFloatingEffectOnPermanent(permanent.getId(),
+                com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAndLockPermanentEffect.class)) {
             return true;
         }
         // Solemnity: "Counters can't be put on artifacts, creatures, enchantments, or lands."
@@ -4869,14 +4869,11 @@ public class GameQueryService {
      * entries â€” those whose source has left â€” are ignored rather than cleaned up, matching the
      * lifetime rule documented on the {@code â€¦WhileSourceOnBattlefield} maps.
      */
-    private boolean lockedWhileSourceOnBattlefield(
-            GameData gameData, Map<UUID, Set<UUID>> locks, UUID subjectId) {
-        for (Map.Entry<UUID, Set<UUID>> lock : locks.entrySet()) {
-            if (lock.getValue().contains(subjectId) && findPermanentById(gameData, lock.getKey()) != null) {
-                return true;
-            }
-        }
-        return false;
+    /** Whether {@code playerId} can't get counters for as long as a source remains on the battlefield (Suncleanser). */
+    private static boolean playerCountersLocked(GameData gameData, UUID playerId) {
+        return gameData.floatingEffectsOfTypes(
+                        com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAndLockPlayerEffect.class).stream()
+                .anyMatch(lock -> playerId.equals(lock.affectedPlayerId()));
     }
 
     private boolean isArtifactCreatureEnchantmentOrLand(
@@ -5933,8 +5930,7 @@ public class GameQueryService {
         if (playersCantGetCounters(gameData)) {
             return 0;
         }
-        if (lockedWhileSourceOnBattlefield(
-                gameData, gameData.countersLockedPlayersWhileSourceOnBattlefield, playerId)) {
+        if (playerCountersLocked(gameData, playerId)) {
             return 0;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -6062,8 +6058,7 @@ public class GameQueryService {
         if (playersCantGetCounters(gameData)) {
             return false;
         }
-        if (lockedWhileSourceOnBattlefield(
-                gameData, gameData.countersLockedPlayersWhileSourceOnBattlefield, playerId)) {
+        if (playerCountersLocked(gameData, playerId)) {
             return false;
         }
         return activeStaticEffects(gameData, playerId, PlayerCantGetPoisonCountersEffect.class).isEmpty();
@@ -9871,10 +9866,11 @@ public class GameQueryService {
     /**
      * Returns {@code true} if Peace Talks is active: creatures can't attack, and players and
      * permanents can't be the targets of spells or activated abilities (triggered abilities are
-     * unaffected). Active while {@link GameData#peaceTalksTurnsRemaining} {@code > 0}.
+     * unaffected). Active while a floating {@code PeaceTalksEffect} lasts.
      */
     public boolean isPeaceTalksActive(GameData gameData) {
-        return gameData.peaceTalksTurnsRemaining > 0;
+        return gameData.hasFloatingEffectOnPlayer(null,
+                com.github.laxika.magicalvibes.model.effect.PeaceTalksEffect.class);
     }
 
     /**

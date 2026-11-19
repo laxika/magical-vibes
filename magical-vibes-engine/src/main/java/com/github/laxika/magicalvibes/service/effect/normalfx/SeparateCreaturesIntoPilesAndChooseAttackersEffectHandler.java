@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -46,7 +49,9 @@ public class SeparateCreaturesIntoPilesAndChooseAttackersEffectHandler implement
                         .toList();
 
         if (creatureIds.isEmpty()) {
-            gameData.attackableCreaturesThisTurn.merge(activePlayerId, Set.of(), (existing, next) -> Set.of());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.of()), null, Duration.UNTIL_END_OF_TURN));
             String playerName = gameData.playerIdToName.get(activePlayerId);
             gameLogService.append(gameData, GameLog.text(playerName + " has no creatures to separate."));
             log.info("Game {} - {} has no creatures to separate", gameData.id, playerName);

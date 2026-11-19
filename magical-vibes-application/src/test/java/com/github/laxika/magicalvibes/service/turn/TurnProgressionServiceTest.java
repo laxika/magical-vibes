@@ -544,21 +544,21 @@ class TurnProgressionServiceTest {
             gd.queueExtraTurnFirst(player1Id, false);
 
             turnProgressionService.advanceTurn(gd);
-            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn()).isFalse();
             assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
 
             turnProgressionService.advanceTurn(gd);
-            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn()).isFalse();
             assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
 
             endTurnEffectsAsTheCleanupStepDoes();
             turnProgressionService.advanceTurn(gd);
-            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isTrue();
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn()).isTrue();
             assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
 
             endTurnEffectsAsTheCleanupStepDoes();
             turnProgressionService.advanceTurn(gd);
-            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn()).isFalse();
             assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         }
 

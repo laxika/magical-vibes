@@ -73,9 +73,6 @@ public class EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffectHan
             // the permanent keeps this permanent copy rather than reverting past it.
             PermanentCopierService.updateCopies(gameData, permanent,
                     copied -> permanent.getCard(), preCopy -> permanent.getCard());
-            if (permanent.isCopyWhileAttached()) {
-                permanent.setWhileAttachedPreCopyCard(permanent.getCard());
-            }
         }
 
         gameLogService.append(gameData, GameLog.builder()

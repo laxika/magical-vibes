@@ -19,7 +19,10 @@ class KangTheConquerorTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
-            harness.forceStep(TurnStep.CLEANUP);
+            harness.setHand(player1, java.util.List.of());
+            harness.setHand(player2, java.util.List.of());
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
             harness.passBothPriorities();
         });
     }

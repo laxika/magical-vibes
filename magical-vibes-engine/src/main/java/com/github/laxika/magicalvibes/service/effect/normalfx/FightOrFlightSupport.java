@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -53,12 +56,8 @@ public class FightOrFlightSupport {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         List<UUID> chosenPile = choosePile1 ? state.pile1Ids() : state.pile2Ids();
         Set<UUID> chosen = new HashSet<>(chosenPile);
-        gameData.attackableCreaturesThisTurn.merge(state.targetPlayerId(), Set.copyOf(chosen),
-                (existing, next) -> {
-                    Set<UUID> intersection = new HashSet<>(existing);
-                    intersection.retainAll(next);
-                    return Set.copyOf(intersection);
-                });
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("", null, state.controllerId(),
+                new OnlyTargetCreaturesCanAttackThisCombatEffect(chosen), null, Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(state.targetPlayerId());
         String pileName = choosePile1 ? "Pile 1" : "Pile 2";

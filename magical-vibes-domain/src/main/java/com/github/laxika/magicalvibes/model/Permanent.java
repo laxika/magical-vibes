@@ -511,14 +511,6 @@ public class Permanent {
      * list, while an object that copies this creature's characteristics is a single object without components.
      */
     private final List<Card> mutatedComponentCards = new ArrayList<>();
-    /** When true, this permanent is a copy of another creature for as long as the Aura that made it
-     *  one stays attached to it (Metamorphic Alteration). NOT cleared by {@link #resetModifiers()}.
-     *  Reverts to {@link #whileAttachedPreCopyCard} via {@link #revertWhileAttachedCopy()} when that
-     *  Aura's {@code WHILE_ATTACHED} floating layer-1 effect expires. */
-    @Setter private boolean copyWhileAttached;
-    /** The card to revert to when a "while attached" copy ends.
-     *  Only non-null when {@link #copyWhileAttached} is true. */
-    @Setter private Card whileAttachedPreCopyCard;
     /** CR 613.7 timestamp: stamped from {@link GameData#nextTimestamp()} when this permanent
      *  enters a battlefield, and re-stamped each time it becomes attached (CR 613.7e — Auras and
      *  Equipment). Control changes do NOT re-stamp (CR 613.7c). Stays 0 for permanents added to
@@ -782,8 +774,6 @@ public class Permanent {
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.mutatedComponentCards.addAll(source.mutatedComponentCards);
-        this.copyWhileAttached = source.copyWhileAttached;
-        this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
         this.timestamp = source.timestamp;
     }
 
@@ -1511,20 +1501,6 @@ public class Permanent {
 
     public boolean isRoomFullyUnlocked() {
         return unlockedRoomDoors.contains(0) && unlockedRoomDoors.contains(1);
-    }
-
-    /**
-     * Reverts a "while the Aura is attached" copy (Metamorphic Alteration) back to the permanent's
-     * pre-copy card. Driven by the expiry of the Aura's {@code WHILE_ATTACHED} floating layer-1
-     * effect when the Aura leaves the battlefield or becomes unattached. Safe to call more than
-     * once — a second expiry finds the flag already cleared.
-     */
-    public void revertWhileAttachedCopy() {
-        if (this.copyWhileAttached && this.whileAttachedPreCopyCard != null) {
-            this.card = this.whileAttachedPreCopyCard;
-        }
-        this.copyWhileAttached = false;
-        this.whileAttachedPreCopyCard = null;
     }
 
     /** The mana of {@code color} spent to cast the spell that produced this permanent ({@link #manaSpentByColorToCast}). */

@@ -853,6 +853,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Alchemist's Gambit's tests fix both hands and draws (the random opening hand stopped auto-pass).
 - Left: the AI's must-attack-alongside hint ignores count caps; the requirement searches stop after 200,000 nodes.
 
+**D (part 23: the last duration fields).**
+- Floating effects now: attachment copies are `ResolvedCopyEffect`s (`WHILE_REMAINS_ATTACHED` for Blade of Shared Souls and Assimilation Aegis, `WHILE_ATTACHED` for the Auras; the newest left applies, CR 613.7); Peace Talks (`Duration.THIS_TURN_AND_NEXT_TURN`, `End.END_OF_NEXT_TURN`: the next turn's cleanup, CR 514.2); the aggressive combat (`OnlyMatchingCreaturesCanAttackThisCombatEffect`, end of combat, CR 511.3, begun only as that combat begins); Kang's extra turn (`PowerUpAbilitiesCantBeActivatedEffect`); Fight or Flight's and Stand or Fall's piles (until end of turn); Stromgald Spy's reveal and Suncleanser's counter locks (`WHILE_SOURCE_REMAINS`, CR 611.2b); Truth or Dare's reveal (`PERMANENT`).
+- Gone: `copyWhileAttached`, `whileAttachedPreCopyCard`, `AuraCopyService.revertExpiredCopies`, `AttachedCreatureIsCopyOfExiledCreatureEffect`, `peaceTalksTurnsRemaining`, `onlyAggressiveCreaturesCanAttackThisCombat`, `powerUpAbilitiesCantBeActivatedThisTurn`, `attackable`/`blockableCreaturesThisTurn`, `handsRevealedWhileSourceOnBattlefield`, the `countersLocked*` sets, `playersWithHandRevealed`.
+- Rules fixes (tests fail before): a newer Cytoshape copy outlives Blade of Shared Souls' ending copy (CR 613.7); Stromgald Spy's reveal and Suncleanser's lock end for good as the source phases out (CR 702.26f).
+- Moments: Peace Talks, Kang's restriction and the pile restrictions end at cleanup (CR 514.2), not as the next turn begins.
+- Ledger (151 card test classes, route tests): only converted `floating` lines (copy lines renamed); triggers differ by route-fixture draws and the new tests. No `Permanent`/`GameData` field holds a resolution's continuous-effect duration; `scripts/duration-inventory.py`'s field regex misses `WhileSource`, `TurnsRemaining`, `Revealed`.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:
