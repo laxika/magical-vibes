@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.ChandrasOutrage;
 import com.github.laxika.magicalvibes.cards.f.Flare;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranSkycaptain;
 import com.github.laxika.magicalvibes.cards.l.LavaBurst;
+import com.github.laxika.magicalvibes.cards.p.PsionicBlast;
 import com.github.laxika.magicalvibes.cards.s.StormSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EnergyStorm.class, BalduvianBears.class, Flare.class, Hurricane.class, Incinerate.class,
-        KjeldoranSkycaptain.class, LavaBurst.class, StormSpirit.class})
+        KjeldoranSkycaptain.class, LavaBurst.class, StormSpirit.class, ChandrasOutrage.class, PsionicBlast.class})
 class EnergyStormTest extends BaseCardTest {
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -249,5 +251,33 @@ class EnergyStormTest extends BaseCardTest {
         harness.assertLife(player2, 17);
         harness.performUntapStep(player2);
         assertThat(flier.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prevents Psionic Blast's damage to its own caster")
+    void preventsInstantDamageToItsCaster() {
+        harness.addToBattlefield(player2, new EnergyStorm());
+        harness.setHand(player1, List.of(new PsionicBlast()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents Chandra's Outrage's damage to the target creature's controller")
+    void preventsInstantDamageToTargetCreaturesController() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new ChandrasOutrage()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
     }
 }

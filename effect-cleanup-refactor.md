@@ -1312,9 +1312,12 @@ looks for its pending choose-a-player enters ability instead of the baked target
 - Now expressible: `controllerOf(targetSpell())` unblocks `TargetSpellControllerLosesLifeEffect` (4b),
   `TargetSpellControllerGainsLifeEqualToManaValueEffect` (4c), Mill's `TARGET_SPELL_CONTROLLER` (4f) and
   `UpkeepDrawRecipient.TARGET_SPELL_CONTROLLER`; `acceptedPlayers()` is the step-7 accepted-players read.
-- Known gap kept on purpose: `you()` and `controllerOf(target())` damage ignores "prevent all damage instant and sorcery
-  spells would deal" and targeted-spell prevention (the old `CONTROLLER` / `TARGET_PERMANENT_CONTROLLER` checks); a later
-  run should make every subject use `isDamageSourcePreventedWithLog` with a test (Chandra's Outrage under such a shield).
+- Not a gap (checked after 4d): `you()` and `controllerOf(target())` damage skips only the handler's early
+  `isDamageSourcePreventedWithLog` check; `dealDamageToPlayer`'s pipeline (`PlayerDamagePreventions`) still applies
+  instant/sorcery, targeted-spell, colour, chosen-source and protection prevention. `EnergyStormTest` covers Psionic
+  Blast and Chandra's Outrage. The early check is the questionable part: it decides prevention without the CR 616.1
+  order choice the pipeline offers. Dropping it for every subject changes logs and prompts across many cards; that
+  needs the user's sign-off and is not part of this plan.
 - Per-receiving-player damage siblings (`DealDamageToEachOpponentEqualTo*`, `DealDamageToEachPlayerControllingMatchingPermanentEffect`)
   need a per-player amount context or a filtered `each`, as 4b noted for life loss.
 
