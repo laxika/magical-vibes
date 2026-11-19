@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeToOwnerOfTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -61,7 +63,8 @@ public class ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOf
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(
                 entry.getControllerId(), entry.getCard(),
                 RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(null,
-                                List.of(new LoseLifeToOwnerOfTriggeringSpellEffect()))
+                                List.of(new LoseLifeEffect(new TargetSpellManaValue(),
+                                        LoseLifeRecipient.TRIGGERING_CARD_OWNER)))
                         .withStackEntryFilter(new StackEntryCardIdPredicate(topCard.getId())).delayedAbility(),
                 entry.getSourcePermanentId()));
 

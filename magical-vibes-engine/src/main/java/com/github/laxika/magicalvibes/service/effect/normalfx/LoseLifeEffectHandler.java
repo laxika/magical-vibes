@@ -96,10 +96,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
             case TRIGGERING_PERMANENT_CONTROLLER ->
                     single(gameQueryService.findTriggeringPermanentController(gameData, entry), amount);
             // A card played or cast, else a permanent the event put into its owner's graveyard, else a card it moved
-            // between other zones, which a graveyard it went to is its owner's (CR 400.3).
+            // between other zones, which a graveyard it went to is its owner's (CR 400.3), else the owner of a permanent
+            // that entered the battlefield, as it is now or as it last existed (CR 608.2h).
             case TRIGGERING_CARD_OWNER -> {
                 UUID cardOwnerId = gameQueryService.findTriggeringCardOwner(gameData, entry);
-                yield single(cardOwnerId != null ? cardOwnerId : entry.getTriggeringPermanentOwnerId(), amount);
+                if (cardOwnerId == null) {
+                    cardOwnerId = entry.getTriggeringPermanentOwnerId();
+                }
+                if (cardOwnerId == null) {
+                    cardOwnerId = gameQueryService.findTriggeringPermanentOwner(gameData, entry);
+                }
+                yield single(cardOwnerId, amount);
             }
             case DEFENDING_PLAYER -> single(defendingPlayerId, amount);
             case OTHER_CHOSEN_PLAYER -> otherChosenPlayerLosses(gameData, entry, source, amount);

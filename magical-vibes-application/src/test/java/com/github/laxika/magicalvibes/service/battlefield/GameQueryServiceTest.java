@@ -654,6 +654,47 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("findTriggeringPermanentOwner")
+    class FindTriggeringPermanentOwner {
+
+        private StackEntry triggerEntry() {
+            Card card = createCreature("Belltower Sphinx", 2, 5, CardColor.BLUE);
+            return TestStackDoor.triggered(card, player1Id, "trigger", List.of());
+        }
+
+        @Test
+        @DisplayName("is the owner of the triggering permanent's card, not its controller, while it is on the battlefield")
+        void ownerOfThePermanentOnTheBattlefield() {
+            Card bears = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+            bears.setOwnerId(player2Id);
+            Permanent permanent = addPermanent(player1Id, bears);
+            StackEntry entry = triggerEntry();
+            entry.setTriggeringPermanentId(permanent.getId());
+
+            assertThat(gqs.findTriggeringPermanentOwner(gd, entry)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is the owner of the card the entry recorded once the permanent has left")
+        void ownerOfTheLastKnownCardOnceItLeft() {
+            Card bears = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+            bears.setOwnerId(player2Id);
+            StackEntry entry = triggerEntry();
+            UUID departedId = UUID.randomUUID();
+            entry.setTriggeringPermanentId(departedId);
+            entry.rememberLastKnownPermanentCard(departedId, bears);
+
+            assertThat(gqs.findTriggeringPermanentOwner(gd, entry)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is null when the entry records no triggering permanent")
+        void nullWithoutATriggeringPermanent() {
+            assertThat(gqs.findTriggeringPermanentOwner(gd, triggerEntry())).isNull();
+        }
+    }
+
     // ===== findPermanentController =====
 
     @Nested

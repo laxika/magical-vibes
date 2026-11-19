@@ -1190,6 +1190,24 @@ public class GameQueryService {
     }
 
     /**
+     * The owner of the permanent a triggered ability's event was about ("its owner", Brainstealer Dragon's "they" for
+     * "a nonland permanent an opponent owns"), as the ability resolves: the owner of the entry's triggering permanent's
+     * card while it is on the battlefield, otherwise the owner of its card as it last existed (CR 608.2h), the card the
+     * entry recorded for that permanent. A copy effect keeps the copied permanent's owner, so either card names it.
+     *
+     * @return the player, or {@code null} when the entry records no triggering permanent or its card has no owner
+     */
+    public UUID findTriggeringPermanentOwner(GameData gameData, StackEntry entry) {
+        UUID permanentId = entry.getTriggeringPermanentId();
+        if (permanentId == null) {
+            return null;
+        }
+        Permanent live = findPermanentById(gameData, permanentId);
+        Card card = live != null ? live.getOriginalCard() : entry.lastKnownPermanentCard(permanentId);
+        return card == null ? null : gameData.ownerOf(card);
+    }
+
+    /**
      * The controller of the object a triggered ability's event was about, as the ability resolves ("that source's
      * controller", "its controller"): the current controller of the entry's triggering permanent while it is on the
      * battlefield, otherwise its last known controller (CR 608.2h), which is the controller the entry recorded when it
