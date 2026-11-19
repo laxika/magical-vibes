@@ -520,7 +520,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
 ability names that incarnation), controller, description, the `ConditionContext` for its "if", and a `TriggerRecord`
 stamping the event; plus `causedByAttack()` / `causedBySourceAttacking()` (CR 508.3a), `withCause`, `withLimitCreature`,
 `withCreatureDying()` (Teysa Karlov; not for an ability that triggers on the sacrifice itself, per her ruling),
-`ofEmblem()`. The collector judges filter, multiplicity and event condition
+`ofEmblem()`. The matcher judges filter, multiplicity and event condition
 (`ConditionEvaluationService.eventConditionMet` / `triggerConditionsMet`, or a `TriggerJudge`) and nothing more; it never
 builds an entry.
 
@@ -618,7 +618,7 @@ The door also stamps `TriggeredAbility.targetFilter()`, read by the target choic
   and the filter gets the record's event value (`CardManaValueEqualsEventValuePredicate`); on resolution the same
   amounts read the entry (`TargetValidationContext.eventValue`). A death trigger evaluates its limit as it triggers with
   the dying object as source (`AmountEvaluationService.evaluateAtDeath`, so `TriggeringPermanentManaValue` reads the
-  last-known object, CR 603.10a; Soulshift) into `StackEntry.graveyardTargetMaxManaValue`. A collector gives a choice the
+  last-known object, CR 603.10a; Soulshift) into `StackEntry.graveyardTargetMaxManaValue`. A matcher gives a choice the
   record's X, never the damage or a mana value: "that much" is `EventValue`.
 - Choices begin after the triggering action at the pumps (`TriggeredAbilityQueueService.beginStackDoorChoices`, from
   `StackResolutionService`, `InputCompletionService`, and `EtbTriggerService` after own enters abilities unless a
@@ -649,7 +649,7 @@ as a value; use `StackEntryType.isAbility`.
   (alternative cost, kicker, optional and repeated costs, gift), once-each-turn key, active player, copy flag, X, and
   the non-targeting "that player" when the entry has none. Putting the handed-off entry itself empties the hand.
 - So every route records what the plain entry records (CR 603.3c, 603.3d). Never copy event fields into a choice
-  context or set them in a choice handler (the carry overwrites them); put missing data on the record in the collector
+  context or set them in a choice handler (the carry overwrites them); put missing data on the record in the matcher
   (the delayed end-step abilities' "that creature"). The entry takes the record's X when the choice set none; a target
   restricted by the event value is judged against the entry's event value; the choice's own
   `graveyardTargetMaxManaValue` stays.
@@ -688,7 +688,7 @@ as a value; use `StackEntryType.isAbility`.
 
 ## What an entry records
 
-Collectors record the event whatever the effects are; effects read it as they resolve. Nothing is bound into an effect.
+Matchers record the event whatever the effects are; effects read it as they resolve. Nothing is bound into an effect.
 
 - **Triggering permanent** (`setTriggeringPermanent(lastKnown, attachments)`, CR 603.10a): "its counters", "that
   creature's name", "the Auras attached to it", read via `getTriggeringPermanentSnapshot()`,
@@ -707,14 +707,14 @@ Collectors record the event whatever the effects are; effects read it as they re
   `youAttack()`'s attackers; read by `EachPermanentScope.TRIGGERING_PERMANENTS`.
 - **Triggering card** (`setTriggeringCard(cardId, graveyardEntryVersion)`): "that card" of a graveyard arrival, checked
   with `isTriggeringCardIncarnation` (CR 400.7), carried by `DeathTriggerTarget.withTriggeringCard`,
-  `GraveyardTargetOperationState.triggeringCardId`, `PendingMayAbility.withTriggeringCard`. Every graveyard collector
+  `GraveyardTargetOperationState.triggeringCardId`, `PendingMayAbility.withTriggeringCard`. Every graveyard matcher
   records it with its incarnation; "its owner's hand" finds the owner from the graveyard holding it.
 - **Triggering cards** (`setTriggeringCards`, as they were): "those cards", set by the discard-event,
-  library-to-graveyard, leaves-the-graveyard and creatures-exiled collectors and discard follow-ups (Kaya, Spirits'
+  library-to-graveyard, leaves-the-graveyard and creatures-exiled matchers and discard follow-ups (Kaya, Spirits'
   Justice: `DrawTriggerPermanentTarget.withTriggeringCards`); read by `getTriggeringCards()`, `triggeringCardIds()`,
   `CardTypesAmongTriggeringCards`.
 - **Triggering player** (`setTriggeringPlayerId`): monarch, discarder, damaged player, caster; carried by
-  `SpellTargetTriggerAnyTarget.withTriggeringPlayer` (judged by its filter: Chandra's Incinerator). Many collectors also
+  `SpellTargetTriggerAnyTarget.withTriggeringPlayer` (judged by its filter: Chandra's Incinerator). Many matchers also
   set "that player" as non-targeting `targetId` (`TRIGGERING_PLAYER` recipients). "That player controls" targets use
   `FilterContext.triggeringPlayerId` (`PermanentControlledByTriggeringPlayerPredicate`, Scalelord Reckoner), carried by
   `AttackTriggerTarget` and rechecked via `TargetValidationContext.triggeringPlayerId`; "another target player" is
@@ -771,7 +771,7 @@ Collectors record the event whatever the effects are; effects read it as they re
 
 ### Graveyard stays
 
-`SourceCardInGraveyard` reads `StackEntry.sourceCardGraveyardEntryVersion()` (recorded by every collector of a
+`SourceCardInGraveyard` reads `StackEntry.sourceCardGraveyardEntryVersion()` (recorded by every matcher of a
 graveyard card's ability with `setSourceGraveyardEntryVersion`, carried by `AttackTriggerTarget.withSourceGraveyardEntryVersion`
 and `PendingMayAbility.sourceGraveyardEntryVersion`, else the triggering card's when the source is the triggering card),
 so leaving and returning can't satisfy an older Bridge from Below ability (CR 400.7). Every "this card" effect
@@ -865,7 +865,7 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   ability about an object acts on it and chooses nothing (CR 603.7c). The resolution's "that player" stands in for a
   target only as `put` judges an event's object.
 - Reflexive "that player" (Dokuchi Silencer, CR 603.12) is the creating entry's triggering player: the combat damage
-  collector gives a non-targeted "you may" entry the damaged player, `DiscardCardThenEffectHandler` gives `DiscardFollowUp`
+  matcher gives a non-targeted "you may" entry the damaged player, `DiscardCardThenEffectHandler` gives `DiscardFollowUp`
   `withTriggeringPlayer`, the target is validated with it (`validateActivatedAbilityTargeting`'s triggering-player
   overload) and `MayAbilityTriggerTarget.withTriggeringPlayer` passes it on. Triggered modals and the reflexive effects
   (`QueueReflexiveAbilityEffect`, `RemoveCounterFromSourceThenEffect`) reuse it the same way.

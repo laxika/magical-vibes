@@ -363,6 +363,45 @@ for every removed effect. Don't commit until I say so.
 
 ---
 
+## 15. Two "enters with an additional counter" grants take different paths
+
+**Status:** open · **Found:** 2026-11-19, Triggering-class audit
+
+**Problem.** `GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect` (Yuna, Patchplate Resolute,
+Benalish Knight-Counselor, Boreal Outrider, Gluttonous Hellkite, Torgal) stores into
+`GameData.spellAdditionalEnterCounters` / `spellAdditionalEnterCounterAmounts`, applied by
+`BattlefieldPlacementService.applySpellAdditionalEnterCounters` inside `applyEnterWithCounters` with one
+`doublePlusOnePlusOneCounters` pass, cleared on recast by `GameData.recordSpellCast`, and never calling
+`firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers`. `GrantAdditionalCounterToTriggeringCreatureSpellEffect`
+(Tenacious Pup, March Toward Perfection, Loch Larent, Jade Orb of Dragonkind, Chocobo Camp, Champions of Tyr, Arcane
+Archery, `SpecializeKlementEffectHandler`) stores into `GameData.spellEntryCounters` (shared with graveyard/exile cast
+permissions in `SpellCastingService`), applied by `applySpellEntryCounters` → `applyEntryCounters`, which does fire that
+trigger; it is cleared only by `StackResolutionService.disposeFizzledPermanentSpell` and end-of-turn cleanup.
+
+**Why it matters.** The six +1/+1 cards don't fire "whenever one or more +1/+1 counters are put on another creature"
+triggers (CR 122.6 counts counters a permanent enters with). A countered card recast the same turn may keep a stale
+`spellEntryCounters` grant. Counters from several sources are applied in separate replacement passes, though all the
+counters a permanent enters with are one event (CR 614.1c), so e.g. Hardened Scales should apply once (check its
+rulings).
+
+**Proposed direction.** One path: `spellEntryCounters` / `applyEntryCounters` taught the `countedOnEntry` amounts, cleared
+when the spell is countered or recast, and all entry counters of a permanent replaced as one event. Merge the two effects
+if nothing else differs.
+
+**Prompt to start it:**
+
+```
+Do refactors-to-do.md entry 15: route GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect and
+GrantAdditionalCounterToTriggeringCreatureSpellEffect through one entry-counter path in BattlefieldPlacementService
+(spellEntryCounters/applyEntryCounters with countedOnEntry amounts), clear grants when the spell is countered or recast,
+and apply all counters a permanent enters with as one replacement event. Read AGENTS.md and agent-docs/ARCHITECTURE.md
+first; verify CR numbers with get_rule and Hardened Scales' rulings with get_rulings. Add tests: the +1/+1-counters-put-
+on-another-creature trigger for the six +1/+1 cards, a countered-then-recast card keeping no stale grant, and Hardened
+Scales with two entry-counter sources. Run only touched test classes by FQCN. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
