@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCard
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -22,7 +22,7 @@ public class RobberOfTheRich extends Card {
     public RobberOfTheRich() {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new DefendingPlayerHasMoreCardsInHandThanController()),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.defendingPlayer()));
         addStaticEffect(new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.ROGUE),
                 new AllowCastFromCardsExiledWithSourceEffect(

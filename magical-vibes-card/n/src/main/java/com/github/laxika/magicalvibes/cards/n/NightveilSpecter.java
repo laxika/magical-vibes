@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "222")
@@ -16,7 +16,7 @@ public class NightveilSpecter extends Card {
         // Whenever this creature deals combat damage to a player, that player exiles the top card
         // of their library (face up, tracked with this creature).
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.triggeringPlayer()));
 
         // You may play lands and cast spells from among cards exiled with this creature.
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(false));

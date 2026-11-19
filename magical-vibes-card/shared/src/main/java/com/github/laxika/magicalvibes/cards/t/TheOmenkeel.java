@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,7 +20,7 @@ public class TheOmenkeel extends Card {
     public TheOmenkeel() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
-                new ExileTopCardsToSourceEffect(new EventValue(), false, false, LibraryScope.TARGET_OPPONENT, false));
+                new ExileTopCardsToSourceEffect(new EventValue(), false, false, Subjects.triggeringPlayer()));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardTypePredicate(CardType.LAND), false, false, 0,
                 null, false, false, false, true));

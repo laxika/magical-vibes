@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "REX", collectorNumber = "13")
@@ -15,10 +15,10 @@ public class IanMalcolmChaotician extends Card {
         // Whenever a player draws their second card each turn, that player exiles the top card of
         // their library, tracked with Ian Malcolm.
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.CONTROLLER));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.you()));
         addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
                 new ExileTopCardsToSourceEffect(
-                        1, false, false, LibraryScope.TARGET_OPPONENT));
+                        1, false, false, Subjects.triggeringPlayer()));
 
         // During each player's turn, that player may cast a non-owned spell exiled with Ian Malcolm;
         // mana of any type can be spent to cast it.

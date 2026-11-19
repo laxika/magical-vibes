@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +38,7 @@ public class MaralenFaeAscendant extends Card {
         var elfOrFaerie = new PermanentAnyOfPredicate(List.of(new PermanentHasSubtypePredicate(CardSubtype.ELF),
                 new PermanentHasSubtypePredicate(CardSubtype.FAERIE)));
         ExileTopCardsToSourceEffect exileTopTwo = new ExileTopCardsToSourceEffect(2, false, false,
-                LibraryScope.TARGET_OPPONENT, true);
+                Subjects.targetPlayer());
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, elfOrFaerie)),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ public class KnowledgePool extends Card {
 
     public KnowledgePool() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER));
+                new ExileTopCardsToSourceEffect(3, false, false, Subjects.eachPlayer()));
         addTrigger(Triggers.playerCastsSpell().castFrom(Zone.HAND), new KnowledgePoolExileAndCastEffect());
     }
 }

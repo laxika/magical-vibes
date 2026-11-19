@@ -15,11 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -31,9 +31,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Exiles the top N cards of one or more libraries, tracked "exiled with" the source permanent.
- * The {@code scope} picks the exiling players: the controller (Colfenor's Plans, Duplicity, Search
- * the City), a single opponent (Grimoire Thief face down, Nightveil Specter face up), or every
- * player (Knowledge Pool).
+ * The effect's player subject, resolved by {@link SubjectResolutionService}, picks the exiling players
+ * in the order they exile.
  */
 @Slf4j
 @Component
@@ -44,24 +43,28 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
     private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Autowired
     public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
                                               GameLogService gameLogService,
                                               AmountEvaluationService amountEvaluationService,
                                               ExileService exileService,
-                                              PredicateEvaluationService predicateEvaluationService) {
+                                              PredicateEvaluationService predicateEvaluationService,
+                                              SubjectResolutionService subjectResolutionService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
         this.exileService = exileService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.subjectResolutionService = subjectResolutionService;
     }
 
     public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
                                               GameLogService gameLogService,
-                                              ExileService exileService) {
-        this(gameQueryService, gameLogService, null, exileService, null);
+                                              ExileService exileService,
+                                              SubjectResolutionService subjectResolutionService) {
+        this(gameQueryService, gameLogService, null, exileService, null, subjectResolutionService);
     }
 
     @Override
@@ -105,7 +108,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
 
         List<UUID> exiledCardIds = new ArrayList<>();
-        for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.player())) {
             exileTopCards(gameData, e, playerId, sourceCard, sourcePermanentId,
                     effectiveCount(gameData, entry, sourcePermanent, e), persistentPermissions,
                     controllerId, exiledCardIds);
@@ -120,46 +123,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
         return Math.max(0, amountEvaluationService.evaluate(gameData, effect.dynamicCount(),
                 AmountContext.forStackEntry(entry, sourcePermanent)));
-    }
-
-    /** The players who exile, in the order they do so. */
-    private List<UUID> exilingPlayers(GameData gameData, StackEntry entry, LibraryScope scope,
-                                      UUID controllerId) {
-        return switch (scope) {
-            case CONTROLLER -> List.of(controllerId);
-            case TARGET_PLAYER, TRIGGERING_PLAYER -> entry.getTargetId() != null
-                    && gameData.orderedPlayerIds.contains(entry.getTargetId())
-                    ? List.of(entry.getTargetId()) : List.of();
-            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
-            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
-                    .filter(id -> !id.equals(controllerId))
-                    .toList();
-            case TARGET_OPPONENT -> {
-                // Combat-damage triggers bind the damaged player as the target, while attack
-                // triggers retain the attacked player or planeswalker in attackedTargetId.
-                UUID opponentId = entry.getTargetId() != null
-                        && gameData.orderedPlayerIds.contains(entry.getTargetId())
-                        && !entry.getTargetId().equals(controllerId)
-                        ? entry.getTargetId()
-                        : defendingPlayerId(gameData, entry.getAttackedTargetId(), controllerId);
-                yield opponentId == null ? List.of() : List.of(opponentId);
-            }
-        };
-    }
-
-    private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId, UUID controllerId) {
-        if (attackedTargetId != null) {
-            if (gameData.playerIds.contains(attackedTargetId)) {
-                return attackedTargetId;
-            }
-            UUID planeswalkerControllerId = gameQueryService.findPermanentController(gameData, attackedTargetId);
-            if (planeswalkerControllerId != null) {
-                return planeswalkerControllerId;
-            }
-        }
-        return gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst().orElse(null);
     }
 
     /**

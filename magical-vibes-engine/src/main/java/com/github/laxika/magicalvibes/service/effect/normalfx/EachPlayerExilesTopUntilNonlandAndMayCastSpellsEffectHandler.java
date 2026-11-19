@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +28,7 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +45,7 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
         List<UUID> nonlandCardIds = new ArrayList<>();
         List<UUID> adventureLandIds = new ArrayList<>();
 
-        for (UUID playerId : exilingPlayers(gameData, entry, exileEffect.libraryScope())) {
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, exileEffect, exileEffect.players())) {
             List<Card> library = gameData.playerDecks.get(playerId);
             while (library != null && !library.isEmpty()) {
                 Card card = library.removeFirst();
@@ -108,16 +109,6 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PlarggAndNassariCardChoice(
                         opponentId, controllerId, nonlandCardIds, maxCastCount, adventureLandIds));
-    }
-
-    private static List<UUID> exilingPlayers(GameData gameData, StackEntry entry,
-                                             LibraryScope libraryScope) {
-        if (libraryScope == LibraryScope.EACH_OPPONENT) {
-            return gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                    .toList();
-        }
-        return List.copyOf(gameData.orderedPlayerIds);
     }
 
     private static boolean isSpell(Card card) {

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellsNamedLikeCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -17,7 +17,7 @@ public class GrimoireThief extends Card {
         // Whenever this creature becomes tapped, exile the top three cards of target opponent's
         // library face down. (Two-player: the single opponent is the only legal target.)
         addTrigger(Triggers.becomesTapped(),
-                new ExileTopCardsToSourceEffect(3, true, false, LibraryScope.TARGET_OPPONENT, true));
+                new ExileTopCardsToSourceEffect(3, true, false, Subjects.targetPlayer()));
 
         // {U}, Sacrifice this creature: Turn all cards exiled with this creature face up.
         // Counter all spells with those names. (You may look at the exiled cards.)

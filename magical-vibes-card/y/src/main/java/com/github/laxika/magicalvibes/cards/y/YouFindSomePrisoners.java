@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -28,7 +28,7 @@ public class YouFindSomePrisoners extends Card {
                                 + "Choose one of them. Until the end of your next turn, you may play that card, "
                                 + "and you may spend mana as though it were mana of any color to cast it.",
                         new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(
-                                3, LibraryScope.TARGET_PLAYER, true),
+                                3, Subjects.targetPlayer(), true),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent"))

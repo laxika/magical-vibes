@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -26,7 +25,7 @@ public class LobeliaDefenderOfBagEnd extends Card {
         // When Lobelia enters, exile the top card of each opponent's library face down, tracked
         // with Lobelia.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.EACH_OPPONENT));
+                new ExileTopCardsToSourceEffect(1, true, false, Subjects.eachOpponent()));
 
         // {T}, Sacrifice an artifact: choose between a free play from Lobelia's exiled cards and
         // draining each opponent.

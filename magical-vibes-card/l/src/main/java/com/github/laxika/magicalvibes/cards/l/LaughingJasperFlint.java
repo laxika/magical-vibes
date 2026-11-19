@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -47,7 +47,7 @@ public class LaughingJasperFlint extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Must target an opponent"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ExileTopCardsToSourceEffect(
-                        outlawsYouControl, false, false, LibraryScope.TARGET_OPPONENT, true));
+                        outlawsYouControl, false, false, Subjects.targetPlayer()));
 
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), false, false, 0, null,

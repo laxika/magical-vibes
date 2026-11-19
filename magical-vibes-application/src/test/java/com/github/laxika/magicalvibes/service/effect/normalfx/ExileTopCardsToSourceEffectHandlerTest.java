@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the merged exile-top-cards-to-source effect across all {@link LibraryScope} values: the
+ * Covers the merged exile-top-cards-to-source effect across its player subjects: the
  * controller's own library (Colfenor's Plans / Duplicity / Search the City), a chosen player's
  * (Mindreaver), a single opponent's (Grimoire Thief / Nightveil Specter), and every player's
  * (Knowledge Pool).
@@ -68,7 +68,10 @@ class ExileTopCardsToSourceEffectHandlerTest {
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        handler = new ExileTopCardsToSourceEffectHandler(gameQueryService, gameLogService, exileService);
+        handler = new ExileTopCardsToSourceEffectHandler(gameQueryService, gameLogService, exileService,
+                new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
     }
 
     private Card card(String name) {
@@ -109,7 +112,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("CONTROLLER scope exiles only the controller's library, face down")
+    @DisplayName("you() exiles only the controller's library, face down")
     void controllerScopeExilesOwnLibraryFaceDown() {
         Card sourceCard = card("Colfenor's Plans");
         Permanent source = addPermanent(player1Id, sourceCard);
@@ -163,14 +166,14 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("TARGET_OPPONENT scope exiles from the bound target player, not the controller")
-    void targetOpponentScopeUsesBoundTarget() {
+    @DisplayName("triggeringPlayer() exiles from the player the trigger recorded, not the controller")
+    void triggeringPlayerExilesFromRecordedPlayer() {
         Card sourceCard = card("Nightveil Specter");
         Permanent source = addPermanent(player1Id, sourceCard);
         gd.playerDecks.get(player1Id).addAll(List.of(card("Mine1"), card("Mine2")));
         gd.playerDecks.get(player2Id).addAll(List.of(card("Theirs1"), card("Theirs2")));
 
-        var effect = new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT);
+        var effect = new ExileTopCardsToSourceEffect(1, false, false, Subjects.triggeringPlayer());
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         stubExileFaceUp();
 
@@ -182,14 +185,14 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("TARGET_PLAYER scope exiles from the chosen player, including the controller")
-    void targetPlayerScopeUsesChosenPlayer() {
+    @DisplayName("targetPlayer() exiles from the chosen player, including the controller")
+    void targetPlayerExilesFromChosenPlayer() {
         Card sourceCard = card("Mindreaver");
         Permanent source = addPermanent(player1Id, sourceCard);
         gd.playerDecks.get(player1Id).addAll(List.of(card("Mine1"), card("Mine2")));
         gd.playerDecks.get(player2Id).addAll(List.of(card("Theirs1"), card("Theirs2")));
 
-        var effect = new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER);
+        var effect = new ExileTopCardsToSourceEffect(1, false, false, Subjects.targetPlayer());
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         stubExileFaceUp();
 
@@ -201,31 +204,33 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("TARGET_OPPONENT scope falls back to the sole opponent when no target is bound")
-    void targetOpponentScopeFallsBackToSoleOpponent() {
+    @DisplayName("eachOpponent() exiles from every opponent and not from the controller")
+    void eachOpponentExilesFromOpponents() {
         Card sourceCard = card("Grimoire Thief");
         Permanent source = addPermanent(player1Id, sourceCard);
+        gd.playerDecks.get(player1Id).addAll(List.of(card("Mine1"), card("Mine2")));
         gd.playerDecks.get(player2Id).addAll(List.of(card("A"), card("B"), card("C"), card("D")));
 
-        var effect = new ExileTopCardsToSourceEffect(3, true, false, LibraryScope.TARGET_OPPONENT);
+        var effect = new ExileTopCardsToSourceEffect(3, true, false, Subjects.eachOpponent());
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         stubExileFaceDown();
 
         handler.resolve(gd, entry(sourceCard, effect, null, source.getId()), effect);
 
+        assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
         assertThat(gd.playerDecks.get(player2Id)).hasSize(1);
         verify(exileService, times(3)).exileCardFaceDown(any(), eq(player2Id), any(), any(), eq(player1Id));
     }
 
     @Test
-    @DisplayName("EACH_PLAYER scope exiles from every library, capped at each library's size")
+    @DisplayName("eachPlayer() exiles from every library, capped at each library's size")
     void eachPlayerScopeExilesFromEveryLibrary() {
         Card sourceCard = card("Knowledge Pool");
         Permanent source = addPermanent(player1Id, sourceCard);
         gd.playerDecks.get(player1Id).addAll(List.of(card("A"), card("B"), card("C")));
         gd.playerDecks.get(player2Id).addAll(List.of(card("X"), card("Y")));
 
-        var effect = new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER);
+        var effect = new ExileTopCardsToSourceEffect(3, false, false, Subjects.eachPlayer());
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         stubExileFaceUp();
 
@@ -239,13 +244,13 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("EACH_PLAYER scope logs nothing for a player with an empty library")
+    @DisplayName("eachPlayer() logs nothing for a player with an empty library")
     void eachPlayerScopeSkipsEmptyLibraries() {
         Card sourceCard = card("Knowledge Pool");
         Permanent source = addPermanent(player1Id, sourceCard);
         gd.playerDecks.get(player1Id).add(card("A"));
 
-        var effect = new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER);
+        var effect = new ExileTopCardsToSourceEffect(3, false, false, Subjects.eachPlayer());
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         stubExileFaceUp();
 
@@ -262,7 +267,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
         Card sourceCard = card("Knowledge Pool");
         gd.playerDecks.get(player1Id).add(card("A"));
 
-        var effect = new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER);
+        var effect = new ExileTopCardsToSourceEffect(3, false, false, Subjects.eachPlayer());
         when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
         stubExileFaceUp();
 
@@ -283,7 +288,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
         gd.playerDecks.get(player2Id).add(card("Exiled card"));
 
         var effect = new ExileTopCardsToSourceEffect(1, true, false,
-                LibraryScope.TARGET_OPPONENT, true);
+                Subjects.targetPlayer());
         StackEntry adventureEntry = entry(sourceCard, effect, player2Id, null);
         adventureEntry.setCastWithAdventure(true);
         stubExileFaceDown();

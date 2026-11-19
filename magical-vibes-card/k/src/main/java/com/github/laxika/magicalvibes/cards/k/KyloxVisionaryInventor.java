@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -35,7 +35,7 @@ public class KyloxVisionaryInventor extends Card {
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new SacrificeAnyNumberOfPermanentsEffect(otherCreature, true),
                 new ExileTopCardsAndMayCastSpellsEffect(
-                        new SacrificedPermanentPower(), LibraryScope.CONTROLLER, false, null,
+                        new SacrificedPermanentPower(), Subjects.you(), false, null,
                         instantOrSorcery)));
     }
 }

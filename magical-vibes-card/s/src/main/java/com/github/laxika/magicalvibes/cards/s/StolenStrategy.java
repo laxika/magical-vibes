@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,7 +19,7 @@ public class StolenStrategy extends Card {
 
     public StolenStrategy() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_OPPONENT));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.eachOpponent()));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),

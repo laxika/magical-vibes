@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -30,7 +30,7 @@ public class RamirezDePietroPillager extends Card {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
                 TriggerOptions.ONE_OR_MORE,
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.triggeringPlayer()));
 
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardNotPredicate(new CardTypePredicate(CardType.LAND)),

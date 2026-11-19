@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -35,6 +35,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -75,7 +76,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             gameData.pendingExileFreeCastRemainderToLibraryBottom.clear();
         }
 
-        for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.player())) {
             List<Card> deck = gameData.playerDecks.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
             for (int i = 0; i < count && deck != null && !deck.isEmpty(); i++) {
@@ -184,20 +185,6 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                         false, e.totalManaValueLimit()));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, entry.getCard().getName(), castableSpellIds.size());
-    }
-
-    private static List<UUID> exilingPlayers(GameData gameData, StackEntry entry,
-                                             LibraryScope scope, UUID controllerId) {
-        return switch (scope) {
-            case CONTROLLER -> List.of(controllerId);
-            case TARGET_PLAYER, TARGET_OPPONENT, TRIGGERING_PLAYER -> entry.getTargetId() != null
-                    && gameData.orderedPlayerIds.contains(entry.getTargetId())
-                    ? List.of(entry.getTargetId()) : List.of();
-            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
-            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
-                    .filter(id -> !id.equals(controllerId))
-                    .toList();
-        };
     }
 
     private static boolean isSpell(Card card) {

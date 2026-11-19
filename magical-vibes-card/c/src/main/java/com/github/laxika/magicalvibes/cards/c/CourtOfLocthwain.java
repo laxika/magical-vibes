@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,7 +32,7 @@ public class CourtOfLocthwain extends Card {
                 "Target must be an opponent"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                         new ExileTopCardsToSourceEffect(
-                                1, false, false, LibraryScope.TARGET_OPPONENT, true),
+                                1, false, false, Subjects.targetPlayer()),
                         new ConditionalEffect(
                                 new ControllerIsMonarch(),
                                 new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(

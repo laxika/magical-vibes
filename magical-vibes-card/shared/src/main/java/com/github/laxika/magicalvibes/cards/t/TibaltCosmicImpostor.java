@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -34,7 +34,7 @@ public class TibaltCosmicImpostor extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER)),
+                List.of(new ExileTopCardsToSourceEffect(1, false, false, Subjects.eachPlayer())),
                 "+2: Exile the top card of each player's library."
         ));
         addActivatedAbility(new ActivatedAbility(

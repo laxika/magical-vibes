@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -17,8 +17,7 @@ public class PyxisOfPandemonium extends Card {
     public PyxisOfPandemonium() {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.EACH_PLAYER,
-                        false, null, false, false)),
+                List.of(new ExileTopCardsToSourceEffect(1, true, false, Subjects.eachPlayer(), null, false, false)),
                 "{T}: Each player exiles the top card of their library face down."));
 
         addActivatedAbility(new ActivatedAbility(

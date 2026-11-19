@@ -36,6 +36,8 @@ import java.util.UUID;
  * @param restDestination where the not-chosen cards go ({@code BOTTOM_OF_LIBRARY} or {@code GRAVEYARD})
  * @param reveal          when true the whole look is public (the looked-at cards are logged)
  * @param chosenDestination where the chosen cards go ({@code HAND} or {@code BATTLEFIELD})
+ * @param player          whose library: {@code you()}, or {@code eachPlayer()}, which the handler splits into one
+ *                        copy per player in APNAP order, each with that player as {@code playerId}
  */
 public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         DynamicAmount count,
@@ -50,7 +52,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         CardPredicate secondPredicate,
         String secondPrompt,
         boolean randomRest,
-        LibraryScope scope,
+        PlayerSubject player,
         UUID playerId,
         LibrarySearchDestination firstChosenDestination,
         boolean mustChooseOne,
@@ -62,7 +64,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             LibrarySearchDestination chosenDestination) {
         this(count, firstType, secondType, subtypePicks, restDestination, reveal,
                 chosenDestination, null, null, null, null, false,
-                LibraryScope.CONTROLLER, null, chosenDestination, false, false);
+                Subjects.you(), null, chosenDestination, false, false);
     }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
@@ -70,9 +72,9 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             List<CardSubtype> subtypePicks, LookDestination restDestination, boolean reveal,
             LibrarySearchDestination chosenDestination, CardPredicate firstPredicate,
             String firstPrompt, CardPredicate secondPredicate, String secondPrompt, boolean randomRest,
-            LibraryScope scope, UUID playerId, LibrarySearchDestination firstChosenDestination) {
+            PlayerSubject player, UUID playerId, LibrarySearchDestination firstChosenDestination) {
         this(count, firstType, secondType, subtypePicks, restDestination, reveal, chosenDestination,
-                firstPredicate, firstPrompt, secondPredicate, secondPrompt, randomRest, scope, playerId,
+                firstPredicate, firstPrompt, secondPredicate, secondPrompt, randomRest, player, playerId,
                 firstChosenDestination, false, false);
     }
 
@@ -127,7 +129,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 count, CardType.CREATURE, CardType.LAND, List.of(),
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true, LibrarySearchDestination.HAND,
-                null, null, null, null, false, LibraryScope.CONTROLLER, null,
+                null, null, null, null, false, Subjects.you(), null,
                 LibrarySearchDestination.HAND, true, chooseZone);
     }
 
@@ -147,7 +149,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 new CardTypePredicate(CardType.LAND), "a land card",
                 new CardAnyOfPredicate(List.of(new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
-                "an instant or sorcery card", true, LibraryScope.EACH_PLAYER, null,
+                "an instant or sorcery card", true, Subjects.eachPlayer(), null,
                 LibrarySearchDestination.HAND);
     }
 
@@ -160,14 +162,14 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true, LibrarySearchDestination.HAND,
                 null, "a land card", new CardSubtypePredicate(subtype),
                 "a card with the " + subtype.getDisplayName() + " subtype", true,
-                LibraryScope.CONTROLLER, null, LibrarySearchDestination.BATTLEFIELD_TAPPED);
+                Subjects.you(), null, LibrarySearchDestination.BATTLEFIELD_TAPPED);
     }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect forPlayer(UUID playerId) {
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 count, firstType, secondType, subtypePicks, restDestination, reveal,
                 chosenDestination, firstPredicate, firstPrompt, secondPredicate, secondPrompt,
-                randomRest, LibraryScope.CONTROLLER, playerId, firstChosenDestination,
+                randomRest, Subjects.you(), playerId, firstChosenDestination,
                 mustChooseOne, chooseZoneAfterPicks);
     }
 }

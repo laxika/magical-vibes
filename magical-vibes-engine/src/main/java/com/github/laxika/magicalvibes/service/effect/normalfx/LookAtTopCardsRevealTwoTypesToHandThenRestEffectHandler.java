@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +50,7 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,17 +61,10 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsRevealTwoTypesToHandThenRestEffect e =
                 (LookAtTopCardsRevealTwoTypesToHandThenRestEffect) effect;
-        if (e.scope() == com.github.laxika.magicalvibes.model.effect.LibraryScope.EACH_PLAYER
-                && e.playerId() == null) {
+        if (!(e.player() instanceof PlayerSubject.You) && e.playerId() == null) {
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
-            List<UUID> apnapOrder = new ArrayList<>();
-            if (gameData.activePlayerId != null && gameData.orderedPlayerIds.contains(gameData.activePlayerId)) {
-                apnapOrder.add(gameData.activePlayerId);
-            }
-            gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !apnapOrder.contains(playerId))
-                    .forEach(apnapOrder::add);
-            List<CardEffect> perPlayerEffects = apnapOrder.stream()
+            List<CardEffect> perPlayerEffects = subjectResolutionService.players(gameData, entry, e, e.player())
+                    .stream()
                     .map(e::forPlayer)
                     .map(CardEffect.class::cast)
                     .toList();

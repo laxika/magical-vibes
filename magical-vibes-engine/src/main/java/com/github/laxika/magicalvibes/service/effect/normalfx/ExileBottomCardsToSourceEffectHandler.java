@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -34,6 +34,7 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
     private final ExileService exileService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,21 +62,10 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
             return;
         }
 
-        for (UUID playerId : exilingPlayers(gameData, exileEffect.scope(), controllerId)) {
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, exileEffect, exileEffect.player())) {
             exileBottomCards(gameData, exileEffect, playerId, sourceCard, sourcePermanentId, count,
                     persistentPermissions, controllerId);
         }
-    }
-
-    private List<UUID> exilingPlayers(GameData gameData, LibraryScope scope, UUID controllerId) {
-        return switch (scope) {
-            case CONTROLLER -> List.of(controllerId);
-            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
-            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !playerId.equals(controllerId))
-                    .toList();
-            case TARGET_PLAYER, TARGET_OPPONENT, TRIGGERING_PLAYER -> List.of();
-        };
     }
 
     private void exileBottomCards(GameData gameData, ExileBottomCardsToSourceEffect effect,

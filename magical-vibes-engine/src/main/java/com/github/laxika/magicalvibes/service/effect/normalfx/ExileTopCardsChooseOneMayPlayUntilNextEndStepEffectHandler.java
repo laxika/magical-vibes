@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,7 @@ public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implemen
     private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,15 +46,12 @@ public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implemen
         }
 
         UUID controllerId = entry.getControllerId();
-        UUID libraryOwnerId = exileEffect.libraryScope() == LibraryScope.TARGET_PLAYER
-                ? (entry.targetsForEffect(exileEffect).isEmpty()
-                        ? entry.getTargetId() : entry.targetsForEffect(exileEffect).getFirst())
-                : controllerId;
+        UUID libraryOwnerId = subjectResolutionService.player(gameData, entry, exileEffect, exileEffect.player());
         if (libraryOwnerId == null || !gameData.orderedPlayerIds.contains(libraryOwnerId)) {
             return;
         }
-        UUID permissionPlayerId = exileEffect.libraryScope() == LibraryScope.TARGET_PLAYER
-                ? libraryOwnerId : controllerId;
+        UUID permissionPlayerId = exileEffect.player() instanceof PlayerSubject.You
+                ? controllerId : libraryOwnerId;
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         if (deck == null || deck.isEmpty()) {
             return;

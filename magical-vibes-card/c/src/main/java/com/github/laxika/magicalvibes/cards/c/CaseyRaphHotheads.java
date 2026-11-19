@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -31,7 +31,7 @@ public class CaseyRaphHotheads extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Target player exiles the top card of their library and may play it without paying its mana cost until their next end step",
                                 new ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect(
-                                        1, LibraryScope.TARGET_PLAYER, true),
+                                        1, Subjects.targetPlayer(), true),
                                 anyPlayer),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Target player creates two Treasure tokens",

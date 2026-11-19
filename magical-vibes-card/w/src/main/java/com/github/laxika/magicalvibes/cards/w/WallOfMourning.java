@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +22,7 @@ public class WallOfMourning extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTopCardsToSourceEffect(
                         new Sum(new PlayersInGame(), new Fixed(-1)),
-                        true, false, LibraryScope.CONTROLLER, false));
+                        true, false, Subjects.you()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new Coven()),
                 PutCardExiledWithSourceIntoHandEffect.returningToOwner());

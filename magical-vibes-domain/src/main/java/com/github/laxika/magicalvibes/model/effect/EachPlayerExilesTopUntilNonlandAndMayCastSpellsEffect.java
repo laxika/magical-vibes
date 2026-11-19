@@ -7,17 +7,17 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param maxCastCount maximum number of exiled spells the controller may cast
  * @param opponentChoosesCard whether an opponent first chooses one nonland card to exclude
- * @param libraryScope whose libraries are exiled
+ * @param players whose libraries are exiled ({@code eachPlayer()} or {@code eachOpponent()})
  */
 public record EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect(
-        int maxCastCount, boolean opponentChoosesCard, LibraryScope libraryScope) implements CardEffect {
+        int maxCastCount, boolean opponentChoosesCard, PlayerSubject players) implements CardEffect {
 
     public EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect() {
-        this(Integer.MAX_VALUE, false, LibraryScope.EACH_PLAYER);
+        this(Integer.MAX_VALUE, false, Subjects.eachPlayer());
     }
 
     public EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect(int maxCastCount,
                                                                   boolean opponentChoosesCard) {
-        this(maxCastCount, opponentChoosesCard, LibraryScope.EACH_PLAYER);
+        this(maxCastCount, opponentChoosesCard, Subjects.eachPlayer());
     }
 }

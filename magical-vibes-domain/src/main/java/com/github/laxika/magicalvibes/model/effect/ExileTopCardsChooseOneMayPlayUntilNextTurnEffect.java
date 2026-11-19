@@ -8,28 +8,28 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * those cards to play until the end of their next turn.
  *
  * @param count how many cards are exiled from the top of the library
- * @param libraryScope whose library is exiled
+ * @param player whose library is exiled ({@code targetPlayer()} declares a benign player target)
  * @param anyManaType whether the chosen card may be cast using mana of any color
  */
 public record ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(
-        DynamicAmount count, LibraryScope libraryScope, boolean anyManaType) implements CardEffect {
+        DynamicAmount count, PlayerSubject player, boolean anyManaType) implements CardEffect {
 
     public ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(DynamicAmount count) {
-        this(count, LibraryScope.CONTROLLER, false);
+        this(count, Subjects.you(), false);
     }
 
     public ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(int count) {
         this(new Fixed(count));
     }
 
-    public ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(int count, LibraryScope libraryScope,
+    public ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(int count, PlayerSubject player,
                                                             boolean anyManaType) {
-        this(new Fixed(count), libraryScope, anyManaType);
+        this(new Fixed(count), player, anyManaType);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return libraryScope == LibraryScope.TARGET_PLAYER
+        return player.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

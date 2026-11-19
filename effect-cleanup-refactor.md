@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a–4h done, 4i partly done (`LibraryScope` left) |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -357,7 +357,8 @@ fold in, the enum and the absorbed classes are deleted.
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | done |
 | 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | done |
 | 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | done |
-| 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | partly done: all but `LibraryScope` (`LibraryOwner` kept for conditions) |
+| 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | done (`LibraryOwner` kept for conditions; `LibraryScope` as 4j) |
+| 4j | The rest of 4i: the library-exile records | `LibraryScope` | `ExileTopCardsToSource`, `ExileBottomCardsToSource`, `ExileTopCardsAndMayCastSpells`, `ExileTopCardsChooseOneMayPlayUntil{NextEndStep,NextTurn}`, `EachPlayerExilesTopUntilNonlandAndMayCastSpells`, `LookAtTopCardsRevealTwoTypesToHandThenRest` | done |
 
 Notes for every run:
 
@@ -1571,7 +1572,7 @@ the effect's bound targets before the entry's `targetId`.
 - `CounterUnlessGetsPoisonCountersEffect` is fused (step 8); `EachOpponentWithPoisonCountersLosesLifeEffect` can now use
   `matching(eachOpponent(), <has poison counters>)` (4b's ledger row).
 
-### Step 4, run 4i (2026-11-19, partly done)
+### Step 4, run 4i (2026-11-19)
 
 **Survivors** (each replaced its enum with a `PlayerSubject` component, every constructor kept with the subject in the
 enum's place, and resolves it through `SubjectResolutionService`; each declares a benign player target iff
@@ -1632,13 +1633,60 @@ Morning Star's skip (player in group 0, the permanents in group 1) needs `target
 survivors, the touched handler / resolver / floating-effect / route / ratchet tests, `SpellEvaluatorTest`): 4,748 test
 cases, all pass after the Yosei fix.
 
-**Left for a run 4j**: `LibraryScope` (7 records: `ExileTopCardsToSource`, `ExileBottomCardsToSource`,
+**Left for a run 4j** (done, see run 4j): `LibraryScope` (7 records: `ExileTopCardsToSource`, `ExileBottomCardsToSource`,
 `ExileTopCardsAndMayCastSpells`, `ExileTopCardsChooseOneMayPlayUntil{NextEndStep,NextTurn}`,
 `EachPlayerExilesTopUntilNonlandAndMayCastSpells`, `LookAtTopCardsRevealTwoTypesToHandThenRest`; about 40 cards, plus
 `GameViewProjectionFactory` and `ExileTopCardsToSourceEffectHandlerTest`). Its 16 `TARGET_OPPONENT` uses must be split
 by Oracle text (step 3's table: `defendingPlayer()` for attack triggers, `triggeringPlayer()` for combat damage, a
 declared `targetPlayer` for `targetedOpponent`, `eachOpponent()` for the sole opponent), and each handler supports a
 different subset, so it is a run of its own. When it is done, step 4 is done.
+
+### Step 4, run 4j (2026-11-19)
+
+**Survivors** (each replaced `LibraryScope` with a `PlayerSubject` component resolved through
+`SubjectResolutionService`; constructors kept with the subject in the enum's place): `ExileTopCardsToSourceEffect`
+(`player`), `ExileBottomCardsToSourceEffect` (`player`; rejects a declaring subject, as its handler found nobody for the
+target constants), `ExileTopCardsAndMayCastSpellsEffect` (`player`), `ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect`
+and `...UntilNextTurnEffect` (`player`), `EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect` (`players`),
+`LookAtTopCardsRevealTwoTypesToHandThenRestEffect` (`player`; a non-`you()` subject with no fixed `playerId` is split into
+one `forPlayer` copy per resolved player, as `EACH_PLAYER` was). The `targetedOpponent` flag of `ExileTopCardsToSource`
+and `ExileTopCardsAndMayCastSpells` is gone: it was set exactly on the declaring `TARGET_OPPONENT` uses, so "declares a
+target" is now `player.declaresTarget()`. Target specs are unchanged: ToSource harmful `player()` (old `TARGET_PLAYER` or
+`targetedOpponent`), CastSpells harmful opponent players, the two ChooseOne records benign `player()`; no group anywhere.
+No record or handler deleted: ratchet unchanged (4,920 / 4,153).
+
+**Deleted**: the enum `LibraryScope`. Mapping: `CONTROLLER` → `you()`; `TARGET_PLAYER` → `targetPlayer()` (Mindreaver,
+Circu, Dimir Lobotomist, Jester's Scepter, You Find Some Prisoners, Casey Jones & Raphael; all declared before);
+`TRIGGERING_PLAYER` → `triggeringPlayer()` (Share the Spoils); `EACH_PLAYER` / `EACH_OPPONENT` → `eachPlayer()` /
+`eachOpponent()`. The 16 `TARGET_OPPONENT` uses by Oracle text: declared target (the old `targetedOpponent = true`, same
+spec) → `targetPlayer()`: Ashiok, Nightmare Weaver; Court of Locthwain; Expensive Taste; Grimoire Thief ("target
+opponent", so not the step-3 table's `eachOpponent()`: it always declared); Laughing Jasper Flint; Maralen, Fae
+Ascendant; Outrageous Robbery; Petty Larceny; and the `targetedOpponent` factories (Gix, Yawgmoth Praetor; Doom Reigns
+Supreme). Non-declaring: "that player" of a combat-damage trigger → `triggeringPlayer()` (Nightveil Specter, Rogue Class,
+Reno and Rude, Ramirez DePietro, Pillager, The Omenkeel, Kotis, the Fangkeeper); "that player" of a draw trigger →
+`triggeringPlayer()` (Ian Malcolm, Chaotician; `LibraryTriggers` bakes the drawing player); "defending player" →
+`defendingPlayer()` (Robber of the Rich). 36 card files rewritten (a deleted scratch script, plus the 18 dropped
+`targetedOpponent` arguments and When Will You Learn's positional flag), the 7 handlers, `GameViewProjectionFactory`
+(the Urianger "may look while deciding" check matches `PlayerSubject.You` where it matched `CONTROLLER`: same cards, same
+viewer) and `ExileTopCardsToSourceEffectHandlerTest` (its manual constructor takes the resolver; the "falls back to the
+sole opponent with no target" case became an `eachOpponent()` case, since no card relies on that fallback any more).
+
+**AI and other readers.** No AI, networking or webservice code read the enum or `targetedOpponent()`.
+
+**Behaviour differences** (none changes a tested outcome): each-player / each-opponent exiles happen in APNAP order
+(CR 101.4) instead of seat order, and Look-at's per-player split uses the resolver's rotated APNAP order instead of
+active player then seat order (same for two players); the non-declaring `TARGET_OPPONENT` lost its last fallbacks
+(attacked planeswalker's controller, then the first non-controller): `triggeringPlayer()` reads the recorded or baked
+player and `defendingPlayer()` the recorded defender (handling a battle's protector), which every collector these cards
+use records; a `targetPlayer()` reads the effect's bound targets before the entry's `targetId`.
+
+**Tests**: 95 classes (every card test of the 7 records, `ExileTopCardsToSourceEffectHandlerTest`,
+`SubjectResolutionServiceTest`, `GameResyncProjectionServiceTest`, `EffectCountRatchetTest`): 816 test cases, all pass.
+The Omenkeel, Expensive Taste, Tibalt, Cosmic Impostor, Flamewar, Hauken's Insight and Explore the Vastlands have no test
+class (Rogue Class covers The Omenkeel's collector, Petty Larceny Expensive Taste's shape).
+
+**Step 4 is done.** What stays open is in the ledger (`blocked-*` rows); `LibraryOwner` waits for subjects in
+conditions.
 
 ## Prompt
 

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,8 +25,7 @@ public class RogueClass extends Card {
 
     public RogueClass() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.TARGET_OPPONENT,
-                        false, null, false, true, true));
+                new ExileTopCardsToSourceEffect(1, true, false, Subjects.triggeringPlayer(), null, false, true, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

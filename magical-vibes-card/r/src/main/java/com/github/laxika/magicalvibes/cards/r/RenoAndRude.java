@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,7 +32,7 @@ public class RenoAndRude extends Card {
         ));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT, false),
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.triggeringPlayer()),
                 new MayEffect(
                         new SacrificePermanentThenEffect(
                                 anotherCreatureOrArtifact,

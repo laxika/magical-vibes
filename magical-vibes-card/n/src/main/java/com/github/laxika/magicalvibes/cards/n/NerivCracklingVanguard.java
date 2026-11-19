@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class NerivCracklingVanguard extends Card {
                 new ExileTopCardsToSourceEffect(
                         new DistinctPermanentNamesAmongControlled(
                                 new PermanentIsTokenPredicate(), CountScope.CONTROLLER),
-                        false, false, LibraryScope.CONTROLLER, false));
+                        false, false, Subjects.you()));
 
         addStaticEffect(new ConditionalEffect(
                         new AttackedWithCommanderThisTurn(),

@@ -549,7 +549,7 @@ public class GameViewProjectionFactory {
         return playerId.equals(choosingPlayerId) && pending.effects().stream().anyMatch(effect ->
                 effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect exile
                         && exile.faceDown() && exile.exilerMayLookWhileExiled()
-                        && exile.scope() == com.github.laxika.magicalvibes.model.effect.LibraryScope.CONTROLLER);
+                        && exile.player() instanceof com.github.laxika.magicalvibes.model.effect.PlayerSubject.You);
     }
 
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {

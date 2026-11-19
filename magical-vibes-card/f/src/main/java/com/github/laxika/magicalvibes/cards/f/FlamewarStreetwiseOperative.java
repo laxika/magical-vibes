@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToFrontFaceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class FlamewarStreetwiseOperative extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 SequenceEffect.of(
                         new ExileTopCardsToSourceEffect(
-                                new EventValue(), true, false, LibraryScope.CONTROLLER, false, true),
+                                new EventValue(), true, false, Subjects.you(), true),
                         new TransformToFrontFaceEffect()));
     }
 }

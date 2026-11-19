@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,9 +22,9 @@ public class CircuDimirLobotomist extends Card {
                 "Target must be a player");
 
         target(anyPlayer).addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.targetPlayer()));
         target(anyPlayer).addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));
+                new ExileTopCardsToSourceEffect(1, false, false, Subjects.targetPlayer()));
         addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
     }
 }

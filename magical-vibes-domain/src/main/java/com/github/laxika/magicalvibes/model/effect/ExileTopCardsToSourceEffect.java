@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * One or more players exile the top {@code count} cards of their library, tracked as "exiled with"
- * the source permanent. Which players is set by {@code scope} — the controller alone (Colfenor's
- * Plans, Duplicity, Search the City), the chosen player (Mindreaver), a single opponent (Grimoire
- * Thief, Nightveil Specter), or every player (Knowledge Pool). Pair with
- * {@link AllowCastFromCardsExiledWithSourceEffect} to let a player play those cards.
+ * the source permanent. Which players is set by {@code player} — you (Colfenor's Plans, Duplicity,
+ * Search the City), target player or opponent (Mindreaver, Grimoire Thief), the player a combat-damage
+ * or draw trigger was about (Nightveil Specter, Ian Malcolm), the defending player (Robber of the Rich),
+ * or every player (Knowledge Pool). Pair with {@link AllowCastFromCardsExiledWithSourceEffect} to let a
+ * player play those cards.
  *
  * <p>The effect fizzles if the source permanent has left the battlefield by the time it resolves,
  * since there would be nothing to track the exiled cards with.
@@ -22,30 +23,34 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * changes or it leaves the battlefield. Used by Duplicity; see
  * {@link ExileCardFromHandFaceDownWithSourceEffect} for the same flag on the hand-exile variant.
  *
- * <p>When {@code targetedOpponent} is true, {@code scope} uses the chosen player target instead of
- * the derived opponent context used by combat-damage and two-player triggered abilities.
+ * <p>A player subject that declares a target ({@link Subjects#targetPlayer()}) makes this a harmful
+ * player target; the card's target filter narrows it to an opponent where the Oracle text says so.
  */
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
-                                          boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                          boolean targetedOpponent, DynamicAmount dynamicCount,
+                                          boolean toGraveyardOnControlLoss, PlayerSubject player,
+                                          DynamicAmount dynamicCount,
                                           boolean markWithIntelCounters, boolean mayLookAtFaceDownCards,
                                           boolean exilerMayLookWhileExiled)
         implements CardEffect {
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown,
-                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                       boolean targetedOpponent, DynamicAmount dynamicCount,
-                                       boolean markWithIntelCounters) {
-        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
-                markWithIntelCounters, true);
+                                       boolean toGraveyardOnControlLoss, PlayerSubject player,
+                                       DynamicAmount dynamicCount, boolean markWithIntelCounters,
+                                       boolean mayLookAtFaceDownCards) {
+        this(count, faceDown, toGraveyardOnControlLoss, player, dynamicCount, markWithIntelCounters,
+                mayLookAtFaceDownCards, false);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown,
-                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                       boolean targetedOpponent, DynamicAmount dynamicCount,
-                                       boolean markWithIntelCounters, boolean mayLookAtFaceDownCards) {
-        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
-                markWithIntelCounters, mayLookAtFaceDownCards, false);
+                                       boolean toGraveyardOnControlLoss, PlayerSubject player,
+                                       DynamicAmount dynamicCount, boolean markWithIntelCounters) {
+        this(count, faceDown, toGraveyardOnControlLoss, player, dynamicCount, markWithIntelCounters, true);
+    }
+
+    public ExileTopCardsToSourceEffect(int count, boolean faceDown,
+                                       boolean toGraveyardOnControlLoss, PlayerSubject player,
+                                       DynamicAmount dynamicCount) {
+        this(count, faceDown, toGraveyardOnControlLoss, player, dynamicCount, false);
     }
 
     /**
@@ -54,62 +59,47 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
      * or leaves the battlefield (Intet, the Dreamer).
      */
     public static ExileTopCardsToSourceEffect faceDownLookedAtByExiler(int count) {
-        return new ExileTopCardsToSourceEffect(count, true, false, LibraryScope.CONTROLLER,
-                false, null, false, false, true);
+        return new ExileTopCardsToSourceEffect(count, true, false, Subjects.you(),
+                null, false, false, true);
     }
 
     /** Exiles cards face down without granting either player permission to look at them. */
     public static ExileTopCardsToSourceEffect faceDownWithoutLookPermission(int count) {
-        return new ExileTopCardsToSourceEffect(count, true, false, LibraryScope.CONTROLLER,
-                false, null, false, false);
-    }
-
-    public ExileTopCardsToSourceEffect(int count, boolean faceDown,
-                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                       boolean targetedOpponent, DynamicAmount dynamicCount) {
-        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount, false);
+        return new ExileTopCardsToSourceEffect(count, true, false, Subjects.you(), null, false, false);
     }
 
     /** Face-down exile from the controller's own library (Colfenor's Plans). */
     public ExileTopCardsToSourceEffect(int count) {
-        this(count, true, false, LibraryScope.CONTROLLER, false, null);
+        this(count, true, false, Subjects.you(), null);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown) {
-        this(count, faceDown, false, LibraryScope.CONTROLLER, false, null);
+        this(count, faceDown, false, Subjects.you(), null);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss) {
-        this(count, faceDown, toGraveyardOnControlLoss, LibraryScope.CONTROLLER, false, null);
+        this(count, faceDown, toGraveyardOnControlLoss, Subjects.you(), null);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss,
-                                       LibraryScope scope) {
-        this(count, faceDown, toGraveyardOnControlLoss, scope, false, null);
-    }
-
-    public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss,
-                                       LibraryScope scope, boolean targetedOpponent) {
-        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, null);
+                                       PlayerSubject player) {
+        this(count, faceDown, toGraveyardOnControlLoss, player, null);
     }
 
     public ExileTopCardsToSourceEffect(DynamicAmount dynamicCount, boolean faceDown,
-                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                       boolean targetedOpponent) {
-        this(dynamicCount, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, false);
+                                       boolean toGraveyardOnControlLoss, PlayerSubject player) {
+        this(dynamicCount, faceDown, toGraveyardOnControlLoss, player, false);
     }
 
     /** Combat-damage variant that marks each newly exiled card with an intel counter. */
     public ExileTopCardsToSourceEffect(DynamicAmount dynamicCount, boolean faceDown,
-                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                       boolean targetedOpponent, boolean markWithIntelCounters) {
-        this(0, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
-                markWithIntelCounters);
+                                       boolean toGraveyardOnControlLoss, PlayerSubject player,
+                                       boolean markWithIntelCounters) {
+        this(0, faceDown, toGraveyardOnControlLoss, player, dynamicCount, markWithIntelCounters);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return targetedOpponent || scope == LibraryScope.TARGET_PLAYER
-                ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
+        return player.declaresTarget() ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

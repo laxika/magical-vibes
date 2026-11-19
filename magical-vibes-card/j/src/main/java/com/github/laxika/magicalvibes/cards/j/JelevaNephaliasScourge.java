@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayCastInstantOrSorceryCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,7 +15,7 @@ public class JelevaNephaliasScourge extends Card {
     public JelevaNephaliasScourge() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTopCardsToSourceEffect(
-                        new ManaSpentToCast(), false, false, LibraryScope.EACH_PLAYER, false));
+                        new ManaSpentToCast(), false, false, Subjects.eachPlayer()));
         addTrigger(Triggers.attacks(), new MayCastInstantOrSorceryCardsExiledWithSourceEffect(true));
     }
 }

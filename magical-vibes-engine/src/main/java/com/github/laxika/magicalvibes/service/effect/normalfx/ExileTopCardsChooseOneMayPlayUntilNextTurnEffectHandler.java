@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -19,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +33,7 @@ public class ExileTopCardsChooseOneMayPlayUntilNextTurnEffectHandler implements 
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,10 +53,8 @@ public class ExileTopCardsChooseOneMayPlayUntilNextTurnEffectHandler implements 
         }
 
         UUID controllerId = entry.getControllerId();
-        UUID libraryOwnerId = ((ExileTopCardsChooseOneMayPlayUntilNextTurnEffect) effect).libraryScope()
-                == LibraryScope.TARGET_PLAYER
-                ? (entry.targetsForEffect(effect).isEmpty() ? entry.getTargetId() : entry.targetsForEffect(effect).getFirst())
-                : controllerId;
+        UUID libraryOwnerId = subjectResolutionService.player(gameData, entry, effect,
+                ((ExileTopCardsChooseOneMayPlayUntilNextTurnEffect) effect).player());
         if (libraryOwnerId == null || !gameData.orderedPlayerIds.contains(libraryOwnerId)) {
             return;
         }

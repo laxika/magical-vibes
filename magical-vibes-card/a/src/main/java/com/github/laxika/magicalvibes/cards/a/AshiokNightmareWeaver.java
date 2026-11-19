@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -26,7 +26,7 @@ public class AshiokNightmareWeaver extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(new ExileTopCardsToSourceEffect(
-                        3, false, false, LibraryScope.TARGET_OPPONENT, true)),
+                        3, false, false, Subjects.targetPlayer())),
                 "+2: Exile the top three cards of target opponent's library.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
