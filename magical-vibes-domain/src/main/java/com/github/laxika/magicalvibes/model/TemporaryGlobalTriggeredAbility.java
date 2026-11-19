@@ -362,6 +362,18 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                 permanentId, sourcePermanentId, null, null, false, false, false, referents, null, true, lastsWhile);
     }
 
+    /**
+     * {@code ability} of the delayed triggered ability that a player controlling {@code controllerId} created by taking
+     * the action a static ability of {@code sourceCard} allows, its source (CR 603.7g), that triggers every time its
+     * event occurs for the rest of the game: "you may reveal this card from your opening hand. If you do, when each
+     * opponent casts their first spell of the game, ..." (Chancellor of the Annex).
+     */
+    public static TemporaryGlobalTriggeredAbility forTheRestOfTheGame(UUID controllerId, Card sourceCard,
+                                                                      TriggeredAbility ability) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                null, null, null, null, false, false, false, DelayedReferents.NONE, null, true, null);
+    }
+
     /** This delayed ability with the ability {@code newAbility}. */
     public TemporaryGlobalTriggeredAbility withAbility(TriggeredAbility newAbility) {
         return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, newAbility, targetFilter,

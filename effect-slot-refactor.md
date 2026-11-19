@@ -867,6 +867,12 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Moments: paradigm's ability goes on the stack with the step's delayed abilities; its controller still orders their own triggers (CR 603.3b).
 - Ledger (74 card test classes, route tests; the 1,895-class set of part 22 too): no ability gained or lost but the new tests'; other lines gain the family's record fields, renamed effects or the maker as source, or differ by random route draws.
 
+**D (part 25: the opening-hand reveal lists).**
+- A reveal from the opening hand (CR 103.6b) makes a `TemporaryGlobalTriggeredAbility` sourced by the revealed card and controlled by the revealer (CR 603.7g): Chancellor of the Annex's is `forTheRestOfTheGame` with `opponentCastsSpell().firstThisGame()` (new `SpellFilter.firstThisGame`, read from `SpellEvent.Cast.firstSpellOfGame`, now recorded for every cast); Chancellor of the Tangle's, the first-upkeep Chancellors', Providence's and Sphinx of Foresight's are `atNextStep` (`precombatMainPhase(YOU)`, `upkeep(ANY)`, `upkeep(YOU)`).
+- Gone: `OpeningHandRevealTrigger`, `openingHandRevealTriggers`, `openingHandManaTriggers`, `openingHandUpkeepTriggers`, `SpellTriggers.putOpeningHandRevealAbilities`, `StepTriggerService.handleOpeningHandUpkeepTriggers` and the main-phase mana drain, Karn's clears (the restart clears delayed abilities).
+- Moments: none moved; Tangle's mana ability goes on the stack first among that main phase's abilities, not last (its controller orders them, CR 603.3b).
+- Ledger (165 card test classes, route tests): only record fields gained; route lines differ by random draws and dice.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

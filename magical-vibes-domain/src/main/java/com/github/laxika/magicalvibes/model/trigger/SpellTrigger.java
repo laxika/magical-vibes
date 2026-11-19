@@ -130,6 +130,11 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
         return filtered(filter -> filter.withNthThisTurn(nth));
     }
 
+    /** This trigger for the casting player's first spell of the game only. */
+    public SpellTrigger firstThisGame() {
+        return filtered(SpellFilter::withFirstThisGame);
+    }
+
     /** This trigger for the casting player's {@code nth} or later spell this turn that matches the filter. */
     public SpellTrigger nthOrLaterThisTurn(int nth) {
         return filtered(filter -> filter.withNthOrLaterThisTurn(nth));

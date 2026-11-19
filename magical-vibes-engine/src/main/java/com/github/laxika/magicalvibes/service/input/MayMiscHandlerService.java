@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -33,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StartInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -224,10 +227,12 @@ public class MayMiscHandlerService {
     public void handleOpeningHandDelayedCounterTrigger(GameData gameData, Player player, boolean accepted,
                                                         PendingMayAbility ability, RegisterDelayedCounterTriggerEffect effect) {
         if (accepted) {
-            gameData.openingHandRevealTriggers.add(new OpeningHandRevealTrigger(
-                    ability.controllerId(), ability.sourceCard(),
-                    new CounterUnlessPaysEffect(effect.genericManaAmount())
-            ));
+            // A delayed triggered ability the reveal made, with the revealed card as its source (CR 603.7g); it acts
+            // on each opponent's first spell, its triggering spell, without targeting it.
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.forTheRestOfTheGame(
+                    ability.controllerId(), ability.sourceCard(), new TriggeredAbility(
+                            Triggers.opponentCastsSpell().firstThisGame(),
+                            new CounterUnlessPaysEffect(effect.genericManaAmount()))));
 
             
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));
@@ -245,10 +250,11 @@ public class MayMiscHandlerService {
     public void handleOpeningHandDelayedManaTrigger(GameData gameData, Player player, boolean accepted,
                                                      PendingMayAbility ability, RegisterDelayedManaTriggerEffect effect) {
         if (accepted) {
-            gameData.openingHandManaTriggers.add(new OpeningHandRevealTrigger(
-                    ability.controllerId(), ability.sourceCard(),
-                    new AwardManaEffect(effect.color(), effect.amount())
-            ));
+            // "At the beginning of your first main phase of the game": the next precombat main phase of the revealing
+            // player's (CR 603.7g, 505.1). It adds mana as it resolves, on the stack (CR 605.1b).
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.precombatMainPhase(ActivePlayer.YOU), ability.controllerId(), ability.sourceCard(), null,
+                    null, new AwardManaEffect(effect.color(), effect.amount())));
 
             
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));
@@ -267,8 +273,11 @@ public class MayMiscHandlerService {
                                                PendingMayAbility ability,
                                                RegisterOpeningHandUpkeepTriggerEffect effect) {
         if (accepted) {
-            gameData.openingHandUpkeepTriggers.add(new OpeningHandRevealTrigger(
-                    ability.controllerId(), ability.sourceCard(), effect.effect(), effect.revealersFirstUpkeep()));
+            // "At the beginning of the first upkeep" is the game's next upkeep, "your first upkeep" the revealing
+            // player's next one (CR 603.7g).
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.upkeep(effect.revealersFirstUpkeep() ? ActivePlayer.YOU : ActivePlayer.ANY),
+                    ability.controllerId(), ability.sourceCard(), null, null, effect.effect()));
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals ",
                     ability.sourceCard(), " from their opening hand."));
         }

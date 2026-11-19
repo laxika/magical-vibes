@@ -113,8 +113,7 @@ public class SpellEvents {
             gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(castingPlayerId);
         }
 
-        boolean firstSpellOfGame = !gameData.openingHandRevealTriggers.isEmpty()
-                && gameData.playersWhoCastFirstSpellInGame.add(castingPlayerId);
+        boolean firstSpellOfGame = gameData.playersWhoCastFirstSpellInGame.add(castingPlayerId);
         Integer conspireCopies = gameData.conspiredSpellCopyCounts.remove(spellCard.getId());
         Integer casualtyCopies = gameData.casualtySpellCopyCounts.remove(spellCard.getId());
         int instantOrSorceryManaCopies = 0;

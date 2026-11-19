@@ -6567,7 +6567,7 @@ RiotEffect() is the static entry marker; its request-bearing form carries remain
 
 BurningRuneDemonEffect reuses IntuitionSearchChoice with a two-card maximum and different-name restriction. The offered choice accepts zero to two differently named cards; selecting zero clears the interaction, shuffles the library, and resumes the pending resolution without an opponent card choice.
 
-- `RegisterOpeningHandUpkeepTriggerEffect(CardEffect effect[, boolean revealersFirstUpkeep])` - pregame reveal that registers a mandatory first-upkeep trigger independently of the source card remaining in hand. Default fires at the first upkeep of the game for either player (Chancellor of the Dross/Forge/Spires); `true` = "your first upkeep" (Sphinx of Foresight).
+- `RegisterOpeningHandUpkeepTriggerEffect(CardEffect effect[, boolean revealersFirstUpkeep])` - pregame reveal that registers a mandatory first-upkeep delayed ability (`TemporaryGlobalTriggeredAbility.atNextStep`) independently of the source card remaining in hand. Default fires at the first upkeep of the game for either player (Chancellor of the Dross/Forge/Spires); `true` = "your first upkeep" (Sphinx of Foresight).
 
 - `ExileTopCardsMayCastMatchingUntilNextTurnEffect.maximumSpells` limits casts across one resolution's exiled cards; its spell filter is checked when casting, including permissions granted for matching alternate faces.
 

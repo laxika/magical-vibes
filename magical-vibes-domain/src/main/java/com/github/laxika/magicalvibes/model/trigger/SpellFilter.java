@@ -38,15 +38,18 @@ import java.util.Objects;
  *                           or greater have cascade", CR 113.1a): the spell is its source (CR 113.7), each of its
  *                           effects is an instance of its own that triggers separately (CR 702.85c), and nothing that
  *                           makes the source permanent's abilities trigger an additional time applies to it
+ * @param firstThisGame      whether the spell must be the first spell its caster cast this game ("when each opponent
+ *                           casts their first spell of the game", Chancellor of the Annex)
  */
 public record SpellFilter(CardPredicate spell, StackEntryPredicate stackEntry, Turn turn, boolean duringCombat,
                           int nthThisTurn, int nthOrLaterThisTurn, boolean paidWithManaFromThis,
                           boolean paidWithTreasureMana, boolean twoOrMoreCardTypes, int expend, Zone castFrom,
-                          Zone notCastFrom, Kicker kicker, boolean everyPlayersSpells, boolean grantedToTheSpell) {
+                          Zone notCastFrom, Kicker kicker, boolean everyPlayersSpells, boolean grantedToTheSpell,
+                          boolean firstThisGame) {
 
     /** Any spell, cast at any time. */
     public static final SpellFilter ANY = new SpellFilter(null, null, Turn.ANY, false, 0, 0, false, false, false, 0,
-            null, null, Kicker.ANY, false, false);
+            null, null, Kicker.ANY, false, false, false);
 
     /** Whose turn it must be as the spell is cast. */
     public enum Turn {
@@ -87,97 +90,103 @@ public record SpellFilter(CardPredicate spell, StackEntryPredicate stackEntry, T
      */
     public boolean spellAndStackEntryOnly() {
         return equals(new SpellFilter(spell, stackEntry, Turn.ANY, false, 0, 0, false, false, false, 0, null, null,
-                Kicker.ANY, false, false));
+                Kicker.ANY, false, false, false));
     }
 
     public SpellFilter withSpell(CardPredicate spell) {
         return new SpellFilter(Objects.requireNonNull(spell, "spell"), stackEntry, turn, duringCombat, nthThisTurn,
                 nthOrLaterThisTurn, paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom,
-                notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell);
+                notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withStackEntry(StackEntryPredicate stackEntry) {
         return new SpellFilter(spell, Objects.requireNonNull(stackEntry, "stackEntry"), turn, duringCombat,
                 nthThisTurn, nthOrLaterThisTurn, paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes,
-                expend, castFrom, notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell);
+                expend, castFrom, notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withTurn(Turn turn) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withDuringCombat() {
         return new SpellFilter(spell, stackEntry, turn, true, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withNthThisTurn(int nth) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, positive(nth), nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withNthOrLaterThisTurn(int nth) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, positive(nth),
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withPaidWithManaFromThis() {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn, true,
                 paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withPaidWithTreasureMana() {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, true, twoOrMoreCardTypes, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withTwoOrMoreCardTypes() {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, true, expend, castFrom, notCastFrom, kicker,
-                everyPlayersSpells, grantedToTheSpell);
+                everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withExpend(int threshold) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, positive(threshold), castFrom,
-                notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell);
+                notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withCastFrom(Zone zone) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend,
-                Objects.requireNonNull(zone, "zone"), notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell);
+                Objects.requireNonNull(zone, "zone"), notCastFrom, kicker, everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withNotCastFrom(Zone zone) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom,
-                Objects.requireNonNull(zone, "zone"), kicker, everyPlayersSpells, grantedToTheSpell);
+                Objects.requireNonNull(zone, "zone"), kicker, everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withKicker(Kicker kicker) {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom,
-                kicker, everyPlayersSpells, grantedToTheSpell);
+                kicker, everyPlayersSpells, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withEveryPlayersSpells() {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom,
-                kicker, true, grantedToTheSpell);
+                kicker, true, grantedToTheSpell, firstThisGame);
     }
 
     public SpellFilter withGrantedToTheSpell() {
         return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
                 paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom,
-                kicker, everyPlayersSpells, true);
+                kicker, everyPlayersSpells, true, firstThisGame);
+    }
+
+    public SpellFilter withFirstThisGame() {
+        return new SpellFilter(spell, stackEntry, turn, duringCombat, nthThisTurn, nthOrLaterThisTurn,
+                paidWithManaFromThis, paidWithTreasureMana, twoOrMoreCardTypes, expend, castFrom, notCastFrom,
+                kicker, everyPlayersSpells, grantedToTheSpell, true);
     }
 
     private static int positive(int value) {

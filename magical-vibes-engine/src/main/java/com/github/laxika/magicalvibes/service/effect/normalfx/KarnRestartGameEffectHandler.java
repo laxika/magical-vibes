@@ -182,10 +182,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.currentExtraTurnSequence = null;
         gameData.lastNormalTurnPlayerId = null;
         gameData.pendingLibraryBottomReorders.clear();
-        gameData.openingHandRevealTriggers.clear();
         gameData.legacyChosenWordsByCardId.clear();
-        gameData.openingHandManaTriggers.clear();
-        gameData.openingHandUpkeepTriggers.clear();
         gameData.mainPhasesBegunThisTurn = 0;
         gameData.postcombatMainPhasesBegunThisTurn = 0;
         gameData.playersWhoCastFirstSpellInGame.clear();

@@ -2144,18 +2144,7 @@ public class GameData {
     /** Cards exiled by a free-cast process that should be put into their owners' hands. */
     public final List<UUID> pendingExileFreeCastRemainderToHand = new ArrayList<>();
 
-    /** Delayed triggers from Chancellor-style opening hand reveals.
-     *  Fires once per opponent when they cast their first spell of the game. */
-    public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
-
-    /** Delayed mana triggers from Chancellor-style opening hand reveals.
-     *  Fires at the beginning of the revealing player's first precombat main phase. */
-    public final List<OpeningHandRevealTrigger> openingHandManaTriggers = Collections.synchronizedList(new ArrayList<>());
-
-    /** Mandatory first-upkeep abilities registered by opening-hand reveals. */
-    public final List<OpeningHandRevealTrigger> openingHandUpkeepTriggers = Collections.synchronizedList(new ArrayList<>());
-
-    /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
+    /** The players who have cast a spell this game: "their first spell of the game" (Chancellor of the Annex). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
 
@@ -11085,9 +11074,6 @@ public class GameData {
         copy.currentlyResolvingTriggeredAbilityControllerId = this.currentlyResolvingTriggeredAbilityControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---
-        copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
-        copy.openingHandManaTriggers.addAll(this.openingHandManaTriggers);
-        copy.openingHandUpkeepTriggers.addAll(this.openingHandUpkeepTriggers);
         copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
         this.paradigmResolvedSpellNames.forEach((k, v) -> {
             Set<String> names = ConcurrentHashMap.newKeySet();

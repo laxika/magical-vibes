@@ -79,7 +79,7 @@ class ChancellorOfTheTangleTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.openingHandManaTriggers).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
@@ -150,7 +150,7 @@ class ChancellorOfTheTangleTest {
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.openingHandManaTriggers).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
@@ -170,8 +170,10 @@ class ChancellorOfTheTangleTest {
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
 
         // Player 2's trigger should still be pending for their first main phase
-        assertThat(gd.openingHandManaTriggers).hasSize(1);
-        assertThat(gd.openingHandManaTriggers.getFirst().revealingPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.temporaryGlobalTriggeredAbilities).singleElement().satisfies(delayed -> {
+            assertThat(delayed.controllerId()).isEqualTo(player2.getId());
+            assertThat(delayed.sourceCard().getName()).isEqualTo("Chancellor of the Tangle");
+        });
     }
 
     @Test
@@ -190,7 +192,7 @@ class ChancellorOfTheTangleTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
-        assertThat(gd.openingHandManaTriggers).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
@@ -209,7 +211,7 @@ class ChancellorOfTheTangleTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
-        assertThat(gd.openingHandManaTriggers).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test

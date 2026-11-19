@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -2471,7 +2470,7 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when there are no opening hand mana triggers")
+        @DisplayName("Does nothing when no ability triggers at the precombat main phase")
         void doesNothingWithNoOpeningHandTriggers() {
             sut.handlePrecombatMainTriggers(gd);
 
@@ -2479,30 +2478,32 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Fires mana trigger for active player")
+        @DisplayName("A delayed \"your first main phase\" ability triggers in its controller's precombat main phase")
         void firesTriggerForActivePlayer() {
             Card card = createCardWithName("Chancellor of the Tangle");
             GainLifeEffect effect = new GainLifeEffect(1);
-            gd.openingHandManaTriggers.add(new OpeningHandRevealTrigger(player1Id, card, effect));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.precombatMainPhase(ActivePlayer.YOU), player1Id, card, null, null, effect));
 
             sut.handlePrecombatMainTriggers(gd);
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Chancellor of the Tangle");
-            assertThat(gd.openingHandManaTriggers).isEmpty();
+            assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
         }
 
         @Test
-        @DisplayName("Does not fire trigger for non-active player")
+        @DisplayName("A delayed \"your first main phase\" ability waits through another player's precombat main phase")
         void doesNotFireTriggerForNonActivePlayer() {
             Card card = createCardWithName("Chancellor of the Tangle");
             GainLifeEffect effect = new GainLifeEffect(1);
-            gd.openingHandManaTriggers.add(new OpeningHandRevealTrigger(player2Id, card, effect));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.precombatMainPhase(ActivePlayer.YOU), player2Id, card, null, null, effect));
 
             sut.handlePrecombatMainTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.openingHandManaTriggers).hasSize(1); // Not removed
+            assertThat(gd.temporaryGlobalTriggeredAbilities).hasSize(1);
         }
 
         @Test

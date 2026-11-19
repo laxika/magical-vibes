@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -202,8 +201,6 @@ public class StepTriggerService {
             triggeredAbilityStackService.putInherent(gameData, gameData.activePlayerId, "The initiative's ability",
                     List.of(new VentureIntoDungeonEffect(Dungeon.UNDERCITY)), TriggerRecord.NONE);
         }
-
-        handleOpeningHandUpkeepTriggers(gameData);
 
         UUID activePlayerId = gameData.activePlayerId;
         gameData.untappedLandsAtTurnStart.computeIfAbsent(activePlayerId, ignored -> {
@@ -402,29 +399,6 @@ public class StepTriggerService {
     }
 
     /**
-     * Puts pending opening-hand reveal triggers onto the stack. "At the beginning of the first upkeep"
-     * (the Chancellors) fires at the first upkeep of the game whichever player revealed the card, so the
-     * first upkeep drains all of those; "at the beginning of your first upkeep" (Sphinx of Foresight) waits
-     * for the revealing player's own first upkeep. The active player's triggers go on the stack first (APNAP).
-     */
-    private void handleOpeningHandUpkeepTriggers(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        List<OpeningHandRevealTrigger> due = new ArrayList<>(gameData.openingHandUpkeepTriggers.stream()
-                .filter(trigger -> !trigger.revealersFirstUpkeep()
-                        || trigger.revealingPlayerId().equals(activePlayerId))
-                .toList());
-        due.sort(java.util.Comparator.comparing(trigger -> !trigger.revealingPlayerId().equals(activePlayerId)));
-        for (OpeningHandRevealTrigger trigger : due) {
-            gameData.openingHandUpkeepTriggers.remove(trigger);
-            // A delayed triggered ability revealing the card made, with the card as its source (CR 603.7).
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(trigger.sourceCard(),
-                    trigger.revealingPlayerId(), trigger.sourceCard().getName() + "'s opening hand ability",
-                    List.of(trigger.effect()));
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-        }
-    }
-
-    /**
      * Executes the draw step: the active player draws a card (rule 504.1),
      * unless it is turn 1 for the starting player (rule 103.7a).
      * Then scans for {@code Triggers.drawStep(ActivePlayer.YOU)} and {@code Triggers.drawStep(ActivePlayer.ANY)}
@@ -596,8 +570,9 @@ public class StepTriggerService {
     }
 
     /**
-     * Fires Chancellor-style delayed mana triggers at the beginning of the
-     * revealing player's first precombat main phase.
+     * Begins a precombat main phase: the rad counters' ability, the active player's Sagas' lore counters, then the
+     * phase's "at the beginning of" abilities, delayed ones included ("at the beginning of your first main phase of the
+     * game", Chancellor of the Tangle).
      *
      * @param gameData the current game state to modify
      */
@@ -612,32 +587,6 @@ public class StepTriggerService {
         handleSagaLoreCounters(gameData);
 
         beginStep(gameData, StepTrigger.Moment.PRECOMBAT_MAIN_PHASE);
-
-        // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
-        if (!gameData.openingHandManaTriggers.isEmpty()) {
-            UUID activePlayerId = gameData.activePlayerId;
-            List<OpeningHandRevealTrigger> toFire = gameData.openingHandManaTriggers.stream()
-                    .filter(t -> t.revealingPlayerId().equals(activePlayerId))
-                    .toList();
-
-            if (!toFire.isEmpty()) {
-                gameData.openingHandManaTriggers.removeAll(toFire);
-                for (OpeningHandRevealTrigger trigger : toFire) {
-                    // A delayed triggered ability revealing the card made (CR 603.7); it adds mana as it resolves,
-                    // on the stack (it doesn't trigger from a mana ability, CR 605.1b).
-                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
-                            trigger.sourceCard(), trigger.revealingPlayerId(),
-                            trigger.sourceCard().getName() + "'s ability", List.of(trigger.effect())));
-
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(trigger.sourceCard(), "'s delayed trigger fires — adds mana."));
-                    log.info("Game {} - {}'s opening hand mana trigger fires for {}",
-                            gameData.id, trigger.sourceCard().getName(),
-                            gameData.playerIdToName.get(activePlayerId));
-                }
-            }
-        }
-
         beginNextStepTriggerChoice(gameData);
     }
 

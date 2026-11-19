@@ -224,8 +224,10 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         h.handleMayAbilityChosen(p1, true);
 
-        assertThat(gameData.openingHandRevealTriggers).hasSize(1);
-        assertThat(gameData.openingHandRevealTriggers.getFirst().revealingPlayerId()).isEqualTo(p1.getId());
+        assertThat(gameData.temporaryGlobalTriggeredAbilities).singleElement().satisfies(delayed -> {
+            assertThat(delayed.controllerId()).isEqualTo(p1.getId());
+            assertThat(delayed.sourceCard().getName()).isEqualTo("Chancellor of the Annex");
+        });
         h.assertInHand(p1, "Chancellor of the Annex");
         assertThat(gameData.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals Chancellor of the Annex"));
     }
@@ -242,7 +244,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         h.handleMayAbilityChosen(p1, false);
 
-        assertThat(gameData.openingHandRevealTriggers).isEmpty();
+        assertThat(gameData.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
@@ -277,6 +279,30 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         h.passBothPriorities();
 
         h.assertInGraveyard(p2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Opening hand trigger ignores the revealing player's own first spell")
+    void openingHandTriggerIgnoresOwnFirstSpell() {
+        GameTestHarness h = new GameTestHarness();
+        Player p1 = h.getPlayer1();
+        GameData gameData = h.getGameData();
+
+        h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
+        h.skipMulligan();
+        h.handleMayAbilityChosen(p1, true);
+
+        h.forceActivePlayer(p1);
+        h.forceStep(TurnStep.PRECOMBAT_MAIN);
+        h.clearPriorityPassed();
+        h.setHand(p1, List.of(new SuntailHawk()));
+        h.addMana(p1, ManaColor.WHITE, 1);
+
+        h.castCreature(p1, 0);
+
+        assertThat(gameData.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        h.passBothPriorities();
+        h.assertOnBattlefield(p1, "Suntail Hawk");
     }
 
     @Test
@@ -342,7 +368,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         h.handleMayAbilityChosen(p1, true);
         h.handleMayAbilityChosen(p1, true);
 
-        assertThat(gameData.openingHandRevealTriggers).hasSize(2);
+        assertThat(gameData.temporaryGlobalTriggeredAbilities).hasSize(2);
 
         h.forceActivePlayer(p2);
         h.forceStep(TurnStep.PRECOMBAT_MAIN);

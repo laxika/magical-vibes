@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -100,7 +99,7 @@ import org.springframework.stereotype.Service;
  * source's "when you spend this mana" rider, face-up schemes, planes, registered abilities), "whenever an opponent
  * casts a spell" (permanents, face-up schemes, suspended cards), the emblems', the caster's graveyard, hand, exile and
  * command zone cards', and the spell's own "when you cast this spell" abilities. Before them come the caster's
- * creature-spell boons and the delayed abilities of cards revealed from an opening hand; after them, the copies the
+ * creature-spell boons; after them, the copies the
  * cast's payment made ({@link SpellEvent.Cast}: the mana that copies the spell it is spent on, conspire and casualty)
  * and the replicate and demonstrate a grant gave the spell. Their controllers order them all the same (CR 603.3b).
  */
@@ -171,7 +170,6 @@ public class SpellTriggers {
         Card spellCard = event.spellCard();
         UUID castingPlayerId = event.castingPlayerId();
         Zone castZone = event.castZone();
-        putOpeningHandRevealAbilities(gameData, event);
         gameData.forEachPermanent((playerId, perm) -> dispatchSpellWatch(gameData, perm, playerId, PLAYER_CASTS,
                 event));
         dispatchFaceUpSchemes(gameData, PLAYER_CASTS, event, ownerId -> true);
@@ -322,28 +320,6 @@ public class SpellTriggers {
         putCopyCostAbilities(gameData, event, castSpellEntry, event.casualtyCopies(), "Casualty");
         putSpellOrAbilityManaCopies(gameData, event, castSpellEntry);
         putGrantedSelfCastAbilities(gameData, event, castSpellEntry, selfCastContext);
-    }
-
-    /**
-     * The delayed triggered abilities of the cards an opponent of {@code event}'s caster revealed from an opening hand
-     * (CR 603.7a), "when each opponent casts their first spell of the game, counter that spell unless that player pays
-     * ..." (Chancellor of the Annex): each acts on the spell, its triggering spell, without targeting it.
-     */
-    private void putOpeningHandRevealAbilities(GameData gameData, SpellEvent.Cast event) {
-        if (!event.firstSpellOfGame()) return;
-        Card spellCard = event.spellCard();
-        StackEntry firstSpell = findStackEntryByCardId(gameData, spellCard.getId());
-        for (OpeningHandRevealTrigger trigger : gameData.openingHandRevealTriggers) {
-            if (trigger.revealingPlayerId().equals(event.castingPlayerId())) continue;
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(trigger.sourceCard(),
-                    trigger.revealingPlayerId(), trigger.sourceCard().getName() + "'s ability",
-                    List.of(trigger.effect()), spellCard.getId(), Zone.STACK);
-            entry.setTriggeringCardId(spellCard.getId());
-            entry.setTriggeringSpell(firstSpell);
-            entry.setTriggeringPlayerId(event.castingPlayerId());
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-        }
     }
 
     /**
@@ -1114,6 +1090,9 @@ public class SpellTriggers {
 
     private boolean handleGenericSpellCastTrigger(SpellMatch match, CastAbility trigger,
                                                     SpellEvent.Cast spellCast) {
+        if (trigger.filter().firstThisGame() && !spellCast.firstSpellOfGame()) {
+            return false;
+        }
         return handleGenericSpellCastTrigger(match, trigger, spellCast.spellCard(), spellCast.castingPlayerId(),
                 spellCast.exiledSourcePermanentId(), spellCast.castZone());
     }
@@ -2021,13 +2000,6 @@ public class SpellTriggers {
         trigger.setRepeatedAdditionalCosts(List.copyOf(spellEntry.getRepeatedAdditionalCosts()));
         trigger.setCasualtyCostPaid(spellEntry.isCasualtyCostPaid());
         trigger.setNonTargeting(true);
-    }
-
-    private static StackEntry findStackEntryByCardId(GameData gameData, UUID cardId) {
-        return gameData.stack.stream()
-                .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(cardId))
-                .findFirst()
-                .orElse(null);
     }
 
     /**

@@ -385,16 +385,17 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   `collectedSpellFilter`), land plays by their trigger (`collectLandPlayAbility`: the player as "that player", the land
   as triggering card), others by event condition (`collectUnfilteredAbility`). A missing target filter comes from the
   bound group. Records: `spellWatchRecord`, the cast record, `activationRecord`.
-- Cast filter: `withFilter`, `withStackEntryFilter`, `duringYourTurn`, `nthThisTurn`, `.castFrom` / `.notCastFrom`
+- Cast filter: `withFilter`, `withStackEntryFilter`, `duringYourTurn`, `nthThisTurn`, `firstThisGame` (the caster's
+  first spell of the game, `SpellEvent.Cast.firstSpellOfGame`), `.castFrom` / `.notCastFrom`
   (counts then count that zone's spells), `.kicked()` / `.eachKick()` (kick count as event value),
   `.countingEveryPlayersSpells()`, `paidWithTreasureMana`. A cast ability's event condition is checked only at the cast
   (CR 603.2).
 - `SpellEvents.cast` (CR 601.2i) records the cast for the turn, moves what the payment leaves (conspire and casualty
   paid, spell-copying mana, the game's first spell) into the `Cast` event, emits it and clears the payment records;
   `SpellEvents.activated` likewise (`Activated.manaLinkedCopies`).
-- A cast puts, in order: the opening-hand reveal delayed abilities, the matched
-  abilities, then the copies the payment made (Primal Wellspring, Pyromancer's Goggles, conspire, casualty, Sunken
-  Palace) and a granted replicate or demonstrate; controllers order them (CR 603.3b).
+- A cast puts, in order: the matched abilities, then the copies the payment made (Primal Wellspring, Pyromancer's
+  Goggles, conspire, casualty, Sunken Palace) and a granted replicate or demonstrate; controllers order them
+  (CR 603.3b).
 - "When you cast this spell" (`putSelfCastAbility`): own, perpetual and granted replicate/demonstrate abilities, each
   one object (CR 603.3), the spell (X, kick, zone) as triggering spell; "you may" asked on resolution (CR 603.5).
 - `.grantedToTheSpell()` makes the ability the spell's: each effect its own object sourced by the spell, never doubled
@@ -785,7 +786,11 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   `GameData.temporaryGlobalTriggeredAbilities`: ability, source card and permanent (CR 603.7d, 603.7e), controller,
   duration, the permanent it is about (`watchedPermanentId`, CR 603.7c), the named player, the maker's linked exiled
   card. Factories: `about`, `thisTurn`, `nextThisTurn`, `untilYourNextTurn`, `boon`, `atNextStep`,
-  `atNextStepUnlessPaid`, `atNextStepThisTurn`, `atEveryStep`.
+  `atNextStepUnlessPaid`, `atNextStepThisTurn`, `atEveryStep`, `forTheRestOfTheGame`.
+- An opening-hand reveal (CR 103.6b) makes one too, sourced by the revealed card (CR 603.7g): Chancellor of the Annex's
+  `forTheRestOfTheGame` "when each opponent casts their first spell of the game" (`firstThisGame`), and `atNextStep`
+  "at the beginning of the first upkeep" (`upkeep(ANY)`), "your first upkeep" (`upkeep(YOU)`), "your first main
+  phase of the game" (`precombatMainPhase(YOU)`).
 - Families match them like any ability: a `Watcher.of(delayed)` and a `TriggerCandidate.of(delayed)` (an observer, or
   the departing permanent's own when about it, so "this" is that permanent), functioning anywhere
   (`functionsAnywhere`); nothing a permanent loses removes it. One about a combat (`DelayedReferents.duringCombatPhase`)
