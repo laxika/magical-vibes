@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class Rakalite extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(
                         PreventDamageEffect.nextToTarget(1),
-                        new ReturnSelfToHandAtEndStepEffect()
+                        new ReturnTargetPermanentToHandAtEndStepEffect(Subjects.source())
                 ),
                 "{2}: Prevent the next 1 damage that would be dealt to any target this turn. Return this artifact to its owner's hand at the beginning of the next end step."));
     }

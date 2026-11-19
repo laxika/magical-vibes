@@ -24,19 +24,24 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,8 +57,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Consolidated handler-unit test for {@link ReturnToHandEffectHandler}, nested by
- * {@link com.github.laxika.magicalvibes.model.effect.BounceScope}.
+ * Consolidated handler-unit test for {@link ReturnToHandEffectHandler}, nested by the effect's subject (the permanents
+ * {@link SubjectResolutionService} finds over the mocked queries).
  */
 @ExtendWith(MockitoExtension.class)
 class ReturnToHandEffectHandlerTest {
@@ -91,11 +96,19 @@ class ReturnToHandEffectHandlerTest {
         bounceSupport = new BounceSupport(gameQueryService, predicateEvaluationService, gameLogService,
                 permanentRemovalService, stateTriggerService);
         LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameLogService, permanentRemovalService, drawService);
+        SubjectResolutionService subjectResolutionService = new SubjectResolutionService(gameQueryService,
+                predicateEvaluationService, org.mockito.Mockito.mock(TargetLegalityService.class));
         handler = new ReturnToHandEffectHandler(gameQueryService, gameLogService, gameOutcomeService,
-                permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport, lifeSupport);
+                permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport, lifeSupport,
+                subjectResolutionService);
     }
 
-    // ===== Helper methods =====
+    /** The mocked predicate service answers the Aura filter the way the real one does for these test cards. */
+    private void stubAuraPredicate() {
+        when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                eq(new PermanentHasSubtypePredicate(CardSubtype.AURA)), any()))
+                .thenAnswer(invocation -> invocation.<Permanent>getArgument(0).getCard().isAura());
+    }
 
     private Card createCard(String name) {
         Card card = new Card();
@@ -138,7 +151,7 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("TARGET scope")
+    @DisplayName("Target subject")
     class Target {
 
         @Test
@@ -319,7 +332,7 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("SELF scope")
+    @DisplayName("Source subject")
     class Self {
 
         @Test
@@ -363,7 +376,7 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("ENCHANTED scope")
+    @DisplayName("Attached subject")
     class Enchanted {
 
         @Test
@@ -425,8 +438,11 @@ class ReturnToHandEffectHandlerTest {
             ReturnToHandEffect effect = ReturnToHandEffect.enchantedAndAuras();
             StackEntry entry = entryWithSource(auraCard, player1Id, List.of(effect), sourceAura.getId());
 
+            stubAuraPredicate();
             when(gameQueryService.findPermanentById(gd, sourceAura.getId())).thenReturn(sourceAura);
             when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.findPermanentById(gd, ownAura.getId())).thenReturn(ownAura);
+            when(gameQueryService.findPermanentById(gd, opponentAura.getId())).thenReturn(opponentAura);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -449,7 +465,7 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("ALL_MATCHING scope")
+    @DisplayName("Every matching permanent on the battlefield")
     class AllMatching {
 
         @Test
@@ -486,7 +502,7 @@ class ReturnToHandEffectHandlerTest {
         }
 
         @Test
-        @DisplayName("Null filter returns every permanent without evaluating a predicate")
+        @DisplayName("A null filter matches every permanent")
         void nullFilterReturnsEveryPermanent() {
             Card card = createCard("Cataclysmic Bounce");
             Permanent creature = createCreature("Grizzly Bears");
@@ -499,6 +515,8 @@ class ReturnToHandEffectHandlerTest {
             ReturnToHandEffect effect = ReturnToHandEffect.allPermanentsMatching(null);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
 
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                    any(PermanentTruePredicate.class), any())).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -551,7 +569,7 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("TARGET_PLAYERS_PERMANENTS scope (River's Rebuke)")
+    @DisplayName("Permanents target player controls (River's Rebuke)")
     class TargetPlayersPermanents {
 
         @Test
@@ -569,8 +587,8 @@ class ReturnToHandEffectHandlerTest {
 
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(nonland), any())).thenReturn(true);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(land), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(nonland), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(land), any(), any())).thenReturn(false);
             when(permanentRemovalService.removePermanentToHand(gd, nonland)).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -595,7 +613,7 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("TARGET_PLAYERS_OWNED scope (Hurkyl's Recall)")
+    @DisplayName("Permanents target player owns (Hurkyl's Recall)")
     class TargetPlayersOwned {
 
         @Test
@@ -614,9 +632,9 @@ class ReturnToHandEffectHandlerTest {
 
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact1), any())).thenReturn(true);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact2), any())).thenReturn(true);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(creature), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact1), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact2), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), any(), any())).thenReturn(false);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -624,6 +642,28 @@ class ReturnToHandEffectHandlerTest {
             verify(permanentRemovalService).removePermanentToHand(gd, artifact1);
             verify(permanentRemovalService).removePermanentToHand(gd, artifact2);
             verify(permanentRemovalService, never()).removePermanentToHand(gd, creature);
+        }
+
+        @Test
+        @DisplayName("Reads the card's owner, not the player it entered under (CR 108.3)")
+        void readsCardOwnerNotEnteringController() {
+            Card card = createCard("Hurkyl's Recall");
+            // Put onto player2's battlefield under player2's control, but player1 owns the card.
+            Card borrowedCard = createCard("Icy Manipulator");
+            borrowedCard.setType(CardType.ARTIFACT);
+            borrowedCard.setOwnerId(player1Id);
+            Permanent borrowed = new Permanent(borrowedCard);
+            gd.playerBattlefields.get(player2Id).add(borrowed);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate());
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player1Id);
+
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(borrowed), any(), any())).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, borrowed)).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, borrowed);
         }
 
         @Test
@@ -642,7 +682,7 @@ class ReturnToHandEffectHandlerTest {
             // Target player1 — should return artifacts player1 owns.
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player1Id);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(ownArtifact), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(ownArtifact), any(), any())).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, ownArtifact)).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -653,7 +693,49 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
-    @DisplayName("AURAS_ATTACHED_TO_TARGET scope (Scarab of the Unseen)")
+    @DisplayName("Granting Equipment (Trusty Boomerang)")
+    class GrantingEquipment {
+
+        @Test
+        @DisplayName("Returns the Equipment the activation bound as the granter, not the equipped creature")
+        void returnsBoundGranter() {
+            Card card = createCard("Trusty Boomerang");
+            Permanent creature = createCreature("Grizzly Bears");
+            Permanent equipment = createArtifact("Trusty Boomerang");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.grantingEquipment()
+                    .withSubject(Subjects.granter(equipment.getId()));
+            StackEntry entry = entryWithSource(card, player1Id, List.of(effect), creature.getId());
+
+            when(gameQueryService.findPermanentById(gd, equipment.getId())).thenReturn(equipment);
+            when(permanentRemovalService.removePermanentToHand(gd, equipment)).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, equipment);
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, creature);
+        }
+
+        @Test
+        @DisplayName("Does nothing when no granting permanent was recorded")
+        void noGranterRecorded() {
+            Card card = createCard("Trusty Boomerang");
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.grantingEquipment();
+            StackEntry entry = entryWithSource(card, player1Id, List.of(effect), creature.getId());
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Auras attached to the target (Scarab of the Unseen)")
     class AurasAttachedToTarget {
 
         @Test
@@ -672,6 +754,7 @@ class ReturnToHandEffectHandlerTest {
             ReturnToHandEffect effect = ReturnToHandEffect.aurasAttachedToTarget();
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), host.getId());
 
+            stubAuraPredicate();
             when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 

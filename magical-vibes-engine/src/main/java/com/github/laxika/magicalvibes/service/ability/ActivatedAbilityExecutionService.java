@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongC
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -95,7 +94,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
@@ -1387,20 +1388,10 @@ public class ActivatedAbilityExecutionService {
                         ? new AwardManaEffect(chosenColor)
                         : new AwardRestrictedManaEffect(chosenColor, 1, chosen.restriction()));
             } else if (effect instanceof ReturnToHandEffect bounce
-                    && (bounce.scope() == BounceScope.ENCHANTED
-                    || bounce.scope() == BounceScope.ENCHANTED_AND_AURAS)
-                    && permanent.getAttachedTo() != null) {
-                // Bind the enchanted permanent now: the Aura may be gone by resolution (Phantom Wings
-                // sacrifices itself as a cost), and the ability still uses last known information.
-                snapshotEffects.add(bounce.scope() == BounceScope.ENCHANTED
-                        ? ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo())
-                        : ReturnToHandEffect.enchantedAndAurasSnapshot(permanent.getAttachedTo()));
-            } else if (effect instanceof ReturnToHandEffect bounce
-                    && bounce.scope() == BounceScope.GRANTING_EQUIPMENT) {
+                    && bounce.subject() instanceof PermanentSubject.Granter) {
                 // Bind the granting Equipment before the ability resolves: the equipped creature is
                 // the ability's source, but the Equipment is the permanent that returns to hand.
-                snapshotEffects.add(ReturnToHandEffect.grantingEquipmentSnapshot(
-                        ability.getGrantSourcePermanentId()));
+                snapshotEffects.add(bounce.withSubject(Subjects.granter(ability.getGrantSourcePermanentId())));
             } else if (effect instanceof SacrificeGrantingPermanentAndControllerDrawsEffect sacrifice) {
                 UUID grantSourceId = ability.getGrantSourcePermanentId();
                 snapshotEffects.add(new SacrificeGrantingPermanentAndControllerDrawsEffect(

@@ -39,10 +39,16 @@ public class BounceSupport {
     private final StateTriggerService stateTriggerService;
 
     public void applyReturnSelfToHand(GameData gameData, StackEntry entry) {
-        Permanent toReturn = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        applyReturnSelfToHand(gameData, entry,
+                gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()));
+    }
 
+    /**
+     * Returns the resolving ability's source permanent, {@code toReturn}, to its owner's hand; {@code null} when it is
+     * no longer on the battlefield.
+     */
+    public void applyReturnSelfToHand(GameData gameData, StackEntry entry, Permanent toReturn) {
         if (toReturn == null) {
-            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is no longer on the battlefield."));
             return;
         }

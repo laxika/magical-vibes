@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Which permanents an effect acts on: the effect's verb names the action, this value names who it happens to. Built
@@ -17,7 +18,8 @@ import java.util.Objects;
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target,
         PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringCard,
-        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.ControlledBy, PermanentSubject.AllOf {
+        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.Granter,
+        PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf, PermanentSubject.AllOf {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -137,6 +139,20 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     }
 
     /**
+     * "Return this Equipment to its owner's hand" in an ability the Equipment grants: the permanent that granted the
+     * resolving ability, not the creature that has it. {@code boundPermanentId} is the granting permanent an activated
+     * ability recorded as it was activated ({@code null} until then); a granted triggered ability's entry records it
+     * itself.
+     */
+    record Granter(UUID boundPermanentId) implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
      * "Each creature you control", "all creatures": every permanent matching {@code filter} that one of
      * {@code players} controls, found once when the effect is applied.
      */
@@ -150,6 +166,41 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return players.needsStackEntry();
+        }
+    }
+
+    /**
+     * "All artifacts target player owns": every permanent on the battlefield matching {@code filter} whose owner is one
+     * of {@code players}, whoever controls it, found once when the effect is applied.
+     */
+    record OwnedBy(PlayerSubject players, PermanentPredicate filter) implements PermanentSubject {
+
+        public OwnedBy {
+            Objects.requireNonNull(players, "players");
+            Objects.requireNonNull(filter, "filter (use PermanentTruePredicate for any permanent)");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return players.needsStackEntry();
+        }
+    }
+
+    /**
+     * "All Auras attached to target permanent": every permanent matching {@code filter} attached to one of the
+     * permanents {@code permanents} names, whoever controls it, found once when the effect is applied. The
+     * attachments are not targeted; a target in {@code permanents} is declared by the effect that reads it.
+     */
+    record AttachmentsOf(PermanentSubject permanents, PermanentPredicate filter) implements PermanentSubject {
+
+        public AttachmentsOf {
+            Objects.requireNonNull(permanents, "permanents");
+            Objects.requireNonNull(filter, "filter (use PermanentTruePredicate for any attachment)");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return permanents.needsStackEntry();
         }
     }
 

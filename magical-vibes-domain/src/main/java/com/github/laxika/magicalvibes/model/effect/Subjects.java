@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The named factory behind every {@link PermanentSubject} and {@link PlayerSubject}, so an effect reads like its card
@@ -22,6 +23,7 @@ public final class Subjects {
     private static final PermanentSubject TARGET_SPELL = new PermanentSubject.TargetSpell();
     private static final PermanentSubject TRIGGERING_SPELL = new PermanentSubject.TriggeringSpell();
     private static final PermanentSubject RETURNED = new PermanentSubject.Returned();
+    private static final PermanentSubject GRANTER = new PermanentSubject.Granter(null);
 
     private static final PlayerSubject YOU = new PlayerSubject.You();
     private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null, true);
@@ -97,6 +99,16 @@ public final class Subjects {
         return RETURNED;
     }
 
+    /** "This Equipment" in an ability it grants: the permanent that granted the resolving ability. */
+    public static PermanentSubject granter() {
+        return GRANTER;
+    }
+
+    /** {@link #granter()} bound to the granting permanent an activated ability recorded as it was activated. */
+    public static PermanentSubject granter(UUID grantingPermanentId) {
+        return new PermanentSubject.Granter(grantingPermanentId);
+    }
+
     /** Every permanent matching {@code filter} that {@code players} control. */
     public static PermanentSubject controlledBy(PlayerSubject players, PermanentPredicate filter) {
         return new PermanentSubject.ControlledBy(players, filter);
@@ -105,6 +117,16 @@ public final class Subjects {
     /** Every permanent {@code players} control. */
     public static PermanentSubject controlledBy(PlayerSubject players) {
         return new PermanentSubject.ControlledBy(players, new PermanentTruePredicate());
+    }
+
+    /** Every permanent matching {@code filter} that {@code players} own, whoever controls it. */
+    public static PermanentSubject ownedBy(PlayerSubject players, PermanentPredicate filter) {
+        return new PermanentSubject.OwnedBy(players, filter);
+    }
+
+    /** Every permanent matching {@code filter} attached to a permanent {@code permanents} names ("all Auras attached to it"). */
+    public static PermanentSubject attachmentsOf(PermanentSubject permanents, PermanentPredicate filter) {
+        return new PermanentSubject.AttachmentsOf(permanents, filter);
     }
 
     /** Several subjects together, each permanent once. */

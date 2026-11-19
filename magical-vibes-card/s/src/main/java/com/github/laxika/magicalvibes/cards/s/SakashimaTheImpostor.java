@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class SakashimaTheImpostor extends Card {
                 List.of(new ActivatedAbility(
                         false,
                         "{2}{U}{U}",
-                        List.of(new ReturnSelfToHandAtEndStepEffect()),
+                        List.of(new ReturnTargetPermanentToHandAtEndStepEffect(Subjects.source())),
                         "{2}{U}{U}: Return Sakashima the Impostor to its owner's hand at the beginning of the next end step."
                 ))
         ));

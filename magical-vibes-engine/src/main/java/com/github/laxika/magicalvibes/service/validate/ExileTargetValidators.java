@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustChosenCounterOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect;
@@ -105,7 +104,7 @@ public class ExileTargetValidators {
 
     @ValidatesTarget(ReturnToHandEffect.class)
     public void validateReturnToHandTarget(TargetValidationContext ctx, ReturnToHandEffect effect) {
-        if (effect.scope() != BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD
+        if (!effect.orSuspendedCard()
                 || ctx.targetZone() != Zone.EXILE) {
             return;
         }

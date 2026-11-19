@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -388,7 +388,7 @@ only in subject, replace the verb's scope enum if it has one.
 |---|---|---|---|---|
 | 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | done |
 | 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | done |
-| 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | open |
+| 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | done |
 | 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | open |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | open |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | open |
@@ -1786,6 +1786,71 @@ snapshot, the same Equipment). New test: `DreadfulApathyTest.exilesEnchantedCrea
   is fused (step 8); `ExileSelfAtEndStepEffect` waits for the delayed-mechanism unification noted in 5a. All in the ledger.
 - A self-removal rider in a mana ability needs a manafx handler keyed on the survivor's class (registry is by class);
   5j (`SacrificeSelfEffect`) should check for one the same way.
+
+### Step 5, run 5c (2026-11-19)
+
+**Survivor.** `ReturnToHandEffect` (still a final class with factories; every factory kept, so its 582 cards are
+untouched) replaced `BounceScope scope` with `PermanentSubject subject` (`null` only for `selfSpell()`, which has no
+subject: `returnsResolvingSpell()`), plus two target modes `orSuspendedCard` and `ofChosenCreatureType`; the baked
+`enchantedPermanentId` / `grantingEquipmentId` fields and the `enchantedSnapshot` / `enchantedAndAurasSnapshot` /
+`grantingEquipmentSnapshot` factories are gone. New public `(PermanentSubject)` constructor and `withSubject`; `filter()`
+/ `withFilter` read and replace the target filter, or the `controlledBy` / `ownedBy` set's filter (TextChangeTransformer,
+AI). Constants mapped per step 3's table: TARGET (+ suspended / chosen-type modes) `target()`, TARGET_AND_SELF
+`allOf(source(), target())`, SELF `source()`, TRIGGERING `triggering()`, ALL_MATCHING `controlledBy(eachPlayer(),
+filter)`, TARGET_PLAYERS_PERMANENTS `controlledBy(targetPlayer(), filter)`, TARGET_PLAYERS_OWNED **new**
+`ownedBy(targetPlayer(), filter)`, AURAS_ATTACHED_TO_TARGET **new** `attachmentsOf(target(), Aura)`, ENCHANTED
+`attached()`, ENCHANTED_AND_AURAS `allOf(attachmentsOf(attached(), Aura), attached())` (Auras first, as before),
+GRANTING_EQUIPMENT **new** `granter()` (`Granter(UUID boundPermanentId)`: `ActivatedAbilityExecutionService` binds
+`granter(ability.getGrantSourcePermanentId())` at activation; unbound it reads `entry.getGrantingPermanentId()`, set only
+for granted triggered abilities). `targetSpec()`: suspended-card and chosen-type specs as before; a benign permanent spec
+(with the target filter) when the subject is, holds or reads attachments of `target()`; a benign player spec for a
+`controlledBy` / `ownedBy` of `targetPlayer()`; the self-targeting marker for `source()`; else `NONE`. `removalKind()` is
+`BOUNCE` iff `subject.declaresTarget()` (Target, or `allOf` holding it: exactly the old four scopes), `sweepsBoard()` iff
+`controlledBy(each...)` (= ALL_MATCHING). The handler keeps the departure paths: `target()` and `triggering()` permanents
+one at a time through `bounceTarget` (controller rider, `rememberRemovedPermanentController`, last-known card, then
+orphaned Auras), `source()` through `BounceSupport.applyReturnSelfToHand` (new overload taking the resolved permanent),
+every other subject as one `applyReturnPermanentsToHand` leave batch (so `allPermanentsMatchingThen`'s count is kept).
+Readers converted: `ExileTargetValidators` (`orSuspendedCard()`), `DestructionSupport`'s forced-cost else-branch
+(`subject() instanceof PermanentSubject.Source`), `SpellEvaluator` (`sweepsBoard()`).
+
+**Resolver.** `SubjectResolutionService` gained `OwnedBy` (owner = the card's owner, else `defaultControllerOf`, read
+from the permanent on the battlefield), `AttachmentsOf` (live hosts, then every battlefield permanent attached to one
+and matching the filter) and `Granter`. A set's `FilterContext` now also carries the source permanent id and the
+entry's X (the old ALL_MATCHING context; `controlledBy` had no other user yet).
+
+**Deleted** (`BounceScope`; 2 records, 2 handlers; ratchet 4,910 / 4,143): `ReturnSelfToHandAtEndOfCombatEffect` →
+`ReturnTargetPermanentToHandAtEndOfCombatEffect(Subjects.source())` (Windscouter, Wall of Junk, Quicksilver Behemoth,
+Phantom Whelp), `ReturnSelfToHandAtEndStepEffect` → `ReturnTargetPermanentToHandAtEndStepEffect(Subjects.source())`
+(Rakalite, Sakashima the Impostor); both survivors gained a `PermanentSubject subject` (`target()` default), declare
+the benign permanent target only for `target()` and schedule each resolved permanent through `DelayedPermanentActions`
+as before. 6 card files rewritten by a deleted scratch script.
+
+**Behaviour differences.** `ownedBy` reads the card's owner (CR 108.3) where the old TARGET_PLAYERS_OWNED read
+`stolenCreatures` else the battlefield holder, so Hurkyl's Recall now also returns a permanent the target player owns
+that another player controls without a recorded steal (test
+`ReturnToHandEffectHandlerTest$TargetPlayersOwned.readsCardOwnerNotEnteringController`). `attachmentsOf(..., Aura)`
+tests the effective subtype (`PermanentHasSubtypePredicate`) instead of the printed one. Sweep batches are in APNAP
+order instead of seat order (simultaneous; only log order differs). `attached()` replaces ENCHANTED's chain (live →
+baked host → departed snapshot → entry target); Phantom Wings / Sun Clasp / Ghostly Wings / Disappear tests pass on the
+resolver's live → source snapshot → attached snapshot. The end-step self return lost its source-to-`targetId` fallback
+(step 3: strict `source()`). River's Rebuke's filter now gets the source context (it is "nonland", so no change).
+
+**Tests**: 159 classes (every card using a non-plain factory, the rewritten cards, a 60-per-class sample of
+`ReturnToHandEffect`, the end-of-combat / end-step / delayed bounce cards, `ReturnToHandEffectHandlerTest` (now over a
+real resolver on the mocks; new Granter and owner cases), `SubjectResolutionServiceTest`, the two ratchets,
+`DestructionSupportFallbackTest`, `ActivatedAbilityExecutionServiceTest`, `TargetLegalityServiceTest`, the AI tests
+naming the class): 1,776 test cases, all pass.
+
+**For later runs.**
+
+- Kept (ledger, `blocked-other`): `ReturnCombatOpponentToHandAtEndOfCombatEffect` and
+  `ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffect` use a `TemporaryGlobalTriggeredAbility`, not
+  `DelayedPermanentActions` (the latter returns Aura and host as one event); `ReturnSelectedPermanentToHandAtEndOfCombat`
+  needs a step-7 `picked()` subject; the `Return*ToHandThen` pair and `ReturnSelfToHandOnCoinFlipLoss` are fused (step 8).
+- `ownedBy`, `attachmentsOf` and `granter()` are available; `Granter` carries an activation-bound id, the pattern for
+  other "granting permanent" effects (`PutCountersOnGrantingEquipment`, `DestroyGrantingPermanentIfNoCounters`, ...).
+- `PermanentSubject.declaresTarget()` stays false for `controlledBy` / `ownedBy` / `attachmentsOf` even when they read
+  a target; an effect's `targetSpec()` inspects those shapes itself (as `ReturnToHandEffect` does).
 
 ## Prompt
 

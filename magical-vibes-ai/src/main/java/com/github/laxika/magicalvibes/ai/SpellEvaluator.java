@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -740,7 +739,7 @@ public class SpellEvaluator {
         // effect's filter are actually bounced (a null filter matches everything), so a
         // colour/type-restricted sweep like Hibernation must not be scored as if it returns
         // every creature — that made the AI cast it with nothing matching on board.
-        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.sweepsBoard()) {
             FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
             java.util.function.Predicate<Permanent> bounced = p ->
                     gameQueryService.isCreature(gameData, p)

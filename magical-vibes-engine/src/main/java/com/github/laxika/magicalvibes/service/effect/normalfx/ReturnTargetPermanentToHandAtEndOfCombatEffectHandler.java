@@ -11,20 +11,20 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAt
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link ReturnTargetPermanentToHandAtEndOfCombatEffect} by scheduling the targeted
- * permanent for a delayed return to its owner's hand.
+ * Resolves {@link ReturnTargetPermanentToHandAtEndOfCombatEffect} by scheduling each permanent its subject names for
+ * a delayed return to its owner's hand at end of combat.
  */
 @Component
 @RequiredArgsConstructor
 public class ReturnTargetPermanentToHandAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,15 +33,14 @@ public class ReturnTargetPermanentToHandAtEndOfCombatEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
-            return;
+        var e = (ReturnTargetPermanentToHandAtEndOfCombatEffect) effect;
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT),
+                    ActivePlayer.ANY);
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                    " will be returned to its owner's hand at end of combat."));
         }
-
-        DelayedPermanentActions.schedule(gameData, entry,
-                new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT),
-                ActivePlayer.ANY);
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " will be returned to its owner's hand at end of combat."));
     }
 }

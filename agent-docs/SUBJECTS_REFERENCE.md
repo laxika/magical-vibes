@@ -18,7 +18,10 @@ resolver's static entry point rejects the others).
 | `targetSpell()` | "target spell", only inside `controllerOf` ("that spell's controller"): read from the stack, else as it was countered (a counter-unless-pays rider has no target, only that record); names no permanent; the spell target is declared by the effect reading it (damage) or by the counter effect it rides on (discard) | no | no |
 | `triggeringSpell()` | "that spell or ability", only inside `controllerOf`: the spell or ability the trigger event was about, as it is on the stack or last was ("that spell or ability's controller sacrifices a land", Lava Runner) | no | no |
 | `returned()` | "that creature" after "return target card ... to the battlefield" (step result) | no | no |
+| `granter()` | "return this Equipment to its owner's hand" in an ability the Equipment grants (the granting permanent: bound at activation as `granter(id)`, else the granted trigger's recorded granter) | no | no |
 | `controlledBy(players, filter)` | "each creature you control", "all creatures", "each land target player controls" | only if `players` targets | if `players` may |
+| `ownedBy(players, filter)` | "all artifacts target player owns" (each matching permanent whose card's owner is one of `players`, whoever controls it; the effect declares a player target) | no | if `players` may |
+| `attachmentsOf(permanents, filter)` | "all Auras attached to target permanent" (each matching permanent attached to one of the named permanents still on the battlefield; the attachments are not targeted) | no | if `permanents` may |
 | `allOf(subjects...)` | "this creature and target creature" | if one part targets | if every part may |
 | `of(PermanentReference)` | temporary adapter for effects that still carry a `PermanentReference` | no | `SOURCE`, `ATTACHED` |
 

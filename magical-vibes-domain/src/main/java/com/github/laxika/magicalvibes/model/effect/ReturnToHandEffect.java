@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
-import java.util.UUID;
+import java.util.Objects;
 
 /**
- * Returns permanent(s) to their owners' hands. Constructed only through the static factories below,
- * which are the safe, self-documenting way to pair a {@link BounceScope} with the parameters that
- * scope actually uses (a plain record can't hide its canonical constructor, so this is a final class
- * with a private constructor).
+ * Returns permanent(s) to their owners' hands. Which permanents is the {@link #subject()}; the static factories below
+ * name the common ones and pair each with the parameters it uses (a plain record can't hide its canonical
+ * constructor, so this is a final class with a private constructor).
  *
  * <ul>
  *   <li>{@link #target()} / {@link #targetAndControllerLosesLife(int)} /
@@ -29,59 +31,73 @@ import java.util.UUID;
  *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
  *   <li>{@link #enchantedAndAuras()} — bounce the permanent the source Aura is attached to and
  *       every Aura attached to that permanent (Mark of Eviction).</li>
- *   <li>{@link #grantingEquipment()} — bounce the Equipment that granted the resolving ability,
- *       captured at activation time.</li>
+ *   <li>{@link #grantingEquipment()} — bounce the Equipment that granted the resolving ability.</li>
+ *   <li>{@link #selfSpell()} — the resolving instant or sorcery returns itself to its owner's hand instead of going
+ *       to the graveyard; it has no subject.</li>
  * </ul>
+ *
+ * <p>A target subject ({@code target()}, or one holding it) declares a benign permanent target with the optional
+ * target filter; a {@code controlledBy} / {@code ownedBy} set of target player's permanents declares a benign player
+ * target; any other subject declares nothing.
  */
 public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect, CastTimeCreatureTypeChoiceEffect {
 
-    private final BounceScope scope;
+    private static final PermanentPredicate AURA = new PermanentHasSubtypePredicate(CardSubtype.AURA);
+
+    private final PermanentSubject subject;
     private final PermanentPredicate filter;
+    private final boolean orSuspendedCard;
+    private final boolean ofChosenCreatureType;
     private final int lifeLoss;
     private final int drawCount;
-    private final UUID enchantedPermanentId;
-    private final UUID grantingEquipmentId;
     private final DynamicAmount castTimeXValue;
     private final CardEffect thenEffect;
     private final int minimumControlledNontokenCount;
 
-    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
-        this(scope, filter, lifeLoss, drawCount, null, null, null, 0, null);
+    /** Returns the permanents {@code subject} names to their owners' hands. */
+    public ReturnToHandEffect(PermanentSubject subject) {
+        this(Objects.requireNonNull(subject, "subject (selfSpell() is the subjectless bounce)"),
+                null, false, false, 0, 0, null, null, 0);
     }
 
-    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
-                               UUID enchantedPermanentId) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null, null, 0, null);
-    }
-
-    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
-                               UUID enchantedPermanentId, DynamicAmount castTimeXValue) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, castTimeXValue, null, 0, null);
-    }
-
-    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
-                               UUID enchantedPermanentId, DynamicAmount castTimeXValue,
-                               CardEffect thenEffect, int minimumControlledNontokenCount,
-                               UUID grantingEquipmentId) {
-        this.scope = scope;
+    private ReturnToHandEffect(PermanentSubject subject, PermanentPredicate filter, boolean orSuspendedCard,
+                               boolean ofChosenCreatureType, int lifeLoss, int drawCount,
+                               DynamicAmount castTimeXValue, CardEffect thenEffect,
+                               int minimumControlledNontokenCount) {
+        if (filter != null && (subject == null || !subject.declaresTarget())) {
+            throw new IllegalArgumentException("A target filter needs a target subject: " + subject);
+        }
+        if ((lifeLoss > 0 || drawCount > 0 || orSuspendedCard || ofChosenCreatureType)
+                && !(subject instanceof PermanentSubject.Target)) {
+            throw new IllegalArgumentException("Only a target bounce has a controller rider or a target mode: "
+                    + subject);
+        }
+        this.subject = subject;
         this.filter = filter;
+        this.orSuspendedCard = orSuspendedCard;
+        this.ofChosenCreatureType = ofChosenCreatureType;
         this.lifeLoss = lifeLoss;
         this.drawCount = drawCount;
-        this.enchantedPermanentId = enchantedPermanentId;
-        this.grantingEquipmentId = grantingEquipmentId;
         this.castTimeXValue = castTimeXValue;
         this.thenEffect = thenEffect;
         this.minimumControlledNontokenCount = minimumControlledNontokenCount;
     }
 
+    private static ReturnToHandEffect of(PermanentSubject subject) {
+        return new ReturnToHandEffect(subject, null, false, false, 0, 0, null, null, 0);
+    }
+
+    private static PermanentPredicate orAny(PermanentPredicate filter) {
+        return filter == null ? new PermanentTruePredicate() : filter;
+    }
+
     public static ReturnToHandEffect target() {
-        return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0);
+        return of(Subjects.target());
     }
 
     /** Returns a target nonland permanent or suspended card to its owner's hand. */
     public static ReturnToHandEffect targetNonlandPermanentOrSuspendedCard() {
-        return new ReturnToHandEffect(BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD,
-                null, 0, 0);
+        return new ReturnToHandEffect(Subjects.target(), null, true, false, 0, 0, null, null, 0);
     }
 
     /**
@@ -89,37 +105,37 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
      * simultaneous event ("Return Wizard Mentor and target creature you control to their owners' hands").
      */
     public static ReturnToHandEffect targetAndSelf() {
-        return new ReturnToHandEffect(BounceScope.TARGET_AND_SELF, null, 0, 0);
+        return of(Subjects.allOf(Subjects.source(), Subjects.target()));
     }
 
     public static ReturnToHandEffect target(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.TARGET, filter, 0, 0);
+        return new ReturnToHandEffect(Subjects.target(), filter, false, false, 0, 0, null, null, 0);
     }
 
     public static ReturnToHandEffect targetAndControllerLosesLife(int lifeLoss) {
-        return new ReturnToHandEffect(BounceScope.TARGET, null, lifeLoss, 0);
+        return new ReturnToHandEffect(Subjects.target(), null, false, false, lifeLoss, 0, null, null, 0);
     }
 
     public static ReturnToHandEffect targetAndControllerDraws(int drawCount) {
-        return new ReturnToHandEffect(BounceScope.TARGET, null, 0, drawCount);
+        return new ReturnToHandEffect(Subjects.target(), null, false, false, 0, drawCount, null, null, 0);
     }
 
     public static ReturnToHandEffect targetWithCastTimeXValue(DynamicAmount castTimeXValue) {
-        return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0, null, castTimeXValue);
+        return new ReturnToHandEffect(Subjects.target(), null, false, false, 0, 0, castTimeXValue, null, 0);
     }
 
     /** Returns the targeted creatures that have the creature type chosen while casting this spell. */
     public static ReturnToHandEffect targetCreaturesOfChosenType() {
-        return new ReturnToHandEffect(BounceScope.TARGET_CHOSEN_CREATURE_TYPE, null, 0, 0);
+        return new ReturnToHandEffect(Subjects.target(), null, false, true, 0, 0, null, null, 0);
     }
 
     public static ReturnToHandEffect self() {
-        return new ReturnToHandEffect(BounceScope.SELF, null, 0, 0);
+        return of(Subjects.source());
     }
 
     /** Returns the permanent whose event produced the resolving triggered ability. */
     public static ReturnToHandEffect triggering() {
-        return new ReturnToHandEffect(BounceScope.TRIGGERING, null, 0, 0);
+        return of(Subjects.triggering());
     }
 
     /**
@@ -127,11 +143,11 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
      * (instants/sorceries that bounce themselves off the stack — Redeem the Lost's won-clash reward).
      */
     public static ReturnToHandEffect selfSpell() {
-        return new ReturnToHandEffect(BounceScope.SELF_SPELL, null, 0, 0);
+        return of(null);
     }
 
     public static ReturnToHandEffect allPermanentsMatching(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0);
+        return of(Subjects.controlledBy(Subjects.eachPlayer(), orAny(filter)));
     }
 
     /**
@@ -141,16 +157,16 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     public static ReturnToHandEffect allPermanentsMatchingThen(PermanentPredicate filter,
                                                                 int minimumControlledNontokenCount,
                                                                 CardEffect thenEffect) {
-        return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0, null, null, thenEffect,
-                minimumControlledNontokenCount, null);
+        return new ReturnToHandEffect(Subjects.controlledBy(Subjects.eachPlayer(), orAny(filter)), null, false,
+                false, 0, 0, null, thenEffect, minimumControlledNontokenCount);
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerControls(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_PERMANENTS, filter, 0, 0);
+        return of(Subjects.controlledBy(Subjects.targetPlayer(), orAny(filter)));
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerOwns(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_OWNED, filter, 0, 0);
+        return of(Subjects.ownedBy(Subjects.targetPlayer(), orAny(filter)));
     }
 
     /**
@@ -158,78 +174,76 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
      * the Aura (Scarab of the Unseen). The Auras themselves are not targeted.
      */
     public static ReturnToHandEffect aurasAttachedToTarget() {
-        return new ReturnToHandEffect(BounceScope.AURAS_ATTACHED_TO_TARGET, null, 0, 0);
+        return of(Subjects.attachmentsOf(Subjects.target(), AURA));
     }
 
-    /**
-     * Returns the permanent the source Aura is attached to to its owner's hand (Sun Clasp).
-     * Non-targeting; re-derives the host from the Aura's {@code attachedTo} at resolution.
-     */
+    /** Returns the permanent the source Aura is attached to to its owner's hand (Sun Clasp). Non-targeting. */
     public static ReturnToHandEffect enchanted() {
-        return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0);
+        return of(Subjects.attached());
     }
 
     /**
      * Returns the permanent the source Aura is attached to and every Aura attached to that
-     * permanent, with the Auras returned first so they do not become orphaned.
+     * permanent, the Auras first, as one simultaneous event (Mark of Eviction).
      */
     public static ReturnToHandEffect enchantedAndAuras() {
-        return new ReturnToHandEffect(BounceScope.ENCHANTED_AND_AURAS, null, 0, 0);
-    }
-
-    /**
-     * {@link #enchantedAndAuras()} with the host permanent already resolved, used as last known
-     * information when the Aura is no longer on the battlefield at resolution.
-     */
-    public static ReturnToHandEffect enchantedAndAurasSnapshot(UUID enchantedPermanentId) {
-        return new ReturnToHandEffect(BounceScope.ENCHANTED_AND_AURAS, null, 0, 0,
-                enchantedPermanentId);
-    }
-
-    /**
-     * {@link #enchanted()} with the host permanent already resolved, used as last known information
-     * when the Aura is no longer on the battlefield at resolution (Phantom Wings sacrifices itself
-     * as the activation cost). Bound at activation time by {@code ActivatedAbilityExecutionService}.
-     */
-    public static ReturnToHandEffect enchantedSnapshot(UUID enchantedPermanentId) {
-        return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0, enchantedPermanentId);
+        return of(Subjects.allOf(Subjects.attachmentsOf(Subjects.attached(), AURA), Subjects.attached()));
     }
 
     /** Returns the Equipment that granted the resolving ability to its owner's hand. */
     public static ReturnToHandEffect grantingEquipment() {
-        return new ReturnToHandEffect(BounceScope.GRANTING_EQUIPMENT, null, 0, 0,
-                null, null, null, 0, null);
+        return of(Subjects.granter());
+    }
+
+    /** Which permanents return; {@code null} only for {@link #selfSpell()}. */
+    public PermanentSubject subject() {
+        return subject;
+    }
+
+    /** Whether the resolving spell returns itself to its owner's hand ({@link #selfSpell()}). */
+    public boolean returnsResolvingSpell() {
+        return subject == null;
+    }
+
+    /** Whether the target may also be a suspended card in exile ({@link #targetNonlandPermanentOrSuspendedCard()}). */
+    public boolean orSuspendedCard() {
+        return orSuspendedCard;
+    }
+
+    /** Whether only the targets of the creature type chosen while casting return. */
+    public boolean ofChosenCreatureType() {
+        return ofChosenCreatureType;
+    }
+
+    /** This bounce with its subject replaced and every other parameter kept (an activation binding its granter). */
+    public ReturnToHandEffect withSubject(PermanentSubject updatedSubject) {
+        return new ReturnToHandEffect(updatedSubject, filter, orSuspendedCard, ofChosenCreatureType, lifeLoss,
+                drawCount, castTimeXValue, thenEffect, minimumControlledNontokenCount);
     }
 
     /**
-     * Returns the granting Equipment using the permanent captured when the ability was activated.
-     * If the Equipment has left the battlefield, this effect does nothing.
+     * The permanent filter: the target filter of a target bounce, else the filter of the set a {@code controlledBy} or
+     * {@code ownedBy} subject names, else {@code null}.
      */
-    public static ReturnToHandEffect grantingEquipmentSnapshot(UUID grantingEquipmentId) {
-        return new ReturnToHandEffect(BounceScope.GRANTING_EQUIPMENT, null, 0, 0,
-                null, null, null, 0, grantingEquipmentId);
-    }
-
-    public UUID enchantedPermanentId() {
-        return enchantedPermanentId;
-    }
-
-    public UUID grantingEquipmentId() {
-        return grantingEquipmentId;
-    }
-
-    public BounceScope scope() {
-        return scope;
-    }
-
     public PermanentPredicate filter() {
-        return filter;
+        return switch (subject) {
+            case PermanentSubject.ControlledBy controlledBy -> controlledBy.filter();
+            case PermanentSubject.OwnedBy ownedBy -> ownedBy.filter();
+            case null, default -> filter;
+        };
     }
 
-    /** A copy of this bounce with its permanent filter replaced and every other parameter kept. */
+    /** A copy of this bounce with its {@link #filter()} replaced and every other parameter kept. */
     public ReturnToHandEffect withFilter(PermanentPredicate updatedFilter) {
-        return new ReturnToHandEffect(scope, updatedFilter, lifeLoss, drawCount, enchantedPermanentId,
-                castTimeXValue, thenEffect, minimumControlledNontokenCount, grantingEquipmentId);
+        return switch (subject) {
+            case PermanentSubject.ControlledBy controlledBy ->
+                    withSubject(Subjects.controlledBy(controlledBy.players(), orAny(updatedFilter)));
+            case PermanentSubject.OwnedBy ownedBy -> withSubject(Subjects.ownedBy(ownedBy.players(),
+                    orAny(updatedFilter)));
+            case null, default -> new ReturnToHandEffect(subject, updatedFilter, orSuspendedCard,
+                    ofChosenCreatureType, lifeLoss, drawCount, castTimeXValue, thenEffect,
+                    minimumControlledNontokenCount);
+        };
     }
 
     public int lifeLoss() {
@@ -253,32 +267,51 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return castTimeXValue;
     }
 
+    /** Whether the set is every matching permanent some players control (the board-sweep shape). */
+    private boolean isSweep() {
+        return subject instanceof PermanentSubject.ControlledBy controlledBy
+                && controlledBy.players() instanceof PlayerSubject.Each;
+    }
+
+    /** Whether the subject reads target player's permanents ({@code controlledBy} / {@code ownedBy} target player). */
+    private boolean readsTargetPlayersPermanents() {
+        PlayerSubject players = switch (subject) {
+            case PermanentSubject.ControlledBy controlledBy -> controlledBy.players();
+            case PermanentSubject.OwnedBy ownedBy -> ownedBy.players();
+            case null, default -> null;
+        };
+        return players != null && players.declaresTarget();
+    }
+
+    /** Whether the subject reads the effect's permanent target, itself or for its attachments. */
+    private boolean readsPermanentTarget() {
+        return subject != null && (subject.declaresTarget()
+                || subject instanceof PermanentSubject.AttachmentsOf attachments
+                && attachments.permanents().declaresTarget());
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        // Only the single-target scope targets a battlefield permanent (PERMANENT reproduces its
-        // requireBattlefieldTarget guard); the target-players scopes target a player (the old
-        // validator imposed no guard there). SELF acts on the source permanent without choosing a
-        // target, but marks it as self-targeting so trigger collectors retain the source id.
-        if (scope == BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD) {
+        // A target permanent reproduces the old requireBattlefieldTarget guard; a target player's set targets the
+        // player (the old validator imposed no guard there). source() acts on the source permanent without choosing
+        // a target, but marks it as self-targeting so trigger collectors retain the source id.
+        if (orSuspendedCard) {
             return TargetSpec.benign(TargetPredicates.anyOf(
                     TargetPredicates.permanents(new PermanentNotPredicate(new PermanentIsLandPredicate())),
                     TargetPredicates.exileCard()));
         }
-        if (scope == BounceScope.TARGET || scope == BounceScope.TARGET_AND_SELF
-                || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
-                || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
-            if (scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE) {
-                return TargetSpec.benign(TargetPredicates.creature());
-            }
+        if (ofChosenCreatureType) {
+            return TargetSpec.benign(TargetPredicates.creature());
+        }
+        if (readsPermanentTarget()) {
             return filter == null
                     ? TargetSpec.benign(TargetPredicates.permanent())
                     : TargetSpec.benign(TargetPredicates.permanent(), filter);
         }
-        if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {
+        if (readsTargetPlayersPermanents()) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        if (scope == BounceScope.SELF) {
+        if (subject instanceof PermanentSubject.Source) {
             return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;
@@ -286,28 +319,25 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == BounceScope.ENCHANTED || scope == BounceScope.ENCHANTED_AND_AURAS;
+        return subject instanceof PermanentSubject.Attached
+                || subject instanceof PermanentSubject.AllOf allOf
+                && allOf.subjects().stream().anyMatch(PermanentSubject.Attached.class::isInstance);
     }
 
     @Override
     public RemovalKind removalKind() {
-        // Only a single-target bounce is targeted removal; the mass/self scopes are board
-        // sweeps or self-return, not single-target removal.
-        return scope == BounceScope.TARGET
-                || scope == BounceScope.TARGET_AND_SELF
-                || scope == BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD
-                || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
-                ? RemovalKind.BOUNCE : null;
+        // Only a bounce of the target permanent itself is targeted removal; the set, attachment and self subjects
+        // are board sweeps or self-return, not single-target removal.
+        return subject != null && subject.declaresTarget() ? RemovalKind.BOUNCE : null;
     }
 
     @Override
     public boolean sweepsBoard() {
-        // Only the all-matching scope is a board sweep; the targeted / self scopes are not.
-        return scope == BounceScope.ALL_MATCHING;
+        return isSweep();
     }
 
     @Override
     public boolean requiresCastTimeCreatureTypeChoice() {
-        return scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE;
+        return ofChosenCreatureType;
     }
 }

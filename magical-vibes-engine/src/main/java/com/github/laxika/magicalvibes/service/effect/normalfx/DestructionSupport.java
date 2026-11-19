@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -870,7 +869,7 @@ public class DestructionSupport {
             } else if (elseEffect instanceof DrawCardEffect draw) {
                 drawCardEffectHandler.resolve(gameData, entry, draw);
             } else if (elseEffect instanceof ReturnToHandEffect returnToHand
-                    && returnToHand.scope() == BounceScope.SELF) {
+                    && returnToHand.subject() instanceof PermanentSubject.Source) {
                 bounceSupport.applyReturnSelfToHand(gameData, entry);
             } else if (elseEffect instanceof EnergyCountersEffect energyCounters) {
                 energyCountersEffectHandler.resolve(gameData, entry, energyCounters);

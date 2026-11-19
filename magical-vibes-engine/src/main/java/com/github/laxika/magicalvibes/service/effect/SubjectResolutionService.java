@@ -118,6 +118,12 @@ public class SubjectResolutionService {
         if (subject instanceof PermanentSubject.ControlledBy controlledBy) {
             return controlledBy(ctx, controlledBy);
         }
+        if (subject instanceof PermanentSubject.OwnedBy ownedBy) {
+            return ownedBy(ctx, ownedBy);
+        }
+        if (subject instanceof PermanentSubject.AttachmentsOf attachmentsOf) {
+            return attachmentsOf(ctx, attachmentsOf);
+        }
         List<Permanent> live = new ArrayList<>();
         for (UUID id : ids(ctx, subject)) {
             Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), id);
@@ -142,7 +148,15 @@ public class SubjectResolutionService {
             case PermanentSubject.TargetSpell ignored -> List.of();
             case PermanentSubject.TriggeringSpell ignored -> List.of();
             case PermanentSubject.Returned ignored -> listOf(returnedPermanentId(ctx));
+            case PermanentSubject.Granter granter -> listOf(granter.boundPermanentId() != null
+                    ? granter.boundPermanentId() : ctx.entry().getGrantingPermanentId());
             case PermanentSubject.ControlledBy controlledBy -> controlledBy(ctx, controlledBy).stream()
+                    .map(Permanent::getId)
+                    .toList();
+            case PermanentSubject.OwnedBy ownedBy -> ownedBy(ctx, ownedBy).stream()
+                    .map(Permanent::getId)
+                    .toList();
+            case PermanentSubject.AttachmentsOf attachmentsOf -> attachmentsOf(ctx, attachmentsOf).stream()
                     .map(Permanent::getId)
                     .toList();
             case PermanentSubject.AllOf allOf -> {
@@ -238,13 +252,7 @@ public class SubjectResolutionService {
     }
 
     private List<Permanent> controlledBy(Context ctx, PermanentSubject.ControlledBy subject) {
-        FilterContext filterContext = FilterContext.of(ctx.gameData())
-                .withSourceCardId(ctx.sourceCardId())
-                .withSourceControllerId(ctx.controllerId());
-        Permanent sourceSnapshot = ctx.sourceSnapshot();
-        if (sourceSnapshot != null) {
-            filterContext = filterContext.withSourcePermanentSnapshot(sourceSnapshot);
-        }
+        FilterContext filterContext = filterContext(ctx);
         List<Permanent> matching = new ArrayList<>();
         for (UUID playerId : players(ctx, subject.players())) {
             List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
@@ -259,6 +267,68 @@ public class SubjectResolutionService {
             }
         }
         return matching;
+    }
+
+    /** Every matching permanent whose owner is one of the players, whoever controls it. */
+    private List<Permanent> ownedBy(Context ctx, PermanentSubject.OwnedBy subject) {
+        List<UUID> owners = players(ctx, subject.players());
+        if (owners.isEmpty()) {
+            return List.of();
+        }
+        FilterContext filterContext = filterContext(ctx);
+        List<Permanent> matching = new ArrayList<>();
+        for (UUID playerId : apnapOrder(ctx.gameData())) {
+            for (Permanent permanent : ctx.gameData().playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (owners.contains(ownerOfLive(ctx.gameData(), permanent))
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, subject.filter(),
+                        filterContext)) {
+                    matching.add(permanent);
+                }
+            }
+        }
+        return matching;
+    }
+
+    /** Every matching permanent attached to one of the named permanents that are on the battlefield. */
+    private List<Permanent> attachmentsOf(Context ctx, PermanentSubject.AttachmentsOf subject) {
+        Set<UUID> hosts = new LinkedHashSet<>();
+        for (Permanent host : livePermanents(ctx, subject.permanents())) {
+            hosts.add(host.getId());
+        }
+        if (hosts.isEmpty()) {
+            return List.of();
+        }
+        FilterContext filterContext = filterContext(ctx);
+        List<Permanent> matching = new ArrayList<>();
+        for (UUID playerId : apnapOrder(ctx.gameData())) {
+            for (Permanent permanent : ctx.gameData().playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (permanent.getAttachedTo() != null && hosts.contains(permanent.getAttachedTo())
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, subject.filter(),
+                        filterContext)) {
+                    matching.add(permanent);
+                }
+            }
+        }
+        return matching;
+    }
+
+    /**
+     * What a set's filter knows about the resolving spell or ability: its source card, source permanent (live id and
+     * last-known snapshot), controller and X.
+     */
+    private static FilterContext filterContext(Context ctx) {
+        FilterContext filterContext = FilterContext.of(ctx.gameData())
+                .withSourceCardId(ctx.sourceCardId())
+                .withSourceControllerId(ctx.controllerId())
+                .withSourcePermanentId(ctx.sourceId());
+        Permanent sourceSnapshot = ctx.sourceSnapshot();
+        if (sourceSnapshot != null) {
+            filterContext = filterContext.withSourcePermanentSnapshot(sourceSnapshot);
+        }
+        if (ctx.entry() != null) {
+            filterContext = filterContext.withXValue(ctx.entry().getXValue());
+        }
+        return filterContext;
     }
 
     private List<UUID> players(Context ctx, PlayerSubject subject) {
@@ -417,9 +487,7 @@ public class SubjectResolutionService {
         GameData gameData = ctx.gameData();
         Permanent live = gameQueryService.findPermanentById(gameData, permanentId);
         if (live != null) {
-            Card card = live.getOriginalCard() != null ? live.getOriginalCard() : live.getCard();
-            UUID owner = gameData.ownerOf(card);
-            return owner != null ? owner : gameData.defaultControllerOf(permanentId);
+            return ownerOfLive(gameData, live);
         }
         Card lastKnownCard = lastKnownCard(ctx, permanentId);
         UUID owner = lastKnownCard == null ? null : gameData.ownerOf(lastKnownCard);
@@ -431,6 +499,13 @@ public class SubjectResolutionService {
             owner = ctx.entry().getControllerId();
         }
         return owner;
+    }
+
+    /** The owner of a permanent on the battlefield: its card's owner, else the player it entered under. */
+    private static UUID ownerOfLive(GameData gameData, Permanent permanent) {
+        Card card = permanent.getOriginalCard() != null ? permanent.getOriginalCard() : permanent.getCard();
+        UUID owner = gameData.ownerOf(card);
+        return owner != null ? owner : gameData.defaultControllerOf(permanent.getId());
     }
 
     private static Card lastKnownCard(Context ctx, UUID permanentId) {
