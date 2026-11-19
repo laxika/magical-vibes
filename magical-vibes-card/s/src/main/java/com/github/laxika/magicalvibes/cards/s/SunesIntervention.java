@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -57,7 +58,7 @@ public class SunesIntervention extends Card {
                         TargetFilters.enchantment()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains 3 life",
-                        new TargetPlayerGainsLifeEffect(3),
+                        new GainLifeEffect(3, Subjects.targetPlayer()),
                         anyPlayerFilter)
         )));
     }

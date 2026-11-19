@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -800,7 +799,7 @@ class SpellTriggersTest {
         Permanent perm = createPermanent("Aven Shrine");
         CardEffect gainLife = new GainLifeEffect(
                 new CardsInGraveyard(new CardSharesNameWithTriggeringSpellPredicate(), CountScope.ANY_PLAYER),
-                GainLifeRecipient.TRIGGERING_PLAYER);
+                Subjects.triggeringPlayer());
         CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), gainLife);
         Card spellCard = createInstant("Grizzly Bears");
         gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id, "Grizzly Bears",

@@ -86,7 +86,9 @@ public final class InstantCategoryClassifier {
         if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
             return InstantCategory.CARD_ADVANTAGE;
         }
-        if (effect instanceof LifeGainEffect gain && !gain.gainsNoLife()) return InstantCategory.CARD_ADVANTAGE;
+        if (effect instanceof LifeGainEffect gain && !gain.gainsNoLife() && !gain.lifeGainingPlayer().declaresTarget()) {
+            return InstantCategory.CARD_ADVANTAGE;
+        }
 
         return null;
     }

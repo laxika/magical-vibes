@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class WingbrightThief extends Card {
                         Triggers.youCastThisSpell(),
                         List.of(
                                 new EachOpponentDrawsCardEffect(1),
-                                new GainLifeEffect(new Fixed(3), GainLifeRecipient.OPPONENT)),
+                                new GainLifeEffect(new Fixed(3), Subjects.eachOpponent())),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
     }
 }

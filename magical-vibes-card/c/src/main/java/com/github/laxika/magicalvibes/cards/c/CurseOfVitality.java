@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,6 +24,6 @@ public class CurseOfVitality extends Card {
                         new ConditionalEffect(
                                 new AllOf(java.util.List.of(
                                         new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())),
-                                new GainLifeEffect(new Fixed(2), GainLifeRecipient.TRIGGERING_PLAYER))));
+                                new GainLifeEffect(new Fixed(2), Subjects.triggeringPlayer()))));
     }
 }

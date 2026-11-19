@@ -1,31 +1,47 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+
+import java.util.Objects;
 
 /**
- * A player gains {@code amount} life. By default the spell/ability's controller gains it; a
- * {@code recipient} of {@link GainLifeRecipient#TARGET_CONTROLLER} instead routes the life to the
- * controller of the effect's target permanent (e.g. Condemn's "its controller gains life equal to
- * its toughness").
+ * {@code player} gains {@code amount} life. The player is {@link Subjects#you()} unless a constructor names another:
+ * "target player gains 3 life" is {@code Subjects.targetPlayer()}, "its controller gains life equal to its toughness"
+ * (Condemn) {@code Subjects.controllerOf(Subjects.target())}, "each opponent gains 10 life" (Aria of Flame)
+ * {@code Subjects.eachOpponent()}. Several players gain in APNAP order.
  *
- * <p>{@code targetsPlayer} makes the effect target a player (the controller still gains the life);
- * this only establishes the target so a {@code CountScope.TARGET_PLAYER} amount can read it — e.g.
- * Renewing Dawn's "gain 2 life for each Mountain target opponent controls".
+ * <p>The amount is evaluated once against the stack entry, except for a target player: then it is evaluated for each
+ * target player with that player as both the amount's controller and its target ("target player gains X life, where X
+ * is the greatest power among creatures they control").
+ *
+ * <p>Only {@link Subjects#targetPlayer()} declares a target (benign, any player). {@code targetsPlayer} also declares
+ * one for an amount that reads a target player while you gain the life ("gain 2 life for each Mountain target
+ * opponent controls", Renewing Dawn; Keeper of the Light).
  */
-public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
+public record GainLifeEffect(DynamicAmount amount, PlayerSubject player,
                              boolean targetsPlayer) implements LifeGainEffect {
 
-    public GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient) {
-        this(amount, recipient, false);
+    public GainLifeEffect {
+        Objects.requireNonNull(player, "player");
     }
 
+    /** {@code player} gains {@code amount} life. */
+    public GainLifeEffect(DynamicAmount amount, PlayerSubject player) {
+        this(amount, player, false);
+    }
+
+    /** {@code player} gains {@code amount} life. */
+    public GainLifeEffect(int amount, PlayerSubject player) {
+        this(new Fixed(amount), player);
+    }
+
+    /** You gain {@code amount} life. */
     public GainLifeEffect(DynamicAmount amount) {
-        this(amount, GainLifeRecipient.CONTROLLER, false);
+        this(amount, Subjects.you(), false);
     }
 
+    /** You gain {@code amount} life. */
     public GainLifeEffect(int amount) {
         this(new Fixed(amount));
     }
@@ -36,7 +52,14 @@ public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
     }
 
     @Override
+    public PlayerSubject lifeGainingPlayer() {
+        return player;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
-        return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+        return player.declaresTarget() || targetsPlayer
+                ? TargetSpec.benign(TargetPredicates.player())
+                : TargetSpec.NONE;
     }
 }

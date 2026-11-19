@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorsAmongControlledPerma
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,7 +25,7 @@ public class HappilyEverAfter extends Card {
 
     public HappilyEverAfter() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GainLifeEffect(new Fixed(5), GainLifeRecipient.EACH_PLAYER),
+                new GainLifeEffect(new Fixed(5), Subjects.eachPlayer()),
                 new EachPlayerDrawsCardEffect(1));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

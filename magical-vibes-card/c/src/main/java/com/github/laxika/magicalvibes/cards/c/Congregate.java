@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "14")
@@ -20,7 +21,7 @@ public class Congregate extends Card {
 
     public Congregate() {
         // Target player gains 2 life for each creature on the battlefield.
-        addSpellEffect(new TargetPlayerGainsLifeEffect(
-                new Scaled(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER), 2)));
+        addSpellEffect(new GainLifeEffect(
+                new Scaled(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER), 2), Subjects.targetPlayer()));
     }
 }

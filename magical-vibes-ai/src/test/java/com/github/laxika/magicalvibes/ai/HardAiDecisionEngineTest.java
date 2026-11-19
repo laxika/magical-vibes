@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
@@ -114,7 +116,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -2493,7 +2494,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         spell.target(new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent"))
-                .addSpellEffect(new TargetPlayerGainsLifeEffect(5));
+                .addSpellEffect(new GainLifeEffect(5, Subjects.targetPlayer()));
         // Exercise target routing independently of the evaluator's divided-damage scoring.
         spell.addSpellEffect(new DrawCardEffect(1));
         harness.setHand(player1, List.of(spell));

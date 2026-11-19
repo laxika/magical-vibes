@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -29,6 +29,6 @@ public class LastBreath extends Card {
                 "Target must be a creature with power 2 or less"
         ))
                 .addSpellEffect(new ExileTargetPermanentEffect())
-                .addSpellEffect(new GainLifeEffect(new Fixed(4), GainLifeRecipient.TARGET_CONTROLLER));
+                .addSpellEffect(new GainLifeEffect(new Fixed(4), Subjects.controllerOf(Subjects.target())));
     }
 }

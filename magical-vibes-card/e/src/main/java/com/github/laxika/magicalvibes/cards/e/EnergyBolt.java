@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "263")
@@ -21,7 +22,7 @@ public class EnergyBolt extends Card {
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains X life",
-                        new TargetPlayerGainsLifeEffect(new XValue()))
+                        new GainLifeEffect(new XValue(), Subjects.targetPlayer()))
         )));
     }
 }

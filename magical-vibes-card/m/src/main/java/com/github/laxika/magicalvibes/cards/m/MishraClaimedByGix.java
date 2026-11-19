@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
@@ -34,7 +33,7 @@ public class MishraClaimedByGix extends Card {
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
 
         addTrigger(Triggers.youAttack(), new LoseLifeEffect(attackingCreatures, Subjects.eachOpponent()),
-                new GainLifeEffect(attackingCreatures, GainLifeRecipient.CONTROLLER),
+                new GainLifeEffect(attackingCreatures, Subjects.you()),
                 new ConditionalEffect(
                 new AllOf(List.of(
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(

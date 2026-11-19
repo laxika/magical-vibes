@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -19,7 +20,7 @@ public class Armistice extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}{W}",
-                List.of(new DrawCardEffect(1), new TargetPlayerGainsLifeEffect(3)),
+                List.of(new DrawCardEffect(1), new GainLifeEffect(3, Subjects.targetPlayer())),
                 "{3}{W}{W}: You draw a card and target opponent gains 3 life.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

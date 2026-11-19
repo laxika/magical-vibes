@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "215")
@@ -33,7 +34,7 @@ public class TrigonOfMending extends Card {
                 "{2}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new TargetPlayerGainsLifeEffect(3)
+                        new GainLifeEffect(3, Subjects.targetPlayer())
                 ),
                 "{2}, {T}, Remove a charge counter from Trigon of Mending: Target player gains 3 life."
         ));

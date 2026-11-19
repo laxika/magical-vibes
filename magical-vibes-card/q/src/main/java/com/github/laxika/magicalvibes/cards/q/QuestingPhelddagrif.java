@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -45,7 +44,7 @@ public class QuestingPhelddagrif extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{W}",
                 List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK, GrantScope.SELF),
                         new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, GrantScope.SELF),
-                        new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT)),
+                        new GainLifeEffect(new Fixed(2), Subjects.targetPlayerDeclaredElsewhere())),
                 "{W}: Questing Phelddagrif gains protection from black and from red until end of turn. Target opponent gains 2 life.",
                 targetOpponent));
 

@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -55,7 +56,7 @@ public class VerdantCommand extends Card {
                         ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains 3 life",
-                        new TargetPlayerGainsLifeEffect(3), anyPlayer)
+                        new GainLifeEffect(3, Subjects.targetPlayer()), anyPlayer)
         ), 2));
     }
 }

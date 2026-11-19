@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -33,7 +33,7 @@ public class IWillSavorYourAgony extends Card {
                                 "Target player draws a card.",
                                 new DrawCardEffect(1, Subjects.targetPlayer()), playerTarget),
                         new ChooseOneEffect.ChooseOneOption(
-                                "Target player gains 5 life.", new TargetPlayerGainsLifeEffect(5), playerTarget)
+                                "Target player gains 5 life.", new GainLifeEffect(5, Subjects.targetPlayer()), playerTarget)
                 ), 3)));
     }
 }

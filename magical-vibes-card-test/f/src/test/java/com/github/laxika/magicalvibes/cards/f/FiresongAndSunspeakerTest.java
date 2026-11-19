@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.l.LastBreath;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColdWaterSnapper;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FiresongAndSunspeaker.class, Shock.class, GrizzlyBears.class, WhitesunsPassage.class,
         SoothingBalm.class, DeepFreeze.class, ColdWaterSnapper.class, JaceBeleren.class,
-        InvasionOfZendikar.class})
+        InvasionOfZendikar.class, LastBreath.class})
 class FiresongAndSunspeakerTest extends BaseCardTest {
 
     @Test
@@ -131,6 +132,25 @@ class FiresongAndSunspeakerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 25);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A white spell giving its target's controller life triggers when that controller is you")
+    void whiteSpellGivingTargetControllerLifeTriggersDamage() {
+        harness.addToBattlefield(player1, new FiresongAndSunspeaker());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LastBreath()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertLife(player1, 24);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();

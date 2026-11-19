@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerAttackedBySourceLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,7 +21,7 @@ public class AngelOfDestiny extends Card {
                         .withFilter(new PermanentIsCreaturePredicate()),
                 SequenceEffect.of(
                         new GainLifeEffect(new EventValue()),
-                        new GainLifeEffect(new EventValue(), GainLifeRecipient.TRIGGERING_PLAYER)));
+                        new GainLifeEffect(new EventValue(), Subjects.triggeringPlayer())));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerLifeAtLeast(15, true)),

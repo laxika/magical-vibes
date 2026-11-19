@@ -69,7 +69,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -434,7 +433,7 @@ public class ActivatedAbilityExecutionService {
                     if (amount <= 0) {
                         continue;
                     }
-                    for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.player())) {
+                    for (UUID victimId : nonTargetedLifeRecipients(gameData, playerId, loss.player())) {
                         losses.merge(victimId, 1, Integer::sum);
                     }
                 }
@@ -1939,7 +1938,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof GainLifeEffect gain && isNonTargetedLifeGain(gain)) {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                for (UUID recipientId : lifeGainRecipients(gameData, playerId, gain.recipient())) {
+                for (UUID recipientId : nonTargetedLifeRecipients(gameData, playerId, gain.player())) {
                     lifeSupport.applyGainLife(gameData, recipientId, amount, permanent.getCard().getName(),
                             permanent.getCard(), StackEntryType.ACTIVATED_ABILITY, playerId);
                 }
@@ -1949,7 +1948,7 @@ public class ActivatedAbilityExecutionService {
                 // here rather than on the stack.
                 int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.player())) {
+                for (UUID victimId : nonTargetedLifeRecipients(gameData, playerId, loss.player())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
@@ -2084,14 +2083,16 @@ public class ActivatedAbilityExecutionService {
         return effect.player() instanceof PlayerSubject.You || effect.player() instanceof PlayerSubject.Each;
     }
 
+    /**
+     * Whether a {@link GainLifeEffect} bundled into a mana ability can be applied without the stack: "you", "each
+     * player" and "each opponent" (Grove of the Burnwillows); a target player would make it targeted (CR 605.1a).
+     */
     private static boolean isNonTargetedLifeGain(GainLifeEffect effect) {
-        return effect.recipient() == GainLifeRecipient.CONTROLLER
-                || effect.recipient() == GainLifeRecipient.OPPONENT
-                || effect.recipient() == GainLifeRecipient.EACH_PLAYER;
+        return effect.player() instanceof PlayerSubject.You || effect.player() instanceof PlayerSubject.Each;
     }
 
-    /** The players losing life, in turn order, for a non-targeted life loss's player subject. */
-    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, PlayerSubject player) {
+    /** The players losing or gaining life, in turn order, for a non-targeted life loss or gain's player subject. */
+    private static List<UUID> nonTargetedLifeRecipients(GameData gameData, UUID controllerId, PlayerSubject player) {
         return switch (player) {
             case PlayerSubject.You ignored -> List.of(controllerId);
             case PlayerSubject.Each each when each.relation() == PlayerSubject.Relation.ALL ->
@@ -2099,18 +2100,6 @@ public class ActivatedAbilityExecutionService {
             case PlayerSubject.Each ignored -> gameData.orderedPlayerIds.stream()
                     .filter(pid -> !pid.equals(controllerId))
                     .toList();
-            default -> List.of();
-        };
-    }
-
-    private List<UUID> lifeGainRecipients(GameData gameData, UUID controllerId, GainLifeRecipient recipient) {
-        return switch (recipient) {
-            case CONTROLLER -> List.of(controllerId);
-            case OPPONENT -> {
-                UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-                yield opponentId == null ? List.of() : List.of(opponentId);
-            }
-            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             default -> List.of();
         };
     }

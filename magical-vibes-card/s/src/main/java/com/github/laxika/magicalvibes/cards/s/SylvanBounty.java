@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class SylvanBounty extends Card {
 
     public SylvanBounty() {
         // Target player gains 8 life.
-        addSpellEffect(new TargetPlayerGainsLifeEffect(8));
+        addSpellEffect(new GainLifeEffect(8, Subjects.targetPlayer()));
 
         // Basic landcycling {1}{G} ({1}{G}, Discard this card: Search your library for a basic land
         // card, reveal it, put it into your hand, then shuffle.) — discard cost is intrinsic.

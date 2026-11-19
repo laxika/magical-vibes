@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermane
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -26,9 +26,13 @@ public class LifeTargetValidators {
         }
     }
 
-    @ValidatesTarget(TargetPlayerGainsLifeEffect.class)
-    public void validateTargetPlayerGainsLife(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(GainLifeEffect.class)
+    public void validateGainLife(TargetValidationContext ctx, GainLifeEffect effect) {
+        // A declared target player must be a player; a gain for you whose amount reads a target player
+        // (targetsPlayer) keeps the card's own target filter, as before.
+        if (effect.player().declaresTarget()) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(GivePoisonCountersEffect.class)

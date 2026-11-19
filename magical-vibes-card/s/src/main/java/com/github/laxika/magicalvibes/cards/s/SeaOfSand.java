@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
@@ -28,7 +27,7 @@ public class SeaOfSand extends Card {
         // Whenever a player draws a land card, that player gains 3 life.
         CardPredicate land = new CardTypePredicate(CardType.LAND);
         addTrigger(List.of(Triggers.youDrawCard().withFilter(land), Triggers.opponentDrawsCard().withFilter(land)),
-                new GainLifeEffect(new Fixed(3), GainLifeRecipient.TRIGGERING_PLAYER));
+                new GainLifeEffect(new Fixed(3), Subjects.triggeringPlayer()));
         // Whenever a player draws a nonland card, that player loses 3 life.
         CardPredicate nonland = new CardNotPredicate(land);
         addTrigger(List.of(Triggers.youDrawCard().withFilter(nonland), Triggers.opponentDrawsCard().withFilter(nonland)),

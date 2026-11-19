@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,9 +18,9 @@ import java.util.List;
 public class SoldeviSteamBeast extends Card {
 
     public SoldeviSteamBeast() {
-        // Whenever this creature becomes tapped, target opponent gains 2 life.
-        // (Two-player: the single opponent is derived, so no target is chosen.)
-        addTrigger(Triggers.becomesTapped(), new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT));
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"))
+                .addTrigger(Triggers.becomesTapped(), new GainLifeEffect(2, Subjects.targetPlayer()));
 
         // {2}: Regenerate this creature.
         addActivatedAbility(new ActivatedAbility(

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "18")
@@ -14,8 +15,8 @@ public class RestForTheWeary extends Card {
     public RestForTheWeary() {
         addSpellEffect(new ConditionalReplacementEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.LAND), 1),
-                new TargetPlayerGainsLifeEffect(4),
-                new TargetPlayerGainsLifeEffect(8)
+                new GainLifeEffect(4, Subjects.targetPlayer()),
+                new GainLifeEffect(8, Subjects.targetPlayer())
         ));
     }
 }

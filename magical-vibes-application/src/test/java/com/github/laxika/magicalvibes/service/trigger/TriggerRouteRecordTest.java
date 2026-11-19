@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -449,7 +448,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 new LoseLifeEffect(1, Subjects.you()))),
                 watch("an opponent gains life", "opponentGainsLife", Triggers::opponentGainsLife, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT))),
+                                new GainLifeEffect(new Fixed(1), Subjects.eachOpponent()))),
                 watch("an opponent loses life", "opponentLosesLife", Triggers::opponentLosesLife, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
                                 new LoseLifeEffect(1, Subjects.eachOpponent()))),

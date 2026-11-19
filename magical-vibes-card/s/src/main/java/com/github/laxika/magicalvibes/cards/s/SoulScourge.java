@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -18,6 +17,6 @@ public class SoulScourge extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RememberTargetPlayerEffect(),
                 new LoseLifeEffect(3, Subjects.targetPlayer()));
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new GainLifeEffect(new Fixed(3), GainLifeRecipient.SOURCE_REMEMBERED_PLAYER));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new GainLifeEffect(new Fixed(3), Subjects.chosenPlayer()));
     }
 }

@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,9 +20,7 @@ public class PutridWarrior extends Card {
                         new LoseLifeEffect(1, Subjects.eachPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player gains 1 life.",
-                        SequenceEffect.of(
-                                new GainLifeEffect(1),
-                                new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT)))
+                        new GainLifeEffect(1, Subjects.eachPlayer()))
         )));
     }
 }

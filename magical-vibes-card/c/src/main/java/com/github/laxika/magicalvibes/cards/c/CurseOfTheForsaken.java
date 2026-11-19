@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class CurseOfTheForsaken extends Card {
 
     public CurseOfTheForsaken() {
         addTrigger(Triggers.creatureAttacks().withFilter(new PermanentIsAttackingEnchantedPlayerPredicate()),
-                new GainLifeEffect(new Fixed(1), GainLifeRecipient.TARGET_CONTROLLER));
+                new GainLifeEffect(new Fixed(1), Subjects.controllerOf(Subjects.triggering())));
     }
 }

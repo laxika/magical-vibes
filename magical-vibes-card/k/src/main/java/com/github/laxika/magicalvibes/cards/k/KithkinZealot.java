@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,6 +28,6 @@ public class KithkinZealot extends Card {
                 new PermanentCount(
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.RED)),
                         CountScope.TARGET_PLAYER),
-                GainLifeRecipient.CONTROLLER, true));
+                Subjects.you(), true));
     }
 }

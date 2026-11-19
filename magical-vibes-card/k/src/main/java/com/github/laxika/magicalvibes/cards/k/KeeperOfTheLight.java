@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 
@@ -20,7 +20,7 @@ public class KeeperOfTheLight extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}",
-                List.of(new GainLifeEffect(new Fixed(3), GainLifeRecipient.CONTROLLER, true)),
+                List.of(new GainLifeEffect(new Fixed(3), Subjects.you(), true)),
                 "{W}, {T}: Choose target opponent who has more life than you do as you activate this ability. "
                         + "You gain 3 life.",
                 new PlayerPredicateTargetFilter(

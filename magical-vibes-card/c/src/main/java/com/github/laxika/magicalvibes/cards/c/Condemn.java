@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "13")
@@ -25,6 +25,6 @@ public class Condemn extends Card {
     public Condemn() {
         target(TargetFilters.attackingCreature())
                 .addSpellEffect(new PutTargetOnBottomOfLibraryEffect())
-                .addSpellEffect(new GainLifeEffect(new EventValue(), GainLifeRecipient.TARGET_CONTROLLER));
+                .addSpellEffect(new GainLifeEffect(new EventValue(), Subjects.controllerOf(Subjects.target())));
     }
 }

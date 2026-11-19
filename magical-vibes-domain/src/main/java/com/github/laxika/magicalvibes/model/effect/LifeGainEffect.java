@@ -20,6 +20,14 @@ public interface LifeGainEffect extends CardEffect {
     DynamicAmount lifeGainAmount();
 
     /**
+     * Who gains the life: {@link Subjects#you()} unless the effect names another player. A consumer scoring the
+     * controller's own life gain skips a gain whose player {@link PlayerSubject#declaresTarget() is a target}.
+     */
+    default PlayerSubject lifeGainingPlayer() {
+        return Subjects.you();
+    }
+
+    /**
      * True when this configuration gains no life at all, which its own components already settle —
      * an effect whose life gain is an optional rider reports {@code Fixed(0)} when the rider is off
      * ({@link RevealTopCardOfLibraryEffect} without a land bonus). A consumer that only asks "does

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -280,10 +281,7 @@ public class SubjectResolutionService {
                     ? ctx.entry().getDefendingPlayerId()
                     : gameQueryService.defendingPlayerOfAttackTarget(gameData, ctx.entry().getAttackedTargetId()));
             case PlayerSubject.EnchantedPlayer ignored -> listOf(enchantedPlayer(ctx));
-            case PlayerSubject.ChosenPlayer ignored -> {
-                Permanent source = sourceAsItIsOrWas(ctx);
-                yield listOf(source == null ? null : source.getRememberedTargetPlayerId());
-            }
+            case PlayerSubject.ChosenPlayer ignored -> listOf(chosenPlayer(ctx));
             case PlayerSubject.ChosenPlayers ignored -> {
                 Permanent source = sourceAsItIsOrWas(ctx);
                 yield source == null ? List.of() : source.getRememberedTargetPlayerIds().stream()
@@ -396,6 +394,30 @@ public class SubjectResolutionService {
         }
         UUID targetId = entry.getTargetId();
         return targetId != null && ctx.gameData().playerIds.contains(targetId) ? targetId : null;
+    }
+
+    /**
+     * "The chosen player": the player the source remembered as it entered, as it is or last was; while the enters
+     * ability that chooses the player ({@link RememberTargetPlayerEffect}) is still on the stack, that ability's target,
+     * so a source that left before it resolved still names the player (Laquatus's Champion's ruling).
+     */
+    private UUID chosenPlayer(Context ctx) {
+        Permanent source = sourceAsItIsOrWas(ctx);
+        if (source != null && source.getRememberedTargetPlayerId() != null) {
+            return source.getRememberedTargetPlayerId();
+        }
+        UUID sourcePermanentId = ctx.sourceId();
+        if (ctx.entry() == null || sourcePermanentId == null) {
+            return null;
+        }
+        return ctx.gameData().stack.stream()
+                .filter(pending -> sourcePermanentId.equals(pending.getSourcePermanentId()))
+                .filter(pending -> pending.getEffectsToResolve().stream()
+                        .anyMatch(RememberTargetPlayerEffect.class::isInstance))
+                .map(StackEntry::getTargetId)
+                .filter(ctx.gameData().playerIds::contains)
+                .findFirst()
+                .orElse(null);
     }
 
     /**

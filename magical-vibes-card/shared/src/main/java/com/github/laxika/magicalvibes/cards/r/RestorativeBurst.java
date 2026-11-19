@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,7 +21,7 @@ public class RestorativeBurst extends Card {
                         new CardTypePredicate(CardType.LAND),
                         new CardTypePredicate(CardType.PLANESWALKER))),
                 2));
-        addSpellEffect(new GainLifeEffect(new Fixed(4), GainLifeRecipient.EACH_PLAYER));
+        addSpellEffect(new GainLifeEffect(new Fixed(4), Subjects.eachPlayer()));
         addSpellEffect(new ExileSpellEffect());
     }
 }

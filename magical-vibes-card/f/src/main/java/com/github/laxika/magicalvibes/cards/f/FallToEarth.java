@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class FallToEarth extends Card {
 
     public FallToEarth() {
         target(TargetFilters.creature()).addSpellEffect(new ExileTargetPermanentEffect());
-        addSpellEffect(new GainLifeEffect(new Fixed(3), GainLifeRecipient.EACH_PLAYER));
+        addSpellEffect(new GainLifeEffect(new Fixed(3), Subjects.eachPlayer()));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),

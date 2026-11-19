@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "4ED", collectorNumber = "272")
 @CardRegistration(set = "9ED", collectorNumber = "272")
@@ -19,6 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 public class StreamOfLife extends Card {
 
     public StreamOfLife() {
-        addSpellEffect(new TargetPlayerGainsLifeEffect(new XValue()));
+        addSpellEffect(new GainLifeEffect(new XValue(), Subjects.targetPlayer()));
     }
 }

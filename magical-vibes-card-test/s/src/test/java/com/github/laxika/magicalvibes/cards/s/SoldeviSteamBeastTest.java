@@ -23,6 +23,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         // 20 + 2 from the tap trigger - 4 unblocked combat damage.
@@ -62,6 +63,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
+        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Soldevi Steam Beast");
@@ -88,7 +90,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent with hexproof cannot receive the targeted tap trigger")
+    @DisplayName("With the only opponent hexproof, the targeted tap trigger has no target and is removed")
     void hexproofOpponentCannotBeTargeted() {
         addCreatureReady(player1, new SoldeviSteamBeast());
         harness.addToBattlefield(player2, new WitchbaneOrb());

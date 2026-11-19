@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "54")
@@ -17,7 +18,7 @@ public class TonicPeddler extends Card {
                 "{W}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new TargetPlayerGainsLifeEffect(3)
+                        new GainLifeEffect(3, Subjects.targetPlayer())
                 ),
                 "{W}, {T}, Discard a card: Target player gains 3 life."
         ));

@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -351,7 +351,7 @@ fold in, the enum and the absorbed classes are deleted.
 |---|---|---|---|---|
 | 4a | Draw: `DrawCardEffect` | none (plus `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` to check) | `DrawCardFor{Owner,TargetPlayer,DefendingPlayer,TriggeringPlayer,Player}Effect`, `DrawCardsForEachOpponentOfTriggeringPlayerEffect` | | done |
 | 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | done |
-| 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | open |
+| 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | done |
 | 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | open |
 | 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | open |
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | open |
@@ -1167,6 +1167,64 @@ paying mana. Now CR 119.3 (an effect makes a player lose life; the total is adju
   upkeep `ENCHANTED_CONTROLLER` entries leave `triggeringPermanentId` unset at upkeep, and the five Aura upkeep cards
   (Stab Wound, Soul Bleed, One Thousand Lashes, Numbing Dose, Torment of Scarabs) read the baked player through
   `triggeringPlayer()`.
+
+### Step 4, run 4c (2026-11-19)
+
+**Survivor.** `GainLifeEffect`'s `GainLifeRecipient recipient` became `PlayerSubject player`; `targetsPlayer` stays (a
+you-gain whose amount reads a target player: Renewing Dawn, Keeper of the Light, Gerrard Capashen, ...). Constructors:
+`(DynamicAmount|int)` is `you()`, `(DynamicAmount|int, PlayerSubject)`, `(DynamicAmount, PlayerSubject, boolean)`.
+`targetSpec()` is a benign player target iff `player.declaresTarget() || targetsPlayer`; a `@ValidatesTarget` requires a
+player iff the subject declares. The handler resolves the players through `SubjectResolutionService` and keeps both old
+amount contexts: one evaluation against the entry with the live source or its snapshot, except for a `TargetPlayer`
+subject, which is evaluated per target player with that player as controller and target and no source (the old
+`TargetPlayerGainsLifeEffect` context). `LifeGainEffect` gained `lifeGainingPlayer()` (default `you()`).
+
+**Deleted**: the enum `GainLifeRecipient` and `TargetPlayerGainsLifeEffect` + handler (ratchet 4,934 / 4,167).
+Mapping: `CONTROLLER` → `you()`; `TARGET_CONTROLLER` → `controllerOf(target())` (Condemn, Last Breath) and
+`controllerOf(triggering())` for Curse of the Forsaken (its creature-attacks entry records the attacker as both target
+and triggering permanent); `OPPONENT` (two-player derived opponent with its own shroud/hexproof check) by Oracle text:
+`eachOpponent()` for "each opponent" (Aria of Flame, Grollub, Grove of the Burnwillows, Mathas's granted ability,
+Wingbright Thief's granted ability) and Benevolent Offering's "choose an opponent" (two-player); Centaur Peacemaker
+and Putrid Warrior ("each player gains", written as you + opponent) are one `eachPlayer()` effect;
+`targetPlayerDeclaredElsewhere()` for Phelddagrif and Questing Phelddagrif (the ability's opponent filter declares the
+target); Soldevi Steam Beast's trigger now declares "target opponent" (`target(opponent filter)` + `targetPlayer()`);
+`TRIGGERING_PLAYER` → `triggeringPlayer()` (Aven Shrine, Collapsing Borders, Curse of Vitality, Fields of Summer, Sea of
+Sand, Spiritual Sanctuary, Angel of Destiny), `you()` for Armadillo Cloak and Spirit Loop ("you gain"; the collector
+bakes the Aura's controller, which is the entry's controller) and `targetPlayerDeclaredElsewhere()` for Cease // Desist
+(a spell: the mode's player target); `TRIGGERING_PERMANENT_CONTROLLER` → `controllerOf(triggering())`;
+`SOURCE_REMEMBERED_PLAYER` → `chosenPlayer()`; `EACH_PLAYER` → `eachPlayer()`. `TargetPlayerGainsLifeEffect(a[, g])` →
+`GainLifeEffect(a, targetPlayer([g]))`. 79 card files (41 named the enum, 38 the record), 4 application/AI test files.
+
+**Resolver.** `chosenPlayer()` gained the old `SOURCE_REMEMBERED_PLAYER` fallback: while the enters ability carrying
+`RememberTargetPlayerEffect` from the same source is still on the stack, its target (Laquatus's Champion ruling
+2018-03-16: "or, if that ability is still on the stack, the player who is its target").
+
+**AI parity.** The AI readers of `LifeGainEffect` (`SpellEvaluator` x3, `InstantCategoryClassifier`) skip a gain
+whose `lifeGainingPlayer().declaresTarget()`: exactly the old `TargetPlayerGainsLifeEffect` set (not a
+`LifeGainEffect`); the old `GainLifeEffect` uses, Phelddagrif's and Cease // Desist's non-declaring reads included,
+are scored as before. The mana-ability path (`ActivatedAbilityExecutionService`) accepts `you()` and `each*` and shares
+`nonTargetedLifeRecipients` with life loss (seat order, as before).
+
+**Behaviour changes.** (1) Every recipient now passes the resolving card as the life gain's source; `TARGET_CONTROLLER`
+and `OPPONENT` passed none, so "whenever a white instant or sorcery spell causes you to gain life" missed Last Breath /
+Condemn on your own creature. Test: `FiresongAndSunspeakerTest.whiteSpellGivingTargetControllerLifeTriggersDamage`.
+(2) "Each opponent" gains are not targeted (CR 115.10, CR 702.11c), so a hexproof or shroud opponent still gains;
+`OPPONENT` skipped them. Test: `GrollubTest.hexproofOpponentStillGainsLife`. (3) Soldevi Steam Beast's controller
+chooses the opponent as the trigger goes on the stack; `SoldeviSteamBeastTest` now answers that prompt, and its
+hexproof case (trigger removed, no gain) is unchanged. Not tested, no card depends on them: several players gain in
+APNAP order instead of seat order; Curse of the Forsaken's creature that left with no removal record now uses the
+recorded triggering controller (CR 608.2h) instead of nobody.
+
+**For later runs.**
+
+- Kept (ledger): `EachTargetPlayerGainsLifeEffect` (Hunters' Feast, Reward the Faithful) evaluates its amount once in
+  the caster's context; folding it into `targetPlayer()` would re-base Reward the Faithful's "permanents you control" to
+  each target, and the AI scores it as own gain. It also still passes no life-gain source (the Firesong gap of change 1).
+  Fold it with a flag for the caster's amount context. `TargetSpellControllerGainsLifeEqualToManaValueEffect` needs
+  `controllerOf(targetSpell())`.
+- 4d–4i: "target opponent" constants that derive the opponent without declaring (two-player `getOpponentId`) split by
+  Oracle text into `eachOpponent()`, `targetPlayerDeclaredElsewhere()` (the ability's filter declares it) and a real
+  declared target; a trigger that newly declares one prompts its controller in tests.
 
 ## Prompt
 

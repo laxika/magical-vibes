@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -37,7 +38,7 @@ public class RelicBind extends Card {
                 new ChooseOneEffect.ChooseOneOption("This Aura deals 1 damage to target player or planeswalker",
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
                 new ChooseOneEffect.ChooseOneOption("Target player gains 1 life",
-                        new TargetPlayerGainsLifeEffect(1),
+                        new GainLifeEffect(1, Subjects.targetPlayer()),
                         new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player")))));
     }

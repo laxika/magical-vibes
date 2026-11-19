@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "10E", collectorNumber = "281")
 @CardRegistration(set = "9ED", collectorNumber = "257")
@@ -14,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 public class NaturalSpring extends Card {
 
     public NaturalSpring() {
-        addSpellEffect(new TargetPlayerGainsLifeEffect(8));
+        addSpellEffect(new GainLifeEffect(8, Subjects.targetPlayer()));
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SonicBurst;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-@CardUsed({Grollub.class, Shock.class, SonicBurst.class, RagingGoblin.class})
+@CardUsed({Grollub.class, Shock.class, SonicBurst.class, RagingGoblin.class, WitchbaneOrb.class})
 class GrollubTest extends BaseCardTest {
 
     @Test
@@ -29,6 +30,21 @@ class GrollubTest extends BaseCardTest {
 
         harness.assertLife(player2, 22);
         harness.assertOnBattlefield(player1, "Grollub");
+    }
+
+    @Test
+    @DisplayName("An opponent with hexproof still gains the life: each opponent is not a target (CR 702.11c, 115.10)")
+    void hexproofOpponentStillGainsLife() {
+        harness.addToBattlefield(player1, new Grollub());
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        UUID grollubId = harness.getPermanentId(player1, "Grollub");
+        harness.castAndResolveInstant(player2, 0, grollubId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 22);
     }
 
     @Test

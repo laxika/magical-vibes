@@ -5,17 +5,23 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link GainLifeEffect}: {@link SubjectResolutionService} finds who gains the life, and each of them gains it
+ * in APNAP order, with the resolving card as the source of the life gain. The amount is evaluated once against the
+ * stack entry (a source-relative amount reads the live source permanent, else its last-known snapshot); for a target
+ * player it is evaluated for each target player, with that player as the amount's controller and target.
+ */
 @Component
 @RequiredArgsConstructor
 public class GainLifeEffectHandler implements NormalEffectHandlerBean {
@@ -23,6 +29,7 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,8 +39,18 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GainLifeEffect) effect;
-        // Source-relative amounts use the live source permanent when it is still on the
-        // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
+        List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.player());
+
+        if (e.player() instanceof PlayerSubject.TargetPlayer) {
+            AmountContext targetContext = AmountContext.forStackEntry(entry, null);
+            for (UUID playerId : players) {
+                int amount = amountEvaluationService.evaluate(gameData, e.amount(),
+                        targetContext.withControllerId(playerId).withTargetPermanentId(playerId));
+                gainLife(gameData, entry, playerId, amount);
+            }
+            return;
+        }
+
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
@@ -42,119 +59,12 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
         }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
-
-        if (e.recipient() == GainLifeRecipient.TARGET_CONTROLLER) {
-            // "its controller gains life …" (e.g. Condemn): route to the target permanent's
-            // controller. No legal target -> no one gains, matching the effect's fizzle behaviour.
-            UUID targetControllerId = controllerOfTarget(gameData, entry.getTargetId());
-            if (targetControllerId == null) {
-                targetControllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
-            }
-            if (targetControllerId != null) {
-                lifeSupport.applyGainLife(gameData, targetControllerId, amount);
-            }
-            return;
+        for (UUID playerId : players) {
+            gainLife(gameData, entry, playerId, amount);
         }
-
-        if (e.recipient() == GainLifeRecipient.OPPONENT) {
-            // "target opponent gains N life": derived opponent (two-player engine), so the entry's
-            // target slot stays free for a sibling effect on the same ability.
-            UUID opponentId = gameQueryService.getOpponentId(gameData, entry.getControllerId());
-            // The derived opponent stands in for a "target opponent", so shroud and hexproof make the
-            // instruction do nothing (CR 702.11c).
-            boolean untargetable = opponentId != null
-                    && (gameQueryService.playerHasShroud(gameData, opponentId)
-                    || gameQueryService.playerHasHexproof(gameData, opponentId)
-                    && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, entry.getControllerId()));
-            if (opponentId != null && !untargetable) {
-                lifeSupport.applyGainLife(gameData, opponentId, amount);
-            }
-            return;
-        }
-
-        if (e.recipient() == GainLifeRecipient.TRIGGERING_PLAYER) {
-            UUID triggeringPlayerId = entry.getTargetId();
-            if (triggeringPlayerId != null && gameData.playerIds.contains(triggeringPlayerId)) {
-                lifeSupport.applyGainLife(gameData, triggeringPlayerId, amount, null,
-                        entry.getCard(), entry.getEntryType());
-            }
-            return;
-        }
-
-        if (e.recipient() == GainLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
-            // "Its controller": the triggering permanent's controller as the ability resolves, else as it last
-            // existed (CR 608.2h); a spell source's controller as it dealt the damage.
-            UUID recipientId = entry.getTriggeringPermanentId() == null ? null
-                    : gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
-            if (recipientId == null && entry.getTriggeringPermanentId() != null) {
-                recipientId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
-            }
-            if (recipientId == null) {
-                recipientId = entry.getTriggeringPermanentControllerId();
-            }
-            if (recipientId != null && gameData.playerIds.contains(recipientId)) {
-                lifeSupport.applyGainLife(gameData, recipientId, amount, null,
-                        entry.getCard(), entry.getEntryType());
-            }
-            return;
-        }
-
-        if (e.recipient() == GainLifeRecipient.SOURCE_REMEMBERED_PLAYER) {
-            UUID rememberedPlayerId = rememberedPlayer(gameData, entry);
-            if (rememberedPlayerId != null && gameData.playerIds.contains(rememberedPlayerId)) {
-                lifeSupport.applyGainLife(gameData, rememberedPlayerId, amount, null,
-                        entry.getCard(), entry.getEntryType());
-            }
-            return;
-        }
-
-        if (e.recipient() == GainLifeRecipient.EACH_PLAYER) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                lifeSupport.applyGainLife(gameData, playerId, amount, null,
-                        entry.getCard(), entry.getEntryType());
-            }
-            return;
-        }
-
-        lifeSupport.applyGainLife(gameData, entry.getControllerId(), amount, null,
-                entry.getCard(), entry.getEntryType());
     }
 
-    /**
-     * The player the entry's source remembered as it entered: the live source's, else its snapshot's as it last
-     * existed, else the target of its enters ability still on the stack ({@link RememberTargetPlayerEffect}), so a
-     * source that left before that ability resolved still names the player (Laquatus's Champion's ruling).
-     */
-    private UUID rememberedPlayer(GameData gameData, StackEntry entry) {
-        Permanent source = entry.getSourcePermanentId() == null ? null
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
-        if (source != null && source.getRememberedTargetPlayerId() != null) {
-            return source.getRememberedTargetPlayerId();
-        }
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        return sourcePermanentId == null ? null : gameData.stack.stream()
-                .filter(pending -> sourcePermanentId.equals(pending.getSourcePermanentId()))
-                .filter(pending -> pending.getEffectsToResolve().stream()
-                        .anyMatch(RememberTargetPlayerEffect.class::isInstance))
-                .map(StackEntry::getTargetId)
-                .filter(gameData.playerIds::contains)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private UUID controllerOfTarget(GameData gameData, UUID targetId) {
-        if (targetId == null) return null;
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) return null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.contains(target)) {
-                return playerId;
-            }
-        }
-        return null;
+    private void gainLife(GameData gameData, StackEntry entry, UUID playerId, int amount) {
+        lifeSupport.applyGainLife(gameData, playerId, amount, null, entry.getCard(), entry.getEntryType());
     }
 }

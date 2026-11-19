@@ -35,7 +35,7 @@ resolver's static entry point rejects the others).
 | `activePlayer()` | "the active player" | no | yes |
 | `defendingPlayer()` | "defending player" | no | no |
 | `enchantedPlayer()` | "enchanted player" (a Curse's player) | no | yes |
-| `chosenPlayer()` | "the chosen player" (chosen as the source entered) | no | yes |
+| `chosenPlayer()` | "the chosen player" (chosen as the source entered; while the enters ability that chooses it is still on the stack, that ability's target: Laquatus's Champion) | no | yes |
 | `chosenPlayers()` | "the chosen players" (every player chosen as the source entered) | no | yes |
 | `except(players, excluded)` | "the other chosen player": `except(chosenPlayers(), triggeringPlayer())` | no | if both may |
 

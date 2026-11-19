@@ -144,7 +144,10 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
     record EnchantedPlayer() implements PlayerSubject {
     }
 
-    /** "The chosen player": the player the source permanent chose as it entered. */
+    /**
+     * "The chosen player": the player the source permanent chose as it entered; while the enters ability that chooses
+     * it ({@link RememberTargetPlayerEffect}) is still on the stack, that ability's target.
+     */
     record ChosenPlayer() implements PlayerSubject {
     }
 

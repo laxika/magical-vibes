@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "168")
 @CardRegistration(set = "INV", collectorNumber = "250")
@@ -12,6 +13,6 @@ public class HeroesReunion extends Card {
 
     public HeroesReunion() {
         // Target player gains 7 life.
-        addSpellEffect(new TargetPlayerGainsLifeEffect(7));
+        addSpellEffect(new GainLifeEffect(7, Subjects.targetPlayer()));
     }
 }

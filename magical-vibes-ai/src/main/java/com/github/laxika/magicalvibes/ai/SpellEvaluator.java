@@ -517,6 +517,11 @@ public class SpellEvaluator {
                 .sum();
     }
 
+    /** A life gain for a target player isn't scored as the AI's own (it was never a {@code LifeGainEffect}). */
+    private static boolean gainsForTargetPlayer(LifeGainEffect gain) {
+        return gain.lifeGainingPlayer().declaresTarget();
+    }
+
     private boolean hasLifeGainEffect(Card card) {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isLifeGainEffect(effect)) return true;
@@ -531,7 +536,7 @@ public class SpellEvaluator {
         // A capability that reports Fixed(0) states a fact: this configuration gains no life. Reveal
         // effects carry the capability for the sake of their optional land rider, so a presence-only
         // check must read the amount or it would score every reveal as a lifegain spell.
-        if (effect instanceof LifeGainEffect gain) return !gain.gainsNoLife();
+        if (effect instanceof LifeGainEffect gain) return !gain.gainsNoLife() && !gainsForTargetPlayer(gain);
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream()
                     .flatMap(option -> option.effects().stream())
@@ -603,7 +608,7 @@ public class SpellEvaluator {
                     ? evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId)
                     : evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof LifeGainEffect gain) {
+        if (effect instanceof LifeGainEffect gain && !gainsForTargetPlayer(gain)) {
             int gainAmount = amountEvaluationService.evaluate(gameData, gain.lifeGainAmount(),
                     AmountContext.forEstimation(aiPlayerId));
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
@@ -767,7 +772,7 @@ public class SpellEvaluator {
         }
 
         // Life — scaled by danger level: more valuable when AI is under pressure
-        if (effect instanceof LifeGainEffect gain) {
+        if (effect instanceof LifeGainEffect gain && !gainsForTargetPlayer(gain)) {
             int gainAmount = amountEvaluationService.evaluate(gameData, gain.lifeGainAmount(),
                     AmountContext.forEstimation(aiPlayerId));
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
