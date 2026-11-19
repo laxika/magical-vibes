@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamage
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -766,7 +766,7 @@ public class StateBasedActionService {
                         StackEntry trigger = TriggeredAbilityStackService.madeAbility(creature.getCard(),
                                 prevController,
                                 creature.getCard().getName() + "'s control-loss sacrifice ability",
-                                List.of(new SacrificeTriggeringPermanentEffect()), (UUID) null, seraphId);
+                                List.of(SacrificeSelfEffect.ofTriggeringPermanent()), (UUID) null, seraphId);
                         trigger.setTriggeringPermanentId(creatureId);
                         trigger.setNonTargeting(true);
                         triggeredAbilityStackService.putDelayed(gameData, trigger);

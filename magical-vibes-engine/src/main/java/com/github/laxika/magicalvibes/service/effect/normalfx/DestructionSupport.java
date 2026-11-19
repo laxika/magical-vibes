@@ -855,7 +855,7 @@ public class DestructionSupport {
                     dealNoncombatDamageToPlayer(gameData, entry, victim, fixed.value());
                     gameOutcomeService.checkWinCondition(gameData);
                 }
-            } else if (elseEffect instanceof SacrificeSelfEffect) {
+            } else if (elseEffect instanceof SacrificeSelfEffect sacrifice && sacrifice.sacrificesSource()) {
                 sacrificeSource(gameData, entry);
             } else if (elseEffect instanceof DrawCardEffect draw) {
                 drawCardEffectHandler.resolve(gameData, entry, draw);

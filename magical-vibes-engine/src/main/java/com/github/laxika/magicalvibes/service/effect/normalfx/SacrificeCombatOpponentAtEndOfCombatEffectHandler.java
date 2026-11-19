@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -50,7 +50,7 @@ public class SacrificeCombatOpponentAtEndOfCombatEffectHandler implements Normal
 
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                targetId, new SacrificeTriggeringPermanentEffect(true, sacrificeEffect.tokenForSacrificingPlayer())));
+                targetId, SacrificeSelfEffect.ofTriggeringPermanent(true, sacrificeEffect.tokenForSacrificingPlayer())));
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " will be sacrificed at end of combat."));
     }

@@ -17,9 +17,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Sacrifices the stack entry's source permanent (CR 701.21a) as a resolution step: the step records its
+ * Sacrifices the stack entry's source permanent, or its triggering permanent for the triggering form, as a resolution
+ * step. A player can sacrifice only a permanent they control (CR 701.21a), so the default form does nothing unless the
+ * ability's controller still controls it, and nothing happens when it has left the battlefield or can't be
+ * sacrificed. The step records its
  * {@link com.github.laxika.magicalvibes.model.DepartureResult} (none when it couldn't sacrifice anything) for an "if
  * you do" step after it, and a CR 616.1 question about how the permanent leaves ends the step
  * ({@link DepartureService#departAsStep}). The form with a token for the sacrificing player creates it for the
@@ -44,16 +48,16 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var sacrifice = (SacrificeSelfEffect) effect;
-        if (entry.getCard() != null && entry.getCard().hasType(CardType.SCHEME)) {
+        if (sacrifice.sacrificesSource() && entry.getCard() != null && entry.getCard().hasType(CardType.SCHEME)) {
             // A scheme's "abandon this scheme" (CR 701.33b), never a sacrifice.
             schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
-        Permanent self = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID sacrificedId = sacrifice.sacrificesSource() ? entry.getSourcePermanentId() : entry.getTriggeringPermanentId();
+        Permanent self = sacrificedId == null ? null : gameQueryService.findPermanentById(gameData, sacrificedId);
         var currentControllerId = self == null ? null : gameQueryService.findPermanentController(gameData, self.getId());
         if (currentControllerId == null
-                || !sacrifice.currentControllerSacrifices() && !entry.getControllerId().equals(currentControllerId)
+                || !sacrifice.currentControllerSacrifices() && !currentControllerId.equals(entry.getControllerId())
                 || gameQueryService.cantBeSacrificed(gameData, self)) {
             entry.recordDepartures(List.of());
             return;

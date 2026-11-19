@@ -932,8 +932,9 @@ public class TriggeredAbilityQueueService {
     }
 
     public static String triggerOrderLabel(StackEntry entry) {
-        if (entry.getEffectsToResolve().stream().anyMatch(
-                com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect.class::isInstance)) {
+        if (entry.getEffectsToResolve().stream().anyMatch(effect ->
+                effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect sacrifice
+                        && sacrifice.sacrificesSource())) {
             return entry.getCard().getName() + " - sacrifice this creature";
         }
         if (entry.getEffectsToResolve().size() == 1

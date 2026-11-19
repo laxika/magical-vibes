@@ -444,7 +444,7 @@ public class MayAbilityHandlerService {
 
     private boolean requiresSourceSacrifice(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
-            if (effect instanceof SacrificeSelfEffect) {
+            if (effect instanceof SacrificeSelfEffect sacrifice && sacrifice.sacrificesSource()) {
                 return true;
             }
             if (effect instanceof SequenceEffect sequence

@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -492,7 +492,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             // is judged as it returns, and the delayed ability is made only then.
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     Triggers.endStep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
-                    entry.getSourcePermanentId(), permanent.getId(), new SacrificeTriggeringPermanentEffect()));
+                    entry.getSourcePermanentId(), permanent.getId(), SacrificeSelfEffect.ofTriggeringPermanent()));
         }
     }
 }

@@ -60,7 +60,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfComma
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -3151,7 +3150,7 @@ public class CardChoiceHandlerService {
                         ? card : gameData.pendingEffectResolutionEntry.getCard();
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.ANY), playerId, sourceCard, null, permanent.getId(),
-                        new SacrificeTriggeringPermanentEffect()));
+                        SacrificeSelfEffect.ofTriggeringPermanent()));
             } else {
                 DelayedPermanentActions.scheduleForResolution(gameData, playerId, permanent,
                         new DelayedPermanentAction(permanent.getId(),

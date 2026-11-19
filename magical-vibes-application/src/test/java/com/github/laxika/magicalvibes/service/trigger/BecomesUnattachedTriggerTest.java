@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,7 +57,7 @@ class BecomesUnattachedTriggerTest extends BaseCardTest {
     @DisplayName("\"Becomes unattached from a permanent, sacrifice that permanent and you gain 1 life\" is one stack object naming that permanent")
     void unattachAbilityIsOneStackObjectNamingThePermanent() {
         Card card = equipment("Grafted Hook");
-        card.addTrigger(Triggers.becomesUnattachedFromPermanent(), new SacrificeTriggeringPermanentEffect(),
+        card.addTrigger(Triggers.becomesUnattachedFromPermanent(), SacrificeSelfEffect.ofTriggeringPermanent(),
                 new GainLifeEffect(1));
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent hook = attached(card, bears);

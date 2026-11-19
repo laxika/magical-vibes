@@ -362,7 +362,8 @@ public class ActivatedAbilityExecutionService {
         List<UUID> sacrificedIds = new ArrayList<>(costSacrificePermanents(gameData, player, permanent, sacrificeSource)
                 .stream().map(Permanent::getId).toList());
         if (!sacrificeSource && AbilityActivationService.isManaAbility(ability, abilityEffects)
-                && abilityEffects.stream().anyMatch(SacrificeSelfEffect.class::isInstance)
+                && abilityEffects.stream().anyMatch(effect -> effect instanceof SacrificeSelfEffect sacrifice
+                        && sacrifice.sacrificesSource())
                 && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
             sacrificedIds.add(permanent.getId());
         }
@@ -1998,7 +1999,7 @@ public class ActivatedAbilityExecutionService {
                 gameData.temporaryGlobalTriggeredAbilities.add(
                         SacrificeSelfAtEndStepEffectHandler.sacrificeAtNextEndStep(
                                 sacrifice, permanent.getId(), playerId, permanent.getCard(), permanent.getId()));
-            } else if (effect instanceof SacrificeSelfEffect
+            } else if (effect instanceof SacrificeSelfEffect sacrifice && sacrifice.sacrificesSource()
                     && !gameQueryService.cantBeSacrificed(gameData, permanent)
                     && sacrificeAlone(gameData, permanent)) {
                 ActionEvents.sacrificed(gameData, playerId, permanent.getCard());

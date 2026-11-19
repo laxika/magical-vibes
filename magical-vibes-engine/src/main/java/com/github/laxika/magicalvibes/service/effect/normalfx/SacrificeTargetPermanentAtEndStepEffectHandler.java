@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -60,7 +60,7 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
                         entry.getSourcePermanentId(), target.getId(),
-                        new FlipCoinWinEffect(null, new SacrificeTriggeringPermanentEffect())));
+                        new FlipCoinWinEffect(null, SacrificeSelfEffect.ofTriggeringPermanent())));
             } else {
                 DelayedPermanentActions.schedule(gameData, entry,
                         new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,

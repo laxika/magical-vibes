@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterProwler;
 import com.github.laxika.magicalvibes.cards.p.PristineAngel;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GraftedWargear.class, SkyhunterProwler.class, PristineAngel.class})
+@CardUsed({GraftedWargear.class, SkyhunterProwler.class, PristineAngel.class, AlexiosDeimosOfKosmos.class})
 class GraftedWargearTest extends BaseCardTest {
 
     @Test
@@ -111,6 +113,22 @@ class GraftedWargearTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Skyhunter Prowler");
         harness.assertNotInGraveyard(player2, "Skyhunter Prowler");
+    }
+
+    @Test
+    @DisplayName("A creature that can't be sacrificed stays when the Wargear becomes unattached from it")
+    void creatureThatCantBeSacrificedSurvivesUnattach() {
+        Permanent creature = addCreatureReady(player1, new AlexiosDeimosOfKosmos());
+        Permanent wargear = harness.addToBattlefieldAndReturn(player1, new GraftedWargear());
+        wargear.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, wargear));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alexios, Deimos of Kosmos");
+        harness.assertNotInGraveyard(player1, "Alexios, Deimos of Kosmos");
     }
 
     @Test

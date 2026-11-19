@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,7 +50,7 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
                                                                          UUID makerSourcePermanentId) {
         if (sacrifice.attachedPermanent()) {
             return TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(ActivePlayer.ANY), controllerId,
-                    sourceCard, makerSourcePermanentId, permanentId, new SacrificeTriggeringPermanentEffect());
+                    sourceCard, makerSourcePermanentId, permanentId, SacrificeSelfEffect.ofTriggeringPermanent());
         }
         return TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(ActivePlayer.ANY), controllerId, sourceCard,
                 permanentId, null, new SacrificeSelfEffect(sacrifice.currentControllerSacrifices()));

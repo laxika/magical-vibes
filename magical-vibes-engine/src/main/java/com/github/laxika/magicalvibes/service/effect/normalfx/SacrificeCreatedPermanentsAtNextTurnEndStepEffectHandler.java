@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +34,7 @@ public class SacrificeCreatedPermanentsAtNextTurnEndStepEffectHandler implements
         for (UUID createdId : entry.getCreatedPermanentIds()) {
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     entry.getControllerId(), entry.getCard(),
-                    new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU), new SacrificeTriggeringPermanentEffect()),
+                    new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU), SacrificeSelfEffect.ofTriggeringPermanent()),
                     entry.getSourcePermanentId(), createdId, null,
                     DelayedReferents.permanents(List.of(createdId)).afterTurn(gameData.turnNumber)));
         }
