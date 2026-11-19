@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringSpellIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
@@ -25,9 +25,9 @@ public class SpellchainScatter extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         addSpellEffect(new ConditionalEffect(new Kicked(),
                 RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
-                        instantOrSorcery, List.of(new ConjureDuplicateOfTriggeringSpellIntoHandEffect(false)))));
+                        instantOrSorcery, List.of(new ConjureDuplicateOfTriggeringCardIntoHandEffect(false)))));
         addSpellEffect(new ConditionalEffect(new NotKicked(),
                 RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
-                        instantOrSorcery, List.of(new ConjureDuplicateOfTriggeringSpellIntoHandEffect(true)))));
+                        instantOrSorcery, List.of(new ConjureDuplicateOfTriggeringCardIntoHandEffect(true)))));
     }
 }
