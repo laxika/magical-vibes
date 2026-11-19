@@ -1,0 +1,592 @@
+# Effect cleanup: one verb, any subject
+
+A step-by-step plan to stop writing a new effect class for every combination of *what happens* and
+*who it happens to*. An effect names its verb (boost, destroy, draw, lose life) and takes a **subject**
+(this permanent, the target, the enchanted creature, each opponent, that permanent's controller) as an
+ordinary component. One engine service resolves every subject. Effects that fuse two instructions
+("discard a card, then untap this") become two steps that talk through the resolution scratchpad.
+
+To start a step, use the prompt at the bottom with the step number. Steps are done in order unless
+their "Depends on" says otherwise. Steps marked *repeatable* are run many times, one family per run.
+
+## Status
+
+| Step | Title | Status |
+|---|---|---|
+| 1 | Inventory script, audit ledger and count ratchet | open |
+| 2 | Delete the effects nothing uses | open |
+| 3 | Subject types and the one resolver | open |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | open |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
+| 7 | Step results: one way for a step to tell the next what happened | open |
+| 8 | Split the fused effects (repeatable) | open |
+| 9 | Sweep the single-card tail (repeatable) | open |
+| 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
+| 11 | Close: docs, leftovers, final ratchet | open |
+
+## Why
+
+The engine has one effect record per *sentence shape*, not per *action*. `BoostSelfEffect`,
+`BoostTargetCreatureEffect`, `BoostAllOwnCreaturesEffect`, `BoostEquippedCreatureUntilEndOfTurnEffect`
+and `BoostReferencedPermanentEffect` are the same action with a different subject, and each has its own
+handler. Where a verb did get parameterised, it got its own private enum: there are about 50 "who"
+enums in `model/effect/` (`LoseLifeRecipient`, `DamageRecipient`, `DiscardRecipient`, `MillRecipient`,
+`PoisonRecipient`, `GrantScope`, `TapUntapScope`, `BounceScope`, `FlickerScope`, `PermanentReference`,
+`PhaseOutSubject`, `LibraryOwner`, ...), and each handler resolves its enum with its own `switch`.
+
+That costs code, and it costs rules accuracy, because the copies drift:
+
+- **"Enchanted creature" is looked up three ways.** `BoostReferencedPermanentEffectHandler` reads the
+  live source's `attachedTo` and falls back to `StackEntry.attachedPermanentSnapshot`.
+  `DestroyReferencedPermanentEffectHandler` reads the source *snapshot* first, then the live source,
+  then falls back to the triggering permanent. `TapPermanentsEffectHandler.resolveEnchanted` reads the
+  live source, then the source snapshot, and nothing else. 52 handlers carry a private `findAttached` /
+  `findEnchanted` / `findReferencedPermanent` helper and 149 handler files call `getAttachedTo()`.
+- **"Its controller" has two constants with different lookups.** `LoseLifeRecipient` has
+  `DYING_CREATURE_CONTROLLER` (reads `entry.getTriggeringPermanentControllerId()`) and
+  `TRIGGERING_PERMANENT_CONTROLLER` (calls `GameQueryService.findTriggeringPermanentController`). Until
+  2026-11-19 two draw effects disagreed the same way, so Selvala, Heart of the Wilds asked one player
+  and drew for another after a control change (`refactors-to-do.md` entry 14).
+- **"This permanent" has two meanings.** `TapUntapScope.SELF` falls back to the entry's target when
+  there is no source permanent; `SOURCE_PERMANENT` never does. `BoostSelfEffectHandler` has the
+  fallback inline.
+- **A new card needs a new class.** "That player draws", "its owner gains", "each opponent mills"
+  each need a constant or a class that the verb's enum happens not to have yet.
+
+The second half of the problem is fused effects. `DiscardCardAndUntapSelfEffect` exists because the
+untap must happen after a discard prompt, so the pair was written as one effect with a bespoke
+continuation (`DiscardFollowUp.untap`). 111 records carry a nested `CardEffect` ("... then X") and
+hundreds more hard-code the second half in their handler.
+
+## Measurements (2026-11-19, at `2d1c6d681a`)
+
+Counted by name-token matching over `magical-vibes-card/**/src/main` (32,382 card classes). Step 1
+turns the throwaway script into `scripts/effect-inventory.py`; re-measure with it, don't trust these.
+
+| What | Count |
+|---|---|
+| Types in `model/effect/` | 5,305 (4,979 records, 105 enums, the rest interfaces) |
+| Handler classes in `service/effect/normalfx` | 3,879 files, 323,886 lines |
+| Records used by exactly one card | 2,980 (1,675 of them have no components at all) |
+| ... of which have a handler of their own | 2,407 handlers, 175,808 lines |
+| Records used by exactly two cards | 558 |
+| Records no card uses, referenced by nothing or only by their own handler | 49 |
+| Groups of classes whose names differ only in the subject word | 121 groups, 285 classes, 164 removable |
+| Records with a nested `CardEffect` component | 111 (44 more hold a `List<CardEffect>`) |
+| Effect names containing `Then` / `And` | 326 / 661 |
+| Effects with a `GrantScope` component | 85 (5,581 card files name `GrantScope`; 227 engine files read it) |
+| Effects with a `PermanentReference` component | 15 (126 card files) |
+| Handlers that `switch` on a recipient / scope / reference component | 62 |
+| Application tests named `*EffectHandlerTest` | 153 |
+
+Verb families (classes whose name starts with the verb; "rare" = used by at most two cards):
+
+| Verb | Classes | Rare | Cards using the family |
+|---|---|---|---|
+| Exile | 421 | 342 | 1,762 |
+| Grant | 192 | 130 | 4,806 |
+| Return | 174 | 134 | 2,332 |
+| Sacrifice | 87 | 60 | 1,079 |
+| Destroy | 86 | 70 | 1,687 |
+| DealDamage | 83 | 60 | 2,446 |
+| Double | 60 | 46 | 130 |
+| Mill | 56 | 47 | 526 |
+| Boost | 45 | 28 | 3,208 |
+| PutCounter(s) | 65 | 37 | 4,312 |
+| Draw | 45 | 39 | 3,042 |
+| Counter | 44 | 35 | 699 |
+| Discard | 43 | 32 | 936 |
+| Copy | 43 | 29 | 353 |
+| Attach | 40 | 26 | 285 |
+| CreateTokenCopy | 35 | 25 | 302 |
+| Tap / Untap | 39 | 34 | 1,360 |
+| RemoveCounter(s) | 28 | 16 | 208 |
+| GainControl | 20 | 17 | 225 |
+
+Rare effects by first word of the name (the tail step 9 sweeps): Exile 342, Each 174, Return 131,
+Put 131, Grant 129, Reveal 123, Choose 104, Target 96, Create 83, Prevent 78, Destroy 70,
+Perpetually 62, May 60, Sacrifice 60, Deal 60, Register 54, Conjure 51, Mill 47, Double 46, Search 44,
+Remove 44, Look 42, Cant 42, Reduce 40, Draw 39, Gain 38, Become 34, Pay 33, Counter 33, Discard 32.
+
+The largest subject-sibling groups found: `*DealsPowerDamageTo*` (7 classes), `Give*RadCounters` (5),
+`DealDamageTo*` (5), `DrawCardFor*` (5), `*DealsDamageTo*` (5), `Attach*EquipmentTo*` (5),
+`CreateTokenCopyOf*` (4), `Exile*` (4), `CreateTokenAttachedTo*` (4), `*ExilesFromHand` (3),
+`Sacrifice*` (3), `DoublePlusOneCountersOn*` (3), `Remove*FromCombat` (3).
+
+**What the numbers say.** Pure subject variants are a small, cheap win (about 160 classes). The mass
+is the single-card tail: 2,980 records, most of them a whole card written as one handler. Subjects and
+step results are what make that tail expressible; steps 8 and 9 are where most of the code goes away,
+and they are the long part of this plan.
+
+## Design
+
+### Words used below
+
+- **Verb**: the action an effect performs. **Subject**: who or what it is performed on.
+- **Survivor**: the record a family folds into. It is the family's most used record, kept under its
+  current name. **Absorbed**: a record (and its handler) deleted because the survivor now expresses it.
+- **Head**: effects used by many cards. **Tail**: effects used by one or two.
+
+### Two subject types
+
+Both are sealed interfaces of small records in `magical-vibes-domain`, built through one factory class
+(`Subjects`), in the style of `TargetPredicate` / `TargetPredicates`. They compose, so
+"that creature's controller" is `controllerOf(triggering())` instead of a constant per verb.
+
+`PermanentSubject` — which permanents:
+
+| Variant | Meaning | Replaces (examples) |
+|---|---|---|
+| `source()` | the permanent the ability came from | `SELF`, `SOURCE`, `SOURCE_PERMANENT` |
+| `target()` / `target(group)` | the effect's target(s); the only variant that targets | `TARGET`, `TARGETS`, `ALL_TARGETS` |
+| `attached()` | what the source Aura or Equipment is attached to | `ENCHANTED`, `EQUIPPED_CREATURE`, `ATTACHED` |
+| `triggering()` | the permanent the trigger event was about | `TRIGGERING`, `TRIGGERING_PERMANENT` |
+| `controlledBy(PlayerSubject, PermanentPredicate)` | every matching permanent those players control, found once at resolution | `OWN_CREATURES`, `OPPONENT_CREATURES`, `TARGET_PLAYERS_PERMANENTS`, `ALL_CREATURES` |
+| step-result variants (step 7) | the permanents an earlier step created, returned or picked | `TOKENS_CREATED_THIS_RESOLUTION`, `RETURNED`, `RETURNED_PERMANENTS` |
+| `allOf(subjects...)` | several of the above together | `TARGET_AND_SELF`, `SELF_AND_PAIRED`, `ENCHANTED_AND_AURAS` |
+
+`PlayerSubject` — which players:
+
+| Variant | Meaning | Replaces (examples) |
+|---|---|---|
+| `you()` | the controller of the spell or ability | `CONTROLLER` |
+| `targetPlayer()` / `targetPlayer(group)` | the effect's player target; the only variant that targets | `TARGET_PLAYER` |
+| `each(PlayerRelation)` | every player, every opponent, every other player, in APNAP order | `EACH_PLAYER`, `EACH_OPPONENT` |
+| `controllerOf(PermanentSubject)` / `ownerOf(PermanentSubject)` | read from the permanent, or from its last-known information | `TARGET_PERMANENT_CONTROLLER`, `TRIGGERING_PERMANENT_CONTROLLER`, `DYING_CREATURE_CONTROLLER`, `SOURCE_CONTROLLER`, `ENCHANTED_PERMANENT_CONTROLLER` |
+| event players | the player the trigger event was about, the active player, the defending player, the enchanted player, the player chosen as the source entered | `TRIGGERING_PLAYER`, `ACTIVE_PLAYER`, `DEFENDING_PLAYER`, `ENCHANTED_PLAYER`, `CHOSEN_PLAYER` |
+
+Step 3 fixes the exact variant list after reading every existing enum. A variant is added only when a
+card needs it and no composition expresses it.
+
+### One resolver
+
+`SubjectResolutionService` (engine, `service/effect/`) is the only code that turns a subject into
+permanents or players. It has two entry points:
+
+- **For a resolving effect**: `(GameData, StackEntry, CardEffect, subject)`. Handlers call it and keep
+  no lookup of their own.
+- **For a static ability**: `(GameData, source Permanent, subject)`, called by the layered pass. A
+  subject that needs a stack entry (`target()`, `triggering()`, a step result) is rejected when the
+  effect is added as a static ability.
+
+Its rules, each checked with `get_rule` on 2026-11-19 (check again before writing a number anywhere):
+
+1. **Only a target variant declares a target.** An effect derives `targetSpec()` from its subject, so
+   declaration and resolution cannot disagree. Targets are chosen as the object goes on the stack
+   (CR 115.1). As it resolves, an illegal target is not affected and a part that needs information
+   about it does nothing (CR 608.2b). A subject that is not a target never makes anything fizzle.
+2. **A reference reads current information, else last-known information.** If the referenced object
+   is still in the public zone it was expected in, its current state is used; otherwise its last-known
+   information (CR 608.2h). "Its controller" of a creature that died is the controller it last had.
+3. **Nothing is done to an object that left.** A reference to a permanent that is gone affects
+   nothing (CR 608.2h for the lookup, CR 609.3 for doing only what is possible); a permanent that left
+   and came back is a new object (CR 400.7).
+4. **A set is determined once.** "Each creature you control" is found when the effect is applied
+   (CR 608.2h). A continuous effect made by a resolution keeps the set it found (CR 611.2c). A static
+   ability's set is re-evaluated by the layered pass (`agent-docs/LAYER_SYSTEM.md`).
+5. **Several players act in APNAP order.** Their choices are made in APNAP order, then the action
+   happens at once (CR 101.4, CR 608.2e). `each(...)` returns players in that order; a verb whose
+   handler cannot choose-then-act for several players does not accept `each(...)` (see step 4).
+
+### Equivalence first
+
+A conversion makes the resolver return, for each old constant, exactly what the old handler found.
+Where two old constants mean the same thing in the rules but were looked up differently, the step
+picks the rules-correct lookup, says so in Findings, and adds a test that fails on the old one. Several
+enums read a non-target player out of `entry.getTargetId()` ("baked at trigger time"); the resolver
+keeps reading it from there. Moving that data is trigger work, not this plan.
+
+### Survivors keep their names
+
+Until step 10 a family folds into its most used record, which gains a subject component and keeps its
+existing constructors as overloads. So a fold touches the absorbed classes' cards (few) and not the
+survivor's (hundreds). An old per-verb enum is deleted when its last reader is gone; its card call
+sites are rewritten by a script that the step writes, runs and then deletes.
+
+### Step results
+
+Step 7 gives every primitive handler one typed way to record what it did (how many cards, which
+objects, whether it happened) on `ResolutionResults`, and three reader families: a `Condition`
+("if you do", "this way"), a `DynamicAmount` ("that many", "equal to the damage dealt this way") and a
+subject ("those tokens", "the exiled cards"). With that, a fused effect is a `SequenceEffect` of two
+primitives, and the fused class goes away.
+
+**A fused effect is split only if splitting is safe.** `SequenceEffect` splices its steps into the
+entry's effect list, and a later step runs only after the earlier one finished. That holds when the
+earlier step resolves without a prompt, or when its handler pauses *at the end of the step* (the step
+model of `leave-battlefield-redesign.md`). A handler that pauses by `rerunCurrentEffectAfterInteraction`
+(194 files today) or by a bespoke continuation cannot be an earlier step: its second half would be
+dropped or run twice. Such an effect is recorded in the audit ledger as `blocked-step-model` and left.
+
+### Not in this plan
+
+- Moving handlers onto the step model (`leave-battlefield-redesign.md` step 14).
+- A generic "each player chooses, then all act" loop for verbs whose handler has no such loop.
+- Subjects inside `DynamicAmount` and `Condition` classes (they have the same who-axis; a follow-up).
+- `agent-docs/EFFECT_MERGE_PLAN.md` steps 19–29. They stay valid. When a run here absorbs a class one
+  of them lists, mark that step there.
+
+## Ground rules for every step
+
+- **Rules accuracy first** (AGENTS.md). Behaviour stays identical unless the old behaviour was
+  rules-wrong; then cite the Oracle text or ruling, add a test, and list the change in Findings.
+  Check card rulings with the Scryfall MCP `get_rulings`; verify every CR number with `get_rule`
+  before writing it in code, a comment, a test name or this file.
+- **Verify the premise before editing.** Read the records *and* their handlers. Earlier audits here
+  found "identical" handlers differing in a guard, a log line, a `checkWinCondition` call or
+  `TargetSpec.harmful`. If a premise does not hold, say so and stop; do not force the merge.
+- **Read first**: `agent-docs/ARCHITECTURE.md` whole, then `agent-docs/architecture/resolution.md`;
+  for static abilities `agent-docs/LAYER_SYSTEM.md`; for triggers grep `agent-docs/architecture/triggers.md`.
+- **Grep every reader of a class before changing it**: engine, `magical-vibes-ai`, networking, the
+  application tests, card tests, `agent-docs/`, `.claude/skills/`. AI code reads the capability
+  interfaces (`RemovalEffect`, `CreatureBoostEffect`, ...); a survivor keeps implementing every
+  capability interface its absorbed classes implemented.
+- **Do not regress**: the fixes listed under "Do not regress these fixes" in
+  `agent-docs/EFFECT_MERGE_PLAN.md`, and the invariants in `ARCHITECTURE.md` (cards freeze, continuous
+  effects are computed, a lasting change is a floating effect with a `Duration`, new game state is
+  copied for simulations).
+- **Tests.** Add or extend tests for every survivor: resolve real cards through the harness, never
+  inspect a card's effect lists. Every test method and `@Nested` class has a `@DisplayName`.
+  - Run the test classes of every card that used an absorbed class, the handler and service tests you
+    touched, and a sample of the survivor's cards. `scripts/effect-inventory.py --tests-for` prints
+    the Gradle arguments.
+  - Gradle's `--tests` binds to the task before it: write
+    `bash gradlew :magical-vibes-card-test:b:test --tests com.github.laxika.magicalvibes.cards.b.BoneSplintersTest :magical-vibes-card-test:c:test --tests ...`.
+    Pass fully qualified class names, never wildcards. Never start a second Gradle run while one is
+    going.
+  - **Never run the full suite.** Ask for it where a step says so.
+- **Docs.** For every absorbed class, update `agent-docs/EFFECTS_INDEX.md`,
+  `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` and any pattern, template or playbook file
+  that names it (grep; never read those files whole).
+- **Bookkeeping.** Record each audited class in `scripts/effect-audit-ledger.csv`, lower the baselines
+  in `EffectCountRatchetTest` to the new counts, mark the step (or the run) in Status and write what
+  later steps need under Findings.
+- No banner comments. No commit until asked.
+
+## Steps
+
+### 1. Inventory script, audit ledger and count ratchet
+
+Depends on: nothing.
+
+Write `scripts/effect-inventory.py` (Python 3, standard library only, run as `python3 -I`, in the style
+of `scripts/duration-inventory.py`). For every type in `model/effect/` it reports: kind (record, enum,
+interface), component list, the number of card classes that name it, the main-code files outside its
+own handler that name it (engine, ai, networking, webservice, domain), its handler class and line
+count, and the test files that name it. Modes:
+
+- no arguments: the summary table of Measurements above, recomputed;
+- `--family <prefix>`: every class whose name starts with the prefix, most used first;
+- `--siblings`: groups of classes whose names differ only in a subject word;
+- `--dead`: records no card names and no main code outside their own handler names;
+- `--unaudited [--family <prefix>]`: classes with no row in the ledger;
+- `--tests-for <Class>... [--max-per-class N]`: the Gradle arguments (one test task per letter module,
+  each followed by its own `--tests <FQCN>` filters) for the existing test classes of the cards that
+  name those effects; with `--max-per-class`, an evenly spaced deterministic sample.
+
+Create `scripts/effect-audit-ledger.csv` with the header `class,verdict,step,note`. Verdicts:
+`absorbed` (folded and deleted; note names the survivor), `survivor`, `unique` (one card, no
+composition expresses it; note says why in a few words), `blocked-step-model`, `blocked-player-loop`,
+`blocked-other` (note says on what), `dead`.
+
+Add `EffectCountRatchetTest` next to `TargetSpecRatchetTest` (application module, `architecture`
+package). It counts the records in `model/effect/` and the handler classes under
+`service/effect/{normalfx,mayfx,staticfx}` and fails when either count is above its baseline. Each
+later step lowers the baselines.
+
+Record the script's summary under Findings, with any number that differs from Measurements.
+
+### 2. Delete the effects nothing uses
+
+Depends on: 1.
+
+`--dead` lists about 49 records: about 12 that nothing references and about 37 referenced only by their
+own handler. For each, confirm that no main code, test, card or reflection constructs it (grep the
+simple name across the repository, `build/` excluded), then delete the record, its handler, its tests
+and its doc entries. `DrawCardForDamagedPlayerEffect` is one of them. A record that turns out to be
+used goes in the ledger as `blocked-other` with the reader named. Interfaces and enums are out of
+scope here.
+
+### 3. Subject types and the one resolver
+
+Depends on: 1.
+
+Additive: no card changes behaviour.
+
+1. Read every "who" enum in `model/effect/` (`--family` does not find them; grep
+   `enum \w*(Recipient|Scope|Reference|Subject|Owner|Role)`), and the handler `switch` of each. Write
+   under Findings one table: old constant → the subject expression that replaces it → how its handler
+   finds it today (which `StackEntry` field, which fallback). This table is the specification for
+   steps 4 to 6.
+2. Add `PermanentSubject`, `PlayerSubject` and `Subjects` to the domain as in Design. Keep the variant
+   list as small as the table allows. Constructors reject impossible combinations.
+3. Add `SubjectResolutionService` with both entry points, implementing the five rules of Design. It
+   reuses `GameQueryService.findTriggeringPermanentController` and the other existing last-known
+   lookups; it does not copy them.
+4. Settle the known divergences with the rules, card rulings and a test each, and record each decision:
+   - the three "enchanted / equipped permanent" lookups (see Why);
+   - `source()` when the entry has no source permanent (the `SELF` fallback to the entry's target):
+     find which entries rely on it and decide whether the resolver or the caller owns the fallback;
+   - `DYING_CREATURE_CONTROLLER` against `TRIGGERING_PERMANENT_CONTROLLER`;
+   - an owner that is `null` (`LoseLifeRecipient.OWNER` falls back to the controller).
+5. Pilot: the 15 effects with a `PermanentReference` component resolve through the service
+   (`Subjects.of(PermanentReference)` as a temporary adapter). Their handlers lose their private
+   lookup helpers. Run those effects' card tests.
+6. Add `SubjectResolutionServiceTest` (harness tests: each variant, live and after the object left)
+   and `agent-docs/SUBJECTS_REFERENCE.md` (one line per variant: wording it stands for, whether it
+   targets, whether a static ability may use it). Link it from the `ARCHITECTURE.md` topic table and
+   add a three-line invariant to `architecture/resolution.md`: a handler finds its permanents and
+   players through `SubjectResolutionService`, never through its own lookup.
+
+### 4. Player verbs take a `PlayerSubject` (repeatable)
+
+Depends on: 3.
+
+One verb per run, in this order. Each run: the survivor's recipient enum is replaced by a
+`PlayerSubject` component, the survivor's handler resolves it through the service, the sibling classes
+fold in, the enum and the absorbed classes are deleted.
+
+| Run | Verb and survivor | Old enum | Known siblings | Status |
+|---|---|---|---|---|
+| 4a | Draw: `DrawCardEffect` | none (plus `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` to check) | `DrawCardFor{Owner,TargetPlayer,DefendingPlayer,TriggeringPlayer,Player}Effect`, `DrawCardsForEachOpponentOfTriggeringPlayerEffect` | open |
+| 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | open |
+| 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | open |
+| 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | open |
+| 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | open |
+| 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | open |
+| 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | open |
+| 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | open |
+| 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | open |
+
+Notes for every run:
+
+- `refactors-to-do.md` entry 14 describes run 4a; remove the entry when 4a is done.
+- A targeting sibling (`DrawCardForTargetPlayerEffect`, 152 cards, about 12 engine readers) is folded
+  last in its run, and `targetSpec()` of the survivor must return for `targetPlayer()` exactly what
+  the sibling declared (benign or harmful, player predicate, target group).
+- `each(...)` is accepted by a verb only if its handler already makes every player's choice in APNAP
+  order and then acts at once. Where the "each player" variant is a separate class whose handler has
+  its own loop, either move that loop into the survivor's handler or leave the class and record it as
+  `blocked-player-loop`.
+- Keep each handler's amount context: `DealDamageToPlayersEffect` and `LoseLifeEffect` evaluate a
+  player-relative amount once per receiving player for the multi-player recipients.
+- The card call sites of a deleted enum are rewritten with a script (constant → `Subjects` call,
+  import fixed). Check the diff of ten files by eye, compile every letter module you touched, delete
+  the script. Ask for a full card-test run after a run that rewrote more than 300 card files.
+
+### 5. Permanent verbs take a `PermanentSubject` (repeatable)
+
+Depends on: 3. Independent of step 4.
+
+Same shape as step 4, for verbs that act on permanents. A run takes one verb: list it with
+`--family` and `--siblings`, pick the survivor (the most used record), fold the classes that differ
+only in subject, replace the verb's scope enum if it has one.
+
+| Run | Verb | Old enum | Known siblings (not exhaustive) | Status |
+|---|---|---|---|---|
+| 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | open |
+| 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | open |
+| 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | open |
+| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | open |
+| 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | open |
+| 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | open |
+| 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | open |
+| 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | open |
+| 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | open |
+| 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | open |
+| 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | open |
+| 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | open |
+| 5m | Whatever `--siblings` still lists | — | — | open |
+
+Notes for every run:
+
+- Do not merge the high-use siblings into each other here (`BoostSelfEffect` with
+  `BoostTargetCreatureEffect`); that is step 10. Here each of them gains what it needs to absorb its
+  rare siblings, and the rare ones go.
+- A removal verb keeps its departure path: `DepartureService.departAsStep`, `StepDepartureSupport`,
+  `DestructionSupport.destroyBatch` for simultaneous deaths (`architecture/resolution.md`,
+  `architecture/replacement-damage.md`). A subject that yields several permanents removes them as one
+  batch.
+- A harmful verb's `targetSpec()` stays `harmful` for `target()`; a non-target subject declares no
+  target, so protection does not stop it.
+- 5i covers the boosts of one named permanent. `StaticBoostEffect` (it carries a `GrantScope`) and the
+  set-wide `BoostAllOwnCreaturesEffect` / `BoostAllCreaturesEffect` (a predicate and no scope, used
+  one-shot and static) wait for step 6.
+
+### 6. `GrantScope` becomes a `PermanentSubject`, static abilities included
+
+Depends on: 3, and 5i.
+
+`GrantScope` has 28 constants, 85 effects carry it, 5,581 card files name it and 227 engine
+files read it (`LayerSystemService`, `GameQueryService` and `StaticEffectSupport` about 36 times each).
+It mixes single references (`SELF`, `TARGET`, `ENCHANTED_CREATURE`) with sets (`OWN_CREATURES`,
+`ALL_CREATURES_INCLUDING_SELF`, `OPPONENT_LANDS`), and the "other / including self" pairs encode a
+predicate in the constant name.
+
+1. Inventory: for each constant, the subject expression (a set is `controlledBy(players, predicate)`;
+   "other" is a not-the-source predicate, which `TapUntapScope`'s Javadoc says exists: find it, don't
+   add a second) and every engine reader. Add it to Findings.
+2. Give `GrantScope` one method returning its `PermanentSubject` and move the engine readers onto the
+   resolver, one file family per sub-run (one-shot handlers; `staticfx` and `StaticEffectSupport`;
+   `LayerSystemService` and `GameQueryService`; the AI). The static path uses the resolver's static
+   entry point. A new game-state input to the layered pass goes into
+   `LayerSystemService.computeBoardFingerprint`.
+3. When no engine code reads a constant directly, the 85 effects take a `PermanentSubject` component,
+   the cards are rewritten by script and `GrantScope` is deleted.
+4. Rule 4 of Design is the risk: a one-shot "creatures you control get +1/+1 until end of turn" locks
+   its set at resolution (CR 611.2c), a static "creatures you control get +1/+1" does not. Add a test
+   of each for at least Boost, GrantKeyword and Animate, with a creature entering after the effect
+   began.
+
+Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run the application
+`layers` tests yourself.
+
+### 7. Step results: one way for a step to tell the next what happened
+
+Depends on: 3.
+
+1. Inventory how a later effect learns what an earlier one did today. Known channels on `StackEntry`:
+   `resolutionResults` (departures, picked ids, drawn cards, countered, copied), `eventValue`
+   (`setEventValue`), `createdPermanentIds`, `resolutionExiledCardIds`, `drawnCardIdsThisResolution`,
+   `returnedPermanentIds`, `acceptedPlayerIds`, `playersDealtDamageThisResolution`,
+   `permanentsDealtDamageThisResolution`, `counteredPermanentIdsThisResolution`, `sacrificedCard`; and
+   the readers: conditions (`PermanentLeftThisWay`, `CardDrawnThisWay`, `SpellCounteredThisWay`,
+   `SpellCopiedThisWay`), amounts (`EventValue`, `CardsDrawnThisResolution`,
+   `PermanentLeftThisWayPower`), scopes (`TOKENS_CREATED_THIS_RESOLUTION`, `RETURNED`). List writer and
+   reader of each under Findings.
+2. Design the typed record of a step's outcome on `ResolutionResults` (which objects, how many, did
+   it happen) and say which existing channels it replaces now and which stay. It stays immutable and
+   is copied for simulations (`GameDataDeepCopyTest`). A step records its result even when nothing
+   happened, so a later step never reads an older step's result (the existing rule for departures).
+3. Add the three reader families: a `Condition` for "if you do / this way", a `DynamicAmount` for
+   "that many / that much", and `PermanentSubject` / `PlayerSubject` variants for "those permanents /
+   that player". Reading follows CR 608.2c (instructions in written order) and CR 608.2h (last-known
+   information of what left).
+4. Make the head primitives record their results: draw, discard, mill, exile, destroy, sacrifice,
+   return, create token, deal damage, gain and lose life, put and remove counters. Add a test per
+   primitive with a real card pair ("X. If you do, Y" and "X, then Y equal to the number").
+5. Write under Findings the list of handlers that may be an *earlier* step: those that never prompt
+   and those that pause at the end of a step. Everything else is `blocked-step-model` as an earlier
+   step. Add this rule to `architecture/resolution.md`.
+
+### 8. Split the fused effects (repeatable)
+
+Depends on: 7, and the step-4 or step-5 run of the verbs involved.
+
+A fused effect does two things the engine already has primitives for. One run takes one family:
+`--unaudited --family <first word>` restricted to names containing `Then`, `And`, `IfYouDo` or
+`Unless`, or to records with a nested `CardEffect`. Start with the wrappers that already take a
+`thenEffect` (`DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`,
+`ReturnTargetPermanentToHandThenEffect`, `DiscardCardThenEffect`, `DrawCardsThenEffect`,
+`MillControllerThenEffect`, `CreateTokenThenEffect`, `ExileSelfThenEffect`, ...): their
+`ThenEffectRecipient` becomes a subject on the second step (`controllerOf` / `ownerOf` of what left).
+
+For each class, read the record and the handler and give a verdict:
+
+- **split**: the card becomes `SequenceEffect.of(first, second)` (or flat `addEffect` calls on a plain
+  spell), the second step reading the first's result. Delete the class and handler.
+- **blocked-step-model**: the first half prompts and its handler is not on the list from step 7.
+- **blocked-player-loop**: it needs several players to choose and then act together.
+- **unique**: the two halves are not separable in the rules (later text changes the meaning of
+  earlier text, CR 608.2c), or a half has no primitive and is used by this card only.
+
+Rules to hold on to:
+
+- "If you do" is gated on the first step having happened, read from its result. `SequenceEffect` has
+  no gate of its own; the gate is a `ConditionalEffect` step (see `SequenceEffect`'s Javadoc and the
+  `SacrificeSelfThenEffect` row in `EFFECT_MERGE_PLAN.md`).
+- "X and Y" in one sentence is often simultaneous (one damage event, deaths together): use
+  `SequenceEffect.simultaneous` or the survivor's batch form, not two sequential steps.
+- Targets: a fused effect with one target becomes steps that share the entry's target; with two
+  targets, each step names its target group. Check that the cast-time target prompt is unchanged.
+- A trigger slot holds one effect, so a split on a trigger slot stays one `SequenceEffect`.
+
+A run stops at about 15 split classes. Record the verdict counts and the blocked classes' common
+cause under Findings.
+
+### 9. Sweep the single-card tail (repeatable)
+
+Depends on: 7. Gets better after each run of steps 4, 5 and 8.
+
+One run takes one first-word family, largest first (see Measurements): `--unaudited --family Exile`,
+then `Each`, `Return`, `Put`, `Grant`, `Reveal`, `Choose`, `Target`, `Create`, `Prevent`, ... A run
+audits about 40 classes and gives each a verdict, in this order of preference:
+
+1. **absorbed, by parameters**: an existing effect expresses it with a subject, a `DynamicAmount`, a
+   predicate, a `Duration`, a `Condition` or a `MayEffect` / `ConditionalEffect` / `ChooseOneEffect`
+   wrapper. Rewrite the card, delete the class and handler.
+2. **absorbed, by one new parameter**: an existing effect would express it and at least two other
+   audited classes with one more component (not a boolean that only this card sets). Add the
+   component, fold all of them.
+3. **split**: as in step 8.
+4. **blocked-***: as in step 8.
+5. **unique**: a card whose text has no reusable part (Karn's restart, Word of Command, a subgame).
+   It stays. Note the reason in the ledger in a few words.
+
+Guard rails:
+
+- Never add a parameter that only one card sets; that moves the special case instead of removing it.
+- Before deleting a handler, read it to the end. Tail handlers hide rules knowledge: a guard, a
+  last-known read, a trigger it fires, an "as much as possible" branch (CR 609.3). The replacement
+  must do each of them, or the class is not absorbed.
+- Check the card's Oracle text with `get_card` and its rulings with `get_rulings` whenever the
+  handler does something its name does not say.
+- The log line of the survivor wins. A test that asserted the old line is updated; say so.
+
+Each run ends with the family's row in Findings: audited, absorbed, split, blocked (by cause), unique,
+left unaudited. The step is done when `--unaudited` lists no record used by fewer than three cards.
+
+### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
+
+Depends on: 5 and 6 done for the verb.
+
+High churn, low behaviour risk. After steps 5 and 6 the high-use siblings of a verb differ only in
+their subject component and constructor shapes: `BoostSelfEffect` (1,079 cards),
+`BoostTargetCreatureEffect` (1,356), `BoostAllOwnCreaturesEffect` (418), `BoostAllCreaturesEffect`
+(195); `DealDamageToAnyTargetEffect` (740), `DealDamageToTargetCreatureEffect` (569),
+`DealDamageToTargetPlayerOrPlaneswalkerEffect` (148); `PutCountersOnSelfEffect` (988),
+`PutCounterOnTargetPermanentEffect` (973). One run merges one verb into one record with static
+factories that read like the old names, rewrites every card with a script, and deletes the others.
+
+Before each run, state the verb, the card-file count and the factory names, and ask. After each run,
+ask for a full card-test run. Skip a verb whose siblings still differ in more than the subject.
+
+### 11. Close: docs, leftovers, final ratchet
+
+Depends on: everything above that is going to be done.
+
+- Delete the temporary adapters (`Subjects.of(PermanentReference)`, `GrantScope`'s subject method) and
+  any per-verb enum left without readers.
+- `agent-docs`: the effect indexes describe verbs with a subject column; `SUBJECTS_REFERENCE.md` is
+  complete; `CARD_IMPLEMENTATION_PLAYBOOK.md`, the templates and the `implement-card` / `review-card`
+  skills say "pick the verb, then the subject; compose fused text from steps" and name no deleted
+  class.
+- Set `EffectCountRatchetTest` to the final counts. Keep `scripts/effect-inventory.py` and the ledger:
+  they tell a card author whether an effect already exists.
+- Move what is still `blocked-*` in the ledger to `refactors-to-do.md` (or to the step-model plan) as
+  entries grouped by cause, then delete this file.
+
+## Findings
+
+(Nothing yet.)
+
+## Prompt
+
+Replace `<N>` with the step number. For a repeatable step, add the run (`step 4, run 4b`; `step 9,
+family Exile`).
+
+```
+Implement step <N> of effect-cleanup-refactor.md. First read the whole file (Why, Measurements, Design,
+Ground rules, Findings) and step <N>'s section, and check in the Status table that every step it depends
+on is done; if one isn't, stop and tell me. Follow the ground rules: read agent-docs/ARCHITECTURE.md and
+agent-docs/architecture/resolution.md before touching engine or domain code, verify the premise by
+reading the effect records and their handlers before editing, keep behaviour identical unless the old
+behaviour was rules-wrong (then cite the Oracle text or ruling and add a test), verify every CR number
+with get_rule, and test behaviour through the engine. Run only the tests the step names, with
+fully qualified class names and one --tests list per Gradle test task; never the full suite, ask me for
+it. When the step or run is done: update agent-docs for every class you removed, add the audited classes
+to scripts/effect-audit-ledger.csv, lower the EffectCountRatchetTest baselines, mark the step or run in
+Status, add what later steps need under Findings, and tell me which classes you deleted, which tests
+changed and why, and any behaviour change. Don't commit until I say so.
+```
