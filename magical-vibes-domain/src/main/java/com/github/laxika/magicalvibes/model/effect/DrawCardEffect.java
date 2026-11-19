@@ -11,15 +11,40 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 
+import java.util.Objects;
+
 /**
- * Controller draws {@code amount} cards, one at a time (so draw-replacement effects and
- * "whenever you draw" triggers see each individual draw).
+ * {@code player} draws {@code amount} cards, one at a time (so draw-replacement effects and "whenever you draw"
+ * triggers see each individual draw). The player is {@link Subjects#you()} unless a constructor names another; several
+ * players draw in APNAP order, each the same evaluated number.
+ *
+ * <p>Only {@link Subjects#targetPlayer()} declares a target (benign, any player). A controller draw whose amount reads
+ * a target player ("cards equal to the number of cards in target opponent's hand") also declares one.
  */
-public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount)
+public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount,
+                             PlayerSubject player)
         implements ManaAbilityCardDrawingEffect, CastTimeXValueEffect {
+
+    public DrawCardEffect {
+        Objects.requireNonNull(player, "player");
+    }
+
+    public DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount) {
+        this(amount, castTimeXValue, rememberAmount, Subjects.you());
+    }
 
     public DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue) {
         this(amount, castTimeXValue, false);
+    }
+
+    /** {@code player} draws {@code amount} cards. */
+    public DrawCardEffect(DynamicAmount amount, PlayerSubject player) {
+        this(amount, null, false, player);
+    }
+
+    /** {@code player} draws {@code amount} cards. */
+    public DrawCardEffect(int amount, PlayerSubject player) {
+        this(new Fixed(amount), player);
     }
 
     /** Saves the evaluated count for subsequent effects before drawing can change the game state. */
@@ -28,7 +53,7 @@ public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue,
     }
 
     public DrawCardEffect(DynamicAmount amount) {
-        this(amount, null);
+        this(amount, null, false);
     }
 
     public DrawCardEffect() {
@@ -60,11 +85,17 @@ public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue,
 
 
     @Override
+    public PlayerSubject drawingPlayer() {
+        return player;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
-        // Only target-relative amounts require a player target on the stack entry (e.g. Dream
-        // Salvage draws equal to the number of cards target opponent discarded this turn; Recurring
-        // Insight draws equal to the number of cards in target opponent's hand).
-        return isTargetRelative() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+        // A controller draw needs a player target only for a target-relative amount (e.g. Dream Salvage draws equal to
+        // the number of cards target opponent discarded this turn; Recurring Insight draws equal to the number of cards
+        // in target opponent's hand).
+        boolean declares = player.declaresTarget() || player instanceof PlayerSubject.You && isTargetRelative();
+        return declares ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     private boolean isTargetRelative() {

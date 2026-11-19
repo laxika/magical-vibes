@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C13", collectorNumber = "40")
@@ -16,6 +16,6 @@ public class DivinerSpirit extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 SequenceEffect.of(
                         new DrawCardEffect(new EventValue()),
-                        new DrawCardForTargetPlayerEffect(new EventValue(), false, false)));
+                        new DrawCardEffect(new EventValue(), Subjects.triggeringPlayer())));
     }
 }

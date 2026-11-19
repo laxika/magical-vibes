@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -118,7 +119,7 @@ public class ConjurePowerNineIntoLibraryEffectHandler implements NormalEffectHan
         card.target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new DrawCardForTargetPlayerEffect(3, false, true));
+        )).addSpellEffect(new DrawCardEffect(3, Subjects.targetPlayer()));
         return freeze(card);
     }
 

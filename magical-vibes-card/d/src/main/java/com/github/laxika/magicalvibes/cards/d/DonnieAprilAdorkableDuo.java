@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerReturnsCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,7 +34,7 @@ public class DonnieAprilAdorkableDuo extends Card {
         ChooseOneEffect modes = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards.",
-                        new DrawCardForTargetPlayerEffect(2, false, true), playerTarget),
+                        new DrawCardEffect(2, Subjects.targetPlayer()), playerTarget),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player returns an artifact, instant, or sorcery card from their graveyard to their hand.",
                         new TargetPlayerReturnsCardFromGraveyardToHandEffect(artifactInstantOrSorcery), playerTarget)

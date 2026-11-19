@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -26,7 +27,7 @@ public class ForebodingFruit extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new DrawCardForTargetPlayerEffect(2))
+        )).addSpellEffect(new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()))
                 .addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK, 3), foodToken()));

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsForEachOpponentOfTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ODY", collectorNumber = "102")
@@ -13,6 +14,6 @@ public class Standstill extends Card {
 
     public Standstill() {
         addTrigger(Triggers.playerCastsSpell().anySpell(),
-                new SacrificeSelfThenEffect(new DrawCardsForEachOpponentOfTriggeringPlayerEffect(3)));
+                new SacrificeSelfThenEffect(new DrawCardEffect(3, Subjects.opponentsOf(Subjects.triggeringPlayer()))));
     }
 }

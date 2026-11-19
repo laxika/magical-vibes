@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -28,6 +29,6 @@ public class ThoughtKnotSeer extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE))
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                        new DrawCardForTargetPlayerEffect(1, false, true));
+                        new DrawCardEffect(1, Subjects.targetPlayer()));
     }
 }

@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonlandCardFromTargetHandOrGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,7 +23,7 @@ public class CruelclawsHeist extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                        new DrawCardForTargetPlayerEffect(1, false, true)))
+                        new DrawCardEffect(1, Subjects.targetPlayer())))
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new ExileNonlandCardFromTargetHandOrGraveyardEffect(true, true)))
                 .addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),

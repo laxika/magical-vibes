@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +20,7 @@ public class Fecundity extends Card {
     public Fecundity() {
         // Whenever a creature dies, that creature's controller may draw a card.
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
-                new MayEffect(new DrawCardForTriggeringPlayerEffect(), "Draw a card?", null,
+                new MayEffect(new DrawCardEffect(1, Subjects.controllerOf(Subjects.triggering())), "Draw a card?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

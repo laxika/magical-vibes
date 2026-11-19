@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "71")
@@ -32,7 +33,7 @@ public class JaceBeleren extends Card {
         // −1: Target player draws a card.
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new DrawCardForTargetPlayerEffect(1, false, true)),
+                List.of(new DrawCardEffect(1, Subjects.targetPlayer())),
                 "\u22121: Target player draws a card."
         ));
 

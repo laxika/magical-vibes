@@ -319,50 +319,6 @@ mentions exists. Javadoc only. Don't commit until I say so.
 
 ---
 
-## 14. `DrawCardEffect` has no recipient
-
-**Status:** open · **Found:** 2026-11-19, merging the triggering-permanent-controller draw into
-`DrawCardForTriggeringPlayerEffect`
-
-**Problem.** Life loss, life gain, damage, discard, mill and sacrifice name their player with a recipient enum
-(`LoseLifeRecipient`, `DiscardRecipient`, `MillRecipient`, ...). Drawing does not: `DrawCardEffect` always draws for
-the controller, and each other player has its own effect and handler — `DrawCardForOwnerEffect` (2 cards),
-`DrawCardForTargetPlayerEffect` (~150 cards, ~12 engine readers), `DrawCardForDefendingPlayerEffect` (1 card),
-`DrawCardForTriggeringPlayerEffect` (12 cards),
-`DrawCardsForEachOpponentOfTriggeringPlayerEffect` (2 cards) and `EachOpponentOfTriggeringPlayerMayDrawCardEffect`
-(1 card), plus `DrawCardForPlayerEffect`, which only the engine builds. Each handler repeats the amount evaluation
-and resolves its player its own way.
-
-**Why it matters.** A new "that player draws" card needs a new class instead of a constant, and the handlers drift:
-until 2026-11-19 the triggering-permanent-controller draw read the permanent's current controller while the
-triggering-player draw read the recorded one, so Selvala, Heart of the Wilds asked one player and drew for another
-after a control change.
-
-**Proposed direction.** A `DrawRecipient` enum on `DrawCardEffect` (`CONTROLLER` default, `OWNER`, `TARGET_PLAYER`,
-`DEFENDING_PLAYER`, `TRIGGERING_PLAYER`, `EACH_OPPONENT_OF_TRIGGERING_PLAYER`), resolved in one place
-the way `LoseLifeEffectHandler` resolves its recipients, using `GameQueryService.findTriggeringPermanentController` for
-the triggering player. The "each opponent may draw" one stays a `MayEffect` wrapper around it if the may-choice can be
-asked per opponent; otherwise it keeps its class. `DrawCardForTargetPlayerEffect` is a player target, so its
-`targetSpec()` and every engine reader of it (AI, target classifiers, `instanceof` checks) move with it. The existing
-draw/upkeep/end-step recipient enums (`UpkeepDrawRecipient`, `EndStepDrawRecipient`, `DrawUpToRecipient`) are worth
-checking for overlap.
-
-**Prompt to start it:**
-
-```
-Do refactors-to-do.md entry 14: give DrawCardEffect a recipient enum and fold DrawCardForOwnerEffect,
-DrawCardForTargetPlayerEffect, DrawCardForDefendingPlayerEffect,
-DrawCardForTriggeringPlayerEffect, DrawCardsForEachOpponentOfTriggeringPlayerEffect and (if the may-choice allows)
-EachOpponentOfTriggeringPlayerMayDrawCardEffect into it. Read AGENTS.md and agent-docs/ARCHITECTURE.md first; model
-the recipient resolution on LoseLifeEffectHandler. Grep every reader of each class (engine, AI, networking, tests,
-agent-docs) before changing it; DrawCardForTargetPlayerEffect has ~150 cards and is a targeting effect, so do it last
-and keep its targetSpec. No card's behavior may change unless the old one was rules-wrong (cite the Oracle text and
-add a test). Run only the touched cards' and services' test classes by FQCN; never the full suite. Update agent-docs
-for every removed effect. Don't commit until I say so.
-```
-
----
-
 ## 15. Two "enters with an additional counter" grants take different paths
 
 **Status:** open · **Found:** 2026-11-19, Triggering-class audit

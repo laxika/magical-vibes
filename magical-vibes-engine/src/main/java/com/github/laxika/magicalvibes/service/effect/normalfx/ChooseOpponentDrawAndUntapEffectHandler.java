@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentDrawAndUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -73,7 +73,7 @@ public class ChooseOpponentDrawAndUntapEffectHandler implements NormalEffectHand
         } else {
             // The draws happen at the same time (CR 101.4); they are logged in APNAP order.
             CardEffect ownDraw = new DrawCardEffect(3);
-            CardEffect opponentDraw = new DrawCardForTargetPlayerEffect(3);
+            CardEffect opponentDraw = new DrawCardEffect(3, Subjects.targetPlayerDeclaredElsewhere());
             boolean opponentFirst = chosenOpponentId.equals(gameData.activePlayerId);
             entry.insertEffectsToResolve(insertionIndex, List.of(
                     opponentFirst ? opponentDraw : ownDraw,

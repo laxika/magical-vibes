@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MBS", collectorNumber = "20")
 @CardRegistration(set = "A25", collectorNumber = "44")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BlueSunsZenith extends Card {
 
     public BlueSunsZenith() {
-        addSpellEffect(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
+        addSpellEffect(new DrawCardEffect(new XValue(), Subjects.targetPlayer()));
         addSpellEffect(new ShuffleIntoLibraryEffect());
     }
 }

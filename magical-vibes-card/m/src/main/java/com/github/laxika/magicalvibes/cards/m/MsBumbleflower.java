@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -30,7 +30,7 @@ public class MsBumbleflower extends Card {
         SpellTarget playerTarget = target(opponentTarget);
         SpellTarget creatureTarget = target(TargetFilters.creature());
 
-        DrawCardForTargetPlayerEffect opponentDraw = new DrawCardForTargetPlayerEffect(1, false, true);
+        DrawCardEffect opponentDraw = new DrawCardEffect(1, Subjects.targetPlayer());
 
         PutCounterOnTargetPermanentEffect counter =
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);

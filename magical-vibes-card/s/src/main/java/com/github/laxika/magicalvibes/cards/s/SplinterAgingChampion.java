@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -35,6 +35,6 @@ public class SplinterAgingChampion extends Card {
                 "Target must be another player"
         )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 SequenceEffect.of(new DrawCardEffect(1),
-                        new DrawCardForTargetPlayerEffect(1, false, true)));
+                        new DrawCardEffect(1, Subjects.targetPlayer())));
     }
 }

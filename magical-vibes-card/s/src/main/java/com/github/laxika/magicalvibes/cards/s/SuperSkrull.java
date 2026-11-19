@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -47,7 +48,7 @@ public class SuperSkrull extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{U}",
-                List.of(new DrawCardForTargetPlayerEffect(4, false, true)),
+                List.of(new DrawCardEffect(4, Subjects.targetPlayer())),
                 "{5}{U}: Target player draws four cards.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

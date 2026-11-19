@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetOfTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -11,7 +13,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -34,7 +35,7 @@ public class DackFayden extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new DrawCardForTargetPlayerEffect(2, false, true),
+                        new DrawCardEffect(2, Subjects.targetPlayer()),
                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)
                 ),
                 "+1: Target player draws two cards, then discards two cards.",

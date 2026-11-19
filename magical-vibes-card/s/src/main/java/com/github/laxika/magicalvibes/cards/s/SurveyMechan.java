@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,7 +35,7 @@ public class SurveyMechan extends Card {
                                 new PermanentIsLandPredicate(), CountScope.CONTROLLER)),
                         new SacrificeSelfCost(),
                         DealDamageToAnyTargetEffect.forTargetGroup(3, 0),
-                        DrawCardForTargetPlayerEffect.forTargetGroup(3, 1),
+                        new DrawCardEffect(3, Subjects.targetPlayer(1)),
                         TargetPlayerGainsLifeEffect.forTargetGroup(3, 1)
                 ),
                 "{10}, Sacrifice this creature: It deals 3 damage to any target. Target player draws three cards and gains 3 life. This ability costs {X} less to activate, where X is the number of differently named lands you control.",

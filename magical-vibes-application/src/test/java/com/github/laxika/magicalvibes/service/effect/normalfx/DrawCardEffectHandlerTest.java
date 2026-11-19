@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -79,5 +80,43 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
                 resolveEffect(gd, entry, effect);
 
                 verify(drawService).resolveDrawCards(gd, player1Id, 3);
+            }
+
+            @Test
+            @DisplayName("The target player draws, not the controller")
+            void targetPlayerDraws() {
+                Card card = createCard("Sign in Blood");
+                DrawCardEffect effect = new DrawCardEffect(2, Subjects.targetPlayer());
+                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(drawService).resolveDrawCards(gd, player2Id, 2);
+                verify(drawService, never()).resolveDrawCards(eq(gd), eq(player1Id), anyInt());
+            }
+
+            @Test
+            @DisplayName("The target player draws X cards from the entry's xValue")
+            void targetPlayerDrawsXCards() {
+                Card card = createCard("Blue Sun's Zenith");
+                DrawCardEffect effect = new DrawCardEffect(new XValue(), Subjects.targetPlayer());
+                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 4, player2Id);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(drawService).resolveDrawCards(gd, player2Id, 4);
+            }
+
+            @Test
+            @DisplayName("Each opponent of the triggering player draws; the triggering player does not")
+            void opponentsOfTriggeringPlayerDraw() {
+                Card card = createCard("Standstill");
+                DrawCardEffect effect = new DrawCardEffect(3, Subjects.opponentsOf(Subjects.triggeringPlayer()));
+                StackEntry entry = createTriggeredEntryWithTarget(card, player1Id, List.of(effect), player2Id, null);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(drawService).resolveDrawCards(gd, player1Id, 3);
+                verify(drawService, never()).resolveDrawCards(eq(gd), eq(player2Id), anyInt());
             }
 }

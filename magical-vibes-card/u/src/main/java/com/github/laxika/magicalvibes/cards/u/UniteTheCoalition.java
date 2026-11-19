@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -44,7 +45,7 @@ public class UniteTheCoalition extends Card {
                         TargetFilters.permanent()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target player draws a card",
-                        () -> new DrawCardForTargetPlayerEffect(1, false, true),
+                        () -> new DrawCardEffect(1, Subjects.targetPlayer()),
                         anyPlayer),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Exile target player's graveyard",

@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -21,6 +22,6 @@ public class RoilingWaters extends Card {
         SpellTarget creatures = target(TargetFilters.creatureAnOpponentControls(), 0, 2);
 
         creatures.addSpellEffect(ReturnToHandEffect.target());
-        player.addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
+        player.addSpellEffect(new DrawCardEffect(2, Subjects.targetPlayer()));
     }
 }

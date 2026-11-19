@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -51,7 +52,7 @@ public class SublimeEpiphany extends Card {
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws a card",
-                        new DrawCardForTargetPlayerEffect(1, false, true),
+                        new DrawCardEffect(1, Subjects.targetPlayer()),
                         playerFilter)
         )));
     }

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -21,7 +22,7 @@ public class CephalidLooter extends Card {
                 true,
                 null,
                 List.of(
-                        new DrawCardForTargetPlayerEffect(1),
+                        new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()),
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)
                 ),
                 "{T}: Target player draws a card, then discards a card.",

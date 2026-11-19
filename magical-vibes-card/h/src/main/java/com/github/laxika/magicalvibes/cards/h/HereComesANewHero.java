@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
@@ -32,7 +33,7 @@ public class HereComesANewHero extends Card {
                 "Target must be a creature with mana value X or less"
         ), 0, 1);
 
-        playerTarget.addSpellEffect(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
+        playerTarget.addSpellEffect(new DrawCardEffect(new XValue(), Subjects.targetPlayer()));
         creatureTarget.addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ControllerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -42,6 +42,6 @@ public class OftNabbedGoat extends Card {
 
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, counterType)),
-                SequenceEffect.of(new DrawCardForOwnerEffect(new CountersOnSource(counterType)), new LoseLifeEffect(new CountersOnSource(counterType), LoseLifeRecipient.EACH_OTHER_PLAYER)));
+                SequenceEffect.of(new DrawCardEffect(new CountersOnSource(counterType), Subjects.ownerOf(Subjects.source())), new LoseLifeEffect(new CountersOnSource(counterType), LoseLifeRecipient.EACH_OTHER_PLAYER)));
     }
 }

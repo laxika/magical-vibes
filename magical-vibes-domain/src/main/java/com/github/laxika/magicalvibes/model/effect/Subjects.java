@@ -17,10 +17,12 @@ public final class Subjects {
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
+    private static final PermanentSubject TRIGGERING_CARD = new PermanentSubject.TriggeringCard();
     private static final PermanentSubject RETURNED = new PermanentSubject.Returned();
 
     private static final PlayerSubject YOU = new PlayerSubject.You();
-    private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null);
+    private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null, true);
+    private static final PlayerSubject TARGET_PLAYER_DECLARED_ELSEWHERE = new PlayerSubject.TargetPlayer(null, false);
     private static final PlayerSubject EACH_PLAYER = new PlayerSubject.Each(PlayerSubject.Relation.ALL);
     private static final PlayerSubject EACH_OPPONENT = new PlayerSubject.Each(PlayerSubject.Relation.OPPONENTS);
     private static final PlayerSubject TRIGGERING_PLAYER = new PlayerSubject.TriggeringPlayer();
@@ -63,6 +65,11 @@ public final class Subjects {
     /** "It", "that creature": the permanent the trigger event was about. */
     public static PermanentSubject triggering() {
         return TRIGGERING;
+    }
+
+    /** "That card" of a "whenever you play a card" event: the spell cast or land played the trigger was about. */
+    public static PermanentSubject triggeringCard() {
+        return TRIGGERING_CARD;
     }
 
     /** The permanent a preceding "return target card from a graveyard to the battlefield" put onto the battlefield. */
@@ -111,7 +118,16 @@ public final class Subjects {
 
     /** The player targets chosen for target group {@code group}. */
     public static PlayerSubject targetPlayer(int group) {
-        return new PlayerSubject.TargetPlayer(group);
+        return new PlayerSubject.TargetPlayer(group, true);
+    }
+
+    /**
+     * "Target player" read without this effect declaring a target: another effect of the same spell or ability, or
+     * the card's target filter, declares it ("target player draws two cards and loses 2 life" with the life loss
+     * declaring the target).
+     */
+    public static PlayerSubject targetPlayerDeclaredElsewhere() {
+        return TARGET_PLAYER_DECLARED_ELSEWHERE;
     }
 
     /** "Each player". */
@@ -122,6 +138,11 @@ public final class Subjects {
     /** "Each opponent". */
     public static PlayerSubject eachOpponent() {
         return EACH_OPPONENT;
+    }
+
+    /** "Each of that player's opponents": every player other than those {@code player} names. */
+    public static PlayerSubject opponentsOf(PlayerSubject player) {
+        return new PlayerSubject.OpponentsOf(player);
     }
 
     /** "Its controller", "that creature's controller". */

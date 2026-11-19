@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldForOwnerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class PendantOfProsperity extends Card {
                         new MayEffect(
                                 new PutCardToBattlefieldEffect(land, "land"),
                                 "Put a land card from your hand onto the battlefield?"),
-                        new DrawCardForOwnerEffect(1),
+                        new DrawCardEffect(1, Subjects.ownerOf(Subjects.source())),
                         new MayEffect(
                                 new PutCardToBattlefieldForOwnerEffect(land, "land", false),
                                 "Put a land card from your hand onto the battlefield?",

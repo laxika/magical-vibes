@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -32,7 +33,7 @@ public class MetamorphicBlast extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards",
-                        new DrawCardForTargetPlayerEffect(2, false, true),
+                        new DrawCardEffect(2, Subjects.targetPlayer()),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player."))

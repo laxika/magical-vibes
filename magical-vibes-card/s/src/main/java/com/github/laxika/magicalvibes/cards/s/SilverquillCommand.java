@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -58,7 +59,7 @@ public class SilverquillCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws a card and loses 1 life",
                         List.of(
-                                new DrawCardForTargetPlayerEffect(1, false, true),
+                                new DrawCardEffect(1, Subjects.targetPlayer()),
                                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(

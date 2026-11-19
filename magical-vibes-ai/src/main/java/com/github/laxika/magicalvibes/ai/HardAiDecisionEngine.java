@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -2252,7 +2253,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         boolean isSelfPump = nonCostEffects.stream().anyMatch(effect -> selfBoost(effect) != null);
         boolean isTargetedPump = nonCostEffects.stream().anyMatch(CreatureBoostEffect.class::isInstance);
         boolean isPump = isSelfPump || isTargetedPump;
-        boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect);
+        boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect draw
+                && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer));
         boolean isRegen = nonCostEffects.stream().anyMatch(e -> e instanceof RegenerationEffect);
 
         TurnStep step = gameData.currentStep;
@@ -2845,7 +2847,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private boolean hasCardDrawEtb(Card card) {
         for (CardEffect effect : card.getOwnEntryEffects()) {
-            if (effect instanceof CardDrawingEffect) {
+            if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
                 return true;
             }
         }

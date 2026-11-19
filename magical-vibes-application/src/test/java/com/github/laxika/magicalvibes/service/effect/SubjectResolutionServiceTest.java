@@ -37,12 +37,15 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.defendingPlay
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachOpponent;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.enchantedPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.ownerOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.target;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggering;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringCard;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.you;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -333,6 +336,26 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("A target player declared elsewhere is read from the entry without declaring a target")
+        void targetPlayerDeclaredElsewhereVariant() {
+            StackEntry entry = entry(player1, player2.getId(), null);
+
+            assertThat(players(entry, targetPlayerDeclaredElsewhere())).containsExactly(player2.getId());
+            assertThat(targetPlayerDeclaredElsewhere().declaresTarget()).isFalse();
+            assertThat(targetPlayer().declaresTarget()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Opponents of a player are every other player, and nobody when that player is unknown")
+        void opponentsOfVariant() {
+            StackEntry baked = entry(player1, player2.getId(), null);
+            StackEntry none = entry(player1, null, null);
+
+            assertThat(players(baked, opponentsOf(triggeringPlayer()))).containsExactly(player1.getId());
+            assertThat(players(none, opponentsOf(triggeringPlayer()))).isEmpty();
+        }
+
+        @Test
         @DisplayName("Each player starts with the active player (APNAP order)")
         void eachPlayerInApnapOrder() {
             harness.forceActivePlayer(player2);
@@ -426,6 +449,18 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(players(entry(player2, null, bears.getId()), ownerOf(source())))
                     .containsExactly(player1.getId());
+        }
+
+        @Test
+        @DisplayName("The triggering card's owner is read from the card, whoever played it")
+        void ownerOfTriggeringCard() {
+            Card card = new GrizzlyBears();
+            card.setOwnerId(player2.getId());
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringCards(List.of(card));
+
+            assertThat(players(entry, ownerOf(triggeringCard()))).containsExactly(player2.getId());
+            assertThat(permanents(entry, triggeringCard())).isEmpty();
         }
 
         @Test

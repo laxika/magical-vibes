@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +15,7 @@ public class CurseOfObsession extends Card {
 
     public CurseOfObsession() {
         // At the beginning of enchanted player's draw step, that player draws two additional cards.
-        addTrigger(Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER), new DrawCardForTargetPlayerEffect(2));
+        addTrigger(Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER), new DrawCardEffect(2, Subjects.triggeringPlayer()));
 
         // At the beginning of enchanted player's end step, that player discards their hand.
         addTrigger(Triggers.endStep(ActivePlayer.ENCHANTED_PLAYER),

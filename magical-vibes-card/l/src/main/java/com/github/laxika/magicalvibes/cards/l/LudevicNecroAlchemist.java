@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +19,7 @@ public class LudevicNecroAlchemist extends Card {
         // lost life this turn.
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new OpponentLostLifeThisTurn(1),
-                new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?", null,
+                new MayEffect(new DrawCardEffect(1, Subjects.triggeringPlayer()), "Draw a card?", null,
                         MayChoicePlayer.ACTIVE_PLAYER)));
     }
 }

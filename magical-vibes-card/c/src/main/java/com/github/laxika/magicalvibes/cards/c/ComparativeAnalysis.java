@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,6 +24,6 @@ public class ComparativeAnalysis extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
+                .addSpellEffect(new DrawCardEffect(2, Subjects.targetPlayer()));
     }
 }

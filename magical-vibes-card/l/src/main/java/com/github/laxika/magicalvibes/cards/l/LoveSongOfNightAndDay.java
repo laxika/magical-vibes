@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -35,7 +35,7 @@ public class LoveSongOfNightAndDay extends Card {
         addStaticEffect(new ReadAheadEffect(false));
 
         // Chapter I: You and target opponent each draw two cards.
-        addTrigger(Triggers.chapter(1), new DrawCardEffect(2), new DrawCardForTargetPlayerEffect(2, false, true));
+        addTrigger(Triggers.chapter(1), new DrawCardEffect(2), new DrawCardEffect(2, Subjects.targetPlayer()));
         setSagaChapterTargetFilter(1, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

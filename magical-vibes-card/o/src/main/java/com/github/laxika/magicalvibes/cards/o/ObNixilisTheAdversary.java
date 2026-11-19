@@ -15,11 +15,12 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -66,7 +67,7 @@ public class ObNixilisTheAdversary extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(
-                        new DrawCardForTargetPlayerEffect(7, false, true),
+                        new DrawCardEffect(7, Subjects.targetPlayer()),
                         new LoseLifeEffect(7, LoseLifeRecipient.TARGET_PLAYER)
                 ),
                 "−7: Target player draws seven cards and loses 7 life.",

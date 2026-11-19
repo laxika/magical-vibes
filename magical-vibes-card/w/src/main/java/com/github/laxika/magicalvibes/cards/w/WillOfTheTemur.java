@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControl
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -38,8 +39,7 @@ public class WillOfTheTemur extends Card {
                         TargetFilters.permanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws cards equal to the greatest mana value among permanents you control",
-                        new DrawCardForTargetPlayerEffect(
-                                new GreatestManaValueAmongControlled(new PermanentTruePredicate()), false, true),
+                        new DrawCardEffect(new GreatestManaValueAmongControlled(new PermanentTruePredicate()), Subjects.targetPlayer()),
                         anyPlayer)
         ), new ControlledCommanderAsCast()));
     }

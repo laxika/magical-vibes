@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedPlayerPoisoned;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,6 +26,6 @@ public class NornsDecree extends Card {
                 new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PERMANENT_CONTROLLER));
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new AllOf(List.of(new AttackedPlayerPoisoned()))),
-                new DrawCardForTriggeringPlayerEffect());
+                new DrawCardEffect(1, Subjects.triggeringPlayer()));
     }
 }

@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,7 +24,7 @@ public class RiseOfTheEldrazi extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addSpellEffect(new DrawCardForTargetPlayerEffect(4, false, true));
+                .addSpellEffect(new DrawCardEffect(4, Subjects.targetPlayer()));
         addSpellEffect(new ControllerExtraTurnEffect(1));
         addSpellEffect(new ExileSpellEffect());
     }

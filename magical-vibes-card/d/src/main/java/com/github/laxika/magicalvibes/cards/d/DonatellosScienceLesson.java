@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -17,7 +18,7 @@ public class DonatellosScienceLesson extends Card {
     public DonatellosScienceLesson() {
         target(creatureOrPlayer(), 0, 4)
                 .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addSpellEffect(new DrawCardForTargetPlayerEffect(1, false, true));
+                .addSpellEffect(new DrawCardEffect(1, Subjects.targetPlayer()));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_PLAYERS);
     }
 

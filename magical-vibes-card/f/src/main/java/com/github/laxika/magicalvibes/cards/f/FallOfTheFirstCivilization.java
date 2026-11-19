@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPermanentsThenDestroyRestEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,7 +31,7 @@ public class FallOfTheFirstCivilization extends Card {
         target(opponentFilter)
                 .addTrigger(Triggers.chapter(1), SequenceEffect.of(
                         new DrawCardEffect(2),
-                        new DrawCardForTargetPlayerEffect(2, false, true)));
+                        new DrawCardEffect(2, Subjects.targetPlayer())));
         setSagaChapterTargetFilter(1, Set.of(opponentFilter));
 
         var opponentArtifact = new PermanentAllOfPredicate(List.of(

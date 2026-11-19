@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +23,6 @@ public class SeizanPerverterOfTruth extends Card {
         // with the life loss resolving before the draw.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), SequenceEffect.of(
                 new LoseLifeEffect(2, LoseLifeRecipient.ACTIVE_PLAYER),
-                new DrawCardForTargetPlayerEffect(2)));
+                new DrawCardEffect(2, Subjects.triggeringPlayer())));
     }
 }

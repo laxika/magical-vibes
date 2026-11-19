@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect.Direction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -31,7 +31,7 @@ public class TeyoGeometricTactician extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(), new DrawCardForTargetPlayerEffect(1, false, true)),
+                List.of(new DrawCardEffect(), new DrawCardEffect(1, Subjects.targetPlayer())),
                 "+1: You and target opponent each draw a card.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

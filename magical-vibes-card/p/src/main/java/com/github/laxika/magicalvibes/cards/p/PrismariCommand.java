@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -50,7 +51,7 @@ public class PrismariCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards, then discards two cards",
                         List.of(
-                                new DrawCardForTargetPlayerEffect(2, false, true),
+                                new DrawCardEffect(2, Subjects.targetPlayer()),
                                 new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(

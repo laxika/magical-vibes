@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -39,7 +40,7 @@ public class ArchmagesCharm extends Card {
                                 new StackEntryTruePredicate(), "Target must be a spell.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards",
-                        new DrawCardForTargetPlayerEffect(2, false, true),
+                        new DrawCardEffect(2, Subjects.targetPlayer()),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player")),

@@ -80,6 +80,9 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class,
                     new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
                             predicateEvaluationService, gameQueryService));
+            deps.put(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class,
+                    new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(
+                            gameQueryService, predicateEvaluationService));
             deps.putAll(extraDeps);
 
             Constructor<?> chosen = null;

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrTarge
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class AnyPlayerMayTakeDamageOrTargetPlayerDrawEffectHandler implements NormalEffectHandlerBean {
 
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
-    private final DrawCardForTargetPlayerEffectHandler drawCardForTargetPlayerEffectHandler;
+    private final DrawCardEffectHandler drawCardEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -120,15 +121,14 @@ public class AnyPlayerMayTakeDamageOrTargetPlayerDrawEffectHandler implements No
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
-        DrawCardForTargetPlayerEffect draw = new DrawCardForTargetPlayerEffect(
-                effect.drawCount(), false, true);
+        DrawCardEffect draw = new DrawCardEffect(effect.drawCount(), Subjects.targetPlayer());
         StackEntry drawEntry = StackEntry.carrier(sourceCard,
                 sourceControllerId,
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(draw)),
                 targetPlayerId,
                 (UUID) null);
-        drawCardForTargetPlayerEffectHandler.resolve(gameData, drawEntry, draw);
+        drawCardEffectHandler.resolve(gameData, drawEntry, draw);
     }
 
     private static List<UUID> apnapPlayers(GameData gameData) {

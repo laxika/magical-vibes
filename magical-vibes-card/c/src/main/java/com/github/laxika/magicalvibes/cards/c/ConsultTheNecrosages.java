@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,7 +25,7 @@ public class ConsultTheNecrosages extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards",
-                        new DrawCardForTargetPlayerEffect(2),
+                        new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player discards two cards",

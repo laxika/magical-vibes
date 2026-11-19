@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -28,7 +29,7 @@ public class ManholeCover extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new DrawCardForTargetPlayerEffect(1, false, true)),
+                List.of(new SacrificeSelfCost(), new DrawCardEffect(1, Subjects.targetPlayer())),
                 "{2}, Sacrifice this artifact: Target player draws a card.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

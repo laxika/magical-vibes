@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
@@ -93,7 +93,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 ? leadingSequence.steps().getFirst() : e.wrapped();
         boolean drawThenDiscard = e.wrapped() instanceof SequenceEffect drawSequence
                 && drawSequence.steps().stream().anyMatch(com.github.laxika.magicalvibes.model.effect.DiscardEffect.class::isInstance);
-        if (leadingEffect instanceof DrawCardEffect && !drawThenDiscard
+        if (leadingEffect instanceof DrawCardEffect leadingDraw && leadingDraw.player() instanceof PlayerSubject.You
+                && !drawThenDiscard
                 && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
             // The controller can't draw (e.g. Narset's draw limit), so the "may have you draw" choice
             // can't be carried out and no choice is offered; the "if they do" branch never happens.
@@ -262,7 +263,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             insertElseEffect(entry, e);
             return;
         }
-        if (optionalAction instanceof DrawCardEffect && !drawThenDiscard
+        if (optionalAction instanceof DrawCardEffect optionalDraw && optionalDraw.player() instanceof PlayerSubject.You
+                && !drawThenDiscard
                 && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
             // The ability's controller is the one who would draw, whoever makes the choice.
             gameData.resolvingMayEffectFromStack = false;
@@ -306,23 +308,14 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // The resolved effect acts for the triggering permanent's controller as of resolution, which
             // can differ from the trigger-time controller if control changed while the ability waited.
             entry.setTriggeringPermanentControllerId(choicePlayerId);
-            if (e.wrapped() instanceof DrawCardForTargetPlayerEffect draw
-                    && !draw.targetsPlayer() && draw.targetGroup() < 0) {
-                entry.setTargetId(choicePlayerId);
-            }
         }
 
-        // "Its controller may draw a card" draws for the triggering permanent's controller as of
-        // resolution, which is the player making the choice.
-        UUID pendingTargetId = e.choicePlayer() == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER
-                && e.wrapped() instanceof DrawCardForTargetPlayerEffect
-                ? choicePlayerId : targetId;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 defendingPlayerChoice ? entry.getControllerId() : choicePlayerId,
                 List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
-                pendingTargetId,
+                targetId,
                 null,
                 entry.getSourcePermanentId(),
                 null,

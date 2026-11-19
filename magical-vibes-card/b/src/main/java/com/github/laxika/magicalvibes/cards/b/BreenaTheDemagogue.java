@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +29,7 @@ public class BreenaTheDemagogue extends Card {
         addTrigger(Triggers.playerAttacksOneOfYourOpponents(),
                 TriggerOptions.DEFAULT.withInterveningIf(new AttackedOpponentHasMoreLifeThanAnotherOpponent()),
                 SequenceEffect.of(
-                        new DrawCardForTriggeringPlayerEffect(),
+                        new DrawCardEffect(1, Subjects.triggeringPlayer()),
                         new PutCounterOnChosenPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 2,

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,7 +28,7 @@ public class FlameOfAnor extends Card {
         var options = List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards",
-                        new DrawCardForTargetPlayerEffect(2), anyPlayer),
+                        new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()), anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact",
                         new DestroyTargetPermanentEffect(), TargetFilters.artifact()),

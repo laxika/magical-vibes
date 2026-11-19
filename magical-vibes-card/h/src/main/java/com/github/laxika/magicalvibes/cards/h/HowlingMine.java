@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,6 +33,6 @@ public class HowlingMine extends Card {
         // additional card.
         addTrigger(Triggers.drawStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
-                new DrawCardForTargetPlayerEffect(1));
+                new DrawCardEffect(1, Subjects.triggeringPlayer()));
     }
 }

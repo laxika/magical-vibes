@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -434,7 +435,7 @@ public class SpellEvaluator {
     }
 
     private boolean isDrawEffect(CardEffect effect) {
-        if (effect instanceof CardDrawingEffect) return true;
+        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) return true;
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream()
                     .flatMap(option -> option.effects().stream())
@@ -581,7 +582,7 @@ public class SpellEvaluator {
                 && Duration.PERMANENT.equals(steal.controlDuration())) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
-        if (effect instanceof CardDrawingEffect draw) {
+        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
             return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
@@ -726,7 +727,7 @@ public class SpellEvaluator {
         }
 
         // Draw
-        if (effect instanceof CardDrawingEffect draw) {
+        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
             return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }

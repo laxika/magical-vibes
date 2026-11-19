@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -82,7 +83,9 @@ public final class InstantCategoryClassifier {
         if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) return InstantCategory.BURN_TO_FACE;
 
         // Card advantage
-        if (effect instanceof CardDrawingEffect) return InstantCategory.CARD_ADVANTAGE;
+        if (effect instanceof CardDrawingEffect draw && !(draw.drawingPlayer() instanceof PlayerSubject.TargetPlayer)) {
+            return InstantCategory.CARD_ADVANTAGE;
+        }
         if (effect instanceof LifeGainEffect gain && !gain.gainsNoLife()) return InstantCategory.CARD_ADVANTAGE;
 
         return null;

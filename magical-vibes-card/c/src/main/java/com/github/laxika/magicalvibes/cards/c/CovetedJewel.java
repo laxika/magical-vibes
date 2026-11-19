@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -44,7 +44,7 @@ public class CovetedJewel extends Card {
         // player draws three cards and gains control of this artifact. Untap it.
         addTrigger(Triggers.creaturesAttackYouUnblocked(),
                 SequenceEffect.of(
-                        new DrawCardForTargetPlayerEffect(3),
+                        new DrawCardEffect(3, Subjects.triggeringPlayer()),
                         TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(),
                         new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)
                 ));

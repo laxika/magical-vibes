@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -29,7 +30,7 @@ public class CeaseDesist extends Card {
 
         CardEffect exile = new ExileCardsFromGraveyardEffect(2, 0, true);
         CardEffect gainLife = new GainLifeEffect(new Fixed(2), GainLifeRecipient.TRIGGERING_PLAYER);
-        CardEffect draw = new DrawCardForTargetPlayerEffect(1, false, true);
+        CardEffect draw = new DrawCardEffect(1, Subjects.targetPlayer());
         List<CardEffect> cease = List.of(exile, gainLife, draw);
         CardEffect desist = new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),

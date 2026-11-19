@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -47,7 +48,7 @@ public class SyggsCommand extends Card {
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws a card",
-                        new DrawCardForTargetPlayerEffect(1, false, true),
+                        new DrawCardEffect(1, Subjects.targetPlayer()),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap target creature. Put a stun counter on it",

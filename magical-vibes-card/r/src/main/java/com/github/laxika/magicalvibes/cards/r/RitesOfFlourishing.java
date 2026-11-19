@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +19,7 @@ public class RitesOfFlourishing extends Card {
 
     public RitesOfFlourishing() {
         // At the beginning of each player's draw step, that player draws an additional card.
-        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardEffect(1, Subjects.triggeringPlayer()));
 
         // Each player may play an additional land on each of their turns.
         addStaticEffect(new EachPlayerPlaysAdditionalLandEffect());

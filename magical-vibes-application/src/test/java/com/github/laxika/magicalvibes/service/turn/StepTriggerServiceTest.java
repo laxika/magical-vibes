@@ -42,7 +42,8 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -428,7 +429,7 @@ class StepTriggerServiceTest {
         void eachDrawTriggeredFiresForAllPlayers() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Howling Mine");
-            card.addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
+            card.addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardEffect(1, Subjects.triggeringPlayer()));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleDrawStep(gd);
@@ -443,7 +444,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card card = createCardWithName("Howling Mine");
             card.addTrigger(Triggers.drawStep(ActivePlayer.ANY),
-                    TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()), new DrawCardForTargetPlayerEffect(1));
+                    TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()), new DrawCardEffect(1, Subjects.triggeringPlayer()));
             Permanent perm = new Permanent(card);
             perm.tap();
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -777,7 +778,7 @@ class StepTriggerServiceTest {
         void playerTargetingEffectTriggersTargetSelection() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Bloodgift Demon");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardForTargetPlayerEffect(1, false, true));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1, Subjects.targetPlayer()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -816,7 +817,7 @@ class StepTriggerServiceTest {
         void playerTargetingInterveningIfSkipsWhenConditionFails() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Brink of Madness");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandEmpty()), new DrawCardForTargetPlayerEffect(1, false, true));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandEmpty()), new DrawCardEffect(1, Subjects.targetPlayer()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerHands.get(player1Id).add(createCardWithName("Card in hand"));
 

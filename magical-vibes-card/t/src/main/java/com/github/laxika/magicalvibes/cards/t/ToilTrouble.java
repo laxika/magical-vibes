@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -45,7 +46,7 @@ public class ToilTrouble extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player.");
 
         CardEffect toil = SequenceEffect.of(
-                new DrawCardForTargetPlayerEffect(2),
+                new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()),
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
         CardEffect trouble = new DealDamageToPlayersEffect(
                 new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER);

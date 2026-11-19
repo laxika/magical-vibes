@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +21,7 @@ public class AnvilOfBogardan extends Card {
         // At the beginning of each player's draw step, that player draws an additional card,
         // then discards a card.
         addTrigger(Triggers.drawStep(ActivePlayer.ANY), SequenceEffect.of(
-                new DrawCardForTargetPlayerEffect(1),
+                new DrawCardEffect(1, Subjects.triggeringPlayer()),
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)));
     }
 }

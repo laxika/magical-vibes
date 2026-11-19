@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -38,7 +39,7 @@ public class CephalidColiseum extends Card {
                 "{U}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DrawCardForTargetPlayerEffect(3, false, true),
+                        new DrawCardEffect(3, Subjects.targetPlayer()),
                         new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)
                 ),
                 "Threshold — {U}, {T}, Sacrifice this land: Target player draws three cards, then discards three cards.",

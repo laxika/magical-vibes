@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostForTargetPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +20,7 @@ public class AcademyLoremaster extends Card {
         // If they do, spells they cast this turn cost {2} more to cast.
         addTrigger(Triggers.drawStep(ActivePlayer.ANY), new MayEffect(
                 SequenceEffect.of(
-                        new DrawCardForTargetPlayerEffect(1),
+                        new DrawCardEffect(1, Subjects.triggeringPlayer()),
                         new IncreaseSpellCostForTargetPlayerUntilEndOfTurnEffect(
                                 new CardTruePredicate(), 2)),
                 "Draw an additional card?",

@@ -7,14 +7,14 @@ import java.util.Objects;
  * through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}. Several players are always
  * returned in APNAP order (CR 101.4).
  *
- * <p>Only {@link TargetPlayer} declares a target ({@link #declaresTarget()}); a target nested in
+ * <p>Only a declared {@link TargetPlayer} declares a target ({@link #declaresTarget()}); a target nested in
  * {@link ControllerOf} or {@link OwnerOf} reads the stack entry's target without declaring one. A subject that reads a
  * stack entry ({@link #needsStackEntry()}) cannot be used by a static ability.
  *
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
-        PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
+        PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
         PlayerSubject.ChosenPlayer {
 
@@ -42,9 +42,11 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
 
     /**
      * "Target player": the effect's player target. {@code group} is the target group the effect reads, or
-     * {@code null} for the targets the stack entry assigns to the effect.
+     * {@code null} for the targets the stack entry assigns to the effect. {@code declared} is whether this effect
+     * declares the target; when it doesn't, another effect of the same spell or ability, or the card's target filter,
+     * declares it and this one only reads it ("target player draws two cards and loses 2 life").
      */
-    record TargetPlayer(Integer group) implements PlayerSubject {
+    record TargetPlayer(Integer group, boolean declared) implements PlayerSubject {
 
         public TargetPlayer {
             if (group != null && group < 0) {
@@ -54,7 +56,7 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
 
         @Override
         public boolean declaresTarget() {
-            return true;
+            return declared;
         }
 
         @Override
@@ -68,6 +70,22 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
 
         public Each {
             Objects.requireNonNull(relation, "relation");
+        }
+    }
+
+    /**
+     * "Each of that player's opponents": every player other than those {@code player} names, in APNAP order; nobody
+     * when {@code player} names nobody.
+     */
+    record OpponentsOf(PlayerSubject player) implements PlayerSubject {
+
+        public OpponentsOf {
+            Objects.requireNonNull(player, "player");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return player.needsStackEntry();
         }
     }
 

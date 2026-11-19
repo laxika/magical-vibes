@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KamiOfTheCrescentMoon extends Card {
 
     public KamiOfTheCrescentMoon() {
-        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardEffect(1, Subjects.triggeringPlayer()));
     }
 }

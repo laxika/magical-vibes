@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +37,7 @@ public class NorthPoleResearchBase extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                        new DrawCardForTargetPlayerEffect(1, false, true),
+                        new DrawCardEffect(1, Subjects.targetPlayer()),
                         new CreateTokenForTargetPlayerEffect(
                                 CreateTokenEffect.ofTreasureToken(1), PlayerRelation.OPPONENT)));
 

@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -34,7 +35,7 @@ public class WretchedConfluence extends Card {
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target player draws a card and loses 1 life",
                         () -> SequenceEffect.of(
-                                new DrawCardForTargetPlayerEffect(1, false, true),
+                                new DrawCardEffect(1, Subjects.targetPlayer()),
                                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
                         anyPlayer()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(

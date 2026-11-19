@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -36,7 +37,7 @@ public class AlaniaDivergentStorm extends Card {
                                         new CardSubtypePredicate(CardSubtype.OTTER),
                                         new CardNotPredicate(new CardIsSelfPredicate())))))),
                 new MayEffect(
-                        SequenceEffect.of(new DrawCardForTargetPlayerEffect(1, false, true), new CopyTriggeringSpellEffect()),
+                        SequenceEffect.of(new DrawCardEffect(1, Subjects.targetPlayer()), new CopyTriggeringSpellEffect()),
                         "Have target opponent draw a card?"));
     }
 }

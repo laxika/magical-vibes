@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VMA", collectorNumber = "251")
@@ -15,7 +16,7 @@ public class EdricSpymasterOfTrest extends Card {
 
     public EdricSpymasterOfTrest() {
         MayEffect draw = new MayEffect(
-                new DrawCardForTriggeringPlayerEffect(),
+                new DrawCardEffect(1, Subjects.controllerOf(Subjects.triggering())),
                 "Draw a card?",
                 null,
                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);

@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | open |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -349,7 +349,7 @@ fold in, the enum and the absorbed classes are deleted.
 
 | Run | Verb and survivor | Old enum | Known siblings | Status |
 |---|---|---|---|---|
-| 4a | Draw: `DrawCardEffect` | none (plus `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` to check) | `DrawCardFor{Owner,TargetPlayer,DefendingPlayer,TriggeringPlayer,Player}Effect`, `DrawCardsForEachOpponentOfTriggeringPlayerEffect` | open |
+| 4a | Draw: `DrawCardEffect` | none (plus `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` to check) | `DrawCardFor{Owner,TargetPlayer,DefendingPlayer,TriggeringPlayer,Player}Effect`, `DrawCardsForEachOpponentOfTriggeringPlayerEffect` | | done |
 | 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | open |
 | 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | open |
 | 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | open |
@@ -1040,6 +1040,64 @@ ENCHANTED_PLAYER `enchantedPlayer()`; static), `CostModificationScope` (SELF `yo
 - Dead constants: `LoseLifeRecipient.SOURCE_CONTROLLER`, `SacrificeRecipient.CONTROLLER_AND_TARGET_PLAYER`,
   `PhaseOutScope.ALL`; constructor-default-only: `EndStepDrawRecipient.CONTROLLER`.
 - Ledger: the 15 pilot records are `blocked-other` "kept for step 5"; they are audited for their subject, not folded.
+
+### Step 4, run 4a (2026-11-19)
+
+**Survivor.** `DrawCardEffect` gained a last component `PlayerSubject player` (default `you()`; every old constructor
+kept, plus `(int|DynamicAmount, PlayerSubject)`). Its handler evaluates the amount once in the entry's context, asks
+`SubjectResolutionService` for the players and has each draw it in APNAP order (`resolveDrawCards`, so a draw of N is
+one instruction for Alms Collector / Quantum Riddler); the cycling draw path is kept for the controller; each player's
+cards drawn from the library are recorded with the old over-draw rule and the step result (`recordDrawnCards`) is the
+union. `targetSpec()`: benign player target when the subject declares one, or (as before) a controller draw with a
+target-relative amount. `CardDrawingEffect` gained `drawingPlayer()` (default `you()`).
+
+**Absorbed** (5 records, 5 handlers; ratchet 4,935 / 4,168): `DrawCardForOwnerEffect` → `ownerOf(source())`;
+`DrawCardForDefendingPlayerEffect` → `defendingPlayer()`; `DrawCardsForEachOpponentOfTriggeringPlayerEffect` →
+`opponentsOf(triggeringPlayer())`; `DrawCardForTriggeringPlayerEffect` → `controllerOf(triggering())` for "its
+controller" (8 cards) and `triggeringPlayer()` for "that attacking player" (Breena, Norn's Decree, Curse of Verbosity,
+Curse of Chaos: their collectors record the attacker as both `triggeringPermanentControllerId` and the baked `targetId`,
+so both lookups gave the same player; the old middle fallback to the source's controller was never reached);
+`DrawCardForTargetPlayerEffect` → `targetPlayer([group])` where `targetsPlayer` was set (93 cards + 4 `forTargetGroup`),
+`ownerOf(triggeringCard())` for Apple of Eden, and for the 55 non-declaring uses one of three by card:
+`targetPlayerDeclaredElsewhere()` (24: spells and abilities whose target filter or another effect declares the player,
+which also keeps multi-target lists and target groups, e.g. Jace, Memory Adept, Toil // Trouble), `triggeringPlayer()`
+(30: draw/upkeep/end-step, cast, land and combat triggers; none of their collectors records a triggering player other
+than the baked one) and `controllerOf(triggering())` (Undercity Reaches). Its unused `requireSourceUntapped` flag is
+gone. 169 card files rewritten (by a deleted scratch script), plus 9 engine constructors.
+
+**New variants.** `targetPlayerDeclaredElsewhere()` (`TargetPlayer` with `declared = false`: same targets, declares
+nothing), `opponentsOf(player)` (nobody when `player` names nobody) and `triggeringCard()` (`ownerOf` reads
+`findTriggeringCardOwner`; as a permanent it is the land played, if on the battlefield).
+
+**Resolver fix.** `ownerOf(source())` of a card with no recorded owner (a hand-built test card) whose source left
+with no last-known controller recorded found nobody; it now falls back to the resolving ability's controller, as
+`DrawCardForOwnerEffect` did (`OftNabbedGoatTest`'s death case).
+
+**AI parity.** `DrawCardForTargetPlayerEffect` was not a `CardDrawingEffect`; the other absorbed classes were. The AI
+readers (`BoardEvaluator`, `HardAiDecisionEngine`, `SpellEvaluator`, `InstantCategoryClassifier`) now skip a
+`CardDrawingEffect` whose `drawingPlayer()` is a `TargetPlayer` (declared or not), which is exactly the old set in the
+contexts they read (activated abilities, spells, modes, enters abilities). `MayEffectHandler`'s "the controller can't
+draw" shortcut now applies only to a `you()` draw (before, only controller draws were `DrawCardEffect`), and its
+`TRIGGERING_PERMANENT_CONTROLLER` special case for the target sibling is gone (Undercity Reaches reads
+`controllerOf(triggering())` like Synapse Sliver).
+
+**Behaviour differences** (none changes a tested outcome): several opponents of a caster draw in APNAP order instead
+of seat order, and "that player" is the caster recorded as the spell was cast rather than the spell's controller at
+resolution (Standstill, Zenith Chronicler); the owner draw no longer re-bases a controller-relative amount to the owner
+(no card's amount depends on it); the target draw records only cards drawn from the library, like the controller draw.
+
+**For later runs.**
+
+- Not folded, in the ledger: `EachOpponentDrawsCardEffect` (5 cards) is `DrawCardEffect(eachOpponent())`, but the AI
+  would then count it as its own draw; fold it with an AI rule for draws by opponents. `DrawCardForYouAndDamagedPlayerEffect`
+  needs a player union. `DrawCardForPlayerEffect` is engine-built with a fixed id. `EachOpponentOfTriggeringPlayerMayDrawCardEffect`
+  asks each opponent its own may choice. `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` stay on
+  their verbs (draw up to, delayed draw registration); their mappings are in step 3's table.
+- Two inline draw paths ignore the subject and draw for the controller: the mana-ability path in
+  `ActivatedAbilityExecutionService` and `FlickerEffectHandler`'s bonus draw. Only `you()` reaches them today.
+- The non-declaring player read is what most "`TARGET_PLAYER`" constants without a declared target are (4b–4i): use
+  `targetPlayerDeclaredElsewhere()` where a card's target filter or a companion effect declares the player, and
+  `triggeringPlayer()` where a trigger baked it.
 
 ## Prompt
 

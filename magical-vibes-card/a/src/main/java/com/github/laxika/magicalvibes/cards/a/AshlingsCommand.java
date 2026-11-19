@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -37,7 +38,7 @@ public class AshlingsCommand extends Card {
                                 "Target must be an Elemental you control.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws two cards",
-                        new DrawCardForTargetPlayerEffect(2),
+                        new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Ashling's Command deals 2 damage to each creature target player controls",

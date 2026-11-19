@@ -10,29 +10,39 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Resolves {@link DrawCardEffect}: the players its subject names (through {@link SubjectResolutionService}) each draw
+ * the amount, evaluated once, in APNAP order. The cards each player actually drew from the library are recorded as
+ * the step's result.
+ */
 @Component
 public class DrawCardEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
     private final DrawService drawService;
 
     public DrawCardEffectHandler(PlayerInteractionSupport playerInteractionSupport,
                                  GameQueryService gameQueryService,
                                  AmountEvaluationService amountEvaluationService,
+                                 SubjectResolutionService subjectResolutionService,
                                  @Lazy DrawService drawService) {
         this.playerInteractionSupport = playerInteractionSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
+        this.subjectResolutionService = subjectResolutionService;
         this.drawService = drawService;
     }
 
@@ -58,37 +68,46 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
 
         if (e.rememberAmount()) entry.setEventValue(amount);
 
-        List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
+        List<UUID> drawnCardIds = new ArrayList<>();
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
+            if (gameData.playerIds.contains(playerId)) {
+                drawnCardIds.addAll(draw(gameData, entry, playerId, amount));
+            }
+        }
+        entry.recordDrawnCards(drawnCardIds);
+    }
+
+    /** {@code playerId} draws {@code amount} cards; returns the cards this instruction drew. */
+    private List<UUID> draw(GameData gameData, StackEntry entry, UUID playerId, int amount) {
         Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
-        hand.forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
+        gameData.playerHands.getOrDefault(playerId, List.of()).forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
         Set<UUID> cardsInLibraryBeforeDraw = new HashSet<>();
-        gameData.playerDecks.getOrDefault(entry.getControllerId(), List.of())
+        gameData.playerDecks.getOrDefault(playerId, List.of())
                 .forEach(card -> cardsInLibraryBeforeDraw.add(card.getId()));
 
-        if (entry.isCyclingAbility()) {
+        if (entry.isCyclingAbility() && playerId.equals(entry.getControllerId())) {
             for (int i = 0; i < amount; i++) {
-                drawService.resolveCyclingDrawCard(gameData, entry.getControllerId(), entry.getCard());
+                drawService.resolveCyclingDrawCard(gameData, playerId, entry.getCard());
                 if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                     break;
                 }
             }
         } else {
-            playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
+            playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
         }
 
         // Only cards that came out of the library are drawn; a permanent returned to hand by a replacement
         // (Words of Wind) is a new hand card but was not drawn.
-        List<Card> newlyDrawn = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
+        List<Card> newlyDrawn = gameData.playerHands.getOrDefault(playerId, List.of()).stream()
                 .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
                 .filter(card -> cardsInLibraryBeforeDraw.contains(card.getId()))
                 .toList();
         // More cards than instructed means a draw was replaced by drawing extra cards (e.g. Alhammarret's
         // Archive); those cards were not drawn by this effect's instruction, so "that card" does not exist.
-        if (newlyDrawn.size() <= amount) {
-            newlyDrawn.forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
-            entry.recordDrawnCards(newlyDrawn.stream().map(Card::getId).toList());
-        } else {
-            entry.recordDrawnCards(List.of());
+        if (newlyDrawn.size() > amount) {
+            return List.of();
         }
+        newlyDrawn.forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
+        return newlyDrawn.stream().map(Card::getId).toList();
     }
 }

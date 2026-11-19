@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +36,7 @@ public class ConsumedByGreed extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new DrawCardForTargetPlayerEffect(1, false, true)))
+                new DrawCardEffect(1, Subjects.targetPlayer())))
                 .addSpellEffect(new SacrificePermanentsEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(

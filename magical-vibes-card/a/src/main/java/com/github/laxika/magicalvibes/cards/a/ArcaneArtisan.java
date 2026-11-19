@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -26,7 +27,7 @@ public class ArcaneArtisan extends Card {
                 true,
                 "{2}{U}",
                 List.of(
-                        new DrawCardForTargetPlayerEffect(1),
+                        new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()),
                         new ExileCardFromHandAndCreateTokenCopyEffect(
                                 new CardTruePredicate(),
                                 CreateTokenCopyOfTargetPermanentEffect.trackedForTargetController(),

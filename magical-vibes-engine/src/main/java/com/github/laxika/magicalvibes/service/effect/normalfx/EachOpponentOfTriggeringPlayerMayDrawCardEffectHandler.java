@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentOfTriggeringPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class EachOpponentOfTriggeringPlayerMayDrawCardEffectHandler implements N
             gameData.queueMayAbilityForPlayer(
                     entry.getCard(),
                     entry.getControllerId(),
-                    new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?"),
+                    new MayEffect(new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?"),
                     playerId,
                     entry.getSourcePermanentId(),
                     playerId,

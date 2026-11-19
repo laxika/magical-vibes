@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +29,7 @@ public class SelvalaHeartOfTheWilds extends Card {
                 new MayEffect(
                         new ConditionalEffect(
                                 new TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures(),
-                                new DrawCardForTriggeringPlayerEffect()),
+                                new DrawCardEffect(1, Subjects.controllerOf(Subjects.triggering()))),
                         "Draw a card?",
                         null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,6 +28,6 @@ public class FiremaneCommando extends Card {
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(
                         new AllOf(List.of(new MinimumAttackers(2), new AttackedTargetIsOpponent()))),
-                new ConditionalEffect(new NotCondition(new OpponentAttacksWithAtLeastCreatures(1, false)), new DrawCardForTargetPlayerEffect(1)));
+                new ConditionalEffect(new NotCondition(new OpponentAttacksWithAtLeastCreatures(1, false)), new DrawCardEffect(1, Subjects.triggeringPlayer())));
     }
 }

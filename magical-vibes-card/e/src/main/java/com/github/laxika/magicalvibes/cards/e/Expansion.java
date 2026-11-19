@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -63,7 +64,7 @@ public class Expansion extends Card {
                         "Explosion — Deal X damage to any target and target player draws X cards",
                         List.of(
                                 new DealDamageToAnyTargetEffect(new XValue(), false, false, 0),
-                                new DrawCardForTargetPlayerEffect(new XValue(), false, true)
+                                new DrawCardEffect(new XValue(), Subjects.targetPlayer())
                         ),
                         List.of(anyTarget, anyPlayer)
                 ).withManaCost("{X}{U}{U}{R}{R}")

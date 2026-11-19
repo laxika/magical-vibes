@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +23,7 @@ public class FeveredVisions extends Card {
 
     public FeveredVisions() {
         addTrigger(Triggers.endStep(ActivePlayer.ANY), SequenceEffect.of(
-                new DrawCardForTargetPlayerEffect(1),
+                new DrawCardEffect(1, Subjects.triggeringPlayer()),
                 new ConditionalEffect(
                         new AllConditions(List.of(new NotControllerTurn(), new ActivePlayerHandAtLeast(4))),
                         new DealDamageToEndStepPlayerEffect(new Fixed(2)))));

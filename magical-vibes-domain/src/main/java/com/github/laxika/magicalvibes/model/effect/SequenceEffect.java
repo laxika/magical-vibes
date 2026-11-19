@@ -42,8 +42,8 @@ import java.util.List;
  * registers its spliced steps with that group; other target groups may be read by position.</p>
  *
  * <p>When used in an end-step trigger, the active end-step player is also carried in the stack
- * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
- * "that player".</p>
+ * entry's {@code targetId}, allowing steps such as a {@link DrawCardEffect} for
+ * {@link Subjects#triggeringPlayer()} to act on "that player".</p>
  */
 public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boolean simultaneous)
         implements CardEffect {

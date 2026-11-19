@@ -1924,7 +1924,7 @@ Checked and found to differ semantically. Do not re-propose without new evidence
 - `DamageCantBePreventedEffect` / `…ThisTurnEffect`; `DoubleControllerDamageEffect` / `…ThisTurnEffect` — static layer effect vs turn flag.
 - `BecomeCopyOfTargetCreatureEffect` vs `…UntilEndOfTurnEffect` — deferred `PendingMayAbility` vs immediate `applyCloneCopy` + layer-1 revert.
 - `ReturnTargetCardsFromGraveyardToHandEffect` vs `…ToBattlefieldEffect` — 3-line delegation vs the full ETB pipeline. A rewrite, not a merge.
-- `DrawCardEffect` (423) / `DrawCardForTargetPlayerEffect` (30) — the target variant carries a CR 603.4 intervening-if re-check and multi-target fan-out.
+- `DrawCardEffect` (423) / `DrawCardForTargetPlayerEffect` (30) — since merged by `effect-cleanup-refactor.md` step 4a: the intervening-if flag was used by no card and the multi-target fan-out is the `PlayerSubject` resolver's.
 - `AwardManaEffect` (192) — read structurally by the mana-source readers (`instanceof AwardManaEffect` to discover what a land produces).
 - `SetPowerToughnessToAmountEffect` (67) vs `SetBasePowerToughnessEffect` — CDA vs one-shot layer-7b setter.
 - `SacrificeCreatureCost` vs `SacrificePermanentCost` — see Step 10.

@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,7 +25,7 @@ import java.util.List;
 public class AppleOfEdenIsuRelic extends Card {
 
     public AppleOfEdenIsuRelic() {
-        CardEffect ownerDraws = DrawCardForTargetPlayerEffect.ofTriggeringCardOwner(1);
+        CardEffect ownerDraws = new DrawCardEffect(1, Subjects.ownerOf(Subjects.triggeringCard()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

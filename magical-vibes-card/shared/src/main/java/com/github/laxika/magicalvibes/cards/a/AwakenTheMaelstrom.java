@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -30,7 +31,7 @@ public class AwakenTheMaelstrom extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a permanent an opponent controls.");
 
-        target(anyPlayer).addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
+        target(anyPlayer).addSpellEffect(new DrawCardEffect(2, Subjects.targetPlayer()));
         addSpellEffect(new MayEffect(
                 new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.ARTIFACT), "artifact"),
                 "Put an artifact card from your hand onto the battlefield?"));

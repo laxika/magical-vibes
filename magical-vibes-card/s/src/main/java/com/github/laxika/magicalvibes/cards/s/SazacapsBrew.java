@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -32,7 +33,7 @@ public class SazacapsBrew extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
+        )).addSpellEffect(new DrawCardEffect(2, Subjects.targetPlayer()));
 
         targetWhenGiftPromised(TargetFilters.creatureYouControl(), 0, 1, 1)
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),

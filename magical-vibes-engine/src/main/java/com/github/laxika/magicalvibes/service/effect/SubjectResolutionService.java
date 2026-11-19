@@ -48,7 +48,8 @@ import java.util.UUID;
  * <p>{@code source()} is the entry's source permanent and nothing else: an entry with no source permanent (a spell, a
  * cast trigger) has none, never its target. An owner the card doesn't record (a hand-built or engine-made card) is
  * the player the permanent entered under (CR 110.2, 111.2): {@code GameData.defaultControllerOf} while it is on the
- * battlefield, its last-known controller once it has left.
+ * battlefield, its last-known controller once it has left (for the source of the resolving ability, that ability's
+ * controller when nothing else recorded it).
  */
 @Service
 @RequiredArgsConstructor
@@ -133,6 +134,7 @@ public class SubjectResolutionService {
             case PermanentSubject.AttachedAtTrigger ignored -> listOf(ctx.entry().getAttachedPermanentSnapshot() == null
                     ? null : ctx.entry().getAttachedPermanentSnapshot().getId());
             case PermanentSubject.Triggering ignored -> listOf(ctx.entry().getTriggeringPermanentId());
+            case PermanentSubject.TriggeringCard ignored -> listOf(triggeringCardPermanentId(ctx));
             case PermanentSubject.Returned ignored -> listOf(returnedPermanentId(ctx));
             case PermanentSubject.ControlledBy controlledBy -> controlledBy(ctx, controlledBy).stream()
                     .map(Permanent::getId)
@@ -213,6 +215,22 @@ public class SubjectResolutionService {
         return null;
     }
 
+    /** The permanent the triggering card is on the battlefield (a land played), else none. */
+    private static UUID triggeringCardPermanentId(Context ctx) {
+        Card card = ctx.entry().triggeringSpellOrCard();
+        if (card == null) {
+            return null;
+        }
+        for (UUID playerId : ctx.gameData().orderedPlayerIds) {
+            for (Permanent permanent : ctx.gameData().playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (card.getId().equals(permanent.getCard().getId())) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
+    }
+
     private List<Permanent> controlledBy(Context ctx, PermanentSubject.ControlledBy subject) {
         FilterContext filterContext = FilterContext.of(ctx.gameData())
                 .withSourceCardId(ctx.sourceCardId())
@@ -248,6 +266,12 @@ public class SubjectResolutionService {
                     .filter(playerId -> each.relation() == PlayerSubject.Relation.ALL
                             || !playerId.equals(ctx.controllerId()))
                     .toList();
+            case PlayerSubject.OpponentsOf opponentsOf -> {
+                List<UUID> of = players(ctx, opponentsOf.player());
+                yield of.isEmpty() ? List.of() : apnapOrder(gameData).stream()
+                        .filter(playerId -> !of.contains(playerId))
+                        .toList();
+            }
             case PlayerSubject.ControllerOf controllerOf -> controllers(ctx, controllerOf.permanent());
             case PlayerSubject.OwnerOf ownerOf -> owners(ctx, ownerOf.permanent());
             case PlayerSubject.TriggeringPlayer ignored -> listOf(triggeringPlayer(ctx));
@@ -291,8 +315,14 @@ public class SubjectResolutionService {
         return lastKnown;
     }
 
-    /** "Its owner": the owner of its card as it is or last was; an unrecorded owner as the class Javadoc says. */
+    /**
+     * "Its owner": the owner of its card as it is or last was; an unrecorded owner as the class Javadoc says. The owner
+     * of the triggering card is read from the card wherever it is (a card's owner never changes).
+     */
     private List<UUID> owners(Context ctx, PermanentSubject permanent) {
+        if (permanent instanceof PermanentSubject.TriggeringCard) {
+            return listOf(gameQueryService.findTriggeringCardOwner(ctx.gameData(), ctx.entry()));
+        }
         List<UUID> owners = new ArrayList<>();
         for (UUID id : ids(ctx, permanent)) {
             owners.add(ownerOf(ctx, id));
@@ -310,7 +340,14 @@ public class SubjectResolutionService {
         }
         Card lastKnownCard = lastKnownCard(ctx, permanentId);
         UUID owner = lastKnownCard == null ? null : gameData.ownerOf(lastKnownCard);
-        return owner != null ? owner : controllerOf(ctx, permanentId);
+        if (owner == null) {
+            owner = controllerOf(ctx, permanentId);
+        }
+        if (owner == null && ctx.entry() != null && permanentId.equals(ctx.entry().getSourcePermanentId())) {
+            // The source's own ability: the controller the ability got from its source.
+            owner = ctx.entry().getControllerId();
+        }
+        return owner;
     }
 
     private static Card lastKnownCard(Context ctx, UUID permanentId) {

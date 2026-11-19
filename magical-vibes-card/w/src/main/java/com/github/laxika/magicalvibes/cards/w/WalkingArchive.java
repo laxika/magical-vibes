@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,8 +21,7 @@ public class WalkingArchive extends Card {
     public WalkingArchive() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new DrawCardForTargetPlayerEffect(
-                        new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), false, false));
+                new DrawCardEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), Subjects.triggeringPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

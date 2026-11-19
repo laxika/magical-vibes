@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -41,7 +42,7 @@ public class CyberneticaDatasmith extends Card {
                 true,
                 "{U}",
                 List.of(
-                        DrawCardForTargetPlayerEffect.forTargetGroup(1, 0),
+                        new DrawCardEffect(1, Subjects.targetPlayer(0)),
                         CreateTokenForTargetPlayerEffect.forTargetGroup(robotToken, 1)),
                 "Field Reprogramming — {U}, {T}: Target player draws a card. Another target player creates a 4/4 colorless Robot artifact creature token with \"This token can't block.\"",
                 List.of(playerTarget, playerTarget),

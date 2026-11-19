@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -25,7 +26,7 @@ public class ChanneledForce extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
+        )).addSpellEffect(new DrawCardEffect(new XValue(), Subjects.targetPlayer()));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -38,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantSorceryCardsInsteadOfGraveyardEffect;
@@ -1333,7 +1334,7 @@ public class GraveyardService {
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
                 riderControllerId(gameData, perm, used),
                 perm.getCard().getName() + "'s regeneration ability",
-                List.of(new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?",
+                List.of(new MayEffect(new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?",
                         null, MayChoicePlayer.TARGET_PLAYER)),
                 opponentId, perm.getId());
         trigger.setNonTargeting(true);

@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -31,7 +32,7 @@ public class DrownInDreams extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws X cards",
-                        new DrawCardForTargetPlayerEffect(new XValue(), false, true),
+                        new DrawCardEffect(new XValue(), Subjects.targetPlayer()),
                         targetPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player mills twice X cards",

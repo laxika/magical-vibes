@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToRecipient;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -66,7 +66,8 @@ public class RegisterDrawCardsAtNextUpkeepEffectHandler implements NormalEffectH
                                                                         Card sourceCard, UUID sourcePermanentId) {
         boolean drawerIsController = drawerId.equals(controllerId);
         CardEffect draw = upTo ? new DrawUpToNCardsEffect(count, DrawUpToRecipient.TARGET_PLAYER)
-                : drawerIsController ? new DrawCardEffect(count) : new DrawCardForTargetPlayerEffect(count);
+                : drawerIsController ? new DrawCardEffect(count)
+                : new DrawCardEffect(count, Subjects.targetPlayerDeclaredElsewhere());
         return TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,
                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY), draw), sourcePermanentId, null,
                 upTo || !drawerIsController ? drawerId : null, DelayedReferents.NONE.afterTurn(turnNumber));

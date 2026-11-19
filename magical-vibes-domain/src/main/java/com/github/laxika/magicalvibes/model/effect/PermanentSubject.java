@@ -16,8 +16,8 @@ import java.util.Objects;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target,
-        PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.Returned,
-        PermanentSubject.ControlledBy, PermanentSubject.AllOf {
+        PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringCard,
+        PermanentSubject.Returned, PermanentSubject.ControlledBy, PermanentSubject.AllOf {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -76,6 +76,19 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
     /** "It", "that creature": the permanent the trigger event was about. */
     record Triggering() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That card" of a "whenever you play a card" event: the spell cast or the land played that the trigger event was
+     * about, which need not be a permanent. Its permanent is the land on the battlefield; {@code ownerOf} reads the
+     * card's owner wherever the card is.
+     */
+    record TriggeringCard() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -26,8 +27,8 @@ public class GleamingSplendor extends Card {
                 false,
                 "{2}{W}",
                 List.of(
-                        DrawCardForTargetPlayerEffect.forTargetGroup(1, 0),
-                        DrawCardForTargetPlayerEffect.forTargetGroup(1, 1)
+                        new DrawCardEffect(1, Subjects.targetPlayer(0)),
+                        new DrawCardEffect(1, Subjects.targetPlayer(1))
                 ),
                 "{2}{W}: Two target players each draw a card.",
                 List.of(playerTarget, playerTarget),

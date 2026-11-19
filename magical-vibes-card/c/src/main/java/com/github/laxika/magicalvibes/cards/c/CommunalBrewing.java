@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCountersToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,7 +29,7 @@ public class CommunalBrewing extends Card {
 
         target(opponent, 0, 99).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
-                        new DrawCardForTargetPlayerEffect(1, false, true),
+                        new DrawCardEffect(1, Subjects.targetPlayer()),
                         new PutCountersOnSelfEffect(CounterType.INGREDIENT),
                         new PutCountersOnSelfEffect(CounterType.INGREDIENT,
                                 new CardsDrawnThisResolution())));

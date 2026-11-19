@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,7 +29,7 @@ public class DireUndercurrents extends Card {
                                 Triggers.CREATURE,
                                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayEffect(new DrawCardForTargetPlayerEffect(1, false, true), "have target player draw a card"));
+                new MayEffect(new DrawCardEffect(1, Subjects.targetPlayer()), "have target player draw a card"));
 
         // Whenever a black creature you control enters, you may have target player discard a card.
         addTrigger(Triggers.enters(
