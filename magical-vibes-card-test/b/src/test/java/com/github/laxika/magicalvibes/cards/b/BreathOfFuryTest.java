@@ -44,6 +44,7 @@ class BreathOfFuryTest extends BaseCardTest {
         Permanent aura = attachBreath(attacker);
 
         dealCombatDamage();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker).contains(aura, nextAttacker);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -147,6 +148,7 @@ class BreathOfFuryTest extends BaseCardTest {
         Permanent aura = attachBreath(attacker);
 
         dealCombatDamage();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(aura.getAttachedTo()).isEqualTo(legalCreature.getId());
@@ -166,15 +168,16 @@ class BreathOfFuryTest extends BaseCardTest {
         Permanent aura = attachBreath(attacker);
 
         dealCombatDamage();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
-            harness.handlePermanentChosen(player1, otherCreature.getId());
-        }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker, aura);
         assertThat(aura.getAttachedTo()).isEqualTo(attacker.getId());
         assertThat(otherCreature.isTapped()).isTrue();
         assertThat(gd.additionalCombatPhasesOnly).isZero();
+
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, harness::passBothPriorities);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
     }
 
@@ -196,6 +199,12 @@ class BreathOfFuryTest extends BaseCardTest {
         return aura;
     }
 
+    /**
+     * Deals combat damage with the enchanted creature and resolves the Aura's trigger, leaving the game stopped at
+     * the end of combat step. Passing priority from there with no extra combat moves on to the postcombat main
+     * phase only when the random opening hand gives player1 something to do there, so tests that look past the
+     * end of combat must stop at the step they expect.
+     */
     private void dealCombatDamage() {
         gd.combatPhasesThisTurn = 1;
         gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_OF_COMBAT));
@@ -203,6 +212,5 @@ class BreathOfFuryTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
-        harness.passBothPriorities();
     }
 }
