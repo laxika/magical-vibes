@@ -547,37 +547,46 @@ public class AbilityActivationService {
         // pendingManaAbilityTriggers so they don't block sorcery-speed spell casting
         // when mana is being tapped to pay a cost.
         int stackBeforeTriggers = gameData.stack.size();
+        int pendingBeforeTriggers = gameData.pendingManaAbilityTriggers.size();
         boolean manaTypeChoicePending = isAwaitingOwnManaColorChoice(gameData, playerId);
-        if (!manaTypeChoicePending && gameQueryService.hasEffectiveSupertype(
-                gameData, permanent, CardSupertype.LEGENDARY)) {
-            for (ManaColor color : ManaColor.values()) {
-                int produced = Math.max(0, manaPool.get(color) - poolBefore.getOrDefault(color, 0));
-                manaPool.addLegendarySourceManaTag(color, produced);
+        // A trigger that chooses a mode or target is held unchosen until it goes on the stack (CR 603.3d).
+        gameData.manaAbilityActivationDepth++;
+        try {
+            if (!manaTypeChoicePending && gameQueryService.hasEffectiveSupertype(
+                    gameData, permanent, CardSupertype.LEGENDARY)) {
+                for (ManaColor color : ManaColor.values()) {
+                    int produced = Math.max(0, manaPool.get(color) - poolBefore.getOrDefault(color, 0));
+                    manaPool.addLegendarySourceManaTag(color, produced);
+                }
             }
+            if (isLandSource && !manaTypeChoicePending) {
+                gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(),
+                        newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals())));
+            }
+            if (isCreatureSource) {
+                gameData.rulesEvents.occur(new TapEvent.CreatureTappedForMana(playerId, permanent.getId()));
+            }
+            gameData.rulesEvents.occur(new TapEvent.SelfTappedForMana(permanent, playerId));
+            if (!manaTypeChoicePending) {
+                int manaProduced = manaPool.getTotalAllMana() - totalManaBefore;
+                gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.ManaAbilityResolved(permanent, playerId, manaProduced)));
+            }
+            gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
+                    manaTypeChoicePending, true));
+            gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
+                    manaTypeChoicePending, false));
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
+        } finally {
+            gameData.manaAbilityActivationDepth--;
         }
-        if (isLandSource && !manaTypeChoicePending) {
-            gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(),
-                    newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals())));
-        }
-        if (isCreatureSource) {
-            gameData.rulesEvents.occur(new TapEvent.CreatureTappedForMana(playerId, permanent.getId()));
-        }
-        gameData.rulesEvents.occur(new TapEvent.SelfTappedForMana(permanent, playerId));
-        if (!manaTypeChoicePending) {
-            int manaProduced = manaPool.getTotalAllMana() - totalManaBefore;
-            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.ManaAbilityResolved(permanent, playerId, manaProduced)));
-        }
-        gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
-                manaTypeChoicePending, true));
-        gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
-                manaTypeChoicePending, false));
-        gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
-        List<StackEntry> deferred = List.of();
+        List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
+                pendingBeforeTriggers, gameData.pendingManaAbilityTriggers.size()));
         if (gameData.stack.size() > stackBeforeTriggers) {
-            deferred = new ArrayList<>(
+            List<StackEntry> moved = new ArrayList<>(
                     gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
             gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
-            gameData.pendingManaAbilityTriggers.addAll(deferred);
+            gameData.pendingManaAbilityTriggers.addAll(moved);
+            deferred.addAll(moved);
         }
 
         if (manaTypeChoicePending) {
@@ -961,8 +970,13 @@ public class AbilityActivationService {
         log.info("Game {} - {} taps foreign land {} for mana", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         int stackBeforeTriggers = gameData.stack.size();
-        gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(),
-                newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals())));
+        gameData.manaAbilityActivationDepth++;
+        try {
+            gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(),
+                    newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals())));
+        } finally {
+            gameData.manaAbilityActivationDepth--;
+        }
         if (gameData.stack.size() > stackBeforeTriggers) {
             List<StackEntry> deferred = new ArrayList<>(
                     gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));

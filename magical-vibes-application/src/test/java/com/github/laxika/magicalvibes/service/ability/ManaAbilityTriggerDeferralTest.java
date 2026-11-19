@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
+import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheVault;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeadenMyr;
@@ -507,11 +508,32 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             // Sorcery-speed cast on the same priority window must succeed.
             harness.castSorcery(player2, 0, 0);
 
+            // Sanguine Bond's target opponent is chosen as it goes on the stack (CR 603.3d), above Divination.
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player2, player1.getId());
+
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Sanguine Bond");
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player1.getId());
+        }
+
+        @Test
+        @DisplayName("Sanguine Bond's target is not chosen while the mana is being produced")
+        void sanguineBondTargetWaitsForTheStack() {
+            setupTalismanAndSanguineBond(player2);
+            harness.setHand(player2, List.of(new Divination()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            armWithInstantResponse(player1);
+
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().isHeldForManaAbility()).isTrue();
         }
 
         @Test
@@ -527,6 +549,9 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.passPriority(player2);
 
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player2, player1.getId());
+
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Sanguine Bond");
@@ -566,6 +591,42 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.castCreature(player2, 0);
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        }
+    }
+
+    @Nested
+    @DisplayName("CR 603.3d: a targeted trigger of a mana ability's cost chooses its target on the stack")
+    class TargetedTriggerFromManaAbilityCost {
+
+        @Test
+        @DisplayName("Disciple of the Vault's target waits while the sacrificed Shrine's mana pays for a sorcery")
+        void discipleTargetWaitsForTheSorcery() {
+            setupShrineScenario(2);
+            harness.addToBattlefield(player2, new DiscipleOfTheVault());
+            harness.setHand(player2, List.of(new Divination())); // {2}{U}
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            armWithInstantResponse(player1);
+
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingManaAbilityTriggers)
+                    .anyMatch(entry -> entry.getCard().getName().equals("Disciple of the Vault")
+                            && entry.isHeldForManaAbility());
+
+            harness.castSorcery(player2, 0, 0);
+
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player2, player1.getId());
+
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
+            assertThat(gd.stack)
+                    .filteredOn(entry -> entry.getCard().getName().equals("Disciple of the Vault"))
+                    .singleElement()
+                    .satisfies(entry -> assertThat(entry.getTargetId()).isEqualTo(player1.getId()));
         }
     }
 }

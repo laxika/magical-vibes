@@ -656,6 +656,32 @@ public class ActivatedAbilityExecutionService {
                         activatedAbilityExiledCardIds == null ? null : List.copyOf(activatedAbilityExiledCardIds)))) {
             return;
         }
+        // A mana ability's triggers (of its costs, its mana, its tap) are held unchosen until they go on the stack
+        // (CR 603.3, 603.3d).
+        boolean manaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
+        if (manaAbility) {
+            gameData.manaAbilityActivationDepth++;
+        }
+        try {
+            payCostsAndActivate(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetId,
+                    targetZone, markAsNonTargetingForSacCreatureCost, targetIds, damageAssignments,
+                    chosenCostPermanentIds, sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot,
+                    activatedAbilityExiledCardIds);
+        } finally {
+            if (manaAbility) {
+                gameData.manaAbilityActivationDepth--;
+            }
+        }
+    }
+
+    private void payCostsAndActivate(GameData gameData, Player player, Permanent permanent, ActivatedAbility ability,
+                                     List<CardEffect> abilityEffects, int effectiveXValue, UUID targetId,
+                                     Zone targetZone, boolean markAsNonTargetingForSacCreatureCost,
+                                     List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                     List<UUID> chosenCostPermanentIds, List<UUID> sacrificedCardIds,
+                                     Card discardedCardSnapshot, Card exiledCostCardSnapshot,
+                                     List<UUID> activatedAbilityExiledCardIds) {
+        int pendingTriggersBeforeActivation = gameData.pendingManaAbilityTriggers.size();
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -1039,7 +1065,8 @@ public class ActivatedAbilityExecutionService {
             java.util.EnumMap<ManaColor, Integer> creatureManaBefore =
                     revertable ? AbilityActivationService.snapshotCreatureManaColors(pool) : null;
             java.util.EnumMap<ManaColor, Integer> regularManaBefore = AbilityActivationService.snapshotPoolColors(pool);
-            int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
+            // Every trigger of this activation that waits in the queue, held as it triggered or moved there below.
+            int pendingTriggersBefore = pendingTriggersBeforeActivation;
 
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue,
                     ability.isRequiresTap());
@@ -1167,9 +1194,12 @@ public class ActivatedAbilityExecutionService {
         gameData.stack.addAll(deferredCostTriggers);
         // Flush any deferred mana-ability triggers (e.g. from mana abilities activated
         // earlier to pay for this ability) — they go on top per CR 603.3.
+        boolean heldManaAbilityTriggers = gameData.pendingManaAbilityTriggers.stream()
+                .anyMatch(StackEntry::isHeldForManaAbility);
         if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
-            gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+            List<StackEntry> deferred = List.copyOf(gameData.pendingManaAbilityTriggers);
             gameData.pendingManaAbilityTriggers.clear();
+            gameData.putManaAbilityTriggersOnStack(deferred);
         }
 
         // A targeted trigger queued by this activation's sacrifice costs (e.g. Furnace Celebration) chooses its
@@ -1182,6 +1212,10 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+        }
+        // Likewise a held mana-ability trigger that chooses its target as it goes on the stack (Sanguine Bond).
+        if (heldManaAbilityTriggers) {
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         }
         // Likewise an activation trigger that targets a permanent (Vazi, Keen Negotiator).
         if (!gameData.pendingMayAbilities.isEmpty()) {

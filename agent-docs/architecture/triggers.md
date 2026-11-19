@@ -457,6 +457,15 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   `GameData.pendingManaAbilityTriggers`, `awaitingProducedManaColor`), then resolves or goes through `putHeld`
   (`putResolvedProducedManaTrigger`); a targeted one (C.A.M.P.) carries its filter and colors
   (`SpellTargetTriggerAnyTarget.withProducedManaColors`).
+- An ability that triggers while a mana ability is activated or resolves (`manaAbilityActivationDepth`, set around
+  `ActivatedAbilityExecutionService.completeActivationAfterCosts` of a mana ability, the direct tap path and Piracy's
+  foreign tap; `manaAbilityResolutionDepth`) is held unchosen in `pendingManaAbilityTriggers`
+  (`StackEntry.heldForManaAbility`): Sanguine Bond on Pristine Talisman's life gain, Disciple of the Vault on an
+  artifact sacrificed for mana. No prompt opens while mana is paid for a spell (CR 601.2g, 605.3a). Every flush site
+  hands the queue to `GameData.putManaAbilityTriggersOnStack`: a held entry goes through the game's held-trigger door
+  (`RulesEventPipeline.putHeld` → `putHeld`, set at setup), which chooses its mode and targets as it goes on the
+  stack (CR 603.3, 603.3c, 603.3d); any other goes on as it is. The undo window (`revertableManaActivations`) tracks
+  an activation's held entries by the queue's growth.
 - `LifeEvent` (CR 119.3, 119.4, 119.9); paying is a loss too (CR 119.4) and its own event; `LifeSupport` keeps life lost
   this turn and speed's inherent ability (CR 702.179d). `LifeTriggers` reads printed, granted (Field-Tested Frying Pan,
   Light of Promise, Sunbond), graveyard (Deathless Knight, Punishing Fire) and delayed (False Cure) abilities and
@@ -626,8 +635,8 @@ The door also stamps `TriggeredAbility.targetFilter()`, read by the target choic
   `StackResolutionService`, `InputCompletionService`, and `EtbTriggerService` after own enters abilities unless a
   legend rule violation is pending: state-based actions come first).
 
-Besides `put`: `trigger` / `triggerOnce` / `triggerPermanentChange`, `putManaAbility`, `holdForProducedMana` /
-`putHeld`, `putWithAnnouncedTargets`, `madeAbility` + `putMade` / `putDelayed`, `putInherent` (each in its section).
+Besides `put` (which holds what triggers while a mana ability is activated or resolves): `trigger` / `triggerOnce` /
+`triggerPermanentChange`, `putManaAbility`, `holdForProducedMana` / `putHeld`, `putWithAnnouncedTargets`, `madeAbility` + `putMade` / `putDelayed`, `putInherent` (each in its section).
 
 ### Only the door builds a triggered entry
 

@@ -498,6 +498,15 @@ public class RulesEventPipeline {
     }
 
     /**
+     * Puts {@code held}, a triggered ability held in {@link GameData#pendingManaAbilityTriggers} with its mode and
+     * targets unchosen, on the stack through {@link TriggeredAbilityStackService#putHeld}: the game's held-trigger
+     * door ({@link GameData#setHeldTriggerDoor}).
+     */
+    public void putHeld(GameData gameData, StackEntry held) {
+        stackService.putHeld(gameData, held);
+    }
+
+    /**
      * Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger.
      *
      * <p>The kinds whose detection only reads the board and hands abilities to the stack door (attack, block, spell,

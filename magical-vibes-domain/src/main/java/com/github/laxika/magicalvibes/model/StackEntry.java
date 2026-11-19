@@ -520,6 +520,13 @@ public class StackEntry {
      */
     @Setter private boolean awaitingProducedManaColor;
     /**
+     * Whether this triggered ability triggered while a mana ability resolved and waits in
+     * {@code GameData.pendingManaAbilityTriggers} with no mode or target chosen yet: those are chosen as it goes on
+     * the stack the next time a player would receive priority (CR 603.3, 603.3c, 603.3d), not while its trigger's
+     * mana is being produced, perhaps to pay for a spell.
+     */
+    @Setter private boolean heldForManaAbility;
+    /**
      * The players who said yes to the "each player may" choice of this resolution ("each opponent who discarded their
      * hand this way"), set by that choice before its follow-up resolves.
      */
@@ -1435,6 +1442,7 @@ public class StackEntry {
         this.recordLibraryGraveyardCount = source.recordLibraryGraveyardCount;
         this.onceEachTurnActionKey = source.onceEachTurnActionKey;
         this.awaitingProducedManaColor = source.awaitingProducedManaColor;
+        this.heldForManaAbility = source.heldForManaAbility;
         this.acceptedPlayerIds = source.acceptedPlayerIds;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;

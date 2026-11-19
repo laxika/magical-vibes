@@ -437,10 +437,12 @@ public class GameService {
 
             // CR 603.3: Flush triggers deferred from mana-ability activations.
             // They go on the stack now (the next time a player would receive priority)
-            // and both players must pass again before the top resolves.
+            // and both players must pass again before the top resolves. A target one of them
+            // chooses as it goes there is asked by the auto-pass below (CR 603.3d).
             if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
-                gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+                List<StackEntry> deferred = List.copyOf(gameData.pendingManaAbilityTriggers);
                 gameData.pendingManaAbilityTriggers.clear();
+                gameData.putManaAbilityTriggersOnStack(deferred);
                 gameData.priorityPassedBy.clear();
             }
 
@@ -2445,9 +2447,8 @@ public class GameService {
             return;
         }
         stateBasedActionService.performStateBasedActions(gameData);
-        gameData.stack.addAll(ready);
         gameData.pendingManaAbilityTriggers.removeIf(entry -> !held.contains(entry));
-        gameData.priorityPassedBy.clear();
+        putManaAbilityTriggersOnStack(gameData, ready);
     }
 
     /**
@@ -2464,9 +2465,22 @@ public class GameService {
             return;
         }
         stateBasedActionService.performStateBasedActions(gameData);
-        gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+        List<StackEntry> deferred = List.copyOf(gameData.pendingManaAbilityTriggers);
         gameData.pendingManaAbilityTriggers.clear();
+        putManaAbilityTriggersOnStack(gameData, deferred);
+    }
+
+    /**
+     * Puts {@code deferred}, triggers taken out of the mana-ability queue, on the stack as the activating player
+     * receives priority (CR 117.3c, 603.3), and begins the choice of a held one's target as it goes there (CR 603.3d).
+     */
+    private void putManaAbilityTriggersOnStack(GameData gameData, List<StackEntry> deferred) {
+        boolean anyHeld = deferred.stream().anyMatch(StackEntry::isHeldForManaAbility);
+        gameData.putManaAbilityTriggersOnStack(deferred);
         gameData.priorityPassedBy.clear();
+        if (anyHeld) {
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
+        }
     }
 
     public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {

@@ -133,6 +133,12 @@ public class GameData {
     /** The engine's trigger pipeline, handed every rules event batch as it closes; set at game setup. */
     private transient volatile BiConsumer<GameData, RulesEventBatch> rulesEventListener;
     /**
+     * The engine's stack door for a triggered ability held in {@link #pendingManaAbilityTriggers} with its mode and
+     * targets unchosen ({@link StackEntry#isHeldForManaAbility()}): it chooses them as the ability goes on the stack
+     * (CR 603.3c, 603.3d). Set at game setup.
+     */
+    private transient volatile BiConsumer<GameData, StackEntry> heldTriggerDoor;
+    /**
      * The record of a trigger event on its way to the triggered ability it belongs to: the entry the ability's
      * collector builds for an ability that chooses nothing ({@link #handOffTriggerRecord}), taken once by whatever
      * the ability goes through next. A choice queued ({@link #queueInteraction}) or asked
@@ -723,6 +729,13 @@ public class GameData {
      *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the
      *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
     public int manaAbilityResolutionDepth;
+    /** CR 603.3 / 603.3d — depth counter for a mana ability being activated: its costs paid, its mana produced and
+     *  its source tapped for mana. While it or {@link #manaAbilityResolutionDepth} is > 0, the engine's trigger
+     *  door holds a triggered ability in {@link #pendingManaAbilityTriggers} with its mode and targets unchosen
+     *  ({@link StackEntry#isHeldForManaAbility()}), so no choice for it is asked while the mana is paid for a
+     *  spell; unlike the resolution depth, it doesn't reroute abilities that already made their choices.
+     *  Incremented/decremented in a try/finally pair around the activation. */
+    public int manaAbilityActivationDepth;
     private int activeTriggeredAbilityCopies = 1;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>() {
         @Override public List<Card> put(UUID id, List<Card> cards) {
@@ -7970,6 +7983,33 @@ public class GameData {
         }
     }
 
+    /** Sets the engine's stack door for the triggered abilities held while a mana ability resolved. */
+    public void setHeldTriggerDoor(BiConsumer<GameData, StackEntry> heldTriggerDoor) {
+        this.heldTriggerDoor = heldTriggerDoor;
+    }
+
+    /**
+     * Puts {@code entries}, triggered abilities taken out of {@link #pendingManaAbilityTriggers}, on the stack in
+     * order, the next time a player would receive priority (CR 603.3). One held as it triggered while a mana ability
+     * resolved goes through the held-trigger door, which chooses its mode and targets as it goes there and removes it
+     * with no legal choice (CR 603.3c, 603.3d); a choice it needs is queued, and the ability reaches the stack once
+     * it is answered. Any other ability chose what it needed as it triggered and goes on the stack as it is.
+     */
+    public void putManaAbilityTriggersOnStack(List<StackEntry> entries) {
+        for (StackEntry entry : List.copyOf(entries)) {
+            if (!entry.isHeldForManaAbility()) {
+                stack.add(entry);
+                continue;
+            }
+            BiConsumer<GameData, StackEntry> door = heldTriggerDoor;
+            if (door == null) {
+                throw new IllegalStateException("No held-trigger door to put " + entry.getDescription()
+                        + " on the stack");
+            }
+            door.accept(this, entry);
+        }
+    }
+
     /** Sets the engine's trigger pipeline, which matches every rules event batch as it closes. */
     public void setRulesEventListener(BiConsumer<GameData, RulesEventBatch> rulesEventListener) {
         this.rulesEventListener = rulesEventListener;
@@ -9611,6 +9651,7 @@ public class GameData {
         copy.subgameCards.putAll(subgameCards);
         suspendedZoneTriggers.forEach(entry -> copy.suspendedZoneTriggers.add(new StackEntry(entry)));
         copy.rulesEventListener = this.rulesEventListener;
+        copy.heldTriggerDoor = this.heldTriggerDoor;
 
         // --- Primitives, enums, UUIDs, Strings ---
         copy.status = this.status;
@@ -11106,6 +11147,7 @@ public class GameData {
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.playersWhoInvestigatedThisTurn.addAll(this.playersWhoInvestigatedThisTurn);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
+        copy.manaAbilityActivationDepth = this.manaAbilityActivationDepth;
         copy.activeTriggeredAbilityCopies = this.activeTriggeredAbilityCopies;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));

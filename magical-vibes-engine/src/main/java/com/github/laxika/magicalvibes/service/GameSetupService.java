@@ -118,6 +118,7 @@ public class GameSetupService {
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.setRulesEventListener(rulesEventPipeline::process);
+        gameData.setHeldTriggerDoor(rulesEventPipeline::putHeld);
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
             gameData.format = format;
@@ -309,6 +310,7 @@ public class GameSetupService {
     /** Initializes pregame play from transferred libraries rather than submitted decks. */
     public void initializeSubgame(GameData game, java.util.Map<UUID, List<Card>> decks) {
         game.setRulesEventListener(rulesEventPipeline::process);
+        game.setHeldTriggerDoor(rulesEventPipeline::putHeld);
         for (UUID player : game.orderedPlayerIds) {
             List<Card> deck = new ArrayList<>(decks.get(player));
             deck.forEach(card -> game.subgameCards.put(card.getId(), card));

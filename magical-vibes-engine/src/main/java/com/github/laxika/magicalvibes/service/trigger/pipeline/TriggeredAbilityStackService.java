@@ -367,6 +367,10 @@ public class TriggeredAbilityStackService extends StackDoor {
      */
     public boolean put(GameData gameData, TriggeredAbilityRequest request) {
         return put(gameData, request, (effects, copies, randomMode) -> {
+            if (gameData.manaAbilityResolutionDepth > 0 || gameData.manaAbilityActivationDepth > 0) {
+                holdForManaAbility(gameData, request, effects, copies);
+                return;
+            }
             int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
             try {
                 gameData.routeTriggeredAbility(() -> route(gameData, request, effects, randomMode));
@@ -374,6 +378,22 @@ public class TriggeredAbilityStackService extends StackDoor {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
         });
+    }
+
+    /**
+     * Holds an ability that triggered while a mana ability was activated or resolved (Sanguine Bond, triggered by
+     * Pristine Talisman's life gain; Disciple of the Vault, by an artifact sacrificed for mana): it goes on the stack the next time a player would receive priority (CR 603.3), which for a mana
+     * ability activated to pay a cost is after the spell or ability is put on the stack (CR 601.2g, 605.3a). Its mode
+     * and targets are chosen then, as it goes there (CR 603.3c, 603.3d), so each entry, its record stamped, waits
+     * unchosen in {@link GameData#pendingManaAbilityTriggers} for {@link #putHeld}.
+     */
+    private static void holdForManaAbility(GameData gameData, TriggeredAbilityRequest request,
+                                           List<CardEffect> effects, int copies) {
+        for (int copy = 0; copy < copies; copy++) {
+            StackEntry entry = abilityEntry(request, effects);
+            entry.setHeldForManaAbility(true);
+            gameData.pendingManaAbilityTriggers.add(entry);
+        }
     }
 
     /**
@@ -418,15 +438,16 @@ public class TriggeredAbilityStackService extends StackDoor {
     }
 
     /**
-     * Puts {@code held}, an ability {@link #holdForProducedMana} held until the tapped permanent's mana choice
-     * completed its record, on the stack: its mode and targets are chosen as it goes there (CR 603.3c, 603.3d), and
-     * with no legal choice it is removed.
+     * Puts {@code held} on the stack: an ability {@link #holdForProducedMana} held until the tapped permanent's mana
+     * choice completed its record, or one held because it triggered while a mana ability resolved. Its mode and
+     * targets are chosen as it goes there (CR 603.3c, 603.3d), and with no legal choice it is removed.
      */
     public void putHeld(GameData gameData, StackEntry held) {
-        if (!held.isAwaitingProducedManaColor()) {
-            throw new IllegalArgumentException("Not held for its produced mana: " + held.getDescription());
+        if (!held.isAwaitingProducedManaColor() && !held.isHeldForManaAbility()) {
+            throw new IllegalArgumentException("Not a held triggered ability: " + held.getDescription());
         }
         held.setAwaitingProducedManaColor(false);
+        held.setHeldForManaAbility(false);
         Permanent source = held.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, held.getSourcePermanentId());
         gameData.routeTriggeredAbility(() -> routeEntry(gameData, held, held.getEffectsToResolve(),

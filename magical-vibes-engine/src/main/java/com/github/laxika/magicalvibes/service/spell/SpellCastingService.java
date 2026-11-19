@@ -18656,9 +18656,11 @@ public class SpellCastingService {
         }
         // CR 603.3: Flush triggers deferred from mana abilities activated to pay for this spell.
         // They go on top of the spell (and spell-cast triggers) so they resolve first.
+        // A held one chooses its target now, as it goes there (CR 603.3d), through the auto-pass below.
         if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
-            gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+            List<StackEntry> deferred = List.copyOf(gameData.pendingManaAbilityTriggers);
             gameData.pendingManaAbilityTriggers.clear();
+            gameData.putManaAbilityTriggersOnStack(deferred);
         }
         stateBasedActionService.performStateBasedActions(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);

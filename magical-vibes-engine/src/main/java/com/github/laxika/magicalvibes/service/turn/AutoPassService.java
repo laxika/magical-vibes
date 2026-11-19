@@ -282,13 +282,21 @@ public class AutoPassService {
 
             // Passing closes the cancel-casting undo window, so triggers still held for it go on
             // the stack first, as an explicit pass would put them there.
-            if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
+            boolean flushedTriggers = !gameData.pendingManaAbilityTriggers.isEmpty();
+            if (flushedTriggers) {
                 gameData.revertableManaActivations.clear();
-                gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+                List<StackEntry> deferred = List.copyOf(gameData.pendingManaAbilityTriggers);
                 gameData.pendingManaAbilityTriggers.clear();
+                gameData.putManaAbilityTriggersOnStack(deferred);
                 gameData.priorityPassedBy.clear();
             }
             gameData.priorityPassedBy.add(priorityHolder);
+            if (flushedTriggers && !gameData.pendingInteractions.isEmpty()) {
+                // A held trigger chooses its target as it goes on the stack (CR 603.3d), before the next player
+                // receives priority: start over, which asks it.
+                resolveAutoPass(gameData, advanceStep);
+                return;
+            }
 
             // CR 117.4: the step ends only once every player has passed in succession.
             if (gameData.priorityPassedBy.size() >= gameData.orderedPlayerIds.size()) {
@@ -326,8 +334,8 @@ public class AutoPassService {
         if (ready.isEmpty()) {
             return;
         }
-        gameData.stack.addAll(ready);
         gameData.pendingManaAbilityTriggers.removeIf(entry -> !held.contains(entry));
+        gameData.putManaAbilityTriggersOnStack(ready);
         gameData.priorityPassedBy.clear();
     }
 
