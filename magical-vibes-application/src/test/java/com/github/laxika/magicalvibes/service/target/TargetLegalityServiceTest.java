@@ -113,6 +113,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class TargetLegalityServiceTest {
     @Test
+    @DisplayName("A player life comparison is checked again when the trigger resolves")
     void playerLifeComparisonIsRecheckedWhenATriggerResolves() {
         Card source = new Card();
         source.setName("Life comparison");
@@ -133,6 +134,7 @@ class TargetLegalityServiceTest {
     }
 
     @Test
+    @DisplayName("Player protection is checked against every color of the source")
     void playerProtectionChecksEverySourceColor() {
         Card source = new Card();
         when(gameQueryService.getEffectiveCardColors(gd, source))
@@ -222,6 +224,7 @@ class TargetLegalityServiceTest {
                 .thenAnswer(invocation -> invocation.<Card>getArgument(1).getToughness());
         lenient().when(gameQueryService.withQueryScope(any(), any()))
                 .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
+        lenient().when(gameQueryService.findStackEntryByCardId(any(), any())).thenCallRealMethod();
     }
 
     private static Set<CardColor> effectiveColors(Card card) {
@@ -401,7 +404,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1Id))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a spell on the stack");
         }
@@ -416,7 +419,7 @@ class TargetLegalityServiceTest {
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
                     new StackEntryHasTargetPredicate(), "error");
 
-            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
+            sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), filter, player1Id);
         }
 
         @Test
@@ -456,7 +459,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = TestStackDoor.triggered(source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1Id))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a spell on the stack");
         }
@@ -474,7 +477,7 @@ class TargetLegalityServiceTest {
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.TRIGGERED_ABILITY))
                     )), "error");
 
-            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
+            sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), filter, player1Id);
         }
 
         @Test
@@ -489,7 +492,7 @@ class TargetLegalityServiceTest {
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
                     new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate()), "error");
 
-            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
+            sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), filter, player1Id);
         }
 
         @Test
@@ -521,7 +524,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
-            sut.validateSpellTargetOnStack(gd, source.getId(), counterOpponentAbilityFilter(), player1Id);
+            sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), counterOpponentAbilityFilter(), player1Id);
         }
 
         @Test
@@ -531,7 +534,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player1Id, "test", List.of());
             gd.stack.add(entry);
 
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), counterOpponentAbilityFilter(), player1Id))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, entry.getTargetableId(), counterOpponentAbilityFilter(), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be an activated or triggered ability you don't control.");
         }
@@ -638,7 +641,7 @@ class TargetLegalityServiceTest {
         void throwsWhenTargetCantBeTargetedBySpellColor() {
             Permanent target = addPermanent(player2Id, createCreature("Strider", CardColor.GREEN));
             Card spell = createTargetingSpell("Blue Bolt", CardColor.BLUE);
-            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySourceColor(gd, target, CardColor.BLUE, player1Id, true)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -1586,7 +1589,7 @@ class TargetLegalityServiceTest {
             spell.setColor(CardColor.BLUE);
             Permanent target = addPermanent(player2Id, createCreature("Strider", CardColor.GREEN));
             when(gameQueryService.isCreature(gd, target)).thenReturn(true);
-            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySourceColor(gd, target, CardColor.BLUE, player1Id, true)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
@@ -1929,6 +1932,7 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("A bare spell-target group stays legal beside a permanent-target group, each keeping its own target")
         void bareStackTargetGroupRemainsLegalAlongsidePermanentTarget() {
             Card targetSpell = createTargetingSpell("Target instant", CardColor.BLUE);
             StackEntry targetEntry = new StackEntry(StackEntryType.INSTANT_SPELL, targetSpell,
@@ -1954,8 +1958,9 @@ class TargetLegalityServiceTest {
         void generatedTriggerRetainsAbilityTarget() {
             for (StackEntryType type : List.of(StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)) {
                 Card source = createCreature("Ability source", CardColor.BLUE);
-                StackEntry target = new StackEntry(type, source, player2Id, "Ability",
-                        List.of(), null, Zone.STACK);
+                StackEntry target = type == StackEntryType.TRIGGERED_ABILITY
+                        ? TestStackDoor.triggered(source, player2Id, "Ability", List.of(), null, Zone.STACK)
+                        : new StackEntry(type, source, player2Id, "Ability", List.of(), null, Zone.STACK);
                 gd.stack.add(target);
                 StackEntry trigger = TestStackDoor.triggered(new Card(), player1Id,
                         "Counter trigger", List.of(), target.getTargetableId(), Zone.STACK);
@@ -2108,6 +2113,7 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("Effect target validation at resolution keeps the defending player of the attack")
         void effectValidationRetainsDefendingPlayerAtResolution() {
             Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));
             Card source = createCreature("Source", CardColor.GREEN);
@@ -2172,6 +2178,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Exile",
                     List.of(), List.of(cardInGY.getId(), UUID.randomUUID()));
             when(gameQueryService.findCardInGraveyardById(gd, cardInGY.getId())).thenReturn(cardInGY);
+            when(gameQueryService.canGraveyardCardsBeTargeted(gd)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -2499,6 +2506,7 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("Mana value equal to the source's counters counts every X symbol")
         void sourceCounterPredicateCountsEveryXSymbol() {
             Permanent source = addPermanent(player1Id, createCreature("Source", CardColor.GREEN));
             source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 4);
@@ -3018,6 +3026,7 @@ class TargetLegalityServiceTest {
     }
 
     @Test
+    @DisplayName("Chosen-by-source predicate matches only the players the source chose")
     void chosenBySourcePredicateMatchesOnlyThePlayersTheSourceChose() {
         Permanent source = new Permanent(new Card());
         source.getRememberedTargetPlayerIds().add(player2Id);
@@ -3031,6 +3040,7 @@ class TargetLegalityServiceTest {
     }
 
     @Test
+    @DisplayName("Other-than-source-owner predicate excludes the owner but allows a non-owner controller")
     void sourceOwnerPredicateExcludesOwnerButAllowsNonOwnerController() {
         Card sourceCard = new Card();
         sourceCard.setOwnerId(player1Id);

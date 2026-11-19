@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
-import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -63,6 +62,11 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureSnapshot;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
@@ -80,6 +84,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.Set;
 import java.util.UUID;
 
@@ -122,6 +128,8 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService landManaReplacementService;
     @Mock private DrawService drawService;
     @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private DepartureService departureService;
+    @Mock private ManaSourceColorSupport manaSourceColorSupport;
     @Mock private SpellEvents spellEvents;
     @Mock private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private TargetTriggers targetTriggers;
@@ -147,6 +155,8 @@ class ActivatedAbilityExecutionServiceTest {
     private Player player2;
     private UUID player1Id;
     private UUID player2Id;
+    /** Runs for each permanent the mocked departure removes, standing in for the triggers its event fires. */
+    private Consumer<Permanent> onDeparture;
 
     @Test
     void restrictedManaBatchRequestsOneColorForTheEntireAmount() {
@@ -205,6 +215,28 @@ class ActivatedAbilityExecutionServiceTest {
                 .thenReturn(1);
         // DamageSupport is a lazy field-injected collaborator, which @InjectMocks skips.
         org.springframework.test.util.ReflectionTestUtils.setField(service, "damageSupport", damageSupport);
+
+        // Sacrifices are one departure event: the mock removes each departing permanent from its
+        // battlefield and reports it to the caller's hooks, as DepartureService does.
+        onDeparture = permanent -> { };
+        lenient().when(departureService.departNow(any(), any(), any())).thenAnswer(inv -> {
+            DepartureBatch batch = inv.getArgument(1);
+            DepartureService.Hooks hooks = inv.getArgument(2);
+            hooks.beforePerform().run();
+            for (DepartureIntent intent : batch.intents()) {
+                for (var entry : gameData.playerBattlefields.entrySet()) {
+                    Permanent departing = entry.getValue().stream()
+                            .filter(p -> p.getId().equals(intent.permanentId())).findFirst().orElse(null);
+                    if (departing != null) {
+                        entry.getValue().remove(departing);
+                        onDeparture.accept(departing);
+                        hooks.afterEach().departed(intent, departing,
+                                new DepartureSnapshot(departing, entry.getKey(), false, Map.of(), List.of()), true);
+                    }
+                }
+            }
+            return new DepartureService.Outcome.Done(List.of(), Set.of());
+        });
     }
 
     // =========================================================================
@@ -294,21 +326,28 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Test Rider Creature", CardType.CREATURE);
             Permanent perm = addReadyPermanent(player1Id, card);
             DealDamageToPlayersEffect rider = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), rider);
+            var reflexive = new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(rider);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), reflexive);
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}: Add {R}. When you do, this creature deals 1 damage to each opponent.");
             stubIsCreature(perm, true);
+            var triggeredAbilityStackService = org.mockito.Mockito.mock(
+                    com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService.class);
+            var riderHandler = new com.github.laxika.magicalvibes.service.effect.manafx.ReflexiveManaAbilityRiderEffectHandler(
+                    triggeredAbilityStackService);
+            when(manaAbilityEffectHandlerRegistry.getHandler(any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == reflexive ? riderHandler : null);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.RED)).isEqualTo(1);
             assertThat(gameData.stack).isEmpty();
-            assertThat(gameData.pendingManaAbilityTriggers).singleElement().satisfies(trigger -> {
-                assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-                assertThat(trigger.getControllerId()).isEqualTo(player1Id);
-                assertThat(trigger.getSourcePermanentId()).isEqualTo(perm.getId());
-                assertThat(trigger.getEffectsToResolve()).containsExactly(rider);
-            });
+            var made = org.mockito.ArgumentCaptor.forClass(StackEntry.class);
+            verify(triggeredAbilityStackService).putMade(eq(gameData), made.capture());
+            assertThat(made.getValue().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(made.getValue().getControllerId()).isEqualTo(player1Id);
+            assertThat(made.getValue().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(made.getValue().getEffectsToResolve()).containsExactly(rider);
             verify(damageSupport, never()).dealDamageToPlayer(any(), any(), any(), anyInt());
         }
 
@@ -972,7 +1011,7 @@ class ActivatedAbilityExecutionServiceTest {
                     .filter(e -> e instanceof DealDamageToTargetCreatureEffect)
                     .map(e -> (DealDamageToTargetCreatureEffect) e)
                     .findFirst().orElseThrow();
-            assertThat(snapshot.damage()).isEqualTo(new CountersOnLinkedPermanent(CounterType.ARROW, aura.getId()));
+            assertThat(snapshot.damage()).isEqualTo(new CountersOnGrantingPermanent(CounterType.ARROW, aura.getId()));
         }
 
         @Test
@@ -994,7 +1033,7 @@ class ActivatedAbilityExecutionServiceTest {
                     .filter(e -> e instanceof DealDamageToAnyTargetEffect)
                     .map(e -> (DealDamageToAnyTargetEffect) e)
                     .findFirst().orElseThrow();
-            assertThat(snapshot.damage()).isEqualTo(new CountersOnLinkedPermanent(CounterType.ARROW, aura.getId()));
+            assertThat(snapshot.damage()).isEqualTo(new CountersOnGrantingPermanent(CounterType.ARROW, aura.getId()));
         }
     }
 
@@ -1017,7 +1056,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            verifySacrificed(perm);
         }
 
         @Test
@@ -1051,8 +1090,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(eq(gameData),
-                    argThat(p -> p.getCard().getName().equals("Neurok Replica")));
+            verifySacrificed(perm);
         }
 
         @Test
@@ -1108,7 +1146,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             verify(permanentRemovalService).removePermanentToExile(gameData, perm, null);
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(departureService, never()).departNow(any(), any(), any());
         }
 
         @Test
@@ -1143,7 +1181,9 @@ class ActivatedAbilityExecutionServiceTest {
             List<CardEffect> effects = List.of(new ExileSourceEquipmentCost(), new DrawCardEffect(1));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects,
                     "Exile the granting Equipment: draw a card").withGrantSource(equipment.getId());
-            when(gameQueryService.findPermanentById(gameData, equipment.getId())).thenReturn(equipment);
+            when(gameQueryService.findPermanentById(eq(gameData), any(UUID.class))).thenAnswer(inv ->
+                    gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                            .filter(p -> p.getId().equals(inv.getArgument(1))).findFirst().orElse(null));
 
             service.completeActivationAfterCosts(gameData, player1, creature, ability, effects,
                     0, null, null, false);
@@ -1193,12 +1233,11 @@ class ActivatedAbilityExecutionServiceTest {
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
             // Simulate death trigger being added during sacrifice
-            doAnswer(inv -> {
+            onDeparture = departed -> {
                 StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
-                return null;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            };
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
@@ -1216,12 +1255,11 @@ class ActivatedAbilityExecutionServiceTest {
                 new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
-            doAnswer(inv -> {
+            onDeparture = departed -> {
                 StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
-                return null;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            };
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
@@ -1239,12 +1277,11 @@ class ActivatedAbilityExecutionServiceTest {
                 new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
-            doAnswer(inv -> {
+            onDeparture = departed -> {
                 StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
-                return null;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            };
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
@@ -1262,12 +1299,11 @@ class ActivatedAbilityExecutionServiceTest {
 
             stubIsCreature(perm, false);
 
-            doAnswer(inv -> {
+            onDeparture = departed -> {
                 StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
-                return null;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            };
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1322,7 +1358,7 @@ class ActivatedAbilityExecutionServiceTest {
             Permanent snapshot = gameData.stack.getFirst().getSourcePermanentSnapshot();
             assertThat(snapshot).isNotSameAs(perm);
             assertThat(snapshot.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            verifySacrificed(perm);
         }
 
         @Test
@@ -1492,12 +1528,14 @@ class ActivatedAbilityExecutionServiceTest {
         void sacrificeCreatureCostDoesNotSetNonTargeting() {
             Card card = createCreature("Test Hopper");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new BoostSelfEffect(2, 2));
-            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sacrifice a creature: +2/+2");
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(ReturnToHandEffect.target());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Sacrifice a creature: Return target creature to its owner's hand.");
 
             // With the permanent-choice handler flow, completeActivationAfterCosts
             // is called with markAsNonTargetingForSacCreatureCost=false
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().isNonTargeting()).isFalse();
@@ -1523,11 +1561,10 @@ class ActivatedAbilityExecutionServiceTest {
 
             stubIsCreature(perm, false);
 
-            // Simulate a death trigger being pushed onto the stack by sacrificePermanentToGraveyard
-            doAnswer(inv -> {
+            // Simulate a death trigger being pushed onto the stack by the sacrifice
+            onDeparture = departed -> {
                 gameData.stack.add(TestStackDoor.triggered(new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect())));
-                return true;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            };
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1548,7 +1585,6 @@ class ActivatedAbilityExecutionServiceTest {
                     "{T}, Sacrifice: Add {C}.");
 
             stubIsCreature(perm, false);
-            when(permanentRemovalService.sacrificePermanentToGraveyard(gameData, perm)).thenReturn(true);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1570,10 +1606,9 @@ class ActivatedAbilityExecutionServiceTest {
             // Pre-set priority state
             gameData.priorityPassedBy.add(player2Id);
 
-            doAnswer(inv -> {
+            onDeparture = departed -> {
                 gameData.stack.add(TestStackDoor.triggered(new Card(), player2Id, "trigger", List.of()));
-                return true;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
+            };
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1653,6 +1688,12 @@ class ActivatedAbilityExecutionServiceTest {
         card.setPower(2);
         card.setToughness(2);
         return card;
+    }
+
+    /** Verifies the activation sacrificed {@code perm} through a departure batch. */
+    private void verifySacrificed(Permanent perm) {
+        verify(departureService).departNow(eq(gameData), argThat(batch -> batch.intents().stream()
+                .anyMatch(intent -> intent.equals(DepartureIntent.sacrifice(perm.getId())))), any());
     }
 
     private void stubIsCreature(Permanent perm, boolean value) {

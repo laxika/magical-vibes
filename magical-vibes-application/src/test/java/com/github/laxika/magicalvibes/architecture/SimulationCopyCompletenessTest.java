@@ -41,24 +41,46 @@ class SimulationCopyCompletenessTest {
      * Fields {@code simulationCopy()} intentionally does not carry. Each entry needs a reason;
      * an entry without one is a bug being hidden rather than a decision being recorded.
      */
-    private static final Map<String, String> DELIBERATELY_NOT_COPIED = Map.of(
-            "createdAt",
-            "Creation metadata; final and assigned by the constructor the copy already calls.",
-            "layeredBoardCache",
-            "A simulation copy must start with a cold CR 613 board cache so a simulated board can "
-                    + "never be served for the real game or vice versa (documented on the field).",
-            "revertableManaActivations",
-            "The MTGO-style cancel-casting window belongs to a human client mid-payment. Nothing in "
-                    + "simulation reads it, and copying it aliased live-game StackEntry objects into "
-                    + "the copy — which could not even work there, since simulationCopy deep-copies "
-                    + "pendingManaAbilityTriggers into new instances and StackEntry uses identity "
-                    + "equality, so the copied entries' removeAll would match nothing.",
-            "pendingRevertableManaActivation",
-            "Scratch state spanning a single colour prompt, for the same cancel-casting window as "
-                    + "revertableManaActivations above; a simulation copy must start with none owed.",
-            "rulesObserver",
-            "The test fixtures' rules event recorder watches the real game only; a simulation copy recording into "
-                    + "it would mix the AI's imagined triggers and rules events into the test's.");
+    private static final Map<String, String> DELIBERATELY_NOT_COPIED = Map.ofEntries(
+            Map.entry("createdAt",
+                    "Creation metadata; final and assigned by the constructor the copy already calls."),
+            Map.entry("layeredBoardCache",
+                    "A simulation copy must start with a cold CR 613 board cache so a simulated board can "
+                            + "never be served for the real game or vice versa (documented on the field)."),
+            Map.entry("revertableManaActivations",
+                    "The MTGO-style cancel-casting window belongs to a human client mid-payment. Nothing in "
+                            + "simulation reads it, and copying it aliased live-game StackEntry objects into "
+                            + "the copy — which could not even work there, since simulationCopy deep-copies "
+                            + "pendingManaAbilityTriggers into new instances and StackEntry uses identity "
+                            + "equality, so the copied entries' removeAll would match nothing."),
+            Map.entry("pendingRevertableManaActivation",
+                    "Scratch state spanning a single colour prompt, for the same cancel-casting window as "
+                            + "revertableManaActivations above; a simulation copy must start with none owed."),
+            Map.entry("rulesObserver",
+                    "The test fixtures' rules event recorder watches the real game only; a simulation copy recording "
+                            + "into it would mix the AI's imagined triggers and rules events into the test's."),
+            Map.entry("interactionWithoutTriggerRecord",
+                    "A test-fixture audit hook, null in real games; like rulesObserver it watches the real game only."),
+            Map.entry("triggerRecordLeftBehind",
+                    "A test-fixture audit hook, null in real games; like rulesObserver it watches the real game only."),
+            Map.entry("triggerRoutingDepth",
+                    "Only non-zero inside routeTriggeredAbility's try/finally, a synchronous engine call, so it is "
+                            + "always 0 when the AI takes a copy."),
+            Map.entry("triggerRecordHandedOff",
+                    "Restored by endTriggerRouting in the same try/finally as triggerRoutingDepth, so it is always "
+                            + "false when the AI takes a copy."),
+            Map.entry("deferredTokenEntryNotifications",
+                    "Runnables closing over the live game, set and drained within one token-creating effect while "
+                            + "the mutation lock is held; it never spans a decision a copy is taken at."),
+            Map.entry("faceUpSchemeSourceViews",
+                    "A lazily rebuilt cache of Permanent views of the live game's schemes; copies start empty "
+                            + "(documented on the field)."),
+            Map.entry("exileEntryShuffleBatchOwners",
+                    "Null outside one batch of creatures entering from exile together, which never spans a mutation "
+                            + "(documented on the field)."),
+            Map.entry("combatDamageStateInProgress",
+                    "Only set while a combat damage step's damage events run; a waiting step is in "
+                            + "pendingCombatDamageState, which is copied (documented on the field)."));
 
     private static final String GAME_DATA_SRC =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/GameData.java";

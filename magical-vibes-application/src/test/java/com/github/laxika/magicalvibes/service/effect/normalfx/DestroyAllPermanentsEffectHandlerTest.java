@@ -51,6 +51,14 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.mockito.ArgumentCaptor;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
+import org.springframework.test.util.ReflectionTestUtils;
+import java.util.Map;
+import java.util.function.Supplier;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class DestroyAllPermanentsEffectHandlerTest {
@@ -86,12 +94,38 @@ class DestroyAllPermanentsEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
+        lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any()))
+                .thenAnswer(invocation -> moveToOwnersGraveyard(invocation.getArgument(1)));
+        ReflectionTestUtils.setField(destructionSupport, "departureService",
+                new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
+                        mock(GrantedTriggeredAbilitySupport.class), gameLogService));
         destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport,
                 predicateEvaluationService, effectHandlerRegistry, gameOutcomeService);
 
     }
 
-    // ===== Helper methods =====
+    /** What the mocked removal does with a departing permanent: it leaves for its controller's graveyard. */
+    private boolean moveToOwnersGraveyard(Permanent permanent) {
+        for (UUID playerId : gd.orderedPlayerIds) {
+            if (gd.playerBattlefields.get(playerId).remove(permanent)) {
+                gd.playerGraveyards.get(playerId).add(permanent.getCard());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void verifyDestroyed(Permanent permanent) {
+        verify(permanentRemovalService).departToGraveyard(eq(gd), eq(permanent), any(), any());
+    }
+
+    private void verifyNotDestroyed(Permanent permanent) {
+        verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(permanent), any(), any());
+    }
 
         private Card createCard(String name) {
             Card card = new Card();
@@ -150,10 +184,6 @@ class DestroyAllPermanentsEffectHandlerTest {
                     card.getName(), List.of(), targetId, sourcePermanentId);
         }
 
-        // =========================================================================
-        // DestroyAllPermanentsEffect
-        // =========================================================================
-
     @Test
             @DisplayName("Destroys all creatures on both sides")
             void destroysAllCreaturesOnBothSides() {
@@ -171,8 +201,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, angel);
+                verifyDestroyed(bears);
+                verifyDestroyed(angel);
                 verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
                 verify(gameLogService).append(gd, GameLog.isDestroyed(angel.getCard()));
             }
@@ -195,8 +225,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
-                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, spellbook);
+                verifyDestroyed(bears);
+                verifyNotDestroyed(spellbook);
             }
 
             @Test
@@ -217,8 +247,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, golem);
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
+                verifyNotDestroyed(golem);
+                verifyDestroyed(bears);
             }
 
             @Test
@@ -253,12 +283,14 @@ class DestroyAllPermanentsEffectHandlerTest {
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+                when(graveyardService.destructionReplacementOptions(gd, elves, true, true))
+                        .thenReturn(Map.of("Regenerate using its ability", "INTRINSIC"));
                 when(graveyardService.tryReplaceDestruction(gd, elves, true)).thenReturn(true);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
                 verify(graveyardService).tryReplaceDestruction(gd, elves, true);
-                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, elves);
+                verifyNotDestroyed(elves);
             }
 
             @Test
@@ -276,8 +308,9 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService).tryReplaceDestruction(gd, bears, false);
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
+                verify(graveyardService).destructionReplacementOptions(gd, bears, false, true);
+                verify(graveyardService, never()).tryReplaceDestruction(any(), any(), anyBoolean());
+                verifyDestroyed(bears);
             }
 
             @Test
@@ -300,9 +333,9 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, myBears);
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, angel);
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, elves);
+                verifyNotDestroyed(myBears);
+                verifyDestroyed(angel);
+                verifyDestroyed(elves);
             }
 
             @Test
@@ -343,8 +376,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, angel);
-                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, myBears);
+                verifyDestroyed(angel);
+                verifyNotDestroyed(myBears);
             }
 
             @Test

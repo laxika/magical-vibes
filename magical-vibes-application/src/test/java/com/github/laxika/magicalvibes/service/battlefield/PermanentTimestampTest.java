@@ -27,8 +27,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
@@ -54,6 +58,7 @@ class PermanentTimestampTest {
     @Mock private EtbTriggerService etbTriggerService;
     @Mock private UnattachTriggerSupport unattachTriggerSupport;
     @Mock private DurationClock durationClock;
+    @Mock private AsEntersDiscardSupport asEntersDiscardSupport;
 
     private BattlefieldEntryService battlefieldEntryService;
     private EquipSupport equipSupport;
@@ -69,6 +74,8 @@ class PermanentTimestampTest {
                 amountEvaluationService, conditionEvaluationService,
                 predicateEvaluationService, permanentCounterSupport, graveyardService,
                 permanentRemovalService, becomeDayAsEntersEffectHandler);
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                placementService, "asEntersDiscardSupport", asEntersDiscardSupport);
         battlefieldEntryService = new BattlefieldEntryService(
                 placementService, asEntersInteractionService, etbTriggerService);
         equipSupport = new EquipSupport(gameQueryService, gameLogService, permanentRemovalService,
@@ -87,6 +94,14 @@ class PermanentTimestampTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.withFreshQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
+        lenient().when(gameQueryService.resolveGatherSpecimensController(any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
+        lenient().when(gameQueryService.resolveTokenCreationController(any(), any(), anyBoolean()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     @Nested

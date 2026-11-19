@@ -39,6 +39,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -79,7 +81,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
         // Default: all check methods return valid (empty = no error)
-        lenient().when(targetLegalityService.checkSpellTargeting(any(), any(), any(), any(), any()))
+        lenient().when(targetLegalityService.checkSpellTargeting(any(), any(), any(), any(), any(), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                 .thenReturn(Optional.empty());
         lenient().when(targetLegalityService.checkGraveyardRetargetCandidate(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
@@ -219,7 +221,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
                 // All candidates fail validation
-                when(targetLegalityService.checkSpellTargeting(any(), any(), any(), isNull(), any()))
+                when(targetLegalityService.checkSpellTargeting(any(), any(), any(), isNull(), any(), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal target"));
 
                 changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
@@ -244,9 +246,9 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
                 // player IDs fail validation (not legal targets for this spell)
-                lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id)))
+                lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal"));
-                lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
+                lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal"));
 
                 changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
@@ -278,9 +280,9 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
                 // Player IDs also fail validation
-                when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id)))
+                when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal"));
-                when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
+                when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal"));
 
                 changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
@@ -302,7 +304,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
                 // player2Id fails, player1Id passes (default: Optional.empty() = legal)
-                lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
+                lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal"));
 
                 changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());

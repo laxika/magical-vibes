@@ -37,7 +37,6 @@ class TargetCreaturesDealPowerDamageToTargetEffectHandlerTest extends AbstractDa
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(victim, 7);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, firstSource.getId())).thenReturn(firstSource);
         when(gameQueryService.findPermanentById(gd, secondSource.getId())).thenReturn(secondSource);
         when(gameQueryService.findPermanentById(gd, victim.getId())).thenReturn(victim);

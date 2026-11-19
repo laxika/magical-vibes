@@ -325,6 +325,49 @@ Don't commit until I say so.
 
 ---
 
+## 78. A targeted trigger from a mana ability asks for its target at once and skips the held triggers
+
+**Status:** open · **Found:** 2026-11-19, application-test backlog fix
+
+**Failing tests:**
+- `ManaAbilityTriggerDeferralTest$LifeGainFromManaAbility` "Sorcery castable after Pristine Talisman life gain
+  triggers Sanguine Bond"
+- `ManaAbilityTriggerDeferralTest$LifeGainFromManaAbility` "Passing priority flushes the deferred Sanguine Bond
+  trigger onto the stack"
+
+**What the rules require.** CR 603.3: a triggered ability is put on the stack "the next time a player would receive
+priority", and CR 603.3d: its targets are chosen as it goes on the stack, as for a spell (601.2c–d). A mana ability
+activated while paying for a spell (CR 601.2g, 605.3a) therefore has its triggers wait, untargeted, until the spell
+is cast. The engine holds untargeted triggers from a mana ability in `GameData.pendingManaAbilityTriggers`
+(`ActivatedAbilityExecutionService` moves the entries the trigger pipeline just put on the stack there). But a
+trigger with a target goes through the normal stack door, which opens the target prompt (`PermanentChoice` with an
+`AttackTriggerTarget` context) right away. The entry isn't on the stack yet when the move happens, so it isn't held.
+Once the prompt is answered it lands on the stack directly. Pristine Talisman's life gain triggers Sanguine Bond
+("target opponent loses that much life"): the prompt opens mid-payment, and the trigger then sits on the stack and
+blocks the sorcery-speed cast the mana was for.
+
+**Why it's large.** Mana-ability triggers have to be held before mode and target choice, and every flush site has
+to put them on the stack through a door that makes those choices then. That door already exists for triggers that
+wait for a produced-mana choice (`TriggeredAbilityStackService.holdForProducedMana` / `putHeld`). The flush sites
+are `GameService.passPriority`, `flushManaAbilityTriggersAfterActivation`, `flushStandaloneManaActivationTriggers`,
+`AutoPassService` (two places), `SpellCastingService` after the spell is put on the stack, and
+`ActivatedAbilityExecutionService` after a non-mana activation. Several triggers flushed together each need their
+choices, in APNAP order, and an ability with no legal choice is removed (603.3d). The cancel-casting undo window
+(`revertableManaActivations`) drops held triggers, so it must keep working with untargeted held entries.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 78: hold triggered abilities from mana abilities in pendingManaAbilityTriggers
+before their modes and targets are chosen, and choose them (CR 603.3c, 603.3d) as each flush site puts them on the
+stack, reusing TriggeredAbilityStackService.putHeld. Make ManaAbilityTriggerDeferralTest's two Sanguine Bond cases
+pass, keep ManaActivationRevertTest, NestedManaAbilityPromptTest and the card tests of Blight, Corrupted Roots,
+Mana Web, Mine Layer, Psychic Venom, Relic Putrescence and Pristine Talisman green. Verify every CR number with
+get_rule. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

@@ -80,7 +80,9 @@ or wording you are changing and read that section.
   `BecomePreparedEffect.ofGrantingPermanent()`) read `StackEntry.requireGrantingPermanentId()`, which throws when it is
   missing.
 - A granted ability with a limit is the granter's instance (`TriggeredAbility.instance()`), so each grant keeps its own
-  limit (CR 113.2c). An Aura-granted ability is the permanent's own (CR 113.8): the door stamps the granter and the
+  limit (CR 113.2c). The granter is the granting permanent of a static grant, or the floating effect of a resolved one
+  (`GrantTriggeredAbilityEffectHandler.asGrantedInstance`), so the same ability given twice until end of turn is two
+  instances. An Aura-granted ability is the permanent's own (CR 113.8): the door stamps the granter and the
   ability's own target filter (Custody Battle). Pip-Boy 3000's own "whenever equipped creature attacks, choose one" is
   its controller's.
 - On an Aura or Equipment, the `THIS` attack, block, becomes-blocked, deals-damage-to-a-player/opponent and

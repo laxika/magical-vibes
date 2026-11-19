@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,6 +56,7 @@ import static org.mockito.Mockito.*;
 class PermanentRemovalServiceTest {
 
     @Test
+    @DisplayName("An Aura put into the graveyard for an illegal attachment keeps its host for leave triggers")
     void illegalAuraAttachmentRetainsItsHostForLeaveTriggers() {
         Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
         UUID hostId = UUID.randomUUID();
@@ -68,6 +71,7 @@ class PermanentRemovalServiceTest {
     }
 
     @Test
+    @DisplayName("A deferred mana-ability trigger remembers the controller of a permanent that leaves")
     void deferredManaTriggerRemembersControllerWhenPermanentLeaves() {
         Card card = new Card();
         card.setName("Leaving land");
@@ -84,6 +88,7 @@ class PermanentRemovalServiceTest {
     }
 
     @Test
+    @DisplayName("Phases in permanents a source held phased out when that source leaves")
     void releasesPhasedOutPermanentsWhenSourceLeavesWithoutExiledCards() {
         Permanent source = addPermanent(player1Id, createEnchantment("Phasing source"));
 
@@ -94,6 +99,7 @@ class PermanentRemovalServiceTest {
     }
 
     @Test
+    @DisplayName("A pending trigger records the last known controller of its departing triggering permanent")
     void preservesLastControllerForPendingOptionalCreatureTrigger() {
         Card card = new Card();
         card.setName("Leaving creature");
@@ -109,7 +115,7 @@ class PermanentRemovalServiceTest {
 
         prs.removePermanentToHand(gd, creature);
 
-        assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+        assertThat(entry.getRemovedPermanentControllers()).containsEntry(creature.getId(), player2Id);
         assertThat(entry.getControllerId()).isEqualTo(player1Id);
     }
 
@@ -142,9 +148,6 @@ class PermanentRemovalServiceTest {
     private ExileService exileService;
 
     @Mock
-    private DurationClock durationClock;
-
-    @Mock
     private CreatureControlService creatureControlService;
 
     @Mock
@@ -158,6 +161,12 @@ class PermanentRemovalServiceTest {
 
     @Mock
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
+
+    @Mock
+    private ObjectProvider<LayerSystemService> layerSystemServiceProvider;
+
+    @Mock
+    private LayerSystemService layerSystemService;
 
     @InjectMocks
     private PermanentRemovalService prs;
@@ -173,6 +182,17 @@ class PermanentRemovalServiceTest {
         lenient().when(gameQueryService.withQueryScope(any(), any()))
                 .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
         lenient().when(auraAttachmentService.removeOrphanedAuras(any(), any())).thenReturn(NO_ATTACHMENT_CHANGE);
+        lenient().when(layerSystemServiceProvider.getObject()).thenReturn(layerSystemService);
+        lenient().when(gameQueryService.findPermanentById(any(), any())).thenAnswer(invocation -> {
+            UUID permanentId = invocation.getArgument(1);
+            return gd.playerBattlefields.values().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.getId().equals(permanentId)).findFirst().orElse(null);
+        });
+        org.springframework.test.util.ReflectionTestUtils.setField(prs, "durationClock",
+                new DurationClock(null, gameQueryService, phasingService));
+        org.springframework.test.util.ReflectionTestUtils.setField(prs, "departureService",
+                new DepartureService(gameQueryService, prs, graveyardService, grantedTriggeredAbilitySupport,
+                        gameLogService));
         // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
         org.springframework.test.util.ReflectionTestUtils.setField(prs, "triggeredAbilityStackService",
                 triggeredAbilityStackService);
@@ -197,8 +217,6 @@ class PermanentRemovalServiceTest {
         gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
     }
-
-    // ===== Helper methods =====
 
     private static Card createCreature(String name) {
         Card card = new Card();
@@ -254,6 +272,14 @@ class PermanentRemovalServiceTest {
         return permanent;
     }
 
+    /**
+     * Matches {@code permanent} or the last-known copy of it that the departure hands on to the graveyard
+     * (CR 608.2h).
+     */
+    private static Permanent samePermanent(Permanent permanent) {
+        return argThat(candidate -> candidate != null && candidate.getId().equals(permanent.getId()));
+    }
+
     private void stubGraveyardForCreature(Permanent target, UUID ownerId) {
         when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         lenient().when(gameQueryService.isArtifact(gd, target)).thenReturn(false);
@@ -261,10 +287,6 @@ class PermanentRemovalServiceTest {
         when(graveyardService.addCardToGraveyard(eq(gd), eq(ownerId), any(Card.class), eq(Zone.BATTLEFIELD),
                 any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
     }
-
-    // =========================================================================
-    // resolveDelayedPermanentAction
-    // =========================================================================
 
     @Nested
     @DisplayName("resolveDelayedPermanentAction")
@@ -327,15 +349,12 @@ class PermanentRemovalServiceTest {
         }
     }
 
-    // =========================================================================
-    // removePermanentToGraveyard
-    // =========================================================================
-
     @Nested
     @DisplayName("removePermanentToGraveyard")
     class RemovePermanentToGraveyard {
 
         @Test
+        @DisplayName("A permanent put into another player's graveyard keeps its battlefield controller for death processing")
         void explicitDestinationKeepsTheBattlefieldControllerForDeathProcessing() {
             Permanent creature = addPermanent(player1Id, createCreature("Exchanged creature"));
             stubGraveyardForCreature(creature, player2Id);
@@ -345,7 +364,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(creature.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), samePermanent(creature), eq(false));
         }
 
         @Test
@@ -359,7 +378,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), samePermanent(bears), eq(false));
         }
 
         @Test
@@ -378,7 +397,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             assertThat(gd.playerHands.get(player1Id)).contains(bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(Permanent.class), anyBoolean());
         }
 
         @Test
@@ -405,7 +424,7 @@ class PermanentRemovalServiceTest {
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isFalse();
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(Permanent.class), anyBoolean());
         }
 
         @Test
@@ -419,7 +438,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(Permanent.class), anyBoolean());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of going to the graveyard")));
         }
 
@@ -428,13 +447,15 @@ class PermanentRemovalServiceTest {
         void exileReplacementExileIfDying() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             bears.setExileIfDying(true);
+            when(gameQueryService.grantedAbilitySurvivesRemoval(eq(gd), samePermanent(bears),
+                    eq(bears.getExileIfDyingTimestamp()))).thenReturn(true);
 
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(Permanent.class), anyBoolean());
         }
 
         @Test
@@ -450,7 +471,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(Permanent.class), anyBoolean());
         }
 
         @Test
@@ -463,7 +484,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, stolen);
 
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(stolen.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(stolen), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), samePermanent(stolen), eq(false));
             verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
                     any(), any(), any(UUID.class));
         }
@@ -609,36 +630,27 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Equipment with a becomes-unattached sacrifice ability sacrifices attached creature when removed")
+        @DisplayName("An Equipment put into the graveyard reports becoming unattached; its sacrifice trigger resolves later")
         void sacrificeOnUnattachWhenEquipmentRemoved() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Permanent equipment = addPermanent(player1Id, createEquipmentWithSacrificeOnUnattach("Grafted Exoskeleton"));
             equipment.setAttachedTo(creature.getId());
-
-            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             lenient().when(gameQueryService.isArtifact(gd, equipment)).thenReturn(true);
             lenient().when(gameQueryService.isArtifact(equipment)).thenReturn(true);
-            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
-            lenient().when(gameQueryService.isArtifact(gd, creature)).thenReturn(false);
-            lenient().when(gameQueryService.isArtifact(creature)).thenReturn(false);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
                     eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
 
             prs.removePermanentToGraveyard(gd, equipment);
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(equipment);
-            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(equipment.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(equipment), eq(false));
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), samePermanent(equipment), eq(false));
+            verify(unattachTriggerSupport).triggerDestroyOnUnattachIfNeeded(
+                    eq(gd), samePermanent(equipment), eq(creature.getId()), eq(player1Id));
+            // "Sacrifice that permanent" is a triggered ability, so the creature is still here until it resolves.
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
         }
     }
-
-    // =========================================================================
-    // removePermanentToHand
-    // =========================================================================
 
     @Nested
     @DisplayName("removePermanentToHand")
@@ -772,10 +784,6 @@ class PermanentRemovalServiceTest {
 
     }
 
-    // =========================================================================
-    // removePermanentToExile
-    // =========================================================================
-
     @Nested
     @DisplayName("removePermanentToExile")
     class RemovePermanentToExile {
@@ -829,26 +837,19 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Equipment with a becomes-unattached sacrifice ability sacrifices creature when exiled")
+        @DisplayName("An exiled Equipment reports becoming unattached; its sacrifice trigger resolves later")
         void sacrificeOnUnattachWhenEquipmentExiled() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Permanent equipment = addPermanent(player1Id, createEquipmentWithSacrificeOnUnattach("Grafted Exoskeleton"));
             equipment.setAttachedTo(creature.getId());
 
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
-            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
-            lenient().when(gameQueryService.isArtifact(gd, creature)).thenReturn(false);
-            lenient().when(gameQueryService.isArtifact(creature)).thenReturn(false);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
-
             prs.removePermanentToExile(gd, equipment);
 
             verify(exileService).exileCard(gd, player1Id, equipment.getOriginalCard());
-            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false));
+            verify(unattachTriggerSupport).triggerDestroyOnUnattachIfNeeded(
+                    eq(gd), samePermanent(equipment), eq(creature.getId()), eq(player1Id));
+            // "Sacrifice that permanent" is a triggered ability, so the creature is still here until it resolves.
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
         }
 
         @Test
@@ -869,20 +870,9 @@ class PermanentRemovalServiceTest {
         }
     }
 
-    // =========================================================================
-    // tryDestroyPermanent
-    // =========================================================================
-
     @Nested
     @DisplayName("tryDestroyPermanent")
     class TryDestroyPermanent {
-
-        @BeforeEach
-        void setUpDepartures() {
-            org.springframework.test.util.ReflectionTestUtils.setField(prs, "departureService",
-                    new DepartureService(gameQueryService, prs, graveyardService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
-                            gameLogService));
-        }
 
         @Test
         @DisplayName("Destroys a normal permanent and sends it to graveyard")
@@ -896,8 +886,8 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false));
-            verify(auraAttachmentService).removeOrphanedAuras(gd);
+                    eq(Zone.BATTLEFIELD), eq(player1Id), samePermanent(bears), eq(false));
+            verify(auraAttachmentService).removeOrphanedAuras(eq(gd), any());
         }
 
         @Test
@@ -910,7 +900,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.playerBattlefields.get(player1Id)).contains(golem);
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(Permanent.class), anyBoolean());
         }
 
         @Test
@@ -966,10 +956,6 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).contains(golem);
         }
     }
-
-    // =========================================================================
-    // removeCardFromGraveyardById
-    // =========================================================================
 
     @Nested
     @DisplayName("removeCardFromGraveyardById")

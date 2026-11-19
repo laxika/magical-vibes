@@ -15,11 +15,15 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.replacement.DamageJournalService;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -48,6 +52,13 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected LifeSupport lifeSupport;
     @Mock protected com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock protected BattleDefeatSupport battleDefeatSupport;
+    /** Real journal: it keeps its state on {@link GameData}, so with no journal open every event is untracked. */
+    @Spy protected DamageJournalService damageJournalService = new DamageJournalService();
+    @Mock protected ReplacementOrderService replacementOrderService;
+    @Mock protected PermanentControlSupport permanentControlSupport;
+    @Mock protected PermanentCounterSupport permanentCounterSupport;
+    @Mock protected TapUntapSupport tapUntapSupport;
+    @Mock protected VisualCueService visualCueService;
 
     @InjectMocks protected DamageSupport damageSupport;
 
@@ -65,6 +76,24 @@ abstract class AbstractDamageHandlerTest {
         player2Id = game.player2Id();
         gd = game.gameData();
         amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
+        // Field-injected (@Lazy) in production, so constructor injection leaves it out.
+        org.springframework.test.util.ReflectionTestUtils.setField(damageSupport, "damageTriggers", damageTriggers);
+        // The production rule: the source permanent's controller (looked up on the battlefields), else its last
+        // known controller, else the entry's.
+        lenient().when(gameQueryService.findDamageSourceController(eq(gd), any(), any())).thenAnswer(inv -> {
+            StackEntry entry = inv.getArgument(1);
+            Permanent source = inv.getArgument(2);
+            UUID controllerId = source == null ? null : gd.playerBattlefields.entrySet().stream()
+                    .filter(battlefield -> battlefield.getValue().contains(source))
+                    .map(java.util.Map.Entry::getKey).findFirst().orElse(null);
+            if (controllerId == null && source != null && entry != null) {
+                controllerId = entry.lastKnownPermanentController(source.getId());
+            }
+            return controllerId != null || entry == null ? controllerId : entry.getControllerId();
+        });
+        // No replacement or prevention effect applies in these unit tests: every damage event completes unchanged.
+        lenient().when(replacementOrderService.run(eq(gd), any()))
+                .thenAnswer(inv -> new ReplacementOrderService.Outcome.Completed<>(inv.getArgument(1)));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any(), any())).thenReturn(1);
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any(), any(), any())).thenReturn(1);
@@ -192,8 +221,12 @@ abstract class AbstractDamageHandlerTest {
         return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), List.of(), 0, targetIds);
     }
 
+    /**
+     * Damage can be prevented in this game. Lenient: only some damage paths still ask (protection and source-wide
+     * prevention); the prevention effects themselves are replacement candidates, mocked away here.
+     */
     protected void stubDamagePreventable() {
-        when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
+        lenient().when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
     }
 
     protected void stubDamageFromSourceNotPrevented() {
@@ -216,15 +249,6 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.getLethalDamageThreshold(gd, target)).thenReturn(toughness);
     }
 
-    protected void stubCreatureSourceRedirects() {
-        when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(eq(gd), any(), anyInt(), any())).thenAnswer(inv -> inv.getArgument(2));
-        when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
-                eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-    }
-
     protected void stubNoKeywordsOnSource(StackEntry entry) {
         // The infect/wither decision goes through sourceDealsCounterDamageToCreatures now,
         // whose mock default (false) is the wanted answer — only deathtouch needs a stub.
@@ -241,11 +265,6 @@ abstract class AbstractDamageHandlerTest {
     }
 
     protected void stubPlayerDamageCore(UUID playerId) {
-        when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
-        when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
-        when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
         when(gameQueryService.canPlayerLoseLife(gd, playerId)).thenReturn(true);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
     }

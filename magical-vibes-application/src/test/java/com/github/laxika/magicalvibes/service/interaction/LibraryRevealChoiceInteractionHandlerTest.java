@@ -60,7 +60,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
     }
 
     @Test
-    @DisplayName("begin sets LIBRARY_REVEAL_CHOICE and sends valid IDs/views with the begin-time maxCount and prompt")
+    @DisplayName("begin sets LIBRARY_REVEAL_CHOICE and sends valid IDs, views of every revealed card, the begin-time maxCount and prompt")
     void beginSendsPrompt() {
         Card eligible = createCard("Grizzly Bears");
         Card ineligible = createCard("Shock");
@@ -73,7 +73,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         assertThat(msg.cardIds()).containsExactly(eligible.getId());
-        assertThat(msg.cards()).hasSize(1);
+        assertThat(msg.cards()).hasSize(2);
         assertThat(msg.maxCount()).isEqualTo(1);
         assertThat(msg.prompt())
                 .isEqualTo("Choose any number of permanent cards with mana value 3 or less to put onto the battlefield.");

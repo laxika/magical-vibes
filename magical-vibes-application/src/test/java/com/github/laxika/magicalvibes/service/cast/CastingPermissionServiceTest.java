@@ -377,7 +377,7 @@ class CastingPermissionServiceTest {
             Card goblin = new Card();
             goblin.setType(CardType.CREATURE);
             when(predicateEvaluationService.matchesCardPredicate(
-                    eq(goblin), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player1Id)))
+                    eq(goblin), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player1Id), any(), any(), any()))
                     .thenReturn(true);
 
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();
@@ -414,7 +414,7 @@ class CastingPermissionServiceTest {
             Card goblin = new Card();
             goblin.setType(CardType.CREATURE);
             when(predicateEvaluationService.matchesCardPredicate(
-                    eq(goblin), eq(filter), any(UUID.class), eq(gd), eq(player1Id)))
+                    eq(goblin), eq(filter), any(UUID.class), eq(gd), eq(player1Id), any(), any(), any()))
                     .thenReturn(true);
 
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, goblin)).isTrue();

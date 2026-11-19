@@ -157,9 +157,16 @@ class CastingCostServiceTest {
         lenient().when(gameQueryService.canPayLifeForCosts(any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.canChooseToSacrificeForCosts(any(), any()))
+                .thenAnswer(inv -> gameQueryService.canSacrificePermanentForCosts(
+                        inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(gameQueryService.canChooseToSacrificeForCosts(any(), any(), any()))
+                .thenAnswer(inv -> gameQueryService.canSacrificePermanentForCosts(
+                        inv.getArgument(0), inv.getArgument(1)));
         lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
                 .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
                         .toStaticBonus(0, 0, false));
+        ActiveStaticEffectStubs.stub(gameQueryService, predicateEvaluationService);
     }
 
     /**
@@ -658,12 +665,7 @@ class CastingCostServiceTest {
             taxCard.addStaticEffect(new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
                             CostModificationScope.ALL));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
-
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(inv -> {
-                Card card = inv.getArgument(0);
-                CardTypePredicate pred = inv.getArgument(1);
-                return card.hasType(pred.cardType());
-            });
+            evaluateCardTypePredicates();
 
             Card instant = new Card();
             instant.setName("Lightning Bolt");
@@ -1008,14 +1010,11 @@ class CastingCostServiceTest {
             when(predicateEvaluationService.matchesPermanentPredicate(
                     any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
                     .thenReturn(true);
-            when(conditionEvaluationService.isMet(eq(gd), any(ControllerTurn.class), any()))
-                    .thenReturn(true);
 
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
                     .isEqualTo(1);
 
-            when(conditionEvaluationService.isMet(eq(gd), any(ControllerTurn.class), any()))
-                    .thenReturn(false);
+            gd.activePlayerId = player2Id;
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
                     .isZero();
         }
@@ -1464,8 +1463,8 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("Per-target reduction counts repeated matching creature targets")
-        void perTargetReductionCountsRepeatedMatchingTargets() {
+        @DisplayName("Per-target reduction counts each targeted creature once, even when targeted more than once")
+        void perTargetReductionCountsEachTargetedCreatureOnce() {
             Card thaumaturge = new Card();
             thaumaturge.setName("Battlefield Thaumaturge");
             thaumaturge.setType(CardType.CREATURE);
@@ -1481,19 +1480,26 @@ class CastingCostServiceTest {
             bearCard.setName("Bear");
             bearCard.setType(CardType.CREATURE);
             Permanent bear = new Permanent(bearCard);
+            Permanent otherBear = new Permanent(bearCard);
 
             when(gameQueryService.findPermanentById(gd, bear.getId())).thenReturn(bear);
+            when(gameQueryService.findPermanentById(gd, otherBear.getId())).thenReturn(otherBear);
             when(predicateEvaluationService.matchesPermanentPredicate(
                     gd, bear, new PermanentIsCreaturePredicate())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    gd, otherBear, new PermanentIsCreaturePredicate())).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(
                     gd, player1Id, spell, List.of(bear.getId(), bear.getId())))
+                    .isEqualTo(1);
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, spell, List.of(bear.getId(), otherBear.getId())))
                     .isEqualTo(2);
         }
 
         @Test
-        @DisplayName("Target-count reduction counts every target occurrence")
-        void targetCountReductionCountsEveryTargetOccurrence() {
+        @DisplayName("Target-count reduction counts each targeted object once, not each use of the word target")
+        void targetCountReductionCountsEachTargetedObjectOnce() {
             Card hinata = new Card();
             hinata.addStaticEffect(new ReduceOwnCastCostForEachTargetEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
@@ -1502,7 +1508,9 @@ class CastingCostServiceTest {
             UUID targetId = UUID.randomUUID();
 
             assertThat(svc.computeTargetBasedCostReduction(
-                    gd, player1Id, spell, List.of(targetId, targetId))).isEqualTo(2);
+                    gd, player1Id, spell, List.of(targetId, targetId))).isEqualTo(1);
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, spell, List.of(targetId, UUID.randomUUID()))).isEqualTo(2);
         }
 
         @Test

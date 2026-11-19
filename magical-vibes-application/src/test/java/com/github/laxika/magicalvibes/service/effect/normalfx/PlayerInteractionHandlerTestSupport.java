@@ -21,6 +21,8 @@ import java.util.Map;
 
 /**
  * Instantiates a single {@link NormalEffectHandlerBean} for unit tests using mocked collaborators.
+ * Collaborators beyond the fixed parameter list are passed in {@code extraDeps}, keyed by the
+ * constructor parameter type they satisfy.
  */
 final class PlayerInteractionHandlerTestSupport {
 
@@ -44,7 +46,8 @@ final class PlayerInteractionHandlerTestSupport {
                                                  InteractionHandlerRegistry interactionHandlerRegistry,
                                                  CoinFlipService coinFlipService,
                                                  PermanentCounterSupport permanentCounterSupport,
-                                                 LifeSupport lifeSupport) {
+                                                 LifeSupport lifeSupport,
+                                                 Map<Class<?>, Object> extraDeps) {
         try {
             Class<?> handlerClass = Class.forName(
                     PlayerInteractionHandlerTestSupport.class.getPackageName() + "." + handlerSimpleName);
@@ -77,6 +80,7 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class,
                     new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
                             predicateEvaluationService, gameQueryService));
+            deps.putAll(extraDeps);
 
             Constructor<?> chosen = null;
             Object[] chosenArgs = null;

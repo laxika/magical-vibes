@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -73,6 +71,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -106,6 +105,9 @@ class CombatDamageServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     private CombatDamageService combatDamageService;
+    /** Runs the replacement and prevention effects on each combat damage event; none apply unless a test says so. */
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline triggerPipeline;
 
     private GameData gameData;
     private UUID player1Id;
@@ -114,7 +116,7 @@ class CombatDamageServiceTest {
     private Player player2;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ReflectiveOperationException {
         com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
                 new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry(
                         () -> org.mockito.Mockito.mock(GameMutationCoordinator.class));
@@ -137,8 +139,17 @@ class CombatDamageServiceTest {
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class),
                         new com.github.laxika.magicalvibes.service.battlefield.DepartureService(gameQueryService,
                                 permanentRemovalService, graveyardService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
-        com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport =
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class);
+        // Field-injected (@Lazy) collaborator the SBA check calls on every pass (CR 702.195a storied check).
+        org.springframework.test.util.ReflectionTestUtils.setField(stateBasedActionService, "storiedEffectHandler",
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler.class));
+        damageSupport = org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class);
+        com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService stackService =
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
+                        gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                        predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.class));
         combatDamageService = new CombatDamageService(gameQueryService,
                 predicateEvaluationService,
                 conditionEvaluationService,
@@ -156,12 +167,9 @@ class CombatDamageServiceTest {
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class),
-                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
-                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
-                        gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
-                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
-                        predicateEvaluationService,
-                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.class)));
+                stackService);
+        // Combat damage triggers are matched by the trigger pipeline from the rules events the step emits.
+        triggerPipeline = newTriggerPipeline(stackService);
         // Abilities without an event condition trigger; the collectors judge only the event condition.
         org.mockito.Mockito.lenient().when(conditionEvaluationService.eventConditionMet(any(), any(), any()))
                 .thenAnswer(inv -> ((com.github.laxika.magicalvibes.model.trigger.TriggerOptions) inv.getArgument(1))
@@ -188,6 +196,7 @@ class CombatDamageServiceTest {
         gameData.playerLifeTotals.put(player1Id, 20);
         gameData.playerLifeTotals.put(player2Id, 20);
         gameData.activePlayerId = player1Id;
+        gameData.setRulesEventListener(triggerPipeline::process);
         gameData.playerIdToName.put(player1Id, "Player1");
         gameData.playerIdToName.put(player2Id, "Player2");
 
@@ -198,6 +207,59 @@ class CombatDamageServiceTest {
     }
 
     // ===== Stub helpers =====
+
+    /**
+     * The trigger pipeline over this test's mocks with the real damage and combat-damage matchers, so the abilities a
+     * combat damage step triggers reach the stack as in a game. The pipeline's other matchers are mocks.
+     */
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline newTriggerPipeline(
+            com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService stackService)
+            throws ReflectiveOperationException {
+        var triggerIndex = new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex(
+                gameQueryService, grantedTriggeredAbilitySupport, predicateEvaluationService);
+        var eventAbilitySupportConstructor = Class.forName(
+                        "com.github.laxika.magicalvibes.service.trigger.pipeline.EventAbilitySupport")
+                .getDeclaredConstructor(com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex.class,
+                        com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService.class,
+                        com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class,
+                        GameLogService.class);
+        eventAbilitySupportConstructor.setAccessible(true);
+        Object eventAbilitySupport = eventAbilitySupportConstructor.newInstance(
+                triggerIndex, stackService, conditionEvaluationService, gameLogService);
+        var damageTriggers = new com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers();
+        var combatDamageTriggers = new com.github.laxika.magicalvibes.service.trigger.pipeline.CombatDamageTriggers();
+        for (Object matcher : List.of(damageTriggers, combatDamageTriggers)) {
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "triggeredAbilityStackService", stackService);
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "gameQueryService", gameQueryService);
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "predicateEvaluationService",
+                    predicateEvaluationService);
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "conditionEvaluationService",
+                    conditionEvaluationService);
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "gameLogService", gameLogService);
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "triggerIndex", triggerIndex);
+            org.springframework.test.util.ReflectionTestUtils.setField(matcher, "eventAbilitySupport", eventAbilitySupport);
+        }
+        org.springframework.test.util.ReflectionTestUtils.setField(damageTriggers, "targetLegalityService",
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(combatDamageTriggers, "damageTriggers", damageTriggers);
+        org.springframework.test.util.ReflectionTestUtils.setField(combatDamageService, "damageTriggers", damageTriggers);
+        var pipeline = new com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline(triggerIndex,
+                stackService, predicateEvaluationService, permanentRemovalService, gameQueryService,
+                conditionEvaluationService, gameLogService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.AttackTriggers.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.BlockTriggers.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.SpellTriggers.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(pipeline, "damageTriggers", damageTriggers);
+        org.springframework.test.util.ReflectionTestUtils.setField(pipeline, "combatDamageTriggers", combatDamageTriggers);
+        for (java.lang.reflect.Field field : pipeline.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            if (field.get(pipeline) == null && field.getType().getSimpleName().endsWith("Triggers")) {
+                field.set(pipeline, org.mockito.Mockito.mock(field.getType()));
+            }
+        }
+        return pipeline;
+    }
 
     /**
      * Core stubs for combat setup: opponent lookup, attacking creature indices,
@@ -559,12 +621,17 @@ class CombatDamageServiceTest {
             var effect = new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(true);
             var granted = new com.github.laxika.magicalvibes.model.TriggeredAbility(
                     Triggers.dealsCombatDamageToCreature(), effect);
-            when(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    eq(gameData), any(Permanent.class), any(Trigger.class)))
+            // The trigger index reads the abilities granted to each permanent, as it is when asked.
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
+                    eq(gameData), any(Permanent.class), any(), any()))
                     .thenAnswer(invocation -> invocation.getArgument(1) == attacker
-                            && Triggers.dealsCombatDamageToCreature().equals(invocation.getArgument(2))
+                            && invocation.<java.util.function.Predicate<com.github.laxika.magicalvibes.model.TriggeredAbility>>getArgument(3).test(granted)
                             && gameData.playerBattlefields.get(player1Id).contains(attacker)
                             ? List.of(granted) : List.of());
+            // "That creature" is the blocker the damage names: it fits the destroy effect's "permanent", so the
+            // ability acts on it without targeting.
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(blocker), any(), any(FilterContext.class)))
+                    .thenReturn(true);
 
             combatDamageService.resolveCombatDamage(gameData);
 
@@ -975,7 +1042,8 @@ class CombatDamageServiceTest {
             combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            assertThat(gameData.playerPoisonCounters.getOrDefault(player2Id, 0)).isEqualTo(1);
+            // LifeSupport puts the poison counters on the player (and applies their replacement effects).
+            verify(lifeSupport).applyPoisonCounters(gameData, player2Id, 1, "Combat damage", player1Id);
         }
     }
 
@@ -993,7 +1061,7 @@ class CombatDamageServiceTest {
         }
 
         @Test
-        @DisplayName("Surviving blocker whose blocked attacker died has blocking state cleared")
+        @DisplayName("Surviving blocker whose blocked attacker died forgets that attacker but stays a blocking creature")
         void survivingBlockerClearedWhenAttackerDies() {
             Permanent attacker = addAttacker("Elf", 1, 1);
             Permanent blocker = addBlocker("Spider", 2, 4, 0);
@@ -1002,7 +1070,9 @@ class CombatDamageServiceTest {
             combatDamageService.resolveCombatDamage(gameData);
 
             verify(permanentRemovalService).departToGraveyard(eq(gameData), eq(attacker), any(), any());
-            assertThat(blocker.isBlocking()).isFalse();
+            // CR 506.4: only the blocker's own removal from combat stops it from being a blocking creature.
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(blocker.getBlockingTargetIds()).doesNotContain(attacker.getId());
             assertThat(blocker.getBlockingTargets()).isEmpty();
         }
     }
@@ -1030,8 +1100,19 @@ class CombatDamageServiceTest {
         @Test
         @DisplayName("Defending player not tracked when all combat damage is prevented")
         void defenderNotTrackedWhenDamagePrevented() {
+            stubCombatSetup();
+            stubDamageResolution();
             addAttacker("Bear", 2, 2);
-            Prevention.add(gameData, PreventDamageEffect.allCombat());
+            // Prevention is a replacement-pool step of the damage event (CR 615): a "prevent all combat damage"
+            // effect gives the event back with nothing left of each portion.
+            doAnswer(inv -> {
+                com.github.laxika.magicalvibes.model.replacement.DamageEvent prevented = inv.getArgument(1);
+                for (int i = 0; i < prevented.portions().size(); i++) {
+                    prevented = prevented.withPortionAmount(i, 0);
+                }
+                combatDamageService.recordCombatDamageEvent(inv.getArgument(0), prevented);
+                return null;
+            }).when(damageSupport).runCombatDamageEvent(any(), any());
 
             combatDamageService.resolveCombatDamage(gameData);
 
@@ -1410,7 +1491,8 @@ class CombatDamageServiceTest {
                             .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
-            assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player1Id);
+            // The token effect gives the token to the triggering permanent's controller: the enchanted creature's.
+            assertThat(triggerEntries.getFirst().getTriggeringPermanentControllerId()).isEqualTo(player1Id);
         }
 
         @Test
@@ -1419,11 +1501,14 @@ class CombatDamageServiceTest {
             Permanent creature = addAttacker("Equipped creature", 3, 3);
             Card equipmentCard = createCard("Two-target Equipment", 0, 0);
             equipmentCard.setType(CardType.ARTIFACT);
+            // One ability with two target groups, each bound to its own effect (Sword of Sinew and Steel).
+            DestroyTargetPermanentEffect destroyPlaneswalker = new DestroyTargetPermanentEffect();
+            DestroyTargetPermanentEffect destroyArtifact = new DestroyTargetPermanentEffect();
+            equipmentCard.addTrigger(Triggers.dealsCombatDamageToPlayer(), destroyPlaneswalker, destroyArtifact);
             equipmentCard.target(new PermanentPredicateTargetFilter(
                             new PermanentIsPlaneswalkerPredicate(), "Target must be a planeswalker"), 0, 1)
-                    .addTrigger(Triggers.dealsCombatDamageToPlayer(), new DestroyTargetPermanentEffect());
-            equipmentCard.target(TargetFilters.artifact(), 0, 1)
-                    .addTrigger(Triggers.dealsCombatDamageToPlayer(), new DestroyTargetPermanentEffect());
+                    .bindEffect(destroyPlaneswalker);
+            equipmentCard.target(TargetFilters.artifact(), 0, 1).bindEffect(destroyArtifact);
             Permanent equipment = new Permanent(equipmentCard);
             equipment.setAttachedTo(creature.getId());
             gameData.playerBattlefields.get(player2Id).add(equipment);

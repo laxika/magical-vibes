@@ -165,12 +165,19 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
             }
 
             @Test
-            @DisplayName("No search when opponent has no basic lands")
-            void noSearchWhenNoBasicLands() {
+            @DisplayName("Opponent with no basic lands is still offered the optional search, which can fail to find")
+            void optionalSearchOfferedWhenNoBasicLands() {
+                stubCardViewFactory();
                 gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
 
                 eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
-                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+                PendingInteraction.LibrarySearch search =
+                        gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+                assertThat(search).isNotNull();
+                assertThat(search.params().playerId()).isEqualTo(player2Id);
+                assertThat(search.params().cards()).isEmpty();
+                assertThat(search.params().canFailToFind()).isTrue();
+                assertThat(search.params().declineSkipsShuffle()).isTrue();
             }
 }

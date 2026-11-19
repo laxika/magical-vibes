@@ -48,6 +48,7 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -172,6 +173,12 @@ class StateBasedActionServiceTest {
         return argThat((DepartureIntent intent) -> intent.cause() == DepartureCause.STATE_BASED_SACRIFICE);
     }
 
+    /** The creature has a regeneration shield, the one destruction replacement the departure applies for it. */
+    private void stubRegenerationAvailable(Permanent creature) {
+        when(graveyardService.destructionReplacementOptions(eq(gd), eq(creature), anyBoolean(), anyBoolean()))
+                .thenReturn(java.util.Map.of("Regenerate using its ability", "INTRINSIC"));
+    }
+
     private static Card createCreatureCard(String name) {
         Card card = new Card();
         card.setName(name);
@@ -252,7 +259,6 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(4);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
 
             sut.performStateBasedActions(gd);
 
@@ -292,6 +298,7 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(1);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            stubRegenerationAvailable(perm);
             doAnswer(invocation -> {
                 perm.setMarkedDamage(0);
                 return true;
@@ -355,7 +362,6 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
 
             sut.performStateBasedActions(gd);
 
@@ -374,7 +380,6 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(3);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
 
             sut.performStateBasedActions(gd);
 
@@ -393,6 +398,7 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            stubRegenerationAvailable(creature);
             doAnswer(invocation -> {
                 creature.setMarkedDamage(0);
                 gd.playerBattlefields.get(player1Id).remove(aura);
@@ -424,12 +430,12 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, doomedCreature)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, doomedCreature)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, doomedCreature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            stubRegenerationAvailable(protectedCreature);
             doAnswer(invocation -> {
                 protectedCreature.setMarkedDamage(0);
                 gd.playerBattlefields.get(player1Id).remove(aura);
                 return true;
             }).when(graveyardService).tryRegenerate(gd, protectedCreature);
-            when(graveyardService.tryRegenerate(gd, doomedCreature)).thenReturn(false);
 
             sut.performStateBasedActions(gd);
 
@@ -465,6 +471,7 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            stubRegenerationAvailable(perm);
             doAnswer(invocation -> {
                 perm.setMarkedDamage(0);
                 return true;
@@ -651,8 +658,9 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            // Saga checks and counter annihilation should NOT run
-            verify(stateTriggerService, never()).checkStateTriggers(gd);
+            // Only the state-trigger check made before the actions runs; nothing after the win check does.
+            verify(stateTriggerService, times(1)).checkStateTriggers(gd);
+            verify(legendRuleService, never()).checkLegendRule(any(), any());
         }
     }
 
@@ -945,11 +953,17 @@ class StateBasedActionServiceTest {
     class StateTriggers {
 
         @Test
-        @DisplayName("State triggers are checked after SBAs")
+        @DisplayName("State triggers are checked before and after SBAs")
         void stateTriggersCheckedAfterSBAs() {
             sut.performStateBasedActions(gd);
 
-            verify(stateTriggerService).checkStateTriggers(gd);
+            // CR 603.8: a state trigger triggers as soon as the state matches, which can be a state the
+            // actions are about to change, so the check runs before them as well as after.
+            var order = org.mockito.Mockito.inOrder(stateTriggerService, gameOutcomeService, legendRuleService);
+            order.verify(stateTriggerService).checkStateTriggers(gd);
+            order.verify(gameOutcomeService).checkWinCondition(gd);
+            order.verify(legendRuleService).checkLegendRule(gd, player2Id);
+            order.verify(stateTriggerService).checkStateTriggers(gd);
         }
     }
 
@@ -1101,7 +1115,6 @@ class StateBasedActionServiceTest {
             when(gameQueryService.getEffectiveToughness(gd, bear))
                     .thenAnswer(inv -> battlefield.contains(lord) ? 3 : 2);
             when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
-            when(graveyardService.tryRegenerate(eq(gd), any())).thenReturn(false);
             doAnswer(inv -> {
                 battlefield.remove((Permanent) inv.getArgument(1));
                 return true;
@@ -1144,7 +1157,6 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
             // The mocked removal leaves the permanent on the battlefield; the repeat loop
             // must not pick it up again.
             when(permanentRemovalService.departToGraveyard(eq(gd), eq(perm), any(), any())).thenReturn(false);
@@ -1240,7 +1252,8 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(legendRuleService, never()).checkLegendRule(gd, player2Id);
-            verify(stateTriggerService, never()).checkStateTriggers(gd);
+            // Only the state-trigger check made before the actions ran.
+            verify(stateTriggerService, times(1)).checkStateTriggers(gd);
         }
 
         @Test
@@ -1316,7 +1329,9 @@ class StateBasedActionServiceTest {
             assertThat(gd.stack).singleElement().satisfies(entry ->
                     assertThat(entry.getEffectsToResolve()).singleElement()
                             .isInstanceOf(ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class));
-            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).isEmpty();
+            // The new controller's own loss of control is watched from now on.
+            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch)
+                    .containsExactly(java.util.Map.entry(scepterId, new ExiledCardsControlLossWatch(player2Id, sourceCard)));
         }
 
         @Test

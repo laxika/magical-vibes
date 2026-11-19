@@ -41,6 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,10 +89,13 @@ class ExileAllPermanentsEffectHandlerTest {
         exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(
                 predicateEvaluationService, gameLogService, permanentRemovalService,
                 gameQueryService, exileSupport);
+        // The simultaneous-removal scope only brackets the removals; run them as the service would.
+        lenient().doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(2).run();
+            return null;
+        }).when(permanentRemovalService).performSimultaneousRemovals(any(), any(), any());
 
     }
-
-    // ===== Helper methods =====
 
         private Card createCard(String name) {
             Card card = new Card();
@@ -155,10 +159,6 @@ class ExileAllPermanentsEffectHandlerTest {
                 return null;
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
-
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
 
     @Test
             @DisplayName("Exiles all permanents matching the predicate across both battlefields")

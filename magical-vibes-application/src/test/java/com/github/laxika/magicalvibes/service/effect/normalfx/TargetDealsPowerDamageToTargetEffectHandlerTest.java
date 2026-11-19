@@ -35,7 +35,6 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(angel, 4);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
         when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
         when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
@@ -64,7 +63,6 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(theirAngel, 4);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, myAngel.getId())).thenReturn(myAngel);
         when(gameQueryService.findPermanentById(gd, theirAngel.getId())).thenReturn(theirAngel);
         when(gameQueryService.getPowerBasedDamage(gd, myAngel)).thenReturn(4);
@@ -93,7 +91,6 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(angel, 4);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
         when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
         when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
@@ -119,7 +116,6 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(target, 2);
-        stubCreatureSourceRedirects();
         when(gameQueryService.getLethalDamageThreshold(gd, target)).thenReturn(2);
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);

@@ -63,6 +63,7 @@ class TurnProgressionServiceTest {
     @Mock private StepTriggerService stepTriggerService;
     @Mock private AutoPassService autoPassService;
     @Mock private GameMutationCoordinator mutationCoordinator;
+    @Mock private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
 
     @InjectMocks
     private TurnProgressionService turnProgressionService;
@@ -93,6 +94,8 @@ class TurnProgressionServiceTest {
         gd.activePlayerId = player1Id;
         gd.status = GameStatus.RUNNING;
         gd.turnNumber = 1;
+        org.mockito.Mockito.lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<java.util.function.Supplier<?>>getArgument(1).get());
     }
 
     private void addCardsToHand(UUID playerId, int count) {
@@ -127,7 +130,7 @@ class TurnProgressionServiceTest {
     }
 
     private PendingMayAbility newMayAbility() {
-        return new PendingMayAbility(new Card(), player1Id, null, "Test may ability");
+        return new PendingMayAbility(new Card(), player1Id, List.of(), "Test may ability");
     }
 
     private Card newNamedCard() {
@@ -700,6 +703,8 @@ class TurnProgressionServiceTest {
         @DisplayName("Resets current step to UNTAP")
         void resetsCurrentStep() {
             gd.currentStep = TurnStep.CLEANUP;
+            // A may-not-untap choice holds the turn in its untap step, where the new turn begins.
+            gd.pendingMayAbilities.add(newMayAbility());
 
             turnProgressionService.advanceTurn(gd);
 
@@ -821,11 +826,14 @@ class TurnProgressionServiceTest {
         }
 
         @Test
-        @DisplayName("Drains mana pools at turn boundary")
+        @DisplayName("Drains mana pools at the turn boundary and again as the untap step ends")
         void drainsManaPoolsAtTurnBoundary() {
             turnProgressionService.advanceTurn(gd);
 
-            verify(turnCleanupService).drainManaPools(gd);
+            // CR 500.5: mana empties as each step ends; no player gets priority in the untap step (CR 502.4),
+            // so the game goes straight on to the upkeep.
+            verify(turnCleanupService, org.mockito.Mockito.times(2)).drainManaPools(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         }
 
         @Test
@@ -1144,9 +1152,11 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.advanceStep(gd);
 
-            // advanceTurn should have been called, switching active player
+            // advanceTurn should have been called, switching active player; no player gets priority in
+            // the untap step (CR 502.4), so the new turn goes on to its upkeep.
             assertThat(gd.activePlayerId).isEqualTo(player2Id);
-            assertThat(gd.currentStep).isEqualTo(TurnStep.UNTAP);
+            verify(untapStepService).untapPermanents(gd, player2Id);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
             assertThat(gd.turnNumber).isEqualTo(2);
         }
     }

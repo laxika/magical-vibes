@@ -232,7 +232,7 @@ class EndTurnEffectHandlerTest {
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                verify(turnCleanupService).resetEndOfTurnModifiers(gd);
+                verify(turnCleanupService).applyCleanupResets(gd);
             }
 
             @Test

@@ -83,8 +83,6 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
 
     }
 
-    // ===== Helper methods =====
-
         private Card createCard(String name) {
             Card card = new Card();
             card.setName(name);
@@ -148,10 +146,6 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
             }).when(exileService).exileCard(any(), any(), any(), any());
         }
 
-        // =========================================================================
-        // ExileAllPermanentsEffect
-        // =========================================================================
-
     @Test
             @DisplayName("Exiles target and imprints onto source permanent")
             void exilesAndImprints() {
@@ -163,14 +157,16 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
                 StackEntry entry = new StackEntry(
                         StackEntryType.ENCHANTMENT_SPELL, sourceCard, player1Id, sourceCard.getName(),
                         List.of(new ExileTargetPermanentAndImprintEffect()),
-                        0, target.getId(), null
+                        target.getId(), source.getId()
                 );
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+                when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+                when(permanentRemovalService.removePermanentToExile(gd, target, source.getId())).thenReturn(true);
 
                 exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(permanentRemovalService).removePermanentToExile(gd, target);
+                verify(permanentRemovalService).removePermanentToExile(gd, target, source.getId());
                 assertThat(gd.getImprintedCard(source.getCard())).isSameAs(targetCard);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled by Exclusion Ritual.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -192,7 +188,7 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
 
                 exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
+                verify(permanentRemovalService, never()).removePermanentToExile(any(), any(), any());
             }
 
             @Test
@@ -210,11 +206,12 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
                 );
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+                when(permanentRemovalService.removePermanentToExile(gd, target, null)).thenReturn(true);
 
                 exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(permanentRemovalService).removePermanentToExile(gd, target);
-                // No permanent to imprint onto
+                verify(permanentRemovalService).removePermanentToExile(gd, target, null);
+                assertThat(gd.getImprintedCard(sourceCard)).isNull();
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 }

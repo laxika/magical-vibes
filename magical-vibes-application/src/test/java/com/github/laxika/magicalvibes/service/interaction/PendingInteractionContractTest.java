@@ -60,6 +60,7 @@ import static org.mockito.Mockito.mock;
 class PendingInteractionContractTest {
 
     @Test
+    @DisplayName("Library reveal refinements keep the selection destination and visibility")
     void libraryRevealRefinementsPreserveSelectionDestinationAndVisibility() {
         UUID playerId = UUID.randomUUID();
         UUID cardId = UUID.randomUUID();
@@ -117,7 +118,10 @@ class PendingInteractionContractTest {
             PendingValkiHandExileChoice.class,
             PendingInteraction.PortentOfCalamityState.class,
             PendingInteraction.RevealedFreeCastGroup.class,
-            PendingInteraction.RippleFreeCastGroup.class);
+            PendingInteraction.RippleFreeCastGroup.class,
+            PendingInteraction.LandManaDrainContinuation.class,
+            com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder.class,
+            com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,

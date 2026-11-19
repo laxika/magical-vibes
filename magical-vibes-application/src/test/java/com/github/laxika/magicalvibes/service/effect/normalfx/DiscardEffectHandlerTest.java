@@ -142,7 +142,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     class EachPlayer {
 
         @Test
-        @DisplayName("APNAP order: active player is first, amount rides the follow-up")
+        @DisplayName("APNAP order: the active player chooses first, for the effect's amount")
         void activePlayerFirst() {
             Card card = createCard("Liliana of the Veil");
             DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.EACH_PLAYER);
@@ -152,12 +152,13 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
-                    argThat((DiscardFollowUp f) -> f.eachPlayerAmount() == 1));
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyList(), anyString(), eq(1),
+                    any(DiscardFollowUp.class));
+            assertThat(gd.eachPlayerRummage.currentPlayerId).isEqualTo(player1Id);
         }
 
         @Test
-        @DisplayName("Opponent is in the carried queue remainder, controllerId stored")
+        @DisplayName("Opponent waits in the queue after the active player, and nothing is discarded yet")
         void opponentInQueueAfterActivePlayer() {
             Card card = createCard("Liliana of the Veil");
             DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.EACH_PLAYER);
@@ -168,9 +169,12 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
-                    argThat((DiscardFollowUp f) -> f.remainingEachPlayerDiscards().equals(List.of(player2Id))
-                            && player1Id.equals(f.eachPlayerControllerId())));
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyList(), anyString(), eq(1),
+                    any(DiscardFollowUp.class));
+            assertThat(gd.eachPlayerRummage.remaining).containsExactly(player2Id);
+            assertThat(gd.eachPlayerRummage.deferDiscards).isTrue();
+            assertThat(gd.playerHands.get(player1Id)).hasSize(1);
+            assertThat(gd.playerHands.get(player2Id)).hasSize(1);
         }
     }
 
@@ -189,8 +193,9 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt(),
-                    argThat((DiscardFollowUp f) -> f.eachPlayerAmount() == 2));
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyList(), anyString(), eq(2),
+                    any(DiscardFollowUp.class));
+            assertThat(gd.eachPlayerRummage.remaining).isEmpty();
         }
 
         @Test
@@ -205,8 +210,9 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
             resolveEffect(gd, entry, effect);
 
             // Active player is the controller (skipped); player2 is the only opponent and starts.
-            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt(),
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyList(), anyString(), eq(1),
                     any(DiscardFollowUp.class));
+            assertThat(gd.eachPlayerRummage.remaining).isEmpty();
         }
     }
 

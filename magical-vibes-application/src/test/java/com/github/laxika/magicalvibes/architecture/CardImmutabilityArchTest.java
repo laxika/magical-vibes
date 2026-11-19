@@ -117,7 +117,33 @@ class CardImmutabilityArchTest {
             "SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler", // clears targeting on a fresh delayed-trigger copy
             "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
             "ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler", // retains abilities on a fresh copy
-            "LayerSystemService"); // assembles a fresh runtime copy for copy effects
+            "LayerSystemService", // assembles a fresh runtime copy for copy effects
+            "Permanent", // marks a fresh runtime copy as a token before freezing it (copied permanent spell)
+            "GameActionAvailabilityService", // stamps owner on the fresh MDFC back-face copy for graveyard land play
+            "ActivatedAbilityExecutionService", // records effective keywords on a fresh runtime copy of the sacrificed equipment
+            "BattlefieldPlacementService", // as-enters characteristics, Mystic Reflection and token-Aura mana cost on fresh runtime copies
+            "GameQueryService", // effective-characteristics and chosen-X snapshots on fresh runtime copies
+            "MutationSupport", // assembles the fresh merged card and token-status copies for mutate
+            "PermanentRemovalService", // last-known-information and printed Werewhat face snapshots on fresh runtime copies
+            "CastingPermissionService", // assembles fresh face-down spell characteristics
+            "CombatAttackService", // effective-type snapshot of a declared attacker on a fresh runtime copy
+            "DamageSupport", // effective-type snapshot of a damaged permanent on a fresh runtime copy
+            "FlipCoinOnEnterEffectHandler", // as-enters P/T and keywords on a fresh runtime copy
+            "MayCastCommanderFromCommandZoneWithoutPayingManaCostHandler", // waived mana cost on a fresh payment copy
+            "BecomeCopyOfTopCreatureCardUntilEndOfTurnEffectHandler", // adds keywords to the fresh clone-copy card installed by PermanentCopierService
+            "BronzeTabletAnteExchangeEffectHandler", // changes owner on a fresh runtime copy of the exiled card
+            "CreateEmblemEffectHandler", // assembles and freezes the fresh emblem source card
+            "EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandler", // stamps owner on fresh conjured copies
+            "EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHandler", // stamps owner on fresh conjured copies
+            "ExileAnotherCreatureAndConjureRandomCreatureEffectHandler", // marks the freshly created printing as conjured
+            "PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler", // stamps the freshly created printing as conjured
+            "ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffectHandler", // assembles fresh face-down copiable values
+            "ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler", // assembles fresh face-down copiable values
+            "ReturnTargetCreatureCardToHandAndPerpetuallyModifyEffectHandler", // perpetual changes on a fresh runtime copy
+            "ChoiceHandlerService", // as-enters P/T form on a fresh runtime copy
+            "MultiPermanentChoiceHandlerService", // effective-subtype snapshot of a devoured creature on a fresh copy
+            "PermanentChoiceBattlefieldHandlerService", // effective-characteristics snapshot of a sacrificed permanent on a fresh copy
+            "SpellTriggers"); // chosen-X mana cost on a fresh runtime copy of the spell
 
     private static boolean isWhitelisted(JavaClass javaClass) {
         String outermost = javaClass.getName().replaceAll("\\$.*", "");

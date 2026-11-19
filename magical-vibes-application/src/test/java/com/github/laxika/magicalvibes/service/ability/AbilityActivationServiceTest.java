@@ -88,6 +88,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -117,6 +118,8 @@ class AbilityActivationServiceTest {
     @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private LandManaReplacementService landManaReplacementService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    @Mock private com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
 
     @InjectMocks
     private AbilityActivationService service;
@@ -162,6 +165,9 @@ class AbilityActivationServiceTest {
         gameData.activePlayerId = player1Id;
         gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
+        // StateBasedActionService is a lazy field-injected collaborator, which @InjectMocks skips.
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "stateBasedActionService",
+                stateBasedActionService);
         // No land-mana replacements unless a test says otherwise.
         lenient().when(landManaReplacementService.produce(eq(gameData), any(), any(), any(), anyInt(), any()))
                 .thenReturn(new LandManaReplacementService.Resolution.Unchanged());
@@ -178,6 +184,10 @@ class AbilityActivationServiceTest {
         lenient().when(gameQueryService.canPayLifeForCosts(gameData, false)).thenReturn(true);
         lenient().when(gameQueryService.canPayLifeForCosts(gameData, true)).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(gameData)).thenReturn(true);
+        // Names are the printed ones (no copy or name-changing effects), as Pithing Needle reads them.
+        lenient().when(gameQueryService.permanentHasName(eq(gameData), any(Permanent.class), any()))
+                .thenAnswer(invocation -> invocation.getArgument(2) != null && invocation.getArgument(2)
+                        .equals(invocation.<Permanent>getArgument(1).getCard().getName()));
     }
 
     @Test
@@ -472,7 +482,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -489,7 +499,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -580,7 +590,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1207,11 +1217,14 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
+            // No counter-placement replacement (Vorinclex): the +1 cost places exactly one counter.
+            when(gameQueryService.replaceCounters(gameData, perm, CounterType.LOYALTY, 1, player1Id)).thenReturn(1);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             // +1 loyalty cost
             assertThat(perm.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+            verify(permanentCounterSupport).notifyCountersPlaced(gameData, null, perm, 1);
         }
     }
 
@@ -1359,12 +1372,12 @@ class AbilityActivationServiceTest {
         }
 
         @Test
-        @DisplayName("RemoveCounterFromSourceCost: prefers removing -1/-1 counter first")
-        void removeCounterPrefersMinusOneMinusOne() {
+        @DisplayName("RemoveCounterFromSourceCost: asks which kind to remove when the source has several kinds")
+        void removeCounterAsksForKindWhenSeveralArePresent() {
             Card card = createArtifactWithRemoveCounterAbility();
             Permanent perm = addReadyPermanent(player1Id, card);
             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+            perm.setCounterCount(CounterType.CHARGE, 1);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -1372,7 +1385,12 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+            verify(interactionHandlerRegistry).begin(eq(gameData), argThat(interaction ->
+                    interaction instanceof PendingInteraction.ColorChoice choice
+                            && choice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.SourceCounterCostTypeChoice kinds
+                            && kinds.counterTypes().containsAll(List.of(CounterType.PLUS_ONE_PLUS_ONE, CounterType.CHARGE))
+                            && kinds.counterTypes().size() == 2));
+            assertThat(perm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
             assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
 
@@ -1514,14 +1532,14 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
-            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canChooseToSacrificeForCosts(gameData, husk)).thenReturn(true);
             when(gameQueryService.findPermanentById(gameData, husk.getId())).thenReturn(husk);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, husk);
-            assertThat(gameData.playersWhoSacrificedPermanentsThisTurn).contains(player1Id);
-            verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
+            // The only creature is chosen without a prompt; the activation's completion sacrifices it.
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
+            assertThat(gameData.pendingActivationCostSacrificeIds).containsExactly(husk.getId());
         }
 
         @Test
@@ -1543,8 +1561,8 @@ class AbilityActivationServiceTest {
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
-            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
-            when(gameQueryService.canSacrificePermanentForCosts(gameData, bears)).thenReturn(true);
+            when(gameQueryService.canChooseToSacrificeForCosts(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canChooseToSacrificeForCosts(gameData, bears)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
@@ -1780,7 +1798,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
 
             ManaPool hypotheticalPool = new ManaPool();
             hypotheticalPool.add(ManaColor.COLORLESS, 2);
@@ -1802,7 +1820,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
             when(castingCostService.getActivatedAbilityActivationTax(
                     eq(gameData), eq(player1Id), eq(perm), any(), anyBoolean())).thenReturn(3);
 
@@ -1828,7 +1846,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(gameQueryService.isArtifact(gameData, perm)).thenReturn(true);
             when(castingCostService.getTargetingSubtypeTax(
                     gameData, player1Id, targetId, null, true)).thenReturn(2);
 

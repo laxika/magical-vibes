@@ -36,7 +36,6 @@ class EachCreatureDealsPowerDamageToItselfEffectHandlerTest extends AbstractDama
 
         stubDamagePreventable();
         stubNoDamageMultiplier();
-        stubCreatureSourceRedirects();
         when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
         when(gameQueryService.findPermanentById(gd, wall.getId())).thenReturn(wall);
         when(gameQueryService.findPermanentById(gd, spider.getId())).thenReturn(spider);
@@ -71,7 +70,6 @@ class EachCreatureDealsPowerDamageToItselfEffectHandlerTest extends AbstractDama
         tappedWall.tap();
         stubDamagePreventable();
         stubNoDamageMultiplier();
-        stubCreatureSourceRedirects();
         when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
         when(gameQueryService.findPermanentById(gd, tappedWall.getId())).thenReturn(tappedWall);
         when(gameQueryService.getPowerBasedDamage(gd, tappedWall)).thenReturn(3);

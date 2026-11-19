@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledTokensEffect;
@@ -75,6 +76,31 @@ class LegendRuleServiceTest {
         lenient().when(gameQueryService.hasEffectiveSupertype(any(), any(), any()))
                 .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard()
                         .getSupertypes().contains(invocation.getArgument(2)));
+        // Names and static abilities come from the printed cards: no copy or text-changing effects here.
+        lenient().when(gameQueryService.getEffectiveName(any(), any()))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getName());
+        lenient().when(gameQueryService.getActiveStaticEffects(any(), any(Permanent.class)))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getStaticEffects());
+        lenient().when(gameQueryService.activeStaticEffects(any(), any(Class.class)))
+                .thenAnswer(invocation -> activeStaticEffects(gd.orderedPlayerIds, invocation.getArgument(1)));
+        lenient().when(gameQueryService.activeStaticEffects(any(), any(UUID.class), any(Class.class)))
+                .thenAnswer(invocation -> activeStaticEffects(List.of(invocation.<UUID>getArgument(1)),
+                        invocation.getArgument(2)));
+    }
+
+    /** The static effects of {@code type} printed on the given players' permanents, as GameQueryService walks them. */
+    private List<GameQueryService.ActiveStaticEffect<CardEffect>> activeStaticEffects(List<UUID> controllerIds,
+                                                                                       Class<?> type) {
+        List<GameQueryService.ActiveStaticEffect<CardEffect>> found = new ArrayList<>();
+        for (UUID controllerId : controllerIds) {
+            for (Permanent permanent : gd.playerBattlefields.get(controllerId)) {
+                permanent.getCard().getStaticEffects().stream()
+                        .filter(type::isInstance)
+                        .forEach(effect -> found.add(
+                                new GameQueryService.ActiveStaticEffect<>(effect, permanent, controllerId)));
+            }
+        }
+        return found;
     }
 
     // ===== Helper methods =====
@@ -202,12 +228,13 @@ class LegendRuleServiceTest {
         }
 
         @Test
-        @DisplayName("A same-named copy without the exemption still triggers the legend rule")
-        void nonExemptCopyStillViolates() {
+        @DisplayName("One copy's exemption also protects an exactly-two same-named copy that lacks the ability")
+        void exemptionProtectsSameNamedCopyWithoutIt() {
             addPermanent(player1Id, exemptLegend());
             addPermanent(player1Id, createLegendaryCreature("Brothers Yamazaki"));
 
-            assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
     }
 

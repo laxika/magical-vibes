@@ -11012,6 +11012,20 @@ public class GameData {
         copy.playersWhoForetoldThisTurn.addAll(this.playersWhoForetoldThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.discardCostBatchOpen = this.discardCostBatchOpen;
+        copy.beholdCostWaivedCardId = this.beholdCostWaivedCardId;
+        copy.beholdCostRevealedCard = this.beholdCostRevealedCard;
+        copy.heldSpellbookCards.addAll(this.heldSpellbookCards);
+        copy.timeVaultsDeclinedThisTurnStart.addAll(this.timeVaultsDeclinedThisTurnStart);
+        copy.permanentsEnteringSimultaneously.addAll(this.permanentsEnteringSimultaneously);
+        copy.castCostMinimumManaOffset = this.castCostMinimumManaOffset;
+        copy.simultaneousSacrificeDepth = this.simultaneousSacrificeDepth;
+        copy.sacrificeBoonBatchPlayerIds.addAll(this.sacrificeBoonBatchPlayerIds);
+        copy.suppressNextLibrarySearchTriggers = this.suppressNextLibrarySearchTriggers;
+        copy.trackingActivationLifePaid = this.trackingActivationLifePaid;
+        copy.activationLifePaid = this.activationLifePaid;
+        copy.graveyardLookBackExcludedCardIds.addAll(this.graveyardLookBackExcludedCardIds);
+        copy.lostPrintedAbilityWatcherIdsBeforeLeave.addAll(this.lostPrintedAbilityWatcherIdsBeforeLeave);
+        copy.sacrificingAsSpellCost = this.sacrificingAsSpellCost;
         copy.permanentTapTriggerBatchDepth = this.permanentTapTriggerBatchDepth;
         this.permanentTapTriggerBatchFiredAbilities.forEach((sourceId, abilities) -> {
             Set<String> copiedAbilities = ConcurrentHashMap.newKeySet();

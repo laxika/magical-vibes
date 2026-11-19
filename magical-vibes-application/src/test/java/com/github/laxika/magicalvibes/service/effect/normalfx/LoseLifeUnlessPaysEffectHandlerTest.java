@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,11 +21,13 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
+                when(potentialManaService.buildVirtualManaPool(gd, player2Id)).thenReturn(new VirtualManaPool());
                 when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+                verify(lifeSupport).applyLifeLoss(gd, player2Id, 2, "Rhystic Study");
+                assertThat(gd.pendingMayAbilities).isEmpty();
             }
 
             @Test
@@ -34,11 +37,12 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(5, 3, true);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
+                when(potentialManaService.buildVirtualManaPool(gd, player2Id)).thenReturn(new VirtualManaPool());
                 when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+                verify(lifeSupport).applyLifeLoss(gd, player2Id, 5, "Rhystic Study");
                 verify(lifeSupport).applyGainLife(gd, player1Id, 5);
             }
 
@@ -49,11 +53,12 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
                 LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
+                when(potentialManaService.buildVirtualManaPool(gd, player2Id)).thenReturn(new VirtualManaPool());
                 when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+                verify(lifeSupport, never()).applyLifeLoss(any(), any(), anyInt(), any());
             }
 
             @Test
@@ -69,6 +74,6 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
 
                 assertThat(gd.pendingMayAbilities).isNotEmpty();
                 assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
-                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+                verify(lifeSupport, never()).applyLifeLoss(any(), any(), anyInt(), any());
             }
 }

@@ -109,6 +109,8 @@ class GameActionAvailabilityServiceTest {
                 .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
                         invocation.getArgument(1)).get());
         lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(NO_BONUS);
+        com.github.laxika.magicalvibes.service.cast.ActiveStaticEffectStubs.stub(
+                gameQueryService, predicateEvaluationService);
 
         // Real casting services (with the real handler registry) over the mocked collaborators,
         // so the playable-index computation exercises the same cost/permission code paths as production.
@@ -903,7 +905,7 @@ class GameActionAvailabilityServiceTest {
                     .thenReturn(new GameQueryService.ExplainedBonus(noBonus, List.of(), List.of()));
             when(permanentViewFactory.create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
                     anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
-                    anyBoolean(), anyBoolean(), any(), anyList(), anyList(), eq(1), any()))
+                    anyBoolean(), anyBoolean(), any(), anyList(), anyList(), eq(1), any(), any(), anyInt(), any(), any()))
                     .thenReturn(permanentView(sourcePermanent.getId(), 1));
 
             projectionFactory.getBattlefields(gd);
@@ -912,7 +914,8 @@ class GameActionAvailabilityServiceTest {
             ArgumentCaptor<List<Card>> faceUpCaptor = ArgumentCaptor.forClass(List.class);
             verify(permanentViewFactory).create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
                     anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
-                    anyBoolean(), anyBoolean(), any(), anyList(), faceUpCaptor.capture(), eq(1), any());
+                    anyBoolean(), anyBoolean(), any(), anyList(), faceUpCaptor.capture(), eq(1), any(), any(), anyInt(), any(),
+                    any());
             assertThat(faceUpCaptor.getValue()).containsExactly(faceUpCard);
         }
     }

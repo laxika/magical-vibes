@@ -310,7 +310,7 @@ class TargetValidationServiceSpecTest {
                 List.of(new GraveyardCreatureEffect(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
                 new TargetValidationContext(
                         gd, creature.getId(), Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
-                .contains("Target card is not in an allowed graveyard");
+                .contains("Target card is not in an allowed graveyard (your graveyard only)");
     }
 
     @Test

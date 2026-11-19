@@ -36,7 +36,6 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(target, 5);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(3);
         when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);
@@ -62,7 +61,6 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(target, 2);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(2);
         when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);
@@ -88,7 +86,6 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         stubDamagePreventable();
         stubNoDamageMultiplier();
         stubCreatureDamageCore(target, 2);
-        stubCreatureSourceRedirects();
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(1);
         when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);

@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatMan
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,7 +28,7 @@ class DiscardOwnHandThenDrawThatManyEffectHandlerTest extends AbstractPlayerInte
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
                 verify(graveyardService).discardCard(gd, player1Id, handCard1);
                 verify(graveyardService).discardCard(gd, player1Id, handCard2);
-                verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 2);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("draws 2 cards")));
             }
@@ -44,7 +42,7 @@ class DiscardOwnHandThenDrawThatManyEffectHandlerTest extends AbstractPlayerInte
                 resolveEffect(gd, entry, new DiscardOwnHandThenDrawThatManyEffect());
 
                 verify(graveyardService, never()).discardCard(any(), any(), any());
-                verify(drawService, never()).resolveDrawCard(any(), any());
+                verify(drawService, never()).resolveDrawCards(any(), any(), anyInt());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard")));
             }

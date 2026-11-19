@@ -53,6 +53,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -84,6 +85,13 @@ class MayCastHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport exileCastTargetSupport;
 
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport copySupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService additionalSpellCostService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport dealDividedDamageSupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport exileFreeCastSupport;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
+    @Mock private com.github.laxika.magicalvibes.service.GameActionAvailabilityService gameActionAvailabilityService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -113,9 +121,28 @@ class MayCastHandlerServiceTest {
         gd.playerDecks.put(PLAYER2_ID, new ArrayList<>());
         gd.playerHands.put(PLAYER1_ID, new ArrayList<>());
         gd.playerHands.put(PLAYER2_ID, new ArrayList<>());
+
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                svc, "exileFreeCastQueueSupport", exileFreeCastQueueSupport);
+        lenient().when(additionalSpellCostService.satisfiable(any(), any(), any())).thenReturn(true);
+        lenient().when(additionalSpellCostService.satisfiableForGraveyardCast(any(), any(), any())).thenReturn(true);
+        lenient().when(additionalSpellCostService.satisfiableWithoutManaCost(any(), any(), any())).thenReturn(true);
+        lenient().when(validTargetService.computeValidTargetsForSpell(any(), any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> everyPermanentAndPlayerLegal());
     }
 
-    // ===== Helper methods =====
+    /**
+     * The target legality service's answer when every permanent on the battlefield and every player is a legal
+     * target, so tests exercise only the handler's own filtering by the spell's target kinds and filter.
+     */
+    private ValidTargetsResponse everyPermanentAndPlayerLegal() {
+        List<UUID> permanents = new ArrayList<>();
+        for (UUID playerId : gd.orderedPlayerIds) {
+            gd.playerBattlefields.get(playerId).forEach(permanent -> permanents.add(permanent.getId()));
+        }
+        return new ValidTargetsResponse(permanents, List.copyOf(gd.orderedPlayerIds), 1, 1, "");
+    }
+
 
     private Card createSorcery(String name) {
         Card card = new Card();
@@ -172,6 +199,8 @@ class MayCastHandlerServiceTest {
         when(gameQueryService.findGraveyardOwnerById(gd, artifact.getId())).thenReturn(PLAYER1_ID);
         when(gameQueryService.canPlayerLifeChange(gd, PLAYER1_ID)).thenReturn(true);
         when(gameQueryService.canPayLifeForCosts(gd)).thenReturn(true);
+        when(gameQueryService.cardHasType(artifact, CardType.ARTIFACT, gd, PLAYER1_ID)).thenReturn(true);
+        when(gameQueryService.canCastSpellFromZone(gd, artifact, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(true);
 
         svc.handleMayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValue(
                 gd, player1, true, abilityFor(artifact));
@@ -183,7 +212,6 @@ class MayCastHandlerServiceTest {
         assertThat(gd.stack.getFirst().getSourceZone()).isEqualTo(Zone.GRAVEYARD);
     }
 
-    // ===== buildValidSpellTargets =====
 
     @Nested
     @DisplayName("buildValidSpellTargets")
@@ -357,7 +385,6 @@ class MayCastHandlerServiceTest {
         }
     }
 
-    // ===== handleCastFromLibraryChoice =====
 
     @Nested
     @DisplayName("handleCastFromLibraryChoice")
@@ -486,11 +513,16 @@ class MayCastHandlerServiceTest {
         }
     }
 
-    // ===== handlePlayFromLibraryOrExileChoice =====
 
     @Nested
     @DisplayName("handlePlayFromLibraryOrExileChoice")
     class HandlePlayFromLibraryOrExileChoice {
+
+        @BeforeEach
+        void allowLibraryCasting() {
+            lenient().when(gameQueryService.canCastSpellFromZone(
+                    eq(gd), any(Card.class), eq(Zone.LIBRARY), eq(PLAYER1_ID))).thenReturn(true);
+        }
 
         @Test
         @DisplayName("Declining exiles the card from library")
@@ -623,7 +655,6 @@ class MayCastHandlerServiceTest {
         }
     }
 
-    // ===== handleCastFromGraveyardChoice =====
 
     @Nested
     @DisplayName("handleCastFromGraveyardChoice")
@@ -732,6 +763,9 @@ class MayCastHandlerServiceTest {
             PendingMayAbility ability = abilityFor(card);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER1_ID);
+            when(predicateEvaluationService.matchesCardPredicate(eq(card),
+                    any(com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate.class),
+                    any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, controllerGraveyardPaid());
 

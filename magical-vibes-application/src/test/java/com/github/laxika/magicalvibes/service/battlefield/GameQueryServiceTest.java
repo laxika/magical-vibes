@@ -225,11 +225,12 @@ class GameQueryServiceTest {
     }
 
     @Test
+    @DisplayName("Conditional extra land plays count only while their condition holds, and only for their controller")
     void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
-        ReflectionTestUtils.setField(gqs, "landPlayPermissionService",
-                new com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService(
-                        new StaticEffectConditionResolver(
-                                conditionEvaluationService)));
+        var landPlayPermissionService = new com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService(
+                new StaticEffectConditionResolver(conditionEvaluationService));
+        ReflectionTestUtils.setField(landPlayPermissionService, "gameQueryService", gqs);
+        ReflectionTestUtils.setField(gqs, "landPlayPermissionService", landPlayPermissionService);
         var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
         Card card = new Card();
         card.addStaticEffect(new ConditionalEffect(condition,

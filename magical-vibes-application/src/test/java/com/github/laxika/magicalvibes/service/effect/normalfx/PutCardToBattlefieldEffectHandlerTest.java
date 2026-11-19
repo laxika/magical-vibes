@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
+    @DisplayName("Filters the hand against the source's last known state after the source has left")
     void retainsSourceSnapshotForTheHandFilterAfterSourceLeaves() {
         Card source = createCard("Subtype source");
         var snapshot = new com.github.laxika.magicalvibes.model.Permanent(source);
@@ -38,7 +39,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), eq(List.of(0)), any(),
                 anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(),
                 eq(false), eq(false), eq(0), eq(0), anySet(), isNull(), eq(false), eq(false),
-                isNull(), isNull(), isNull(), isNull(), eq(snapshot.getId()), eq(Set.of()), eq(false));
+                isNull(), isNull(), isNull(), isNull(), eq(snapshot.getId()), eq(Set.of()), eq(true), eq(false));
     }
 
     @Test
@@ -58,7 +59,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
-                anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
+                anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false), eq(false));
     }
 
     @Test
@@ -79,7 +80,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true),
                 isNull(), eq(false), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0), anySet(),
-                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false), eq(false));
     }
 
     @Test
@@ -100,7 +101,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
-                anySet(), isNull(), eq(true), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
+                anySet(), isNull(), eq(true), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false), eq(false));
     }
 
     @Test
@@ -127,7 +128,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), validIndices.capture(), any(), anyBoolean(),
                 anyBoolean(), anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false),
                 eq(0), eq(0), anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(),
-                isNull(), anySet(), eq(false));
+                isNull(), anySet(), eq(false), eq(false));
         assertThat(validIndices.getValue()).containsExactly(0);
     }
 
@@ -151,7 +152,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
                 anySet(), isNull(), eq(false), eq(false), isNull(), isNull(),
-                eq(enterTappedAndAttackingIf), isNull(), isNull(), eq(Set.of()), eq(false));
+                eq(enterTappedAndAttackingIf), isNull(), isNull(), eq(Set.of()), eq(false), eq(false));
     }
 
     @Test
@@ -171,7 +172,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
                 isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false), eq(false), eq(0), eq(0), anySet(),
-                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false), eq(false));
     }
 
     @Test
@@ -191,7 +192,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
                 isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true), eq(false), eq(0), eq(0), anySet(),
-                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false));
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Set.of()), eq(false), eq(false));
     }
 
     @Test

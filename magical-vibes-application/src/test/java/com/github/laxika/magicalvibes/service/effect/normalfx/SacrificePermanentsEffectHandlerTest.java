@@ -70,6 +70,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SacrificePermanentsEffectHandlerTest {
 
     @Test
+    @DisplayName("A player's automatic sacrifices leave together and share one last-known snapshot")
     void singlePlayerAutomaticSacrificesShareTheSimultaneousDeathSnapshot() {
         Permanent first = addPermanent(player1Id, "First land", CardType.LAND);
         Permanent second = addPermanent(player1Id, "Second land", CardType.LAND);
@@ -95,6 +96,7 @@ class SacrificePermanentsEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Simultaneous sacrifice choices start with the active player even with a single legal creature")
     void simultaneousChoicesStartWithTheActivePlayerEvenForASingleLegalCreature() {
         gd.activePlayerId = player2Id;
         Permanent first = addPermanent(player1Id, "First creature", CardType.CREATURE);
@@ -151,15 +153,18 @@ class SacrificePermanentsEffectHandlerTest {
         handler = new SacrificePermanentsEffectHandler(destructionSupport, gameLogService,
                 gameQueryService, predicateEvaluationService, playerInputService, amountEvaluationService);
         lenient().when(gameQueryService.canEffectCauseSacrifice(any(), any(), any())).thenReturn(true);
-        lenient().when(permanentRemovalService.sacrificePermanentToGraveyard(any(), any())).thenReturn(true);
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.findPermanentById(any(), any())).thenAnswer(invocation -> {
+            UUID permanentId = invocation.getArgument(1);
+            return gd.playerBattlefields.values().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.getId().equals(permanentId)).findFirst().orElse(null);
+        });
         org.springframework.test.util.ReflectionTestUtils.setField(destructionSupport, "departureService",
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
     }
 
-    // ===== Helpers =====
 
     private Card createCard(String name, CardType type) {
         Card card = new Card();
@@ -188,11 +193,8 @@ class SacrificePermanentsEffectHandlerTest {
                 any(AmountContext.class))).thenReturn(count);
     }
 
-    // ===================================================================================
-    // TARGET_PLAYER — creature single-select mechanic (former SacrificeCreatureEffectHandler)
-    // ===================================================================================
-
     @Nested
+    @DisplayName("Target player sacrifices a creature they choose")
     class TargetPlayerCreature {
 
         @Test
@@ -231,7 +233,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
             verify(gameLogService).append(gd, GameLog.text("Player2 has no creatures to sacrifice."));
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
 
         @Test
@@ -239,7 +241,7 @@ class SacrificePermanentsEffectHandlerTest {
         void noEffectWithoutTargetPlayer() {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
         }
 
@@ -252,16 +254,13 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
         }
     }
 
-    // ===================================================================================
-    // TARGET_PLAYER — multi-permanent mechanic (former TargetPlayerSacrificesPermanentsEffect)
-    // ===================================================================================
-
     @Nested
+    @DisplayName("Target player sacrifices matching permanents")
     class TargetPlayerPermanents {
 
         private SacrificePermanentsEffect landSac() {
@@ -279,7 +278,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, forest);
+            verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Forest.")));
         }
 
@@ -300,8 +299,8 @@ class SacrificePermanentsEffectHandlerTest {
                     .withRecordedSacrificeCount());
 
             assertThat(resolvingEntry.getEventValue()).isEqualTo(2);
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, firstForest);
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, secondForest);
+            verify(permanentRemovalService).departToGraveyard(gd, firstForest, DepartureIntent.sacrifice(firstForest.getId()), null);
+            verify(permanentRemovalService).departToGraveyard(gd, secondForest, DepartureIntent.sacrifice(secondForest.getId()), null);
         }
 
         @Test
@@ -322,7 +321,7 @@ class SacrificePermanentsEffectHandlerTest {
                     .withRecordedSacrificedPower());
 
             assertThat(resolvingEntry.getEventValue()).isEqualTo(3);
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, giant);
+            verify(permanentRemovalService).departToGraveyard(gd, giant, DepartureIntent.sacrifice(giant.getId()), null);
         }
 
         @Test
@@ -338,7 +337,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player2Id),
                     any(), eq(1), any(MultiPermanentChoiceContext.ForcedSacrifice.class), anyString());
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
 
         @Test
@@ -380,7 +379,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
             verify(gameLogService).append(gd, GameLog.text("Player2 has no matching permanents to sacrifice."));
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
 
         @Test
@@ -393,7 +392,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
             verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(),
                     anyInt(), any(), anyString());
         }
@@ -409,15 +408,12 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolveForPlayer(gd, entry(player1Id, null), new SacrificePermanentsEffect(
                     1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER), player2Id);
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, forest);
+            verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
         }
     }
 
-    // ===================================================================================
-    // CONTROLLER — creature single-select mechanic (former ControllerSacrificesCreatureEffect)
-    // ===================================================================================
-
     @Nested
+    @DisplayName("The controller sacrifices a creature")
     class ControllerCreature {
 
         @Test
@@ -435,11 +431,8 @@ class SacrificePermanentsEffectHandlerTest {
         }
     }
 
-    // ===================================================================================
-    // EACH_OPPONENT — creature single-select mechanic (former EachOpponentSacrificesCreatureEffect)
-    // ===================================================================================
-
     @Nested
+    @DisplayName("Each opponent sacrifices a creature")
     class EachOpponentCreature {
 
         @Test
@@ -463,15 +456,12 @@ class SacrificePermanentsEffectHandlerTest {
 
             verify(gameLogService).append(gd, GameLog.text("Player2 has no creatures to sacrifice."));
             verify(gameLogService, never()).append(gd, GameLog.text("Player1 has no creatures to sacrifice."));
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
     }
 
-    // ===================================================================================
-    // EACH_PLAYER — multi-permanent APNAP mechanic (former EachPlayerSacrificesPermanentsEffect)
-    // ===================================================================================
-
     @Nested
+    @DisplayName("Each player sacrifices matching permanents in APNAP order")
     class EachPlayerPermanents {
 
         private SacrificePermanentsEffect landSac(SacrificeRecipient recipient) {
@@ -511,12 +501,8 @@ class SacrificePermanentsEffectHandlerTest {
         }
     }
 
-    // ===================================================================================
-    // TARGET_PLAYER_OR_PERMANENT_CONTROLLER — piggybacks on a companion player-or-planeswalker
-    // damage effect's targetId (Nicol Bolas, Planeswalker -9)
-    // ===================================================================================
-
     @Nested
+    @DisplayName("The targeted player, or the targeted permanent's controller, sacrifices")
     class TargetPlayerOrPermanentController {
 
         private SacrificePermanentsEffect anyPermanentSac() {
@@ -534,7 +520,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), anyPermanentSac());
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, forest);
+            verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
             verify(gameLogService).append(gd, GameLog.playerSacrifices("Player2", forest.getCard()));
         }
 
@@ -550,7 +536,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, planeswalkerId), anyPermanentSac());
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, forest);
+            verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
             verify(gameLogService).append(gd, GameLog.playerSacrifices("Player2", forest.getCard()));
         }
 
@@ -562,7 +548,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, planeswalkerId), anyPermanentSac());
 
-            verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
     }
 }

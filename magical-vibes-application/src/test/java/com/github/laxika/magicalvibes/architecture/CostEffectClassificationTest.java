@@ -99,6 +99,7 @@ class CostEffectClassificationTest {
             "ReturnSelfToHandCost",
             "RevealHandCost",
             "RevealChosenPlayerCost",
+            "RevealSourceChosenSubtypeCost",
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
             "SacrificeAllMatchingPermanentsCost",

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -99,6 +100,8 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 new StepDepartureSupport(new DepartureService(gameQueryService, permanentRemovalService,
                         graveyardService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService), null));
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.cardHasSupertype(any(), any(), any(), any())).thenAnswer(invocation ->
+                invocation.<Card>getArgument(0).getSupertypes().contains(invocation.<CardSupertype>getArgument(1)));
 
     }
 
@@ -129,12 +132,10 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             arbiterCard.addStaticEffect(new CantSearchLibrariesEffect());
             Permanent arbiter = new Permanent(arbiterCard);
             gd.playerBattlefields.get(playerId).add(arbiter);
+            lenient().when(gameQueryService.activeStaticEffects(gd, CardEffect.class)).thenReturn(List.of(
+                    new GameQueryService.ActiveStaticEffect<>(new CantSearchLibrariesEffect(), arbiter, playerId)));
             return arbiter;
         }
-
-        // =========================================================================
-        // resolveSearchLibraryForCardTypesToHand (via SylvanScrying)
-        // =========================================================================
 
     private DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect effect;
 
@@ -368,14 +369,14 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             }
 
             @Test
-            @DisplayName("Skips player with no basic lands and tries next")
+            @DisplayName("A mandatory search skips a player with no basic lands and tries the next")
             void skipsPlayerWithNoBasicLandsWhenDequeuing() {
                 stubCardViewFactory();
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
                 gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
 
                 boolean result = support.startNextEachPlayerBasicLandSearch(gd,
-                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player1Id, player2Id), false));
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player1Id, player2Id), false), false);
 
                 assertThat(result).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
@@ -384,13 +385,13 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             }
 
             @Test
-            @DisplayName("Returns false when all queued players lack basic lands")
+            @DisplayName("A mandatory search returns false when all queued players lack basic lands")
             void returnsFalseWhenAllPlayersLackBasicLands() {
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
                 gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
 
                 boolean result = support.startNextEachPlayerBasicLandSearch(gd,
-                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player1Id, player2Id), false));
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player1Id, player2Id), false), false);
 
                 assertThat(result).isFalse();
             }

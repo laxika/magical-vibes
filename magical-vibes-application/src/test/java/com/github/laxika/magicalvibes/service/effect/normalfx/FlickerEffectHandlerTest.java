@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -113,6 +115,14 @@ class FlickerEffectHandlerTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class),
                 cloneService, battlefieldEntryBatchSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.state.StateTriggerService.class));
+        // The mocked removal exiles what it is handed, so an immediate flicker finds the card to return.
+        org.mockito.Mockito.lenient().when(permanentRemovalService.removePermanentToExile(any(), any()))
+                .thenAnswer(invocation -> {
+                    Permanent permanent = invocation.getArgument(1);
+                    gd.playerBattlefields.values().forEach(battlefield -> battlefield.remove(permanent));
+                    permanent.cardsLeavingBattlefield().forEach(card -> gd.addToExile(player1Id, card));
+                    return true;
+                });
     }
 
     private Card createCreatureCard(String name) {
@@ -133,7 +143,7 @@ class FlickerEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("Global delayed flicker exiles matching permanents from every battlefield and batches returns by owner")
+    @DisplayName("Global delayed flicker exiles matching permanents from every battlefield and returns each under its owner's control")
     void globalDelayedFlickerExilesEveryBattlefield() {
         Permanent first = new Permanent(createCreatureCard("Grizzly Bears"));
         Permanent second = new Permanent(createCreatureCard("Llanowar Elves"));
@@ -158,8 +168,13 @@ class FlickerEffectHandlerTest {
         verify(permanentRemovalService).removePermanentToExile(gd, first);
         verify(permanentRemovalService).removePermanentToExile(gd, second);
         assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
-                .extracting(PendingExileReturn::controllerId)
-                .containsExactly(player1Id, player2Id);
+                .singleElement()
+                .satisfies(pending -> {
+                    assertThat(pending.card()).isSameAs(first.getCard());
+                    assertThat(pending.additionalCards()).containsExactly(second.getCard());
+                    assertThat(pending.returnControllerByCardId()).containsExactlyInAnyOrderEntriesOf(Map.of(
+                            first.getCard().getId(), player1Id, second.getCard().getId(), player2Id));
+                });
     }
 
     @Nested
@@ -246,7 +261,7 @@ class FlickerEffectHandlerTest {
 
             ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), returnedCaptor.capture());
+                    eq(gd), eq(player1Id), returnedCaptor.capture(), anySet(), anyList());
             assertThat(returnedCaptor.getValue().isTapped()).isTrue();
         }
 
@@ -273,7 +288,7 @@ class FlickerEffectHandlerTest {
             verify(cloneService).prepareCloneReplacementEffect(
                     eq(gd), eq(player1Id), eq(targetCard), eq((UUID) null), eq(0));
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
-                    any(), any(), any(Permanent.class));
+                    any(), any(), any(Permanent.class), anySet(), anyList());
         }
 
         @Test
@@ -293,7 +308,7 @@ class FlickerEffectHandlerTest {
 
             ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), returnedCaptor.capture());
+                    eq(gd), eq(player1Id), returnedCaptor.capture(), anySet(), anyList());
             assertThat(returnedCaptor.getValue().isFaceDown()).isTrue();
             verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(
                     eq(gd), eq(player1Id), eq(target.getCard()));
@@ -487,7 +502,7 @@ class FlickerEffectHandlerTest {
 
             ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), returnedCaptor.capture());
+                    eq(gd), eq(player1Id), returnedCaptor.capture(), anySet(), anyList());
             assertThat(returnedCaptor.getValue().getCounterCount(
                     com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(returnedCaptor.getValue().isTapped()).isFalse();
@@ -510,7 +525,7 @@ class FlickerEffectHandlerTest {
 
             ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player2Id), returnedCaptor.capture());
+                    eq(gd), eq(player2Id), returnedCaptor.capture(), anySet(), anyList());
             assertThat(returnedCaptor.getValue().getCounterCount(
                     com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
             assertThat(returnedCaptor.getValue().isTapped()).isTrue();

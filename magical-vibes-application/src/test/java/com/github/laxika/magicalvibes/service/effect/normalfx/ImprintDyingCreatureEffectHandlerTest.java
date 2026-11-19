@@ -215,8 +215,8 @@ class ImprintDyingCreatureEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Does nothing when source permanent is gone")
-            void fizzlesWhenSourceGone() {
+            @DisplayName("Still exiles the dying card when the source permanent is gone, linked to no permanent")
+            void exilesUnlinkedWhenSourceGone() {
                 Card dyingCard = createCreatureCard("Grizzly Bears");
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
@@ -233,9 +233,10 @@ class ImprintDyingCreatureEffectHandlerTest {
 
                 imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
-                // Dying card should still be in graveyard
-                assertThat(gd.playerGraveyards.get(player2Id))
-                        .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                // The ability resolves independently of its source, so the card is exiled anyway.
+                assertThat(gd.playerGraveyards.get(player2Id)).doesNotContain(dyingCard);
+                verify(exileService).exileCard(gd, player2Id, dyingCard);
+                assertThat(gd.getImprintedCard(vatCard)).isNull();
             }
 
             @Test

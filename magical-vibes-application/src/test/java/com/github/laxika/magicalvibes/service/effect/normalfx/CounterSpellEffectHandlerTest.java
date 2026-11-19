@@ -374,7 +374,8 @@ class CounterSpellEffectHandlerTest {
 
                 Card stormtamer = createCreatureCard("Siren Stormtamer");
                 StackEntry counterEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, stormtamer, player2Id,
-                        "Siren Stormtamer's ability", List.of(new CounterSpellEffect()), 0, fumeSpitter.getId(), null);
+                        "Siren Stormtamer's ability", List.of(new CounterSpellEffect()), 0,
+                        abilityEntry.getTargetableId(), null);
 
                 counterSpellHandler.resolve(gd, counterEntry, new CounterSpellEffect());
 
@@ -392,7 +393,7 @@ class CounterSpellEffectHandlerTest {
                 gd.stack.add(abilityEntry);
 
                 Card counter = createInstantCard("Stifle");
-                StackEntry counterEntry = counterSpellEntry(counter, player2Id, source.getId());
+                StackEntry counterEntry = counterSpellEntry(counter, player2Id, abilityEntry.getTargetableId());
 
                 counterSpellHandler.resolve(gd, counterEntry, new CounterSpellEffect());
 

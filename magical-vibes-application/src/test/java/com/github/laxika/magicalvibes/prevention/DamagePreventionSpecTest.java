@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -46,13 +48,22 @@ class DamagePreventionSpecTest extends BaseCardTest {
     class ConsumptionOrdering {
 
         @Test
-        @DisplayName("Global shield is consumed before a creature's own shield")
+        @DisplayName("The creature's controller orders the global and creature shields; choosing the global one spends it first")
         void globalConsumedBeforeCreatureShield() {
             Permanent bears = addCreature(player2);
             gd.addGlobalDamagePreventionShield(1);
             gd.addPermanentDamagePreventionShield(bears.getId(), 5);
 
             shockPermanent(bears.getId());
+
+            // CR 616.1: two prevention effects apply to the same damage, so the affected creature's controller
+            // chooses which applies first.
+            PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+            assertThat(choice.playerId()).isEqualTo(player2.getId());
+            harness.handleListChoice(player2, choice.options().stream()
+                    .filter(option -> option.startsWith("Prevent damage with the shared shield"))
+                    .findFirst().orElseThrow());
 
             assertThat(gd.globalDamagePreventionShield()).isZero();
             assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(4);

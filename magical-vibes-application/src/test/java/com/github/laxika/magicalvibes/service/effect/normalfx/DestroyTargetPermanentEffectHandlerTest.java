@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.springframework.beans.factory.ObjectProvider;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -62,6 +64,8 @@ class DestroyTargetPermanentEffectHandlerTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
+    @Mock private ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
+    @Mock private PermanentControlSupport permanentControlSupport;
     @InjectMocks private DestructionSupport destructionSupport;
     private GameData gd;
     private UUID player1Id;
@@ -87,12 +91,11 @@ class DestroyTargetPermanentEffectHandlerTest {
         destroyTargetPermanentHandler = new DestroyTargetPermanentEffectHandler(destructionSupport, gameQueryService);
 
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
+        lenient().when(permanentControlSupportProvider.getObject()).thenReturn(permanentControlSupport);
         org.springframework.test.util.ReflectionTestUtils.setField(destructionSupport, "departureService",
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
     }
-
-    // ===== Helper methods =====
 
         private Card createCard(String name) {
             Card card = new Card();
@@ -260,15 +263,11 @@ class DestroyTargetPermanentEffectHandlerTest {
 
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
-                when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenCreationAmount(eq(gd), eq(player2Id), eq(1), any(), eq(true))).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).departToGraveyard(eq(gd), eq(bears), eq(DepartureIntent.destroy(bears.getId(), false)), any());
-                verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), any());
-                verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2Id), any(Card.class), eq(null), eq(false));
-                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 creates a 3/3 green Beast creature token.")));
+                verify(permanentControlSupport).applyCreateToken(eq(gd), eq(player2Id), eq(token), eq(1), any());
             }
 
             @Test
@@ -283,13 +282,11 @@ class DestroyTargetPermanentEffectHandlerTest {
 
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
-                when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenCreationAmount(eq(gd), eq(player2Id), eq(1), any(), eq(false))).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
-                verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                        eq(gd), eq(player2Id), argThat(Permanent::isTapped), any());
+                verify(permanentControlSupport).applyCreateToken(
+                        eq(gd), eq(player2Id), argThat(CreateTokenEffect::tapped), eq(1), any());
             }
 
             @Test
@@ -310,7 +307,6 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).departToGraveyard(eq(gd), eq(bears), eq(DepartureIntent.destroy(bears.getId(), false)), any());
-                verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
-                        any(), any(), any(), any());
+                verify(permanentControlSupport, never()).applyCreateToken(any(), any(), any(), anyInt(), any());
             }
 }

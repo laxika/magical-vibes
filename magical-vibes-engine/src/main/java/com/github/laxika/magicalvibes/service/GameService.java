@@ -2394,8 +2394,10 @@ public class GameService {
      * receives priority after activating an ability (CR 117.3c), which is when triggered abilities
      * are put on the stack (CR 603.3). A trigger on the stack can't be taken back, so that
      * activation leaves the cancel-casting undo window. One activated to pay for a cast or
-     * activation the client is holding back keeps its triggers waiting, still revertable, until
-     * that spell or ability is put on the stack.
+     * activation the client is holding back keeps its triggers waiting until that spell or ability
+     * is put on the stack (CR 601.2g), or until its controller passes priority: an activation that
+     * can be undone keeps them revertable, and one that can't (a sacrifice in its cost, life gained
+     * by its effect) still keeps them off the stack, so they can't stop a sorcery-speed cast.
      *
      * <p>A standalone activation that stopped for a colour choice is marked standalone, so the
      * answer finishes it the same way once the mana exists (see {@link #handleInteractionAnswer}).
@@ -2404,7 +2406,6 @@ public class GameService {
                                               PendingManaActivation parkedBefore,
                                               ManaPaymentIntent paymentIntent) {
         if (paymentIntent != null) {
-            flushManaAbilityTriggersAfterActivation(gameData);
             return;
         }
         PendingManaActivation parked = gameData.pendingRevertableManaActivation;

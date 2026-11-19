@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +62,9 @@ class AuraAttachmentServiceTest {
     @Mock private CreatureControlService creatureControlService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private UnattachTriggerSupport unattachTriggerSupport;
+    @Mock private TargetLegalityService targetLegalityService;
+    @Mock private ObjectProvider<PermanentRemovalService> permanentRemovalServiceProvider;
+    @Mock private PermanentRemovalService permanentRemovalService;
 
     @InjectMocks private AuraAttachmentService service;
 
@@ -73,6 +79,10 @@ class AuraAttachmentServiceTest {
         org.mockito.Mockito.lenient().when(gameQueryService.hasEffectiveSubtype(any(), any(), any()))
                 .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard()
                         .getSubtypes().contains(invocation.getArgument(2)));
+        // A swept Aura's last-known card is its printed card: no type-changing effects in these tests.
+        org.mockito.Mockito.lenient().when(permanentRemovalServiceProvider.getObject()).thenReturn(permanentRemovalService);
+        org.mockito.Mockito.lenient().when(permanentRemovalService.snapshotEffectivePermanentCard(any(), any()))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard());
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

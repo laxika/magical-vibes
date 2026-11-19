@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -32,7 +31,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
                 resolveEffect(gd, entry, effect);
 
-                verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, source);
+                verify(stepDepartureSupport).sacrificeThenContinue(eq(gd), eq(entry), eq(effect), eq(source.getId()), any());
             }
 
             @Test
@@ -52,7 +51,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.pendingMayAbilities).isNotEmpty();
-                verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+                verify(stepDepartureSupport, never()).sacrificeThenContinue(any(), any(), any(), any(), any());
             }
 
             @Test
@@ -64,7 +63,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
                 resolveEffect(gd, entry, effect);
 
-        verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+        verify(stepDepartureSupport, never()).sacrificeThenContinue(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -79,7 +78,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
         resolveEffect(gd, entry, effect);
 
-        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, source);
+        verify(stepDepartureSupport).sacrificeThenContinue(eq(gd), eq(entry), eq(effect), eq(source.getId()), any());
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
@@ -99,6 +98,6 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
         resolveEffect(gd, entry, effect);
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
-        verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
+        verify(stepDepartureSupport, never()).sacrificeThenContinue(any(), any(), any(), any(), any());
     }
 }

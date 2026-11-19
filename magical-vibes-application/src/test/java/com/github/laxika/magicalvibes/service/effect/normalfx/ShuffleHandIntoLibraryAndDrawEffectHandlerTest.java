@@ -4,12 +4,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -36,7 +34,7 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
                 // 3 cards moved to library
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(3);
                 // Draw 3 cards (one per card shuffled)
-                verify(drawService, times(3)).resolveDrawCard(gd, player1Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 3);
             }
 
             @Test
@@ -45,16 +43,15 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
                 Card card = createCard("Windfall");
                 ShuffleHandIntoLibraryAndDrawEffect effect = new ShuffleHandIntoLibraryAndDrawEffect();
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
-                Card watcher = createCard("Shuffle watcher");
-                watcher.addTrigger(Triggers.opponentShufflesLibrary(),
-                        new com.github.laxika.magicalvibes.model.effect.DrawCardEffect());
-                gd.playerBattlefields.get(player1Id).add(new com.github.laxika.magicalvibes.model.Permanent(watcher));
                 // Both players have empty hands
 
                 resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
-                verify(drawService, never()).resolveDrawCard(any(), any());
-                assertThat(gd.stack).hasSize(1);
+                verify(drawService, never()).resolveDrawCards(any(), any(), anyInt());
+                assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream())
+                        .filter(LibraryEvent.Shuffled.class::isInstance)
+                        .map(event -> ((LibraryEvent.Shuffled) event).playerId()))
+                        .containsExactlyInAnyOrder(player1Id, player2Id);
                 verify(gameLogService, times(2)).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards in hand")));
             }
@@ -71,8 +68,8 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
 
                 resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
-                verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
-                verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 2);
+                verify(drawService).resolveDrawCards(gd, player2Id, 1);
             }
 
             @Test
@@ -87,8 +84,8 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
-                verify(drawService, never()).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 2);
+                verify(drawService, never()).resolveDrawCards(eq(gd), eq(player2Id), anyInt());
                 assertThat(gd.playerHands.get(player2Id)).hasSize(1);
             }
 }

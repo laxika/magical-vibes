@@ -74,17 +74,18 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
     }
 
     /**
-     * Makes a granted ability with a limit ("this ability triggers only once each turn") the instance the granting
-     * permanent grants ({@link TriggeredAbility#instance()}): a permanent several permanents grant it to has an
-     * instance from each, and each triggers on its own (CR 113.2c), so each keeps its own limit.
+     * Makes a granted ability with a limit ("this ability triggers only once each turn") the instance its grantor
+     * grants ({@link TriggeredAbility#instance()}): a permanent several grantors give it to has an instance from each,
+     * and each triggers on its own (CR 113.2c), so each keeps its own limit. The grantor is the granting permanent
+     * of a static grant, or the floating effect of a resolved one, so the same ability given twice until end of turn
+     * is two instances too.
      */
-    private static GrantTriggeredAbilityEffect asGrantedInstance(GrantTriggeredAbilityEffect grant,
-                                                                 UUID grantingPermanentId) {
+    public static GrantTriggeredAbilityEffect asGrantedInstance(GrantTriggeredAbilityEffect grant, UUID grantorId) {
         if (!(grant.grantedAbility() instanceof TriggeredAbility ability)
                 || ability.options().limit() == TriggerLimit.NONE) {
             return grant;
         }
-        return new GrantTriggeredAbilityEffect(ability.withInstance("granted-by:" + grantingPermanentId),
+        return new GrantTriggeredAbilityEffect(ability.withInstance("granted-by:" + grantorId),
                 grant.scope(), grant.filter());
     }
 }

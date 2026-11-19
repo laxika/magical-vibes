@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceIntera
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -359,8 +360,8 @@ class InputCompletionServiceTest {
     }
 
     @Test
-    void interactionOpenedByStateBasedActionsDefersMayAbilitiesAndParkedResolution() {
-        StackEntry parked = parkResolution();
+    @DisplayName("An interaction opened by state-based actions defers pending may abilities and auto-pass")
+    void interactionOpenedByStateBasedActionsDefersMayAbilities() {
         gameData.pendingMayAbilities.add(pendingMayAbility());
         InteractionHandlerRegistry interactions = mayInteractionRegistry();
         doAnswer(invocation -> {
@@ -372,10 +373,21 @@ class InputCompletionServiceTest {
         mutate(() -> service.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData));
 
         assertThat(lastKinds()).containsExactly(GameEventKind.DECISION_REQUESTED);
-        assertThat(gameData.pendingEffectResolutionEntry).isSameAs(parked);
+        assertThat(gameData.pendingMayAbilities).hasSize(1);
         verify(playerInputService, never()).processNextMayAbility(gameData);
-        verify(effectResolutionService, never()).resolveEffectsFrom(gameData, parked, 2);
         verify(turnProgressionService, never()).resolveAutoPass(gameData);
+    }
+
+    @Test
+    @DisplayName("State-based actions are not checked while an effect resolution is parked")
+    void stateBasedActionsAreNotCheckedWhileAResolutionIsParked() {
+        parkResolution();
+        gameData.pendingMayAbilities.add(pendingMayAbility());
+
+        mutate(() -> service.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData));
+
+        verify(stateBasedActionService, never()).performStateBasedActions(gameData);
+        verify(playerInputService).processNextMayAbility(gameData);
     }
 
     @Test

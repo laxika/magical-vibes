@@ -101,6 +101,13 @@ class LookAtTopCardsEffectHandlerTest {
             return null;
         }).when(graveyardService).addCardToGraveyard(
                 eq(gd), any(UUID.class), any(Card.class), any(Zone.class));
+        lenient().when(graveyardService.addCardsFromLibraryToGraveyard(eq(gd), any(UUID.class), any()))
+                .thenAnswer(inv -> {
+                    UUID playerId = inv.getArgument(1);
+                    List<Card> cards = List.copyOf(inv.getArgument(2));
+                    gd.playerGraveyards.get(playerId).addAll(cards);
+                    return cards;
+                });
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
@@ -536,7 +543,7 @@ class LookAtTopCardsEffectHandlerTest {
             stubCardViewFactory();
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
             gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenCallRealMethod();
 
             // No permanents on the battlefield share a name with the looked-at cards.
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(
@@ -554,7 +561,7 @@ class LookAtTopCardsEffectHandlerTest {
             gd.playerBattlefields.get(player1Id).add(new Permanent(bfCard));
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenCallRealMethod();
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(
                     4, new CardSharesNameWithAPermanentPredicate());
@@ -577,7 +584,7 @@ class LookAtTopCardsEffectHandlerTest {
             tooExpensive.setManaCost("{3}");
             gd.playerDecks.get(player1Id).add(eligible);
             gd.playerDecks.get(player1Id).add(tooExpensive);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(true);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
@@ -599,7 +606,7 @@ class LookAtTopCardsEffectHandlerTest {
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
             gd.playerDecks.get(player1Id).add(createCard("Forest"));
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> !((Card) inv.getArgument(0)).getName().equals("Lightning Bolt"));
 
             LookAtTopCardsEffect effect = new LookAtTopCardsEffect(
@@ -623,7 +630,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card spell = createCard("Lightning Bolt");
             gd.playerDecks.get(player1Id).add(land);
             gd.playerDecks.get(player1Id).add(spell);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> inv.getArgument(0) == land);
 
             LookAtTopCardsEffect effect =
@@ -649,7 +656,7 @@ class LookAtTopCardsEffectHandlerTest {
             Card spell = createCard("Lightning Bolt");
             gd.playerDecks.get(player1Id).add(land);
             gd.playerDecks.get(player1Id).add(spell);
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> inv.getArgument(0) == land);
 
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.putOneMatchingOntoBattlefieldRestToGraveyard(

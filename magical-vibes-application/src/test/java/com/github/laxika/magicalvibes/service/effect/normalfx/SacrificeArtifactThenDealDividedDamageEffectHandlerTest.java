@@ -9,8 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -28,7 +26,7 @@ class SacrificeArtifactThenDealDividedDamageEffectHandlerTest extends AbstractPl
                 Permanent artifact = new Permanent(createCard("Sol Ring"));
                 gd.playerBattlefields.get(player1Id).add(artifact);
 
-                when(gameQueryService.isArtifact(artifact)).thenReturn(true);
+                when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 

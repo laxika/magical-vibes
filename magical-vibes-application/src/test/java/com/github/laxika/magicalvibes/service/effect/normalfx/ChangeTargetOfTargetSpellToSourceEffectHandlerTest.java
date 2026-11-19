@@ -37,6 +37,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -76,7 +78,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
         // Default: all check methods return valid (empty = no error)
-        lenient().when(targetLegalityService.checkSpellTargeting(any(), any(), any(), any(), any()))
+        lenient().when(targetLegalityService.checkSpellTargeting(any(), any(), any(), any(), any(), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                 .thenReturn(Optional.empty());
         lenient().when(targetLegalityService.checkGraveyardRetargetCandidate(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
@@ -259,7 +261,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
                 when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
                 when(targetLegalityService.checkSpellTargeting(
-                                eq(gd), eq(targetSpellCard), eq(sourcePermanent.getId()), isNull(), eq(player2Id)))
+                                eq(gd), eq(targetSpellCard), eq(sourcePermanent.getId()), isNull(), eq(player2Id), anyBoolean(), anyInt(), anyBoolean(), anyBoolean()))
                         .thenReturn(Optional.of("illegal target"));
 
                 changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
@@ -270,8 +272,8 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Does not redirect multi-target spell (targetIds populated)")
-            void doesNotRedirectMultiTargetSpell() {
+            @DisplayName("Multi-target spell lets the controller choose which target changes to the source")
+            void multiTargetSpellPromptsForTheTargetToChange() {
                 Card redirectCard = createCard("Spellskite");
                 Card targetSpellCard = createCard("Arc Trail");
                 UUID target1 = UUID.randomUUID();
@@ -289,7 +291,9 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
                 changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
-                assertThat(captureLogMessage()).contains("does not have a single target");
+                verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id),
+                        eq(List.of(target1, target2)), eq(List.of()), anyString());
+                assertThat(targetSpell.getTargetIds()).containsExactly(target1, target2);
             }
 
             @Test
@@ -385,6 +389,6 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
                 changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
-                assertThat(captureLogMessage()).contains("does not have a single target");
+                assertThat(captureLogMessage()).contains("has no target that can be changed");
             }
 }

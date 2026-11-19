@@ -9,8 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -26,7 +24,7 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player2Id, 2);
             }
 
             @Test
@@ -43,7 +41,7 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, never()).resolveDrawCard(any(), any());
+                verify(drawService, never()).resolveDrawCards(any(), any(), intThat(n -> n > 0));
             }
 
             @Test
@@ -59,7 +57,7 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player2Id, 1);
             }
 
             @Test
@@ -75,7 +73,7 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player2Id, 1);
             }
 
             @Test
@@ -87,7 +85,7 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(4)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player2Id, 4);
             }
 
             @Test
@@ -99,6 +97,6 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, never()).resolveDrawCard(any(), any());
+                verify(drawService, never()).resolveDrawCards(any(), any(), intThat(n -> n > 0));
             }
 }

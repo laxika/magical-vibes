@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -165,12 +166,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             Card impactCard = createCard("Sudden Impact");
             StackEntry entry = createEntry(impactCard, player1Id, player2Id);
 
-            stubDamagePreventable();
             stubDamageFromSourceNotPrevented();
-            stubNoDamageMultiplier();
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(player2Id), any())).thenReturn(false);
-            when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(player2Id), any(), anyInt()))
-                    .thenAnswer(inv -> inv.getArgument(3));
 
             handler.resolve(gd, entry,
                     new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
@@ -289,7 +285,12 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
             // The victim is player2, but the damage SOURCE controller stays the caster (player1) so
             // opponent-source damage-reduction shields keep applying — entry.controllerId is never remapped.
-            verify(damagePreventionService).applyOpponentSourceDamageReduction(gd, player2Id, player1Id, 2);
+            assertThat(damageEvents()).anySatisfy(event -> assertThat(event)
+                    .isInstanceOfSatisfying(DamageDealtEvent.ToPlayer.class, dealt -> {
+                        assertThat(dealt.playerId()).isEqualTo(player2Id);
+                        assertThat(dealt.sourceControllerId()).isEqualTo(player1Id);
+                    }));
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
         }
     }
 

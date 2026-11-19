@@ -306,6 +306,12 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.canChooseToSacrificeForCosts(any(), any()))
+                .thenAnswer(inv -> gameQueryService.canSacrificePermanentForCosts(
+                        inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(gameQueryService.canChooseToSacrificeForCosts(any(), any(), any()))
+                .thenAnswer(inv -> gameQueryService.canSacrificePermanentForCosts(
+                        inv.getArgument(0), inv.getArgument(1)));
         lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
@@ -363,6 +369,8 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.getCardSubtypes(any(Card.class), any(GameData.class), any(UUID.class)))
                 .thenAnswer(invocation -> new HashSet<>(
                         ((Card) invocation.getArgument(0)).getSubtypes()));
+        lenient().when(gameQueryService.getEffectiveCardColors(any(GameData.class), any(Card.class)))
+                .thenAnswer(invocation -> new HashSet<>(((Card) invocation.getArgument(1)).getColors()));
         lenient().when(gameQueryService.getEffectiveColors(any(GameData.class), any(Permanent.class)))
                 .thenAnswer(invocation -> new HashSet<>(
                         ((Permanent) invocation.getArgument(1)).getEffectiveColors()));
@@ -421,6 +429,7 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
+        when(gameQueryService.getPermanentManaValue(artifact)).thenReturn(3);
         when(permanentRemovalService.departToGraveyard(eq(gd), eq(artifact), any(), any())).thenReturn(true);
 
         svc.playCard(gd, player1, 0, null, target.getId(), null, null, null, false, artifact.getId());
@@ -461,6 +470,7 @@ class SpellCastingServiceTest {
     }
 
     @Test
+    @DisplayName("Pays a discard cost from hand when casting flashback from the graveyard")
     void paysDiscardCostWhenCastingFromGraveyard() {
         Card spell = prepareFlashbackDiscardSpell();
         Card discarded = createCreature("Discarded Creature", "{1}{G}");
@@ -471,7 +481,7 @@ class SpellCastingServiceTest {
 
         assertThat(gd.playerHands.get(player1Id)).isEmpty();
         verify(permanentRemovalService).removeCardFromGraveyardById(gd, spell.getId());
-        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded, Zone.HAND);
+        verify(graveyardService).discardCard(gd, player1Id, discarded, false);
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getCard()).isSameAs(spell);
             assertThat(entry.isCastWithFlashback()).isTrue();
@@ -634,10 +644,6 @@ class SpellCastingServiceTest {
         assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
     }
 
-    // =========================================================================
-    // Helpers
-    // =========================================================================
-
     private Card createCreature(String name, String manaCost) {
         Card card = new Card();
         card.setName(name);
@@ -696,10 +702,6 @@ class SpellCastingServiceTest {
     private void addMana(UUID playerId, ManaColor color, int amount) {
         gd.playerManaPools.get(playerId).add(color, amount);
     }
-
-    // =========================================================================
-    // playCard validation
-    // =========================================================================
 
     @Nested
     @DisplayName("playCard validation")
@@ -763,7 +765,6 @@ class SpellCastingServiceTest {
             secondWhiteCard.setColors(List.of(CardColor.WHITE));
             setHand(player1Id, List.of(spell, firstWhiteCard, secondWhiteCard));
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
-            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any())).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null, List.of(), List.of(), false,
                     null, null, List.of(), null, null, false, 1, List.of(1, 2));
@@ -800,10 +801,6 @@ class SpellCastingServiceTest {
                     .hasMessage("Card is not playable");
         }
     }
-
-    // =========================================================================
-    // Land casting
-    // =========================================================================
 
     @Nested
     @DisplayName("Land casting")
@@ -851,6 +848,8 @@ class SpellCastingServiceTest {
             Card land = createLand("Test Plains");
             gd.playerGraveyards.get(player1Id).add(land);
             when(actionAvailabilityService.getPlayableGraveyardLandIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.canPlayGraveyardLand(eq(gd), eq(player1Id), any(Card.class), eq(player1Id)))
+                    .thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, true, null);
 
@@ -860,10 +859,6 @@ class SpellCastingServiceTest {
             assertThat(permanentCaptor.getValue().getEnteredFromGraveyardOwnerId()).isEqualTo(player1Id);
         }
     }
-
-    // =========================================================================
-    // Creature casting
-    // =========================================================================
 
     @Nested
     @DisplayName("Creature casting")
@@ -930,10 +925,6 @@ class SpellCastingServiceTest {
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(beforeCount + 1);
         }
     }
-
-    // =========================================================================
-    // ETB-only targeting (creature with "when this enters" effects)
-    // =========================================================================
 
     @Nested
     @DisplayName("ETB-only targeting")
@@ -1103,10 +1094,6 @@ class SpellCastingServiceTest {
         }
     }
 
-    // =========================================================================
-    // Instant casting
-    // =========================================================================
-
     @Nested
     @DisplayName("Instant casting")
     class InstantCasting {
@@ -1223,10 +1210,6 @@ class SpellCastingServiceTest {
         }
     }
 
-    // =========================================================================
-    // Sorcery casting
-    // =========================================================================
-
     @Nested
     @DisplayName("Sorcery casting")
     class SorceryCasting {
@@ -1249,10 +1232,6 @@ class SpellCastingServiceTest {
         }
     }
 
-    // =========================================================================
-    // Enchantment casting
-    // =========================================================================
-
     @Nested
     @DisplayName("Enchantment casting")
     class EnchantmentCasting {
@@ -1274,10 +1253,6 @@ class SpellCastingServiceTest {
         }
     }
 
-    // =========================================================================
-    // Artifact casting
-    // =========================================================================
-
     @Nested
     @DisplayName("Artifact casting")
     class ArtifactCasting {
@@ -1298,10 +1273,6 @@ class SpellCastingServiceTest {
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
-
-    // =========================================================================
-    // X-cost spells
-    // =========================================================================
 
     @Nested
     @DisplayName("X-cost spells")
@@ -1359,10 +1330,6 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
         }
     }
-
-    // =========================================================================
-    // Modal spells (ChooseOneEffect)
-    // =========================================================================
 
     @Nested
     @DisplayName("Modal spells (ChooseOneEffect)")
@@ -1464,10 +1431,6 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(damage);
         }
     }
-
-    // =========================================================================
-    // Convoke
-    // =========================================================================
 
     @Nested
     @DisplayName("Convoke")
@@ -1581,25 +1544,21 @@ class SpellCastingServiceTest {
         }
     }
 
-    // =========================================================================
-    // paySpellManaCost
-    // =========================================================================
-
     @Nested
     @DisplayName("paySpellManaCost")
     class PaySpellManaCost {
 
         @Test
-        @DisplayName("Does nothing for cards with no mana cost")
-        void noOpForNullManaCost() {
+        @DisplayName("Refuses to pay a missing mana cost, which is unpayable, and spends no mana")
+        void refusesToPayMissingManaCost() {
             Card card = createLand("Test Land");
+            addMana(player1Id, ManaColor.GREEN, 2);
 
-            ManaPool poolBefore = gd.playerManaPools.get(player1Id);
-            int totalBefore = poolBefore.getTotal();
+            assertThatThrownBy(() -> svc.paySpellManaCost(gd, player1Id, card, 0, List.of()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Not enough mana to pay spell");
 
-            svc.paySpellManaCost(gd, player1Id, card, 0, List.of());
-
-            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(totalBefore);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(2);
         }
 
         @Test
@@ -1653,10 +1612,6 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().isKicked()).isTrue();
         }
     }
-
-    // =========================================================================
-    // finishSpellCast
-    // =========================================================================
 
     @Nested
     @DisplayName("finishSpellCast")
@@ -1724,13 +1679,15 @@ class SpellCastingServiceTest {
         }
     }
 
-    // =========================================================================
-    // playCardFromExile
-    // =========================================================================
-
     @Nested
     @DisplayName("playCardFromExile")
     class PlayCardFromExile {
+
+        @BeforeEach
+        void allowCastingAndLandPlays() {
+            lenient().when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            lenient().when(castingPermissionService.canPlayLandNow(any(), any(), any())).thenReturn(true);
+        }
 
         @Test
         @DisplayName("Throws when game is not running")
@@ -1883,8 +1840,6 @@ class SpellCastingServiceTest {
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
         }
     }
-
-    // =========================================================================
 
     /** The rules events the game emitted so far, in order. */
     private static List<RulesEvent> rulesEvents(GameData gameData) {

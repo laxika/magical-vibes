@@ -26,7 +26,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-crypto")
     testImplementation("io.github.classgraph:classgraph:4.8.179")
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testImplementation(testFixtures(project(":magical-vibes-engine")))
 }
 

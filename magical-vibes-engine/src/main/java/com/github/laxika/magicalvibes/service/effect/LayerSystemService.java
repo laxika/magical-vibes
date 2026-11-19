@@ -112,6 +112,7 @@ import com.github.laxika.magicalvibes.model.layer.Layer;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.DependencyFootprint.BoardTable;
+import com.github.laxika.magicalvibes.service.effect.staticfx.GrantTriggeredAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -3598,7 +3599,8 @@ public class LayerSystemService {
                                 provenanceSourceName(instance), grant.effect());
                     }
                     case GrantTriggeredAbilityEffect grant -> {
-                        state.addStaticEffect(grant);
+                        state.addStaticEffect(GrantTriggeredAbilityEffectHandler.asGrantedInstance(grant,
+                                instance.floating().id()));
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), grant);
                     }

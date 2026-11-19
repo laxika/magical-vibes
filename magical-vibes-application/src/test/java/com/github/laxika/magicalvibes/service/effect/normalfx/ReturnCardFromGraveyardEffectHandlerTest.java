@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 class ReturnCardFromGraveyardEffectHandlerTest {
 
     @Test
+    @DisplayName("An all-graveyards choice keeps the mandatory and haste riders")
     void allGraveyardsChoicePreservesTheReturnRiders() {
         Card creature = createCard("Chosen creature");
         gd.playerGraveyards.get(player2Id).add(creature);
@@ -73,7 +74,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 player1Id, "Return spell", new ArrayList<>(List.of(effect)));
         when(predicateEvaluationService.matchesCardPredicate(
                 eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                isNull(), isNull(), anyInt())).thenReturn(true);
+                isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
 
         returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -84,6 +85,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("A graveyard choice can be restricted to cards put there from a library this turn")
     void graveyardChoiceCanBeRestrictedToCardsPutThereFromLibrary() {
         Card eligible = createCard("Eligible creature");
         eligible.setOwnerId(player2Id);
@@ -105,7 +107,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 player1Id, "Return source", new ArrayList<>(List.of(effect)));
         when(predicateEvaluationService.matchesCardPredicate(
                 any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), eq(player2Id),
-                isNull(), isNull(), anyInt())).thenReturn(true);
+                isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
 
         returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -145,13 +147,13 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 player1Id, "Return spell", new ArrayList<>(List.of(effect)));
         when(predicateEvaluationService.matchesCardPredicate(
                 any(Card.class), eq(filter), eq(source.getId()), eq(gd), any(UUID.class),
-                isNull(), isNull(), anyInt())).thenReturn(true);
+                isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
         when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
 
         support.resolveReturnAll(gd, entry, effect, player1Id, source.getId());
 
         verify(battlefieldEntryService, times(2)).putPermanentOntoBattlefield(
-                eq(gd), eq(player1Id), any(Permanent.class), eq(Set.of()));
+                eq(gd), eq(player1Id), any(Permanent.class), eq(Set.of()), any());
         assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
         assertThat(gd.playerGraveyards.get(player2Id)).containsExactly(oldPlayer2Card);
     }
@@ -400,10 +402,10 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 when(predicateEvaluationService.matchesCardPredicate(
                         eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt())).thenReturn(true);
+                        isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
                 when(predicateEvaluationService.matchesCardPredicate(
                         eq(artifact), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt())).thenReturn(true);
+                        isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -433,7 +435,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 when(predicateEvaluationService.matchesCardPredicate(
                         eq(destroyedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt())).thenReturn(true);
+                        isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -442,7 +444,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                                 && gc.cardPool().equals(List.of(destroyedCreature))));
                 verify(predicateEvaluationService, never()).matchesCardPredicate(
                         eq(unrelatedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt());
+                        isNull(), isNull(), anyInt(), isNull(), any());
             }
 
             @Test
@@ -462,7 +464,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 when(predicateEvaluationService.matchesCardPredicate(
                         eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt())).thenReturn(true);
+                        isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -511,7 +513,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 when(predicateEvaluationService.matchesCardPredicate(
                         eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt())).thenReturn(false);
+                        isNull(), isNull(), anyInt(), isNull(), any())).thenReturn(false);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -542,7 +544,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 when(predicateEvaluationService.matchesCardPredicate(
                         any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
-                        isNull(), isNull(), anyInt()))
+                        isNull(), isNull(), anyInt(), isNull(), any()))
                         .thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
@@ -569,7 +571,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
         when(predicateEvaluationService.matchesCardPredicate(
                 eq(land), eq(filter), eq(entry.getCard().getId()), eq(gd),
-                isNull(), isNull(), isNull(), eq(0))).thenReturn(true);
+                isNull(), isNull(), isNull(), eq(0), isNull(), any())).thenReturn(true);
 
         returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 

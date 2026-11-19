@@ -10,8 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -103,6 +101,7 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("TARGET_PERMANENT_CONTROLLER uses the damaged creature's last known controller once it has died")
     void usesLastKnownControllerWhenTheDamagedCreatureHasDied() {
         Card card = createCard("Soul Charmer");
         MayPayManaEffect effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2}?",
@@ -119,6 +118,7 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("TARGET_PERMANENT_CONTROLLER uses the damaged creature's current controller after a control change")
     void usesCurrentControllerWhenTheDamagedCreatureHasChangedControl() {
         Card card = createCard("Soul Charmer");
         MayPayManaEffect effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2}?",

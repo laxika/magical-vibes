@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -138,9 +139,12 @@ class SearchLibraryEffectHandlerTest {
 
     private Permanent addArbiterToBattlefield(UUID playerId) {
         Card arbiterCard = createCard("Leonin Arbiter");
-        arbiterCard.addStaticEffect(new CantSearchLibrariesEffect());
+        CantSearchLibrariesEffect restriction = new CantSearchLibrariesEffect();
+        arbiterCard.addStaticEffect(restriction);
         Permanent arbiter = new Permanent(arbiterCard);
         gd.playerBattlefields.get(playerId).add(arbiter);
+        when(gameQueryService.activeStaticEffects(gd, CardEffect.class)).thenReturn(
+                List.of(new GameQueryService.ActiveStaticEffect<CardEffect>(restriction, arbiter, playerId)));
         return arbiter;
     }
 

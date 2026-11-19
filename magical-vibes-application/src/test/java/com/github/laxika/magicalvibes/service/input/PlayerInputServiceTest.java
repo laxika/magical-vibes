@@ -653,12 +653,13 @@ class PlayerInputServiceTest {
     class BeginPermanentTypeChoice {
 
         @Test
-        @DisplayName("Sends five permanent type options")
+        @DisplayName("Sends the six permanent type options")
         void sendsPermanentTypes() {
             svc.beginPermanentTypeChoice(gd, PLAYER1_ID, GraveyardChoiceDestination.BATTLEFIELD, "some desc");
 
             InteractionPromptMessage msg = projectedPrompt();
-            assertThat(msg.options()).containsExactly("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
+            assertThat(msg.options()).containsExactly(
+                    "ARTIFACT", "BATTLE", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
             assertThat(msg.prompt()).isEqualTo("Choose a permanent type.");
         }
 
@@ -702,7 +703,8 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly(
                     "LAND", "CREATURE", "ENCHANTMENT", "SORCERY", "INSTANT", "ARTIFACT",
-                    "PLANESWALKER", "BATTLE", "KINDRED", "PLANE", "PHENOMENON", "SCHEME");
+                    "PLANESWALKER", "BATTLE", "KINDRED", "PLANE", "PHENOMENON", "SCHEME", "CONSPIRACY", "DUNGEON",
+                    "VANGUARD");
             assertThat(msg.prompt()).isEqualTo("Choose a card type.");
         }
 

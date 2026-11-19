@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnBottomOfLibraryEffect;
@@ -87,8 +88,8 @@ class PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("Moves targeted cards to the bottom in target order")
-    void movesCardsToBottomInTargetOrder() {
+    @DisplayName("Moving several targeted cards lets the controller order them on the bottom")
+    void movingSeveralCardsLetsTheControllerOrderThem() {
         Card first = card("First");
         Card second = card("Second");
         Card existing = card("Existing");
@@ -106,8 +107,12 @@ class PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandlerTest {
         handler.resolve(gd, entry, effect);
 
         assertThat(gd.playerGraveyards.get(playerId)).isEmpty();
-        assertThat(gd.playerDecks.get(playerId)).extracting(Card::getName)
-                .containsExactly("Existing", "First", "Second");
+        assertThat(gd.playerDecks.get(playerId)).extracting(Card::getName).containsExactly("Existing");
+        verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
+                interaction instanceof PendingInteraction.LibraryReorder reorder
+                        && reorder.toBottom()
+                        && reorder.playerId().equals(playerId)
+                        && reorder.cards().equals(List.of(first, second))));
         verify(gameLogService).append(eq(gd), argThat((GameLogEntry log) ->
                 log.plainText().contains("on the bottom of their library")));
     }

@@ -465,6 +465,37 @@ class StackResolutionServiceTest {
     @DisplayName("Enchantment spell resolution")
     class EnchantmentSpellResolution {
 
+        /**
+         * A Saga's chapter abilities go on the stack through the real trigger pipeline's stack door, so
+         * the Saga service gets a real {@link com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService}
+         * over this class's mocks, and the layered Saga queries answer with the printed chapters.
+         */
+        @BeforeEach
+        void wireSagaChapterStackDoor() {
+            var predicates = new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService);
+            var conditions = new com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService(
+                    gameQueryService, predicates);
+            var stackService = new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
+                    conditions, gameQueryService,
+                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
+                    gameLogService,
+                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class),
+                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class),
+                    triggeredAbilityQueueService,
+                    new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(predicates, gameQueryService),
+                    predicates,
+                    new com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector(
+                            gameQueryService, predicates, targetLegalityService));
+            org.springframework.test.util.ReflectionTestUtils.setField(
+                    sagaChapterService, "triggeredAbilityStackService", stackService);
+            lenient().when(gameQueryService.withQueryScope(any(), any()))
+                    .thenAnswer(inv -> inv.<java.util.function.Supplier<?>>getArgument(1).get());
+            lenient().when(gameQueryService.sagaFinalChapterNumber(any(), any(Permanent.class)))
+                    .thenAnswer(inv -> inv.<Permanent>getArgument(1).getCard().getSagaFinalChapter());
+            lenient().when(gameQueryService.sagaChapterAbilities(any(), any(Permanent.class)))
+                    .thenAnswer(inv -> inv.<Permanent>getArgument(1).getCard().getTriggeredAbilities());
+        }
+
         @Test
         @DisplayName("Non-aura enchantment enters the battlefield")
         void nonAuraEntersBattlefield() {

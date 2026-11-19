@@ -54,6 +54,7 @@ class CombatBlockServiceTest extends BaseCardTest {
     @Test
     @com.github.laxika.magicalvibes.testutil.CardUsed({
             com.github.laxika.magicalvibes.cards.j.JabarisBanner.class, GrizzlyBears.class, HillGiant.class})
+    @DisplayName("Two separately granted flanking instances each give the blocker -1/-1")
     void separateFlankingGrantsEachReduceTheBlocker() {
         harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JabarisBanner());
         harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JabarisBanner());
@@ -71,8 +72,8 @@ class CombatBlockServiceTest extends BaseCardTest {
                 List.of(new BlockerAssignment(defenderIndex(blocker), attackerIndex(attacker))));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test

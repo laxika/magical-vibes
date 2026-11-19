@@ -395,6 +395,8 @@ class UntapStepServiceTest {
             card.addStaticEffect(new MayNotUntapDuringUntapStepEffect());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
+            when(gameQueryService.hasActiveStaticEffect(gd, perm, MayNotUntapDuringUntapStepEffect.class))
+                    .thenReturn(true);
 
             sut.untapPermanents(gd, player1Id);
 

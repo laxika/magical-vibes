@@ -115,6 +115,8 @@ class EffectResolutionServiceTest {
     void setUp() {
         lenient().when(stateBasedActionServiceProvider.getObject()).thenReturn(stateBasedActionService);
         lenient().when(stackResolutionServiceProvider.getObject()).thenReturn(stackResolutionService);
+        lenient().when(damageSupport.beginDamageEvent(any(), any(), anyInt())).thenReturn(true);
+        lenient().when(damageSupport.endOpenDamageEvent(any())).thenReturn(true);
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 registry, gameLogService, permanentRemovalService, gameQueryService, damageSupport,

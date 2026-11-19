@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -32,6 +30,7 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
                 Permanent perm2 = new Permanent(createCard("Hill Giant"));
                 gd.playerBattlefields.get(player2Id).add(perm1);
                 gd.playerBattlefields.get(player2Id).add(perm2);
+                stubTargetsLegal();
 
                 resolveEffect(gd, entry, effect);
 
@@ -70,10 +69,16 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
 
                 when(predicateEvaluationService.matchesPermanentPredicate(gd, matching, filter)).thenReturn(true);
                 when(predicateEvaluationService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
+                stubTargetsLegal();
 
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id),
                         argThat(ids -> ids.size() == 1 && ids.contains(matching.getId())), eq(1), any(), any());
             }
+
+    private void stubTargetsLegal() {
+        when(validTargetService.isValidTriggeredAbilityPermanentTarget(eq(gd), any(), any(), any(), any(),
+                eq(player1Id))).thenReturn(true);
+    }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -23,6 +24,7 @@ class BattlefieldEntryServiceTest {
             new BattlefieldEntryService(placementService, interactionService, triggerService);
 
     @Test
+    @DisplayName("A land that names a card as it enters waits for the name before it is placed")
     void landNameChoicePausesPlacementUntilNameIsChosen() {
         var input = mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class);
         var entryService = new BattlefieldEntryService(placementService, interactionService, triggerService, input);
@@ -32,17 +34,19 @@ class BattlefieldEntryServiceTest {
         land.setType(com.github.laxika.magicalvibes.model.CardType.LAND);
         land.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect(
                         com.github.laxika.magicalvibes.model.CardType.LAND));
+        Permanent permanent = new Permanent(land);
         org.mockito.Mockito.when(input.beginCardNameChoice(gameData, controllerId, land,
                 java.util.List.of(), false, false, null, com.github.laxika.magicalvibes.model.CardType.LAND,
-                com.github.laxika.magicalvibes.model.Zone.HAND)).thenReturn(true);
+                com.github.laxika.magicalvibes.model.Zone.HAND, permanent)).thenReturn(true);
 
-        entryService.putLandOntoBattlefield(gameData, controllerId, new Permanent(land),
+        entryService.putLandOntoBattlefield(gameData, controllerId, permanent,
                 com.github.laxika.magicalvibes.model.Zone.HAND);
 
         org.mockito.Mockito.verifyNoInteractions(placementService);
     }
 
     @Test
+    @DisplayName("Default placement snapshots the enter-tapped types and delegates to the placement workflow")
     void delegatesDefaultPlacementToPlacementWorkflow() {
         GameData gameData = mock(GameData.class);
         UUID controllerId = UUID.randomUUID();
@@ -55,6 +59,7 @@ class BattlefieldEntryServiceTest {
     }
 
     @Test
+    @DisplayName("Entry interaction handling is delegated to the interaction workflow")
     void delegatesEntryInteractionToInteractionWorkflow() {
         GameData gameData = mock(GameData.class);
         UUID controllerId = UUID.randomUUID();
@@ -67,6 +72,7 @@ class BattlefieldEntryServiceTest {
     }
 
     @Test
+    @DisplayName("Enters-the-battlefield trigger collection is delegated to the trigger workflow")
     void delegatesEtbCollectionToTriggerWorkflow() {
         GameData gameData = mock(GameData.class);
         UUID controllerId = UUID.randomUUID();

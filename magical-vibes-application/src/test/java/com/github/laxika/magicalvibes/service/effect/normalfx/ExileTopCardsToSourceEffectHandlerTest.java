@@ -103,9 +103,9 @@ class ExileTopCardsToSourceEffectHandlerTest {
     private void stubExileFaceDown() {
         doAnswer(inv -> {
             ((GameData) inv.getArgument(0)).addToExile(inv.getArgument(1), inv.getArgument(2),
-                    inv.getArgument(3), true);
+                    inv.getArgument(3), true, inv.getArgument(4));
             return null;
-        }).when(exileService).exileCardFaceDown(any(), any(), any(), any());
+        }).when(exileService).exileCardFaceDown(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -125,7 +125,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
         assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
         assertThat(gd.playerDecks.get(player2Id)).hasSize(2);
-        verify(exileService, times(2)).exileCardFaceDown(any(), eq(player1Id), any(), any());
+        verify(exileService, times(2)).exileCardFaceDown(any(), eq(player1Id), any(), any(), eq(player1Id));
     }
 
     @Test
@@ -214,7 +214,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
         handler.resolve(gd, entry(sourceCard, effect, null, source.getId()), effect);
 
         assertThat(gd.playerDecks.get(player2Id)).hasSize(1);
-        verify(exileService, times(3)).exileCardFaceDown(any(), eq(player2Id), any(), any());
+        verify(exileService, times(3)).exileCardFaceDown(any(), eq(player2Id), any(), any(), eq(player1Id));
     }
 
     @Test

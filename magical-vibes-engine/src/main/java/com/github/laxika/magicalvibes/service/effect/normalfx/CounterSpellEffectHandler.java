@@ -43,9 +43,14 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
             entry.rememberLastKnownPermanentCard(counterTargetId, targetOnStack.getCard());
             Card targetingCard = targetOnStack.getTargetingCard();
-            int xSymbols = targetingCard.getManaCost() == null
-                    ? 0 : new ManaCost(targetingCard.getManaCost()).getXSymbolCount();
-            entry.setEventValue(targetingCard.getManaValue() + targetOnStack.getXValue() * xSymbols);
+            if (targetingCard == null) {
+                // An ability with no source object (the planeswalking ability, CR 901.8) has no mana value.
+                entry.setEventValue(0);
+            } else {
+                int xSymbols = targetingCard.getManaCost() == null
+                        ? 0 : new ManaCost(targetingCard.getManaCost()).getXSymbolCount();
+                entry.setEventValue(targetingCard.getManaValue() + targetOnStack.getXValue() * xSymbols);
+            }
         }
 
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);

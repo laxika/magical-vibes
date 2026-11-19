@@ -114,6 +114,33 @@ class TurnCleanupServiceTest {
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        // Static abilities are the printed ones: nothing in these tests removes or grants abilities.
+        lenient().when(gameQueryService.getActiveStaticEffects(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(Permanent.class), org.mockito.ArgumentMatchers.any(UUID.class)))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getStaticEffects());
+        lenient().when(gameQueryService.activeStaticEffects(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(Class.class)))
+                .thenAnswer(invocation -> activeStaticEffects(gd.orderedPlayerIds, invocation.getArgument(1)));
+        lenient().when(gameQueryService.activeStaticEffects(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(UUID.class), org.mockito.ArgumentMatchers.any(Class.class)))
+                .thenAnswer(invocation -> activeStaticEffects(List.of(invocation.<UUID>getArgument(1)),
+                        invocation.getArgument(2)));
+    }
+
+    /** The static effects of {@code type} printed on the given players' permanents, as GameQueryService walks them. */
+    private List<GameQueryService.ActiveStaticEffect<com.github.laxika.magicalvibes.model.effect.CardEffect>>
+            activeStaticEffects(List<UUID> controllerIds, Class<?> type) {
+        List<GameQueryService.ActiveStaticEffect<com.github.laxika.magicalvibes.model.effect.CardEffect>> found =
+                new ArrayList<>();
+        for (UUID controllerId : controllerIds) {
+            for (Permanent permanent : gd.playerBattlefields.get(controllerId)) {
+                permanent.getCard().getStaticEffects().stream()
+                        .filter(type::isInstance)
+                        .forEach(effect -> found.add(
+                                new GameQueryService.ActiveStaticEffect<>(effect, permanent, controllerId)));
+            }
+        }
+        return found;
     }
 
     private static Card createCardWithName(String name) {

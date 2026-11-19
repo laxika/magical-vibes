@@ -375,7 +375,8 @@ public class CopySupport {
                 controllerId,
                 "Copy of " + source.getDescription(),
                 new ArrayList<>(source.getEffectsToResolve()),
-                copyCard.hasKeyword(Keyword.CONVERGE) || source.isXValueSetByCastTrigger() ? 0 : source.getXValue(),
+                (copyCard != null && copyCard.hasKeyword(Keyword.CONVERGE)) || source.isXValueSetByCastTrigger()
+                        ? 0 : source.getXValue(),
                 targetId,
                 source.getSourcePermanentId(),
                 damageAssignments,

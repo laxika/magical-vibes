@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
@@ -28,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -52,6 +56,10 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected PermanentCounterSupport permanentCounterSupport;
     @Mock protected InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock protected LifeSupport lifeSupport;
+    @Mock protected StepDepartureSupport stepDepartureSupport;
+    @Mock protected ConditionEvaluationService conditionEvaluationService;
+    @Mock protected PotentialManaService potentialManaService;
+    @Mock protected ValidTargetService validTargetService;
 
     protected EffectHandlerRegistry registry;
     protected PlayerInteractionSupport support;
@@ -76,7 +84,11 @@ abstract class AbstractPlayerInteractionHandlerTest {
                 handlerName, support, registry, gameLogService, cardRevealService, drawService, sessionManager, cardViewFactory,
                 gameQueryService, predicateEvaluationService, playerInputService, battlefieldEntryService,
                 permanentRemovalService, graveyardService, interactionHandlerRegistry, coinFlipService,
-                permanentCounterSupport, lifeSupport);
+                permanentCounterSupport, lifeSupport, Map.of(
+                        StepDepartureSupport.class, stepDepartureSupport,
+                        ConditionEvaluationService.class, conditionEvaluationService,
+                        PotentialManaService.class, potentialManaService,
+                        ValidTargetService.class, validTargetService));
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }

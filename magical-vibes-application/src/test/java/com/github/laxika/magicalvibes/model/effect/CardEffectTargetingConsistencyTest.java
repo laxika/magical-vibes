@@ -76,6 +76,9 @@ class CardEffectTargetingConsistencyTest {
             // target(PlayerPredicateTargetFilter) (Mana Short) — the handler reads the stack
             // entry's targetId and never enters trigger-target collection.
             "TargetPlayerLosesAllUnspentManaEffect",
+            // Piggyback: rides on Ruthless Negotiation's spell-level opponent target declared via
+            // target(PlayerPredicateTargetFilter); the handler reads the stack entry's targetId.
+            "TargetPlayerExilesCardFromHandEffect",
             // Pre-resolved: the affected player is carried as the stack entry's target — the
             // spell-level player target (Moonhold) or the trigger's damaged player (Stigma Lasher) —
             // and the handler reads entry.getTargetId(); never enters trigger-target collection.

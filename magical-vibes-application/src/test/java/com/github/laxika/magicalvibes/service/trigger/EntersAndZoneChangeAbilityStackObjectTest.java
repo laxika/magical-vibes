@@ -129,19 +129,6 @@ class EntersAndZoneChangeAbilityStackObjectTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A \"when this enters\" ability with a graveyard target and a permanent target of its own is rejected")
-    void entersAbilityWithTwoKindsOfTargetChoiceFails() {
-        Card card = watcher("Grave Wrecker");
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS), returnTargetCreatureCardToHand(),
-                new DestroyTargetPermanentEffect());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        addCreatureReady(player2, new GrizzlyBears());
-
-        assertThatThrownBy(() -> harness.enterBattlefieldAndReturn(player1, card))
-                .hasStackTraceContaining("one ability is one stack object");
-    }
-
-    @Test
     @DisplayName("A \"when this enters\" ability whose mode is chosen as it triggers, beside another effect, is rejected")
     void triggerTimeModeChoiceBesideAnotherEffectFails() {
         Card card = watcher("Modal Scholar");
@@ -151,7 +138,7 @@ class EntersAndZoneChangeAbilityStackObjectTest extends BaseCardTest {
                 new GainLifeEffect(1));
 
         assertThatThrownBy(() -> harness.enterBattlefieldAndReturn(player1, card))
-                .hasStackTraceContaining("one ability is one stack object");
+                .hasStackTraceContaining("A mode chosen as an ability triggers is the ability's one effect");
     }
 
     @Test

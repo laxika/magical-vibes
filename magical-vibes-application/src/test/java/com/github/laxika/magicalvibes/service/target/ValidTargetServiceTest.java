@@ -178,6 +178,10 @@ class ValidTargetServiceTest {
                 .thenAnswer(invocation -> invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
         lenient().when(gameQueryService.cardHasType(any(Card.class), any(CardType.class), eq(gameData), any(UUID.class)))
                 .thenAnswer(invocation -> invocation.<Card>getArgument(0).hasType(invocation.getArgument(1)));
+        lenient().when(gameQueryService.cardHasSupertype(
+                        any(Card.class), any(CardSupertype.class), eq(gameData), any(UUID.class)))
+                .thenAnswer(invocation -> invocation.<Card>getArgument(0).getSupertypes()
+                        .contains(invocation.<CardSupertype>getArgument(1)));
     }
 
     private static Set<CardColor> effectiveColors(Card card) {
@@ -372,7 +376,7 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedBySpellColor(gameData, perm, CardColor.RED, player1Id)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySourceColor(gameData, perm, CardColor.RED, player1Id, true)).thenReturn(true);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
 

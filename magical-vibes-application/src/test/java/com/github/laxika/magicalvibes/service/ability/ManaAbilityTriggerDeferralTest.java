@@ -87,10 +87,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         harness.addMana(player, ManaColor.RED, 1);
     }
 
-    // =========================================================================
-    // Core bug fix: sorcery-speed spell cast after mana-ability sacrifice
-    // =========================================================================
-
     @Nested
     @DisplayName("CR 603.3: Sorcery-speed spells castable after mana-ability sacrifice trigger")
     class SorcerySpeedCastAfterManaAbilitySacrifice {
@@ -106,7 +102,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
 
             // Activate Shrine mana ability — sacrifices an artifact, triggering Viridian Revel.
             // Shrine is the only permanent on player2's battlefield → index 0.
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
 
             // Trigger should be deferred, not on the stack
             assertThat(gd.stack).isEmpty();
@@ -129,7 +125,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             armWithInstantResponse(player1);
 
             // Activate Shrine (index 0) — 3 colorless + 1 blue = enough for {2}{U}
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingManaAbilityTriggers).isNotEmpty();
@@ -141,10 +137,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
         }
     }
-
-    // =========================================================================
-    // Stack ordering: deferred triggers go ON TOP of the spell
-    // =========================================================================
 
     @Nested
     @DisplayName("CR 603.3: Deferred triggers placed on top of spell")
@@ -158,7 +150,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.setHand(player2, List.of(new GrizzlyBears()));
             armWithInstantResponse(player1);
 
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             harness.castCreature(player2, 0);
 
             // Bottom of stack: creature spell, top: triggered ability
@@ -177,7 +169,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.setHand(player2, List.of(new Divination()));
             armWithInstantResponse(player1);
 
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             harness.castSorcery(player2, 0, 0);
 
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
@@ -188,12 +180,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         }
     }
 
-    // =========================================================================
-    // Priority pass: standalone mana ability triggers flush on passPriority
-    // =========================================================================
-
     @Nested
-    @DisplayName("Standalone mana ability: triggers flush when priority is passed")
+    @DisplayName("Mana-ability triggers held for a payment flush when priority is passed")
     class FlushOnPriorityPass {
 
         @Test
@@ -203,8 +191,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             // Arm player1 so auto-pass stops once she has priority to respond to the trigger.
             armWithInstantResponse(player1);
 
-            // Activate Shrine mana ability (standalone, not paying for a spell)
-            harness.activateAbility(player2, 0, null, null);
+            // Activate Shrine mana ability toward a payment, then pass instead of casting
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.unspecified());
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingManaAbilityTriggers).isNotEmpty();
@@ -242,10 +230,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         }
     }
 
-    // =========================================================================
-    // Instant-speed: mana-ability triggers don't block instant casting
-    // =========================================================================
-
     @Nested
     @DisplayName("Instant-speed spells unaffected by pending triggers")
     class InstantSpeedUnaffected {
@@ -266,10 +250,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
         }
     }
-
-    // =========================================================================
-    // Multiple mana-ability sacrifices accumulate pending triggers
-    // =========================================================================
 
     @Nested
     @DisplayName("Multiple mana-ability sacrifices accumulate pending triggers")
@@ -295,11 +275,11 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             armWithInstantResponse(player1);
 
             // Activate first shrine (index 0)
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
             // After sacrifice, second shrine moves to index 0
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             assertThat(gd.pendingManaAbilityTriggers).hasSize(2);
 
             // Stack should still be empty
@@ -319,10 +299,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         }
     }
 
-    // =========================================================================
-    // AutoPass: pending triggers flushed before auto-pass can skip them
-    // =========================================================================
-
     @Nested
     @DisplayName("AutoPass flushes pending triggers before skipping steps")
     class AutoPassFlush {
@@ -336,7 +312,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             armWithInstantResponse(player1);
 
             // Activate Shrine — trigger goes to pending
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.unspecified());
             assertThat(gd.pendingManaAbilityTriggers).isNotEmpty();
 
             // Manually place triggers on the pending list and invoke resolveAutoPass
@@ -350,10 +326,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         }
     }
 
-    // =========================================================================
-    // Full resolution: trigger resolves correctly after being deferred
-    // =========================================================================
-
     @Nested
     @DisplayName("Deferred triggers resolve correctly")
     class FullResolution {
@@ -365,7 +337,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.GREEN, 1);
             harness.setHand(player2, List.of(new GrizzlyBears()));
 
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             harness.castCreature(player2, 0);
 
             // Resolve the Viridian Revel trigger (top of stack) — should prompt player1
@@ -387,7 +359,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.GREEN, 1);
             harness.setHand(player2, List.of(new GrizzlyBears()));
 
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             harness.castCreature(player2, 0);
 
             // Resolve Viridian Revel trigger first (it's on top)
@@ -402,11 +374,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             assertThat(gd.stack).isEmpty();
         }
     }
-
-    // =========================================================================
-    // CR 603.2: basic mana tap (AbilityActivationService.tapPermanent) defers
-    // enchanted-permanent-tap triggers (Relic Putrescence fuzz-bug repro)
-    // =========================================================================
 
     @Nested
     @DisplayName("CR 603.2: basic-mana tap made to pay for a spell defers enchanted-permanent-tap triggers")
@@ -495,12 +462,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         }
     }
 
-    // =========================================================================
-    // CR 603.2: life-gain from a mana ability (Pristine Talisman) defers
-    // the Sanguine Bond trigger, so a sorcery-speed spell is still castable
-    // on the same priority window (fuzz-log repro).
-    // =========================================================================
-
     @Nested
     @DisplayName("CR 603.2: life-gain from a mana ability defers Sanguine Bond trigger")
     class LifeGainFromManaAbility {
@@ -534,7 +495,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             armWithInstantResponse(player1);
 
             // Activate Pristine Talisman (index 0) — adds {C} + 1 life → Sanguine Bond triggers.
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
 
             // Before the fix, the Sanguine Bond trigger went straight to the stack,
             // blocking the sorcery cast. Now it must sit in the deferred queue.
@@ -559,7 +520,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             setupTalismanAndSanguineBond(player2);
             armWithInstantResponse(player1);
 
-            harness.activateAbility(player2, 0, null, null);
+            harness.activateAbilityToPayFor(player2, 0, ManaPaymentIntent.unspecified());
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
@@ -571,10 +532,6 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Sanguine Bond");
         }
     }
-
-    // =========================================================================
-    // No-trigger case: mana ability without opponent trigger works normally
-    // =========================================================================
 
     @Nested
     @DisplayName("Mana ability without triggers still works normally")
