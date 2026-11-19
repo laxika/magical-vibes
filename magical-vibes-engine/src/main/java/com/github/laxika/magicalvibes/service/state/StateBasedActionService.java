@@ -299,6 +299,7 @@ public class StateBasedActionService {
             gameData.exiledCardScreamCounters.remove(cardId);
             gameData.exiledCardDreamCounters.remove(cardId);
             gameData.exiledCardHitCounters.remove(cardId);
+            gameData.exiledCardDelayCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
             gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);

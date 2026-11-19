@@ -54,7 +54,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawSt
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -223,28 +222,6 @@ public class StepTriggerService {
         // "Since your last upkeep" (Wiitigo) ends as the upkeep begins, not when an ability reading it resolves or only
         // when one triggers: the window closes here for every permanent, after the abilities took their snapshots.
         battlefield.forEach(permanent -> permanent.setBlockedOrWasBlockedSinceLastUpkeep(false));
-        // Ertai's Meddling: "At the beginning of each of that player's upkeeps, if that card is
-        // exiled, remove a delay counter from it." The trigger fires only on the exiled spell's
-        // controller's upkeeps, but it is controlled by the player who resolved Ertai's Meddling
-        // and its source is that Meddling card.
-        for (GameData.DelayedSpellExile pending : new ArrayList<>(gameData.delayedSpellExiles)) {
-            if (!pending.controllerId().equals(activePlayerId)) {
-                continue;
-            }
-            Card meddlingCard = pending.meddlingCard();
-            // A delayed triggered ability Ertai's Meddling made as it resolved: its source is the Meddling and its
-            // controller the player who controlled it (CR 603.7d).
-            StackEntry delayCounter = TriggeredAbilityStackService.madeAbility(meddlingCard, pending.meddlerId(),
-                    meddlingCard.getName() + " delay counter ability",
-                    List.of(new RemoveDelayCounterFromExiledSpellEffect(pending.cardId())));
-            delayCounter.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, delayCounter);
-
-            gameLogService.append(gameData,
-                    GameLog.cardThen(meddlingCard, "'s delay counter ability triggers."));
-            log.info("Game {} - {} delay counter upkeep trigger pushed onto stack", gameData.id, meddlingCard.getName());
-        }
-
         // Suspend: remove a time counter from every suspended spell owned by the active player.
         for (GameData.SuspendedSpellExile pending : new ArrayList<>(gameData.suspendedSpellExiles)) {
             if (!pending.ownerId().equals(activePlayerId)) {

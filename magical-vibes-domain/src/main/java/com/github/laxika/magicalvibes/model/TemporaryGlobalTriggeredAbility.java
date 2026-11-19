@@ -382,6 +382,17 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                 payToPrevent, repeats, lastsWhile, uses);
     }
 
+    /**
+     * This ability about the player {@code playerId}: "at the beginning of each of that player's upkeeps"
+     * ({@code ActivePlayer.CHOSEN_PLAYER}).
+     */
+    public TemporaryGlobalTriggeredAbility withWatchedPlayer(UUID playerId) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn,
+                untilNextTurn, registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId,
+                playerId, linkedExiledCardId, untilTriggered, next, boon, referents, payToPrevent, repeats,
+                lastsWhile, uses);
+    }
+
     /** This ability with the other objects it refers to and the turn it waits past {@code newReferents}. */
     public TemporaryGlobalTriggeredAbility withReferents(DelayedReferents newReferents) {
         return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn,

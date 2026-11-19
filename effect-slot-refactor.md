@@ -29,7 +29,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | R0 | Delete the dead `TriggerCollectionService` injections | done |
 | R1 | Emblems' abilities are `TriggerIndex` candidates for every family | done |
 | R2 | Keyword abilities and departed sources are candidates; abilities as the layers leave them | done |
-| R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | done but: C51 |
+| R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | done |
 | R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | done |
 | F | Delete the legacy types; docs | done |
 | D | Durations: one `Duration` on floating effects, ended by a clock on the rules events; `DelayedAction` deleted | open |
@@ -872,6 +872,11 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Gone: `OpeningHandRevealTrigger`, `openingHandRevealTriggers`, `openingHandManaTriggers`, `openingHandUpkeepTriggers`, `SpellTriggers.putOpeningHandRevealAbilities`, `StepTriggerService.handleOpeningHandUpkeepTriggers` and the main-phase mana drain, Karn's clears (the restart clears delayed abilities).
 - Moments: none moved; Tangle's mana ability goes on the stack first among that main phase's abilities, not last (its controller orders them, CR 603.3b).
 - Ledger (165 card test classes, route tests): only record fields gained; route lines differ by random draws and dice.
+
+**D (part 26: Ertai's Meddling).**
+- Ertai's Meddling's "at the beginning of each of that player's upkeeps, if that card is exiled" is an `atEveryStep(upkeep(CHOSEN_PLAYER))` delayed ability (`withWatchedPlayer`; source and controller per CR 603.7d) with an intervening "if" and `lastsWhile` `CardsStillInZone(EXILE, …)` (CR 603.4, 400.7); its effect carries the original stack entry (CR 707.10), and the delay counters are on the exiled card (`GameData.exiledCardDelayCounters`).
+- Gone: `delayedSpellExiles`, `DelayedSpellExile`, the upkeep drain. No bespoke delayed-ability list remains in `GameData` or `Permanent` (`suspendedSpellExiles` is suspend's own keyword ability).
+- Ledger (9 card test classes, route tests): same triggers, controllers and sources; record fields gained; route lines differ by random draws and dice.
 
 ## Prompt
 

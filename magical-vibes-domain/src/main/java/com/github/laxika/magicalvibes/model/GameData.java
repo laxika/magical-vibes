@@ -929,6 +929,8 @@ public class GameData {
     public final Map<UUID, Integer> exiledCardDreamCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → hit counter count (Etrata, the Silencer). */
     public final Map<UUID, Integer> exiledCardHitCounters = new ConcurrentHashMap<>();
+    /** Maps exiled card UUID → delay counter count (Ertai's Meddling). */
+    public final Map<UUID, Integer> exiledCardDelayCounters = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> exiledCardRefineCounters = new ConcurrentHashMap<>();
     /** Spells whose successful resolution is replaced by exile with a dream counter. */
     public final Set<UUID> spellsWithDreamCounterOnResolution = ConcurrentHashMap.newKeySet();
@@ -964,8 +966,6 @@ public class GameData {
     public final Set<UUID> exiledCardsWithBrainCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have cage counters (Mairsil, the Pretender). */
     public final Set<UUID> exiledCardsWithCageCounters = ConcurrentHashMap.newKeySet();
-    /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
-    public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     /**
      * Spells exiled with suspend counters and waiting for their owners' upkeeps. Effects that add
      * or remove time counters on suspended cards apply to these as well as to cards suspended from
@@ -2045,20 +2045,6 @@ public class GameData {
     /** Spells whose mana was paid using a pending any-type mana permission. */
     public final Set<UUID> spellsPaidUsingPendingAnyManaTypeThisTurn = ConcurrentHashMap.newKeySet();
 
-
-    /**
-     * A spell exiled with delay counters by Ertai's Meddling.
-     *
-     * @param cardId        the exiled card
-     * @param controllerId  the player whose upkeeps remove the counters — the spell's controller
-     * @param counters      delay counters still on the card
-     * @param originalEntry a snapshot of the stack entry the spell had, restored when the last
-     *                      counter is removed so the spell keeps its X value and targets
-     * @param meddlerId     the controller of the resolved Ertai's Meddling, who controls its delay triggers
-     * @param meddlingCard  the Ertai's Meddling card that is the source of its delay triggers
-     */
-    public record DelayedSpellExile(UUID cardId, UUID controllerId, int counters, StackEntry originalEntry,
-                                    UUID meddlerId, Card meddlingCard) {}
 
     /** A spell exiled with suspend counters, waiting to be cast by its owner when the last counter is removed. */
     public record SuspendedSpellExile(UUID cardId, UUID ownerId, int counters) {}
@@ -8803,9 +8789,8 @@ public class GameData {
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
-            // A card that leaves exile is a new object (CR 400.7): delay-counter tracking from its
-            // earlier exile no longer applies, even if it is exiled again later.
-            delayedSpellExiles.removeIf(pending -> pending.cardId().equals(cardId));
+            // A card that leaves exile is a new object (CR 400.7) with no counters from its earlier exile.
+            exiledCardDelayCounters.remove(cardId);
             exiledVoyageCounters.remove(cardId);
             exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
@@ -9419,6 +9404,7 @@ public class GameData {
         }
         removedIds.forEach(exiledCardDreamCounters::remove);
         removedIds.forEach(exiledCardHitCounters::remove);
+        removedIds.forEach(exiledCardDelayCounters::remove);
         removedIds.forEach(exiledCardScreamCounters::remove);
         removedIds.forEach(exiledCardRefineCounters::remove);
         removedIds.forEach(exiledCardsWithStudyCounters::remove);
@@ -10479,6 +10465,7 @@ public class GameData {
         copy.cardsExiledFromGraveyardThisTurn.addAll(this.cardsExiledFromGraveyardThisTurn);
         copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
         copy.exiledCardHitCounters.putAll(this.exiledCardHitCounters);
+        copy.exiledCardDelayCounters.putAll(this.exiledCardDelayCounters);
         copy.exiledCardRefineCounters.putAll(this.exiledCardRefineCounters);
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
@@ -10489,7 +10476,6 @@ public class GameData {
         copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
         copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
-        copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---

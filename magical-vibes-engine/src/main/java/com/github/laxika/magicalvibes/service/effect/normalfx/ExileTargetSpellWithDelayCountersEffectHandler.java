@@ -2,9 +2,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CardsStillInZone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellWithDelayCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -12,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -64,8 +74,18 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
         }
 
         exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
-        gameData.delayedSpellExiles.add(new GameData.DelayedSpellExile(
-                targetCardId, target.getControllerId(), counters, snapshot, entry.getControllerId(), entry.getCard()));
+        gameData.exiledCardDelayCounters.put(targetCardId, counters);
+        // "At the beginning of each of that player's upkeeps, if that card is exiled, ...": a delayed triggered ability
+        // of this spell, controlled by its controller (CR 603.7a, 603.7d), with an intervening "if" (CR 603.4). It has
+        // no stated end, but it can do nothing once that card has left exile (CR 400.7), so it ends then.
+        CardsStillInZone stillExiled = new CardsStillInZone(Zone.EXILE,
+                gameData.exileEntryVersionsOf(List.of(targetCardId)));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atEveryStep(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
+                        TriggerOptions.DEFAULT.withInterveningIf(stillExiled),
+                        new RemoveDelayCounterFromExiledSpellEffect(targetCardId, snapshot)),
+                null, null, DelayedReferents.NONE, stillExiled).withWatchedPlayer(target.getControllerId()));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " is exiled with " + counters + " delay counter" + (counters == 1 ? "" : "s") + " on it."));

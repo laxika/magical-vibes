@@ -786,7 +786,8 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   `GameData.temporaryGlobalTriggeredAbilities`: ability, source card and permanent (CR 603.7d, 603.7e), controller,
   duration, the permanent it is about (`watchedPermanentId`, CR 603.7c), the named player, the maker's linked exiled
   card. Factories: `about`, `thisTurn`, `nextThisTurn`, `untilYourNextTurn`, `boon`, `atNextStep`,
-  `atNextStepUnlessPaid`, `atNextStepThisTurn`, `atEveryStep`, `forTheRestOfTheGame`.
+  `atNextStepUnlessPaid`, `atNextStepThisTurn`, `atEveryStep`, `forTheRestOfTheGame`; `withWatchedPlayer` names
+  "that player" (Ertai's Meddling's `atEveryStep(upkeep(CHOSEN_PLAYER))`, which ends as its card leaves exile).
 - An opening-hand reveal (CR 103.6b) makes one too, sourced by the revealed card (CR 603.7g): Chancellor of the Annex's
   `forTheRestOfTheGame` "when each opponent casts their first spell of the game" (`firstThisGame`), and `atNextStep`
   "at the beginning of the first upkeep" (`upkeep(ANY)`), "your first upkeep" (`upkeep(YOU)`), "your first main
@@ -907,8 +908,9 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
 - Inherent abilities with no source (monarch, CR 726.2; initiative, CR 727.2; rad; speed; planeswalking) use
   `putInherent`: the holder controls it, no doubler, no target; the initiative's combat-damage ability names the taker
   non-targeting (`TakeInitiativeEffect(true)`).
-- A spell's, reveal's or rule's "at the beginning of …" (epic, rebound, Ertai's Meddling, opening-hand reveals,
-  Judgment of Alexander, regeneration shields, exile returns, Gaze of Pain) is `madeAbility` + `putDelayed` (CR 603.7d, 603.7e). "Combat damage uses the stack" is one `putMade` object.
+- A spell's, reveal's or rule's "at the beginning of …" (epic, rebound, Judgment of Alexander, regeneration shields,
+  exile returns, Gaze of Pain) is `madeAbility` + `putDelayed` (CR 603.7d, 603.7e). "Combat damage uses the stack" is
+  one `putMade` object.
 
 ## Doublers: `TriggerCause`
 

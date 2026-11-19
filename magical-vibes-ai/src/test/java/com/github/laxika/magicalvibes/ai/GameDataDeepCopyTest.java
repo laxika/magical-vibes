@@ -208,6 +208,19 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the delay counters on exiled cards independently")
+    void deepCopyKeepsExiledDelayCountersIndependently() {
+        UUID cardId = UUID.randomUUID();
+        gd.exiledCardDelayCounters.put(cardId, 2);
+
+        GameData copy = gd.simulationCopy();
+        copy.exiledCardDelayCounters.put(cardId, 1);
+
+        assertThat(gd.exiledCardDelayCounters).containsEntry(cardId, 2);
+        assertThat(gd.simulationCopy().exiledCardDelayCounters).containsEntry(cardId, 2);
+    }
+
+    @Test
     @DisplayName("Deep copy creates independent battlefield collections")
     void deepCopyIndependentBattlefields() {
         harness.addToBattlefield(player1, new GrizzlyBears());

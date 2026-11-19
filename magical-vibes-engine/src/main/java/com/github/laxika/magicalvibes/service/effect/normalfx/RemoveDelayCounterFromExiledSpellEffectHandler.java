@@ -33,46 +33,25 @@ public class RemoveDelayCounterFromExiledSpellEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID cardId = ((RemoveDelayCounterFromExiledSpellEffect) effect).cardId();
+        RemoveDelayCounterFromExiledSpellEffect delay = (RemoveDelayCounterFromExiledSpellEffect) effect;
+        UUID cardId = delay.cardId();
+        Integer counters = gameData.exiledCardDelayCounters.get(cardId);
+        if (counters == null || gameData.findExiledCard(cardId) == null) return;
 
-        int index = indexOf(gameData, cardId);
-        if (index < 0) return;
-
-        GameData.DelayedSpellExile pending = gameData.delayedSpellExiles.get(index);
-
-        // "if that card is exiled" — an intervening-if clause: the trigger does nothing if the card
-        // has left exile, and the tracking record goes with it.
-        if (gameData.findExiledCard(cardId) == null) {
-            gameData.delayedSpellExiles.remove(index);
-            return;
-        }
-
-        int remaining = pending.counters() - 1;
+        int remaining = Math.max(0, counters - 1);
         if (remaining > 0) {
-            gameData.delayedSpellExiles.set(index, new GameData.DelayedSpellExile(
-                    cardId, pending.controllerId(), remaining, pending.originalEntry(),
-                    pending.meddlerId(), pending.meddlingCard()));
-            gameLogService.append(gameData, GameLog.cardThen(pending.originalEntry().getCard(),
+            gameData.exiledCardDelayCounters.put(cardId, remaining);
+            gameLogService.append(gameData, GameLog.cardThen(delay.originalEntry().getCard(),
                     " loses a delay counter (" + remaining + " left)."));
             return;
         }
 
-        gameData.delayedSpellExiles.remove(index);
         gameData.removeFromExile(cardId);
-        gameData.stack.add(new StackEntry(pending.originalEntry()));
+        gameData.stack.add(new StackEntry(delay.originalEntry()));
 
-        gameLogService.append(gameData, GameLog.cardThen(pending.originalEntry().getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(delay.originalEntry().getCard(),
                 " loses its last delay counter and is put back onto the stack."));
         log.info("Game {} - {} returned to the stack from delay-counter exile",
-                gameData.id, pending.originalEntry().getCard().getName());
-    }
-
-    private int indexOf(GameData gameData, UUID cardId) {
-        for (int i = 0; i < gameData.delayedSpellExiles.size(); i++) {
-            if (gameData.delayedSpellExiles.get(i).cardId().equals(cardId)) {
-                return i;
-            }
-        }
-        return -1;
+                gameData.id, delay.originalEntry().getCard().getName());
     }
 }

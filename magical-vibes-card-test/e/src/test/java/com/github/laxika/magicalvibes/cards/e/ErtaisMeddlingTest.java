@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.l.LightningBlast;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,10 +29,11 @@ class ErtaisMeddlingTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Lowland Giant"));
 
-        GameData.DelayedSpellExile pending = gd.delayedSpellExiles.getFirst();
-        assertThat(pending.cardId()).isEqualTo(giant.getId());
-        assertThat(pending.controllerId()).isEqualTo(player1.getId());
-        assertThat(pending.counters()).isEqualTo(2);
+        assertThat(gd.exiledCardDelayCounters).containsExactly(Map.entry(giant.getId(), 2));
+        assertThat(gd.temporaryGlobalTriggeredAbilities).singleElement().satisfies(delayed -> {
+            assertThat(delayed.controllerId()).isEqualTo(player2.getId());
+            assertThat(delayed.watchedPlayerId()).isEqualTo(player1.getId());
+        });
     }
 
     @Test
@@ -42,8 +43,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
 
         triggerUpkeep(player1);
 
-        assertThat(gd.delayedSpellExiles).singleElement()
-                .extracting(GameData.DelayedSpellExile::counters).isEqualTo(1);
+        assertThat(gd.exiledCardDelayCounters.values()).containsExactly(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Lowland Giant"));
         harness.assertNotOnBattlefield(player1, "Lowland Giant");
@@ -56,8 +56,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
 
         triggerUpkeep(player2);
 
-        assertThat(gd.delayedSpellExiles).singleElement()
-                .extracting(GameData.DelayedSpellExile::counters).isEqualTo(2);
+        assertThat(gd.exiledCardDelayCounters.values()).containsExactly(2);
     }
 
     @Test
@@ -68,7 +67,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve the trigger — Lowland Giant goes back onto the stack
 
-        assertThat(gd.delayedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardDelayCounters).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Lowland Giant"));
         assertThat(gd.stack).singleElement()
@@ -184,7 +183,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
         harness.castInstant(player2, 0, 1, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.delayedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardDelayCounters).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getId().equals(giant.getId()));
         harness.assertNotInGraveyard(player1, "Lowland Giant");
@@ -209,7 +208,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.delayedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardDelayCounters).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getId().equals(giant.getId()));
         harness.assertInGraveyard(player2, "Ertai's Meddling");
@@ -238,7 +237,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No delay trigger is created after the delayed card leaves exile")
+    @DisplayName("The delay ability ends without triggering once the delayed card has left exile")
     void noTriggerAfterCardLeavesExile() {
         LowlandGiant giant = castGiantAndMeddle(1);
         gd.removeFromExile(giant.getId());
@@ -248,6 +247,7 @@ class ErtaisMeddlingTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInHand(player1, "Lowland Giant");
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
