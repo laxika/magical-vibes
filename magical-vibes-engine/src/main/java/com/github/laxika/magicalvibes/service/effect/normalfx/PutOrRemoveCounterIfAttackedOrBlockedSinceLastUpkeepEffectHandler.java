@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 /**
  * Resolves the upkeep counter adjustment for permanents that attacked or blocked during the
@@ -23,7 +22,7 @@ import java.util.UUID;
 public class PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final GameLogService gameLogService;
 
@@ -35,7 +34,7 @@ public class PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect) effect;
-        Permanent permanent = findReferencedPermanent(gameData, entry, e.reference());
+        Permanent permanent = subjectResolutionService.permanent(gameData, entry, effect, Subjects.of(e.reference()));
         if (permanent == null) {
             return;
         }
@@ -55,42 +54,5 @@ public class PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffectHandler
         permanent.setCounterCount(e.counterType(), current - 1);
         gameLogService.append(gameData, GameLog.builder().card(permanent.getCard())
                 .text(" removes a " + counterName + " counter.").build());
-    }
-
-    private Permanent findReferencedPermanent(GameData gameData, StackEntry entry,
-                                              PermanentReference reference) {
-        return switch (reference) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
-            case ATTACHED -> {
-                Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-                if (source != null && source.isAttached()) {
-                    yield findPermanent(gameData, source.getAttachedTo());
-                }
-                // The Aura left the battlefield in response: the ability still affects the permanent it
-                // was attached to when it triggered (CR 608.2h).
-                Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
-                yield attachedSnapshot == null ? null : findPermanent(gameData, attachedSnapshot.getId());
-            }
-            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
-        };
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        return gameData.playerBattlefields.values().stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(java.util.Collection::stream)
-                .filter(permanent -> cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId())))
-                .findFirst()
-                .orElse(null);
     }
 }

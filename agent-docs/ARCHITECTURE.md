@@ -21,6 +21,7 @@ Javadoc of the owner class.
 | Turn, dungeon, suspend, face-down exile state; domain events | [architecture/game-state.md](architecture/game-state.md), [DOMAIN_EVENTS.md](DOMAIN_EVENTS.md) |
 | Card metadata loading, the card and card-data modules | [architecture/oracle-data.md](architecture/oracle-data.md) |
 | Static and continuous effects | [LAYER_SYSTEM.md](LAYER_SYSTEM.md) |
+| Who an effect acts on: the subject variants and their resolver | [SUBJECTS_REFERENCE.md](SUBJECTS_REFERENCE.md) |
 | Nested games | [SUBGAMES.md](SUBGAMES.md) |
 | Planechase | [PLANECHASE.md](PLANECHASE.md) |
 

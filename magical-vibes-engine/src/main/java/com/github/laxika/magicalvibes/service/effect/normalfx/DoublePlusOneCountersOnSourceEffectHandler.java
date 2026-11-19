@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 /** Resolves an effect that doubles the +1/+1 counters on the source or on the triggering permanent. */
 @Component
@@ -20,6 +20,7 @@ import java.util.UUID;
 public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -29,13 +30,8 @@ public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID permanentId = ((DoublePlusOneCountersOnSourceEffect) effect).reference() == PermanentReference.TRIGGERING
-                ? entry.getTriggeringPermanentId()
-                : entry.getSourcePermanentId();
-        if (permanentId == null) {
-            return;
-        }
-        Permanent source = gameQueryService.findPermanentById(gameData, permanentId);
+        Permanent source = subjectResolutionService.permanent(
+                gameData, entry, effect, Subjects.of(((DoublePlusOneCountersOnSourceEffect) effect).reference()));
         if (source == null || gameQueryService.cantHaveCounters(gameData, source)) {
             return;
         }

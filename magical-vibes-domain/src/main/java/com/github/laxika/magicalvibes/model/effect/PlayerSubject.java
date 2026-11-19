@@ -1,0 +1,132 @@
+package com.github.laxika.magicalvibes.model.effect;
+
+import java.util.Objects;
+
+/**
+ * Which players an effect acts on: the effect's verb names the action, this value names who it happens to. Built
+ * through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}. Several players are always
+ * returned in APNAP order (CR 101.4).
+ *
+ * <p>Only {@link TargetPlayer} declares a target ({@link #declaresTarget()}); a target nested in
+ * {@link ControllerOf} or {@link OwnerOf} reads the stack entry's target without declaring one. A subject that reads a
+ * stack entry ({@link #needsStackEntry()}) cannot be used by a static ability.
+ *
+ * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
+ */
+public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
+        PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
+        PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
+        PlayerSubject.ChosenPlayer {
+
+    /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
+    default boolean declaresTarget() {
+        return false;
+    }
+
+    /** Whether resolving this subject reads a stack entry, so a static ability can't use it. */
+    default boolean needsStackEntry() {
+        return false;
+    }
+
+    /** Which players {@link Each} names. */
+    enum Relation {
+        /** Every player, the controller included. */
+        ALL,
+        /** Every opponent of the controller. */
+        OPPONENTS
+    }
+
+    /** "You": the controller of the spell or ability (of the source permanent, for a static ability). */
+    record You() implements PlayerSubject {
+    }
+
+    /**
+     * "Target player": the effect's player target. {@code group} is the target group the effect reads, or
+     * {@code null} for the targets the stack entry assigns to the effect.
+     */
+    record TargetPlayer(Integer group) implements PlayerSubject {
+
+        public TargetPlayer {
+            if (group != null && group < 0) {
+                throw new IllegalArgumentException("A target group is not negative: " + group);
+            }
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return true;
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /** "Each player", "each opponent", in APNAP order. */
+    record Each(Relation relation) implements PlayerSubject {
+
+        public Each {
+            Objects.requireNonNull(relation, "relation");
+        }
+    }
+
+    /**
+     * "Its controller": the controller of each permanent {@code permanent} names, as it is now, or as it last existed
+     * on the battlefield once it has left (CR 608.2h).
+     */
+    record ControllerOf(PermanentSubject permanent) implements PlayerSubject {
+
+        public ControllerOf {
+            Objects.requireNonNull(permanent, "permanent");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return permanent.needsStackEntry();
+        }
+    }
+
+    /** "Its owner": the owner of each permanent {@code permanent} names, read from its card as it is or last was. */
+    record OwnerOf(PermanentSubject permanent) implements PlayerSubject {
+
+        public OwnerOf {
+            Objects.requireNonNull(permanent, "permanent");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return permanent.needsStackEntry();
+        }
+    }
+
+    /** "That player": the player the trigger event was about, recorded on the stack entry; not a target. */
+    record TriggeringPlayer() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /** "The active player": the player whose turn it is as the effect is applied. */
+    record ActivePlayer() implements PlayerSubject {
+    }
+
+    /** "Defending player": the player the source's attack named on the stack entry was against. */
+    record DefendingPlayer() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /** "Enchanted player": the player the source Aura (a Curse) is attached to. */
+    record EnchantedPlayer() implements PlayerSubject {
+    }
+
+    /** "The chosen player": the player the source permanent chose as it entered. */
+    record ChosenPlayer() implements PlayerSubject {
+    }
+}

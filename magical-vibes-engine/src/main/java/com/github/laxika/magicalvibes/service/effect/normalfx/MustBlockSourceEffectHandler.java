@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
 import com.github.laxika.magicalvibes.model.GameData;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -37,8 +39,8 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         // Activated abilities snapshot their source onto the effect; a triggered ability names it on the stack entry:
         // its source, or the permanent the trigger event was about (an Equipment's "block it", Grappling Hook).
         UUID sourceId = e.sourcePermanentId() != null ? e.sourcePermanentId()
-                : e.blocked() == PermanentReference.TRIGGERING ? entry.getTriggeringPermanentId()
-                : entry.getSourcePermanentId();
+                : subjectResolutionService.permanentIds(gameData, entry, effect, Subjects.of(e.blocked())).stream()
+                        .findFirst().orElse(null);
         if (target == null || sourceId == null) {
             return;
         }

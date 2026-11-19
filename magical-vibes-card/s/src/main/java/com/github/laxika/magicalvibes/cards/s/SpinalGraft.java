@@ -22,6 +22,6 @@ public class SpinalGraft extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED, true));
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true));
     }
 }

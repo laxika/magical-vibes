@@ -15,7 +15,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 |---|---|---|
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
-| 3 | Subject types and the one resolver | open |
+| 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | open |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
@@ -650,6 +650,396 @@ For later steps:
   `AttackerTargetRestrictionEffect` is down to `CantAttackControllerEffect`. Step 11 should sweep interfaces and enums
   with no implementer or reader.
 - `EFFECT_MERGE_PLAN.md` step 20's `SacrificeCreatureForTokenEffect` row is marked moot (one of its two classes was dead).
+
+### Step 3 (2026-11-19)
+
+Added `PermanentSubject`, `PlayerSubject` and `Subjects` (domain, `model/effect/`, sealed interfaces of records, not
+counted by the ratchet) and `SubjectResolutionService` (engine, `service/effect/`) with the two entry points of
+Design: `permanents` / `permanent` / `permanentIds` / `players` / `player` for a resolving entry, and `permanents` /
+`players` for a static ability's source (a subject with `needsStackEntry()` is rejected there). Variants:
+`source()`, `target([group])`, `attached()`, `triggering()`, `returned()` (the one step-result variant, needed by the
+pilot), `controlledBy(players, filter)`, `allOf(...)`; `you()`, `targetPlayer([group])`, `eachPlayer()`,
+`eachOpponent()`, `controllerOf(p)`, `ownerOf(p)`, `triggeringPlayer()`, `activePlayer()`, `defendingPlayer()`,
+`enchantedPlayer()`, `chosenPlayer()`. `permanentIds` exists because some verbs act on last-known information of a
+permanent that left (an explore, CR 701.44c; "block it" names an id). Records, handlers: ratchet unchanged
+(4,940 / 4,173).
+
+**Pilot.** The 15 effects with a `PermanentReference` component resolve it through `Subjects.of(PermanentReference)`;
+the private `findReferencedPermanent` / `findAttached` / `findPermanentByCardId` helpers of `BoostReferenced`,
+`DestroyReferenced`, `PutCounterOnReferenced`, `RemoveCounterFromReferenced`, `RemoveReferencedPermanentFromCombat`,
+`ShuffleReferencedPermanentIntoLibrary`, `PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeep`,
+`RemoveAllCountersThenDestroyReferencedPermanentAndDamageController`, `Explore`, `MustBlockSource`,
+`GoadTargetCreatureUntilNextTurn`, `TurnSourceFaceUp`, `DoublePlusOneCountersOnSource` and `SacrificeSelf` handlers are
+gone; `UntapStepService` reads `DoesntUntapWithCounterEffect.counterBearer` through the static entry point. Not
+converted (they name `PermanentReference` but are not one of the 15): `PredicateEvaluationService`'s
+`PermanentBlockingSourcePredicate.blocked()`, and the handlers that only construct a referenced effect
+(`DestructionSupport`, `ForcedCostOrElse`, `DestroyUnlessPaysPerCounter`, `PayXManaPutCountersOnSelf`, ...).
+
+**Divergences settled.**
+
+- *Enchanted / equipped permanent.* `attached()` is: the live source's `attachedTo` while the source is on the
+  battlefield (nothing if it is unattached), else the source's last-known snapshot's `attachedTo`, else (no snapshot
+  recorded) `StackEntry.attachedPermanentSnapshot`; then only if that permanent is still on the battlefield. Basis:
+  CR 608.2h (current information while the object is in the expected zone, else last-known). `PutCounterOnReferenced`
+  already did this. Changed: `DestroyReferenced` read the activation-time snapshot first (so an Aura moved after
+  activation destroyed its old host) and fell back to the triggering permanent; `BoostReferenced` and
+  `PutOrRemoveCounter...` fell back to `attachedPermanentSnapshot` while the source was still on the battlefield
+  unattached; `RemoveCounterFromReferenced` used the snapshot's `lastAttachedTo`; `RemoveFromCombat`,
+  `RemoveAllCountersThenDestroy...` and `Explore` had no last-known branch; `Shuffle` had no
+  `attachedPermanentSnapshot` branch. Destroy's snapshot-first order was standing in for a second rules concept:
+  "destroy it" / "destroy that creature" in an Aura's trigger about its creature means the creature the event was
+  about, fixed when it triggered (Oracle text of Dwindle M19 53, Spinal Graft TMP 159, Cryoshatter EOE 53; no ruling says
+  otherwise). Those three cards now use `PermanentReference.TRIGGERING` (their collectors record the triggering
+  permanent), so `DwindleTest` / `SpinalGraftTest`'s "moving the Aura in response" cases pass unchanged.
+  *Paroxysm* (EXO 94) and *Venarian Gold* (LEG 83) ("that creature" in an upkeep trigger of the enchanted
+  creature's controller) use the new `attachedAtTrigger()` / `PermanentReference.ATTACHED_AT_TRIGGER`: the host the
+  entry's `attachedPermanentSnapshot` recorded when the ability triggered, live only while still on the battlefield.
+  Paroxysm's +3/+3 moved to `BoostReferencedPermanentEffect(ATTACHED_AT_TRIGGER, 3, 3)`. The upkeep record was left
+  alone: recording the host as the triggering permanent on upkeep/draw `ENCHANTED_CONTROLLER` entries (then
+  `TRIGGERING`) first needs `DealDamageToPlayersEffectHandler` (`ENCHANTED_PERMANENT_CONTROLLER` recipient) and
+  `ForcedCostOrElseEffectHandler` (`payerIsEnchantedController`) guarded, since both read a set
+  `triggeringPermanentId` as "its current controller" and would move "that player" off the upkeep player; whichever
+  step-4 run touches them does that. Tests: the "Aura moved in response" cases in `ParoxysmTest` / `VenarianGoldTest`,
+  `SubjectResolutionServiceTest$AttachedAtTrigger`. Other tests: `PoolingVenomTest.abilityDestroysTheLandEnchantedAtResolution`
+  (fails on the old Destroy lookup), `SubjectResolutionServiceTest$Attached`.
+- *`source()` without a source permanent.* Strict: the entry's `getSourcePermanentId()` only. The `SELF` fallback to
+  the entry's target (`TapPermanents`, `UntapPermanents`, `BoostSelf`, `RemoveAllCounters(SOURCE)`,
+  `RemoveCounterAndGainLife`, about 30 `...Self...` handlers) is legacy: every permanent's activated and triggered
+  ability has a source (`TriggeredAbilityStackService.abilityEntry`, `payCostsAndActivate`; an Aura's "attached"
+  ability puts the host in `targetId` but keeps the source), and no card puts those effects on a source-less entry
+  (spell, cast trigger, graveyard/emblem trigger). On such an entry the fallback acted on the spell's real target,
+  which is wrong. So the resolver owns no fallback and no caller needs one; the steps that convert those handlers drop
+  theirs and make `TapUntapScope.SOURCE_PERMANENT` the same as `SELF`. Test: `SubjectResolutionServiceTest$Source`.
+- *`DYING_CREATURE_CONTROLLER` vs `TRIGGERING_PERMANENT_CONTROLLER`.* Both are `controllerOf(triggering())`, resolved
+  by `GameQueryService.findTriggeringPermanentController` (current controller, then
+  `entry.lastKnownPermanentController`, then `getTriggeringPermanentControllerId`). For every death trigger they give
+  the same player: the death collectors (`ZoneChangeRequests.zoneChangeRecord`, `TriggeredAbilityStackService.aboutRecord`)
+  record the controller as it left, and nothing is live. Test:
+  `SubjectResolutionServiceTest$ControllerAndOwner.controllerAfterControlChangeAndDeath` (a stale recorded controller
+  loses to the controller it had as it left, CR 608.2h).
+- *An owner that is `null`.* Every object has an owner (CR 108.3 cards, CR 111.2 tokens, CR 110.2); a `null` owner is
+  an unstamped engine-made or hand-built test card. `ownerOf` reads `gameData.ownerOf(card)` (honours
+  `cardOwnerOverrides`, unlike `LoseLifeRecipient.OWNER`'s raw `Card.getOwnerId()`), else
+  `gameData.defaultControllerOf` while the permanent is on the battlefield (stolen-creature record, else the battlefield
+  it is on), else its last-known controller. `LoseLifeRecipient.OWNER` and `EACH_OTHER_PLAYER` fall back to the
+  entry's controller; for the source's own abilities that is the same player. Test:
+  `SubjectResolutionServiceTest$ControllerAndOwner.unrecordedOwner`.
+- `returned()` reads the entry's target, else its first targeted card (`BoostReferenced`, `PutCounterOnReferenced`);
+  `Destroy`, `Explore` and the others read only the target. No card puts those on an entry with only targeted cards.
+
+**Resolver choices later steps must check per card** (not divergences of the pilot, so not settled here):
+`triggeringPlayer()` is `entry.getTriggeringPlayerId()`, else the entry's non-targeting `targetId` when it is a player;
+`activePlayer()` is `gameData.activePlayerId` (live); `enchantedPlayer()` is the source's `attachedTo` as it is or last
+was, else the baked `targetId` only when no source is known; `chosenPlayer()` has no `targetId` fallback; `each(...)`
+and every multi-player result is rotated APNAP order (active player, then turn order), where most handlers today use
+raw `orderedPlayerIds` (`SkipNext` even the unordered `playerIds`); `controllerOf(source())` falls back to
+`entry.getSourcePermanentControllerId()`.
+
+#### Old constant → subject
+
+Columns: the constant, the subject that replaces it, and how its handler finds it today (getter → fallback). "baked"
+= a non-targeting player a trigger collector wrote into `entry.getTargetId()`. "LKI chain" =
+`findPermanentController` → `entry.lastKnownPermanentController` → `getTriggeringPermanentControllerId` (the
+`findTriggeringPermanentController` order). **New** marks a variant the run that needs it adds (smallest form given).
+A constant with no subject is a quantity, mode or filter that stays a component.
+
+**LoseLifeRecipient** (`LoseLifeEffectHandler`; seat order, not APNAP)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()`; mana path: activating player |
+| OWNER | `ownerOf(source())` | `entry.getCard().getOwnerId()` raw → controller; amount context re-based to owner |
+| SOURCE_CONTROLLER | `controllerOf(source())` | live → `getSourcePermanentControllerId()`; dead (no card, no engine use) |
+| TARGET_PLAYER | `targetPlayer()` | `targetsForEffect` → `getTargetId()` → `getTargetIds().first`; amount per target |
+| TRIGGERING_PLAYER | `triggeringPlayer()` | baked → `getTargetIds().first`; counts as targeted for `recordTargetLifeLost` |
+| TARGET_PERMANENT_CONTROLLER | `controllerOf(target())` | live → `removedPermanentControllers` → triggering controller if target is the triggering permanent |
+| DYING_CREATURE_CONTROLLER | `controllerOf(triggering())` | raw `getTriggeringPermanentControllerId()` (same player, see above) |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | `findTriggeringPermanentController` |
+| TRIGGERING_CARD_OWNER | **new** `ownerOf(triggeringCard())` (spell, land played, or permanent) | `findTriggeringCardOwner` → `getTriggeringPermanentOwnerId()` → `findTriggeringPermanentOwner` |
+| DEFENDING_PLAYER | `defendingPlayer()` | `getDefendingPlayerId()` → `getAttackedTargetId()` (player, or planeswalker's live controller; resolver uses `defendingPlayerOfAttackTarget`, which also handles battles) |
+| OTHER_CHOSEN_PLAYER | **new** `except(chosenPlayers(), triggeringPlayer())` | source live → snapshot, `getRememberedTargetPlayerIds()` minus `getTriggeringPlayerId()` |
+| ACTIVE_PLAYER | `activePlayer()` | `entry.getActivePlayerId()` → `gameData.activePlayerId` |
+| EACH_PLAYER | `eachPlayer()` | seat order, minus `exemptIfControls` matches |
+| EACH_OPPONENT | `eachOpponent()` | seat order, minus controller and `exemptIfControls` |
+| EACH_OTHER_PLAYER | **new** `except(eachPlayer(), ownerOf(source()))` | seat order minus `getCard().getOwnerId()` → controller |
+
+**GainLifeRecipient** (`GainLifeEffectHandler`)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()`; `targetsPlayer` flag declares an unused player target (keep it as its own component) |
+| TARGET_CONTROLLER | `controllerOf(target())` | `findPermanentById` + battlefield scan → `removedPermanentControllers`; no triggering fallback |
+| OPPONENT | `targetPlayer(group)` with an opponent filter | `getOpponentId` (two players), own shroud/hexproof check; no declared target |
+| TRIGGERING_PLAYER | `triggeringPlayer()` | baked, must be a player |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | inline copy of the LKI chain |
+| SOURCE_REMEMBERED_PLAYER | `chosenPlayer()` | source live → snapshot `getRememberedTargetPlayerId()` → `targetId` of a stack entry from the same source carrying `RememberTargetPlayerEffect` (the resolver lacks this last fallback) |
+| EACH_PLAYER | `eachPlayer()` | seat order |
+
+**PoisonRecipient** (`GivePoisonCountersEffectHandler`)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()` |
+| TARGET_PLAYER | `targetPlayer()` | `getTargetId()` only |
+| EACH_PLAYER / EACH_OPPONENT | `eachPlayer()` / `eachOpponent()` | seat order |
+| TARGET_PERMANENT_CONTROLLER | `controllerOf(target())` | as LoseLife's |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | `findTriggeringPermanentController` |
+
+**SetLifeTotalRecipient**: CONTROLLER `you()`; TARGET_PLAYER `targetPlayer()` (`getTargetId()`, null = nothing);
+EACH_PLAYER `eachPlayer()` (seat order; amount evaluated per player, all totals computed before any is set; keep).
+**SkipRecipient**: CONTROLLER `you()`; DAMAGED_PLAYER `triggeringPlayer()` (baked); TARGET_PLAYER `targetPlayer()`
+(`getTargetId()` → first player in `getTargetIds()`); EACH_OPPONENT `eachOpponent()` (iterates unordered `playerIds`).
+**EmblemRecipient**: CONTROLLER `you()`; TARGET_PLAYER `targetPlayer()` (`getTargetId()`, no null guard);
+EACH_OPPONENT `eachOpponent()`; EACH_PLAYER_DEALT_DAMAGE_THIS_WAY **new** step-7 `playersDealtDamageThisResolution()`.
+**FractionalLifeLossRecipient**: ALL `eachPlayer()`; OPPONENTS `eachOpponent()`; SUBGAME_NON_WINNERS **new**
+`except(eachPlayer(), subgameWinners())` (step 7). **PlayersCantGainLifeEffect.Scope** (static,
+`GameQueryService.canPlayerGainLife`): ALL_PLAYERS `eachPlayer()`; ENCHANTED_PLAYER `enchantedPlayer()`.
+**ExchangeLifeTotalWithCreatureStatEffect.Recipient**: CONTROLLER `you()`; TARGET_PLAYER `targetPlayer()`.
+**AwardPersistentManaEffect.Recipient**: CONTROLLER `you()`; TARGET_PLAYER is `triggeringPlayer()` (baked, no
+target declared, falls back to the controller). **AnteRecipient**: CONTROLLER `you()`; EACH_PLAYER `eachPlayer()`.
+**DraftCardRecipient**: CONTROLLER `you()`; TARGET_PLAYER reads a companion effect's player target without declaring
+one: **new** non-declaring `targetPlayer` read (e.g. a `declares=false` flag on `TargetPlayer`).
+**DestroyRecipient**: CONTROLLER `you()`; TARGET_PLAYER `targetPlayer()`.
+
+**DamageRecipient** (`DealDamageToPlayersEffectHandler`; seat order; one damage call per player)
+
+| Constant | Subject | Today |
+|---|---|---|
+| TARGET_PLAYER | `targetPlayer()` | `getTargetId()` only |
+| EACH_OPPONENT / EACH_PLAYER | `eachOpponent()` / `eachPlayer()` | seat order; EACH_PLAYER evaluates the amount per player |
+| SELECTED_OPPONENTS | **new** step-7 `acceptedPlayers()` ∩ opponents | `getAcceptedPlayerIds()` minus controller |
+| EACH_OTHER_OPPONENT | **new** `except(eachOpponent(), triggeringPlayer())` | seat order minus controller and `getTargetId()` |
+| CHOSEN_PLAYER | `chosenPlayer()` | source live → snapshot `getRememberedTargetPlayerId()` → `getTargetId()` |
+| ACTIVE_PLAYER | `triggeringPlayer()` (baked upkeep player) | baked |
+| CONTROLLER | `you()` | `getControllerId()` |
+| ENCHANTED_PLAYER | `enchantedPlayer()` | baked |
+| ENCHANTED_PLAYER_OR_PLANESWALKER | no subject: a resolution-time "player or one of their planeswalkers" choice; keep as a verb option over `enchantedPlayer()` | `getOpponentChosenTargetPlayerId()` → baked; prompt |
+| ENCHANTED_PERMANENT_CONTROLLER | `controllerOf(triggering())` | live controller of `getTriggeringPermanentId()` → TRIGGERING_PERMANENT_CONTROLLER path; else baked (Feedback) |
+| DEFENDING_PLAYER | `defendingPlayer()` | `getDefendingPlayerId()` → `getAttackedTargetId()` |
+| TARGET_PERMANENT_CONTROLLER | `controllerOf(target())` **but declares the permanent target** | `targetsForEffect.first` → `getTargetId()`; triggering controller if it is the triggering permanent → live → `removedPermanentControllers` |
+| TARGET_SPELL_CONTROLLER | **new** `controllerOf(targetSpell())` (declares a spell target here) | stack scan by `getTargetableId()` → `getCounteredSpellControllerId()` → `removedPermanentControllers` |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | inline LKI chain → extra `getTargetId()` fallback |
+| TRIGGERING_PLAYER | `triggeringPlayer()` | baked |
+
+**DiscardRecipient** (`DiscardEffectHandler`, `DiscardHandEffectHandler`, `DiscardCardThenEffectHandler`;
+`discardCausedByOpponent` stays a derived flag)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()` |
+| TARGET_PLAYER | `targetPlayer()` | `targetsForEffect` → `getTargetId()`, players only; several targets choose active player first |
+| TRIGGERING_PLAYER | `triggeringPlayer()` | baked (no null check); `DiscardCardThen` falls to controller |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | `findTriggeringPermanentController`; `DiscardHand` does nothing |
+| ACTIVE_PLAYER | `triggeringPlayer()` (baked upkeep player) | baked; `DiscardCardThen` falls to controller |
+| TARGET_PERMANENT_CONTROLLER | `controllerOf(target())` | live → `removedPermanentControllers` (`DiscardCardThen`: live only) |
+| TARGET_PLAYER_OR_PERMANENT_CONTROLLER | **new**: `controllerOf(target())` where a player target stands for itself (or a `targetPlayerOrControllerOf()` variant) | `getTargetId()` player, else live controller; no LKI |
+| DEFENDING_PLAYER | `defendingPlayer()` | `getDefendingPlayerId()` → `getAttackedTargetId()` |
+| EACH_PLAYER / EACH_OPPONENT | `eachPlayer()` / `eachOpponent()` | non-random: all choose (active first, then seat order), then discard at once; random and `DiscardHand`: one player at a time |
+
+**MillRecipient** (`MillEffectHandler`)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()` |
+| CHOSEN_PLAYER | `chosenPlayer()` | source live → snapshot `getRememberedTargetPlayerId()` |
+| TARGET_PLAYER | `targetPlayer()` | `targetsForEffect` → `getTargetId()` |
+| TRIGGERING_PLAYER | `triggeringPlayer()` | baked |
+| ACTIVE_PLAYER | `triggeringPlayer()` (baked) | same code as TARGET_PLAYER |
+| EACH_OPPONENT | `eachOpponent()` | one player at a time, seat order |
+| EACH_PLAYER | `eachPlayer()` | one simultaneous event (`resolveMillPlayersSimultaneously`) — EACH_OPPONENT must become simultaneous too or the run says why not |
+| TARGET_SPELL_CONTROLLER | **new** `controllerOf(targetSpell())`, non-declaring | stack scan → countered controller → `removedPermanentControllers` |
+| TARGET_PERMANENT_CONTROLLER | `controllerOf(target())` | live → triggering controller if it is the triggering permanent; no `removedPermanentControllers` |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | `findTriggeringPermanentController` → `getEventPlayerIds().first` (Belltower Sphinx: keep as the triggering record's controller) |
+
+**SacrificeRecipient** (`SacrificePermanentsEffectHandler`; the only one already in rotated APNAP order, choose then
+act at once)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()` |
+| TARGET_PLAYER | `targetPlayer()` | `getTargetId()` → `targetsForEffect.first` |
+| CONTROLLER_AND_TARGET_PLAYER | none: dead (no card, no engine construction); delete | `[controller, target]` |
+| ACTIVE_PLAYER | `activePlayer()` | live `gameData.activePlayerId` |
+| TRIGGERING_PERMANENT_CONTROLLER | `controllerOf(triggering())` | inline LKI chain |
+| TARGET_PLAYER_OR_PERMANENT_CONTROLLER | as Discard's | `getTargetId()` player, else live controller |
+| EACH_PLAYER / EACH_OPPONENT | `eachPlayer()` / `eachOpponent()` | `apnapPlayers()`, choose then sacrifice together |
+| PLAYERS_WITH_MOST_LANDS | **new** player filter on `each` (e.g. `eachPlayer(PlayerPredicate)`) | `apnapPlayers()` filtered by `controlsMoreLandsThan` |
+| DEFENDING_PLAYER | `defendingPlayer()` | `getDefendingPlayerId()` → `getAttackedTargetId()` |
+
+**Draw** (4a): `RegisterDrawCardsAtNextUpkeepEffect`'s **UpkeepDrawRecipient** CONTROLLER `you()`; TARGET_PLAYER
+`targetPlayer()`; TARGET_SPELL_CONTROLLER **new** `controllerOf(targetSpell())` (stack scan by target, before the
+counter); TARGET_GRAVEYARD_OWNER **new** `ownerOf(targetCards())` (first targeted card still in a graveyard →
+`findGraveyardOwnerById`; else the target player; else controller). The handler then bakes the drawer into the delayed
+entry's `targetId` (decided twice). **EndStepDrawRecipient**: CONTROLLER `you()` (constructor default only);
+TRIGGERING_PLAYER `triggeringPlayer()`. **DrawUpToRecipient** (engine-built only): CONTROLLER `you()`; OPPONENT
+`eachOpponent()` (today `getOpponentId`, two players); TARGET_PLAYER is `triggeringPlayer()` (baked, never declares).
+Siblings: `DrawCardForOwnerEffect` `ownerOf(source())` (`getCard().getOwnerId()` → controller);
+`DrawCardForTargetPlayerEffect` `targetPlayer([group])` when `targetsPlayer`, else `triggeringPlayer()`, or
+`ownerOf(triggeringCard())` when `triggeringCardOwner`; `DrawCardForDefendingPlayerEffect` `defendingPlayer()`
+(`getAttackedTargetId()` only); `DrawCardForTriggeringPlayerEffect` `controllerOf(triggering())` → `triggeringPlayer()`
+(today `findTriggeringPermanentController` → **source permanent's controller** → baked: the middle step looks wrong,
+check its 12 cards); `DrawCardForPlayerEffect` engine-internal fixed id, not a subject;
+`DrawCardsForEachOpponentOfTriggeringPlayerEffect` **new** `opponentsOf(triggeringPlayer())` (triggering spell's
+controller → baked).
+
+**LibraryOwner** (`Scry`, `ReorderTopCards`, `RevealTopCard` handlers and the `TopCardOfLibrary*` conditions; each
+handler supports a different subset and falls back to the controller silently)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()` |
+| TARGET_PLAYER | `targetPlayer()` | `getTargetId()` → controller (condition: no fallback) |
+| OPPONENT | `eachOpponent()` (single) | Scry, condition: `getOpponentId`; Reorder, Reveal: controller |
+| ENCHANTED_PERMANENT_CONTROLLER | `triggeringPlayer()` (Paroxysm's baked upkeep player) | Reveal: baked → controller; condition: `targetId` |
+| DYING_CREATURE_CONTROLLER | `controllerOf(triggering())` | Scry: raw `getTriggeringPermanentControllerId()` → controller; condition: `targetId` → controller |
+
+**LibraryScope** (the `ExileTopCards*`, `ExileBottomCardsToSource`, `EachPlayerExilesTopUntilNonland...`,
+`LookAtTopCardsRevealTwoTypes...` handlers)
+
+| Constant | Subject | Today |
+|---|---|---|
+| CONTROLLER | `you()` | `getControllerId()` |
+| TARGET_PLAYER | `targetPlayer()` (`ExileTopCardsAndMayCastSpells` declares none) | `getTargetId()` if a player; ChooseOne: `targetsForEffect.first` → `getTargetId()`; Bottom: nothing |
+| TARGET_OPPONENT | split: `defendingPlayer()` (attack triggers), `triggeringPlayer()` (combat damage), `targetPlayer(group)` with an opponent filter (`targetedOpponent`), `eachOpponent()` (sole opponent, Grimoire Thief) | ToSource: baked player ≠ controller → `getAttackedTargetId()` → first non-controller; Cast: `getTargetId()` only |
+| TRIGGERING_PLAYER | `triggeringPlayer()` | baked (same path as TARGET_PLAYER) |
+| EACH_PLAYER / EACH_OPPONENT | `eachPlayer()` / `eachOpponent()` | seat order (Look handler: active first) |
+
+**GraveyardOwner** (`ReturnTopCreatureCardFromGraveyardToBattlefieldEffect`): CONTROLLER `you()`; TARGET_PLAYER is
+`defendingPlayer()` (Bone Dancer's baked defending player, no target).
+**GraveyardExileScope** (`ExileGraveyardCardsEffectHandler`): split into who × quantity (count / all matching / entire /
+keep N) × card targets. Who: OWN, OWN_ALL_MATCHING `you()`; TRIGGERING_PLAYER `triggeringPlayer()` (baked);
+TARGET_PLAYER_ENTIRE, TARGET_PLAYER_ALL_MATCHING `targetPlayer()` (multi-target lists vs `getTargetId()` only);
+DYING_CREATURE_CONTROLLER `controllerOf(triggering())` (raw recorded controller today); ALL_PLAYERS `eachPlayer()`;
+ALL_OPPONENTS, EACH_OPPONENT_KEEP `eachOpponent()`. TARGET_CARDS_* are card targets (owner per card), not a subject;
+they become a graveyard-card-target effect with the existing `GraveyardSearchScope`.
+**ThenEffectRecipient** (the `...ThenEffect` wrappers; controller/owner snapshotted before the permanent leaves:
+`findPermanentController`, owner `defaultControllerOf`; Destroy's departed path `removedPermanentControllers` /
+`lastKnownPermanentCard.getOwnerId()`): CONTROLLER `you()`; TARGET_CONTROLLER and TARGET_CONTROLLER_AS_TARGET
+`controllerOf(target())`; TARGET_OWNER and TARGET_OWNER_AS_TARGET `ownerOf(target())`. The `_AS_TARGET` pair exists
+only so damage-source checks still see the caster; with a player subject on the rider both pairs are one. Step 8 owns
+it.
+**BouncePermanentOnUpkeepEffect.Scope**: SOURCE_CONTROLLER `you()`; TRIGGER_TARGET_PLAYER `triggeringPlayer()`
+(baked upkeep player → controller). The verb is "that player returns a permanent they control": `controlledBy(p,
+filter)` plus that player's choice.
+
+**TapUntapScope** (`TapPermanents`, `UntapPermanents`, `SkipNextUntap`, `CantAttackThisTurn`, `CantBlockThisTurn`,
+`DoesntUntap`, `DoesntUntapWithCounter`, `UntapAllPermanentsYouControlDuringEachOtherPlayersStep`)
+
+| Constant | Subject | Today |
+|---|---|---|
+| TARGET | `target()` (`DoesntUntap`: non-declaring read) | `targetsForEffect` → `getTargetId()`; CantAttack: flat `getTargetIds()` |
+| ALL_TARGETS | `target(group)` | Untap: `getTargetIds()` → `getTargetId()`; Tap: throws |
+| SELF | `source()` | Tap/Untap: source → `getTargetId()` (dropped, see above); others strict |
+| SOURCE_PERMANENT | `source()` | strict; the same as SELF once the fallback goes |
+| TRIGGERING | `triggering()` | `getTriggeringPermanentId()`; SkipNextUntap → `getTargetId()` |
+| ENCHANTED | `attached()` | Tap/Untap: live → source snapshot; SkipNextUntap: live only; CantBlock: live → activation-captured `targetId`; static readers scan live attachments |
+| CONTROLLED | `controlledBy(you(), filter)` | controller's battlefield (Untap `chosenCount`, Skip `matchAtUntap` keep their own modes) |
+| OTHER_CONTROLLED_CREATURES | `controlledBy(you(), creature ∧ ¬source)` | skips source id |
+| TARGET_PLAYERS_PERMANENTS | `controlledBy(targetPlayer(), filter)` | `getTargetId()`; CantBlock accepts a planeswalker's controller; CantAttack/CantBlock install player-scoped floating rules |
+| TARGET_CONTROLLERS_OTHER_CREATURES | `controlledBy(controllerOf(target()), creature ∧ ¬target)` — **new** "is not the target" predicate | floating rule (covers later arrivals) |
+| ALL_CREATURES / ALL_PERMANENTS | `controlledBy(eachPlayer(), [creature ∧] filter)` | `forEachPermanent`; filter context carries defending / triggering player |
+| ATTACKED_CREATURES | `controlledBy(eachPlayer(), creature ∧ PermanentAttackedThisTurnPredicate)` | `isAttackedThisTurn` |
+| OPPONENTS_PERMANENTS | `controlledBy(eachOpponent(), filter)` | unordered `playerIds` |
+
+The floating-rule uses (CantBlock/CantAttack player scopes, SkipNextUntap `matchAtUntap`) are re-evaluated later, so
+they are not "found once": they keep a player-scoped rule, not a resolved set (CR 611.2c second sentence).
+
+**BounceScope** (`ReturnToHandEffect` factories): TARGET, TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD,
+TARGET_CHOSEN_CREATURE_TYPE `target()` (the last two keep their filter/zone); TARGET_AND_SELF `allOf(source(),
+target())`; SELF `source()` (strict); TRIGGERING `triggering()`; SELF_SPELL no subject (spell disposition);
+ALL_MATCHING `controlledBy(eachPlayer(), filter)`; TARGET_PLAYERS_PERMANENTS `controlledBy(targetPlayer(), filter)`;
+TARGET_PLAYERS_OWNED **new** `ownedBy(targetPlayer(), filter)`; AURAS_ATTACHED_TO_TARGET **new**
+`attachmentsOf(target(), aura)`; ENCHANTED `attached()` (today live → effect-baked `enchantedPermanentId` →
+`departedPermanentSnapshots` → `getTargetId()`); ENCHANTED_AND_AURAS `allOf(attached(), attachmentsOf(attached(),
+aura))`; GRANTING_EQUIPMENT **new** `granter()` (activation-baked `grantingEquipmentSnapshot`; triggered:
+`getGrantingPermanentId()`).
+**FlickerScope**: TARGET `target()` (IMMEDIATE reads every bound group); SELF `source()`; TRIGGERING `triggering()`;
+SELF_OR_TARGET **new** `oneOf(source(), target())` chosen at resolution; TARGET_PLAYERS_PERMANENTS
+`controlledBy(targetPlayer(), filter)`; CONTROLLERS_PERMANENTS `controlledBy(you(), filter)`; ALL_PLAYERS_PERMANENTS
+`controlledBy(eachPlayer(), filter)`; RETURNED_PERMANENTS step-7 `returnedThisResolution()`;
+ENCHANTED_CREATURE_AND_AURAS `allOf(attached(), attachmentsOf(attached(), aura))` (today the activation-captured
+`getTargetId()` only); TARGET_EXILED_EARLIER step-7 `exiledThisResolution()` (a card).
+**PhaseOutSubject**: SOURCE `source()`; TARGET `target()` (PhaseOutAttackingCreatureAtEndOfCombat builds it on a
+delayed entry as a non-declared referent: `triggering()`); ATTACHED `attached()` (live → snapshot).
+**PhaseOutScope**: CONTROLLER `controlledBy(you(), filter)`; TARGET_PLAYER `controlledBy(targetPlayer(), filter)`;
+ALL dead (no card or engine use).
+**CounterRemovalSubject**: SOURCE `source()` (fallback dropped); TARGET `target()`; NAMED (engine-built, Giant Oyster's
+delayed ability) a referent: `triggering()` once the delayed ability records its permanent there.
+**PutOnTopOfLibraryScope**: TARGET `target()`; SELF `source()`; SELF_AND_TARGET `allOf(source(), target())` (keeps its
+shuffle).
+**EachPermanentScope**: ALL_PLAYERS `controlledBy(eachPlayer(), pred)`; TARGET_PLAYER `controlledBy(targetPlayer(),
+pred)` (RemoveCounterFromEachMatching: baked upkeep player, `triggeringPlayer()`); TRIGGERING_PERMANENTS **new** plural
+`triggeringAll()` (`getTriggeringPermanentIds()`).
+**DamagedPermanentScope**: not a who-axis (creature vs creature-or-planeswalker filter); its player is
+`controllerOf(target())` / `targetPlayer()` read without declaring (TargetSpec `harmful` with no predicate).
+**RedirectRole**: SOURCE_PERMANENT `source()`; TARGET `target()` / `targetPlayer()` (declared by `declaredTarget`);
+CONTROLLER `you()`; SOURCE_PERMANENT_AND_CONTROLLER a permanent and a player together (stays special);
+ENCHANTED_PERMANENT `attached()` (live → snapshot → `lastAttachedTo`).
+
+**GrantScope** (step 6; one-shot handlers each have their own chain, static path in `StaticEffectSupport`,
+`LayerSystemService.scopeTargets`, `GameQueryService`). "Not the source" is the existing
+`PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())`.
+
+| Constant | Subject |
+|---|---|
+| SELF | `source()` (GrantKeyword one-shot falls back to `getTargetId()`; dropped) |
+| TRIGGERING_PERMANENT | `triggering()` |
+| SELF_AND_PAIRED | `controlledBy(eachPlayer(), PermanentIsSourceOrPairedPredicate)` or **new** `paired()` |
+| TARGET | `target()` (also the internal marker of per-permanent floating effects with `affectedPermanentId`) |
+| TARGET_AND_SHARING_CREATURES | `allOf(target(), controlledBy(eachPlayer(), creature ∧ **new** shares-a-colour-with-target))` |
+| TARGETS | `target(group)`; GrantKeyword's use is the triggering spell's targets: **new** `triggeringSpellTargets()` |
+| DECLARED_ATTACKERS | **new** `triggeringAttackers()` (`getAttackingPermanentSnapshots()`) |
+| ENCHANTED_CREATURE, EQUIPPED_CREATURE | `attached()` with a creature check (static path has none today) |
+| ENCHANTED_PERMANENT | `attached()` |
+| OWN_TAPPED_CREATURES | `controlledBy(you(), creature ∧ tapped ∧ ¬source)` |
+| OWN_UNTAPPED_CREATURES | `controlledBy(you(), creature ∧ untapped)` |
+| OWN_CREATURES | `controlledBy(you(), creature ∧ ¬source)` |
+| ALL_OWN_CREATURES | `controlledBy(you(), creature)` |
+| OPPONENT_CREATURES | `controlledBy(eachOpponent(), creature)` |
+| OWN_PERMANENTS | `controlledBy(you())` (static keyword grants exclude the source today: decide per verb) |
+| TARGET_PLAYERS_CREATURES / _LANDS | `controlledBy(targetPlayer(), creature / land)` |
+| ALL_CREATURES | `controlledBy(eachPlayer(), creature ∧ ¬source)` (one-shot GrantKeyword, Doran and `selfInScope` include the source today) |
+| ALL_CREATURES_INCLUDING_SELF | `controlledBy(eachPlayer(), creature)` |
+| ALL_PERMANENTS | `controlledBy(eachPlayer(), ¬source)` |
+| ENCHANTED_PLAYER_CREATURES | `controlledBy(enchantedPlayer(), creature)` |
+| OWN_LANDS / OPPONENT_LANDS | `controlledBy(you() / eachOpponent(), land)` (OWN_LANDS self-inclusion differs per verb today) |
+| ALL_LANDS | `controlledBy(eachPlayer(), land ∧ ¬source)` (one-shot includes the source) |
+| ALL_LANDS_INCLUDING_SELF | `controlledBy(eachPlayer(), land)` |
+| TOKENS_CREATED_THIS_RESOLUTION | step-7 `createdThisResolution()` |
+| BANDED_WITH_SELF | **new** `bandmatesOf(source())` or a band predicate |
+
+**Not a who-axis, or static player sets**: `SpellLimitScope` (EACH_PLAYER `eachPlayer()`, CONTROLLER `you()`,
+ENCHANTED_PLAYER `enchantedPlayer()`; static), `CostModificationScope` (SELF `you()`, OPPONENT `eachOpponent()`, ALL
+`eachPlayer()`; static; `IncreaseSpellCostForTargetPlayerUntilEndOfTurn` writes SELF under the target player),
+`ManaColorLandScope` (`controlledBy(you() / eachOpponent(), land ∧ filter)`), `CombatAttackTargetScope` (CONTROLLER
+`you()`, SOURCE_PERMANENT `source()`, ALL unrestricted: a player-or-permanent attack target, stays),
+`ChosenSourcePreventionScope` and `PreventionScope` (shield semantics; their recipients map to `you()`,
+`controlledBy(you(), X)`, `source()`, `attached()`, `target()`, and the damage-source side to `target()` /
+`controlledBy(...)`), `DestroyedPermanentCountScope` (a count filter; CONTROLLER* is "controlled by `you()`"),
+`DamagedPermanentScope` (filter).
+
+**For later steps.**
+
+- New variants, each added by the first run that needs it: `except(players, players)`, `chosenPlayers()`,
+  `triggeringCard()`, `targetSpell()` / `targetCards()` (subjects over a stack object or graveyard cards for
+  `controllerOf` / `ownerOf`), a non-declaring player-target read, `opponentsOf(player)`, a filtered `each`,
+  `ownedBy`, `attachmentsOf`, `granter()`, `oneOf` (chosen at resolution), plural `triggeringAll()`,
+  `triggeringAttackers()`, `paired()` / `bandmatesOf()`, and the step-7 results (`createdThisResolution()`,
+  `returnedThisResolution()`, `exiledThisResolution()`, `acceptedPlayers()`, `playersDealtDamageThisResolution()`,
+  `subgameWinners()`).
+- "That player" is read four ways today (baked `getTargetId()`; that → `getTargetIds().first`;
+  `getTriggeringPlayerId()`; `getActivePlayerId()`); ACTIVE_PLAYER constants that read the baked target are
+  `triggeringPlayer()`, Sacrifice's live one is `activePlayer()`.
+- Multi-player order: only `SacrificePermanentsEffectHandler` is rotated APNAP; most use seat order, `SkipNext` the
+  unordered `playerIds`. Several private `apnapOrder` / `apnapPlayers` copies exist (`TriggerIndex`,
+  `PlayerInputService`, `WorldsWithinWorldsSupport`, a few handlers), some unrotated.
+- Misnamed constants that never declare a target: `GraveyardOwner.TARGET_PLAYER`, `DrawUpToRecipient.TARGET_PLAYER`,
+  `AwardPersistentManaEffect.Recipient.TARGET_PLAYER`, `BouncePermanentOnUpkeepEffect.Scope.TRIGGER_TARGET_PLAYER`,
+  LibraryScope TARGET_PLAYER on `ExileTopCardsAndMayCastSpells`, EachPermanentScope TARGET_PLAYER on
+  `RemoveCounterFromEachMatching`.
+- Dead constants: `LoseLifeRecipient.SOURCE_CONTROLLER`, `SacrificeRecipient.CONTROLLER_AND_TARGET_PLAYER`,
+  `PhaseOutScope.ALL`; constructor-default-only: `EndStepDrawRecipient.CONTROLLER`.
+- Ledger: the 15 pilot records are `blocked-other` "kept for step 5"; they are audited for their subject, not folded.
 
 ## Prompt
 

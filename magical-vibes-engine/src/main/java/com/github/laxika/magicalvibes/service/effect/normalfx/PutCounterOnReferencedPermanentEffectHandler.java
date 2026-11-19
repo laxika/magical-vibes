@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
@@ -40,14 +40,9 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
         PutCounterOnReferencedPermanentEffect e = (PutCounterOnReferencedPermanentEffect) effect;
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Source";
 
-        Permanent referenced = switch (e.reference()) {
-            case ATTACHED -> findAttached(gameData, entry, sourceName);
-            case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
-            // Unreachable: the record's constructor rejects SOURCE (PutCountersOnSourceEffect owns it).
-            case SOURCE -> throw new IllegalStateException("SOURCE counters belong on PutCountersOnSourceEffect");
-            case RETURNED -> findPermanentByCardId(gameData, returnedCardId(entry));
-        };
+        Permanent referenced = subjectResolutionService.permanent(gameData, entry, effect, Subjects.of(e.reference()));
         if (referenced == null) {
+            log.info("Game {} - {}: the referenced permanent is not on the battlefield", gameData.id, sourceName);
             return;
         }
 
@@ -60,58 +55,5 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
         int count = amountEvaluationService.evaluate(gameData, e.count(),
                 AmountContext.forStackEntry(entry, referenced));
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, referenced, e.counterType(), count);
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        return gameData.playerBattlefields.values().stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(java.util.Collection::stream)
-                .filter(permanent -> cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId())))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private UUID returnedCardId(StackEntry entry) {
-        if (entry.getTargetId() != null) {
-            return entry.getTargetId();
-        }
-        return entry.getTargetCardIds() == null ? null : entry.getTargetCardIds().stream().findFirst().orElse(null);
-    }
-
-    private Permanent findAttached(GameData gameData, StackEntry entry, String sourceName) {
-        Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-        if (source != null && !source.isAttached()) {
-            log.info("Game {} - {} fizzles: source no longer attached", gameData.id, sourceName);
-            return null;
-        }
-        UUID attachedTo = null;
-        if (source != null) {
-            attachedTo = source.getAttachedTo();
-        } else if (entry.getSourcePermanentSnapshot() != null) {
-            // The Aura left the battlefield: its last known information says what it was enchanting when
-            // it left (nothing if it was already unattached, CR 608.2h).
-            attachedTo = entry.getSourcePermanentSnapshot().getAttachedTo();
-        } else if (entry.getAttachedPermanentSnapshot() != null) {
-            attachedTo = entry.getAttachedPermanentSnapshot().getId();
-        }
-        if (attachedTo == null) {
-            log.info("Game {} - {} fizzles: source no longer attached", gameData.id, sourceName);
-            return null;
-        }
-
-        Permanent host = gameQueryService.findPermanentById(gameData, attachedTo);
-        if (host == null) {
-            log.info("Game {} - {} fizzles: attached permanent no longer on battlefield", gameData.id, sourceName);
-        }
-        return host;
     }
 }

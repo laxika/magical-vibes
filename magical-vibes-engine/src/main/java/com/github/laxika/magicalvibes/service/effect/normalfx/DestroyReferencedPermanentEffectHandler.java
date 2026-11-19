@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,12 +38,7 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DestroyReferencedPermanentEffect e = (DestroyReferencedPermanentEffect) effect;
 
-        Permanent referenced = switch (e.reference()) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case ATTACHED -> findAttached(gameData, entry);
-            case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
-            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
-        };
+        Permanent referenced = subjectResolutionService.permanent(gameData, entry, effect, Subjects.of(e.reference()));
         if (referenced == null) {
             return;
         }
@@ -55,34 +53,5 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
 
         destructionSupport.destroyBatch(
                 gameData, List.of(referenced), entry.getCard().getName(), e.cannotBeRegenerated());
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        return gameData.playerBattlefields.values().stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(java.util.Collection::stream)
-                .filter(permanent -> cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId())))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Permanent findAttached(GameData gameData, StackEntry entry) {
-        Permanent source = entry.getSourcePermanentSnapshot();
-        if (source == null || !source.isAttached()) {
-            source = findPermanent(gameData, entry.getSourcePermanentId());
-        }
-        if (source != null && source.isAttached()) {
-            return gameQueryService.findPermanentById(gameData, source.getAttachedTo());
-        }
-        return findPermanent(gameData, entry.getTriggeringPermanentId());
     }
 }

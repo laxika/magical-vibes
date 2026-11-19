@@ -19,6 +19,6 @@ public class Dwindle extends Card {
         addStaticEffect(new StaticBoostEffect(-6, 0, GrantScope.ENCHANTED_CREATURE));
         // When enchanted creature blocks, destroy it.
         addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

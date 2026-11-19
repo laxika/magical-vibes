@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Component;
 public class ExploreEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
@@ -217,35 +220,11 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             return effect.permanentId();
         }
         if (effect.reference() != null) {
-            return switch (effect.reference()) {
-                case SOURCE -> entry.getSourcePermanentId();
-                case TRIGGERING -> entry.getTriggeringPermanentId();
-                case ATTACHED -> {
-                    Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                    yield source == null ? null : source.getAttachedTo();
-                }
-                case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
-            };
+            // A permanent that left still explores, by its last-known information (CR 701.44c).
+            List<UUID> ids = subjectResolutionService.permanentIds(
+                    gameData, entry, effect, Subjects.of(effect.reference()));
+            return ids.isEmpty() ? null : ids.getFirst();
         }
         return effect.targeted() ? entry.getTargetId() : entry.getSourcePermanentId();
-    }
-
-    private UUID findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId()))) {
-                    return permanent.getId();
-                }
-            }
-        }
-        return null;
     }
 }

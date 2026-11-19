@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.e.EnchantmentAlteration;
 import com.github.laxika.magicalvibes.cards.g.GreenManaBattery;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VenarianGold.class, DurkwoodBoars.class, GreenManaBattery.class, Boomerang.class})
+@CardUsed({VenarianGold.class, DurkwoodBoars.class, GreenManaBattery.class, Boomerang.class,
+        EnchantmentAlteration.class})
 class VenarianGoldTest extends BaseCardTest {
 
     @Test
@@ -148,6 +150,26 @@ class VenarianGoldTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getCounterCount(CounterType.SLEEP)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Moving the Aura in response, the upkeep ability removes a sleep counter from the creature enchanted when it triggered")
+    void upkeepAbilityRemovesCounterFromOriginalCreatureAfterAuraMoves() {
+        Permanent original = addCreatureReady(player1, new DurkwoodBoars());
+        castVenarianGold(original, 2);
+        Permanent destination = addCreatureReady(player1, new DurkwoodBoars());
+        destination.setCounterCount(CounterType.SLEEP, 2);
+        Permanent aura = findPermanent(player1, "Venarian Gold");
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new EnchantmentAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        resolveAllTriggers();
+
+        assertThat(original.getCounterCount(CounterType.SLEEP)).isEqualTo(1);
+        assertThat(destination.getCounterCount(CounterType.SLEEP)).isEqualTo(2);
     }
 
     private void castVenarianGold(Permanent creature, int xValue) {

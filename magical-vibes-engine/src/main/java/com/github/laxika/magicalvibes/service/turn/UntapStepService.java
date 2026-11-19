@@ -17,7 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUntapDuringEachPlayersUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
@@ -70,6 +71,7 @@ public class UntapStepService {
     private final UntapPreventionSupport untapPreventionSupport;
     private final PermanentCounterSupport permanentCounterSupport;
     private final DayNightService dayNightService;
+    private final SubjectResolutionService subjectResolutionService;
 
     public void snapshotUntappedLandsAtTurnStart(GameData gameData, UUID activePlayerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
@@ -725,31 +727,28 @@ public class UntapStepService {
         // comes from the aura, which is unaffected.
         boolean ownLockApplies = !permanent.isFaceDown()
                 && (!gameQueryService.hasLostAllAbilities(gameData, permanent)
-                && hasActiveCounterLock(permanent, permanent,
+                && hasActiveCounterLock(gameData, permanent,
                         permanent.getCard().getStaticEffects(), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks
                 // "doesn't untap during your untap step if it has a fungus counter on it".
-                || hasActiveCounterLock(permanent, permanent,
+                || hasActiveCounterLock(gameData, permanent,
                         gameQueryService.getGrantedEffects(gameData, permanent), TapUntapScope.SELF));
         return ownLockApplies || gameData.anyPermanentMatches(source -> source.isAttached()
                         && source.getAttachedTo().equals(permanent.getId())
-                        && (hasActiveCounterLock(source, permanent,
+                        && (hasActiveCounterLock(gameData, source,
                                 source.getCard().getStaticEffects(), TapUntapScope.ENCHANTED)
-                        || hasActiveCounterLock(source, permanent,
+                        || hasActiveCounterLock(gameData, source,
                                 gameQueryService.getGrantedEffects(gameData, source), TapUntapScope.ENCHANTED)));
     }
 
-    private static boolean hasActiveCounterLock(Permanent source, Permanent attached,
-                                                List<CardEffect> effects, TapUntapScope scope) {
+    private boolean hasActiveCounterLock(GameData gameData, Permanent source, List<CardEffect> effects,
+                                         TapUntapScope scope) {
         return effects.stream()
                 .anyMatch(e -> e instanceof DoesntUntapWithCounterEffect lock
                         && lock.scope() == scope
-                        && counterBearer(source, attached, lock).getCounterCount(lock.counterType()) > 0);
-    }
-
-    private static Permanent counterBearer(Permanent source, Permanent attached,
-                                           DoesntUntapWithCounterEffect lock) {
-        return lock.counterBearer() == PermanentReference.ATTACHED ? attached : source;
+                        && subjectResolutionService.permanents(gameData, source, Subjects.of(lock.counterBearer()))
+                                .stream()
+                                .anyMatch(bearer -> bearer.getCounterCount(lock.counterType()) > 0));
     }
 
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {

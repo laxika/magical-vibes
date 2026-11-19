@@ -141,6 +141,24 @@ class PoolingVenomTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability destroys the land Pooling Venom enchants as it resolves, after the Aura moved")
+    void abilityDestroysTheLandEnchantedAtResolution() {
+        Permanent first = addLand(player2);
+        Permanent second = addLand(player2);
+        Permanent venom = attachAura(player1, first);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        // An Aura still on the battlefield is read as it is now (CR 608.2h), not as it was when activated.
+        venom.setAttachedTo(second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+    }
+
+    @Test
     @DisplayName("A pending life-loss trigger still resolves after the enchanted land is destroyed")
     void lifeLossSurvivesEnchantedLandLeavingBattlefield() {
         Permanent land = addLand(player2);

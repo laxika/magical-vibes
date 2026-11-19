@@ -10,17 +10,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -30,6 +29,7 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,8 +39,10 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BoostReferencedPermanentEffect boost = (BoostReferencedPermanentEffect) effect;
-        Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-        Permanent referenced = findReferencedPermanent(gameData, entry, boost.reference());
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent referenced = subjectResolutionService.permanent(
+                gameData, entry, effect, Subjects.of(boost.reference()));
         if (referenced == null) {
             return;
         }
@@ -71,54 +73,5 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
                 .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
                 .build());
         log.info("Game {} - {} gets {}/{}", gameData.id, referenced.getCard().getName(), powerBoost, toughnessBoost);
-    }
-
-    private Permanent findReferencedPermanent(GameData gameData, StackEntry entry,
-                                              PermanentReference reference) {
-        return switch (reference) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
-            case ATTACHED -> {
-                Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-                if (source != null && source.isAttached()) {
-                    yield findPermanent(gameData, source.getAttachedTo());
-                }
-                // The equipment or aura left the battlefield in response: the ability still affects the
-                // permanent it was attached to when it was activated (CR 608.2h).
-                Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
-                yield attachedSnapshot == null ? null : findPermanent(gameData, attachedSnapshot.getId());
-            }
-            case RETURNED -> findPermanentByCardId(gameData, returnedCardId(entry));
-        };
-    }
-
-    private UUID returnedCardId(StackEntry entry) {
-        if (entry.getTargetId() != null) {
-            return entry.getTargetId();
-        }
-        return entry.getTargetCardIds() == null ? null : entry.getTargetCardIds().stream().findFirst().orElse(null);
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId()))) {
-                    return permanent;
-                }
-            }
-        }
-        return null;
     }
 }

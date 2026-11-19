@@ -1,22 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveReferencedPermanentFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class RemoveReferencedPermanentFromCombatEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final CombatRemovalSupport combatRemovalSupport;
 
     @Override
@@ -28,12 +27,8 @@ public class RemoveReferencedPermanentFromCombatEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RemoveReferencedPermanentFromCombatEffect referencedEffect =
                 (RemoveReferencedPermanentFromCombatEffect) effect;
-        Permanent permanent = switch (referencedEffect.reference()) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case ATTACHED -> findAttached(gameData, entry);
-            case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
-            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
-        };
+        Permanent permanent = subjectResolutionService.permanent(
+                gameData, entry, effect, Subjects.of(referencedEffect.reference()));
         if (permanent == null) {
             return;
         }
@@ -42,31 +37,5 @@ public class RemoveReferencedPermanentFromCombatEffectHandler implements NormalE
         } else {
             combatRemovalSupport.removeFromCombat(gameData, entry, permanent);
         }
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findAttached(GameData gameData, StackEntry entry) {
-        Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-        if (source == null || !source.isAttached()) {
-            return null;
-        }
-        return findPermanent(gameData, source.getAttachedTo());
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        return gameData.playerBattlefields.values().stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(java.util.Collection::stream)
-                .filter(permanent -> cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId())))
-                .findFirst()
-                .orElse(null);
     }
 }

@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Destroys one permanent named by a {@link PermanentReference} rather than chosen as a target —
  * "destroy this Aura" ({@link PermanentReference#SOURCE}, Arachnus Web / Ice Cage / Aether Storm),
- * "destroy enchanted creature" ({@link PermanentReference#ATTACHED}, Spreading Algae, Yoke of the
- * Damned, Mortal Wound, Spinal Graft) and "destroy it" for the permanent that fired the trigger
- * ({@link PermanentReference#TRIGGERING}, Suleiman's Legacy).
+ * "destroy enchanted creature" ({@link PermanentReference#ATTACHED}, Yoke of the Damned, Pooling Venom) and
+ * "destroy it" / "destroy that creature" for the permanent the trigger event was about
+ * ({@link PermanentReference#TRIGGERING}, Suleiman's Legacy, Mortal Wound, Spinal Graft, Dwindle). The
+ * permanent is found by {@code SubjectResolutionService}.
  *
  * <p>Never targets, so it never fizzles: if the referenced permanent is gone at resolution — the
  * source has left, the Aura is no longer attached, the triggering permanent has moved zone —

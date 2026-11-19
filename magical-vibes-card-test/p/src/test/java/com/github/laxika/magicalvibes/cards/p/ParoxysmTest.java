@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.Allay;
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
+import com.github.laxika.magicalvibes.cards.e.EnchantmentAlteration;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Paroxysm.class, CityOfTraitors.class, RagingGoblin.class, Allay.class})
+@CardUsed({Paroxysm.class, CityOfTraitors.class, RagingGoblin.class, Allay.class, EnchantmentAlteration.class})
 class ParoxysmTest extends BaseCardTest {
 
     @Test
@@ -115,6 +116,7 @@ class ParoxysmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger during the Aura controller's upkeep")
     void doesNotTriggerDuringAuraControllersUpkeep() {
         Permanent creature = addCreatureReady(player2, new RagingGoblin());
         attachParoxysm(creature);
@@ -128,6 +130,7 @@ class ParoxysmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A revealed land still destroys the creature after the Aura is destroyed in response")
     void landRevealStillDestroysCreatureAfterAuraIsDestroyed() {
         Permanent creature = addCreatureReady(player2, new RagingGoblin());
         Permanent aura = attachParoxysm(creature);
@@ -145,6 +148,7 @@ class ParoxysmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A revealed nonland card still boosts the creature after the Aura is destroyed in response")
     void nonlandRevealStillBoostsCreatureAfterAuraIsDestroyed() {
         Permanent creature = addCreatureReady(player2, new RagingGoblin());
         Permanent aura = attachParoxysm(creature);
@@ -159,6 +163,47 @@ class ParoxysmTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Moving the Aura in response, a revealed land destroys the creature enchanted when it triggered")
+    void landRevealDestroysOriginalCreatureAfterAuraMoves() {
+        Permanent original = addCreatureReady(player2, new RagingGoblin());
+        Permanent destination = addCreatureReady(player2, new RagingGoblin());
+        Permanent aura = attachParoxysm(original);
+        harness.setLibrary(player2, List.of(new CityOfTraitors()));
+
+        advanceToUpkeep(player2);
+        moveAuraInResponse(aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(destination).doesNotContain(original);
+    }
+
+    @Test
+    @DisplayName("Moving the Aura in response, a revealed nonland card boosts the creature enchanted when it triggered")
+    void nonlandRevealBoostsOriginalCreatureAfterAuraMoves() {
+        Permanent original = addCreatureReady(player2, new RagingGoblin());
+        Permanent destination = addCreatureReady(player2, new RagingGoblin());
+        Permanent aura = attachParoxysm(original);
+        harness.setLibrary(player2, List.of(new RagingGoblin()));
+
+        advanceToUpkeep(player2);
+        moveAuraInResponse(aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, destination)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, destination)).isEqualTo(1);
+    }
+
+    private void moveAuraInResponse(Permanent aura) {
+        harness.setHand(player2, List.of(new EnchantmentAlteration()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
     }
 
     private Permanent attachParoxysm(Permanent creature) {

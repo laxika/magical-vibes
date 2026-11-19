@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,9 +35,9 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<UUID> targetIds;
-        if (((GoadTargetCreatureUntilNextTurnEffect) effect).goaded() == PermanentReference.TRIGGERING) {
-            targetIds = entry.getTriggeringPermanentId() == null
-                    ? List.of() : List.of(entry.getTriggeringPermanentId());
+        PermanentReference goaded = ((GoadTargetCreatureUntilNextTurnEffect) effect).goaded();
+        if (goaded != null) {
+            targetIds = subjectResolutionService.permanentIds(gameData, entry, effect, Subjects.of(goaded));
         } else {
             targetIds = entry.targetsForEffect(effect);
             if (targetIds.isEmpty() && entry.getTargetId() != null) {

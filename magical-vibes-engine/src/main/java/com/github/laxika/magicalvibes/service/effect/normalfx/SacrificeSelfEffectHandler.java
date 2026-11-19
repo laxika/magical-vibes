@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Sacrifices the stack entry's source permanent, or its triggering permanent for the triggering form, as a resolution
@@ -35,6 +36,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
         ContinuesAfterDeparture {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PermanentControlSupport permanentControlSupport;
     private final SchemeAbandonSupport schemeAbandonSupport;
     private final DepartureService departureService;
@@ -53,8 +55,8 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
             schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
-        UUID sacrificedId = sacrifice.sacrificesSource() ? entry.getSourcePermanentId() : entry.getTriggeringPermanentId();
-        Permanent self = sacrificedId == null ? null : gameQueryService.findPermanentById(gameData, sacrificedId);
+        Permanent self = subjectResolutionService.permanent(
+                gameData, entry, effect, Subjects.of(sacrifice.sacrificed()));
         var currentControllerId = self == null ? null : gameQueryService.findPermanentController(gameData, self.getId());
         if (currentControllerId == null
                 || !sacrifice.currentControllerSacrifices() && !currentControllerId.equals(entry.getControllerId())

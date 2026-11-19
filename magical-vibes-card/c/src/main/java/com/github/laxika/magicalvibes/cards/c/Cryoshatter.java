@@ -16,7 +16,7 @@ public class Cryoshatter extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(-5, 0, GrantScope.ENCHANTED_CREATURE))
                 .addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED))
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING))
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
                         new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }

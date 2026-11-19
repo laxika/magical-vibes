@@ -30,6 +30,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -102,6 +103,18 @@ class UntapStepServiceTest {
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        // A real subject resolver over its own query mock, which finds permanents on gd's battlefields.
+        GameQueryService subjectQueries = org.mockito.Mockito.mock(GameQueryService.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "subjectResolutionService",
+                new SubjectResolutionService(subjectQueries,
+                        org.mockito.Mockito.mock(PredicateEvaluationService.class)));
+        org.mockito.Mockito.lenient().when(subjectQueries.findPermanentById(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> gd.playerBattlefields.values().stream()
+                        .flatMap(List::stream)
+                        .filter(permanent -> permanent.getId().equals(invocation.getArgument(1)))
+                        .findFirst()
+                        .orElse(null));
     }
 
     private static Card createCardWithName(String name) {

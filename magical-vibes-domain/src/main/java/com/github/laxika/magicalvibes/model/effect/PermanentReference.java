@@ -14,6 +14,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *       creature", "equipped creature"). Read from the source permanent's {@code attachedTo}, so
  *       Aura and Equipment are the same case: both resolve through {@code Permanent.getAttachedTo()}
  *       and neither targets, because the enchant/equip clause already chose the host.</li>
+ *   <li>{@link #ATTACHED_AT_TRIGGER} — the permanent the source was attached to when the ability
+ *       triggered or was activated ("that creature" after "at the beginning of the upkeep of enchanted
+ *       creature's controller"; Paroxysm, Venarian Gold). Read from
+ *       {@code StackEntry.attachedPermanentSnapshot}, so moving the Aura in response doesn't change it.</li>
  *   <li>{@link #TRIGGERING} — the permanent whose event produced this triggered ability ("put a
  *       wind counter on it", where "it" is the permanent that became tapped; Freyalise's Winds).
  *       Read from {@code StackEntry.triggeringPermanentId}, so an effect using this value belongs
@@ -29,6 +33,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum PermanentReference {
     SOURCE,
     ATTACHED,
+    ATTACHED_AT_TRIGGER,
     TRIGGERING,
     RETURNED
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DepartureResult;
@@ -34,6 +36,7 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
     private final DamageSupport damageSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final StepDepartureSupport stepDepartureSupport;
 
@@ -45,7 +48,7 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect) effect;
-        Permanent referenced = findReferencedPermanent(gameData, entry, e.reference());
+        Permanent referenced = subjectResolutionService.permanent(gameData, entry, effect, Subjects.of(e.reference()));
         if (referenced == null) {
             if (e.reference() == PermanentReference.TRIGGERING && entry.getDamageSourceCard() != null) {
                 dealDamage(gameData, entry.getTriggeringPermanentControllerId(), entry.getDamageSourceCard(),
@@ -104,38 +107,5 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
                 null,
                 damageSourceId);
         damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, damage);
-    }
-
-    private Permanent findReferencedPermanent(GameData gameData, StackEntry entry,
-                                              PermanentReference reference) {
-        return switch (reference) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
-            case ATTACHED -> {
-                Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-                yield source == null || !source.isAttached()
-                        ? null
-                        : findPermanent(gameData, source.getAttachedTo());
-            }
-            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
-        };
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) {
-            return null;
-        }
-        return gameData.playerBattlefields.values().stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(java.util.Collection::stream)
-                .filter(permanent -> cardId.equals(permanent.getCard().getId())
-                        || (permanent.getOriginalCard() != null
-                        && cardId.equals(permanent.getOriginalCard().getId())))
-                .findFirst()
-                .orElse(null);
     }
 }
