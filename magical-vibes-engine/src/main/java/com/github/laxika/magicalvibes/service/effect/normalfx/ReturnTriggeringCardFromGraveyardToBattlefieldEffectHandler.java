@@ -21,8 +21,9 @@ import java.util.UUID;
 
 /**
  * Returns the triggering card from its owner's graveyard to the battlefield under its owner's
- * control, or under the triggered ability controller's control for Adarkar Valkyrie. Fizzles
- * silently if the card is no longer in a graveyard.
+ * control, or under the triggered ability controller's control (Adarkar Valkyrie, Angelic Renewal).
+ * Does nothing if the card is no longer the graveyard object the trigger event named, or if it can't
+ * enter the battlefield from a graveyard (Grafdigger's Cage).
  */
 @Component
 @RequiredArgsConstructor

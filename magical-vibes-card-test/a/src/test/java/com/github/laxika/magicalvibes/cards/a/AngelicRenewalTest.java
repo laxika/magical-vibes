@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AngelicRenewal.class, CruelEdict.class, GrizzlyBears.class, WrathOfGod.class, StealEnchantment.class})
+@CardUsed({AngelicRenewal.class, CruelEdict.class, GrafdiggersCage.class, GrizzlyBears.class, WrathOfGod.class,
+        StealEnchantment.class})
 class AngelicRenewalTest extends BaseCardTest {
 
     /** Player 2 edicts away player 1's only creature, firing Angelic Renewal's death trigger. */
@@ -52,6 +54,22 @@ class AngelicRenewalTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Angelic Renewal");
         harness.assertInGraveyard(player1, "Angelic Renewal");
+    }
+
+    @Test
+    @DisplayName("Sacrifices Renewal but returns nothing while Grafdigger's Cage stops creature cards entering from graveyards")
+    void grafdiggersCageStopsTheReturn() {
+        harness.addToBattlefield(player1, new AngelicRenewal());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+
+        killPlayerOnesCreature();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Angelic Renewal");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
