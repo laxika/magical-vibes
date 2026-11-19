@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.g.GodheadOfAwe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DisplacedDinosaurs.class, Millstone.class, GrizzlyBears.class,
-        Clone.class, TheWarGames.class, YasminKhan.class, Ovinize.class})
+        Clone.class, TheWarGames.class, YasminKhan.class, Ovinize.class, GodheadOfAwe.class})
 class DisplacedDinosaursTest extends BaseCardTest {
 
     @Test
@@ -102,6 +103,20 @@ class DisplacedDinosaursTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, millstone)).isTrue();
         assertThat(gqs.getEffectivePower(gd, millstone)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, millstone)).isEqualTo(7);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, millstone)).contains(CardSubtype.DINOSAUR);
+    }
+
+    @Test
+    @DisplayName("The 7/7 is a copiable value, so an earlier \"other creatures have base 1/1\" effect still applies")
+    void earlierBasePowerToughnessSetterOverridesTheConversion() {
+        harness.addToBattlefield(player1, new DisplacedDinosaurs());
+        harness.addToBattlefield(player2, new GodheadOfAwe());
+
+        Permanent millstone = harness.enterBattlefieldAndReturn(player1, new Millstone());
+
+        assertThat(gqs.isCreature(gd, millstone)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, millstone)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, millstone)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, millstone)).contains(CardSubtype.DINOSAUR);
     }
 

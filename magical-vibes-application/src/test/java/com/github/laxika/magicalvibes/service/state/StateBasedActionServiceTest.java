@@ -660,6 +660,26 @@ class StateBasedActionServiceTest {
     @DisplayName("Saga sacrifice — CR 715.4")
     class SagaSacrifice {
 
+        @BeforeEach
+        void stubPrintedChapterAbilities() {
+            lenient().when(gameQueryService.sagaFinalChapterNumber(any(), any(Permanent.class)))
+                    .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getSagaFinalChapter());
+        }
+
+        @Test
+        @DisplayName("A Saga that has no chapter abilities as the layers leave it is not sacrificed")
+        void sagaWithoutChapterAbilitiesSurvives() {
+            Card card = createSagaCard("Urza's Saga", 3);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            lenient().when(gameQueryService.sagaFinalChapterNumber(gd, perm)).thenReturn(0);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
+        }
+
         @Test
         @DisplayName("Saga with lore counters >= final chapter is sacrificed")
         void sagaWithFinalChapterReachedIsSacrificed() {

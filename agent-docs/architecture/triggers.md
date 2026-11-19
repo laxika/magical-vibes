@@ -494,8 +494,12 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   `…Triggers` class.
 - Saga chapters: `ChapterTrigger` (`Triggers.chapter(n)`, CR 715.2b), no options. `Card.addTrigger` joins one chapter's
   effects into one ability holding its targets (`setSagaChapterTargetFilter` / `Groups` / `Required`);
-  `getSagaFinalChapter()` is the greatest (CR 715.2d). `SagaChapterService.triggerSagaChapter` and
-  `StepTriggerService.handleSagaLoreCounters` read chapters; `putChapterAbility` calls `put`, one choosing targets
+  `getSagaFinalChapter()` is the greatest (CR 715.2d). A Saga on the battlefield has the chapter abilities the layers
+  leave it (`GameQueryService.sagaChapterAbilities` / `sagaFinalChapterNumber`: none once it lost its abilities), so
+  one without any gets no lore counter (CR 715.3c), triggers nothing and isn't sacrificed (CR 704.5s). A Saga entering
+  while an effect makes it lose all abilities (`losesAllAbilitiesByEffects`; not a CR 305.7 land type, which keeps
+  intrinsic abilities) has no intrinsic "enters with a lore counter" ability (CR 715.3a, 614.12).
+  `SagaChapterService.triggerSagaChapter` and `StepTriggerService.handleSagaLoreCounters` read chapters; `putChapterAbility` calls `put`, one choosing targets
   (`chapterTargets()`, its effects, a random mode's filter) parked with the chapter's choice. `FinalChapterTrigger`
   (CR 715.2e) is matched by `SagaTriggers` (Saga's controller; its mana value as event value).
 - State triggers (`StateTrigger`, CR 603.8): `StateTriggerService` checks the state against

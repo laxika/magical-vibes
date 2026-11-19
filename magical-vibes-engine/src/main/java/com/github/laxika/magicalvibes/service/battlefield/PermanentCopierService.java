@@ -3,27 +3,22 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PrimalClayForm;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import java.util.ArrayList;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
@@ -43,51 +38,9 @@ public class PermanentCopierService {
         applyCloneCopy(clonePerm, copiableCard(targetPerm), powerOverride, toughnessOverride, additionalTypesOverride);
     }
 
-    /** Includes characteristics selected by independent as-enters choices in a copy's base. */
+    /** The copiable values of {@code permanent} (CR 707.2): its card as copy and as-enters effects left it. */
     public Card copiableCard(Permanent permanent) {
-        Card copiable = printedCopiableCard(permanent);
-        PrimalClayForm shape = permanent.getPrimalClayForm();
-        if (permanent.isFaceDown()
-                || permanent.getCopiableEntryCharacteristics().isEmpty() && shape == null) {
-            return copiable;
-        }
-        // "As ... enters" conversions that set power and toughness are copiable values (CR 707.2).
-        Card converted = copiable.createRuntimeCopy();
-        Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
-        additionalTypes.addAll(converted.getAdditionalTypes());
-        List<CardSubtype> subtypes = new ArrayList<>(converted.getSubtypes());
-        for (ControlledPermanentEntryCharacteristicsEffect characteristics : permanent.getCopiableEntryCharacteristics()) {
-            characteristics.addedCardTypes().stream()
-                    .filter(type -> type != converted.getType())
-                    .forEach(additionalTypes::add);
-            characteristics.addedSubtypes().stream()
-                    .filter(subtype -> !subtypes.contains(subtype))
-                    .forEach(subtypes::add);
-            if (characteristics.basePower() != null) {
-                converted.setPower(characteristics.basePower());
-            }
-            if (characteristics.baseToughness() != null) {
-                converted.setToughness(characteristics.baseToughness());
-            }
-        }
-        if (shape != null) {
-            // Primal Clay's shape is an "as enters" conversion too: a copy takes its keyword and Wall type, while
-            // its P/T comes from the copy's own shape choice, which overrides this base (Gatherer ruling, Primal Clay).
-            converted.setPower(shape.power());
-            converted.setToughness(shape.toughness());
-            if (shape.keyword() != null) {
-                Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-                keywords.addAll(converted.getKeywords());
-                keywords.add(shape.keyword());
-                converted.setKeywords(keywords);
-            }
-            if (shape.subtype() != null && !subtypes.contains(shape.subtype())) {
-                subtypes.add(shape.subtype());
-            }
-        }
-        converted.setAdditionalTypes(additionalTypes);
-        converted.setSubtypes(subtypes);
-        return converted;
+        return printedCopiableCard(permanent);
     }
 
     private Card printedCopiableCard(Permanent permanent) {
@@ -114,24 +67,6 @@ public class PermanentCopierService {
             // A Licid that became an Aura: that is the effect of its ability, not a copiable value, so a
             // copy sees the printed creature form (CR 707.2).
             return permanent.getOriginalCard();
-        }
-        FlipCoinOnEnterEffect entryFlip = permanent.getEntryCoinFlipHeads() == null ? null
-                : original.getStaticEffects().stream()
-                        .filter(FlipCoinOnEnterEffect.class::isInstance)
-                        .map(FlipCoinOnEnterEffect.class::cast)
-                        .findFirst().orElse(null);
-        if (entryFlip != null) {
-            // A permanent that copies this one already on the battlefield takes the form the entry
-            // coin flip fixed, without flipping again (Molten Sentry ruling).
-            boolean heads = permanent.getEntryCoinFlipHeads();
-            Card formCopy = original.createRuntimeCopy();
-            formCopy.setPower(heads ? entryFlip.headsPower() : entryFlip.tailsPower());
-            formCopy.setToughness(heads ? entryFlip.headsToughness() : entryFlip.tailsToughness());
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            keywords.addAll(formCopy.getKeywords());
-            keywords.addAll(heads ? entryFlip.headsKeywords() : entryFlip.tailsKeywords());
-            formCopy.setKeywords(keywords);
-            return formCopy;
         }
         if (original.getStaticEffects().stream()
                 .noneMatch(ChooseIndependentModesOnEnterEffect.class::isInstance)) {

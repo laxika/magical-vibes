@@ -317,8 +317,9 @@ public class CombatAttackService {
     }
 
     /**
-     * Returns the subset of attackable indices whose creatures have at least one
-     * "attacks each combat if able" requirement that can be met without paying an attack tax.
+     * Returns the attackable creatures with an "attacks if able" requirement that attack in a declaration obeying the
+     * most requirements possible without disobeying a restriction or paying a cost to attack (CR 508.1d). When the
+     * restrictions let only some of them attack, these are one such choice.
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         return gameQueryService.withQueryScope(gameData,
@@ -327,55 +328,21 @@ public class CombatAttackService {
 
     private List<Integer> getMustAttackIndicesUnscoped(GameData gameData, UUID playerId,
                                                         List<Integer> attackableIndices) {
-        if (castingCostService.hasAttackLifePaymentForAnyCreature(gameData, playerId)
-                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (castingCostService.hasAttackLifePaymentForAnyCreature(gameData, playerId)) {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        Set<Integer> restrictionValidAttackers = new HashSet<>(
-                getRestrictionValidGroupAttackers(gameData, playerId, attackableIndices));
-        for (int idx : attackableIndices) {
-            if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
-                restrictionValidAttackers.add(idx);
-            }
-        }
+        RequirementDeclaration best = searchAttackRequirements(
+                gameData, playerId, attackableIndices, Integer.MAX_VALUE);
         List<Integer> mustAttack = new ArrayList<>();
         for (int idx : attackableIndices) {
-            Permanent p = battlefield.get(idx);
-            if (restrictionValidAttackers.contains(idx)
-                    && getMaximumUnpaidAttackRequirementCount(gameData, p) > 0) {
+            UUID targetId = best.attackers().get(idx);
+            if (targetId != null && attackLegalityService.getMustAttackRequirementCount(
+                    gameData, battlefield.get(idx), targetId) > 0) {
                 mustAttack.add(idx);
             }
         }
         return mustAttack;
-    }
-
-    private List<Integer> getRestrictionValidGroupAttackers(GameData gameData, UUID playerId,
-                                                              List<Integer> attackableIndices) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return List.of();
-        }
-
-        List<Integer> candidates = attackableIndices.stream()
-                .filter(idx -> !canOnlyAttackAlone(gameData, battlefield.get(idx)))
-                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-        boolean changed;
-        do {
-            changed = false;
-            for (int idx : List.copyOf(candidates)) {
-                if (hasUnmetAttackRestriction(gameData, battlefield, candidates, idx)) {
-                    candidates.remove(Integer.valueOf(idx));
-                    changed = true;
-                }
-            }
-        } while (changed);
-        return candidates;
-    }
-
-    private boolean isRestrictionValidSingleton(GameData gameData, List<Permanent> battlefield,
-                                                 int attackerIndex) {
-        return !hasUnmetAttackRestriction(gameData, battlefield, List.of(attackerIndex), attackerIndex);
     }
 
     private boolean hasUnmetAttackRestriction(GameData gameData, List<Permanent> battlefield,
@@ -678,16 +645,16 @@ public class CombatAttackService {
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
-        validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices);
+        validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // War's Toll: if one of the active player's creatures attacks, all of that player's
         // creatures attack if able.
-        validateOpponentCreaturesAttackTogether(gameData, playerId, attackable, uniqueIndices);
-        validateOtherCreaturesAttackWithSource(gameData, playerId, attackable, uniqueIndices);
+        validateOpponentCreaturesAttackTogether(gameData, playerId, attackable, uniqueIndices, attackTargets);
+        validateOtherCreaturesAttackWithSource(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // Magnetic Web: "if a creature with a magnet counter attacks, all creatures with magnet
         // counters attack if able"
-        validateCounterBearersAttackTogether(gameData, playerId, attackable, uniqueIndices);
+        validateCounterBearersAttackTogether(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // Validate "must attack with at least one creature" (e.g. Trove of Temptation)
         validateOpponentRequiredAttackTargets(gameData, playerId, attackable, attackerIndices, attackTargets);
@@ -1412,31 +1379,15 @@ public class CombatAttackService {
         return indices;
     }
 
+    /**
+     * CR 508.1d: the declaration is illegal when it obeys fewer attack requirements than some declaration that disobeys
+     * no restriction and needs no cost to attack could obey.
+     */
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,
                                                     Set<Integer> declaredAttackerIndices,
                                                     Map<Integer, UUID> attackTargets) {
-        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
-            return;
-        }
-
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-
-        List<Integer> restrictionValidGroupAttackers = getRestrictionValidGroupAttackers(
-                gameData, playerId, attackableIndices);
-        int maxRequirements = 0;
-        for (int idx : restrictionValidGroupAttackers) {
-            maxRequirements += getMaximumUnpaidAttackRequirementCount(
-                    gameData, battlefield.get(idx));
-        }
-        for (int idx : attackableIndices) {
-            if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
-                maxRequirements = Math.max(maxRequirements,
-                        getMaximumUnpaidAttackRequirementCount(
-                                gameData, battlefield.get(idx)));
-            }
-        }
-
         UUID defaultTargetId = gameQueryService.getOpponentId(gameData, playerId);
         int satisfiedRequirements = 0;
         for (int idx : declaredAttackerIndices) {
@@ -1448,35 +1399,227 @@ public class CombatAttackService {
                     gameData, battlefield.get(idx), targetId);
         }
 
-        if (satisfiedRequirements < maxRequirements) {
-            Set<Integer> restrictionValidAttackers = new HashSet<>(restrictionValidGroupAttackers);
-            for (int idx : attackableIndices) {
-                if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
-                    restrictionValidAttackers.add(idx);
-                }
-            }
-            for (int idx : restrictionValidAttackers) {
-                if (!declaredAttackerIndices.contains(idx)
-                        && getMaximumUnpaidAttackRequirementCount(
-                        gameData, battlefield.get(idx)) > 0) {
-                    throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
+        RequirementDeclaration better = searchAttackRequirements(
+                gameData, playerId, attackableIndices, satisfiedRequirements);
+        if (better.obeyed() > satisfiedRequirements) {
+            for (Map.Entry<Integer, UUID> attacker : new TreeMap<>(better.attackers()).entrySet()) {
+                if (!declaredAttackerIndices.contains(attacker.getKey())
+                        && attackLegalityService.getMustAttackRequirementCount(
+                        gameData, battlefield.get(attacker.getKey()), attacker.getValue()) > 0) {
+                    throw new IllegalStateException("Creature at index " + attacker.getKey()
+                            + " must attack this combat");
                 }
             }
             throw new IllegalStateException("Attack declaration satisfies too few attack requirements");
         }
     }
 
-    private int getMaximumUnpaidAttackRequirementCount(GameData gameData, Permanent creature) {
-        UUID controllerId = gameData.findControllerOf(creature);
-        if (controllerId == null) return 0;
-        return attackLegalityService.getValidAttackTargetIds(gameData, controllerId).stream()
-                .filter(targetId -> attackLegalityService.canAttackDefender(gameData, creature, targetId))
-                .filter(targetId -> castingCostService.getAttackPaymentPerCreature(
-                        gameData, controllerId, targetId, creature) == 0)
-                .filter(targetId -> castingCostService.getAttackLifePaymentPerCreature(
-                        gameData, controllerId, targetId, creature) == 0)
-                .mapToInt(targetId -> attackLegalityService.getMustAttackRequirementCount(gameData, creature, targetId))
-                .max().orElse(0);
+    /** Upper bound on the declarations an attack-requirement search visits before it settles for what it found. */
+    private static final int REQUIREMENT_SEARCH_BUDGET = 200_000;
+
+    /**
+     * One creature a requirement search may declare: the attack targets it can attack without its player paying a
+     * cost, each with the number of attack requirements attacking that target obeys, best first.
+     */
+    private record AttackOptions(int index, List<UUID> targets, List<Integer> requirementCounts) {
+
+        int maximum() {
+            return requirementCounts.isEmpty() ? 0 : requirementCounts.getFirst();
+        }
+    }
+
+    /**
+     * The best declaration a requirement search found ({@code attackers} mapped to what each attacks) and the number of
+     * attack requirements it obeys.
+     */
+    private record RequirementDeclaration(Map<Integer, UUID> attackers, int obeyed) {
+    }
+
+    /**
+     * CR 508.1d: a declaration of attackers obeying the most attack requirements possible without disobeying any
+     * restriction (who may attack, how many creatures may attack, which creatures must or can't attack together) and
+     * without its player paying a cost to attack. The search stops once it finds one obeying more than
+     * {@code enough}; with {@code Integer.MAX_VALUE} it finds a best one.
+     */
+    private RequirementDeclaration searchAttackRequirements(GameData gameData, UUID playerId,
+                                                            List<Integer> attackableIndices, int enough) {
+        RequirementDeclaration none = new RequirementDeclaration(Map.of(), 0);
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+            return none;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return none;
+        }
+        Set<UUID> validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
+        List<AttackOptions> options = new ArrayList<>();
+        for (int idx : attackableIndices) {
+            Permanent creature = battlefield.get(idx);
+            if (requiresNonManaAttackCost(gameData, playerId, creature, idx)) {
+                continue;
+            }
+            List<Map.Entry<UUID, Integer>> targets = new ArrayList<>();
+            for (UUID targetId : validTargetIds) {
+                if (attackLegalityService.canAttackDefender(gameData, creature, targetId)
+                        && castingCostService.getAttackPaymentPerCreature(gameData, playerId, targetId, creature) == 0
+                        && castingCostService.getAttackLifePaymentPerCreature(
+                        gameData, playerId, targetId, creature) == 0) {
+                    targets.add(Map.entry(targetId, attackLegalityService.getMustAttackRequirementCount(
+                            gameData, creature, targetId)));
+                }
+            }
+            if (targets.isEmpty()) {
+                continue;
+            }
+            targets.sort(Map.Entry.<UUID, Integer>comparingByValue().reversed()
+                    .thenComparing(entry -> entry.getKey().toString()));
+            options.add(new AttackOptions(idx, targets.stream().map(Map.Entry::getKey).toList(),
+                    targets.stream().map(Map.Entry::getValue).toList()));
+        }
+        options.sort(Comparator.comparingInt(AttackOptions::maximum).reversed());
+        int[] remaining = new int[options.size() + 1];
+        for (int i = options.size() - 1; i >= 0; i--) {
+            remaining[i] = remaining[i + 1] + options.get(i).maximum();
+        }
+        if (remaining[0] == 0) {
+            return none;
+        }
+        AttackRequirementSearch search = new AttackRequirementSearch(gameData, playerId, battlefield, options,
+                remaining, enough);
+        search.visit(0, 0);
+        return search.best;
+    }
+
+    /**
+     * Whether attacking with {@code creature} needs its player to pay a cost other than the mana and life a target's
+     * controller charges per attacker (CR 508.1d: the player is never required to pay it): its own attack tax, a
+     * creature to tap, permanents to sacrifice or permanents to return to hand.
+     */
+    private boolean requiresNonManaAttackCost(GameData gameData, UUID playerId, Permanent creature, int index) {
+        if (gameQueryService.getCreatureAttackTax(gameData, creature) > 0
+                || combatTapCostService.hasCombatTapCost(gameData, creature)) {
+            return true;
+        }
+        return attackSacrificeCostService.hasSacrificeAttackCost(gameData, playerId, creature)
+                || attackReturnToHandCostService.hasReturnToHandAttackCost(gameData, playerId, index);
+    }
+
+    /**
+     * A branch-and-bound search over declarations of attackers for {@link #searchAttackRequirements}: each creature in
+     * turn attacks one of its targets or stays home, a branch is cut once it can't beat the best declaration found, and
+     * once a restriction on how many creatures attack is already broken.
+     */
+    private final class AttackRequirementSearch {
+
+        private final GameData gameData;
+        private final UUID playerId;
+        private final List<Permanent> battlefield;
+        private final List<AttackOptions> options;
+        private final int[] remaining;
+        private final int enough;
+        private final List<Integer> attackers = new ArrayList<>();
+        private final Map<Integer, UUID> targets = new HashMap<>();
+        private RequirementDeclaration best = new RequirementDeclaration(Map.of(), 0);
+        private int visited;
+
+        private AttackRequirementSearch(GameData gameData, UUID playerId, List<Permanent> battlefield,
+                                        List<AttackOptions> options, int[] remaining, int enough) {
+            this.gameData = gameData;
+            this.playerId = playerId;
+            this.battlefield = battlefield;
+            this.options = options;
+            this.remaining = remaining;
+            this.enough = enough;
+        }
+
+        private boolean done() {
+            return best.obeyed() > enough || visited > REQUIREMENT_SEARCH_BUDGET;
+        }
+
+        private void visit(int position, int obeyed) {
+            visited++;
+            int toBeat = enough == Integer.MAX_VALUE ? best.obeyed() : Math.max(best.obeyed(), enough);
+            if (obeyed + remaining[position] <= toBeat || done()) {
+                return;
+            }
+            if (position == options.size()) {
+                if (restrictionsAllow(gameData, playerId, battlefield, attackers, targets)) {
+                    best = new RequirementDeclaration(Map.copyOf(targets), obeyed);
+                }
+                return;
+            }
+            AttackOptions creature = options.get(position);
+            for (int i = 0; i < creature.targets().size() && !done(); i++) {
+                attackers.add(creature.index());
+                targets.put(creature.index(), creature.targets().get(i));
+                if (attackerCountAllowed(gameData, playerId, battlefield, attackers, targets)) {
+                    visit(position + 1, obeyed + creature.requirementCounts().get(i));
+                }
+                attackers.removeLast();
+                targets.remove(creature.index());
+            }
+            if (!done()) {
+                visit(position + 1, obeyed);
+            }
+        }
+    }
+
+    /**
+     * Whether no restriction on how many creatures attack, or on which creatures may attack together, is broken by
+     * {@code attackers} attacking {@code targets}; adding attackers never mends one of these.
+     */
+    private boolean attackerCountAllowed(GameData gameData, UUID playerId, List<Permanent> battlefield,
+                                         List<Integer> attackers, Map<Integer, UUID> targets) {
+        if (attackers.size() > 1 && attackers.stream()
+                .anyMatch(idx -> canOnlyAttackAlone(gameData, battlefield.get(idx)))) {
+            return false;
+        }
+        try {
+            CombatHelper.validateMaximumAttackers(gameData, attackers, targets, gameQueryService);
+        } catch (IllegalStateException tooMany) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * CR 508.1c: whether {@code attackers} attacking {@code targets} disobey no restriction — who can't attack alone or
+     * can only attack alone, who needs other or more powerful attackers beside it, and how many creatures may attack.
+     */
+    private boolean restrictionsAllow(GameData gameData, UUID playerId, List<Permanent> battlefield,
+                                      List<Integer> attackers, Map<Integer, UUID> targets) {
+        if (attackers.isEmpty()) {
+            return true;
+        }
+        for (int idx : attackers) {
+            if (hasUnmetAttackRestriction(gameData, battlefield, attackers, idx)) {
+                return false;
+            }
+        }
+        try {
+            CombatHelper.validateCommandZoneAttackCount(gameData, playerId, attackers.size());
+            CombatHelper.validateMaximumAttackers(gameData, attackers, targets, gameQueryService);
+        } catch (IllegalStateException disobeyed) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Whether a creature that "attacks if able" when the declared attackers make it able can join them: declaring it
+     * beside {@code declaredAttackerIndices} disobeys no restriction (CR 508.1d obeys requirements only as far as the
+     * restrictions allow).
+     */
+    private boolean canAttackAlongside(GameData gameData, UUID playerId, List<Permanent> battlefield,
+                                       Set<Integer> declaredAttackerIndices, Map<Integer, UUID> attackTargets,
+                                       int index) {
+        List<Integer> attackers = new ArrayList<>(declaredAttackerIndices);
+        attackers.add(index);
+        UUID defaultTargetId = gameQueryService.getOpponentId(gameData, playerId);
+        Map<Integer, UUID> targets = new HashMap<>();
+        attackers.forEach(attacker -> targets.put(attacker, attackTargets == null || attacker == index
+                ? defaultTargetId : attackTargets.getOrDefault(attacker, defaultTargetId)));
+        return restrictionsAllow(gameData, playerId, battlefield, attackers, targets);
     }
 
     /**
@@ -1570,12 +1713,13 @@ public class CombatAttackService {
      * other creature its controller controls is declared as an attacker. The requirement is
      * waived when attacking would cost the player mana (CR 508.1d — optional attack costs are
      * never mandatory), matching {@code validateMaximumAttackRequirements}. The requirement is also
-     * waived when the Cyclops has lost all abilities, or when it or another declared attacker can only
-     * attack alone, since it then cannot be declared alongside the other creature.
+     * waived when the Cyclops has lost all abilities, or when declaring it beside the other attackers would
+     * disobey a restriction (one of them can only attack alone, or no more creatures may attack).
      */
     private void validateAttacksAlongsideOtherCreature(GameData gameData, UUID playerId,
                                                        List<Integer> attackableIndices,
-                                                       Set<Integer> declaredAttackerIndices) {
+                                                       Set<Integer> declaredAttackerIndices,
+                                                       Map<Integer, UUID> attackTargets) {
         if (castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
                 || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
@@ -1590,9 +1734,8 @@ public class CombatAttackService {
                     && creature.getCard().getStaticEffects().stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
             if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
-                    && !canOnlyAttackAlone(gameData, creature)
-                    && declaredAttackerIndices.stream()
-                    .noneMatch(attacker -> canOnlyAttackAlone(gameData, battlefield.get(attacker)))) {
+                    && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
+                    idx)) {
                 throw new IllegalStateException(creature.getCard().getName()
                         + " must also attack when another creature you control attacks");
             }
@@ -1601,7 +1744,8 @@ public class CombatAttackService {
 
     private void validateOpponentCreaturesAttackTogether(GameData gameData, UUID playerId,
                                                          List<Integer> attackableIndices,
-                                                         Set<Integer> declaredAttackerIndices) {
+                                                         Set<Integer> declaredAttackerIndices,
+                                                         Map<Integer, UUID> attackTargets) {
         if (declaredAttackerIndices.isEmpty()
                 || castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
                 || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()
@@ -1610,14 +1754,12 @@ public class CombatAttackService {
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        // CR 508.1d: a creature that can only attack alone can't be attacking with the others, so the
-        // "attacks if able" requirements of the other creatures can't all be obeyed without disobeying it.
-        if (declaredAttackerIndices.stream().anyMatch(idx -> canOnlyAttackAlone(gameData, battlefield.get(idx)))) {
-            return;
-        }
+        // CR 508.1d: a creature whose attacking beside the others would disobey a restriction (one of them can only
+        // attack alone, or no more creatures may attack) isn't required to join them.
         for (int idx : attackableIndices) {
             if (!declaredAttackerIndices.contains(idx)
-                    && !canOnlyAttackAlone(gameData, battlefield.get(idx))) {
+                    && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
+                    idx)) {
                 throw new IllegalStateException(battlefield.get(idx).getCard().getName()
                         + " must also attack when another creature you control attacks");
             }
@@ -1626,7 +1768,8 @@ public class CombatAttackService {
 
     private void validateOtherCreaturesAttackWithSource(GameData gameData, UUID playerId,
                                                        List<Integer> attackableIndices,
-                                                       Set<Integer> declaredAttackerIndices) {
+                                                       Set<Integer> declaredAttackerIndices,
+                                                       Map<Integer, UUID> attackTargets) {
         if (castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
                 || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
@@ -1637,14 +1780,11 @@ public class CombatAttackService {
                         && source.getCard().getStaticEffects().stream()
                         .anyMatch(OtherCreaturesMustAttackIfSourceAttacksEffect.class::isInstance));
         if (!sourceAttacks) return;
-        if (declaredAttackerIndices.stream()
-                .anyMatch(attacker -> canOnlyAttackAlone(gameData, battlefield.get(attacker)))) {
-            return;
-        }
         for (int index : attackableIndices) {
             Permanent other = battlefield.get(index);
             if (!declaredAttackerIndices.contains(index)
-                    && !canOnlyAttackAlone(gameData, other)
+                    && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
+                    index)
                     && gameQueryService.getCreatureAttackTax(gameData, other) == 0) {
                 throw new IllegalStateException(other.getCard().getName()
                         + " must attack when the source creature attacks");
@@ -1661,7 +1801,8 @@ public class CombatAttackService {
      */
     private void validateCounterBearersAttackTogether(GameData gameData, UUID playerId,
                                                       List<Integer> attackableIndices,
-                                                      Set<Integer> declaredAttackerIndices) {
+                                                      Set<Integer> declaredAttackerIndices,
+                                                      Map<Integer, UUID> attackTargets) {
         if (declaredAttackerIndices.isEmpty()) {
             return;
         }
@@ -1688,9 +1829,8 @@ public class CombatAttackService {
                 }
                 Permanent creature = battlefield.get(idx);
                 if (creature.getCounterCount(counterType) > 0
-                        && !canOnlyAttackAlone(gameData, creature)
-                        && declaredAttackerIndices.stream()
-                        .noneMatch(attacker -> canOnlyAttackAlone(gameData, battlefield.get(attacker)))) {
+                        && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices,
+                        attackTargets, idx)) {
                     throw new IllegalStateException(creature.getCard().getName()
                             + " must also attack when a creature with such a counter attacks");
                 }

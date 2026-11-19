@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.entryfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RecordedCoinFlip;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
@@ -20,12 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * "As this enters, flip a coin" (Molten Sentry, CR 614.1c): the result fixes the entering permanent's base power,
- * toughness and keywords. When Krark's Thumb's physical flips disagree, the flip is left on the permanent
+ * "As this enters, flip a coin" (Molten Sentry, CR 614.1c): the result fixes the entering permanent's power,
+ * toughness and keywords as copiable values (CR 707.2). When Krark's Thumb's physical flips disagree, the flip is left on the permanent
  * ({@link Permanent#getEntryCoinFlipAwaitingChoice()}) and its controller chooses the kept result through
  * {@link #beginPendingResultChoice} before the permanent's enter abilities are processed.
  */
@@ -100,20 +97,18 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
-        enteringPermanent.setEntryCoinFlipHeads(heads);
         int power = heads ? flipEffect.headsPower() : flipEffect.tailsPower();
         int toughness = heads ? flipEffect.headsToughness() : flipEffect.tailsToughness();
-        Set<Keyword> keywords = heads ? flipEffect.headsKeywords() : flipEffect.tailsKeywords();
-        SetBasePowerToughnessEffect setter = new SetBasePowerToughnessEffect(
-                power, toughness, GrantScope.SELF, Duration.PERMANENT);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), sourceName, enteringPermanent.getId(), controllerId, setter,
-                enteringPermanent.getId(), null, null, Duration.PERMANENT, 0));
-        if (!keywords.isEmpty()) {
-            gameData.addEffectOnPermanent(sourceName, enteringPermanent.getId(), controllerId,
-                    new GrantKeywordEffect(Set.copyOf(keywords), GrantScope.TARGET),
-                    enteringPermanent.getId(), Duration.PERMANENT);
-        }
+        // An as-enters ability that sets power and toughness: the form is part of the permanent's copiable values
+        // (CR 707.2), applied in layer 1 (CR 613.1a), so a permanent that becomes a copy of it takes the form without
+        // flipping.
+        Card form = enteringPermanent.getCard().createRuntimeCopy();
+        form.setPower(power);
+        form.setToughness(toughness);
+        Set<Keyword> keywords = new LinkedHashSet<>(form.getKeywords());
+        keywords.addAll(heads ? flipEffect.headsKeywords() : flipEffect.tailsKeywords());
+        form.setKeywords(keywords);
+        enteringPermanent.setCard(form);
 
         log.info("Game {} - {} enters with base power and toughness {}/{}", gameData.id,
                 sourceName, power, toughness);

@@ -69,6 +69,19 @@ public class AttackSacrificeCostService {
     }
 
     /**
+     * Whether attacking with {@code attacker} costs sacrificing permanents: its own "can't attack unless you sacrifice"
+     * or a restriction that charges every matching attacker (Flooded Woodlands).
+     */
+    public boolean hasSacrificeAttackCost(GameData gameData, UUID playerId, Permanent attacker) {
+        if (!gameQueryService.hasLostPrintedAbilities(gameData, attacker)
+                && attacker.getCard().getStaticEffects().stream()
+                .anyMatch(CantAttackUnlessSacrificeEffect.class::isInstance)) {
+            return true;
+        }
+        return !collectGlobalCosts(gameData, playerId, List.of(attacker)).isEmpty();
+    }
+
+    /**
      * Throws if the declaration can't pay its {@link CreaturesCantAttackUnlessSacrificeEffect} costs
      * (Flooded Woodlands). The cost is charged per matching attacker, so it must be validated for the
      * declaration as a whole — the per-creature gate in {@code AttackLegalityService} only guarantees

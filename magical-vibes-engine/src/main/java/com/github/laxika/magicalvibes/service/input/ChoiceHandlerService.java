@@ -143,7 +143,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @Slf4j
 @Service
@@ -4463,7 +4462,8 @@ public class ChoiceHandlerService {
                 && gameData.playerIds.contains(pendingEntry.getTargetId());
         if (pendingEntry == null
                 || (pendingEntry.getTargetId() != null && !nonTargetingCombatEntry)
-                || !pendingEntry.getTargetIds().isEmpty()) {
+                || !pendingEntry.getTargetIds().isEmpty()
+                || targetsAnnouncedOnActivation(pendingEntry, ctx)) {
             return false;
         }
 
@@ -4500,6 +4500,20 @@ public class ChoiceHandlerService {
         playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(), validPermanents, validPlayers,
                 ctx.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
         return true;
+    }
+
+    /**
+     * Whether {@code entry} is an activated ability whose targets were announced as it was activated (CR 602.2b applies
+     * CR 601.2c): the ability holding {@code ctx}'s modal effect declares targets of its own. Choosing its mode as it
+     * resolves never asks for a target then, so an "up to one target" ability activated with no target resolves with
+     * none.
+     */
+    private static boolean targetsAnnouncedOnActivation(StackEntry entry, ChoiceContext.ChooseModeChoice ctx) {
+        return entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                && ctx.sourceCard().getActivatedAbilities().stream()
+                .anyMatch(ability -> ability.getEffects().contains(ctx.effect())
+                        && (ability.getTargetFilter() != null || !ability.getMultiTargetFilters().isEmpty()
+                        || ability.getMaxTargets() > 0));
     }
 
     private void handleMultipleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
@@ -6771,20 +6785,23 @@ public class ChoiceHandlerService {
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
-            // "As this creature enters, it becomes ..." — lock in the chosen shape's base P/T,
-            // keyword, and extra creature type for the life of the permanent (CR 614.1c).
-            gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
-                    new SetBasePowerToughnessEffect(form.power(), form.toughness(), GrantScope.TARGET,
-                            Duration.PERMANENT), perm.getId(), Duration.PERMANENT);
+            // "As this creature enters, it becomes ...": an as-enters ability that sets power and toughness, so the
+            // chosen shape is part of the permanent's copiable values (CR 707.2), applied in layer 1 (CR 613.1a). A
+            // copy entering as a copy of it keeps the shape's keyword and Wall type and sets its P/T by its own choice.
+            Card formCard = perm.getCard().createRuntimeCopy();
+            formCard.setPower(form.power());
+            formCard.setToughness(form.toughness());
             if (form.keyword() != null) {
-                gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
-                        new GrantKeywordEffect(form.keyword(), GrantScope.TARGET), perm.getId(), Duration.PERMANENT);
+                Set<Keyword> formKeywords = new LinkedHashSet<>(formCard.getKeywords());
+                formKeywords.add(form.keyword());
+                formCard.setKeywords(formKeywords);
             }
-            if (form.subtype() != null) {
-                gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
-                        new GrantSubtypeEffect(form.subtype(), GrantScope.TARGET), perm.getId(), Duration.PERMANENT);
+            if (form.subtype() != null && !formCard.getSubtypes().contains(form.subtype())) {
+                List<CardSubtype> formSubtypes = new ArrayList<>(formCard.getSubtypes());
+                formSubtypes.add(form.subtype());
+                formCard.setSubtypes(formSubtypes);
             }
-            perm.setPrimalClayForm(form);
+            perm.setCard(formCard);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses a " + form.power() + "/" + form.toughness()
                     + (form.keyword() != null ? " " + form.keyword().name().toLowerCase() : "")

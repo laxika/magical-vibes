@@ -7,7 +7,6 @@ import lombok.Setter;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -212,22 +211,6 @@ public class Permanent {
      * stays on the battlefield.
      */
     private final Set<String> chosenModeLabels = new HashSet<>();
-    /**
-     * Result of the "as this enters, flip a coin" replacement that fixed this permanent's form
-     * (Molten Sentry): {@code true} for heads, {@code null} when no such flip happened.
-     */
-    @Setter private Boolean entryCoinFlipHeads;
-    /**
-     * The shape Primal Clay chose as it entered, or {@code null} when this permanent made no such choice. The
-     * shape's keyword and Wall type are copiable values a copy takes, while its P/T is set by the copy's own choice
-     * (CR 707.2, CR 614.1c).
-     */
-    @Setter private PrimalClayForm primalClayForm;
-    /**
-     * "As a permanent you control enters, it becomes ..." conversions applied to this permanent as it entered
-     * (Displaced Dinosaurs). They are copiable values (CR 707.2), so a copy of this permanent takes them too.
-     */
-    private final List<ControlledPermanentEntryCharacteristicsEffect> copiableEntryCharacteristics = new ArrayList<>();
     /**
      * The "as this enters, flip a coin" flip (Molten Sentry) whose Krark's Thumb results disagreed, while its
      * flipping player has not yet chosen the kept result; {@code null} otherwise. The result is chosen before this
@@ -684,9 +667,6 @@ public class Permanent {
         this.toymakersTrapChosenNumbers.addAll(source.toymakersTrapChosenNumbers);
         this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
         this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
-        this.entryCoinFlipHeads = source.entryCoinFlipHeads;
-        this.primalClayForm = source.primalClayForm;
-        this.copiableEntryCharacteristics.addAll(source.copiableEntryCharacteristics);
         this.entryCoinFlipAwaitingChoice = source.entryCoinFlipAwaitingChoice;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);

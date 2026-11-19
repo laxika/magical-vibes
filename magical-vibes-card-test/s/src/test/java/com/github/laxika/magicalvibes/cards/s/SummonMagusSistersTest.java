@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -15,10 +17,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SummonMagusSisters.class, BirdsOfParadise.class})
+@CardUsed({SummonMagusSisters.class, BirdsOfParadise.class, Humility.class})
 class SummonMagusSistersTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering chooses the random mode and its targets before the chapter resolves")
     void enteringChoosesTheRandomModeAndTargetsBeforeResolution() {
         harness.addToBattlefield(player1, new BirdsOfParadise());
         harness.addToBattlefield(player2, new BirdsOfParadise());
@@ -33,6 +36,21 @@ class SummonMagusSistersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entering under Humility it has no abilities, so it gets no lore counter, triggers nothing and stays")
+    void enteringUnderHumilityGetsNoLoreCounter() {
+        harness.addToBattlefield(player2, new Humility());
+        harness.addToBattlefield(player2, new BirdsOfParadise());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new SummonMagusSisters());
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+    }
+
+    @Test
+    @DisplayName("Counter modes need a target, and the defense mode adds a shield counter")
     void counterModesRequireATargetAndDefenseAddsAShield() {
         Set<String> modes = new HashSet<>();
 
@@ -73,6 +91,7 @@ class SummonMagusSistersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each chapter randomly applies a mode with that mode's targets")
     void chaptersRandomlyApplyEachModeWithTheCorrectTargets() {
         Set<String> modes = new HashSet<>();
 
@@ -121,6 +140,7 @@ class SummonMagusSistersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each chapter resolves, and the Saga is sacrificed after the third")
     void eachChapterResolvesAndTheThirdSacrificesTheSaga() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonMagusSisters());
 
@@ -146,6 +166,7 @@ class SummonMagusSistersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The fight deals no damage if the Saga leaves before it resolves")
     void fightDoesNoDamageIfTheSagaLeavesBeforeResolution() {
         boolean observedFight = false;
 

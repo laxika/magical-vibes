@@ -433,40 +433,19 @@ public class CombatBlockService {
         // happens until every check below has passed).
         BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
 
-        // Validate assignments
+        validateBlockRestrictions(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                blockerAssignments);
+        validateBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                blockerAssignments);
+
         int blockTaxTotal = 0;
         Map<UUID, Integer> blockLifeTaxByBlocker = new HashMap<>();
         Map<UUID, Integer> globalBlockManaTaxByBlocker = new HashMap<>();
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
-        Set<String> blockerAttackerPairs = new HashSet<>();
-        Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
         for (BlockerAssignment assignment : blockerAssignments) {
-            int blockerIdx = assignment.blockerIndex();
-            int attackerIdx = assignment.attackerIndex();
-
-            if (!blockable.contains(blockerIdx)) {
-                if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()) {
-                    throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
-                            + defenderBattlefield.get(blockerIdx).getCard().getName() + " can't block)");
-                }
-                throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
-            }
-            int usageCount = blockerUsageCount.merge(blockerIdx, 1, Integer::sum);
-            int maxBlocks = getMaxBlocksForCreature(gameData, defenderBattlefield.get(blockerIdx), defenderBattlefield);
-            if (usageCount > maxBlocks) {
-                throw new IllegalStateException("Blocker " + blockerIdx + " assigned too many times");
-            }
-            if (!blockerAttackerPairs.add(blockerIdx + ":" + attackerIdx)) {
-                throw new IllegalStateException("Duplicate blocker-attacker pair: " + blockerIdx + " -> " + attackerIdx);
-            }
-            if (attackerIdx < 0 || attackerIdx >= attackerBattlefield.size() || !attackerBattlefield.get(attackerIdx).isAttacking()) {
-                throw new IllegalStateException("Invalid attacker index: " + attackerIdx);
-            }
-
-            Permanent attacker = attackerBattlefield.get(attackerIdx);
-            Permanent blocker = defenderBattlefield.get(blockerIdx);
-            blockLegalityService.getBlockingIllegalityReason(blockContext, blocker, attacker)
-                    .ifPresent(reason -> { throw new IllegalStateException(reason); });
+            int usageCount = blockerUsageCount.merge(assignment.blockerIndex(), 1, Integer::sum);
+            Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+            Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
 
             // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
             blockTaxTotal += gameQueryService.getBlockManaTax(gameData, blocker, attacker);
@@ -485,85 +464,9 @@ public class CombatBlockService {
             if (lifeTax > 0) {
                 blockLifeTaxByBlocker.merge(blocker.getId(), lifeTax, Math::max);
             }
-
-            blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
-        }
-        int maximumBlockers = CombatHelper.getMaximumBlockers(gameData, defenderId,
-                staticEffectConditionResolver);
-        if (blockerUsageCount.size() > maximumBlockers) {
-            throw new IllegalStateException("No more than " + maximumBlockers
-                    + " distinct creature" + (maximumBlockers == 1 ? "" : "s")
-                    + " can block each combat");
         }
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
         blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
-
-        for (var entry : blockersPerAttacker.entrySet()) {
-            int attackerIdx = entry.getKey();
-            int blockerCount = entry.getValue();
-            Permanent attacker = attackerBattlefield.get(attackerIdx);
-            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
-                throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
-            }
-            int teamMaxBlockers = maximumBlockersForTeam(gameData, attacker, attackerBattlefield);
-            if (blockerCount > teamMaxBlockers) {
-                throw new IllegalStateException(attacker.getCard().getName()
-                        + " can't be blocked by more than " + teamMaxBlockers
-                        + " creature" + (teamMaxBlockers == 1 ? "" : "s"));
-            }
-            // CR 509.1c: a "blocks/is blocked by exactly one if able" requirement is not obeyed by blocking
-            // with one creature when menace forbids it, so the cap it implies does not apply.
-            boolean exactlyOneRequirementUnobeyable =
-                    gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE)
-                    && gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
-            int maxBlockers = exactlyOneRequirementUnobeyable
-                    ? Integer.MAX_VALUE : gameQueryService.getMaxBlockersAllowed(gameData, attacker);
-            if (blockerCount > maxBlockers) {
-                throw new IllegalStateException(attacker.getCard().getName()
-                        + " can't be blocked by more than " + maxBlockers
-                        + " creature" + (maxBlockers == 1 ? "" : "s"));
-            }
-            for (CardEffect effect : gameQueryService.hasLostAllAbilities(gameData, attacker)
-                    ? List.<CardEffect>of() : attacker.getCard().getStaticEffects()) {
-                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
-                        && blockerCount < restriction.minBlockers()) {
-                    throw new IllegalStateException(attacker.getCard().getName()
-                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
-                }
-            }
-            for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
-                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
-                        && blockerCount < restriction.minBlockers()) {
-                    throw new IllegalStateException(attacker.getCard().getName()
-                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
-                }
-            }
-        }
-
-        // CR 509.1a: validate "can't block alone" — if any declared blocker has this restriction,
-        // there must be at least 2 total blockers
-        validateCantBlockAlone(gameData, defenderBattlefield, blockerAssignments);
-
-        // Okk: "can't block unless a creature with greater power also blocks"
-        validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
-
-        // Orcish Conscripts: "can't block unless at least N other creatures also block"
-        validateCountAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
-
-        validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
-                blockerAssignments);
-        validateAllDefendingCreaturesMustBlockRequirements(
-                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockerAssignments);
-        validatePerCreatureMustBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
-                blockerAssignments);
-        validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
-                blockerAssignments);
-        validateMustBeBlockedByMatchingCreatureIfAbleRequirements(
-                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
-        validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
-                blockerAssignments);
-        validateMustBlockEachAttackingCreatureRequirements(
-                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
 
         List<Permanent> declaredBlockers = blockerAssignments.stream()
                 .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
@@ -1098,6 +1001,364 @@ public class CombatBlockService {
         return 1 + additionalBlocks;
     }
 
+    /** Upper bound on the declarations a blocking-requirement search visits before it settles for what it found. */
+    private static final int REQUIREMENT_SEARCH_BUDGET = 200_000;
+
+    /**
+     * CR 509.1b: throws when {@code blockerAssignments} disobey a restriction — a creature that can't block, can't
+     * block that attacker or blocks more attackers than it may, how many creatures may block or block one attacker,
+     * menace and "can't be blocked except by N or more creatures", "can't block alone", "can't block unless a creature
+     * with greater power (or N other creatures) also blocks", and "can't be blocked unless all creatures defending
+     * player controls block it".
+     */
+    private void validateBlockRestrictions(GameData gameData, BlockLegalityContext blockContext,
+                                           List<Permanent> attackerBattlefield, List<Permanent> defenderBattlefield,
+                                           List<Integer> blockable, List<BlockerAssignment> blockerAssignments) {
+        Map<Integer, Integer> blockerUsageCount = new HashMap<>();
+        Set<String> blockerAttackerPairs = new HashSet<>();
+        Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            int blockerIdx = assignment.blockerIndex();
+            int attackerIdx = assignment.attackerIndex();
+
+            if (!blockable.contains(blockerIdx)) {
+                if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()) {
+                    throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
+                            + defenderBattlefield.get(blockerIdx).getCard().getName() + " can't block)");
+                }
+                throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
+            }
+            int usageCount = blockerUsageCount.merge(blockerIdx, 1, Integer::sum);
+            int maxBlocks = getMaxBlocksForCreature(gameData, defenderBattlefield.get(blockerIdx), defenderBattlefield);
+            if (usageCount > maxBlocks) {
+                throw new IllegalStateException("Blocker " + blockerIdx + " assigned too many times");
+            }
+            if (!blockerAttackerPairs.add(blockerIdx + ":" + attackerIdx)) {
+                throw new IllegalStateException("Duplicate blocker-attacker pair: " + blockerIdx + " -> " + attackerIdx);
+            }
+            if (attackerIdx < 0 || attackerIdx >= attackerBattlefield.size() || !attackerBattlefield.get(attackerIdx).isAttacking()) {
+                throw new IllegalStateException("Invalid attacker index: " + attackerIdx);
+            }
+
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            blockLegalityService.getBlockingIllegalityReason(blockContext, blocker, attacker)
+                    .ifPresent(reason -> { throw new IllegalStateException(reason); });
+
+            blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
+        }
+        int maximumBlockers = CombatHelper.getMaximumBlockers(gameData,
+                controllerIdOf(gameData, defenderBattlefield), staticEffectConditionResolver);
+        if (blockerUsageCount.size() > maximumBlockers) {
+            throw new IllegalStateException("No more than " + maximumBlockers
+                    + " distinct creature" + (maximumBlockers == 1 ? "" : "s")
+                    + " can block each combat");
+        }
+        for (var entry : blockersPerAttacker.entrySet()) {
+            int attackerIdx = entry.getKey();
+            int blockerCount = entry.getValue();
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
+                throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
+            }
+            int teamMaxBlockers = maximumBlockersForTeam(gameData, attacker, attackerBattlefield);
+            if (blockerCount > teamMaxBlockers) {
+                throw new IllegalStateException(attacker.getCard().getName()
+                        + " can't be blocked by more than " + teamMaxBlockers
+                        + " creature" + (teamMaxBlockers == 1 ? "" : "s"));
+            }
+            // CR 509.1c: a "blocks/is blocked by exactly one if able" requirement is not obeyed by blocking
+            // with one creature when menace forbids it, so the cap it implies does not apply.
+            boolean exactlyOneRequirementUnobeyable =
+                    gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE)
+                    && gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+            int maxBlockers = exactlyOneRequirementUnobeyable
+                    ? Integer.MAX_VALUE : gameQueryService.getMaxBlockersAllowed(gameData, attacker);
+            if (blockerCount > maxBlockers) {
+                throw new IllegalStateException(attacker.getCard().getName()
+                        + " can't be blocked by more than " + maxBlockers
+                        + " creature" + (maxBlockers == 1 ? "" : "s"));
+            }
+            for (CardEffect effect : gameQueryService.hasLostAllAbilities(gameData, attacker)
+                    ? List.<CardEffect>of() : attacker.getCard().getStaticEffects()) {
+                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
+                        && blockerCount < restriction.minBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
+                }
+            }
+            for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
+                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
+                        && blockerCount < restriction.minBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
+                }
+            }
+        }
+
+        // CR 509.1b: validate "can't block alone" — if any declared blocker has this restriction,
+        // there must be at least 2 total blockers
+        validateCantBlockAlone(gameData, defenderBattlefield, blockerAssignments);
+
+        // Okk: "can't block unless a creature with greater power also blocks"
+        validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
+
+        // Orcish Conscripts: "can't block unless at least N other creatures also block"
+        validateCountAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
+
+        validateAllDefendingCreaturesMustBlockRequirements(
+                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockerAssignments);
+    }
+
+    /**
+     * CR 509.1c: throws when {@code blockerAssignments} obey fewer blocking requirements than some declaration that
+     * disobeys no restriction and needs no cost to block could obey. Each kind of requirement first checks the
+     * declaration against the most of its own kind that could be obeyed; only when one says too few does a search
+     * over the declarations weigh every kind together under the restrictions (how many creatures may block, for one),
+     * and the declaration stands when no declaration obeys more of them in all.
+     */
+    private void validateBlockRequirements(GameData gameData, BlockLegalityContext blockContext,
+                                           List<Permanent> attackerBattlefield, List<Permanent> defenderBattlefield,
+                                           List<Integer> blockable, List<BlockerAssignment> blockerAssignments) {
+        try {
+            validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield,
+                    blockable, blockerAssignments);
+            validatePerCreatureMustBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield,
+                    blockable, blockerAssignments);
+            validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield,
+                    blockable, blockerAssignments);
+            validateMustBeBlockedByMatchingCreatureIfAbleRequirements(
+                    gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
+            validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield,
+                    blockable, blockerAssignments);
+            validateMustBlockEachAttackingCreatureRequirements(
+                    gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
+        } catch (IllegalStateException tooFewObeyed) {
+            int obeyed = obeyedBlockRequirements(gameData, attackerBattlefield, defenderBattlefield,
+                    blockerAssignments);
+            if (new BlockRequirementSearch(gameData, blockContext, attackerBattlefield, defenderBattlefield,
+                    blockable, obeyed).findsMore()) {
+                throw tooFewObeyed;
+            }
+        }
+    }
+
+    /**
+     * The number of blocking requirements {@code blockerAssignments} obey: each block of an attacker its blocker must
+     * block (Lure and the like, one per requirement; provoke and "blocks target creature"; "blocks each attacking
+     * creature"), each blocker that must block if able, each attacker that must be blocked if able and blocked, and each
+     * "must be blocked by a [quality] creature if able" met.
+     */
+    private int obeyedBlockRequirements(GameData gameData, List<Permanent> attackerBattlefield,
+                                        List<Permanent> defenderBattlefield,
+                                        List<BlockerAssignment> blockerAssignments) {
+        int obeyed = 0;
+        Set<Integer> blockers = new HashSet<>();
+        Set<Integer> blockedAttackers = new HashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            obeyed += pairRequirementCount(gameData, defenderBattlefield.get(assignment.blockerIndex()),
+                    attackerBattlefield.get(assignment.attackerIndex()));
+            blockers.add(assignment.blockerIndex());
+            blockedAttackers.add(assignment.attackerIndex());
+        }
+        for (int blockerIdx : blockers) {
+            if (mustBlockIfAble(gameData, defenderBattlefield.get(blockerIdx))) {
+                obeyed++;
+            }
+        }
+        for (int attackerIdx : blockedAttackers) {
+            if (mustBeBlockedIfAble(gameData, attackerBattlefield.get(attackerIdx))) {
+                obeyed++;
+            }
+        }
+        for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            if (!attacker.isAttacking()) continue;
+            int currentAttackerIdx = attackerIdx;
+            for (MustBeBlockedByMatchingCreatureIfAbleEffect requirement : gameQueryService.collectAuraEffects(
+                    gameData, attacker, MustBeBlockedByMatchingCreatureIfAbleEffect.class)) {
+                if (blockerAssignments.stream()
+                        .filter(assignment -> assignment.attackerIndex() == currentAttackerIdx)
+                        .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
+                        .anyMatch(blocker -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, blocker, requirement.blockerFilter()))) {
+                    obeyed++;
+                }
+            }
+        }
+        return obeyed;
+    }
+
+    /**
+     * The blocking requirements {@code blocker} blocking {@code attacker} obeys on its own: the attacker's Lure-like
+     * requirements on it, the attacker being one it must block (provoke, "target creature blocks it"), and its
+     * "blocks each attacking creature if able".
+     */
+    private int pairRequirementCount(GameData gameData, Permanent blocker, Permanent attacker) {
+        int count = gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)
+                ? gameQueryService.lureRequirementCount(gameData, attacker, blocker) : 0;
+        if (requiredBlockSourceIds(gameData, blocker).contains(attacker.getId())) {
+            count++;
+        }
+        if (gameData.hasFloatingEffectOnPermanent(blocker.getId(), MustBlockEachAttackingCreatureThisTurnEffect.class)) {
+            count++;
+        }
+        return count;
+    }
+
+    private boolean mustBeBlockedIfAble(GameData gameData, Permanent attacker) {
+        return gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
+                || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
+                || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+    }
+
+    /**
+     * A branch-and-bound search over declarations of blockers for {@link #validateBlockRequirements}: each creature
+     * that can block in turn blocks some attackers it can block without a cost or doesn't block, a branch is cut once it
+     * can't obey more requirements than the declaration being checked or once more creatures block than may, and a
+     * complete declaration counts only when it disobeys no restriction (CR 509.1c).
+     */
+    private final class BlockRequirementSearch {
+
+        private final GameData gameData;
+        private final BlockLegalityContext blockContext;
+        private final List<Permanent> attackerBattlefield;
+        private final List<Permanent> defenderBattlefield;
+        private final List<Integer> blockable;
+        private final int toBeat;
+        private final List<Integer> blockers = new ArrayList<>();
+        private final List<List<List<Integer>>> options = new ArrayList<>();
+        private final int[] remaining;
+        private final int attackerSideRequirements;
+        private final int maximumBlockers;
+        private final List<BlockerAssignment> assignments = new ArrayList<>();
+        private int distinctBlockers;
+        private boolean found;
+        private int visited;
+
+        private BlockRequirementSearch(GameData gameData, BlockLegalityContext blockContext,
+                                       List<Permanent> attackerBattlefield, List<Permanent> defenderBattlefield,
+                                       List<Integer> blockable, int toBeat) {
+            this.gameData = gameData;
+            this.blockContext = blockContext;
+            this.attackerBattlefield = attackerBattlefield;
+            this.defenderBattlefield = defenderBattlefield;
+            this.blockable = blockable;
+            this.toBeat = toBeat;
+            List<Integer> attackers = new ArrayList<>();
+            int attackerSide = 0;
+            for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                if (attacker.isAttacking()) {
+                    attackers.add(attackerIdx);
+                    attackerSide += (mustBeBlockedIfAble(gameData, attacker) ? 1 : 0)
+                            + gameQueryService.collectAuraEffects(gameData, attacker,
+                            MustBeBlockedByMatchingCreatureIfAbleEffect.class).size();
+                }
+            }
+            this.attackerSideRequirements = attackerSide;
+            List<Integer> potentials = new ArrayList<>();
+            for (int blockerIdx : blockable) {
+                Permanent blocker = defenderBattlefield.get(blockerIdx);
+                if (combatTapCostService.hasCombatTapCost(gameData, blocker)
+                        || gameQueryService.getGlobalBlockManaTax(gameData, blocker) > 0) {
+                    continue;
+                }
+                List<Integer> blockableAttackers = new ArrayList<>();
+                List<Integer> pairCounts = new ArrayList<>();
+                for (int attackerIdx : attackers) {
+                    Permanent attacker = attackerBattlefield.get(attackerIdx);
+                    if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)
+                            && gameQueryService.getBlockManaTax(gameData, blocker, attacker) == 0
+                            && gameQueryService.getGlobalBlockLifeTax(gameData, blocker, attacker) == 0) {
+                        blockableAttackers.add(attackerIdx);
+                        pairCounts.add(pairRequirementCount(gameData, blocker, attacker));
+                    }
+                }
+                if (blockableAttackers.isEmpty()) {
+                    continue;
+                }
+                int maxBlocks = Math.min(getMaxBlocksForCreature(gameData, blocker, defenderBattlefield),
+                        blockableAttackers.size());
+                blockers.add(blockerIdx);
+                options.add(attackerGroups(blockableAttackers, maxBlocks));
+                potentials.add((mustBlockIfAble(gameData, blocker) ? 1 : 0) + pairCounts.stream()
+                        .sorted(Comparator.reverseOrder()).limit(maxBlocks).mapToInt(Integer::intValue).sum());
+            }
+            this.remaining = new int[blockers.size() + 1];
+            for (int i = blockers.size() - 1; i >= 0; i--) {
+                remaining[i] = remaining[i + 1] + potentials.get(i);
+            }
+            this.maximumBlockers = CombatHelper.getMaximumBlockers(gameData,
+                    controllerIdOf(gameData, defenderBattlefield), staticEffectConditionResolver);
+        }
+
+        /** Every group of at most {@code maxBlocks} of {@code attackers}, the largest first. */
+        private static List<List<Integer>> attackerGroups(List<Integer> attackers, int maxBlocks) {
+            List<List<Integer>> groups = new ArrayList<>();
+            int count = attackers.size();
+            for (int mask = 1; mask < (1 << count); mask++) {
+                if (Integer.bitCount(mask) <= maxBlocks) {
+                    List<Integer> group = new ArrayList<>();
+                    for (int bit = 0; bit < count; bit++) {
+                        if ((mask & (1 << bit)) != 0) {
+                            group.add(attackers.get(bit));
+                        }
+                    }
+                    groups.add(group);
+                }
+            }
+            groups.sort(Comparator.comparingInt(List<Integer>::size).reversed());
+            return groups;
+        }
+
+        private boolean findsMore() {
+            visit(0);
+            return found;
+        }
+
+        private void visit(int position) {
+            visited++;
+            if (found || visited > REQUIREMENT_SEARCH_BUDGET) {
+                return;
+            }
+            int obeyed = obeyedBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, assignments);
+            if (obeyed + remaining[position] + attackerSideRequirements <= toBeat) {
+                return;
+            }
+            if (position == blockers.size()) {
+                if (obeyed > toBeat && allowed()) {
+                    found = true;
+                }
+                return;
+            }
+            int blockerIdx = blockers.get(position);
+            if (distinctBlockers < maximumBlockers) {
+                distinctBlockers++;
+                for (List<Integer> group : options.get(position)) {
+                    group.forEach(attackerIdx -> assignments.add(new BlockerAssignment(blockerIdx, attackerIdx)));
+                    visit(position + 1);
+                    group.forEach(ignored -> assignments.removeLast());
+                    if (found) {
+                        return;
+                    }
+                }
+                distinctBlockers--;
+            }
+            visit(position + 1);
+        }
+
+        private boolean allowed() {
+            try {
+                validateBlockRestrictions(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                        assignments);
+                return true;
+            } catch (IllegalStateException disobeyed) {
+                return false;
+            }
+        }
+    }
+
     private void validateMaximumBlockRequirements(GameData gameData,
                                                    BlockLegalityContext blockContext,
                                                    List<Permanent> attackerBattlefield,
@@ -1422,10 +1683,7 @@ public class CombatBlockService {
         for (int i = 0; i < attackerBattlefield.size(); i++) {
             Permanent attacker = attackerBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean hasRequirement = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
-                    || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
-                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
-            if (hasRequirement) {
+            if (mustBeBlockedIfAble(gameData, attacker)) {
                 mustBeBlockedAttackerIndices.add(i);
             }
         }

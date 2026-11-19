@@ -43,6 +43,11 @@ public class AttackReturnToHandCostService {
         });
     }
 
+    /** Whether attacking with the creature at {@code attackerIndex} costs returning permanents to hand. */
+    public boolean hasReturnToHandAttackCost(GameData gameData, UUID playerId, int attackerIndex) {
+        return !collectCosts(gameData, playerId, List.of(attackerIndex)).isEmpty();
+    }
+
     public void payReturnToHandAttackCosts(GameData gameData, UUID playerId,
                                            List<Permanent> attackers) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

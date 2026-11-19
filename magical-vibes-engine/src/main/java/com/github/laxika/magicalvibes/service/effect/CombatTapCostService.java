@@ -38,6 +38,11 @@ public class CombatTapCostService {
         return availableTapSourceCount(gameData, playerId, declaredIds) >= required;
     }
 
+    /** Whether attacking or blocking with {@code creature} costs tapping other untapped creatures. */
+    public boolean hasCombatTapCost(GameData gameData, Permanent creature) {
+        return requiredTapCount(gameData, creature) > 0;
+    }
+
     public boolean canPayBlockCost(GameData gameData, Permanent blocker) {
         Set<UUID> declaredIds = new HashSet<>();
         gameData.forEachPermanent((ignored, permanent) -> {

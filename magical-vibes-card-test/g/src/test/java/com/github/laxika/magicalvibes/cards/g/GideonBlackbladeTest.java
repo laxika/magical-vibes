@@ -89,6 +89,22 @@ class GideonBlackbladeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("+1 activated with no target asks for no target as it resolves and grants nothing")
+    void plusOneWithNoTargetResolvesWithNone() {
+        Permanent gideon = addReadyGideon(player1, 4);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Vigilance");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("-6 exiles a target nonland permanent")
     void minusSixExilesNonlandPermanent() {
         addReadyGideon(player1, 6);

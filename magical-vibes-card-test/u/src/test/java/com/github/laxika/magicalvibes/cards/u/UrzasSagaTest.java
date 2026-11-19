@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.e.EsperSentinel;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({UrzasSaga.class, Ornithopter.class, GrizzlyBears.class, ChromaticStar.class,
-        EsperSentinel.class, SolTalisman.class})
+        EsperSentinel.class, SolTalisman.class, BloodMoon.class})
 class UrzasSagaTest extends BaseCardTest {
 
     @Test
@@ -74,6 +75,7 @@ class UrzasSagaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III finds only an artifact whose mana cost is exactly {0} or {1}")
     void chapterIIIRequiresExactGenericManaCost() {
         addSagaWithLore(2);
         Ornithopter ornithopter = new Ornithopter();
@@ -89,6 +91,7 @@ class UrzasSagaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III may find nothing, and the Saga is still sacrificed")
     void chapterIIIDoesNotRequireFindingAnArtifact() {
         Permanent saga = addSagaWithLore(2);
         Ornithopter ornithopter = new Ornithopter();
@@ -103,6 +106,7 @@ class UrzasSagaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Construct counts only its controller's artifacts and updates as they change")
     void constructCountsOnlyItsControllersArtifactsAndUpdatesContinuously() {
         Permanent saga = addSagaWithLore(1);
         harness.addToBattlefield(player2, new Ornithopter());
@@ -125,6 +129,7 @@ class UrzasSagaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Playing it triggers chapter I, and its mana ability stays through chapter II")
     void playingSagaTriggersChapterIAndRetainsManaAbilityThroughChapterII() {
         harness.setHand(player1, List.of(new UrzasSaga()));
         harness.forceActivePlayer(player1);
@@ -147,6 +152,45 @@ class UrzasSagaTest extends BaseCardTest {
         harness.activateAbility(player1, sagaIndex, 1, null, null);
         harness.passBothPriorities();
         assertThat(countPermanents(player1, "Construct")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Under Blood Moon it has no chapter abilities, so it gets no lore counter and no chapter triggers")
+    void bloodMoonStopsLoreCountersAndChapters() {
+        Permanent saga = addSagaWithLore(1);
+        harness.addToBattlefield(player2, new BloodMoon());
+
+        resolveNextChapter();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Construct")).isZero();
+    }
+
+    @Test
+    @DisplayName("Played under Blood Moon it keeps its intrinsic entry lore counter but triggers no chapter")
+    void playedUnderBloodMoonEntersWithALoreCounter() {
+        harness.addToBattlefield(player2, new BloodMoon());
+        harness.setHand(player1, List.of(new UrzasSaga()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        Permanent saga = findPermanent(player1, "Urza's Saga");
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Under Blood Moon it isn't sacrificed with as many lore counters as its printed final chapter")
+    void bloodMoonSagaIsNotSacrificed() {
+        Permanent saga = addSagaWithLore(3);
+        harness.addToBattlefield(player2, new BloodMoon());
+
+        resolveNextChapter();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }
 
     private Permanent addSagaWithLore(int lore) {

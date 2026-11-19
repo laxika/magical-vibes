@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,7 +22,21 @@ import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 @CardUsed({AlchemistsGambit.class, PersistentSpecimen.class})
 class AlchemistsGambitTest extends BaseCardTest {
 
+    /**
+     * Empties both opening hands and stocks player 1's library with cards it can't cast: a random land in hand or
+     * drawn during the extra turn is a play that stops auto-pass in the postcombat main phase instead of the end
+     * step, so whether the delayed loss trigger is reached would change from run to run.
+     */
+    @BeforeEach
+    void fixHandsAndDraws() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new PersistentSpecimen(), new PersistentSpecimen(),
+                new PersistentSpecimen(), new PersistentSpecimen(), new PersistentSpecimen()));
+    }
+
     @Test
+    @DisplayName("Cast normally, it gives an extra turn with a delayed loss and is exiled")
     void normalCastQueuesExtraTurnAndDelayedLossAndExilesSpell() {
         AlchemistsGambit card = castNormally();
 
@@ -30,6 +46,7 @@ class AlchemistsGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cast with cleave, it gives an extra turn without the delayed loss and is exiled")
     void cleaveCastQueuesExtraTurnWithoutDelayedLossAndExilesSpell() {
         AlchemistsGambit card = castCleaved();
 
@@ -54,6 +71,7 @@ class AlchemistsGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage can't be prevented during the extra turn")
     void damageCannotBePreventedDuringTheExtraTurn() {
         enableAutoStop();
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
@@ -76,6 +94,7 @@ class AlchemistsGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its controller loses only at the end step of the extra turn it gave")
     void lossTriggersOnlyAtTheGrantedTurnsEndStep() {
         enableAutoStop();
         castNormally();
@@ -97,6 +116,7 @@ class AlchemistsGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The cleaved extra turn's damage can't be prevented, but it causes no loss")
     void cleavedTurnRemainsUnpreventableButDoesNotCauseLoss() {
         enableAutoStop();
         castCleaved();
@@ -117,6 +137,7 @@ class AlchemistsGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A later cleaved extra turn is taken before the extra turn with the delayed loss")
     void laterCleavedTurnIsTakenBeforeTheTurnWithDelayedLoss() {
         enableAutoStop();
         castNormally();

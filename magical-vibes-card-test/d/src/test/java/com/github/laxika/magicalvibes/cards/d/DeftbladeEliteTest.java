@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinDynamo;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeftbladeElite.class, GrizzlyBears.class, FountainOfYouth.class, GoblinDynamo.class})
+@CardUsed({DeftbladeElite.class, GrizzlyBears.class, FountainOfYouth.class, GoblinDynamo.class, PhantasmalBear.class})
 class DeftbladeEliteTest extends BaseCardTest {
 
     @Test
@@ -85,6 +86,34 @@ class DeftbladeEliteTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Provoke must target a creature defending player controls when there is one; only the may is optional")
+    void provokeTargetIsNotOptional() {
+        addCreatureReady(player1, new DeftbladeElite());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(blocker.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The chosen creature becomes the target as provoke is put on the stack")
+    void chosenCreatureBecomesTheTarget() {
+        addCreatureReady(player1, new DeftbladeElite());
+        Permanent bear = addCreatureReady(player2, new PhantasmalBear());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bear.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof PhantasmalBear);
     }
 
     @Test

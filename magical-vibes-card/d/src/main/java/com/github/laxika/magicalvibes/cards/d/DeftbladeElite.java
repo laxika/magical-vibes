@@ -27,7 +27,7 @@ public class DeftbladeElite extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
-                "Target must be a creature defending player controls"), 0, 1)
+                "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(), new MayEffect(
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.TARGET),

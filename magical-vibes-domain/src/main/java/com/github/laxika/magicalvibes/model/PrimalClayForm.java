@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.model;
 /**
  * The three shapes Primal Clay can become as it enters the battlefield
  * ("your choice of a 3/3 artifact creature, a 2/2 artifact creature with flying, or a 1/6 Wall
- * artifact creature with defender"). The chosen shape's base power/toughness, keyword, and extra
- * creature type are locked in for the life of the permanent (a CR 614.1c "as it enters" choice).
+ * artifact creature with defender"), a CR 614.1c "as it enters" choice. The chosen shape's power/toughness, keyword
+ * and extra creature type become the permanent's copiable values (CR 707.2).
  */
 public enum PrimalClayForm {
 

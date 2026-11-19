@@ -78,7 +78,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithS
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -2758,17 +2757,28 @@ public class BattlefieldPlacementService {
                 continue;
             }
 
-            permanent.getCopiableEntryCharacteristics().add(characteristics);
-            characteristics.addedCardTypes().forEach(cardType -> grantOnEntry(gameData, controllerId, permanent,
-                    new GrantCardTypeEffect(cardType, GrantScope.TARGET)));
-            characteristics.addedSubtypes().forEach(subtype -> grantOnEntry(gameData, controllerId, permanent,
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET)));
-
-            if (characteristics.basePower() != null || characteristics.baseToughness() != null) {
-                grantOnEntry(gameData, controllerId, permanent, new SetBasePowerToughnessEffect(
-                        characteristics.basePower(), characteristics.baseToughness(), GrantScope.TARGET,
-                        Duration.PERMANENT));
+            // "As a permanent you control enters, it becomes ...": an "as ... enters" ability that sets power and
+            // toughness (and more), so the permanent enters with these as copiable values (CR 707.2), applied in
+            // layer 1 (CR 613.1a); a copy of it takes them too.
+            Card converted = permanent.getCard().createRuntimeCopy();
+            Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+            additionalTypes.addAll(converted.getAdditionalTypes());
+            characteristics.addedCardTypes().stream()
+                    .filter(type -> type != converted.getType())
+                    .forEach(additionalTypes::add);
+            List<CardSubtype> subtypes = new ArrayList<>(converted.getSubtypes());
+            characteristics.addedSubtypes().stream()
+                    .filter(subtype -> !subtypes.contains(subtype))
+                    .forEach(subtypes::add);
+            converted.setAdditionalTypes(additionalTypes);
+            converted.setSubtypes(subtypes);
+            if (characteristics.basePower() != null) {
+                converted.setPower(characteristics.basePower());
             }
+            if (characteristics.baseToughness() != null) {
+                converted.setToughness(characteristics.baseToughness());
+            }
+            permanent.setCard(converted);
         }
     }
 

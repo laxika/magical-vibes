@@ -18,7 +18,7 @@ public class PrimalClay extends Card {
     public PrimalClay() {
         // As this creature enters, it becomes your choice of a 3/3 artifact creature, a 2/2 artifact
         // creature with flying, or a 1/6 Wall artifact creature with defender. The chosen shape's
-        // base P/T, keyword, and creature type are stamped onto the permanent when the choice resolves.
+        // P/T, keyword, and creature type become the permanent's copiable values when the choice resolves.
         addStaticEffect(new ChoosePrimalClayFormOnEnterEffect());
     }
 }

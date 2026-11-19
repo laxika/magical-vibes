@@ -2449,6 +2449,10 @@ class StepTriggerServiceTest {
             lenient().when(gameQueryService.replaceCounters(any(), any(Permanent.class), eq(CounterType.LORE),
                     org.mockito.ArgumentMatchers.anyInt(), any(UUID.class)))
                     .thenAnswer(invocation -> invocation.getArgument(3));
+            lenient().when(gameQueryService.sagaFinalChapterNumber(any(), any(Permanent.class)))
+                    .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getSagaFinalChapter());
+            lenient().when(gameQueryService.sagaChapterAbilities(any(), any(Permanent.class)))
+                    .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getTriggeredAbilities());
         }
 
         @Test
@@ -2510,6 +2514,7 @@ class StepTriggerServiceTest {
         @DisplayName("Saga on active player's battlefield gets a lore counter at precombat main")
         void sagaGetsLoreCounterAtPrecombatMain() {
             Card saga = createSaga("Test Saga");
+            saga.addTrigger(Triggers.chapter(3), new GainLifeEffect(1));
             Permanent perm = new Permanent(saga);
             perm.setCounterCount(CounterType.LORE, 1); // already has 1 from ETB
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -2517,6 +2522,23 @@ class StepTriggerServiceTest {
             sut.handlePrecombatMainTriggers(gd);
 
             assertThat(perm.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("CR 715.3c: a Saga with no chapter abilities as the layers leave it gets no lore counter")
+        void sagaWithoutChapterAbilitiesGetsNoLoreCounter() {
+            Card saga = createSaga("Test Saga");
+            saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(1));
+            Permanent perm = new Permanent(saga);
+            perm.setCounterCount(CounterType.LORE, 1);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(gameQueryService.sagaFinalChapterNumber(gd, perm)).thenReturn(0);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(perm.getCounterCount(CounterType.LORE)).isEqualTo(1);
+            verify(sagaChapterService, never()).putChapterAbility(any(), any(), any(), any(),
+                    org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
         }
 
         @Test

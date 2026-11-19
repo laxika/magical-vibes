@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.Cytoshape;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.k.KarplusanMinotaur;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoltenSentry.class, KarplusanMinotaur.class, Cytoshape.class})
+@CardUsed({MoltenSentry.class, KarplusanMinotaur.class, Cytoshape.class, Humility.class})
 class MoltenSentryTest extends BaseCardTest {
 
     @Test
@@ -105,5 +106,18 @@ class MoltenSentryTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("coin flip for Molten Sentry")).count())
                 .isEqualTo(flipsBefore);
+    }
+
+    @Test
+    @DisplayName("The flipped form is a copiable value, so an earlier Humility still makes it a 1/1 with no abilities")
+    void earlierHumilityOverridesTheFlippedForm() {
+        harness.addToBattlefield(player2, new Humility());
+
+        Permanent sentry = harness.enterBattlefieldAndReturn(player1, new MoltenSentry());
+
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, sentry, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sentry, Keyword.DEFENDER)).isFalse();
     }
 }

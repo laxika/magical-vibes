@@ -276,6 +276,24 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({BerserkersOfBloodRidge.class, DuelingGrounds.class})
+        @DisplayName("CR 508.1d: under a one-attacker limit only one of two forced creatures is flagged, and it may attack alone")
+        void attackerLimitLetsOnlyOneForcedCreatureAttack() {
+            harness.addToBattlefield(player2, new DuelingGrounds());
+            Permanent first = addCreatureReady(player1, new BerserkersOfBloodRidge());
+            Permanent second = addCreatureReady(player1, new BerserkersOfBloodRidge());
+
+            List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
+            assertThat(service().getMustAttackIndices(gd, player1.getId(), attackable))
+                    .hasSize(1)
+                    .isSubsetOf(index(first), index(second));
+
+            enterDeclareAttackers();
+
+            assertThatCode(() -> declare(List.of(index(second)))).doesNotThrowAnyException();
+        }
+
+        @Test
         @DisplayName("A forced creature that cannot satisfy its group restriction may stay home")
         @CardUsed(OrcishConscripts.class)
         void forcedRestrictedCreatureMayStayHomeWhenNoLegalDeclarationIncludesIt() {

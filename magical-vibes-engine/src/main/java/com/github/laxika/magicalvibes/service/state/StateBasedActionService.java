@@ -715,7 +715,8 @@ public class StateBasedActionService {
         gameData.forEachPermanent((playerId, p) -> {
             if (processedIds.contains(p.getId())) return;
             if (!p.getCard().isSaga()) return;
-            int finalChapter = p.getCard().getSagaFinalChapter();
+            // Only a Saga with one or more chapter abilities, as the layers leave it, is sacrificed (CR 704.5s).
+            int finalChapter = gameQueryService.sagaFinalChapterNumber(gameData, p);
             if (finalChapter <= 0 || p.getCounterCount(CounterType.LORE) < finalChapter) return;
 
             boolean chapterOnStack = gameData.stack.stream()

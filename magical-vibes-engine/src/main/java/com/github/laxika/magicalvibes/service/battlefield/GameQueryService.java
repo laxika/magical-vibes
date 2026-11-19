@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14119,6 +14120,58 @@ public class GameQueryService {
         } finally {
             layerSystemService.endPass(pass);
         }
+    }
+
+    /**
+     * Whether an effect makes {@code permanent} lose all its abilities, or all its non-mana abilities (Humility). Unlike
+     * {@link #hasLostPrintedAbilities}, a basic land type set on a land (Blood Moon) doesn't count: it removes only the
+     * abilities generated from the land's rules text (CR 305.7), so intrinsic abilities the rules give it remain.
+     */
+    public boolean losesAllAbilitiesByEffects(GameData gameData, Permanent permanent) {
+        if (gameData.losesAllAbilitiesByEffect(permanent)) {
+            return true;
+        }
+        CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
+        if (activeState != null) {
+            return activeState.isLosesAllAbilities() || activeState.isLosesAllNonManaAbilities();
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = pass.board().states().get(permanent.getId());
+            return state != null && (state.isLosesAllAbilities() || state.isLosesAllNonManaAbilities());
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
+    /**
+     * The chapter abilities Saga {@code saga} has as the layers leave it (CR 715.2): its card's, unless it lost its
+     * printed abilities (CR 613.1f), in the order they were added.
+     */
+    public List<TriggeredAbility> sagaChapterAbilities(GameData gameData, Permanent saga) {
+        if (saga.isFaceDown() || hasLostPrintedAbilities(gameData, saga)) {
+            return List.of();
+        }
+        return saga.getCard().getTriggeredAbilities().stream()
+                .filter(ability -> ability.conditions().stream()
+                        .anyMatch(condition -> condition.trigger() instanceof ChapterTrigger))
+                .toList();
+    }
+
+    /**
+     * Saga {@code saga}'s final chapter number as the layers leave it: the greatest value among the chapter abilities
+     * it has, 0 when it has none (CR 715.2d).
+     */
+    public int sagaFinalChapterNumber(GameData gameData, Permanent saga) {
+        int finalChapter = 0;
+        for (TriggeredAbility ability : sagaChapterAbilities(gameData, saga)) {
+            for (var condition : ability.conditions()) {
+                if (condition.trigger() instanceof ChapterTrigger chapter) {
+                    finalChapter = Math.max(finalChapter, chapter.chapter());
+                }
+            }
+        }
+        return finalChapter;
     }
 
     public boolean hasLostPrintedAbilities(GameData gameData, Permanent permanent) {

@@ -845,6 +845,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger (1,243 card test classes, route tests; 10,911 tests pass): only converted `floating` lines added; triggers differ only by random draws, coins and the new tests.
 - Left: while-attached copies (Blade of Shared Souls, Assimilation Aegis: `copyWhileAttached`, `whileAttachedPreCopyCard`), Peace Talks' `peaceTalksTurnsRemaining`, `onlyAggressiveCreaturesCanAttackThisCombat`.
 
+**D (part 22: rules fixes from the triage).**
+- Attack and block requirement maximums (CR 508.1d, 509.1c) come from a search over the declarations that disobey no restriction and need no cost (taxes, tap, sacrifice and return costs; alone, power and count restrictions; attacker caps), so a cap limits how many requirements must be obeyed (`SilentArbiterTest`, fails before); conditional requirements only demand creatures that can legally join.
+- Primal Clay's shape, Molten Sentry's flip and Displaced Dinosaurs' 7/7 Dinosaur are copiable values swapped into the card (layer 1, CR 707.2, 613.1a), so an earlier Humility or Godhead of Awe wins; gone: `primalClayForm`, `entryCoinFlipHeads`, `copiableEntryCharacteristics`.
+- An activated ability whose targets were announced (CR 602.2b, 601.2c) never asks for one as it resolves (Gideon Blackblade's +1). Deftblade Elite's provoke target is required, so with none the trigger is removed (CR 702.39a, 603.3d).
+- Sagas read their chapter abilities through the layers for the chapter triggers, the main-phase lore counter (CR 715.3c) and the sacrifice (CR 704.5s); a Saga entering under a lose-all-abilities effect has no intrinsic lore-counter ability (CR 715.3a, 614.12), while a CR 305.7 land type (Blood Moon) keeps it.
+- Alchemist's Gambit's tests fix both hands and draws (the random opening hand stopped auto-pass).
+- Left: the AI's must-attack-alongside hint ignores count caps; the requirement searches stop after 200,000 nodes.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

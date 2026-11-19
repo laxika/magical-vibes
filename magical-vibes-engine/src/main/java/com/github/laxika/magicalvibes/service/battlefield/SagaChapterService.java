@@ -62,6 +62,11 @@ public class SagaChapterService {
             return;
         }
 
+        // CR 715.3a: "this Saga enters with a lore counter on it" is an intrinsic ability, so a Saga entering while an
+        // effect that already exists makes it lose all abilities (CR 614.12) enters without one.
+        if (gameQueryService.losesAllAbilitiesByEffects(gameData, sagaPermanent)) {
+            return;
+        }
         initializeSagaAtChapter(gameData, sagaPermanent, card, controllerId, 1);
     }
 
@@ -164,8 +169,10 @@ public class SagaChapterService {
      * Puts {@code card}'s chapter ability {@code loreCount} on the stack through the stack door, whole (CR 603.3), with
      * the Saga as it was when it triggered and whether the chapter was copied ({@code null} Saga for one copied from a
      * Saga card that isn't on the battlefield): the door chooses its mode, its random mode and the targets its chapter
-     * declares as it goes there (CR 603.3c, 603.3d). Reaching the final chapter triggers the "whenever the final chapter
-     * ability of a Saga you control triggers" abilities. The choices it queued are begun by the caller.
+     * declares as it goes there (CR 603.3c, 603.3d). A Saga on the battlefield triggers only the chapter abilities it
+     * has as the layers leave it (none once it lost its abilities, CR 613.1f). Reaching the final chapter triggers the
+     * "whenever the final chapter ability of a Saga you control triggers" abilities. The choices it queued are begun by
+     * the caller.
      */
     public void putChapterAbility(GameData gameData, Permanent sagaPermanent, Card card, UUID controllerId,
                                   int loreCount, boolean copied) {
@@ -173,8 +180,9 @@ public class SagaChapterService {
             return;
         }
         ChapterTrigger chapter = Triggers.chapter(loreCount);
-        List<TriggeredAbility> chapterAbilities = card.getTriggeredAbilities().stream()
-                .filter(ability -> ability.hasTrigger(chapter)).toList();
+        List<TriggeredAbility> chapterAbilities = (sagaPermanent == null || copied
+                ? card.getTriggeredAbilities() : gameQueryService.sagaChapterAbilities(gameData, sagaPermanent))
+                .stream().filter(ability -> ability.hasTrigger(chapter)).toList();
         if (chapterAbilities.isEmpty()) {
             return;
         }
@@ -197,7 +205,9 @@ public class SagaChapterService {
                 log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapter.numeral());
             }
         }
-        if (!copied && loreCount == card.getSagaFinalChapter()) {
+        int finalChapter = sagaPermanent == null ? card.getSagaFinalChapter()
+                : gameQueryService.sagaFinalChapterNumber(gameData, sagaPermanent);
+        if (!copied && loreCount == finalChapter) {
             gameData.rulesEvents.occur(new SagaEvent(SagaEvent.Kind.FINAL_CHAPTER_TRIGGERED, controllerId, card.getManaValue()));
         }
     }

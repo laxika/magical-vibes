@@ -705,8 +705,8 @@ public class StepTriggerService {
     }
 
     /**
-     * Adds a lore counter to each Saga the active player controls and triggers
-     * the appropriate chapter ability (CR 715.3c, 715.2b).
+     * Adds a lore counter to each Saga the active player controls with one or more chapter abilities, as the layers
+     * leave it, and triggers the appropriate chapter ability (CR 715.3c, 715.2b).
      * Called at the beginning of the active player's precombat main phase.
      */
     private void handleSagaLoreCounters(GameData gameData) {
@@ -717,6 +717,7 @@ public class StepTriggerService {
         // Collect Sagas first to avoid ConcurrentModificationException
         List<Permanent> sagas = battlefield.stream()
                 .filter(p -> p.getCard().isSaga() && !p.getCard().isBedtimeStory())
+                .filter(p -> gameQueryService.sagaFinalChapterNumber(gameData, p) > 0)
                 .toList();
 
         // Each lore counter is placed through the replacement pipeline (Vorinclex doubles or halves it),
