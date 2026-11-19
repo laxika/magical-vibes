@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -44,7 +44,7 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageHandler
 
         if (accepted) {
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                    effect.damage(), DamageRecipient.TARGET_PLAYER);
+                    effect.damage(), Subjects.targetPlayer());
             StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(damage)), ability.targetCardId(), ability.sourcePermanentId());

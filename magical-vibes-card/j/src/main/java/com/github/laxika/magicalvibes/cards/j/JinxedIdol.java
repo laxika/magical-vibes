@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,7 +22,7 @@ import java.util.List;
 public class JinxedIdol extends Card {
 
     public JinxedIdol() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToPlayersEffect(2, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

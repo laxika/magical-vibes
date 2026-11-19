@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyAndDealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -42,7 +42,7 @@ public class DiscardOwnHandThenDrawThatManyAndDealDamageEffectHandler implements
         if (conditionEvaluationService.isMet(gameData, e.condition(),
                 ConditionContext.forStackEntry(entry), entry.getEventValue())) {
             damageHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT));
+                    new DealDamageToPlayersEffect(new EventValue(), Subjects.eachOpponent()));
         }
     }
 }

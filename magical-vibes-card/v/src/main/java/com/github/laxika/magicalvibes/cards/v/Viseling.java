@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,6 +23,6 @@ public class Viseling extends Card {
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),
                                 new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4))),
-                        DamageRecipient.ACTIVE_PLAYER));
+                        Subjects.triggeringPlayer()));
     }
 }

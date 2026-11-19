@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -54,7 +54,7 @@ public class CoolButRude extends Card {
 
         addTrigger(Triggers.youDiscardCard(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
         addTrigger(Triggers.reachesLevelThree(), new SearchLibraryEffect(),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
     }

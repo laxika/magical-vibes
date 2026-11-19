@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class TortureChamber extends Card {
         // At the beginning of your end step, Torture Chamber deals damage to you equal to the
         // number of pain counters on it.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(new CountersOnSource(CounterType.PAIN), DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(new CountersOnSource(CounterType.PAIN), Subjects.you()));
 
         // {1}, {T}, Remove all pain counters from Torture Chamber: It deals damage to target
         // creature equal to the number of pain counters removed this way.

@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -23,7 +23,7 @@ public class RiskFactor extends Card {
                 "Target must be an opponent."
         )).addSpellEffect(TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
             new ChooseOneEffect.ChooseOneOption("Have Risk Factor deal 4 damage to you",
-                    new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER)),
+                    new DealDamageToPlayersEffect(4, Subjects.targetPlayer())),
             new ChooseOneEffect.ChooseOneOption("Draw three cards", new DrawCardEffect(3))
         )));
         addCastingOption(new JumpStartCast());

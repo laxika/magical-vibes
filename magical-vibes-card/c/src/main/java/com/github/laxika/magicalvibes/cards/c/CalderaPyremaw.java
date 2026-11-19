@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -32,6 +32,6 @@ public class CalderaPyremaw extends Card {
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
                         .withFilter(INSTANT_OR_SORCERY),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(new SourcePower(), Subjects.targetPlayer()));
     }
 }

@@ -16,7 +16,7 @@ import java.util.Objects;
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
-        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.Except {
+        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.Except {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -153,6 +153,18 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
 
     /** "The chosen players": every player the source permanent chose as it entered, in APNAP order. */
     record ChosenPlayers() implements PlayerSubject {
+    }
+
+    /**
+     * The players who said yes to the preceding "each player may" choice of the same resolution, as the stack entry
+     * recorded them ("each opponent who discarded their hand this way"); a step result.
+     */
+    record AcceptedPlayers() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
     }
 
     /**

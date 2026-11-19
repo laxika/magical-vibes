@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinsWithResultEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,7 @@ class FlipCoinsWithResultEffectsEffectHandlerTest extends AbstractPlayerInteract
     void dispatchesWinAndLossEffectsForEveryFlip() {
         Card card = createCard("Yusri, Fortune's Flame");
         CardEffect win = new DrawCardEffect(1);
-        CardEffect loss = new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER);
+        CardEffect loss = new DealDamageToPlayersEffect(2, Subjects.you());
         CardEffect allWins = new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
                 new AlternativeCostForSpellsEffect("{0}", null, null, false, true));
         EffectHandler winHandler = registerMockHandler(win);
@@ -51,7 +51,7 @@ class FlipCoinsWithResultEffectsEffectHandlerTest extends AbstractPlayerInteract
     void dispatchesFiveWinRewardOnlyAfterFiveWins() {
         Card card = createCard("Yusri, Fortune's Flame");
         CardEffect win = new DrawCardEffect(1);
-        CardEffect loss = new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER);
+        CardEffect loss = new DealDamageToPlayersEffect(2, Subjects.you());
         CardEffect allWins = new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
                 new AlternativeCostForSpellsEffect("{0}", null, null, false, true));
         EffectHandler winHandler = registerMockHandler(win);

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValueDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -73,7 +73,7 @@ public class PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValue
         entry.rememberLastKnownPermanentCard(permanent.getId(), card);
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
         entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new DealDamageToPlayersEffect(new TargetManaValue(), DamageRecipient.CONTROLLER)));
+                List.of(new DealDamageToPlayersEffect(new TargetManaValue(), Subjects.you())));
 
         if (cloneService.prepareCloneReplacementEffect(
                 gameData, entry.getControllerId(), card, null)) {

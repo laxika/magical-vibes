@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class PainDistributor extends Card {
         addTrigger(Triggers.playerCastsSpell().nthThisTurn(1),
                 new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)));
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.OPPONENT_CONTROLS),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.triggering())));
     }
 }

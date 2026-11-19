@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class StingSlinger extends Card {
                 true,
                 "{1}{R}",
                 List.of(new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)),
+                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())),
                 "{1}{R}, {T}, Blight 1: This creature deals 2 damage to each opponent."
         ));
     }

@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddCounterThenPayCountersOrTapAndDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +56,7 @@ public class AddCounterThenPayCountersOrTapAndDamageEffectHandler implements Nor
         ForcedCostOrElseEffect punish = new ForcedCostOrElseEffect(
                 new PayManaCost("{" + Math.max(0, x) + "}"),
                 List.of(new TapPermanentsEffect(TapUntapScope.SELF),
-                        new DealDamageToPlayersEffect(Math.max(0, x), DamageRecipient.CONTROLLER)),
+                        new DealDamageToPlayersEffect(Math.max(0, x), Subjects.you())),
                 true);
         forcedCostOrElseEffectHandler.resolve(gameData, entry, punish);
     }

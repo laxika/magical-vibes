@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +46,6 @@ public class TargetCreatureDealsPowerDamageToEachOpponentEffectHandler implement
                 null,
                 source.getId());
         dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry,
-                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(new SourcePower(), Subjects.eachOpponent()));
     }
 }

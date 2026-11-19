@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +28,6 @@ public class ErgRaiders extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new DidntAttack()),
                 new ConditionalEffect(
                         new NotCondition(new CameUnderControlThisTurn()),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)));
+                        new DealDamageToPlayersEffect(2, Subjects.you())));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class Scabland extends Card {
                 null,
                 List.of(
                         new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.WHITE)),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)
+                        new DealDamageToPlayersEffect(1, Subjects.you())
                 ),
                 "{T}: Add {R} or {W}. This land deals 1 damage to you."
         ));

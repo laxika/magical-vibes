@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class TuktukScrapper extends Card {
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new MayEffect(DestroyTargetPermanentThenEffect.ifDiesThisWay(
                         EventStat.NONE,
-                        new DealDamageToPlayersEffect(allies, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(allies, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
                         null),
                         "Destroy target artifact?"));

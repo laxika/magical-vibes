@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -17,7 +17,7 @@ public class GoblinArtillery extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(SequenceEffect.simultaneous(new DealDamageToAnyTargetEffect(2), new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER))),
+                List.of(SequenceEffect.simultaneous(new DealDamageToAnyTargetEffect(2), new DealDamageToPlayersEffect(3, Subjects.you()))),
                 "{T}: Goblin Artillery deals 2 damage to any target and 3 damage to you."
         ));
     }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "STX", collectorNumber = "156")
 public class RowanScholarOfSparks extends Card {
@@ -42,8 +42,8 @@ public class RowanScholarOfSparks extends Card {
                 1,
                 List.of(new ConditionalReplacementEffect(
                         new ControllerDrewAtLeastCardsThisTurn(3),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                        new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT))),
+                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
+                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent()))),
                 "+1: Rowan deals 1 damage to each opponent. If you've drawn three or more cards this turn, she deals 3 damage to each opponent instead."));
         addActivatedAbility(new ActivatedAbility(
                 -4,

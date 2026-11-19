@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,11 +24,11 @@ public class SyrKonradTheGrim extends Card {
 
     public SyrKonradTheGrim() {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
         addTrigger(Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
         addTrigger(Triggers.leavesGraveyard(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

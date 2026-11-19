@@ -15,6 +15,8 @@ resolver's static entry point rejects the others).
 | `attachedAtTrigger()` | "that creature" after "at the beginning of the upkeep of enchanted creature's controller" (the host the stack entry recorded when the ability triggered or was activated, not the current one; Paroxysm, Venarian Gold) | no | no |
 | `triggering()` | "it", "that creature" (the permanent the trigger event was about) | no | no |
 | `triggeringCard()` | "that card" of a "whenever you play a card" event (the spell or land; with `ownerOf`, "its owner", which for an event with no spell or land is the owner of the card put into a graveyard or of the permanent that entered) | no | no |
+| `targetSpell()` | "target spell", only inside `controllerOf` ("that spell's controller"): read from the stack, else as it was countered; names no permanent; the effect reading it declares the spell target | no | no |
+| `triggeringSpell()` | "that spell or ability", only inside `controllerOf`: the spell or ability the trigger event was about, as it is on the stack or last was | no | no |
 | `returned()` | "that creature" after "return target card ... to the battlefield" (step result) | no | no |
 | `controlledBy(players, filter)` | "each creature you control", "all creatures", "each land target player controls" | only if `players` targets | if `players` may |
 | `allOf(subjects...)` | "this creature and target creature" | if one part targets | if every part may |
@@ -35,8 +37,9 @@ resolver's static entry point rejects the others).
 | `activePlayer()` | "the active player" | no | yes |
 | `defendingPlayer()` | "defending player" | no | no |
 | `enchantedPlayer()` | "enchanted player" (a Curse's player) | no | yes |
-| `chosenPlayer()` | "the chosen player" (chosen as the source entered; while the enters ability that chooses it is still on the stack, that ability's target: Laquatus's Champion) | no | yes |
+| `chosenPlayer()` | "the chosen player" (chosen as the source entered; while the enters ability that chooses it is still on the stack, that ability's target: Laquatus's Champion; for a spell, the player an earlier effect of the spell chose onto the entry: Backdraft) | no | yes |
 | `chosenPlayers()` | "the chosen players" (every player chosen as the source entered) | no | yes |
+| `acceptedPlayers()` | "each opponent who discarded their hand this way": the players who said yes to the preceding "each player may" choice of the same resolution (step result); `except(acceptedPlayers(), you())` for the opponents among them | no | no |
 | `except(players, excluded)` | "the other chosen player": `except(chosenPlayers(), triggeringPlayer())` | no | if both may |
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target

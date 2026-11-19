@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class MaximumCarnage extends Card {
                 GoadCreaturesUntilNextTurnEffect.requirementOnly(new PermanentTruePredicate()));
         addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED, 3));
         addTrigger(Triggers.chapter(3),
-                new DealDamageToPlayersEffect(5, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(5, Subjects.eachOpponent()));
     }
 }

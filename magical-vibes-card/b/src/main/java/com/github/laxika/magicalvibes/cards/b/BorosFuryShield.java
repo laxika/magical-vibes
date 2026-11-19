@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -35,7 +35,7 @@ public class BorosFuryShield extends Card {
                 .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures())
                 .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED),
-                        new DealDamageToPlayersEffect(new TargetPower(), DamageRecipient.TARGET_PERMANENT_CONTROLLER)
+                        new DealDamageToPlayersEffect(new TargetPower(), Subjects.controllerOf(Subjects.target()))
                 ));
     }
 }

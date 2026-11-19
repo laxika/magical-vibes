@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class RuricTharTheUnbowed extends Card {
         // Whenever a player casts a noncreature spell, Ruric Thar deals 6 damage to that player.
         addTrigger(Triggers.playerCastsSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new DealDamageToPlayersEffect(6, DamageRecipient.TRIGGERING_PLAYER));
+                new DealDamageToPlayersEffect(6, Subjects.triggeringPlayer()));
     }
 }

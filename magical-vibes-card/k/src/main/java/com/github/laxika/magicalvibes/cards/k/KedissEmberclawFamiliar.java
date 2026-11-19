@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class KedissEmberclawFamiliar extends Card {
     public KedissEmberclawFamiliar() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCommanderPredicate()),
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OTHER_OPPONENT).dealtByEventDamageSource());
+                new DealDamageToPlayersEffect(new EventValue(), Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer())).dealtByEventDamageSource());
     }
 }

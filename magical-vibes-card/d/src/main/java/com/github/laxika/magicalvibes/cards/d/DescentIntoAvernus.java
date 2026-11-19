@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +22,6 @@ public class DescentIntoAvernus extends Card {
                 new EachPlayerCreatesTokenEffect(
                         CreateTokenEffect.ofTreasureToken(new CountersOnSource(CounterType.DESCENT))),
                 new DealDamageToPlayersEffect(
-                        new CountersOnSource(CounterType.DESCENT), DamageRecipient.EACH_PLAYER)));
+                        new CountersOnSource(CounterType.DESCENT), Subjects.eachPlayer())));
     }
 }

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class VoldarenEpicure extends Card {
     public VoldarenEpicure() {
         // When this creature enters, it deals 1 damage to each opponent. Create a Blood token.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 CreateTokenEffect.ofBloodToken(1));
     }
 }

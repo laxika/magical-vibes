@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class FanaticOfMogis extends Card {
         // When this creature enters, it deals damage to each opponent equal to your red devotion.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToPlayersEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED),
-                DamageRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
     }
 }

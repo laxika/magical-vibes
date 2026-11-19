@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class BailOut extends Card {
 
         SequenceEffect returnAndDamage = SequenceEffect.of(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(true, false, java.util.Set.of(), null, false, true),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnAndDamage)),

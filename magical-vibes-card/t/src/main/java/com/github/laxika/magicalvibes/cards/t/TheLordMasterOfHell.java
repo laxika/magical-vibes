@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,6 +22,6 @@ public class TheLordMasterOfHell extends Card {
         ));
         addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(
                 new CardsInGraveyard(noncreatureNonland, CountScope.CONTROLLER),
-                DamageRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
     }
 }

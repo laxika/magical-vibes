@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +17,7 @@ public class MinionMissile extends Card {
         addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature"));
         target(TargetFilters.creature())
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(2, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -23,7 +23,7 @@ public class UnlicensedDisintegration extends Card {
         target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 new ConditionalEffect(
                         new ControlsPermanent(new PermanentIsArtifactPredicate()),
-                        new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER)),
+                        new DealDamageToPlayersEffect(3, Subjects.targetPlayer())),
                 ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

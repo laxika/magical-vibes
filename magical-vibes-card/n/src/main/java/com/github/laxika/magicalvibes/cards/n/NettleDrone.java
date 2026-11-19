@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class NettleDrone extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
                 "{T}: Nettle Drone deals 1 damage to each opponent."
         ));
 

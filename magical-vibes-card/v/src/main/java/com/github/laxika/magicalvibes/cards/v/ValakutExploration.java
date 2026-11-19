@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,6 +27,6 @@ public class ValakutExploration extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceExiledCardsThreshold(1)),
                 SequenceEffect.of(
                         new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect(),
-                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT)));
+                        new DealDamageToPlayersEffect(new EventValue(), Subjects.eachOpponent())));
     }
 }

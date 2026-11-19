@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class ChandraFlamesCatalyst extends Card {
         // +1: Chandra deals 3 damage to each opponent.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(3, Subjects.eachOpponent())),
                 "+1: Chandra deals 3 damage to each opponent."
         ));
 

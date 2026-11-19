@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDamageAtNextUpkeepUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class RegisterDamageAtNextUpkeepUnlessPaysEffectHandler implements Normal
         // targets again (CR 115.10a).
         boolean targetsPlayer = gameData.playerIds.contains(targetId);
         CardEffect damage = targetsPlayer
-                ? new DealDamageToPlayersEffect(e.damage(), DamageRecipient.TRIGGERING_PLAYER)
+                ? new DealDamageToPlayersEffect(e.damage(), Subjects.triggeringPlayer())
                 : new DealDamageToTriggeringPermanentEffect(e.damage());
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
                 spellControllerId, entry.getCard(), new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), damage),

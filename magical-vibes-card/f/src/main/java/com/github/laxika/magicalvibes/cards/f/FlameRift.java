@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "NEM", collectorNumber = "80")
 @CardRegistration(set = "MH2", collectorNumber = "278")
 public class FlameRift extends Card {
 
     public FlameRift() {
-        addSpellEffect(new DealDamageToPlayersEffect(4, DamageRecipient.EACH_PLAYER));
+        addSpellEffect(new DealDamageToPlayersEffect(4, Subjects.eachPlayer()));
     }
 }

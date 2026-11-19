@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.RecordLastDiscardedCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "19")
@@ -24,6 +24,6 @@ public class RecklessHandling extends Card {
         addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
         addSpellEffect(new RecordLastDiscardedCardTypeEffect(CardType.ARTIFACT));
         addSpellEffect(new ConditionalEffect(new EventValueAtLeast(1),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
     }
 }

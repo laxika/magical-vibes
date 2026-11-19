@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrMillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -92,7 +92,7 @@ public class AnyPlayerMayTakeDamageOrMillTargetPlayerEffectHandler implements No
                            AnyPlayerMayTakeDamageOrMillTargetPlayerEffect effect,
                            UUID playerId) {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                effect.damage(), DamageRecipient.TARGET_PLAYER);
+                effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.SORCERY_SPELL,
                 ability.sourceCard(),

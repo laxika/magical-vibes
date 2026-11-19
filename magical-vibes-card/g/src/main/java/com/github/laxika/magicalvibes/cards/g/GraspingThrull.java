@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,7 +13,7 @@ public class GraspingThrull extends Card {
 
     public GraspingThrull() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
                 new GainLifeEffect(2));
     }
 }

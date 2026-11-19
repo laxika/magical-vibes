@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -29,7 +29,7 @@ public class HiredClaw extends Card {
         )).addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.LIZARD))),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, Subjects.targetPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

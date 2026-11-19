@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class FogwellsGym extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.RED),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)
+                        new DealDamageToPlayersEffect(1, Subjects.you())
                 ),
                 "{T}: Add {R}. This land deals 1 damage to you."
         ));

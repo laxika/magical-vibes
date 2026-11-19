@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RAV", collectorNumber = "117")
 @CardRegistration(set = "V13", collectorNumber = "14")
@@ -13,6 +13,6 @@ public class Char extends Card {
 
     public Char() {
         addSimultaneousSpellEffects(new DealDamageToAnyTargetEffect(4),
-                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(2, Subjects.you()));
     }
 }

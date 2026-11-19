@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -45,7 +45,7 @@ public class ChandraRoaringFlame extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(
-                        new DealDamageToPlayersEffect(6, DamageRecipient.EACH_OPPONENT),
+                        new DealDamageToPlayersEffect(6, Subjects.eachOpponent()),
                         new CreateEmblemEffect(
                                 List.of(),
                                 EMBLEM_TEXT,
@@ -53,7 +53,7 @@ public class ChandraRoaringFlame extends Card {
                                 List.of(),
                                 List.of(
                                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                                                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER))))
+                                                new DealDamageToPlayersEffect(3, Subjects.you()))))
                 ),
                 "−7: Chandra, Roaring Flame deals 6 damage to each opponent. Each player dealt "
                         + "damage this way gets an emblem with \"" + EMBLEM_TEXT + "\""

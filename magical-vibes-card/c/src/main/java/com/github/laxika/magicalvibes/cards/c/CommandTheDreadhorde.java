@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class CommandTheDreadhorde extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(creatureOrPlaneswalker,
                 GraveyardSearchScope.ALL_GRAVEYARDS), 0, Integer.MAX_VALUE)
-                .addSpellEffect(new DealDamageToPlayersEffect(new TargetCardsManaValueSum(true), DamageRecipient.CONTROLLER))
+                .addSpellEffect(new DealDamageToPlayersEffect(new TargetCardsManaValueSum(true), Subjects.you()))
                 .addSpellEffect(ReturnTargetCardsFromGraveyardToBattlefieldEffect.fromAllGraveyards(creatureOrPlaneswalker));
     }
 }

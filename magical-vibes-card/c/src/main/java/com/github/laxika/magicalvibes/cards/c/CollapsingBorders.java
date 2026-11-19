@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -22,6 +21,6 @@ public class CollapsingBorders extends Card {
                 new GainLifeEffect(
                         new BasicLandTypesAmongControlledLands(CountScope.TARGET_PLAYER),
                         Subjects.triggeringPlayer()),
-                new DealDamageToPlayersEffect(3, DamageRecipient.TRIGGERING_PLAYER)));
+                new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer())));
     }
 }

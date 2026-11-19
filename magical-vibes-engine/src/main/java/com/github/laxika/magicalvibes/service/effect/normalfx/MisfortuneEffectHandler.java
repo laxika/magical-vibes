@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -50,7 +50,7 @@ public class MisfortuneEffectHandler implements NormalEffectHandlerBean {
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                                 EachPermanentScope.ALL_PLAYERS),
-                        new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT));
+                        new DealDamageToPlayersEffect(4, Subjects.eachOpponent()));
         List<CardEffect> effects = entry.getEffectsToResolve();
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) == effect) {

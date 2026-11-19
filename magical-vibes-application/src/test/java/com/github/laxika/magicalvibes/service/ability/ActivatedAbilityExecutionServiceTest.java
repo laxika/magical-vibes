@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -252,7 +251,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandAddsManaAndDealsDamage() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, Subjects.you()));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -325,7 +324,7 @@ class ActivatedAbilityExecutionServiceTest {
         void eachOpponentRiderQueuesReflexiveTrigger() {
             Card card = createCard("Test Rider Creature", CardType.CREATURE);
             Permanent perm = addReadyPermanent(player1Id, card);
-            DealDamageToPlayersEffect rider = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+            DealDamageToPlayersEffect rider = new DealDamageToPlayersEffect(1, Subjects.eachOpponent());
             var reflexive = new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(rider);
             List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), reflexive);
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
@@ -356,7 +355,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandBlueAbility() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), new DealDamageToPlayersEffect(1, Subjects.you()));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -1458,7 +1457,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandManaAbilityPreservesPriority() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, Subjects.you()));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
             gameData.priorityPassedBy.add(player2Id);
 

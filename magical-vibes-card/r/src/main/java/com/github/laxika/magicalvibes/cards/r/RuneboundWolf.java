@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -32,7 +32,7 @@ public class RuneboundWolf extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}{R}",
                 List.of(new DealDamageToPlayersEffect(
-                        wolvesAndWerewolves, DamageRecipient.TARGET_PLAYER)),
+                        wolvesAndWerewolves, Subjects.targetPlayer())),
                 "{3}{R}, {T}: This creature deals damage equal to the number of Wolves and "
                         + "Werewolves you control to target opponent.",
                 new PlayerPredicateTargetFilter(

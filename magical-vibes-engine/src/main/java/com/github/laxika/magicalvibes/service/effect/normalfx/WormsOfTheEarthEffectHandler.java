@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -111,7 +111,7 @@ public class WormsOfTheEarthEffectHandler implements NormalEffectHandlerBean {
     public void dealDamageAndDestroy(GameData gameData, Card sourceCard,
                                      WormsOfTheEarthEffect effect, UUID playerId) {
         DealDamageToPlayersEffect damage =
-                new DealDamageToPlayersEffect(5, DamageRecipient.TARGET_PLAYER);
+                new DealDamageToPlayersEffect(5, Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(sourceCard,
                 effect.abilityControllerId(),
                 sourceCard.getName() + "'s ability",

@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsChosenPlayer;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,6 +32,6 @@ public class BoobyTrap extends Card {
         addTrigger(List.of(Triggers.opponentDrawsCard().withFilter(new CardHasSourceChosenNamePredicate()),
                         Triggers.youDrawCard().withFilter(new CardHasSourceChosenNamePredicate())),
                 TriggerOptions.DEFAULT.withEventCondition(new TargetPlayerIsChosenPlayer()),
-                new SacrificeSelfThenEffect(new DealDamageToPlayersEffect(10, DamageRecipient.TRIGGERING_PLAYER)));
+                new SacrificeSelfThenEffect(new DealDamageToPlayersEffect(10, Subjects.triggeringPlayer())));
     }
 }

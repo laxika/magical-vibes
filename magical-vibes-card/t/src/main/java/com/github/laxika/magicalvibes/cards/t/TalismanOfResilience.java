@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class TalismanOfResilience extends Card {
                 null,
                 List.of(
                         new AwardManaOfColorsEffect(List.of(ManaColor.BLACK, ManaColor.GREEN)),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)
+                        new DealDamageToPlayersEffect(1, Subjects.you())
                 ),
                 "{T}: Add {B} or {G}. This artifact deals 1 damage to you."
         ));

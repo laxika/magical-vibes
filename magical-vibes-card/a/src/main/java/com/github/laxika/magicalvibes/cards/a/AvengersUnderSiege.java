@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class AvengersUnderSiege extends Card {
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))));
         addSimultaneousTrigger(Triggers.chapter(2),
                 new MassDamageEffect(2, false, false, nonVillainCreature),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
 
         addTrigger(Triggers.chapter(3),
                 CreateTokenEffect.ofTreasureToken(new PermanentCount(

@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -32,7 +32,7 @@ public class Kookus extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCountAtMost(0, KEEPER_OF_KOOKUS)),
                 SequenceEffect.of(
-                                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER),
+                                new DealDamageToPlayersEffect(3, Subjects.you()),
                                 new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate(), true)
                         ));
 

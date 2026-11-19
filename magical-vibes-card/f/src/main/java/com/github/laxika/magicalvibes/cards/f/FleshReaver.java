@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class FleshReaver extends Card {
 
     public FleshReaver() {
         DealDamageToPlayersEffect damageBack =
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CONTROLLER);
+                new DealDamageToPlayersEffect(new EventValue(), Subjects.you());
         addTrigger(List.of(
                         Triggers.dealsDamageToCreature(),
                         Triggers.sourceYouControlDealsDamageToOpponent()

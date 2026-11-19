@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -83,7 +82,7 @@ public class DamageTargetValidators {
         // Only the TARGET_PLAYER recipient chooses a player target; every other recipient
         // (CONTROLLER, EACH_*, ENCHANTED_PLAYER, the two permanent-controller riders) takes no
         // player target and must not trip the class-keyed validator, which runs unconditionally.
-        if (effect.recipient() == DamageRecipient.TARGET_PLAYER) {
+        if (effect.player().declaresTarget()) {
             tvs.requireTargetPlayer(ctx);
         }
     }

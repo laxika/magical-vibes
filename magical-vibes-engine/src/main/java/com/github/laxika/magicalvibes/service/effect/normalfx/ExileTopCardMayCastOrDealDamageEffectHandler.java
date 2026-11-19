@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastOrDealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -51,7 +51,7 @@ public class ExileTopCardMayCastOrDealDamageEffectHandler implements NormalEffec
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (library == null || library.isEmpty()) {
             dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(exileEffect.damage(), DamageRecipient.EACH_OPPONENT));
+                    new DealDamageToPlayersEffect(exileEffect.damage(), Subjects.eachOpponent()));
             return;
         }
 
@@ -59,7 +59,7 @@ public class ExileTopCardMayCastOrDealDamageEffectHandler implements NormalEffec
         exileService.exileCard(gameData, controllerId, topCard);
         if (topCard.hasType(com.github.laxika.magicalvibes.model.CardType.LAND)) {
             dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(exileEffect.damage(), DamageRecipient.EACH_OPPONENT));
+                    new DealDamageToPlayersEffect(exileEffect.damage(), Subjects.eachOpponent()));
             return;
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

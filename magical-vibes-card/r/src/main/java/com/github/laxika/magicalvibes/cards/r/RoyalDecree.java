@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -36,6 +36,6 @@ public class RoyalDecree extends Card {
         addTrigger(List.of(
                         Triggers.permanentYouControlBecomesTapped().withFilter(SWAMP_MOUNTAIN_BLACK_OR_RED),
                         Triggers.permanentOpponentControlsBecomesTapped().withFilter(SWAMP_MOUNTAIN_BLACK_OR_RED)),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.triggering())));
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class SpellAbilityTest {
         // Char: "deals 4 damage to any target and 2 damage to you" is one damage event.
         EffectRegistration toAnyTarget = new EffectRegistration(new DealDamageToAnyTargetEffect(4));
         EffectRegistration toYou = new EffectRegistration(
-                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER), true);
+                new DealDamageToPlayersEffect(2, Subjects.you()), true);
 
         SpellAbility ability = new SpellAbility(List.of(toAnyTarget, toYou));
 

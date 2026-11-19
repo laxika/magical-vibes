@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndApplyColorRidersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -88,7 +88,7 @@ public class ExileTopCardsAndApplyColorRidersEffectHandler implements NormalEffe
             riders.add(new DrawCardEffect(blueCount));
         }
         if (redCount > 0) {
-            riders.add(new DealDamageToPlayersEffect(redCount, DamageRecipient.EACH_OPPONENT));
+            riders.add(new DealDamageToPlayersEffect(redCount, Subjects.eachOpponent()));
         }
 
         if (!riders.isEmpty()) {

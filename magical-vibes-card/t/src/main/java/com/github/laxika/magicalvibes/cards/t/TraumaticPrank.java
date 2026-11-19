@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectT
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -34,6 +34,6 @@ public class TraumaticPrank extends Card {
                         new CantBlockEffect()))
                 .addSpellEffect(new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))));
+                        new DealDamageToPlayersEffect(1, Subjects.you()))));
     }
 }

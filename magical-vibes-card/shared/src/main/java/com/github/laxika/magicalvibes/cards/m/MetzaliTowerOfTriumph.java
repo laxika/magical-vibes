@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomAttackingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class MetzaliTowerOfTriumph extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}",
-                List.of(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(2, Subjects.eachOpponent())),
                 "{1}{R}, {T}: Metzali deals 2 damage to each opponent."
         ));
         addActivatedAbility(new ActivatedAbility(

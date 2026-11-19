@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import org.springframework.stereotype.Component;
@@ -87,7 +87,7 @@ public class AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffectHandler implements
                            AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffect effect,
                            UUID playerId) {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                effect.damage(), DamageRecipient.TARGET_PLAYER);
+                effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.SORCERY_SPELL,
                 ability.sourceCard(),

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class KeralKeepDisciples extends Card {
         addTrigger(Triggers.youActivateAbility()
                         .withKind(AbilityTrigger.AbilityKind.LOYALTY)
                         .withSource(new PermanentHasSubtypePredicate(CardSubtype.CHANDRA)),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
     }
 }

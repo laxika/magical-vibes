@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "132")
@@ -17,7 +17,7 @@ public class BurnTheAccursed extends Card {
         // controller. If that creature would die this turn, exile it instead.
         DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(5);
         DealDamageToPlayersEffect controllerDamage =
-                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER);
+                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target()));
         target(TargetFilters.creature())
                 .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
                 .bindEffect(creatureDamage)

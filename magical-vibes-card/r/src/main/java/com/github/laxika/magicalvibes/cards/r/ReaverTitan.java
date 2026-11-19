@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueAtMostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class ReaverTitan extends Card {
 
     public ReaverTitan() {
         addStaticEffect(new ProtectionFromManaValueAtMostEffect(3));
-        addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(5, DamageRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(5, Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

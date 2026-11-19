@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -45,7 +45,7 @@ public class DealDamageToTargetCreatureUnlessControllerTakesDamageHandler
                 ? ability.sourceControllerId() : ability.controllerId();
         if (accepted) {
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                    effect.controllerDamage(), DamageRecipient.TARGET_PLAYER);
+                    effect.controllerDamage(), Subjects.targetPlayer());
             StackEntry damageEntry = new StackEntry(
                     StackEntryType.ACTIVATED_ABILITY, ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability", List.of(damage),

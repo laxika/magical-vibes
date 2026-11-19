@@ -735,7 +735,7 @@ Matchers record the event whatever the effects are; effects read it as they reso
 - **Choice results.** A chosen card (`setChosenObjectCard`, set before the follow-up is inserted unchanged; effects that
   ask then act insert their own step: `ExileCardFromHandAndBecomeForetoldEffect.afterChoice()`,
   `GrizzledHuntmasterEffect.Step`; a held card rides `PendingMayAbility.withHeldCard`), accepted players
-  (`setAcceptedPlayerIds`, `DamageRecipient.SELECTED_OPPONENTS`), produced mana (`setProducedManaColors`), picks
+  (`setAcceptedPlayerIds`, `Subjects.acceptedPlayers()`), produced mana (`setProducedManaColors`), picks
   (`StackEntry.recordPicks`, `ResolutionResults.pickedIds`, recorded by `LibraryChoiceHandlerService` and read by
   `LibrarySelectionFollowUp.effect()`: `MakeChosenPermanentAttackingEffect.pickedPermanent()`,
   `TransformChosenPermanentEffect.pickedPermanent()`, the `...Selected...` effects), a question's card

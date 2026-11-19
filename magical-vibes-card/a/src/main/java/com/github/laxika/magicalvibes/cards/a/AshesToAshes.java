@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class AshesToAshes extends Card {
         target(nonartifactCreatureFilter("Second target must be a nonartifact creature"))
                 .addSpellEffect(new ExileTargetPermanentEffect());
 
-        addSpellEffect(new DealDamageToPlayersEffect(5, DamageRecipient.CONTROLLER));
+        addSpellEffect(new DealDamageToPlayersEffect(5, Subjects.you()));
     }
 
     private static PermanentPredicateTargetFilter nonartifactCreatureFilter(String description) {

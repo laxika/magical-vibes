@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.e.EtchingOfKumano;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCountersToCastSpellEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -28,7 +28,7 @@ public class KumanoFacesKakkazan extends Card {
         setBackFaceCard(new EtchingOfKumano());
 
         addTrigger(Triggers.chapter(1),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 new DealDamageToEachMatchingPermanentEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(

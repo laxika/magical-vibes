@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,7 +25,7 @@ public class Icequake extends Card {
         target(TargetFilters.land())
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(1, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
     }

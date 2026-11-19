@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MID", collectorNumber = "136")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FalkenrathPerforator extends Card {
 
     public FalkenrathPerforator() {
-        addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(1, DamageRecipient.DEFENDING_PLAYER));
+        addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(1, Subjects.defendingPlayer()));
     }
 }

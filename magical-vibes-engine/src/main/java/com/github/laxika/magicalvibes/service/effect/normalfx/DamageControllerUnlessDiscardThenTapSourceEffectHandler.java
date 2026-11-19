@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -73,7 +73,7 @@ public class DamageControllerUnlessDiscardThenTapSourceEffectHandler implements 
         int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
 
         dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                new DealDamageToPlayersEffect(damage, DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(damage, Subjects.you()));
 
         if (gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0) > damageBefore) {
             Permanent source = entry.getSourcePermanentId() != null

@@ -123,7 +123,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -131,6 +130,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -2180,7 +2180,7 @@ class MediumAiDecisionEngineTest {
         spell.setType(CardType.INSTANT);
         spell.setManaCost("{X}{B}");
         spell.addSpellEffect(new ExileTargetPlayerGraveyardCardsEffect(1, 1));
-        spell.addSpellEffect(new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        spell.addSpellEffect(new DealDamageToPlayersEffect(1, Subjects.targetPlayer()));
         harness.setHand(aiPlayer, List.of(spell));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);

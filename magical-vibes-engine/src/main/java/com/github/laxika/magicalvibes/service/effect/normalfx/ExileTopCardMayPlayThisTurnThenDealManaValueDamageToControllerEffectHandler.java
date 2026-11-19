@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffec
 
         if (topCard.getManaValue() > 0) {
             dealDamageToPlayersEffectHandler.resolve(gameData, entry,
-                    new DealDamageToPlayersEffect(topCard.getManaValue(), DamageRecipient.CONTROLLER));
+                    new DealDamageToPlayersEffect(topCard.getManaValue(), Subjects.you()));
         }
     }
 }

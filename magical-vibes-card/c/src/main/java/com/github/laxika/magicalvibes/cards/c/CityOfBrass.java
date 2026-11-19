@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
@@ -25,7 +25,7 @@ public class CityOfBrass extends Card {
     public CityOfBrass() {
         // Whenever this land becomes tapped, it deals 1 damage to you. When it taps for mana the
         // trigger is deferred until a player next receives priority (CR 603.3).
-        addTrigger(Triggers.becomesTapped(), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+        addTrigger(Triggers.becomesTapped(), new DealDamageToPlayersEffect(1, Subjects.you()));
 
         // {T}: Add one mana of any color.
         addActivatedAbility(ManaAbilities.tapForAnyColor());

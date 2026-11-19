@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,6 +23,6 @@ public class IshiIshiAkkiCrackshot extends Card {
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
+                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
     }
 }

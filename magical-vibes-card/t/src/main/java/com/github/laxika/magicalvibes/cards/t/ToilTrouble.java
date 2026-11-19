@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -48,7 +47,7 @@ public class ToilTrouble extends Card {
                 new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()),
                 new LoseLifeEffect(2, Subjects.targetPlayer()));
         CardEffect trouble = new DealDamageToPlayersEffect(
-                new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER);
+                new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer());
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

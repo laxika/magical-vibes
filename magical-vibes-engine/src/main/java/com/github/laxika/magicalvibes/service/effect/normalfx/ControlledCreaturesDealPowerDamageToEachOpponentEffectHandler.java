@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -70,7 +70,7 @@ public class ControlledCreaturesDealPowerDamageToEachOpponentEffectHandler
                         opponentId,
                         source.getId());
                 dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry,
-                        new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.TARGET_PLAYER));
+                        new DealDamageToPlayersEffect(new SourcePower(), Subjects.targetPlayer()));
             }
         }
     }

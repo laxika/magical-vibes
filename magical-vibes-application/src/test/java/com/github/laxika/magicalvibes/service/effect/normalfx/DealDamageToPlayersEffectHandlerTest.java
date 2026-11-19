@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-/** Consolidated tests for the merged {@link DealDamageToPlayersEffectHandler} (one handler, all recipients). */
+/** Tests for {@link DealDamageToPlayersEffectHandler}: one handler for every player subject. */
 class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
 
     @Mock private PlayerInputService playerInputService;
@@ -39,6 +40,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
         entry.setTriggeringPermanentId(land.getId());
         entry.setTriggeringPermanentControllerId(player1Id);
         when(gameQueryService.findPermanentController(gd, land.getId())).thenReturn(player2Id);
+        when(gameQueryService.findTriggeringPermanentController(gd, entry)).thenCallRealMethod();
         stubDamagePreventable();
         stubDamageFromSourceNotPrevented();
         stubNoDamageMultiplier();
@@ -46,7 +48,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
         stubNoInfectOnSource(entry);
 
         handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
-                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                Subjects.controllerOf(Subjects.triggering())));
 
         assertThat(gd.getLife(player1Id)).isEqualTo(20);
         assertThat(gd.getLife(player2Id)).isEqualTo(18);
@@ -62,7 +64,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
         stubNoInfectOnSource(entry);
 
         handler.resolve(gd, entry,
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT).recordingDamageDealt());
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()).recordingDamageDealt());
 
         assertThat(entry.getEventValue()).isEqualTo(2);
     }
@@ -74,6 +76,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
         entry.setTriggeringPermanentId(landId);
         entry.setTriggeringPermanentControllerId(player1Id);
         entry.getRemovedPermanentControllers().put(landId, player2Id);
+        when(gameQueryService.findTriggeringPermanentController(gd, entry)).thenCallRealMethod();
         stubDamagePreventable();
         stubDamageFromSourceNotPrevented();
         stubNoDamageMultiplier();
@@ -81,7 +84,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
         stubNoInfectOnSource(entry);
 
         handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
-                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                Subjects.controllerOf(Subjects.triggering())));
 
         assertThat(gd.getLife(player1Id)).isEqualTo(20);
         assertThat(gd.getLife(player2Id)).isEqualTo(18);
@@ -100,11 +103,12 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     @Override
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(
-                damageSupport, playerInputService, gameQueryService, gameLogService, gameOutcomeService, amountEvaluationService);
+                damageSupport, playerInputService, gameQueryService, gameLogService, gameOutcomeService, amountEvaluationService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService));
     }
 
     @Nested
-    @DisplayName("TARGET_PLAYER recipient")
+    @DisplayName("targetPlayer() subject")
     class TargetPlayer {
 
         @Test
@@ -119,7 +123,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(5, DamageRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(5, Subjects.targetPlayer()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
             verify(lifeSupport).lifeLost(gd, player2Id, 5);
@@ -133,7 +137,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             UUID fakeId = UUID.randomUUID();
             StackEntry entry = createEntry(lavaAxeCard, player1Id, fakeId);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(5, DamageRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(5, Subjects.targetPlayer()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
                     }
@@ -154,7 +158,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubNoInfectOnSource(entry);
 
             handler.resolve(gd, entry,
-                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
+                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
             verify(lifeSupport).lifeLost(gd, player2Id, 5);
@@ -169,14 +173,14 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubDamageFromSourceNotPrevented();
 
             handler.resolve(gd, entry,
-                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
+                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
                     }
     }
 
     @Nested
-    @DisplayName("CONTROLLER recipient")
+    @DisplayName("you() subject")
     class Controller {
 
         @Test
@@ -190,7 +194,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubPlayerDamageCore(player1Id);
             stubNoInfectOnSource(entry);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(3, Subjects.you()));
 
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
             verify(lifeSupport).lifeLost(gd, player1Id, 3);
@@ -199,7 +203,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Nested
-    @DisplayName("DEFENDING_PLAYER recipient")
+    @DisplayName("defendingPlayer() subject")
     class DefendingPlayer {
 
         @Test
@@ -208,6 +212,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             Card sourceCard = createCard("Ghost-Spider, Gwen Stacy");
             StackEntry entry = createEntry(sourceCard, player1Id, null);
             entry.setAttackedTargetId(player2Id);
+            when(gameQueryService.defendingPlayerOfAttackTarget(gd, player2Id)).thenReturn(player2Id);
 
             stubDamagePreventable();
             stubDamageFromSourceNotPrevented();
@@ -216,7 +221,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubNoInfectOnSource(entry);
 
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(3,
-                    DamageRecipient.DEFENDING_PLAYER));
+                    Subjects.defendingPlayer()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
@@ -229,7 +234,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             Permanent planeswalker = addPermanent(player2Id, createCard("Jace Beleren"));
             StackEntry entry = createEntry(sourceCard, player1Id, null);
             entry.setAttackedTargetId(planeswalker.getId());
-            when(gameQueryService.findPermanentController(gd, planeswalker.getId())).thenReturn(player2Id);
+            when(gameQueryService.defendingPlayerOfAttackTarget(gd, planeswalker.getId())).thenReturn(player2Id);
 
             stubDamagePreventable();
             stubDamageFromSourceNotPrevented();
@@ -238,14 +243,14 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubNoInfectOnSource(entry);
 
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(3,
-                    DamageRecipient.DEFENDING_PLAYER));
+                    Subjects.defendingPlayer()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
         }
     }
 
     @Nested
-    @DisplayName("TARGET_PERMANENT_CONTROLLER recipient")
+    @DisplayName("controllerOf(target()) subject")
     class TargetPermanentController {
 
         @Test
@@ -259,7 +264,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubNoInfectOnSource(entry);
 
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
-                    DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+                    Subjects.controllerOf(Subjects.target())));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
@@ -280,7 +285,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
             // The victim is player2, but the damage SOURCE controller stays the caster (player1) so
@@ -295,7 +300,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Nested
-    @DisplayName("TARGET_SPELL_CONTROLLER recipient")
+    @DisplayName("controllerOf(targetSpell()) subject")
     class TargetSpellController {
 
         @Test
@@ -316,7 +321,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_SPELL_CONTROLLER));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, Subjects.controllerOf(Subjects.targetSpell())));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
         }
@@ -328,14 +333,14 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             UUID goneSpellId = UUID.randomUUID();
             StackEntry entry = createEntry(refuseCard, player1Id, goneSpellId);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_SPELL_CONTROLLER));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, Subjects.controllerOf(Subjects.targetSpell())));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
                     }
     }
 
     @Nested
-    @DisplayName("EACH_OPPONENT recipient")
+    @DisplayName("eachOpponent() subject")
     class EachOpponent {
 
         @Test
@@ -350,7 +355,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            handler.resolve(gd, entry, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);

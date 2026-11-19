@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessTakesDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -55,7 +55,7 @@ public class CounterUnlessTakesDamageHandler implements MayEffectHandlerBean {
 
         if (accepted) {
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                    effect.damage(), DamageRecipient.TARGET_SPELL_CONTROLLER);
+                    effect.damage(), Subjects.controllerOf(Subjects.targetSpell()));
             StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s effect", new ArrayList<>(List.of(damage)),
                     ability.targetCardId(), (UUID) null);

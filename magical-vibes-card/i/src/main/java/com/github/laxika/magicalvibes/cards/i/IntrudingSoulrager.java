@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class IntrudingSoulrager extends Card {
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.ROOM),
                                 "Sacrifice a Room"),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
                         new DrawCardEffect(1)
                 ),
                 "{T}, Sacrifice a Room: This creature deals 2 damage to each opponent. Draw a card."

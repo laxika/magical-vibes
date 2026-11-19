@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class AwakenTheBloodAvatar extends Card {
                 List.of(CardSubtype.AVATAR), Set.of(Keyword.HASTE), Set.of(),
                 false, false,
                 List.of(new TriggeredAbility(Triggers.attacks(),
-                        new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT))),
+                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent()))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

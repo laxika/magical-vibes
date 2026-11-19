@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class MercilessEnforcers extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B}",
-                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
                 "{3}{B}: This creature deals 1 damage to each opponent."
         ));
     }

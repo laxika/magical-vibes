@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class SerendibEfreet extends Card {
 
     public SerendibEfreet() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(1, Subjects.you()));
     }
 }

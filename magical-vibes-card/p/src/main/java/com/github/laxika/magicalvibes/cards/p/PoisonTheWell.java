@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -21,6 +21,6 @@ public class PoisonTheWell extends Card {
                 "Target must be a land."
         ))
                 .addSpellEffect(new DestroyTargetPermanentEffect())
-                .addSpellEffect(new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+                .addSpellEffect(new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target())));
     }
 }

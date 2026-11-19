@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,6 +27,6 @@ public class GevScaledScorch extends Card {
 
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardSubtypePredicate(CardSubtype.LIZARD)),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, Subjects.targetPlayer()));
     }
 }

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +22,6 @@ public class PsychicVenom extends Card {
         target(TargetFilters.land());
         // Whenever enchanted land becomes tapped, this Aura deals 2 damage to that land's controller.
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.triggering())));
     }
 }

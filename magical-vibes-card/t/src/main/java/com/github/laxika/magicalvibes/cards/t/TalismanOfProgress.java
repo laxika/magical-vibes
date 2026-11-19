@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class TalismanOfProgress extends Card {
                 null,
                 List.of(
                         new AwardManaOfColorsEffect(List.of(ManaColor.WHITE, ManaColor.BLUE)),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)
+                        new DealDamageToPlayersEffect(1, Subjects.you())
                 ),
                 "{T}: Add {W} or {U}. This artifact deals 1 damage to you."
         ));

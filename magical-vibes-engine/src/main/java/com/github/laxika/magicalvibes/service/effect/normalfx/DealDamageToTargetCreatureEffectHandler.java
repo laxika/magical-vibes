@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -135,7 +135,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
                     || amountEvaluationService.referencesEventValue(boost.toughnessBoost());
         }
         if (effect instanceof DealDamageToPlayersEffect playerDamage) {
-            return playerDamage.recipient() == DamageRecipient.TARGET_PERMANENT_CONTROLLER
+            return playerDamage.player().equals(Subjects.controllerOf(Subjects.target()))
                     && amountEvaluationService.referencesEventValue(playerDamage.amount());
         }
         if (effect instanceof GainLifeEffect gainLife) {

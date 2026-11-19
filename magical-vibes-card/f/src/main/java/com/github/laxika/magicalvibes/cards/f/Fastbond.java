@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerPlayedAtLeastLandsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,6 +27,6 @@ public class Fastbond extends Card {
         // trigger is collected, after this land has been counted.
         addTrigger(Triggers.youPlayLand(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerPlayedAtLeastLandsThisTurn(2)),
-                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(1, Subjects.you()));
     }
 }

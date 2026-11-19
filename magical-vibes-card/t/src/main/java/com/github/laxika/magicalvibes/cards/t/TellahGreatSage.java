@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -31,6 +31,6 @@ public class TellahGreatSage extends Card {
                 new ConditionalEffect(new SpellManaSpentAtLeast(4), new DrawCardEffect(2)),
                 new ConditionalEffect(new SpellManaSpentAtLeast(8), SequenceEffect.of(
                         new SacrificeSelfEffect(),
-                        new DealDamageToPlayersEffect(new ManaSpentToCast(), DamageRecipient.EACH_OPPONENT))));
+                        new DealDamageToPlayersEffect(new ManaSpentToCast(), Subjects.eachOpponent()))));
     }
 }

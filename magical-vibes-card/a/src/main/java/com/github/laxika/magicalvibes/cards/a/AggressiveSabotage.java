@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -25,6 +25,6 @@ public class AggressiveSabotage extends Card {
         ));
         targetPlayer.addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
         targetPlayer.addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER)));
+                        new DealDamageToPlayersEffect(3, Subjects.targetPlayer())));
     }
 }

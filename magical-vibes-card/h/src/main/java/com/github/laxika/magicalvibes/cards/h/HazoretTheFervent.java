@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class HazoretTheFervent extends Card {
                 "{2}{R}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)
+                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())
                 ),
                 "{2}{R}, Discard a card: Hazoret the Fervent deals 2 damage to each opponent."
         ));

@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -17,7 +17,7 @@ public class MjLnirsMight extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ));
-        addSpellEffect(new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER));
+        addSpellEffect(new DealDamageToPlayersEffect(4, Subjects.targetPlayer()));
         addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(1));
     }
 }

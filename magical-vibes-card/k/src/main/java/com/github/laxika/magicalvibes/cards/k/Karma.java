@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,6 +27,6 @@ public class Karma extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new DealDamageToPlayersEffect(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.TARGET_PLAYER),
-                        DamageRecipient.ACTIVE_PLAYER));
+                        Subjects.triggeringPlayer()));
     }
 }

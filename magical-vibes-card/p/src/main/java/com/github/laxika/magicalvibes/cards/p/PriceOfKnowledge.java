@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class PriceOfKnowledge extends Card {
         // player equal to the number of cards in that player's hand.
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

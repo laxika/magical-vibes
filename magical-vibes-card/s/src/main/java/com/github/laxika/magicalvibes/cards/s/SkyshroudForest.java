@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -26,14 +26,14 @@ public class SkyshroudForest extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
+                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToPlayersEffect(1, Subjects.you())),
                 "{T}: Add {G}. Skyshroud Forest deals 1 damage to you."
         ));
         // {T}: Add {U}. This land deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
+                List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToPlayersEffect(1, Subjects.you())),
                 "{T}: Add {U}. Skyshroud Forest deals 1 damage to you."
         ));
     }

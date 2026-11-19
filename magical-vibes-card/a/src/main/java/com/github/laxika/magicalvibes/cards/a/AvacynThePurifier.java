@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,6 +17,6 @@ public class AvacynThePurifier extends Card {
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
                 new MassDamageEffect(3, false, false,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
-                new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(3, Subjects.eachOpponent()));
     }
 }

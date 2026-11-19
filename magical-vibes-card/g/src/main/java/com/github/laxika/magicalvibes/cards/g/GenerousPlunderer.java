@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,6 +28,6 @@ public class GenerousPlunderer extends Card {
                 "Create a Treasure token?"));
         addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.DEFENDING_PLAYER),
-                DamageRecipient.DEFENDING_PLAYER));
+                Subjects.defendingPlayer()));
     }
 }

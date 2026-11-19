@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class SpawnOfMayhem extends Card {
         // At the beginning of your upkeep, this creature deals 1 damage to each player. Then if
         // you have 10 or less life, put a +1/+1 counter on this creature.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_PLAYER),
+                new DealDamageToPlayersEffect(1, Subjects.eachPlayer()),
                 new ConditionalEffect(
                         new ControllerLifeAtMost(10),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));

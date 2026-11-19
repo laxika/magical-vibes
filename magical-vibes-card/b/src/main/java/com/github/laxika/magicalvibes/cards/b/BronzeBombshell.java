@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.UUID;
@@ -18,6 +18,6 @@ public class BronzeBombshell extends Card {
                     return ownerId != null && !ownerId.equals(controllerId);
                 }),
                 new SacrificeSelfThenEffect(
-                        new DealDamageToPlayersEffect(7, DamageRecipient.CONTROLLER)));
+                        new DealDamageToPlayersEffect(7, Subjects.you())));
     }
 }

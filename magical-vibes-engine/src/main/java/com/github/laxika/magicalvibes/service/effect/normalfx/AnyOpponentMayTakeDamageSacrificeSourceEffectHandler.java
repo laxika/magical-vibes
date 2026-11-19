@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTakeDamageSacrificeSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -86,7 +86,7 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
      */
     public void dealDamage(GameData gameData, PendingMayAbility ability,
             AnyOpponentMayTakeDamageSacrificeSourceEffect effect, UUID opponentId) {
-        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
+        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 effect.abilityControllerId(),
                 ability.sourceCard().getName() + "'s ability",

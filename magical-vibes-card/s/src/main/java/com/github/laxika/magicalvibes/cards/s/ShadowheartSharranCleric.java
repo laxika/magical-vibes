@@ -19,11 +19,11 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeShadowheartEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -41,7 +41,7 @@ public class ShadowheartSharranCleric extends Card {
 
     public ShadowheartSharranCleric() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_PLAYER));
+                new DealDamageToPlayersEffect(1, Subjects.eachPlayer()));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);
@@ -79,7 +79,7 @@ public class ShadowheartSharranCleric extends Card {
                     List.of(CardSubtype.KNIGHT), Set.of(), Set.of());
             case BLUE -> new DrawCardEffect();
             case BLACK -> null;
-            case RED -> new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT);
+            case RED -> new DealDamageToPlayersEffect(new EventValue(), Subjects.eachOpponent());
             case GREEN -> new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
         };
         return effect == null ? null : new TriggeredAbility(Triggers.youLoseLife(),

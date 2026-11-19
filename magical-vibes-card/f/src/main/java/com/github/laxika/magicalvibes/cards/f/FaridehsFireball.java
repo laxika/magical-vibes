@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class FaridehsFireball extends Card {
                 "Target must be a creature or planeswalker"))
                 .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(5));
         addSpellEffect(new RollD20Effect(
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
+                new DealDamageToPlayersEffect(2, Subjects.eachPlayer()),
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
     }
 }

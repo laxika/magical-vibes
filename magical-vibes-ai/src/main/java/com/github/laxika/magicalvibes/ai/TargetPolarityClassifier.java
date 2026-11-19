@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -65,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -450,7 +450,7 @@ public class TargetPolarityClassifier {
             return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
                     ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
         }
-        if (granted instanceof DealDamageToPlayersEffect damage && damage.recipient() == DamageRecipient.CONTROLLER) {
+        if (granted instanceof DealDamageToPlayersEffect damage && damage.player() instanceof PlayerSubject.You) {
             return TargetPolarity.HARMFUL;
         }
         return null;

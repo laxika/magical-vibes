@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -128,7 +128,7 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
     private void dealDamageToPlayer(GameData gameData, PendingMayAbility ability, UUID playerId, int amount) {
         UUID sourceControllerId = sourceControllerId(gameData, ability);
         DealDamageToPlayersEffect damage =
-                new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
+                new DealDamageToPlayersEffect(amount, Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                 playerId, ability.sourcePermanentId());

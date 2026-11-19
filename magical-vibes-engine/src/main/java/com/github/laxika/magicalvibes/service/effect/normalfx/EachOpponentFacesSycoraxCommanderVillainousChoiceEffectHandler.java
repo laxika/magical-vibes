@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentFacesSycoraxCommanderVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenDrawsThatManyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -95,6 +95,6 @@ public class EachOpponentFacesSycoraxCommanderVillainousChoiceEffectHandler
         damageEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         damageHandler.resolve(gameData, damageEntry,
                 new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -29,7 +29,7 @@ public class PumpkinBombs extends Card {
                         new DrawCardEffect(3),
                         new PutCountersOnSelfEffect(CounterType.FUSE),
                         new DealDamageToPlayersEffect(
-                                new CountersOnSource(CounterType.FUSE), DamageRecipient.TARGET_PLAYER),
+                                new CountersOnSource(CounterType.FUSE), Subjects.targetPlayer()),
                         new TargetPlayerGainsControlOfSourceCreatureEffect()
                 ),
                 "{T}, Discard two cards: Draw three cards, then put a fuse counter on this artifact. "

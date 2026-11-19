@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.OpponentPreviouslyDamagedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -26,6 +26,6 @@ public class DiseasedVermin extends Card {
                 "Target must be an opponent previously dealt damage by this creature"
         ))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DealDamageToPlayersEffect(
-                        new CountersOnSource(CounterType.INFECTION), DamageRecipient.TARGET_PLAYER));
+                        new CountersOnSource(CounterType.INFECTION), Subjects.targetPlayer()));
     }
 }

@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -1282,7 +1281,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Punisher Card");
             card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                     TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(3)),
-                    new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
+                    new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 2 cards in hand (≤ 3)
@@ -1301,7 +1300,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Punisher Card");
             card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                     TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(3)),
-                    new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
+                    new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 5 cards in hand (> 3)
@@ -1349,7 +1348,7 @@ class StepTriggerServiceTest {
 
             Card auraCard = createCardWithName("Feedback");
             auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER));
+                    new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
             gd.playerBattlefields.get(player2Id).add(auraPerm);
@@ -1427,7 +1426,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of the Bloody Tome");
             curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                    new DealDamageToPlayersEffect(2, DamageRecipient.ENCHANTED_PLAYER));
+                    new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -1438,7 +1437,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
             DealDamageToPlayersEffect effect =
                     (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(effect.recipient()).isEqualTo(DamageRecipient.ENCHANTED_PLAYER);
+            assertThat(effect.player()).isEqualTo(Subjects.triggeringPlayer());
         }
 
         @Test
@@ -1459,7 +1458,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
             DealDamageToPlayersEffect effect =
                     (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(effect.recipient()).isEqualTo(DamageRecipient.ENCHANTED_PLAYER);
+            assertThat(effect.player()).isEqualTo(Subjects.triggeringPlayer());
             assertThat(effect.attachedCountFilter()).isEqualTo(predicate);
         }
 

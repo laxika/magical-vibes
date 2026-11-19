@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToNMatchingCreaturesThenMayExileRestEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesExceptChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -82,7 +82,7 @@ public class ChooseUpToNMatchingCreaturesThenMayExileRestEffectHandler
                 controllerId,
                 List.of(SequenceEffect.of(
                         new ExileAllCreaturesExceptChosenEffect(chosenIds),
-                        new DealDamageToPlayersEffect(13, DamageRecipient.CONTROLLER))),
+                        new DealDamageToPlayersEffect(13, Subjects.you()))),
                 "Exile all other creatures? If you do, " + sourceCard.getName()
                         + " deals 13 damage to you.",
                 null,

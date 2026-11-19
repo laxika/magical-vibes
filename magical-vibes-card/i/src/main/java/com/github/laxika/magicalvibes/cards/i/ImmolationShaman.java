@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class ImmolationShaman extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate()))),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, Subjects.targetPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

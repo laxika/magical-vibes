@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,12 +26,12 @@ public class ChainersTorment extends Card {
     public ChainersTorment() {
         // Chapter I: deal 2 damage to each opponent, gain 2 life
         addTrigger(Triggers.chapter(1),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
                 new GainLifeEffect(2));
 
         // Chapter II: same as chapter I
         addTrigger(Triggers.chapter(2),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
                 new GainLifeEffect(2));
 
         // Chapter III: create X/X black Nightmare Horror token, it deals X damage to you

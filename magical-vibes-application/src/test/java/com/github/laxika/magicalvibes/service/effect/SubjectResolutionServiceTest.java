@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static com.github.laxika.magicalvibes.model.effect.Subjects.acceptedPlayers;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.activePlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.allOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attached;
@@ -46,9 +48,11 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.target;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.targetSpell;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggering;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringCard;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpell;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.you;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -409,6 +413,58 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             bears.setRememberedTargetPlayerId(player2.getId());
 
             assertThat(players(entry(player1, null, bears.getId()), chosenPlayer())).containsExactly(player2.getId());
+        }
+
+        @Test
+        @DisplayName("A spell's chosen player is the player an earlier effect of the spell chose onto the entry")
+        void spellsChosenPlayer() {
+            assertThat(players(entry(player1, player2.getId(), null), chosenPlayer()))
+                    .containsExactly(player2.getId());
+            assertThat(players(entry(player1, null, null), chosenPlayer())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Accepted players are those who said yes this resolution; the opponents among them exclude you")
+        void acceptedPlayersVariant() {
+            StackEntry entry = entry(player1, null, null);
+            entry.setAcceptedPlayerIds(List.of(player1.getId(), player2.getId()));
+
+            assertThat(players(entry, acceptedPlayers())).containsExactly(player1.getId(), player2.getId());
+            assertThat(players(entry, except(acceptedPlayers(), you()))).containsExactly(player2.getId());
+            assertThat(players(entry(player1, null, null), acceptedPlayers())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("\"That spell's controller\" is read from the stack, else as it was countered; it names no permanent")
+        void targetSpellController() {
+            Card spellCard = new HillGiant();
+            StackEntry spell = new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2.getId(),
+                    spellCard.getName(), List.of());
+            gd.stack.add(spell);
+            StackEntry entry = entry(player1, spell.getTargetableId(), null);
+
+            assertThat(players(entry, controllerOf(targetSpell()))).containsExactly(player2.getId());
+            assertThat(subjects.permanents(gd, entry, EFFECT, targetSpell())).isEmpty();
+
+            gd.stack.remove(spell);
+            assertThat(players(entry, controllerOf(targetSpell()))).isEmpty();
+            entry.setCounteredSpellControllerId(player2.getId());
+            assertThat(players(entry, controllerOf(targetSpell()))).containsExactly(player2.getId());
+        }
+
+        @Test
+        @DisplayName("\"That spell's controller\" of a trigger is the controller of the spell the trigger was about")
+        void triggeringSpellController() {
+            Card spellCard = new HillGiant();
+            StackEntry spell = new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2.getId(),
+                    spellCard.getName(), List.of());
+            gd.stack.add(spell);
+            StackEntry entry = entry(player1, null, null);
+
+            assertThat(players(entry, controllerOf(triggeringSpell()))).isEmpty();
+
+            entry.setTriggeringCardId(spellCard.getId());
+            assertThat(players(entry, controllerOf(triggeringSpell()))).containsExactly(player2.getId());
         }
 
         @Test

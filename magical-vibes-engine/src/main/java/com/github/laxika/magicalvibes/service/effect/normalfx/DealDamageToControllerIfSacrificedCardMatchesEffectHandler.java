@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerIfSacrificedCardMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +46,6 @@ public class DealDamageToControllerIfSacrificedCardMatchesEffectHandler
         }
 
         dealDamageToPlayersEffectHandler.resolve(
-                gameData, entry, new DealDamageToPlayersEffect(damage.amount(), DamageRecipient.CONTROLLER));
+                gameData, entry, new DealDamageToPlayersEffect(damage.amount(), Subjects.you()));
     }
 }

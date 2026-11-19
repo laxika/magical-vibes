@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,7 +28,7 @@ public class SaheeliRai extends Card {
     public SaheeliRai() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new ScryEffect(1), new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)),
+                List.of(new ScryEffect(1), new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
                 "+1: Scry 1. Saheeli Rai deals 1 damage to each opponent."
         ));
 

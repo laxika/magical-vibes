@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -34,7 +34,7 @@ public class HumanTorch extends Card {
                 "{R}{G}{W}{U}",
                 new GrantEffectToSourceUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OTHER_OPPONENT))),
+                        new DealDamageToPlayersEffect(new EventValue(), Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer())))),
                 "Pay {R}{G}{W}{U} to deal that much damage to each other opponent?"));
     }
 }

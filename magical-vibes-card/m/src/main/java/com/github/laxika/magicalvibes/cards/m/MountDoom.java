@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToTwoCreaturesDestroyRestEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -39,7 +39,7 @@ public class MountDoom extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}{R}",
-                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
                 "{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent."
         ));
 

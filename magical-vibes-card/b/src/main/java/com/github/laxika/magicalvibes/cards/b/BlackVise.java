@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,6 +29,6 @@ public class BlackVise extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
                 new DealDamageToPlayersEffect(
                         new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4)),
-                        DamageRecipient.CHOSEN_PLAYER));
+                        Subjects.chosenPlayer()));
     }
 }

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class ManaCrypt extends Card {
     public ManaCrypt() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new FlipCoinWinEffect(
                 null,
-                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)));
+                new DealDamageToPlayersEffect(3, Subjects.you())));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS, 2));
     }
 }

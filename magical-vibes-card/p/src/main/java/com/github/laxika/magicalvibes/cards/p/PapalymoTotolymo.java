@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +29,7 @@ public class PapalymoTotolymo extends Card {
         // Whenever you cast a noncreature spell, this creature deals 1 damage to each opponent and
         // you gain 1 life.
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 new GainLifeEffect(1));
 
         // {4}, {T}, Sacrifice this creature: Each opponent who lost life this turn sacrifices a

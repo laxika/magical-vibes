@@ -5,62 +5,80 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
+import java.util.Objects;
+
 /**
- * Deals damage to one or more players (never creatures). The {@link DamageRecipient} selects
- * which player(s) receive the damage; the {@link DynamicAmount} is evaluated at resolution
- * (fixed number, cards in a hand, +1/+1 counter count, …). For {@code EACH_PLAYER}, the amount
- * is evaluated once per player so player-relative scopes such as {@code CONTROLLER} refer to the
- * player receiving the damage.
+ * Deals damage to one or more players (never creatures). The {@link PlayerSubject} names who is dealt the damage
+ * ({@code SubjectResolutionService} resolves it); the {@link DynamicAmount} is evaluated at resolution (fixed number,
+ * cards in a hand, +1/+1 counter count, …). For {@link Subjects#eachPlayer()} the amount is evaluated once per player,
+ * with that player as the controller, so player-relative scopes such as {@code CONTROLLER} refer to the player
+ * receiving the damage; for {@link Subjects#defendingPlayer()} with the defending player as the target.
  *
- * <p>{@code attachedCountFilter} is non-null only for the {@code ENCHANTED_PLAYER} curse case
- * (Curse of Thirst): the amount dealt is the number of permanents attached to the enchanted
- * player that match the predicate, and {@code amount} is ignored.
+ * <p>{@code attachedCountFilter} is non-null only for the Curse of Thirst case: the amount dealt is the number of
+ * permanents attached to the player dealt the damage that match the predicate, and {@code amount} is ignored.
  *
- * @param unpreventable whether the damage can't be prevented
- * @param damageSource  which object deals the damage: the ability's source, the permanent that dealt the damage
- *                      the trigger event was about ({@link #dealtByEventDamageSource()}), or the permanent the trigger
- *                      event was about ({@link #dealtByTriggeringPermanent()}); never {@code null}
+ * <p>Only a declared {@link Subjects#targetPlayer()} declares a player target. "That creature's controller"
+ * ({@code controllerOf(target())}) and "that spell's controller" ({@code controllerOf(targetSpell())}) declare the
+ * permanent or spell target they read, so a card whose only targeting effect is this one still has its target.
+ *
+ * @param unpreventable              whether the damage can't be prevented
+ * @param damageSource               which object deals the damage: the ability's source, the permanent that dealt the
+ *                                   damage the trigger event was about ({@link #dealtByEventDamageSource()}), or the
+ *                                   permanent the trigger event was about ({@link #dealtByTriggeringPermanent()});
+ *                                   never {@code null}
+ * @param playerOrTheirPlaneswalker  whether the damage goes to the player {@code player} names or, chosen without
+ *                                   targeting as it resolves, a planeswalker that player controls ("deals 1 damage to
+ *                                   that player or a planeswalker that player controls", Curse of the Pierced Heart)
  */
-public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+public record DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player,
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
                                         boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
-                                        DamageSource damageSource)
+                                        DamageSource damageSource, boolean playerOrTheirPlaneswalker)
         implements DamageDealingEffect {
 
     public DealDamageToPlayersEffect {
+        Objects.requireNonNull(player, "player");
         if (damageSource == null) {
             damageSource = DamageSource.ABILITY_SOURCE;
         }
     }
 
-    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
+                                     DamageSource damageSource) {
+        this(amount, player, attachedCountFilter, unpreventable, recordDamageDealt, triggeredTargetFilter,
+                damageSource, false);
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable,
                                      boolean recordDamageDealt, TargetFilter triggeredTargetFilter) {
-        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt, triggeredTargetFilter,
+        this(amount, player, attachedCountFilter, unpreventable, recordDamageDealt, triggeredTargetFilter,
                 DamageSource.ABILITY_SOURCE);
     }
 
-    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable,
                                      boolean recordDamageDealt) {
-        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt, null);
+        this(amount, player, attachedCountFilter, unpreventable, recordDamageDealt, null);
     }
 
-    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable) {
-        this(amount, recipient, attachedCountFilter, unpreventable, false);
+        this(amount, player, attachedCountFilter, unpreventable, false);
     }
 
     /** Records actual damage in the entry's event value for a subsequent effect. */
     public DealDamageToPlayersEffect recordingDamageDealt() {
-        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true,
-                triggeredTargetFilter, damageSource);
+        return new DealDamageToPlayersEffect(amount, player, attachedCountFilter, unpreventable, true,
+                triggeredTargetFilter, damageSource, playerOrTheirPlaneswalker);
     }
 
     /** Supplies a target filter for trigger-time target selection when the effect is granted. */
     public DealDamageToPlayersEffect withTriggeredTargetFilter(TargetFilter targetFilter) {
-        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
-                recordDamageDealt, targetFilter, damageSource);
+        return new DealDamageToPlayersEffect(amount, player, attachedCountFilter, unpreventable,
+                recordDamageDealt, targetFilter, damageSource, playerOrTheirPlaneswalker);
     }
 
     /**
@@ -69,8 +87,8 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
      * controller" (Greatbow Doyen), "it deals that much damage to the chosen player" (Saskia the Unyielding).
      */
     public DealDamageToPlayersEffect dealtByEventDamageSource() {
-        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
-                recordDamageDealt, triggeredTargetFilter, DamageSource.EVENT_DAMAGE_SOURCE);
+        return new DealDamageToPlayersEffect(amount, player, attachedCountFilter, unpreventable,
+                recordDamageDealt, triggeredTargetFilter, DamageSource.EVENT_DAMAGE_SOURCE, playerOrTheirPlaneswalker);
     }
 
     /**
@@ -78,35 +96,35 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
      * ({@link DamageSource#TRIGGERING_PERMANENT}): "then that land deals 1 damage to that player" (Barbflare Gremlin).
      */
     public DealDamageToPlayersEffect dealtByTriggeringPermanent() {
-        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
-                recordDamageDealt, triggeredTargetFilter, DamageSource.TRIGGERING_PERMANENT);
+        return new DealDamageToPlayersEffect(amount, player, attachedCountFilter, unpreventable,
+                recordDamageDealt, triggeredTargetFilter, DamageSource.TRIGGERING_PERMANENT, playerOrTheirPlaneswalker);
     }
 
-    public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
-        this(new Fixed(damage), recipient, null, false);
+    public DealDamageToPlayersEffect(int damage, PlayerSubject player) {
+        this(new Fixed(damage), player, null, false);
     }
 
-    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient) {
-        this(amount, recipient, null, false);
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player) {
+        this(amount, player, null, false);
     }
 
-    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player,
                                      PermanentPredicate attachedCountFilter) {
-        this(amount, recipient, attachedCountFilter, false);
+        this(amount, player, attachedCountFilter, false);
     }
 
-    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
-                                     boolean unpreventable) {
-        this(amount, recipient, null, unpreventable);
+    public DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject player, boolean unpreventable) {
+        this(amount, player, null, unpreventable);
     }
 
     /**
      * Deals the damage to each opponent who said yes to the preceding "each player may" choice of this resolution
-     * (the stack entry's accepted players, {@code StackEntry.getAcceptedPlayerIds()}): Snort's "each opponent who
-     * discarded their hand this way".
+     * (the stack entry's accepted players, {@link Subjects#acceptedPlayers()}): Snort's "each opponent who discarded
+     * their hand this way".
      */
     public static DealDamageToPlayersEffect selectedOpponents(DynamicAmount amount) {
-        return new DealDamageToPlayersEffect(amount, DamageRecipient.SELECTED_OPPONENTS, null, false);
+        return new DealDamageToPlayersEffect(amount, Subjects.except(Subjects.acceptedPlayers(), Subjects.you()),
+                null, false);
     }
 
     public static DealDamageToPlayersEffect selectedOpponents(int damage) {
@@ -114,28 +132,44 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     }
 
     /**
-     * Deals damage to the enchanted player equal to the number of permanents attached to that
-     * player matching the predicate (e.g. {@code PermanentHasSubtypePredicate(CardSubtype.CURSE)}
+     * Deals damage to "that player" (the enchanted player whose upkeep it is) equal to the number of permanents
+     * attached to that player matching the predicate (e.g. {@code PermanentHasSubtypePredicate(CardSubtype.CURSE)}
      * for Curse of Thirst).
      */
     public static DealDamageToPlayersEffect enchantedAttachedCount(PermanentPredicate predicate) {
-        return new DealDamageToPlayersEffect(new Fixed(0), DamageRecipient.ENCHANTED_PLAYER, predicate);
+        return new DealDamageToPlayersEffect(new Fixed(0), Subjects.triggeringPlayer(), predicate);
     }
 
-    // Per-recipient targeting: only TARGET_PLAYER chooses a player; TARGET_PERMANENT_CONTROLLER
-    // rides the shared permanent target of a companion effect (e.g. Chandra's Outrage), so it takes
-    // no independent target. TARGET_SPELL_CONTROLLER owns a spell-on-stack target (Refuse). The kept
-    // @ValidatesTarget validator (DamageTargetValidators) enforces "must be a player" for
-    // TARGET_PLAYER — a check the no-op PLAYER spec cannot express. Benign: the validator performs
-    // no protection check (the damage lands on a player, not the permanent/spell).
+    /**
+     * Deals {@code damage} to the player {@code player} names or to a planeswalker that player controls, chosen as it
+     * resolves without targeting ("deals 1 damage to that player or a planeswalker that player controls").
+     */
+    public static DealDamageToPlayersEffect toPlayerOrTheirPlaneswalker(int damage, PlayerSubject player) {
+        return new DealDamageToPlayersEffect(new Fixed(damage), player, null, false, false, null,
+                DamageSource.ABILITY_SOURCE, true);
+    }
+
+    /**
+     * A declared {@code targetPlayer()} targets a player. "That creature's controller" ({@code controllerOf(target())})
+     * and "that spell's controller" ({@code controllerOf(targetSpell())}) declare the permanent or spell they read, so
+     * the target is chosen even when no companion effect declares it (Fodder Launch, Ionize). Benign: the damage lands
+     * on a player, not the permanent or spell; the kept {@code @ValidatesTarget} validator enforces "must be a player"
+     * for the player target, which the no-op player spec cannot express.
+     */
     @Override
     public TargetSpec targetSpec() {
-        return switch (recipient) {
-            case TARGET_PLAYER -> TargetSpec.benign(TargetPredicates.player());
-            case TARGET_PERMANENT_CONTROLLER -> TargetSpec.benign(TargetPredicates.permanent());
-            case TARGET_SPELL_CONTROLLER -> TargetSpec.benign(TargetPredicates.spellOnStack());
-            default -> TargetSpec.NONE;
-        };
+        if (player.declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
+        if (player instanceof PlayerSubject.ControllerOf controllerOf) {
+            if (controllerOf.permanent() instanceof PermanentSubject.Target) {
+                return TargetSpec.benign(TargetPredicates.permanent());
+            }
+            if (controllerOf.permanent() instanceof PermanentSubject.TargetSpell) {
+                return TargetSpec.benign(TargetPredicates.spellOnStack());
+            }
+        }
+        return TargetSpec.NONE;
     }
 
     @Override
@@ -155,6 +189,6 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
 
     @Override
     public boolean damagesController() {
-        return recipient == DamageRecipient.CONTROLLER;
+        return player instanceof PlayerSubject.You;
     }
 }

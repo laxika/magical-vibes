@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,6 +34,6 @@ public class CourtOfEmbereth extends Card {
                 new CreateTokenEffect("Knight", 3, 1, CardColor.RED,
                         List.of(CardSubtype.KNIGHT), Set.of(), Set.of()),
                 new ConditionalEffect(new ControllerIsMonarch(),
-                        new DealDamageToPlayersEffect(creaturesYouControl, DamageRecipient.EACH_OPPONENT))));
+                        new DealDamageToPlayersEffect(creaturesYouControl, Subjects.eachOpponent()))));
     }
 }

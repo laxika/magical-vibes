@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +29,7 @@ public class LoreholdExcavation extends Card {
                 1,
                 new CardTypePredicate(CardType.LAND),
                 new GainLifeEffect(1),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent())));
 
         // {5}, Exile a creature card from your graveyard: Create a tapped 3/2 red and white Spirit
         // creature token.

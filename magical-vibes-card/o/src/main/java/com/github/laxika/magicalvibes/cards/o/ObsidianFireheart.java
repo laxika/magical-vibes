@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -35,7 +35,7 @@ public class ObsidianFireheart extends Card {
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 TriggerOptions.DEFAULT.withEventCondition(
                                         new SourceCounterThreshold(1, CounterType.BLAZE)),
-                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)))
+                                        new DealDamageToPlayersEffect(1, Subjects.you())))
                 ),
                 "{1}{R}{R}: Put a blaze counter on target land without a blaze counter on it. For as long as that land has a blaze counter on it, it has \"At the beginning of your upkeep, this land deals 1 damage to you.\"",
                 new PermanentPredicateTargetFilter(

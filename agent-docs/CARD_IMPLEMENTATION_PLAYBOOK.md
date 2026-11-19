@@ -96,7 +96,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Opponent draw trigger:
-  - use `addTrigger(Triggers.opponentDrawsCard(), new DealDamageToPlayersEffect(N, DamageRecipient.TARGET_PLAYER))` when the effect should hit the player who drew
+  - use `addTrigger(Triggers.opponentDrawsCard(), new DealDamageToPlayersEffect(N, Subjects.targetPlayer()))` when the effect should hit the player who drew
   - Example: `magical-vibes-card/u/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 
 - Conditional self cast-cost reduction ("this spell costs {N} less to cast if …"):

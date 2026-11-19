@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrBoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -100,7 +100,7 @@ public class AnyPlayerMayTakeDamageOrBoostSelfEffectHandler implements NormalEff
     public void dealDamage(GameData gameData, PendingMayAbility ability,
                            AnyPlayerMayTakeDamageOrBoostSelfEffect effect, UUID playerId) {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                effect.damage(), DamageRecipient.TARGET_PLAYER);
+                effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 ability.sourceCard(),

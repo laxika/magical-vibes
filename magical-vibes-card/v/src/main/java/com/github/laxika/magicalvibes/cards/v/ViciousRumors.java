@@ -2,19 +2,19 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GRN", collectorNumber = "89")
 public class ViciousRumors extends Card {
 
     public ViciousRumors() {
-        addSpellEffect(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+        addSpellEffect(new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
         addSpellEffect(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
         addSpellEffect(new MillEffect(1, MillRecipient.EACH_OPPONENT));
         addSpellEffect(new GainLifeEffect(1));

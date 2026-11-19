@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class AureliaTheLawAbove extends Card {
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(5)),
                 SequenceEffect.of(
-                        new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT),
+                        new DealDamageToPlayersEffect(3, Subjects.eachOpponent()),
                         new GainLifeEffect(3)));
     }
 }

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -90,7 +90,7 @@ public class ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffe
                 exileEffect.damagePerCard());
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.endStep(ActivePlayer.YOU), controllerId, entry.getCard(), sourcePermanentId, null,
-                new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT)));
+                new DealDamageToPlayersEffect(damage, Subjects.eachOpponent())));
 
         if (!exiledNames.isEmpty()) {
             String controllerName = gameData.playerIdToName.get(controllerId);

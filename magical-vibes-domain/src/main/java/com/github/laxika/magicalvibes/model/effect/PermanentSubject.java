@@ -17,7 +17,7 @@ import java.util.Objects;
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target,
         PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringCard,
-        PermanentSubject.Returned, PermanentSubject.ControlledBy, PermanentSubject.AllOf {
+        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.ControlledBy, PermanentSubject.AllOf {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -90,6 +90,33 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * the event was about (a card put into a graveyard, a permanent that entered, as it is or last was).
      */
     record TriggeringCard() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Target spell", read inside {@code controllerOf} ("that spell's controller"): the spell the stack entry targets,
+     * which is no permanent, so it names no permanent on the battlefield. Its controller is read from the stack while
+     * the spell is there, else as the resolving effect last saw it (countered or removed by an earlier step). It does
+     * not declare the target; the effect that reads it does.
+     */
+    record TargetSpell() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That spell or ability", read inside {@code controllerOf}: the spell or ability a trigger event was about (it
+     * became the target of it, it was cast), as it is on the stack, else as it last existed there (CR 608.2h). It is
+     * no permanent, so it names no permanent on the battlefield.
+     */
+    record TriggeringSpell() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

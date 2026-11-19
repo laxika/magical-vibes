@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "196")
@@ -18,6 +18,6 @@ public class HallarTheFirefletcher extends Card {
         // then Hallar deals damage equal to the number of +1/+1 counters on it to each opponent.
         addTrigger(Triggers.youCastSpell().kicked(),
                 new PutCountersOnSourceEffect(1, 1, 1),
-                new DealDamageToPlayersEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), Subjects.eachOpponent()));
     }
 }

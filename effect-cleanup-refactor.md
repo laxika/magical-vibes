@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -352,7 +352,7 @@ fold in, the enum and the absorbed classes are deleted.
 | 4a | Draw: `DrawCardEffect` | none (plus `DrawUpToRecipient`, `UpkeepDrawRecipient`, `EndStepDrawRecipient` to check) | `DrawCardFor{Owner,TargetPlayer,DefendingPlayer,TriggeringPlayer,Player}Effect`, `DrawCardsForEachOpponentOfTriggeringPlayerEffect` | | done |
 | 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | done |
 | 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | done |
-| 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | open |
+| 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | | done |
 | 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | open |
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | open |
 | 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | open |
@@ -1225,6 +1225,98 @@ recorded triggering controller (CR 608.2h) instead of nobody.
 - 4d–4i: "target opponent" constants that derive the opponent without declaring (two-player `getOpponentId`) split by
   Oracle text into `eachOpponent()`, `targetPlayerDeclaredElsewhere()` (the ability's filter declares it) and a real
   declared target; a trigger that newly declares one prompts its controller in tests.
+
+### Step 4, run 4d (2026-11-19)
+
+**Survivor.** `DealDamageToPlayersEffect`'s `DamageRecipient recipient` became `PlayerSubject player` (every constructor
+kept with the subject in the recipient's place) plus a last component `playerOrTheirPlaneswalker` (factory
+`toPlayerOrTheirPlaneswalker(int, player)`, Curse of the Pierced Heart's resolution-time "that player or a planeswalker
+that player controls" choice, kept as a verb option). The handler resolves the players through
+`SubjectResolutionService` and keeps, per subject shape, what the old handler did: one `dealDamageToPlayer` call per
+player, one `checkWinCondition`, the `EVENT_DAMAGE_SOURCE` / `TRIGGERING_PERMANENT` dealing entry, `recordDamageDealt`,
+`unpreventable`; the amount is evaluated once per receiving player in the entry's context, re-based as controller for
+`eachPlayer()` and as target for `defendingPlayer()` (the old `EACH_PLAYER` / `DEFENDING_PLAYER` contexts), and
+`attachedCountFilter` counts per receiving player; `you()` and `controllerOf(target())` check only the entry's own
+prevention with their old log lines (the other subjects also check instant/sorcery and targeted-spell prevention, as
+before); `controllerOf(targetSpell())` skips a non-positive amount. `targetSpec()`: benign player iff
+`player.declaresTarget()`, benign permanent for `controllerOf(target())`, benign spell for `controllerOf(targetSpell())`
+(exactly the old `TARGET_PLAYER` / `TARGET_PERMANENT_CONTROLLER` / `TARGET_SPELL_CONTROLLER` specs).
+`damagesController()` is `player instanceof You`.
+
+**Deleted**: the enum `DamageRecipient`, `DealDamageToEndStepPlayerEffect` and `DealDamageToTriggeringSpellControllerEffect`
+with their handlers (ratchet 4,932 / 4,165). Mapping: `TARGET_PLAYER` → `targetPlayer()` everywhere (it always
+declared; Psychic Allergy's upkeep trigger and engine-built payloads included); `EACH_OPPONENT` / `EACH_PLAYER` →
+`eachOpponent()` / `eachPlayer()`; `CONTROLLER` → `you()`; `TRIGGERING_PLAYER`, `ACTIVE_PLAYER` (baked upkeep player) and
+`ENCHANTED_PLAYER` (Maddening Hex, Curse of Shaken Faith, Curse of Thirst: "that player" / "them") →
+`triggeringPlayer()`; `ENCHANTED_PLAYER_OR_PLANESWALKER` → `toPlayerOrTheirPlaneswalker(1, triggeringPlayer())`;
+`EACH_OTHER_OPPONENT` → `except(eachOpponent(), triggeringPlayer())`; `SELECTED_OPPONENTS` → `except(acceptedPlayers(),
+you())` (Snort, through `selectedOpponents`); `CHOSEN_PLAYER` → `chosenPlayer()`; `DEFENDING_PLAYER` → `defendingPlayer()`;
+`TARGET_PERMANENT_CONTROLLER` → `controllerOf(target())`, except Insubordination ("deals 2 damage to that player" at the end step of enchanted creature's controller), which is `activePlayer()`: its end-step record bakes the enchanted creature as the target and the old lookup preferred the recorded controller, so `InsubordinationTest`'s control-change case pinned the player whose end step it is; `TARGET_SPELL_CONTROLLER` → `controllerOf(targetSpell())`;
+`TRIGGERING_PERMANENT_CONTROLLER` → `controllerOf(triggering())`; `ENCHANTED_PERMANENT_CONTROLLER` split by Oracle text:
+`triggeringPlayer()` for the Aura upkeep cards ("that player" = the player whose upkeep it is, as the orchestrator's
+note asked: Warp Artifact, Wanderlust, Parasitic Bond, Maddening Wind, Leeching Licid, Festering Wound, Feedback, Cursed
+Land, Mind Whip, Curse Artifact, Unnatural Hunger) and Mogis; `controllerOf(triggering())` for "that creature's
+controller" / "that player" of a tapped or entering permanent (Insolence, Lust for War, Seizures, Tourach's Chant,
+Thelon's Chant); `targetPlayerDeclaredElsewhere()` for Demanding Dragon (its target filter declares the opponent). The
+upkeep `ENCHANTED_CONTROLLER` step record sets only the baked `targetId` (no triggering permanent, no triggering player),
+so the old "live controller of the triggering permanent" branch was never reached for those cards and
+`triggeringPlayer()` reads the same baked player; the tapped record sets the tapped permanent and its controller as both
+the triggering controller and the baked target, so `controllerOf(triggering())` gives the old answer.
+`DealDamageToEndStepPlayerEffect(a)` → `DealDamageToPlayersEffect(a, triggeringPlayer())` (6 cards; same context, same
+prevention); `DealDamageToTriggeringSpellControllerEffect(n)` → `DealDamageToPlayersEffect(n,
+controllerOf(triggeringSpell()))` (Retromancer, Thunderbreak Regent, Bonecrusher Giant). The two other records naming
+the enum now take a `PlayerSubject`: `SacrificeOtherCreatureOrDamageEffect` (`you()`; `triggeringPlayer()` for Unnatural
+Hunger, resolved through the service; the handler gained the resolver) and `TargetCreatureDealsDamageToControllerEffect`
+(`controllerOf(target())` default, `you()` for the half-life token handler; a mode, the handler still uses each
+damaging creature's controller). 659 card files rewritten by a deleted scratch script (649 named the enum, 9 the absorbed
+records, plus a stray import), 48 engine, 10 AI and 14 application-test files.
+
+**New variants.** `targetSpell()` and `triggeringSpell()` (permanent subjects naming a stack object, meant only inside
+`controllerOf`; they name no permanent): `controllerOf(targetSpell())` is the targeted spell's controller on the stack,
+else `counteredSpellControllerId`, else the entry's last-known controller of that id (the old `TARGET_SPELL_CONTROLLER`
+chain); `controllerOf(triggeringSpell())` is `CopySupport.triggeringSpell`'s controller. `acceptedPlayers()` reads
+`StackEntry.getAcceptedPlayerIds()`. `chosenPlayer()` on an entry with no source permanent now reads the entry's
+player target (Backdraft's spell, whose first effect writes the chosen player there; the old `CHOSEN_PLAYER` fallback).
+The resolver's APNAP rotation tolerates a `null` active player (Mockito handler tests).
+
+**Other readers.** `DestructionSupport.resolveForcedCostElseEffects` handles `you()` as before and, for the six
+enchanted-controller-may-pay cards, `triggeringPlayer()` / `controllerOf(triggering())` /
+`targetPlayerDeclaredElsewhere()` by reading the baked `targetId` exactly as the old `ENCHANTED_PERMANENT_CONTROLLER`
+branch did (no other card has those subjects in a forced-cost else-branch). `DamageTargetValidators` requires a player iff
+the subject declares; `DealDamageToTargetCreatureEffectHandler`'s excess-damage check matches `controllerOf(target())`;
+the mana-ability path (`ActivatedAbilityExecutionService`) and the AI (`TargetPolarityClassifier`, `SpellEvaluator`,
+`InstantCategoryClassifier`, `AiManaManager`, `GameSimulator`) match `you()` where they matched `CONTROLLER` and
+`declaresTarget()` where they matched `TARGET_PLAYER` (only `targetPlayer()` declares, so the AI sees the same sets;
+Demanding Dragon's non-declaring read was not `TARGET_PLAYER` before either). The folded siblings implemented only
+`DamageDealingEffect`, which the survivor implements, with the same `damageAmount`, `canDamage*` and (for these
+subjects) `damagesController() == false` and no target spec.
+
+**Behaviour differences** (none changes a tested outcome): several players are dealt damage in APNAP order (CR 101.4)
+instead of seat order; `triggeringPlayer()` prefers the recorded triggering player over the baked target (the same
+player for every collector these cards use); `targetPlayer()` reads the effect's bound or flat targets before the
+single `targetId`, so an effect with several player targets damages each; `controllerOf(target())` reads the permanent's
+current controller before the recorded triggering controller, so Heat of Battle / Battle Strain (the only other trigger users) damage the blocker's
+current controller after a control change in response ("that creature's controller", CR 608.2h);
+`controllerOf(triggering())` has no last fallback to the baked `targetId` (every damage collector records the
+triggering controller, a spell source's included); `defendingPlayer()` no longer needs `attackedTargetId` when
+`defendingPlayerId` is set and handles a battle's protector; a permanent's `chosenPlayer()` with nothing remembered
+looks for its pending choose-a-player enters ability instead of the baked target.
+
+**For later runs.**
+
+- Kept (ledger): `DealDamageToEnchantedPermanentControllerEffect` (Orcish Mine, Gremlin Infestation, Impending Doom,
+  Smoke Spirits' Aid) has its own Aura-gone fallback chain and an enchanted-permanent-as-source swap that differ from
+  `controllerOf(attached())` / `controllerOf(triggering())` + `dealtByTriggeringPermanent()`; fold it with tests of the
+  host-left cases. `DealDamageToRandomOpponentEffect` (a random pick is a choice) and
+  `DealDamageToCombatOpponentControllerEffect` (harmful permanent spec over a baked target) stay.
+- Now expressible: `controllerOf(targetSpell())` unblocks `TargetSpellControllerLosesLifeEffect` (4b),
+  `TargetSpellControllerGainsLifeEqualToManaValueEffect` (4c), Mill's `TARGET_SPELL_CONTROLLER` (4f) and
+  `UpkeepDrawRecipient.TARGET_SPELL_CONTROLLER`; `acceptedPlayers()` is the step-7 accepted-players read.
+- Known gap kept on purpose: `you()` and `controllerOf(target())` damage ignores "prevent all damage instant and sorcery
+  spells would deal" and targeted-spell prevention (the old `CONTROLLER` / `TARGET_PERMANENT_CONTROLLER` checks); a later
+  run should make every subject use `isDamageSourcePreventedWithLog` with a test (Chandra's Outrage under such a shield).
+- Per-receiving-player damage siblings (`DealDamageToEachOpponentEqualTo*`, `DealDamageToEachPlayerControllingMatchingPermanentEffect`)
+  need a per-player amount context or a filtered `each`, as 4b noted for life loss.
 
 ## Prompt
 

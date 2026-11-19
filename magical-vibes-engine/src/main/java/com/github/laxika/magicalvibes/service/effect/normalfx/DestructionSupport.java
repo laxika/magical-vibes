@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -55,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -830,6 +830,16 @@ public class DestructionSupport {
     }
 
     /**
+     * Whether {@code player} is "that player" an enchanted-controller-may-pay ability asks: the player whose upkeep it
+     * is, the controller of the permanent the trigger was about, or the opponent its target filter declared.
+     */
+    private static boolean isPayingPlayer(PlayerSubject player) {
+        return player instanceof PlayerSubject.TriggeringPlayer
+                || player.equals(Subjects.controllerOf(Subjects.triggering()))
+                || player.equals(Subjects.targetPlayerDeclaredElsewhere());
+    }
+
+    /**
      * Resolves the unpaid branch ({@link ForcedCostOrElseEffect#elseEffects()}) in order. Only the first
      * fallback effect runs inside a death replacement rerun window its caller opened; each later one runs with
      * it closed, since a rerun would repeat what came before.
@@ -842,14 +852,15 @@ public class DestructionSupport {
                 // Mind Whip: "you tap that creature" — tap the permanent the source Aura enchants.
                 tapEnchantedPermanent(gameData, entry);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
-                    && damage.recipient() == DamageRecipient.CONTROLLER
+                    && damage.player() instanceof PlayerSubject.You
                     && damage.amount() instanceof Fixed fixed) {
                 dealNoncombatDamageToPlayer(gameData, entry, entry.getControllerId(), fixed.value());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
-                    && damage.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER
+                    && isPayingPlayer(damage.player())
                     && damage.amount() instanceof Fixed fixed) {
-                // Mind Whip: damage the enchanted permanent's controller (baked as targetId).
+                // "Deals N damage to that player unless they pay" (Mind Whip, Seizures, Demanding Dragon): the player
+                // who was asked to pay, which the trigger recorded as the entry's target.
                 UUID victim = entry.getTargetId();
                 if (victim != null) {
                     dealNoncombatDamageToPlayer(gameData, entry, victim, fixed.value());

@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "134")
@@ -24,7 +24,7 @@ public class HeavenSent extends Card {
 
         AnOpponentLifeAtMost opponentAtZero = new AnOpponentLifeAtMost(0);
         addTrigger(Triggers.chapter(3),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 new ConditionalEffect(opponentAtZero, new DrawCardEffect(7)),
                 new ConditionalEffect(new NotCondition(opponentAtZero),
                         SequenceEffect.of(

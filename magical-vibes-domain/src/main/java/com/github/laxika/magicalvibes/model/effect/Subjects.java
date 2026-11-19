@@ -18,6 +18,8 @@ public final class Subjects {
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
     private static final PermanentSubject TRIGGERING_CARD = new PermanentSubject.TriggeringCard();
+    private static final PermanentSubject TARGET_SPELL = new PermanentSubject.TargetSpell();
+    private static final PermanentSubject TRIGGERING_SPELL = new PermanentSubject.TriggeringSpell();
     private static final PermanentSubject RETURNED = new PermanentSubject.Returned();
 
     private static final PlayerSubject YOU = new PlayerSubject.You();
@@ -31,6 +33,7 @@ public final class Subjects {
     private static final PlayerSubject ENCHANTED_PLAYER = new PlayerSubject.EnchantedPlayer();
     private static final PlayerSubject CHOSEN_PLAYER = new PlayerSubject.ChosenPlayer();
     private static final PlayerSubject CHOSEN_PLAYERS = new PlayerSubject.ChosenPlayers();
+    private static final PlayerSubject ACCEPTED_PLAYERS = new PlayerSubject.AcceptedPlayers();
 
     private Subjects() {
     }
@@ -74,6 +77,16 @@ public final class Subjects {
      */
     public static PermanentSubject triggeringCard() {
         return TRIGGERING_CARD;
+    }
+
+    /** "Target spell", for {@link #controllerOf}: "that spell's controller". Declares nothing by itself. */
+    public static PermanentSubject targetSpell() {
+        return TARGET_SPELL;
+    }
+
+    /** "That spell or ability", for {@link #controllerOf}: the spell or ability the trigger event was about. */
+    public static PermanentSubject triggeringSpell() {
+        return TRIGGERING_SPELL;
     }
 
     /** The permanent a preceding "return target card from a graveyard to the battlefield" put onto the battlefield. */
@@ -187,6 +200,11 @@ public final class Subjects {
     /** "The chosen players": every player the source chose as it entered. */
     public static PlayerSubject chosenPlayers() {
         return CHOSEN_PLAYERS;
+    }
+
+    /** The players who said yes to the preceding "each player may" choice of this resolution. */
+    public static PlayerSubject acceptedPlayers() {
+        return ACCEPTED_PLAYERS;
     }
 
     /** The players {@code players} names but those {@code excluded} names ("the other chosen player"). */

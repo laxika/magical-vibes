@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -26,7 +26,7 @@ public class Cryoclasm extends Card {
                 "Target must be a Plains or Island"
         ))
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(3, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

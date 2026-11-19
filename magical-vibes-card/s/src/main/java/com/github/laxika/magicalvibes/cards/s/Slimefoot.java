@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class Slimefoot extends Card {
         var saproling = new PermanentHasSubtypePredicate(CardSubtype.SAPROLING);
         addTrigger(Triggers.creatureDies(saproling, ObjectRelation.YOU_CONTROL),
                 SequenceEffect.of(
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                        new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                         new GainLifeEffect(1)));
 
         // {4}: Create a 1/1 green Saproling creature token.

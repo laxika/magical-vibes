@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class Seizures extends Card {
                 ForcedCostOrElseEffect.enchantedControllerMayPay(
                         new PayManaCost("{3}"),
                         List.of(new DealDamageToPlayersEffect(3,
-                                DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER))));
+                                Subjects.controllerOf(Subjects.triggering())))));
     }
 }

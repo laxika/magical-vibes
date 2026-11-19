@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class FieryConfluence extends Card {
                         new MassDamageEffect(1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fiery Confluence deals 2 damage to each opponent",
-                        new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)),
+                        new DealDamageToPlayersEffect(2, Subjects.eachOpponent())),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Destroy target artifact",
                         () -> new DestroyTargetPermanentEffect(TargetFilters.artifact().predicate()),

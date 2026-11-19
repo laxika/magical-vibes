@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,7 +22,7 @@ public class IllGottenInheritance extends Card {
 
     public IllGottenInheritance() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 new GainLifeEffect(1)));
 
         addActivatedAbility(new ActivatedAbility(
@@ -30,7 +30,7 @@ public class IllGottenInheritance extends Card {
                 "{5}{B}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(4, Subjects.targetPlayer()),
                         new GainLifeEffect(4)
                 ),
                 "{5}{B}, Sacrifice this enchantment: It deals 4 damage to target opponent and you gain 4 life.",

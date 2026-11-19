@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,7 +36,7 @@ public class SplinteringWind extends Card {
         List<Ability> splinterEffects = List.of(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                 new CumulativeUpkeepEffect("{G}")));
         CardEffect splinterLeaves = SequenceEffect.of(
-                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
+                new DealDamageToPlayersEffect(1, Subjects.you()),
                 new MassDamageEffect(1, false, false, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate()))));

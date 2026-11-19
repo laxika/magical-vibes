@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIs;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -122,7 +122,7 @@ public class ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler implements 
         gameData.grantAbilityToPermanent(auraCard.getName(), null, auraControllerId,
                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withEventCondition(new TargetPlayerIs(damagedPlayerId)),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER)), enchantment.getId(),
+                new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer())), enchantment.getId(),
                 Duration.PERMANENT);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, enchantment);
 

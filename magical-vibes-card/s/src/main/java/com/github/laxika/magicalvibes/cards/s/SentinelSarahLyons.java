@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -37,6 +37,6 @@ public class SentinelSarahLyons extends Card {
                         TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                         new DealDamageToPlayersEffect(
                                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
-                                DamageRecipient.TARGET_PLAYER));
+                                Subjects.targetPlayer()));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,7 +34,7 @@ public class BlackMagesRod extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youCastSpell()
                                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)),
+                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent())),
                         GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.EQUIPPED_CREATURE));
 

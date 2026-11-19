@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "111")
@@ -18,6 +18,6 @@ public class SearingBlood extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new DealDamageToTargetCreatureEffect(2))
                 .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
-                        new DealDamageToPlayersEffect(3, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)));
+                        new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.triggering()))));
     }
 }

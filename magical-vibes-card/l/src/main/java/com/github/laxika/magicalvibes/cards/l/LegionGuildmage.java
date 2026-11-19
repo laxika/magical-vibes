@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -22,7 +22,7 @@ public class LegionGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}{R}",
-                List.of(new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(3, Subjects.eachOpponent())),
                 "{5}{R}, {T}: This creature deals 3 damage to each opponent."
         ));
 

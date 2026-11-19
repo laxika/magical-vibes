@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
@@ -83,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPe
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
@@ -1117,7 +1117,7 @@ public class MayPenaltyChoiceHandlerService {
                     .filter(pid -> !pid.equals(targetPlayerId))
                     .findFirst().orElse(targetPlayerId);
         }
-        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
+        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                 targetPlayerId, ability.sourcePermanentId());
@@ -1762,7 +1762,7 @@ public class MayPenaltyChoiceHandlerService {
             int damageAmount = milled.stream().mapToInt(Card::getManaValue).sum();
             if (damageAmount > 0) {
                 DealDamageToPlayersEffect damage =
-                        new DealDamageToPlayersEffect(damageAmount, DamageRecipient.TARGET_PLAYER);
+                        new DealDamageToPlayersEffect(damageAmount, Subjects.targetPlayer());
                 StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), controllerId,
                         ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                         targetPlayerId, ability.sourcePermanentId());
@@ -2425,7 +2425,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined (or unable to pay) — resolve the fallback/penalty effects.
-        // Preserve targetCardId so ENCHANTED_PERMANENT_CONTROLLER damage / similar fallthroughs
+        // Preserve targetCardId so "that player" damage (DestructionSupport reads it) / similar fallthroughs
         // still see the enchanted permanent's controller (Mind Whip).
         clearAnyPlayerPayState(gameData);
         StackEntry syntheticEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -13,7 +13,7 @@ public class TovolarsMagehunter extends Card {
 
     public TovolarsMagehunter() {
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
+                new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()));
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new TwoOrMoreSpellsCastLastTurn()),

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -18,7 +18,7 @@ public class ChandraPyrogenius extends Card {
     public ChandraPyrogenius() {
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)),
+                List.of(new DealDamageToPlayersEffect(2, Subjects.eachOpponent())),
                 "+2: Chandra deals 2 damage to each opponent."
         ));
 

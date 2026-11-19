@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnsnaredByTheMaraVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -152,7 +152,7 @@ public class EnsnaredByTheMaraVillainousChoiceEffectHandler implements NormalEff
             StackEntry damageEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(), entry.getDescription(),
                     List.of(), opponentId, entry.getSourcePermanentId());
             damageHandler.resolve(gameData, damageEntry,
-                    new DealDamageToPlayersEffect(totalManaValue, DamageRecipient.TARGET_PLAYER));
+                    new DealDamageToPlayersEffect(totalManaValue, Subjects.targetPlayer()));
         }
         advance(gameData, entry);
     }

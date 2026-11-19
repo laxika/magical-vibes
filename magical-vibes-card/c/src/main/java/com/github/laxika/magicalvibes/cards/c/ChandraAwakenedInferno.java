@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -38,7 +38,7 @@ public class ChandraAwakenedInferno extends Card {
                         List.of(),
                         List.of(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))))),
+                                        new DealDamageToPlayersEffect(1, Subjects.you()))))),
                 "+2: Each opponent gets an emblem with \"" + EMBLEM_TEXT + "\"."
         ));
 

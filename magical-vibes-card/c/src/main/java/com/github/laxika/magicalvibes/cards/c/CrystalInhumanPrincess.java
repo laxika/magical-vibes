@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class CrystalInhumanPrincess extends Card {
 
     public CrystalInhumanPrincess() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new DealDamageToPlayersEffect(new TriggeringSpellColorCount(), DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(new TriggeringSpellColorCount(), Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

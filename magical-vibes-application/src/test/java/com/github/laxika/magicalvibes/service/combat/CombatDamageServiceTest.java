@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -1460,13 +1460,13 @@ class CombatDamageServiceTest {
         void dealDamageByHandSizeEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
                     Triggers.dealsCombatDamageToPlayer(),
-                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
+                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), Subjects.targetPlayer()));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
                     .filter(se -> se.getEffectsToResolve().stream()
-                            .anyMatch(e -> e instanceof DealDamageToPlayersEffect d && d.recipient() == DamageRecipient.TARGET_PLAYER))
+                            .anyMatch(e -> e instanceof DealDamageToPlayersEffect d && d.player().equals(Subjects.targetPlayer())))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);

@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,7 +34,7 @@ public class PsychicAllergy extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 new DealDamageToPlayersEffect(
                         new PermanentCount(nontokenPermanentOfChosenColor, CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new SacrificeMultiplePermanentsCost(2,

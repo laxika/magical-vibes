@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -23,7 +23,7 @@ public class JinxedRing extends Card {
         // artifact deals 1 damage to you. This leaves-the-battlefield watcher also sees the ring's own
         // death (CR 603.10a), so no separate death trigger is needed.
         addTrigger(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN),
-                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+                new DealDamageToPlayersEffect(1, Subjects.you()));
 
         // Sacrifice a creature: Target opponent gains control of this artifact.
         addActivatedAbility(new ActivatedAbility(

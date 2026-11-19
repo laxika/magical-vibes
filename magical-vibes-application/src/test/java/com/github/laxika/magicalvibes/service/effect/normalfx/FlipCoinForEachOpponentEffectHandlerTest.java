@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,7 @@ class FlipCoinForEachOpponentEffectHandlerTest extends AbstractPlayerInteraction
     @Test
     void dispatchesWinBranchForEachOpponent() {
         DrawCardEffect win = new DrawCardEffect();
-        DealDamageToPlayersEffect loss = new DealDamageToPlayersEffect(3, DamageRecipient.TRIGGERING_PLAYER);
+        DealDamageToPlayersEffect loss = new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer());
         EffectHandler winHandler = mock(EffectHandler.class);
         EffectHandler lossHandler = mock(EffectHandler.class);
         registry.register(DrawCardEffect.class, winHandler);
@@ -49,7 +49,7 @@ class FlipCoinForEachOpponentEffectHandlerTest extends AbstractPlayerInteraction
     @Test
     void bindsTheOpponentToTheLossBranch() {
         DrawCardEffect win = new DrawCardEffect();
-        DealDamageToPlayersEffect loss = new DealDamageToPlayersEffect(3, DamageRecipient.TRIGGERING_PLAYER);
+        DealDamageToPlayersEffect loss = new DealDamageToPlayersEffect(3, Subjects.triggeringPlayer());
         EffectHandler winHandler = mock(EffectHandler.class);
         EffectHandler lossHandler = mock(EffectHandler.class);
         registry.register(DrawCardEffect.class, winHandler);

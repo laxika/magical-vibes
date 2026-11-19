@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -21,7 +21,7 @@ public class LiquidFire extends Card {
         DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(new XValue());
         DealDamageToPlayersEffect controllerDamage = new DealDamageToPlayersEffect(
                 new Sum(new Fixed(5), new Scaled(new XValue(), -1)),
-                DamageRecipient.TARGET_PERMANENT_CONTROLLER);
+                Subjects.controllerOf(Subjects.target()));
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature."))
                 .bindEffect(creatureDamage)

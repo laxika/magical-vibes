@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentUnlessSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -110,7 +110,7 @@ public class DealDamageToRandomOpponentUnlessSacrificeEffectHandler implements N
 
     private void dealDamage(GameData gameData, StackEntry sourceEntry,
             DealDamageToRandomOpponentUnlessSacrificeEffect effect, UUID opponentId) {
-        var damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
+        var damage = new DealDamageToPlayersEffect(effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s ability",

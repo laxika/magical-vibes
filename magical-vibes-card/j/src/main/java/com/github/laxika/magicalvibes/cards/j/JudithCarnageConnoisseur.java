@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,7 +30,7 @@ public class JudithCarnageConnoisseur extends Card {
             "Create a 2/2 red Imp creature token with \"When this token dies, it deals 2 damage to each opponent.\"";
 
     public JudithCarnageConnoisseur() {
-        List<Ability> tokenEffects = List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
+        List<Ability> tokenEffects = List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),

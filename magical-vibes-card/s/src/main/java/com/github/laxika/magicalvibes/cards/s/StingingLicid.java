@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidBecomeAuraEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,6 +25,6 @@ public class StingingLicid extends Card {
         ));
         // Whenever enchanted creature becomes tapped, this creature deals 2 damage to that creature's controller.
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.triggering())));
     }
 }

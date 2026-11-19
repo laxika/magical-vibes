@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +53,7 @@ public class DamageUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 && cost.canPay(potentialManaService.buildVirtualManaPool(gameData, targetPlayerId)));
         if (!canPay) {
             // Can't pay — apply the damage now, reusing the real entry (correct source + target).
-            DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(e.damage(), DamageRecipient.TARGET_PLAYER);
+            DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(e.damage(), Subjects.targetPlayer());
             dealDamageToPlayersEffectHandler.resolve(gameData, entry, damage);
             return;
         }

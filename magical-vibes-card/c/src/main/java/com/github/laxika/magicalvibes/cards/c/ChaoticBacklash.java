@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -21,6 +21,6 @@ public class ChaoticBacklash extends Card {
                 new Scaled(new PermanentCount(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE)),
                         CountScope.TARGET_PLAYER), 2),
-                DamageRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
     }
 }

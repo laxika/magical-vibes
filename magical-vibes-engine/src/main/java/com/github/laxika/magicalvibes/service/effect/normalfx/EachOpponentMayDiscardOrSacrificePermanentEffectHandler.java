@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrSacrificePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -105,7 +105,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentEffectHandler
 
     private void dealDamage(GameData gameData, StackEntry sourceEntry, UUID playerId,
             DynamicAmount amount) {
-        var damage = new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
+        var damage = new DealDamageToPlayersEffect(amount, Subjects.targetPlayer());
         var damageEntry = StackEntry.carrier(sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s ability",

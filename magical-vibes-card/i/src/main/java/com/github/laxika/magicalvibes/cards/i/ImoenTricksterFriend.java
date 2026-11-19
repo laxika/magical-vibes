@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
@@ -28,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.SpecializeImoenEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -90,7 +90,7 @@ public class ImoenTricksterFriend extends Card {
                         new SkipNextUntapEffect(TapUntapScope.TARGET, opponentCreature)));
             }
             case BLACK -> CreateTokenEffect.blackZombie(1);
-            case RED -> new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT);
+            case RED -> new DealDamageToPlayersEffect(2, Subjects.eachOpponent());
             case GREEN -> SequenceEffect.of(new DrawCardEffect(), new PlayAdditionalLandsEffect(1));
         };
         return ExileOwnGraveyardCardThenEffect.ifYouDo(INSTANT_OR_SORCERY, effect, false);

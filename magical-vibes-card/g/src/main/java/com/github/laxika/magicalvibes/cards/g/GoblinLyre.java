@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -34,7 +34,7 @@ public class GoblinLyre extends Card {
                                 PlayerRelation.OPPONENT),
                         new DealDamageToPlayersEffect(
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER),
-                                DamageRecipient.CONTROLLER))),
+                                Subjects.you()))),
                 "Sacrifice Goblin Lyre: Flip a coin. If you win the flip, Goblin Lyre deals damage to "
                         + "target opponent or planeswalker equal to the number of creatures you control. "
                         + "If you lose the flip, Goblin Lyre deals damage to you equal to the number of "

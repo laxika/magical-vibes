@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class YawgmothDemon extends Card {
                 new ForcedCostOrElseEffect(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "Sacrifice an artifact", false),
                         List.of(new TapPermanentsEffect(TapUntapScope.SELF),
-                                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)),
+                                new DealDamageToPlayersEffect(2, Subjects.you())),
                         true));
     }
 }

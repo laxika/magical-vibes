@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class AncientTomb extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.COLORLESS, 2), new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)),
+                List.of(new AwardManaEffect(ManaColor.COLORLESS, 2), new DealDamageToPlayersEffect(2, Subjects.you())),
                 "{T}: Add {C}{C}. This land deals 2 damage to you."
         ));
     }

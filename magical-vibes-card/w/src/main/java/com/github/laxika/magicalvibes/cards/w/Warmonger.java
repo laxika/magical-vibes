@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class Warmonger extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),
                                 EachPermanentScope.ALL_PLAYERS),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_PLAYER)),
+                        new DealDamageToPlayersEffect(1, Subjects.eachPlayer())),
                 "{2}: This creature deals 1 damage to each creature without flying and each player. Any player may activate this ability.")
                 .withActivatableByAnyPlayer());
     }

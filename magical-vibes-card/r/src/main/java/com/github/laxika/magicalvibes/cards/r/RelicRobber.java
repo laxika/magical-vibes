@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +34,7 @@ public class RelicRobber extends Card {
                         List.of(
                                 StaticAbility.of(new CantBlockEffect()),
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)))
+                                        new DealDamageToPlayersEffect(1, Subjects.you())))
                 )));
     }
 }

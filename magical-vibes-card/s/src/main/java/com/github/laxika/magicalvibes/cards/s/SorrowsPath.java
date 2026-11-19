@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SwapBlockingAssignmentsBetweenTwoCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -50,7 +50,7 @@ public class SorrowsPath extends Card {
 
         addTrigger(Triggers.becomesTapped(),
                 SequenceEffect.of(
-                        new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER),
+                        new DealDamageToPlayersEffect(2, Subjects.you()),
                         new DealDamageToEachMatchingPermanentEffect(2,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

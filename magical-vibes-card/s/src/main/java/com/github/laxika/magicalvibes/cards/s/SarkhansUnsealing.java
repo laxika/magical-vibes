@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
@@ -32,7 +32,7 @@ public class SarkhansUnsealing extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardPowerAtLeastPredicate(7)
                         ))),
-                new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToPlayersEffect(4, Subjects.eachOpponent()),
                 new DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect(4));
     }
 }

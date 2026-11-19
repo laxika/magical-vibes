@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
@@ -16,10 +16,10 @@ public class ArtifactPossession extends Card {
     public ArtifactPossession() {
         target(TargetFilters.artifact());
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.triggering())));
 
         CardEffect activationTrigger =
-                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
+                new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.triggering()));
         addTrigger(Triggers.youActivateAbility()
                         .withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST)
                         .withSource(new PermanentIsHostOfSourceAuraPredicate()),

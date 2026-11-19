@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class Banshee extends Card {
                 "{X}",
                 List.of(
                         new DealDamageToAnyTargetEffect(new Divided(new XValue(), 2)),
-                        new DealDamageToPlayersEffect(new HalvedRoundedUp(new XValue()), DamageRecipient.CONTROLLER)
+                        new DealDamageToPlayersEffect(new HalvedRoundedUp(new XValue()), Subjects.you())
                 ),
                 "{X}, {T}: This creature deals half X damage, rounded down, to any target, and half X damage, rounded up, to you."
         ));

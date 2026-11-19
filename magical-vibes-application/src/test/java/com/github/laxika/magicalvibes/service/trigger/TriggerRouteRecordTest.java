@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -488,10 +487,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         TriggerRouteRecordTest::fixturesDealCombatDamageToPlayer),
                 watch("you are dealt damage", "youAreDealtDamage", Triggers::youAreDealtDamage, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))),
+                                new DealDamageToPlayersEffect(1, Subjects.you()))),
                 watch("an opponent is dealt damage", "opponentDealtDamage", Triggers::opponentDealtDamage, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()))),
                 watch("an opponent casts a spell", "opponentCastsSpell", () -> Triggers.opponentCastsSpell().anySpell(),
                         CardType.ENCHANTMENT, TriggerRouteRecordTest::opponentCastsACreatureSpell),
                 watch("a land enters under your control", "enters",
@@ -601,25 +600,25 @@ class TriggerRouteRecordTest extends BaseCardTest {
                 watch("you are dealt damage by a source you control", "youAreDealtDamageBySourceYouControl", Triggers::youAreDealtDamageBySourceYouControl,
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))),
+                                new DealDamageToPlayersEffect(1, Subjects.you()))),
                 watch("a player is dealt damage", "playerDealtDamage", Triggers::playerDealtDamage,
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()))),
                 watch("an opponent is dealt noncombat damage", "opponentDealtNoncombatDamage",
                         Triggers::opponentDealtNoncombatDamage,
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()))),
                 watch("a source you control deals noncombat damage to an opponent",
                         "sourceYouControlDealsNoncombatDamageToOpponent",
                         Triggers::sourceYouControlDealsNoncombatDamageToOpponent, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()))),
                 watch("a source you control deals damage", "sourceYouControlDealsDamage", Triggers::sourceYouControlDealsDamage,
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                                new DealDamageToPlayersEffect(1, Subjects.eachOpponent()))),
                 watch("is dealt noncombat damage", "dealtNoncombatDamage", Triggers::dealtNoncombatDamage, CardType.CREATURE,
                         TriggerRouteRecordTest::fixturesAreDealtNoncombatDamage),
                 watch("is dealt damage, not in combat", "dealtDamage", Triggers::dealtDamage, CardType.CREATURE,
@@ -1906,7 +1905,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             }
                             test.rememberPermanents();
                             test.helperEntersAndItsAbilityResolves(
-                                    new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                                    new DealDamageToPlayersEffect(1, Subjects.eachOpponent()));
                         }, CardSubtype.AURA),
                 watch("enchanted creature deals damage to you", "enchantedCreatureDealsDamageToYou",
                         Triggers::enchantedCreatureDealsDamageToYou, CardType.ENCHANTMENT,
@@ -2541,7 +2540,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
         for (Card card : cards) {
             gd.planechase.faceUp.add(new PlanarObject(card, gd.nextTimestamp()));
         }
-        opponentHelperAbilityResolves(new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+        opponentHelperAbilityResolves(new DealDamageToPlayersEffect(1, Subjects.you()));
     }
 
     /** The helper's ability puts a -1/-1 counter on a Goblin of player1. */
@@ -2974,7 +2973,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     /** A prevention shield of 1 on player1 prevents the 1 damage the helper's ability deals them. */
     private void damageToYouIsPrevented(List<Card> cards) {
         gd.addPlayerDamagePreventionShield(player1.getId(), 1);
-        helperAbilityResolves(cards, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+        helperAbilityResolves(cards, new DealDamageToPlayersEffect(1, Subjects.you()));
     }
 
     private void anotherPermanentUntaps(List<Card> cards) {

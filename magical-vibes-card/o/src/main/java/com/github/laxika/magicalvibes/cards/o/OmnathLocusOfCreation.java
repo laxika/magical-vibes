@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -39,7 +39,7 @@ public class OmnathLocusOfCreation extends Card {
                         new AwardManaEffect(ManaColor.BLUE))),
                 new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(3), SequenceEffect.of(
-                        new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT),
+                        new DealDamageToPlayersEffect(4, Subjects.eachOpponent()),
                         new DealDamageToEachMatchingPermanentEffect(4,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsPlaneswalkerPredicate(),

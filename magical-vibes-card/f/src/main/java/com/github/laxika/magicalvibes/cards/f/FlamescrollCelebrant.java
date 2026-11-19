@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class FlamescrollCelebrant extends Card {
         setModalDoubleFaced(true);
 
         addTrigger(Triggers.opponentActivatesNonManaAbility(),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(1, Subjects.targetPlayer()));
         addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(new BoostSelfEffect(2, 0)),
                 "{1}{R}: This creature gets +2/+0 until end of turn."));
         addSpellEffect(new ChooseOneEffect(List.of(

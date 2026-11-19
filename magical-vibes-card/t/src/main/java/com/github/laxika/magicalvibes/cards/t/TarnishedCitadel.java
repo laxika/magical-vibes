@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class TarnishedCitadel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorManaEffect(), new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)),
+                List.of(new AwardAnyColorManaEffect(), new DealDamageToPlayersEffect(3, Subjects.you())),
                 "{T}: Add one mana of any color. This land deals 3 damage to you."
         ));
     }

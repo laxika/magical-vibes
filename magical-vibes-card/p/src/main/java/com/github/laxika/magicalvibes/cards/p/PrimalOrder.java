@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -32,6 +32,6 @@ public class PrimalOrder extends Card {
                                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                                 )),
                                 CountScope.TARGET_PLAYER),
-                        DamageRecipient.ACTIVE_PLAYER));
+                        Subjects.triggeringPlayer()));
     }
 }

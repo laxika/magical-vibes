@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffectHandler;
@@ -104,7 +104,7 @@ public class RevealTopCardAnyOpponentMayGraveyardOrDealDamageHandler implements 
     private void dealDamage(GameData gameData, PendingMayAbility ability,
             RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect effect, UUID targetPlayerId) {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
-                effect.manaValue(), DamageRecipient.TARGET_PLAYER);
+                effect.manaValue(), Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 effect.abilityControllerId(),
                 ability.sourceCard().getName() + "'s ability",

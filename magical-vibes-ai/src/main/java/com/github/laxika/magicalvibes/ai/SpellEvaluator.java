@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -713,10 +712,10 @@ public class SpellEvaluator {
                     ? evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId)
                     : evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) {
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player().declaresTarget()) {
             return estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
         }
-        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player() instanceof PlayerSubject.You) {
             return -estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
         }
 

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -30,6 +30,6 @@ public class UrborgStalker extends Card {
                         new ActivePlayerControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))),
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()))))),
-                new DealDamageToPlayersEffect(1, DamageRecipient.ACTIVE_PLAYER));
+                new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
     }
 }

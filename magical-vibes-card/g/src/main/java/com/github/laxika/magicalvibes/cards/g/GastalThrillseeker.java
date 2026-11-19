@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -27,7 +27,7 @@ public class GastalThrillseeker extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(1, Subjects.targetPlayer()),
                         new GainLifeEffect(1));
 
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),

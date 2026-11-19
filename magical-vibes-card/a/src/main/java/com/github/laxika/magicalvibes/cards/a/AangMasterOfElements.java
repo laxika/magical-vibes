@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +29,7 @@ public class AangMasterOfElements extends Card {
                         new GainLifeEffect(4),
                         new DrawCardEffect(4),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
-                        new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT))),
+                        new DealDamageToPlayersEffect(4, Subjects.eachOpponent()))),
                 "Transform Aang, Master of Elements?"));
     }
 }

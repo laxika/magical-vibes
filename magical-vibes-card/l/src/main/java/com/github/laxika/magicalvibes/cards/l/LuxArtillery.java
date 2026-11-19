@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCountersToCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -39,6 +39,6 @@ public class LuxArtillery extends Card {
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsCreaturePredicate())))),
-                new DealDamageToPlayersEffect(10, DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(10, Subjects.eachOpponent()));
     }
 }

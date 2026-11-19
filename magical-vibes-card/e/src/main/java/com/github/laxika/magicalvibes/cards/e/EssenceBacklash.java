@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -24,6 +24,6 @@ public class EssenceBacklash extends Card {
                 "Target must be a creature spell."
         )).addSpellEffect(new CounterSpellEffect())
           .addSpellEffect(new DealDamageToPlayersEffect(
-                new TargetSpellPower(), DamageRecipient.TARGET_SPELL_CONTROLLER));
+                new TargetSpellPower(), Subjects.controllerOf(Subjects.targetSpell())));
     }
 }

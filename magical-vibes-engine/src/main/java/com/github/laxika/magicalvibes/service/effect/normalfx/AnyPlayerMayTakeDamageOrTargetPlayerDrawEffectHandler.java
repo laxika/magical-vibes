@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +73,7 @@ public class AnyPlayerMayTakeDamageOrTargetPlayerDrawEffectHandler implements No
                 ? effect.sourceControllerId()
                 : ability.controllerId();
         DealDamageToPlayersEffect damage =
-                new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
+                new DealDamageToPlayersEffect(effect.damage(), Subjects.targetPlayer());
         StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",

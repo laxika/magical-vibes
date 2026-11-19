@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
@@ -26,6 +26,6 @@ public class BarretWallace extends Card {
         PermanentCount equippedCreatures = new PermanentCount(equippedCreature, CountScope.CONTROLLER);
 
         addTrigger(Triggers.attacks(),
-                new DealDamageToPlayersEffect(equippedCreatures, DamageRecipient.DEFENDING_PLAYER));
+                new DealDamageToPlayersEffect(equippedCreatures, Subjects.defendingPlayer()));
     }
 }

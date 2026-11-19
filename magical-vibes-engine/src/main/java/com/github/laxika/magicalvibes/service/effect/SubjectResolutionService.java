@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -136,6 +137,8 @@ public class SubjectResolutionService {
                     ? null : ctx.entry().getAttachedPermanentSnapshot().getId());
             case PermanentSubject.Triggering ignored -> listOf(ctx.entry().getTriggeringPermanentId());
             case PermanentSubject.TriggeringCard ignored -> listOf(triggeringCardPermanentId(ctx));
+            case PermanentSubject.TargetSpell ignored -> List.of();
+            case PermanentSubject.TriggeringSpell ignored -> List.of();
             case PermanentSubject.Returned ignored -> listOf(returnedPermanentId(ctx));
             case PermanentSubject.ControlledBy controlledBy -> controlledBy(ctx, controlledBy).stream()
                     .map(Permanent::getId)
@@ -282,6 +285,9 @@ public class SubjectResolutionService {
                     : gameQueryService.defendingPlayerOfAttackTarget(gameData, ctx.entry().getAttackedTargetId()));
             case PlayerSubject.EnchantedPlayer ignored -> listOf(enchantedPlayer(ctx));
             case PlayerSubject.ChosenPlayer ignored -> listOf(chosenPlayer(ctx));
+            case PlayerSubject.AcceptedPlayers ignored -> ctx.entry().getAcceptedPlayerIds().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
             case PlayerSubject.ChosenPlayers ignored -> {
                 Permanent source = sourceAsItIsOrWas(ctx);
                 yield source == null ? List.of() : source.getRememberedTargetPlayerIds().stream()
@@ -303,11 +309,38 @@ public class SubjectResolutionService {
         if (permanent instanceof PermanentSubject.Triggering) {
             return listOf(gameQueryService.findTriggeringPermanentController(ctx.gameData(), ctx.entry()));
         }
+        if (permanent instanceof PermanentSubject.TargetSpell) {
+            return listOf(targetSpellController(ctx));
+        }
+        if (permanent instanceof PermanentSubject.TriggeringSpell) {
+            StackEntry triggeringSpell = CopySupport.triggeringSpell(ctx.gameData(), ctx.entry());
+            return listOf(triggeringSpell == null ? null : triggeringSpell.getControllerId());
+        }
         List<UUID> controllers = new ArrayList<>();
         for (UUID id : ids(ctx, permanent)) {
             controllers.add(controllerOf(ctx, id));
         }
         return controllers.stream().filter(Objects::nonNull).toList();
+    }
+
+    /**
+     * "That spell's controller": the controller of the spell the entry targets while it is on the stack; once an
+     * earlier step of this resolution countered it, the controller recorded as it was countered; else the controller
+     * the entry recorded as it removed it.
+     */
+    private static UUID targetSpellController(Context ctx) {
+        StackEntry entry = ctx.entry();
+        UUID spellCardId = entry.getTargetId();
+        if (spellCardId == null) {
+            return null;
+        }
+        for (StackEntry onStack : ctx.gameData().stack) {
+            if (spellCardId.equals(onStack.getTargetableId())) {
+                return onStack.getControllerId();
+            }
+        }
+        UUID countered = entry.getCounteredSpellControllerId();
+        return countered != null ? countered : entry.lastKnownPermanentController(spellCardId);
     }
 
     private UUID controllerOf(Context ctx, UUID permanentId) {
@@ -399,7 +432,8 @@ public class SubjectResolutionService {
     /**
      * "The chosen player": the player the source remembered as it entered, as it is or last was; while the enters
      * ability that chooses the player ({@link RememberTargetPlayerEffect}) is still on the stack, that ability's target,
-     * so a source that left before it resolved still names the player (Laquatus's Champion's ruling).
+     * so a source that left before it resolved still names the player (Laquatus's Champion's ruling). A spell's chosen
+     * player is the one an earlier effect of the spell chose onto the entry.
      */
     private UUID chosenPlayer(Context ctx) {
         Permanent source = sourceAsItIsOrWas(ctx);
@@ -407,8 +441,14 @@ public class SubjectResolutionService {
             return source.getRememberedTargetPlayerId();
         }
         UUID sourcePermanentId = ctx.sourceId();
-        if (ctx.entry() == null || sourcePermanentId == null) {
+        if (ctx.entry() == null) {
             return null;
+        }
+        if (sourcePermanentId == null) {
+            // A spell has no source to remember a player: its chosen player is the one an earlier effect of the same
+            // spell chose onto the entry (Backdraft).
+            UUID targetId = ctx.entry().getTargetId();
+            return targetId != null && ctx.gameData().playerIds.contains(targetId) ? targetId : null;
         }
         return ctx.gameData().stack.stream()
                 .filter(pending -> sourcePermanentId.equals(pending.getSourcePermanentId()))
@@ -440,7 +480,7 @@ public class SubjectResolutionService {
     /** The players in APNAP order (CR 101.4): the active player, then the others in turn order. */
     private static List<UUID> apnapOrder(GameData gameData) {
         List<UUID> seats = List.copyOf(gameData.orderedPlayerIds);
-        int active = seats.indexOf(gameData.activePlayerId);
+        int active = gameData.activePlayerId == null ? -1 : seats.indexOf(gameData.activePlayerId);
         if (active <= 0) {
             return seats;
         }

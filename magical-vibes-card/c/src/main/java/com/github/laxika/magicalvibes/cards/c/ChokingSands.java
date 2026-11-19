@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -34,7 +34,7 @@ public class ChokingSands extends Card {
         ))
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
-                        new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
+                        new DealDamageToPlayersEffect(2, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))));
     }

@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -51,6 +51,6 @@ public class DonnaNoble extends Card {
                 "Target must be an opponent"))
                 .addTrigger(Triggers.permanentYouControlDealtDamage()
                                 .withFilter(new PermanentIsSourceOrPairedPredicate()),
-                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
+                        new DealDamageToPlayersEffect(new EventValue(), Subjects.targetPlayer()));
     }
 }

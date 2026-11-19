@@ -27,12 +27,12 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -656,7 +656,7 @@ class StackResolutionServiceTest {
         @DisplayName("Saga ETB pushes chapter I ability onto the stack")
         void sagaEtbTriggersChapterI() {
             Card saga = createSaga("Test Saga");
-            saga.addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+            saga.addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
             saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
             saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(3));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,

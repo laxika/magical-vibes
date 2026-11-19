@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -1951,7 +1950,7 @@ public class ActivatedAbilityExecutionService {
                 for (UUID victimId : nonTargetedLifeRecipients(gameData, playerId, loss.player())) {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
-            } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
+            } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player() instanceof PlayerSubject.You) {
                 int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0));
                 StackEntry damageEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,

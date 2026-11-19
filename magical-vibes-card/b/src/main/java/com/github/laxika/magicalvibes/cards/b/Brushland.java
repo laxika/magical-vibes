@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -32,14 +32,14 @@ public class Brushland extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
+                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToPlayersEffect(1, Subjects.you())),
                 "{T}: Add {G}. Brushland deals 1 damage to you."
         ));
         // {T}: Add {W}. Brushland deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
+                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToPlayersEffect(1, Subjects.you())),
                 "{T}: Add {W}. Brushland deals 1 damage to you."
         ));
     }

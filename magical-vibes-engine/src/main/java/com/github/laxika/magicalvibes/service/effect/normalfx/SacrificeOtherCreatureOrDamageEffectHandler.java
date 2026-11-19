@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,18 +32,20 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
     private final AmountEvaluationService amountEvaluationService;
     private final DamageSupport damageSupport;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Autowired
     public SacrificeOtherCreatureOrDamageEffectHandler(DestructionSupport destructionSupport,
             GameOutcomeService gameOutcomeService, GameQueryService gameQueryService,
             AmountEvaluationService amountEvaluationService, DamageSupport damageSupport,
-            PlayerInputService playerInputService) {
+            PlayerInputService playerInputService, SubjectResolutionService subjectResolutionService) {
         this.destructionSupport = destructionSupport;
         this.gameOutcomeService = gameOutcomeService;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
         this.damageSupport = damageSupport;
         this.playerInputService = playerInputService;
+        this.subjectResolutionService = subjectResolutionService;
     }
 
     public SacrificeOtherCreatureOrDamageEffectHandler(DestructionSupport destructionSupport,
@@ -54,6 +57,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
         this.amountEvaluationService = null;
         this.damageSupport = null;
         this.playerInputService = playerInputService;
+        this.subjectResolutionService = null;
     }
 
     @Override
@@ -64,12 +68,12 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SacrificeOtherCreatureOrDamageEffect) effect;
-        UUID controllerId = sacrificingPlayer(entry, e.recipient());
+        UUID controllerId = sacrificingPlayer(gameData, entry, e);
         if (controllerId == null) {
             return;
         }
         String cardName = entry.getCard().getName();
-        UUID excludedPermanentId = excludedPermanentId(gameData, entry, e.recipient());
+        UUID excludedPermanentId = excludedPermanentId(gameData, entry, e.player());
 
         List<UUID> otherCreatureIds = destructionSupport.collectCreatureIds(gameData, controllerId,
                 p -> (excludedPermanentId == null || !p.getId().equals(excludedPermanentId))
@@ -81,7 +85,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
             return;
         }
 
-        if (e.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER) {
+        if (!(e.player() instanceof PlayerSubject.You)) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), controllerId, List.of(e),
                     "Sacrifice another creature instead of " + cardName + " dealing damage to you?",
@@ -139,14 +143,19 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
         gameOutcomeService.checkWinCondition(gameData);
     }
 
-    private UUID sacrificingPlayer(StackEntry entry, DamageRecipient recipient) {
-        return recipient == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER
-                ? entry.getTargetId()
-                : entry.getControllerId();
+    /** The player who sacrifices or is dealt the damage: "you", or the player the effect's subject names. */
+    private UUID sacrificingPlayer(GameData gameData, StackEntry entry, SacrificeOtherCreatureOrDamageEffect e) {
+        if (e.player() instanceof PlayerSubject.You) {
+            return entry.getControllerId();
+        }
+        if (subjectResolutionService == null) {
+            throw new IllegalStateException("Another player's sacrifice requires the engine handler constructor");
+        }
+        return subjectResolutionService.player(gameData, entry, e, e.player());
     }
 
-    private UUID excludedPermanentId(GameData gameData, StackEntry entry, DamageRecipient recipient) {
-        if (recipient != DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER) {
+    private UUID excludedPermanentId(GameData gameData, StackEntry entry, PlayerSubject player) {
+        if (player instanceof PlayerSubject.You) {
             return entry.getSourcePermanentId();
         }
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

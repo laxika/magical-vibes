@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndPutMatchingOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -36,7 +36,7 @@ public class TezzeretMasterOfTheBridge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(
-                        new DealDamageToPlayersEffect(artifactsYouControl, DamageRecipient.EACH_OPPONENT),
+                        new DealDamageToPlayersEffect(artifactsYouControl, Subjects.eachOpponent()),
                         new GainLifeEffect(artifactsYouControl)),
                 "+2: Tezzeret deals X damage to each opponent, where X is the number of artifacts you control. "
                         + "You gain X life."

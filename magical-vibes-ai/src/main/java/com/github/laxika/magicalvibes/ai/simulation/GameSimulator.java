@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1573,7 +1574,7 @@ public class GameSimulator {
     private int scoreAbilityForSim(com.github.laxika.magicalvibes.model.ActivatedAbility ability, ManaCost cost, ManaPool pool) {
         boolean hasSideEffects = ability.getEffects().stream()
                 .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect dmg
-                        && dmg.recipient() == com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER);
+                        && dmg.player() instanceof PlayerSubject.You);
         var coloredCosts = cost.getColoredCosts();
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ManaProducingEffect mp) {

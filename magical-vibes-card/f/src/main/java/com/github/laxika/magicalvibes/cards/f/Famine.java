@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PTK", collectorNumber = "75")
 @CardRegistration(set = "VMA", collectorNumber = "120")
@@ -14,6 +14,6 @@ public class Famine extends Card {
 
     public Famine() {
         addSimultaneousSpellEffects(new MassDamageEffect(3),
-                new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER));
+                new DealDamageToPlayersEffect(3, Subjects.eachPlayer()));
     }
 }
