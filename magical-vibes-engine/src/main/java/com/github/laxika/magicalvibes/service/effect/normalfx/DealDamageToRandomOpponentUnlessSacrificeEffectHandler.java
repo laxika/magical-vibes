@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
@@ -105,7 +104,7 @@ public class DealDamageToRandomOpponentUnlessSacrificeEffectHandler implements N
     }
 
     private SacrificePermanentsEffect sacrificeEffect(DealDamageToRandomOpponentUnlessSacrificeEffect effect) {
-        return new SacrificePermanentsEffect(1, effect.sacrificeFilter(), SacrificeRecipient.TARGET_PLAYER);
+        return new SacrificePermanentsEffect(1, effect.sacrificeFilter(), Subjects.targetPlayer());
     }
 
     private void dealDamage(GameData gameData, StackEntry sourceEntry,

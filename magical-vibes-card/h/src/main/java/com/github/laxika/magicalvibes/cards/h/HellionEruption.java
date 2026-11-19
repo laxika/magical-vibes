@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -25,7 +25,7 @@ public class HellionEruption extends Card {
     public HellionEruption() {
         var creature = new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate()));
         addSpellEffect(new SacrificePermanentsEffect(
-                new PermanentCount(creature, CountScope.CONTROLLER), creature, SacrificeRecipient.CONTROLLER)
+                new PermanentCount(creature, CountScope.CONTROLLER), creature, Subjects.you())
                 .withRecordedSacrificeCount());
         addSpellEffect(new CreateTokenEffect(new EventValue(), "Hellion", 4, 4,
                 CardColor.RED, List.of(CardSubtype.HELLION), Set.of(), Set.of()));

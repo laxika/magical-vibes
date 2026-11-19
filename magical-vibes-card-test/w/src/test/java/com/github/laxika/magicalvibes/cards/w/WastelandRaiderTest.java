@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.t.TheMasterMultiplied;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WastelandRaider.class})
+@CardUsed({WastelandRaider.class, TheMasterMultiplied.class})
 @DisplayName("Wasteland Raider")
 class WastelandRaiderTest extends BaseCardTest {
 
@@ -87,6 +88,29 @@ class WastelandRaiderTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Wasteland Raider");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Its own trigger can't make its controller sacrifice a creature token The Master, Multiplied protects")
+    void protectedCreatureTokenIsNotOffered() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new TheMasterMultiplied());
+        TheMasterMultiplied tokenCard = new TheMasterMultiplied();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+        castRaider(List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent raider = findPermanent(player1, "Wasteland Raider");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(master.getId(), raider.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(raider.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(master, token);
+        harness.assertInGraveyard(player1, "Wasteland Raider");
     }
 
     private void castRaider(List<String> repeatedAdditionalCosts) {

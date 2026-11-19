@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class DeathPitOffering extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.CONTROLLER));
+                Subjects.you()));
 
         // Creatures you control get +2/+2.
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES));

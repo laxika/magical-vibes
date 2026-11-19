@@ -281,10 +281,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect sacrifice
                 && sacrifice.count() instanceof com.github.laxika.magicalvibes.model.amount.Fixed count
                 && count.value() > 0
-                && (sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.TARGET_PLAYER
-                || sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER)) {
-            UUID sacrificingPlayerId = sacrifice.recipient()
-                    == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.TARGET_PLAYER && targetId != null
+                && (sacrifice.player().declaresTarget()
+                || sacrifice.player() instanceof com.github.laxika.magicalvibes.model.effect.PlayerSubject.You)) {
+            UUID sacrificingPlayerId = sacrifice.player().declaresTarget() && targetId != null
                     ? targetId : choicePlayerId;
             // The choice is only withheld when the deciding player is the one who would sacrifice; a
             // controller choosing for a targeted opponent is asked whatever that opponent controls.

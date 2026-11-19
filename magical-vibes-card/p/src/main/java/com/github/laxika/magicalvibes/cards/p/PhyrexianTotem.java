@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -39,6 +39,6 @@ public class PhyrexianTotem extends Card {
         addTrigger(Triggers.dealtDamage(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsCreature()),
                 new SacrificePermanentsEffect(
-                        new EventValue(), new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER));
+                        new EventValue(), new PermanentTruePredicate(), Subjects.you()));
     }
 }

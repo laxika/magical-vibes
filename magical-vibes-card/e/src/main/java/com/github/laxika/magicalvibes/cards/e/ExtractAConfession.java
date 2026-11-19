@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,10 +24,10 @@ public class ExtractAConfession extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasGreatestPowerAmongControllerCreaturesPredicate())),
-                        SacrificeRecipient.EACH_OPPONENT)));
+                        Subjects.eachOpponent())));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CollectEvidenceCostPaid()),
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                        SacrificeRecipient.EACH_OPPONENT)));
+                        Subjects.eachOpponent())));
     }
 }

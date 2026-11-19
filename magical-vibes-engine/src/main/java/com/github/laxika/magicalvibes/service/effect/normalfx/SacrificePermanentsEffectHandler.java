@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -25,8 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves filtered sacrifices. A single affected player uses the appropriate creature or
- * permanent selection; multiple players choose in turn order before their simultaneous sacrifices.
+ * Resolves filtered sacrifices. The sacrificing players come from {@code SubjectResolutionService}.
+ * A single affected player uses the appropriate creature or permanent selection; an "each player"
+ * subject, or any subject naming several players, has every player choose in APNAP order and then
+ * sacrifices everything chosen at once (CR 101.4).
  * Nothing changes before the first sacrifice (log lines about players with nothing to sacrifice
  * are written after it), so a competing death replacement can be chosen first.
  */
@@ -41,6 +45,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,88 +60,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         boolean creatureSingleSac = e.filter() instanceof PermanentIsCreaturePredicate
                 && !e.simultaneousChoices();
 
-        switch (e.recipient()) {
-            case TRIGGERING_PERMANENT_CONTROLLER -> {
-                UUID playerId = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
-                if (playerId == null) {
-                    playerId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
-                }
-                if (playerId == null) {
-                    playerId = entry.getTriggeringPermanentControllerId();
-                }
-                if (playerId != null) {
-                    resolveSinglePlayer(gameData, entry, e, playerId, creatureSingleSac);
-                }
-            }
-            case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
-            case TARGET_PLAYER -> {
-                UUID targetPlayerId = targetPlayerId(entry, e);
-                if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-                    return;
-                }
-                resolveSinglePlayer(gameData, entry, e, targetPlayerId, creatureSingleSac);
-            }
-            case CONTROLLER_AND_TARGET_PLAYER -> {
-                UUID targetPlayerId = targetPlayerId(entry, e);
-                if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-                    return;
-                }
-                resolveSelectedPlayers(gameData, entry, e,
-                        List.of(entry.getControllerId(), targetPlayerId), creatureSingleSac);
-            }
-            case ACTIVE_PLAYER -> {
-                UUID activePlayerId = gameData.activePlayerId;
-                if (activePlayerId == null) {
-                    return;
-                }
-                resolveSinglePlayer(gameData, entry, e, activePlayerId, creatureSingleSac);
-            }
-            case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> {
-                // targetId is either a player or a planeswalker; the sacrificer is that player or the
-                // planeswalker's controller (piggybacks on a companion player-or-planeswalker effect).
-                UUID targetId = entry.getTargetId();
-                UUID playerId = gameData.playerIds.contains(targetId)
-                        ? targetId
-                        : gameQueryService.findPermanentController(gameData, targetId);
-                if (playerId == null || !gameData.playerIds.contains(playerId)) {
-                    return;
-                }
-                resolveSinglePlayer(gameData, entry, e, playerId, creatureSingleSac);
-            }
-            case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false, creatureSingleSac);
-            case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true, creatureSingleSac);
-            case PLAYERS_WITH_MOST_LANDS -> resolveSelectedPlayers(gameData, entry, e,
-                    apnapPlayers(gameData).stream()
-                            .filter(playerId -> controlsMostLandsOrTied(gameData, playerId))
-                            .toList(), creatureSingleSac);
-            case DEFENDING_PLAYER -> {
-                // Non-targeting ON_ATTACK edict: the attacked player, or the controller of the
-                // attacked planeswalker, sacrifices (reads the trigger's attackedTargetId).
-                // The defending player is captured when the attack is declared, so it still
-                // applies after the attacked planeswalker has left the battlefield.
-                UUID defendingPlayerId = entry.getDefendingPlayerId();
-                if (defendingPlayerId == null) {
-                    UUID attackedTargetId = entry.getAttackedTargetId();
-                    if (attackedTargetId == null) {
-                        return;
-                    }
-                    defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
-                            ? attackedTargetId
-                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                }
-                if (defendingPlayerId == null || !gameData.playerIds.contains(defendingPlayerId)) {
-                    return;
-                }
-                resolveSinglePlayer(gameData, entry, e, defendingPlayerId, creatureSingleSac);
-            }
+        List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.player());
+        if (e.player() instanceof PlayerSubject.Each || e.player() instanceof PlayerSubject.Matching
+                || players.size() > 1) {
+            resolveSelectedPlayers(gameData, entry, e, players, creatureSingleSac);
+        } else if (!players.isEmpty()) {
+            resolveSinglePlayer(gameData, entry, e, players.getFirst(), creatureSingleSac);
         }
-    }
-
-    private boolean controlsMostLandsOrTied(GameData gameData, UUID playerId) {
-        return gameData.orderedPlayerIds.stream()
-                .filter(candidateId -> !candidateId.equals(playerId))
-                .noneMatch(candidateId -> gameQueryService.controlsMoreLandsThan(
-                        gameData, candidateId, playerId));
     }
 
     void resolveForPlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect,
@@ -249,16 +179,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveEachPlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
-            boolean opponentsOnly, boolean creatureSingleSac) {
-        UUID controllerId = entry.getControllerId();
-
-        List<UUID> playerIds = apnapPlayers(gameData).stream()
-                .filter(playerId -> !opponentsOnly || !playerId.equals(controllerId))
-                .toList();
-        resolveSelectedPlayers(gameData, entry, e, playerIds, creatureSingleSac);
-    }
-
     private void resolveSelectedPlayers(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             List<UUID> playerIds, boolean creatureSingleSac) {
         if (e.recordSacrificedCount()) {
@@ -354,15 +274,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 .orElse(0);
     }
 
-    private UUID targetPlayerId(StackEntry entry, SacrificePermanentsEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null) {
-            List<UUID> effectTargets = entry.targetsForEffect(effect);
-            targetPlayerId = effectTargets.isEmpty() ? null : effectTargets.getFirst();
-        }
-        return targetPlayerId;
-    }
-
     /**
      * Returns {@code true} when this effect belongs to an opponent of {@code playerId} and that
      * player can't be caused to sacrifice permanents by opponents' spells and abilities (Sigarda,
@@ -370,17 +281,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
      */
     private boolean isSacrificeProtected(GameData gameData, StackEntry entry, UUID playerId) {
         return !gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId());
-    }
-
-    private List<UUID> apnapPlayers(GameData gameData) {
-        List<UUID> orderedPlayers = new ArrayList<>(gameData.orderedPlayerIds);
-        int activeIndex = orderedPlayers.indexOf(gameData.activePlayerId);
-        if (activeIndex <= 0) {
-            return orderedPlayers;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayers.subList(activeIndex, orderedPlayers.size()));
-        rotated.addAll(orderedPlayers.subList(0, activeIndex));
-        return rotated;
     }
 
     /**

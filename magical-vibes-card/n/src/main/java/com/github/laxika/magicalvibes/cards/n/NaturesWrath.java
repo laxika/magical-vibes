@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -45,6 +45,6 @@ public class NaturesWrath extends Card {
     }
 
     private static CardEffect sacrificeTrigger(CardSubtype landType, CardColor color) {
-        return new SacrificePermanentsEffect(1, landTypeOrColor(landType, color), SacrificeRecipient.TARGET_PLAYER);
+        return new SacrificePermanentsEffect(1, landTypeOrColor(landType, color), Subjects.targetPlayer());
     }
 }

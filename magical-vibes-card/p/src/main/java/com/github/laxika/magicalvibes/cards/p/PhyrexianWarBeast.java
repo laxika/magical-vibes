@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -21,7 +20,7 @@ public class PhyrexianWarBeast extends Card {
     public PhyrexianWarBeast() {
         // When this creature leaves the battlefield, sacrifice a land and this creature deals 1 damage to you.
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER),
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()),
                 new DealDamageToPlayersEffect(1, Subjects.you())));
     }
 }

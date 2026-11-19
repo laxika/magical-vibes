@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,8 +35,8 @@ public class GideonsTriumph extends Card {
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new ControlsPermanent(gideonPlaneswalker),
                 new SacrificePermanentsEffect(1, attackedOrBlockedCreature,
-                        SacrificeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 new SacrificePermanentsEffect(2, attackedOrBlockedCreature,
-                        SacrificeRecipient.TARGET_PLAYER)));
+                        Subjects.targetPlayer())));
     }
 }

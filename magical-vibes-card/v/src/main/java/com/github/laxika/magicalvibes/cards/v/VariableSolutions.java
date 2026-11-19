@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureWithMana
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SeekCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,7 +25,7 @@ public class VariableSolutions extends Card {
                 spellXEquals(1), new SeekCardToBattlefieldEffect(CardPredicateUtils.basicLand(), true)));
         addSpellEffect(new ConditionalEffect(
                 spellXEquals(2), new SacrificePermanentsEffect(
-                        1, new PermanentIsArtifactPredicate(), SacrificeRecipient.EACH_OPPONENT)));
+                        1, new PermanentIsArtifactPredicate(), Subjects.eachOpponent())));
         addSpellEffect(new ConditionalEffect(
                 spellXEquals(3), new ConjureRandomCreatureWithManaValueEffect(new XValue(), false)));
 
@@ -34,7 +34,7 @@ public class VariableSolutions extends Card {
                 new SpellXAtLeast(4), new SeekCardToBattlefieldEffect(CardPredicateUtils.basicLand(), true)));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4), new SacrificePermanentsEffect(
-                        1, new PermanentIsArtifactPredicate(), SacrificeRecipient.EACH_OPPONENT)));
+                        1, new PermanentIsArtifactPredicate(), Subjects.eachOpponent())));
         addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4), new ConjureRandomCreatureWithManaValueEffect(new XValue(), false)));
     }

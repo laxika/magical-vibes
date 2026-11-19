@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -55,7 +55,7 @@ public class SorinSolemnVisitor extends Card {
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.OPPONENT),
                                 new SacrificePermanentsEffect(
-                                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.ACTIVE_PLAYER)),
+                                        1, new PermanentIsCreaturePredicate(), Subjects.activePlayer())),
                         EMBLEM_TEXT)),
                 "−6: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

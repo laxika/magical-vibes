@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
@@ -57,6 +56,6 @@ public class DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffectHandle
         // discardCount (a bare PermanentIsCreaturePredicate would force exactly one per opponent).
         sacrificePermanentsEffectHandler.resolve(gameData, entry, new SacrificePermanentsEffect(discardCount,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
     }
 }

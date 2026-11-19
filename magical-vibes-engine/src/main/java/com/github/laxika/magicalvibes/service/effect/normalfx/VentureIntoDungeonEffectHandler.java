@@ -206,12 +206,12 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                         Subjects.you()),
                         new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate(),
-                                com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER),
+                                com.github.laxika.magicalvibes.model.effect.Subjects.you()),
                         new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
-                                new PermanentIsCreaturePredicate(), com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER),
+                                new PermanentIsCreaturePredicate(), com.github.laxika.magicalvibes.model.effect.Subjects.you()),
                         new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate(),
-                                com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER));
+                                com.github.laxika.magicalvibes.model.effect.Subjects.you()));
                 case 4 -> List.of(creatureToken("The Atropal", 1, 4, 4,
                         com.github.laxika.magicalvibes.model.CardColor.BLACK, List.of(CardSubtype.GOD, CardSubtype.HORROR),
                         java.util.Set.of(Keyword.DEATHTOUCH), true), new CompleteDungeonEffect(progress.dungeon()));

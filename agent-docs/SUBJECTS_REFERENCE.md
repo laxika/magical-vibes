@@ -16,7 +16,7 @@ resolver's static entry point rejects the others).
 | `triggering()` | "it", "that creature" (the permanent the trigger event was about) | no | no |
 | `triggeringCard()` | "that card" of a "whenever you play a card" event (the spell or land; with `ownerOf`, "its owner", which for an event with no spell or land is the owner of the card put into a graveyard or of the permanent that entered) | no | no |
 | `targetSpell()` | "target spell", only inside `controllerOf` ("that spell's controller"): read from the stack, else as it was countered (a counter-unless-pays rider has no target, only that record); names no permanent; the spell target is declared by the effect reading it (damage) or by the counter effect it rides on (discard) | no | no |
-| `triggeringSpell()` | "that spell or ability", only inside `controllerOf`: the spell or ability the trigger event was about, as it is on the stack or last was | no | no |
+| `triggeringSpell()` | "that spell or ability", only inside `controllerOf`: the spell or ability the trigger event was about, as it is on the stack or last was ("that spell or ability's controller sacrifices a land", Lava Runner) | no | no |
 | `returned()` | "that creature" after "return target card ... to the battlefield" (step result) | no | no |
 | `controlledBy(players, filter)` | "each creature you control", "all creatures", "each land target player controls" | only if `players` targets | if `players` may |
 | `allOf(subjects...)` | "this creature and target creature" | if one part targets | if every part may |
@@ -42,6 +42,7 @@ resolver's static entry point rejects the others).
 | `acceptedPlayers()` | "each opponent who discarded their hand this way": the players who said yes to the preceding "each player may" choice of the same resolution (step result); `except(acceptedPlayers(), you())` for the opponents among them | no | no |
 | `except(players, excluded)` | "the other chosen player": `except(chosenPlayers(), triggeringPlayer())` | no | if both may |
 | `allOf(players...)` | "that player or that planeswalker's controller": `allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))` over a "target player or planeswalker" another effect declares (each player once, APNAP order) | no | if every part may |
+| `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
 creature; its controller loses 2 life").

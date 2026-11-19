@@ -26,7 +26,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -42,6 +43,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -87,7 +89,7 @@ class SacrificePermanentsEffectHandlerTest {
         }
 
         handler.resolve(gd, entry(player1Id, null),
-                new SacrificePermanentsEffect(2, new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER)
+                new SacrificePermanentsEffect(2, new PermanentTruePredicate(), Subjects.you())
                         .withSimultaneousChoices());
 
         verify(permanentRemovalService).departToGraveyard(gd, first, DepartureIntent.sacrifice(first.getId()), null);
@@ -107,7 +109,7 @@ class SacrificePermanentsEffectHandlerTest {
                 any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
         handler.resolve(gd, entry(player1Id, null),
-                creatureSac(SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());
+                creatureSac(Subjects.eachPlayer()).withSimultaneousChoices());
 
         verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player2Id),
                 eq(List.of(second.getId())), eq(1),
@@ -151,7 +153,9 @@ class SacrificePermanentsEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new SacrificePermanentsEffectHandler(destructionSupport, gameLogService,
-                gameQueryService, predicateEvaluationService, playerInputService, amountEvaluationService);
+                gameQueryService, predicateEvaluationService, playerInputService, amountEvaluationService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
         lenient().when(gameQueryService.canEffectCauseSacrifice(any(), any(), any())).thenReturn(true);
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
@@ -184,8 +188,8 @@ class SacrificePermanentsEffectHandlerTest {
                 controllerId, "Source", List.of(), 0, targetId, null);
     }
 
-    private SacrificePermanentsEffect creatureSac(SacrificeRecipient recipient) {
-        return new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), recipient);
+    private SacrificePermanentsEffect creatureSac(PlayerSubject player) {
+        return new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), player);
     }
 
     private void stubCount(int count) {
@@ -205,7 +209,7 @@ class SacrificePermanentsEffectHandlerTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(Subjects.targetPlayer()));
 
             verify(permanentRemovalService).departToGraveyard(gd, bears, DepartureIntent.sacrifice(bears.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Grizzly Bears.")));
@@ -220,7 +224,7 @@ class SacrificePermanentsEffectHandlerTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.isCreature(gd, spider)).thenReturn(true);
 
-            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(Subjects.targetPlayer()));
 
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
@@ -230,7 +234,7 @@ class SacrificePermanentsEffectHandlerTest {
         @Test
         @DisplayName("No effect when opponent has no creatures")
         void noEffectWithNoCreatures() {
-            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(Subjects.targetPlayer()));
 
             verify(gameLogService).append(gd, GameLog.text("Player2 has no creatures to sacrifice."));
             verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
@@ -239,7 +243,7 @@ class SacrificePermanentsEffectHandlerTest {
         @Test
         @DisplayName("No effect when there is no valid target player")
         void noEffectWithoutTargetPlayer() {
-            handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry(player1Id, null), creatureSac(Subjects.targetPlayer()));
 
             verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
@@ -252,7 +256,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             when(gameQueryService.canEffectCauseSacrifice(gd, player2Id, player1Id)).thenReturn(false);
 
-            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
+            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(Subjects.targetPlayer()));
 
             verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
@@ -265,7 +269,7 @@ class SacrificePermanentsEffectHandlerTest {
 
         private SacrificePermanentsEffect landSac() {
             return new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(),
-                    SacrificeRecipient.TARGET_PLAYER);
+                    Subjects.targetPlayer());
         }
 
         @Test
@@ -295,7 +299,7 @@ class SacrificePermanentsEffectHandlerTest {
             StackEntry resolvingEntry = entry(player1Id, null);
 
             handler.resolve(gd, resolvingEntry, new SacrificePermanentsEffect(
-                    2, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER)
+                    2, new PermanentIsLandPredicate(), Subjects.you())
                     .withRecordedSacrificeCount());
 
             assertThat(resolvingEntry.getEventValue()).isEqualTo(2);
@@ -317,7 +321,7 @@ class SacrificePermanentsEffectHandlerTest {
             StackEntry resolvingEntry = entry(player1Id, player2Id);
 
             handler.resolve(gd, resolvingEntry, new SacrificePermanentsEffect(
-                    1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER)
+                    1, new PermanentTruePredicate(), Subjects.targetPlayer())
                     .withRecordedSacrificedPower());
 
             assertThat(resolvingEntry.getEventValue()).isEqualTo(3);
@@ -350,7 +354,7 @@ class SacrificePermanentsEffectHandlerTest {
                     any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolve(gd, entry(player1Id, null), new SacrificePermanentsEffect(
-                    1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER)
+                    1, new PermanentIsLandPredicate(), Subjects.you())
                     .withRecordedSacrificeCount());
 
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id), any(), eq(1),
@@ -406,7 +410,7 @@ class SacrificePermanentsEffectHandlerTest {
                     any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolveForPlayer(gd, entry(player1Id, null), new SacrificePermanentsEffect(
-                    1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER), player2Id);
+                    1, new PermanentIsLandPredicate(), Subjects.you()), player2Id);
 
             verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
         }
@@ -424,7 +428,7 @@ class SacrificePermanentsEffectHandlerTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.CONTROLLER));
+            handler.resolve(gd, entry(player1Id, null), creatureSac(Subjects.you()));
 
             verify(permanentRemovalService).departToGraveyard(gd, bears, DepartureIntent.sacrifice(bears.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Grizzly Bears.")));
@@ -443,7 +447,7 @@ class SacrificePermanentsEffectHandlerTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.EACH_OPPONENT));
+            handler.resolve(gd, entry(player1Id, null), creatureSac(Subjects.eachOpponent()));
 
             verify(permanentRemovalService).departToGraveyard(gd, bears, DepartureIntent.sacrifice(bears.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Grizzly Bears.")));
@@ -452,7 +456,7 @@ class SacrificePermanentsEffectHandlerTest {
         @Test
         @DisplayName("No effect when opponent has no creatures; controller is not asked")
         void noEffectWhenOpponentHasNoCreatures() {
-            handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.EACH_OPPONENT));
+            handler.resolve(gd, entry(player1Id, null), creatureSac(Subjects.eachOpponent()));
 
             verify(gameLogService).append(gd, GameLog.text("Player2 has no creatures to sacrifice."));
             verify(gameLogService, never()).append(gd, GameLog.text("Player1 has no creatures to sacrifice."));
@@ -464,8 +468,8 @@ class SacrificePermanentsEffectHandlerTest {
     @DisplayName("Each player sacrifices matching permanents in APNAP order")
     class EachPlayerPermanents {
 
-        private SacrificePermanentsEffect landSac(SacrificeRecipient recipient) {
-            return new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), recipient);
+        private SacrificePermanentsEffect landSac(PlayerSubject player) {
+            return new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), player);
         }
 
         @Test
@@ -479,7 +483,7 @@ class SacrificePermanentsEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
             when(gameQueryService.findPermanentById(gd, island.getId())).thenReturn(island);
 
-            handler.resolve(gd, entry(player1Id, null), landSac(SacrificeRecipient.EACH_PLAYER));
+            handler.resolve(gd, entry(player1Id, null), landSac(Subjects.eachPlayer()));
 
             verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
             verify(permanentRemovalService).departToGraveyard(gd, island, DepartureIntent.sacrifice(island.getId()), null);
@@ -494,7 +498,7 @@ class SacrificePermanentsEffectHandlerTest {
             when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
                     any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
-            handler.resolve(gd, entry(player1Id, null), landSac(SacrificeRecipient.EACH_PLAYER));
+            handler.resolve(gd, entry(player1Id, null), landSac(Subjects.eachPlayer()));
 
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player2Id), any(), eq(1),
                     any(MultiPermanentChoiceContext.ForcedSacrifice.class), anyString());
@@ -507,7 +511,7 @@ class SacrificePermanentsEffectHandlerTest {
 
         private SacrificePermanentsEffect anyPermanentSac() {
             return new SacrificePermanentsEffect(1, new PermanentTruePredicate(),
-                    SacrificeRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER);
+                    Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target())));
         }
 
         @Test

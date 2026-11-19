@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SCD", collectorNumber = "95")
@@ -15,7 +15,7 @@ public class NecroticHex extends Card {
         addSpellEffect(new SacrificePermanentsEffect(
                 6,
                 new PermanentIsCreaturePredicate(),
-                SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());
+                Subjects.eachPlayer()).withSimultaneousChoices());
         addSpellEffect(CreateTokenEffect.blackZombie(6).withTapped(true));
     }
 }

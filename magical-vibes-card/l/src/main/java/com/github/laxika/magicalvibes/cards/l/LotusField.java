@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class LotusField extends Card {
         addStaticEffect(new EntersTappedEffect());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
-                2, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
+                2, new PermanentIsLandPredicate(), Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

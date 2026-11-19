@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +22,7 @@ public class SocialSnub extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new ControlsPermanent(new PermanentIsCreaturePredicate())),
                 new MayEffect(new CopyTriggeringSpellEffect(), "Copy Social Snub?"));
         addSpellEffect(new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER));
+                1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer()));
         addSpellEffect(new LoseLifeEffect(1, Subjects.eachOpponent()));
         addSpellEffect(new GainLifeEffect(1));
     }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -32,7 +32,7 @@ public class Pompeii extends Card {
 
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new MassDamageEffect(new CountersOnSource(CounterType.ERUPTION), true),
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.EACH_PLAYER),
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.eachPlayer()),
                 new PlaneswalkEffect()));
     }
 }

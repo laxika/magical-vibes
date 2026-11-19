@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -23,7 +23,7 @@ public class HellcarverDemon extends Card {
                 new SacrificePermanentsEffect(
                         new PermanentCount(otherPermanent, CountScope.CONTROLLER),
                         otherPermanent,
-                        SacrificeRecipient.CONTROLLER),
+                        Subjects.you()),
                 new DiscardHandEffect(),
                 new ExileTopCardsAndMayCastSpellsEffect(6)));
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +18,7 @@ public class ManaVortex extends Card {
         addTrigger(Triggers.youCastThisSpell(),
                 new CounterUnlessSacrificesEffect(new PermanentIsLandPredicate(), "land"));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentsEffect(
-                1, new PermanentIsLandPredicate(), SacrificeRecipient.ACTIVE_PLAYER));
+                1, new PermanentIsLandPredicate(), Subjects.activePlayer()));
         addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentIsLandPredicate()), new SacrificeSelfEffect());
     }
 }

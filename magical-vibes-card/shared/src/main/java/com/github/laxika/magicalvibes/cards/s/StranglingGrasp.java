@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,7 +33,7 @@ public class StranglingGrasp extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1,
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                                SacrificeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         new LoseLifeEffect(1, Subjects.targetPlayer())));
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -52,7 +51,7 @@ public class BraidssFrightfulReturn extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
         addTrigger(Triggers.chapter(3), new MayEffect(
-                new SacrificePermanentsEffect(1, nonlandNontoken, SacrificeRecipient.TARGET_PLAYER),
+                new SacrificePermanentsEffect(1, nonlandNontoken, Subjects.targetPlayer()),
                 "Have the targeted opponent sacrifice a nonland, nontoken permanent?",
                 SequenceEffect.of(
                         new LoseLifeEffect(2, Subjects.targetPlayer()),

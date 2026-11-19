@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -49,7 +49,7 @@ public class RakdosRiteknife extends Card {
                         new SacrificePermanentsEffect(
                                 new CountersOnSource(CounterType.BLOOD),
                                 new PermanentTruePredicate(),
-                                SacrificeRecipient.TARGET_PLAYER)
+                                Subjects.targetPlayer())
                 ),
                 "{B}{R}, Sacrifice this Equipment: Target player sacrifices a permanent of their choice for each blood counter on Rakdos Riteknife.",
                 new PlayerPredicateTargetFilter(

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -19,6 +19,6 @@ public class MireInMisery extends Card {
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsEnchantmentPredicate())),
-                SacrificeRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
     }
 }

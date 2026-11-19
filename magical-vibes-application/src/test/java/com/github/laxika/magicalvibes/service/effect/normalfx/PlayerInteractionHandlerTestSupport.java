@@ -82,7 +82,8 @@ final class PlayerInteractionHandlerTestSupport {
                             predicateEvaluationService, gameQueryService));
             deps.put(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class,
                     new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(
-                            gameQueryService, predicateEvaluationService));
+                            gameQueryService, predicateEvaluationService,
+                            org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
             deps.putAll(extraDeps);
 
             Constructor<?> chosen = null;

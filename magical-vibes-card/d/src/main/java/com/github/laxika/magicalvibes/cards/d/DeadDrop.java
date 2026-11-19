@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -24,6 +24,6 @@ public class DeadDrop extends Card {
         )).addSpellEffect(new SacrificePermanentsEffect(
                 2,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.TARGET_PLAYER).withSimultaneousChoices());
+                Subjects.targetPlayer()).withSimultaneousChoices());
     }
 }

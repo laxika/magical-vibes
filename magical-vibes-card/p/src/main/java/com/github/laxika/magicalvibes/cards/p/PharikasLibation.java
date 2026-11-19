@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,12 +25,12 @@ public class PharikasLibation extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         opponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices an enchantment of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsEnchantmentPredicate(),
-                                SacrificeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         opponent)
         )));
     }

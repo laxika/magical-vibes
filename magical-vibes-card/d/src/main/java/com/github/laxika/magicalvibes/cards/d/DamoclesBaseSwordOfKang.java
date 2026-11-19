@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +34,7 @@ public class DamoclesBaseSwordOfKang extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Sacrifice a nontoken creature",
                                 new SacrificePermanentsEffect(1, nontokenCreature,
-                                        SacrificeRecipient.TARGET_PLAYER)),
+                                        Subjects.targetPlayer())),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Lose 2 life and draw two cards",
                                 SequenceEffect.of(

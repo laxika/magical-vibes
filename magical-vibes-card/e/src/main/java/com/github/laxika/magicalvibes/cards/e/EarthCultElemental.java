@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,10 +16,10 @@ public class EarthCultElemental extends Card {
     public EarthCultElemental() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new RollD20Effect(
                 new SacrificePermanentsEffect(1, new PermanentTruePredicate(),
-                        SacrificeRecipient.EACH_PLAYER),
+                        Subjects.eachPlayer()),
                 new SacrificePermanentsEffect(1, new PermanentTruePredicate(),
-                        SacrificeRecipient.EACH_OPPONENT),
+                        Subjects.eachOpponent()),
                 new SacrificePermanentsEffect(2, new PermanentTruePredicate(),
-                        SacrificeRecipient.EACH_OPPONENT)));
+                        Subjects.eachOpponent())));
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOf
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -27,7 +27,7 @@ public class HideousTaskmaster extends Card {
     public HideousTaskmaster() {
         // Annihilator 1 (printed).
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                1, new PermanentTruePredicate(), Subjects.defendingPlayer()));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
                 .addTrigger(Triggers.youCastThisSpell(),
@@ -37,6 +37,6 @@ public class HideousTaskmaster extends Card {
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new SacrificePermanentsEffect(
-                                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER))));
+                                        1, new PermanentTruePredicate(), Subjects.defendingPlayer()))));
     }
 }

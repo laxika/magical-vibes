@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class UlamogsCrusher extends Card {
     public UlamogsCrusher() {
         addStaticEffect(new MustAttackEffect());
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                2, new PermanentTruePredicate(), Subjects.defendingPlayer()));
     }
 }

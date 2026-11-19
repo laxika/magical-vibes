@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -46,7 +46,7 @@ public class FarAway extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Away — Target player sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         anyPlayer
                 ).withManaCost("{2}{B}"),
                 new ChooseOneEffect.ChooseOneOption(
@@ -54,7 +54,7 @@ public class FarAway extends Card {
                         List.<CardEffect>of(
                                 ReturnToHandEffect.target(),
                                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                        SacrificeRecipient.TARGET_PLAYER)),
+                                        Subjects.targetPlayer())),
                         List.of(creature, anyPlayer)
                 ).withManaCost("{3}{U}{B}")
         )));

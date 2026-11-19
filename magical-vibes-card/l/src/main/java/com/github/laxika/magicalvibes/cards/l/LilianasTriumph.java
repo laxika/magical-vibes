@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +21,7 @@ public class LilianasTriumph extends Card {
 
     public LilianasTriumph() {
         addSpellEffect(new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
+                1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsPlaneswalkerPredicate(),

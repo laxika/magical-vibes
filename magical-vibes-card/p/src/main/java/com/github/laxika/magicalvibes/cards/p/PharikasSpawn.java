@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,6 +39,6 @@ public class PharikasSpawn extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GORGON)))),
-                        SacrificeRecipient.EACH_OPPONENT));
+                        Subjects.eachOpponent()));
     }
 }

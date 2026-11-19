@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +29,7 @@ public class LegateLaniusCaesarsAce extends Card {
                         new Divided(
                                 new Sum(new PermanentCount(creature, CountScope.CONTROLLER), new Fixed(9)),
                                 10),
-                        new PermanentAnyOfPredicate(List.of(creature)), SacrificeRecipient.EACH_OPPONENT,
+                        new PermanentAnyOfPredicate(List.of(creature)), Subjects.eachOpponent(),
                         true));
         addTrigger(Triggers.sacrificed(creature, ObjectRelation.OPPONENT_CONTROLS),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));

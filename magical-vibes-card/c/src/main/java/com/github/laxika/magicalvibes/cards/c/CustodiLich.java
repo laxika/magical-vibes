@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,6 +23,6 @@ public class CustodiLich extends Card {
                 "Target must be a player"
         )).addTrigger(Triggers.youBecomeMonarch(),
                 new SacrificePermanentsEffect(
-                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER));
+                        1, new PermanentIsCreaturePredicate(), Subjects.targetPlayer()));
     }
 }

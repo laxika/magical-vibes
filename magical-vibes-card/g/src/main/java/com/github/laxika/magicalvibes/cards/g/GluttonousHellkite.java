@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class GluttonousHellkite extends Card {
     public GluttonousHellkite() {
         addTrigger(Triggers.youCastThisSpell(),
                 new SacrificePermanentsEffect(
-                new XValue(), new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER,
+                new XValue(), new PermanentIsCreaturePredicate(), Subjects.eachPlayer(),
                 false, true, false, true),
                 new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
                         new Scaled(new EventValue(), 2)));

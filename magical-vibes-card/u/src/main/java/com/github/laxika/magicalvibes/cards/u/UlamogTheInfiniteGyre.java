@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class UlamogTheInfiniteGyre extends Card {
                 new DestroyTargetPermanentEffect());
 
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                4, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                4, new PermanentTruePredicate(), Subjects.defendingPlayer()));
 
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),
                 new ShuffleGraveyardIntoLibraryEffect(false));

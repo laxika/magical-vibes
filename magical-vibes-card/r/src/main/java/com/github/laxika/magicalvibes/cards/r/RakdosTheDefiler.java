@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +20,9 @@ public class RakdosTheDefiler extends Card {
         var nonDemon = new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON));
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 new HalvedRoundedUp(new PermanentCount(nonDemon, CountScope.CONTROLLER)),
-                nonDemon, SacrificeRecipient.CONTROLLER));
+                nonDemon, Subjects.you()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new SacrificePermanentsEffect(
                 new HalvedRoundedUp(new PermanentCount(nonDemon, CountScope.TARGET_PLAYER)),
-                nonDemon, SacrificeRecipient.TARGET_PLAYER));
+                nonDemon, Subjects.targetPlayer()));
     }
 }

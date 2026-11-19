@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifyCardsOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -22,7 +22,7 @@ public class MycelicBallad extends Card {
         addSpellEffect(new SacrificePermanentsEffect(
                 new SourceIntensity(),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());
+                Subjects.eachPlayer()).withSimultaneousChoices());
         addSpellEffect(new GainLifeEffect(new SourceIntensity()));
         addSpellEffect(new IntensifyCardsOfSubtypeEffect(CardSubtype.CHORUS));
     }

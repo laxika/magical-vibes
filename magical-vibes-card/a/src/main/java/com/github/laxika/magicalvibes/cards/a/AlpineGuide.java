@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,6 +27,6 @@ public class AlpineGuide extends Card {
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(1,
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
-                        SacrificeRecipient.CONTROLLER));
+                        Subjects.you()));
     }
 }

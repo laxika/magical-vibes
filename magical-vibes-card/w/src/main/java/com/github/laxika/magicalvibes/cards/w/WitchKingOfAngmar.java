@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -35,7 +35,7 @@ public class WitchKingOfAngmar extends Card {
                 TriggerOptions.ONE_OR_MORE,
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(
-                                1, creatureThatDealtCombatDamage, SacrificeRecipient.EACH_OPPONENT),
+                                1, creatureThatDealtCombatDamage, Subjects.eachOpponent()),
                         new RingTemptsYouEffect()));
 
         // Discard a card: Witch-king of Angmar gains indestructible until end of turn. Tap him.

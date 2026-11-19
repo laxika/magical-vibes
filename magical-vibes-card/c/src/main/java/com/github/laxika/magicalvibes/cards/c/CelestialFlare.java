@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -25,6 +25,6 @@ public class CelestialFlare extends Card {
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsAttackingPredicate(),
                                 new PermanentIsBlockingPredicate())))),
-                SacrificeRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
     }
 }

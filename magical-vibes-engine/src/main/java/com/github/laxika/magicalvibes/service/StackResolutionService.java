@@ -508,7 +508,7 @@ public class StackResolutionService {
                             new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
                                     new com.github.laxika.magicalvibes.model.filter
                                             .PermanentIsSpecificPermanentPredicate(permanent.getId()),
-                                    com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.EACH_PLAYER)));
+                                    com.github.laxika.magicalvibes.model.effect.Subjects.eachPlayer())));
         }
         gameData.transferCardsExiledByPermanent(entry.getCard().getId(), permanent.getId());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {

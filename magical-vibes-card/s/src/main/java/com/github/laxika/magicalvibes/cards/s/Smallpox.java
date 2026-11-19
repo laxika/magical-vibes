@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -22,7 +21,7 @@ public class Smallpox extends Card {
         // sacrifice, then land sacrifice.
         addSpellEffect(new LoseLifeEffect(1, Subjects.eachPlayer()));
         addSpellEffect(new DiscardEffect(1, Subjects.eachPlayer()));
-        addSpellEffect(new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER));
-        addSpellEffect(new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.EACH_PLAYER));
+        addSpellEffect(new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer()));
+        addSpellEffect(new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.eachPlayer()));
     }
 }

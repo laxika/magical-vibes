@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class MeathookMassacreII extends Card {
     public MeathookMassacreII() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(new XValue(), new PermanentIsCreaturePredicate(),
-                        SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());
+                        Subjects.eachPlayer()).withSimultaneousChoices());
 
         ReturnDyingCreatureToBattlefieldEffect returnCreature = new ReturnDyingCreatureToBattlefieldEffect(
                 false, CounterType.FINALITY, 1);

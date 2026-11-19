@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -61,7 +61,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeHandler
         var sacrifice = new SacrificePermanentsEffect(
                 1,
                 EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler.NONTOKEN_CREATURE,
-                SacrificeRecipient.TARGET_PLAYER);
+                Subjects.targetPlayer());
         var sacrificeEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",

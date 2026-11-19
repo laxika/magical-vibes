@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
@@ -40,7 +40,7 @@ public class RiveteersCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices a creature or planeswalker they control with the greatest mana value among creatures and planeswalkers they control",
                         new SacrificePermanentsEffect(1, greatestCreatureOrPlaneswalker,
-                                SacrificeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         opponentFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile the top three cards of your library. Until your next end step, you may play those cards",

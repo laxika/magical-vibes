@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -48,7 +48,7 @@ public class PalanisHatcher extends Card {
                         new SacrificePermanentsEffect(
                                 1,
                                 new PermanentHasSubtypePredicate(CardSubtype.EGG),
-                                SacrificeRecipient.CONTROLLER),
+                                Subjects.you()),
                         new CreateTokenEffect(
                                 "Dinosaur",
                                 3,

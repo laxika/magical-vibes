@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -24,6 +24,6 @@ public class HandOfEmrakul extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.SPAWN)))))));
 
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                1, new PermanentTruePredicate(), Subjects.defendingPlayer()));
     }
 }

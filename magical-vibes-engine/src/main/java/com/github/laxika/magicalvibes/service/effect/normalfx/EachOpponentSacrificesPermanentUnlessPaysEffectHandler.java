@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -85,7 +85,7 @@ public class EachOpponentSacrificesPermanentUnlessPaysEffectHandler implements N
         }
 
         SacrificePermanentsEffect sacrifice = new SacrificePermanentsEffect(
-                1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER);
+                1, new PermanentTruePredicate(), Subjects.targetPlayer());
         StackEntry sacrificeEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(sacrifice)),
                 sacrificingPlayerId, ability.sourcePermanentId());

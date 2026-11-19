@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "164")
@@ -11,6 +11,6 @@ public class YawningFissure extends Card {
 
     public YawningFissure() {
         addSpellEffect(new SacrificePermanentsEffect(
-                1, new PermanentIsLandPredicate(), SacrificeRecipient.EACH_OPPONENT));
+                1, new PermanentIsLandPredicate(), Subjects.eachOpponent()));
     }
 }

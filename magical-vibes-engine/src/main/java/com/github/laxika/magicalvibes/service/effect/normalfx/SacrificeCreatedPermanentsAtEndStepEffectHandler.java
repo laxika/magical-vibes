@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -40,7 +40,7 @@ public class SacrificeCreatedPermanentsAtEndStepEffectHandler implements NormalE
                                 new PermanentIsSpecificPermanentPredicate(id))
                         .toList());
         CardEffect sacrifice = new SacrificePermanentsEffect(
-                Integer.MAX_VALUE, filter, SacrificeRecipient.CONTROLLER).withSimultaneousChoices();
+                Integer.MAX_VALUE, filter, Subjects.you()).withSimultaneousChoices();
         ActivePlayer whose = ((SacrificeCreatedPermanentsAtEndStepEffect) effect).controllerEndStepOnly()
                 ? ActivePlayer.YOU : ActivePlayer.ANY;
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(

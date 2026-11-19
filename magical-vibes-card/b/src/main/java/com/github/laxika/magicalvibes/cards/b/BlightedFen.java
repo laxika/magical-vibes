@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -29,7 +29,7 @@ public class BlightedFen extends Card {
                         new SacrificePermanentsEffect(
                                 1,
                                 new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.TARGET_PLAYER)),
+                                Subjects.targetPlayer())),
                 "{4}{B}, {T}, Sacrifice this land: Target opponent sacrifices a creature of their choice.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

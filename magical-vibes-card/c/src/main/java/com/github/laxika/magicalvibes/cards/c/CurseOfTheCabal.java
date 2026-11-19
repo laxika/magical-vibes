@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
@@ -38,7 +38,7 @@ public class CurseOfTheCabal extends Card {
                 .addSpellEffect(new SacrificePermanentsEffect(
                         new Divided(new PermanentCount(allPermanents, CountScope.TARGET_PLAYER), 2),
                         allPermanents,
-                        SacrificeRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
@@ -52,7 +52,7 @@ public class CurseOfTheCabal extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardSuspended()),
                 new MayEffect(
                         SequenceEffect.of(
-                                new SacrificePermanentsEffect(1, allPermanents, SacrificeRecipient.ACTIVE_PLAYER)
+                                new SacrificePermanentsEffect(1, allPermanents, Subjects.activePlayer())
                                         .withRecordedSacrificeCount(),
                                 new ConditionalEffect(new EventValueAtLeast(1),
                                         new PutTimeCountersOnSuspendedCardEffect(2))),

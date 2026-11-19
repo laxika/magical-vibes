@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -27,7 +27,7 @@ public class UmbralJuke extends Card {
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentIsPlaneswalkerPredicate())),
-                                SacrificeRecipient.TARGET_PLAYER)),
+                                Subjects.targetPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 2/1 white and black Inkling creature token with flying",
                         new CreateTokenEffect(1, "Inkling", 2, 1,

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -36,7 +35,7 @@ public class VindictiveLich extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(
-                                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
+                                1, new PermanentIsCreaturePredicate(), Subjects.targetPlayer()),
                         opponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",

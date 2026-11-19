@@ -104,7 +104,8 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(
                 damageSupport, playerInputService, gameQueryService, gameLogService, gameOutcomeService, amountEvaluationService,
-                new SubjectResolutionService(gameQueryService, predicateEvaluationService));
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
     }
 
     @Nested

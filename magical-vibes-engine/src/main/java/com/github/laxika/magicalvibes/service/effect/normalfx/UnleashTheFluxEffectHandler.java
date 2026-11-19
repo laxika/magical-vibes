@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnleashTheFluxEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -31,7 +31,7 @@ public class UnleashTheFluxEffectHandler implements NormalEffectHandlerBean {
 
         var nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         entry.insertEffectsToResolve(effectIndex + 1, List.of(
-                new SacrificePermanentsEffect(1, nonland, SacrificeRecipient.EACH_PLAYER),
+                new SacrificePermanentsEffect(1, nonland, Subjects.eachPlayer()),
                 new FlipCoinWinEffect(null, new UnleashTheFluxEffect())));
     }
 }

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -76,7 +76,7 @@ public class SlivdraziMonstrosity extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
                 new SacrificePermanentsEffect(
-                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)),
+                        1, new PermanentTruePredicate(), Subjects.defendingPlayer())),
                 GrantScope.ALL_OWN_CREATURES,
                 SLIVER));
         addActivatedAbility(new ActivatedAbility(

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,7 +22,7 @@ public class PredatoryNightstalker extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new SacrificePermanentsEffect(
-                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
+                        1, new PermanentIsCreaturePredicate(), Subjects.targetPlayer()),
                         "Have target opponent sacrifice a creature?"));
     }
 }

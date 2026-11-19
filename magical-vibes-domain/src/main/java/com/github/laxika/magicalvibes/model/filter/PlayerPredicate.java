@@ -13,6 +13,7 @@ public sealed interface PlayerPredicate permits
         PlayerCastSorceryThisTurnPredicate,
         PlayerControlsMoreCreaturesThanControllerPredicate,
         PlayerControlsMoreLandsThanControllerPredicate,
+        PlayerControlsMostLandsPredicate,
         PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate,
         PlayerHasMoreCardsInHandThanControllerPredicate,
         PlayerHasMoreLifeThanControllerPredicate,

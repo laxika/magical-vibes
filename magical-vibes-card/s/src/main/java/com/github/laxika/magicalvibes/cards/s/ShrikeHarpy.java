@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,6 +22,6 @@ public class ShrikeHarpy extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new TributeNotPaidEffect(
-                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER)));
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.targetPlayer())));
     }
 }

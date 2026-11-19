@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,6 +15,6 @@ public class DestructiveUrge extends Card {
         target(TargetFilters.creature());
         // "That player" is the player dealt damage, which the ability names without targeting.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.TARGET_PLAYER));
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.targetPlayer()));
     }
 }

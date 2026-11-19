@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,6 +31,6 @@ public class YukoraThePrisoner extends Card {
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SacrificePermanentsEffect(
                 new PermanentCount(nonOgreCreature, CountScope.CONTROLLER),
                 nonOgreCreature,
-                SacrificeRecipient.CONTROLLER));
+                Subjects.you()));
     }
 }

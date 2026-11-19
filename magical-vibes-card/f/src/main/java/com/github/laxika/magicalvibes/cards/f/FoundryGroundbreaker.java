@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,7 @@ public class FoundryGroundbreaker extends Card {
 
     public FoundryGroundbreaker() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER),
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()),
                 new ConjureCardNamedOntoBattlefieldEffect("BRO", "265", Set.of(CardType.LAND)),
                 new ConjureCardNamedOntoBattlefieldEffect("BRO", "265", Set.of(CardType.LAND))));
     }

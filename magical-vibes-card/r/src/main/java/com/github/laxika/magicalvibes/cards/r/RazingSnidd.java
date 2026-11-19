@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class RazingSnidd extends Card {
 
     public RazingSnidd() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
-                1, new PermanentIsLandPredicate(), SacrificeRecipient.EACH_PLAYER));
+                1, new PermanentIsLandPredicate(), Subjects.eachPlayer()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ReturnPermanentControlledByPlayerToHandEffect(
                 new PermanentAllOfPredicate(List.of(

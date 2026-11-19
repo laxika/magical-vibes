@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class KillmongerRuthlessUsurper extends Card {
                 new Fixed(0)));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(),
-                        SacrificeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 CreateTokenEffect.ofTreasureToken(1)));
     }
 }

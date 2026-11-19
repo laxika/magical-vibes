@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -495,7 +494,7 @@ public class EffectResolutionService {
             if (effectToResolve instanceof MayEffect may
                     && may.choicePlayer() == MayChoicePlayer.TARGET_PLAYER
                     && may.wrapped() instanceof SacrificePermanentsEffect sacrifice
-                    && sacrifice.recipient() == SacrificeRecipient.TARGET_PLAYER
+                    && sacrifice.player().declaresTarget()
                     && entry.getTargetId() != null
                     && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
                     gameData, entry, sacrifice, entry.getTargetId())) {

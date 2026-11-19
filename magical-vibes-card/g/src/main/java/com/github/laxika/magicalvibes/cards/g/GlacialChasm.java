@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttack
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -25,7 +25,7 @@ public class GlacialChasm extends Card {
 
         // When this land enters, sacrifice a land. Glacial Chasm itself is a legal choice.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()));
 
         // Creatures you control can't attack — no creature is ever exempt.
         addStaticEffect(new ControlledCreaturesCantAttackUnlessPredicateEffect(

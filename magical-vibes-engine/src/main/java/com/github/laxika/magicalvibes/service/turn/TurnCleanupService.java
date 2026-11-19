@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -122,7 +122,7 @@ public class TurnCleanupService {
                     permanent.getCard().getName() + "'s cleanup trigger",
                     List.of(new SacrificePermanentsEffect(1,
                             new PermanentIsSpecificPermanentPredicate(permanent.getId()),
-                            SacrificeRecipient.EACH_PLAYER)));
+                            Subjects.eachPlayer())));
             entry.setNonTargeting(true);
             triggeredAbilityStackService.putDelayed(gameData, entry);
         }

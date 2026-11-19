@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -45,7 +44,7 @@ public class PapalymoTotolymo extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasGreatestPowerAmongControllerCreaturesPredicate()
                                 )),
-                                SacrificeRecipient.EACH_OPPONENT,
+                                Subjects.eachOpponent(),
                                 true
                         )
                 ),

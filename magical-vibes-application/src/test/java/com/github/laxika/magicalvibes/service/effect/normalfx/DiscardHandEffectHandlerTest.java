@@ -52,7 +52,8 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
 
         int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService,
-                new SubjectResolutionService(gameQueryService, predicateEvaluationService))
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)))
                 .discardHand(gd, player1Id, player1Id, "One with Nothing");
 
         assertThat(discardCount).isEqualTo(2);

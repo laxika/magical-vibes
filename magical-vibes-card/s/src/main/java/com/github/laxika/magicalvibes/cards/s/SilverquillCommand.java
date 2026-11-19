@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -64,7 +63,7 @@ public class SilverquillCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(
-                                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
+                                1, new PermanentIsCreaturePredicate(), Subjects.targetPlayer()),
                         opponent)
         ), 2));
     }

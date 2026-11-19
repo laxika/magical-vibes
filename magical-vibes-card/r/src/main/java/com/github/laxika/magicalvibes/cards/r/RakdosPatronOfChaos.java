@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -36,7 +36,7 @@ public class RakdosPatronOfChaos extends Card {
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
                         )),
-                        SacrificeRecipient.TARGET_PLAYER
+                        Subjects.targetPlayer()
                 ),
                 "Have the targeted opponent sacrifice two nonland, nontoken permanents?",
                 new DrawCardEffect(2),

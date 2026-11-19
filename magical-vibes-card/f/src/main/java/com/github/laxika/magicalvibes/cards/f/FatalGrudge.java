@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
@@ -17,7 +17,7 @@ public class FatalGrudge extends Card {
         addCastingCost(SacrificePermanentCost.withPermanentSnapshot(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()), "a nonland permanent"));
         addSpellEffect(new SacrificePermanentsEffect(1,
-                new PermanentSharesCardTypeWithSourcePermanentPredicate(), SacrificeRecipient.EACH_OPPONENT));
+                new PermanentSharesCardTypeWithSourcePermanentPredicate(), Subjects.eachOpponent()));
         addSpellEffect(new DrawCardEffect());
     }
 }

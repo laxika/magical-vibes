@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachType
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -42,7 +42,7 @@ public class LilianaDreadhordeGeneral extends Card {
                 List.of(new SacrificePermanentsEffect(
                         2,
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                        SacrificeRecipient.EACH_PLAYER)),
+                        Subjects.eachPlayer())),
                 "−4: Each player sacrifices two creatures of their choice."
         ));
 
@@ -51,7 +51,7 @@ public class LilianaDreadhordeGeneral extends Card {
                 List.of(new ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect(
                         List.of(CardType.ARTIFACT, CardType.BATTLE, CardType.CREATURE,
                                 CardType.ENCHANTMENT, CardType.LAND, CardType.PLANESWALKER),
-                        true, true, SacrificeRecipient.EACH_OPPONENT)),
+                        true, true, Subjects.eachOpponent())),
                 "−9: Each opponent chooses a permanent they control of each permanent type and sacrifices the rest."
         ));
     }

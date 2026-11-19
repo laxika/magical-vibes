@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class HighwayRobbery extends Card {
                                 "Sacrifice a land",
                                 List.of(
                                         new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(),
-                                                SacrificeRecipient.CONTROLLER).withRecordedSacrificeCount(),
+                                                Subjects.you()).withRecordedSacrificeCount(),
                                         new DrawCardEffect(new Scaled(new EventValue(), 2))))
                 )),
                 "Discard a card or sacrifice a land to draw two cards?"

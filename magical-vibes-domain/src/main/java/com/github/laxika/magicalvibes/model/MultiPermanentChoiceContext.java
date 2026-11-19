@@ -585,18 +585,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Each player chooses a creature before the chosen creatures are sacrificed together. */
-    record EachPlayerSacrificesCreature(
-            java.util.List<PendingForcedSacrifice> remainingChoosers,
-            java.util.List<UUID> accumulatedSacrificeIds,
-            StackEntry resolvingEntry)
-            implements MultiPermanentChoiceContext {
-        public EachPlayerSacrificesCreature {
-            remainingChoosers = java.util.List.copyOf(remainingChoosers);
-            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
-        }
-    }
-
     /** Each opponent chooses a creature before the chosen creatures are sacrificed together. */
     record EachOpponentSacrificesCreatureCreateTokens(
             java.util.List<PendingForcedSacrifice> remainingChoosers,

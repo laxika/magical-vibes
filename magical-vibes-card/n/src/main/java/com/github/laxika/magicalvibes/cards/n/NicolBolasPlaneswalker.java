@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -56,7 +55,7 @@ public class NicolBolasPlaneswalker extends Card {
                         new DiscardEffect(7, Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target()))),
                         new SacrificePermanentsEffect(
                                 7, new PermanentTruePredicate(),
-                                SacrificeRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER)
+                                Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target())))
                 ),
                 "−9: Nicol Bolas, Planeswalker deals 7 damage to target player or planeswalker. "
                         + "That player or that planeswalker's controller discards seven cards, then "

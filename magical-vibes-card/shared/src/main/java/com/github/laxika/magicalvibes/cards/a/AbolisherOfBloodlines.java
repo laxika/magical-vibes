@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,6 +22,6 @@ public class AbolisherOfBloodlines extends Card {
         )).addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(3, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate())),
-                        SacrificeRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

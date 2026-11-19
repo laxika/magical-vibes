@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,7 +25,7 @@ public class HenrikaDomnathi extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.EACH_PLAYER)),
+                                Subjects.eachPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "You draw a card and you lose 1 life",
                         List.of(new DrawCardEffect(1), new LoseLifeEffect(1))),

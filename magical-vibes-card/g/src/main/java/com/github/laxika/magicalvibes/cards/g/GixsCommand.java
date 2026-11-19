@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureE
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -51,7 +51,7 @@ public class GixsCommand extends Card {
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasGreatestPowerAmongControllerCreaturesPredicate())),
-                                SacrificeRecipient.EACH_OPPONENT))
+                                Subjects.eachOpponent()))
         ), 2));
     }
 }

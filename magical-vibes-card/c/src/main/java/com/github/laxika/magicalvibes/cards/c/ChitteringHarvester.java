@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,6 +23,6 @@ public class ChitteringHarvester extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
                 "Mutate requires a non-Human creature with the spell's owner")));
         addTrigger(Triggers.mutates(), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
+                1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
     }
 }

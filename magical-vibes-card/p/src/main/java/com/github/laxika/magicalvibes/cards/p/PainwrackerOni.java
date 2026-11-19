@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,7 +19,7 @@ public class PainwrackerOni extends Card {
     public PainwrackerOni() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new NotCondition(new ControlsPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.OGRE))),
-                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER)
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you())
         ));
     }
 }

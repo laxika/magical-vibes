@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,6 +30,6 @@ public class AbhorrentOverlord extends Card {
                 Set.of(Keyword.FLYING), Set.of()));
         // At the beginning of your upkeep, sacrifice a creature.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
+                1, new PermanentIsCreaturePredicate(), Subjects.you()));
     }
 }

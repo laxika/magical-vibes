@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -35,7 +35,7 @@ public class ExtractTheTruth extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices an enchantment of their choice",
                         new SacrificePermanentsEffect(
-                                1, new PermanentIsEnchantmentPredicate(), SacrificeRecipient.TARGET_PLAYER),
+                                1, new PermanentIsEnchantmentPredicate(), Subjects.targetPlayer()),
                         opponentFilter)
         )));
     }

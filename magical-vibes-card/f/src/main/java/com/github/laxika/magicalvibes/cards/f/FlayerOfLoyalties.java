@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOf
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -27,7 +27,7 @@ public class FlayerOfLoyalties extends Card {
     public FlayerOfLoyalties() {
         // Annihilator 2 (printed).
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                2, new PermanentTruePredicate(), Subjects.defendingPlayer()));
         // When you cast this spell, gain control of target creature until end of turn.
         // Untap it. Until end of turn, it has base power and toughness 10/10 and gains trample,
         // annihilator 2, and haste.
@@ -40,6 +40,6 @@ public class FlayerOfLoyalties extends Card {
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         new SacrificePermanentsEffect(
-                                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER))));
+                                2, new PermanentTruePredicate(), Subjects.defendingPlayer()))));
     }
 }

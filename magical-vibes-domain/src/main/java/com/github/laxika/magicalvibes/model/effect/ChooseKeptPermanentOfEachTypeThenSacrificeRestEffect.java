@@ -11,25 +11,29 @@ import java.util.List;
  * player controls nothing of is skipped, and a permanent with several of those types may be chosen
  * for more than one of them, which is why earlier picks are not removed from later candidate lists.
  * All choices are made before anything is sacrificed, and the sacrifices then happen simultaneously.
- * Driven by {@code ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler}.
+ * {@code players} is {@code eachPlayer()} or {@code eachOpponent()}. Driven by
+ * {@code ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler}.
  */
 public record ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect(
         List<CardType> types, boolean sacrificeAllPermanents, boolean eachPlayerChooses,
-        SacrificeRecipient recipient) implements CardEffect {
+        PlayerSubject players) implements CardEffect {
 
     private static final List<CardType> TRAGIC_ARROGANCE_TYPES = List.of(
             CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.PLANESWALKER);
 
     public ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect() {
-        this(TRAGIC_ARROGANCE_TYPES, false, false, SacrificeRecipient.EACH_PLAYER);
+        this(TRAGIC_ARROGANCE_TYPES, false, false, Subjects.eachPlayer());
     }
 
     public ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect(
             List<CardType> types, boolean sacrificeAllPermanents, boolean eachPlayerChooses) {
-        this(types, sacrificeAllPermanents, eachPlayerChooses, SacrificeRecipient.EACH_PLAYER);
+        this(types, sacrificeAllPermanents, eachPlayerChooses, Subjects.eachPlayer());
     }
 
     public ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect {
         types = List.copyOf(types);
+        if (!(players instanceof PlayerSubject.Each)) {
+            throw new IllegalArgumentException("Each player or each opponent keeps and sacrifices: " + players);
+        }
     }
 }

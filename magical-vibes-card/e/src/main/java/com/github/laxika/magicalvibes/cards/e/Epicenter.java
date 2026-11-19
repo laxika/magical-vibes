@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "192")
@@ -25,6 +25,6 @@ public class Epicenter extends Card {
                 new SacrificeEachMatchingPermanentEffect(land)));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(threshold),
-                new SacrificePermanentsEffect(1, land, SacrificeRecipient.TARGET_PLAYER)));
+                new SacrificePermanentsEffect(1, land, Subjects.targetPlayer())));
     }
 }

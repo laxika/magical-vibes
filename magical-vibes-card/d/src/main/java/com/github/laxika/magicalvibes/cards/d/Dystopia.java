@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class Dystopia extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentsEffect(
                 1,
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE)),
-                SacrificeRecipient.ACTIVE_PLAYER));
+                Subjects.activePlayer()));
     }
 }

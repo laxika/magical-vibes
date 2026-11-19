@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class KjeldoranDead extends Card {
         // Bare PermanentIsCreaturePredicate routes through the single-select
         // "sacrifice a creature" primitive (controller chooses).
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
+                1, new PermanentIsCreaturePredicate(), Subjects.you()));
 
         // {B}: Regenerate this creature.
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -16,7 +16,7 @@ public class RoilingRegrowth extends Card {
 
     public RoilingRegrowth() {
         addSpellEffect(new SacrificePermanentsEffect(
-                1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
+                1, new PermanentIsLandPredicate(), Subjects.you()));
         addSpellEffect(new SearchLibraryEffect(
                 new Fixed(2), CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -40,7 +40,7 @@ public class DromokasCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player sacrifices an enchantment of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsEnchantmentPredicate(),
-                                SacrificeRecipient.TARGET_PLAYER),
+                                Subjects.targetPlayer()),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player.")),

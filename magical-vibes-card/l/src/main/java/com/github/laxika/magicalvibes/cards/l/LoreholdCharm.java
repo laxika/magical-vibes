@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -35,7 +35,7 @@ public class LoreholdCharm extends Card {
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                                SacrificeRecipient.EACH_OPPONENT)),
+                                Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact or creature card with mana value 2 or less "
                                 + "from your graveyard to the battlefield",

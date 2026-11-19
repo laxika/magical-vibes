@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +23,7 @@ public class SummonAnima extends Card {
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
         addTrigger(Triggers.chapter(4), SequenceEffect.of(
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                        SacrificeRecipient.EACH_OPPONENT),
+                        Subjects.eachOpponent()),
                 new LoseLifeEffect(3, Subjects.eachOpponent())));
     }
 }

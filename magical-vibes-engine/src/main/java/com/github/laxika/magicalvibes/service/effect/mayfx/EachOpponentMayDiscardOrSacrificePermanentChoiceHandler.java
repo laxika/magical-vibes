@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -113,7 +112,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
     private void resolveSacrifice(GameData gameData, PendingMayAbility ability,
             UUID sourceControllerId, PermanentPredicate sacrificeFilter) {
         var sacrifice = new SacrificePermanentsEffect(
-                1, sacrificeFilter, SacrificeRecipient.TARGET_PLAYER);
+                1, sacrificeFilter, Subjects.targetPlayer());
         var sacrificeEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",

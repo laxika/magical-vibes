@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class BirthOfTheImperium extends Card {
                 List.of(CardSubtype.ASTARTES, CardSubtype.WARRIOR), Set.of(Keyword.VIGILANCE), Set.of()));
 
         addTrigger(Triggers.chapter(2), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
+                1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
 
         addTrigger(Triggers.chapter(3), new DrawCardEffect(
                 new Scaled(new OpponentsWithFewerCreaturesThanController(), 2)));

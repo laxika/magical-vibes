@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -36,7 +36,7 @@ public class RavenousRotbelly extends Card {
                                         new SacrificePermanentsEffect(
                                                 new EventValue(),
                                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                                                SacrificeRecipient.EACH_OPPONENT)))),
+                                                Subjects.eachOpponent())))),
                 "Sacrifice up to three Zombies?"));
     }
 }

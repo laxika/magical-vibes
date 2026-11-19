@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class TithingBlade extends Card {
         setBackFaceCard(new ConsumingSepulcher());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
+                1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

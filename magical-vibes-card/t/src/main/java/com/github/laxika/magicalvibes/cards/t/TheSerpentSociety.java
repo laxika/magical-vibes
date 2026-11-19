@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessGetsPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,6 +30,6 @@ public class TheSerpentSociety extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                                 new PermanentIsCreaturePredicate())),
-                        SacrificeRecipient.EACH_OPPONENT));
+                        Subjects.eachOpponent()));
     }
 }

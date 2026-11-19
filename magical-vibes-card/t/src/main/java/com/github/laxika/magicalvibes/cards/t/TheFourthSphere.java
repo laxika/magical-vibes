@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class TheFourthSphere extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new SacrificePermanentsEffect(1, nonblackCreature, SacrificeRecipient.CONTROLLER));
+                new SacrificePermanentsEffect(1, nonblackCreature, Subjects.you()));
         addTrigger(Triggers.chaosEnsues(), CreateTokenEffect.blackZombie(1));
     }
 }

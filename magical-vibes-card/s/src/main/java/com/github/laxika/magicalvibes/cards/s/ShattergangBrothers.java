@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -24,7 +24,7 @@ public class ShattergangBrothers extends Card {
                 List.of(
                         new SacrificeCreatureCost(),
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.EACH_OPPONENT)
+                                Subjects.eachOpponent())
                 ),
                 "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature."
         ));
@@ -35,7 +35,7 @@ public class ShattergangBrothers extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
                         new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(),
-                                SacrificeRecipient.EACH_OPPONENT)
+                                Subjects.eachOpponent())
                 ),
                 "{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact."
         ));
@@ -46,7 +46,7 @@ public class ShattergangBrothers extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsEnchantmentPredicate(), "an enchantment", false),
                         new SacrificePermanentsEffect(1, new PermanentIsEnchantmentPredicate(),
-                                SacrificeRecipient.EACH_OPPONENT)
+                                Subjects.eachOpponent())
                 ),
                 "{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment."
         ));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -30,7 +30,7 @@ public class FeastOfWorms extends Card {
                 new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))),
-                        SacrificeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
     }

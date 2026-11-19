@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -24,17 +24,17 @@ public class SheoldredsEdict extends Card {
                         new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                                SacrificeRecipient.EACH_OPPONENT)),
+                                Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices a creature token of their choice",
                         new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsTokenPredicate())),
-                                SacrificeRecipient.EACH_OPPONENT)),
+                                Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices a planeswalker of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsPlaneswalkerPredicate(),
-                                SacrificeRecipient.EACH_OPPONENT))
+                                Subjects.eachOpponent()))
         )));
     }
 }

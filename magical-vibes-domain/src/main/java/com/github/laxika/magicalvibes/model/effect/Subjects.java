@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 
 import java.util.List;
 
@@ -215,5 +216,10 @@ public final class Subjects {
     /** Every player any of {@code subjects} names, each once ("that player or that planeswalker's controller"). */
     public static PlayerSubject allOf(PlayerSubject... subjects) {
         return new PlayerSubject.AllOf(List.of(subjects));
+    }
+
+    /** The players {@code players} names who match {@code filter} ("each player who controls the most lands"). */
+    public static PlayerSubject matching(PlayerSubject players, PlayerPredicate filter) {
+        return new PlayerSubject.Matching(players, filter);
     }
 }

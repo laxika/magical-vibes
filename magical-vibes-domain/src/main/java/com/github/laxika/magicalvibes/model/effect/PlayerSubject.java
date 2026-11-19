@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -18,7 +20,7 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
         PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.Except,
-        PlayerSubject.AllOf {
+        PlayerSubject.AllOf, PlayerSubject.Matching {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -209,6 +211,27 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         @Override
         public boolean needsStackEntry() {
             return subjects.stream().anyMatch(PlayerSubject::needsStackEntry);
+        }
+    }
+
+    /**
+     * The players {@code players} names who match {@code filter} as the effect is applied (CR 608.2h): "each player who
+     * controls the most lands" is {@code matching(eachPlayer(), new PlayerControlsMostLandsPredicate())}. The filter is
+     * evaluated with the effect's controller as the comparing player.
+     */
+    record Matching(PlayerSubject players, PlayerPredicate filter) implements PlayerSubject {
+
+        public Matching {
+            Objects.requireNonNull(players, "players");
+            Objects.requireNonNull(filter, "filter");
+            if (players.declaresTarget()) {
+                throw new IllegalArgumentException("A filtered set of players can't declare a target: " + players);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return players.needsStackEntry();
         }
     }
 }

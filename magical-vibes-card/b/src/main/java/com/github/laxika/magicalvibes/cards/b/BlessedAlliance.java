@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -53,7 +52,7 @@ public class BlessedAlliance extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices an attacking creature of their choice",
                         new SacrificePermanentsEffect(
-                                1, attackingCreatureFilter, SacrificeRecipient.TARGET_PLAYER),
+                                1, attackingCreatureFilter, Subjects.targetPlayer()),
                         opponentFilter)
         )));
     }

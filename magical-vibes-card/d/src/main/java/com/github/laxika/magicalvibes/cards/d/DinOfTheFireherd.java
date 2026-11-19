@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -43,13 +43,13 @@ public class DinOfTheFireherd extends Card {
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
                                 CountScope.CONTROLLER),
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                        SacrificeRecipient.TARGET_PLAYER))
+                        Subjects.targetPlayer()))
                 .addSpellEffect(new SacrificePermanentsEffect(
                         new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.RED)))),
                                 CountScope.CONTROLLER),
                         new PermanentIsLandPredicate(),
-                        SacrificeRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

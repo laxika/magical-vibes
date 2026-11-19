@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -33,7 +32,7 @@ public class LordXanderTheCollector extends Card {
                         new SacrificePermanentsEffect(
                                 new Divided(new PermanentCount(nonland, CountScope.TARGET_PLAYER), 2),
                                 nonland,
-                                SacrificeRecipient.TARGET_PLAYER));
+                                Subjects.targetPlayer()));
 
         addTrigger(Triggers.attacks(), new MillHalfLibraryEffect(false, Subjects.defendingPlayer()));
     }

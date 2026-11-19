@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,6 +37,6 @@ public class ShadowbornDemon extends Card {
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new NotCondition(new GraveyardCardThreshold(6, new CardTypePredicate(CardType.CREATURE)))),
-                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()));
     }
 }

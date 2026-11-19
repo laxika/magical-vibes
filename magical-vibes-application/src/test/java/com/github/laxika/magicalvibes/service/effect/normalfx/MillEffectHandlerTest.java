@@ -77,7 +77,8 @@ class MillEffectHandlerTest {
         gd.activePlayerId = player1Id;
         handler = new MillEffectHandler(graveyardService, gameQueryService,
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService),
-                new SubjectResolutionService(gameQueryService, predicateEvaluationService));
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
     }
 
     private static Card createCard(String name) {

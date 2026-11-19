@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUnti
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -49,7 +49,7 @@ public class AzlaskTheSwellingScourge extends Card {
                         new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new SacrificePermanentsEffect(
-                                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)),
+                                        1, new PermanentTruePredicate(), Subjects.defendingPlayer())),
                                 scionsAndSpawns)),
                 "{W}{U}{B}{R}{G}: Creatures you control get +X/+X until end of turn, where X is the number "
                         + "of experience counters you have. Scions and Spawns you control gain indestructible "

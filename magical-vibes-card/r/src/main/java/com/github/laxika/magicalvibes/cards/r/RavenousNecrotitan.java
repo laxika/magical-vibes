@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class RavenousNecrotitan extends Card {
     public RavenousNecrotitan() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new OpponentPoisoned(3)),
-                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER)));
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you())));
     }
 }

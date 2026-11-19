@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -25,8 +25,8 @@ public class VonasHunger extends Card {
         addSpellEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new SacrificePermanentsEffect(
                         new HalvedRoundedUp(new PermanentCount(creature, CountScope.CONTROLLER)),
-                        new PermanentAnyOfPredicate(List.of(creature)), SacrificeRecipient.EACH_OPPONENT, true)));
+                        new PermanentAnyOfPredicate(List.of(creature)), Subjects.eachOpponent(), true)));
         addSpellEffect(new ConditionalEffect(new NotCondition(new ControllerHasCityBlessing()),
-                new SacrificePermanentsEffect(1, creature, SacrificeRecipient.EACH_OPPONENT)));
+                new SacrificePermanentsEffect(1, creature, Subjects.eachOpponent())));
     }
 }

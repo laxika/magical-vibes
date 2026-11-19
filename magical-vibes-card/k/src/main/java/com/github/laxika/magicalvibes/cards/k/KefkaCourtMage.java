@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsOneThenDrawsForEachCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -33,7 +33,7 @@ public class KefkaCourtMage extends Card {
                 "{8}",
                 List.of(
                         new SacrificePermanentsEffect(1, new PermanentTruePredicate(),
-                                SacrificeRecipient.EACH_OPPONENT),
+                                Subjects.eachOpponent()),
                         new TransformSelfEffect()),
                 "{8}: Each opponent sacrifices a permanent of their choice. Transform Kefka. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));

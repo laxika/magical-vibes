@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -30,7 +30,7 @@ public class EradicatorValkyrie extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentIsPlaneswalkerPredicate()
                                 )),
-                                SacrificeRecipient.EACH_OPPONENT
+                                Subjects.eachOpponent()
                         )
                 ),
                 "Boast — {1}{B}, Sacrifice a creature: Each opponent sacrifices a creature or planeswalker. "

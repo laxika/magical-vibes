@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,7 +23,7 @@ public class EmptyTheLaboratory extends Card {
     public EmptyTheLaboratory() {
         addSpellEffect(new SacrificePermanentsEffect(
                 new XValue(), new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
-                SacrificeRecipient.CONTROLLER).withRecordedSacrificeCount());
+                Subjects.you()).withRecordedSacrificeCount());
         addSpellEffect(new RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect(
                 new EventValue(),
                 new CardAllOfPredicate(List.of(

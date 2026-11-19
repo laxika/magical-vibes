@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.c.CurseOfStalkedPrey;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -41,6 +43,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.eachOpponent;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.eachPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.enchantedPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.matching;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.ownerOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
@@ -61,7 +64,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Every subject variant resolved against a real game: while the object is on the battlefield, and after it left
  * (last-known information, CR 608.2h; nothing done to what left).
  */
-@CardUsed({GrizzlyBears.class, HillGiant.class, Pacifism.class, Bonesplitter.class, CurseOfStalkedPrey.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HillGiant.class, Pacifism.class, Bonesplitter.class, CurseOfStalkedPrey.class})
 class SubjectResolutionServiceTest extends BaseCardTest {
 
     private static final CardEffect EFFECT = new DrawCardEffect(1);
@@ -384,6 +387,20 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(players(entry, eachPlayer())).containsExactly(player2.getId(), player1.getId());
             assertThat(players(entry, eachOpponent())).containsExactly(player2.getId());
+        }
+
+        @Test
+        @DisplayName("A filtered set keeps only the players matching the filter as it resolves, ties included")
+        void matchingPlayers() {
+            harness.addToBattlefield(player2, new Forest());
+            StackEntry entry = entry(player1, null, null);
+            PlayerSubject mostLands = matching(eachPlayer(), new PlayerControlsMostLandsPredicate());
+
+            assertThat(players(entry, mostLands)).containsExactly(player2.getId());
+
+            harness.addToBattlefield(player1, new Forest());
+
+            assertThat(players(entry, mostLands)).containsExactly(player1.getId(), player2.getId());
         }
 
         @Test

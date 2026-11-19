@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -54,7 +53,7 @@ public class TheRuinousWreckingCrew extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Each player sacrifices a creature of their choice.",
                                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                        SacrificeRecipient.EACH_PLAYER))
+                                        Subjects.eachPlayer()))
                 ), false, 0, 4), new XValue()));
     }
 }

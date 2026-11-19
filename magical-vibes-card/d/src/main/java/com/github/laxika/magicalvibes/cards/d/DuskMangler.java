@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +18,7 @@ public class DuskMangler extends Card {
         addCastingCost(new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(
-                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT),
+                        1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()),
                 new DiscardEffect(1, Subjects.eachOpponent()),
                 new LoseLifeEffect(4, Subjects.eachOpponent()));
     }

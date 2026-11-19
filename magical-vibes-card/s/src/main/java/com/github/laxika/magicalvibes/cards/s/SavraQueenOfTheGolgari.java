@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class SavraQueenOfTheGolgari extends Card {
         addTrigger(Triggers.sacrificed(creatureOfColor(CardColor.BLACK), ObjectRelation.YOU_CONTROL),
                 new MayPayLifeEffect(2,
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.EACH_OPPONENT),
+                                Subjects.eachOpponent()),
                         "Pay 2 life?"));
 
         addTrigger(Triggers.sacrificed(creatureOfColor(CardColor.GREEN), ObjectRelation.YOU_CONTROL),

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -50,7 +50,7 @@ public class SacrificeSelfAtNextCleanupEffectHandler implements NormalEffectHand
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
                 new SacrificePermanentsEffect(1, new PermanentIsSpecificPermanentPredicate(sourceId),
-                        SacrificeRecipient.CONTROLLER)));
+                        Subjects.you())));
         gameLogService.append(gameData, GameLog.text(source.getCard().getName()
                 + " will be sacrificed at the beginning of the next cleanup step."));
         log.info("Game {} - {} scheduled for sacrifice at next cleanup", gameData.id, source.getCard().getName());

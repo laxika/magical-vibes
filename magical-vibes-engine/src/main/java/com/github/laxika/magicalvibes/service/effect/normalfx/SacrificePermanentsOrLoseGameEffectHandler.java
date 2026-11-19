@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -45,7 +45,7 @@ public class SacrificePermanentsOrLoseGameEffectHandler implements NormalEffectH
             return;
         }
         var delegated = new SacrificePermanentsEffect(count,
-                new PermanentAllOfPredicate(List.of(sacrifice.filter())), SacrificeRecipient.CONTROLLER)
+                new PermanentAllOfPredicate(List.of(sacrifice.filter())), Subjects.you())
                 .withSimultaneousChoices();
         boolean canSacrifice = sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
                 gameData, entry, delegated, entry.getControllerId());

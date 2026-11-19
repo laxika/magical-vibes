@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e, 4f done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e, 4f, 4g done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -355,7 +355,7 @@ fold in, the enum and the absorbed classes are deleted.
 | 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | | done |
 | 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | done |
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | done |
-| 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | open |
+| 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | done |
 | 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | open |
 | 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | open |
 
@@ -1451,6 +1451,69 @@ like the target-player half mill.
   player's library (`EFFECT_MERGE_PLAN.md`'s blocked row), evaluated per player like the target-player mill.
 - The rest of the family (ledger) is fused mill + an instruction on "the cards milled this way": step 7 gives
   `resolveMillPlayer`'s returned cards a step result, then step 8 splits them.
+
+
+### Step 4, run 4g (2026-11-19)
+
+**Survivor.** `SacrificePermanentsEffect`'s `SacrificeRecipient recipient` became `PlayerSubject player` (every
+constructor kept with the subject in the recipient's place). `targetSpec()` is a benign player target iff
+`player.declaresTarget()`; `DestructionTargetValidators` requires a player iff it declares. The handler asks
+`SubjectResolutionService` for the players: an `Each` or `Matching` subject, or any subject naming several players, goes
+through the existing multi-player path (every player chooses in APNAP order, then everything chosen is sacrificed at once
+through `performSimultaneousSacrifice` / the `ForcedSacrifice` queue; CR 101.4, CR 608.2e), one player through the
+single-player path, nobody does nothing. That is exactly the old split (`EACH_*` and `PLAYERS_WITH_MOST_LANDS` used the
+multi path even for one or no player). The choice flows, `sacrificeTogether` / `DepartureService.departNow`, the
+recorded count and power, "can't be sacrificed", Sigarda's `canEffectCauseSacrifice` and The Master, Multiplied's token
+check are untouched. `each(...)` is accepted: the handler already chose-then-acted.
+
+**Deleted**: the enum `SacrificeRecipient`, `EachPlayerSacrificesCreatureEffect` and
+`TriggeringSpellControllerSacrificesPermanentsEffect` with their handlers, plus the
+`MultiPermanentChoiceContext.EachPlayerSacrificesCreature` context and its three branches in
+`MultiPermanentChoiceHandlerService` (ratchet 4,926 / 4,159). Mapping: `CONTROLLER` → `you()`; `TARGET_PLAYER` →
+`targetPlayer()` (always declared; the engine-built payloads of the may/unless handlers too, on carrier entries whose
+`targetId` is the player); `ACTIVE_PLAYER` → `activePlayer()` (live, as before); `TRIGGERING_PERMANENT_CONTROLLER` →
+`controllerOf(triggering())` (the old inline chain is `findTriggeringPermanentController`'s); `TARGET_PLAYER_OR_PERMANENT_CONTROLLER`
+→ `allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))` (Nicol Bolas, Planeswalker); `EACH_PLAYER` /
+`EACH_OPPONENT` → `eachPlayer()` / `eachOpponent()`; `PLAYERS_WITH_MOST_LANDS` → `matching(eachPlayer(), new
+PlayerControlsMostLandsPredicate())` (Tectonic Hellion; rulings 2019-08-23: ties all sacrifice, decided as the ability
+resolves); `DEFENDING_PLAYER` → `defendingPlayer()`; `CONTROLLER_AND_TARGET_PLAYER` was dead (no card, no engine
+construction). `EachPlayerSacrificesCreatureEffect()` → `SacrificePermanentsEffect(1, creature, eachPlayer())` (Wasteland
+Raider, Rankle, Pitiless Trickster, Grave Studies); `TriggeringSpellControllerSacrificesPermanentsEffect(n, f)` →
+`SacrificePermanentsEffect(n, f, controllerOf(triggeringSpell()))` (Lava Runner; same `CopySupport.triggeringSpell`
+lookup, same single-player path). `ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect` (same enum) now takes a
+`PlayerSubject players` that must be an `Each` (default `eachPlayer()`, Liliana, Dreadhorde General `eachOpponent()`),
+resolved through the service. 305 card files (301 named the enum, 4 the absorbed records), 26 engine (plus the 2
+deleted handlers) and 9 application-test files.
+
+**New variant.** `matching(players, PlayerPredicate)` (`PlayerSubject.Matching`): the players `players` names who match
+the filter as the effect is applied, evaluated by `TargetLegalityService.matchesPlayerPredicate` with the effect's
+controller, source and triggering player (the resolver gained that dependency; Mockito tests pass a mock). New predicate
+`PlayerControlsMostLandsPredicate` (no other player controls more lands). It is a separate record, not a filter on
+`Each`, so the readers that treat `Each` as "everyone" (life loss / gain on mana abilities, AI) don't see a filtered set
+as everyone. Test: `SubjectResolutionServiceTest$Players.matchingPlayers`.
+
+**AI and other readers.** No AI code reads `SacrificePermanentsEffect`. `EffectResolutionService` (target player may skip
+a sacrifice it can't make) and `MayEffectHandler` match `declaresTarget()` where they matched `TARGET_PLAYER` and `You`
+where they matched `CONTROLLER`. The absorbed records implemented no capability interface.
+
+**Behaviour changes.** (1) Wasteland Raider, Rankle and Grave Studies now use the survivor's eligibility, which honours
+The Master, Multiplied ("triggered abilities you control can't cause you to sacrifice ... creature tokens you
+control"): the old each-player handler offered a protected token. Test:
+`WastelandRaiderTest.protectedCreatureTokenIsNotOffered`. They now also log "has no matching permanents to sacrifice" for
+a player with no creature. Not tested, no card depends on them: a `targetPlayer()` sacrifice reads the effect's bound
+targets before the entry's `targetId` (no sacrifice card has several targets); the planeswalker controller of Nicol Bolas's
+-9 falls back to its last-known controller; `defendingPlayer()` handles a battle's protector.
+
+**For later runs.**
+
+- `matching(...)` is the filtered `each` 4b and 4d asked for (`EachOpponentWith{EmptyHand,PoisonCounters}LosesLife`,
+  `DealDamageToEachPlayerControllingMatchingPermanentEffect`, ...): give it the `PlayerPredicate` they need. Readers that
+  switch on `Each` must decide per verb whether a `Matching` behaves like it.
+- Kept (ledger): `EachPlayerSacrifices{DownToCount,DownToFewest,FractionRoundedDown,FractionRoundedUp}` need a
+  per-player amount; the survivor's `countPerSacrificingPlayer` evaluates the count per player, so they fold once a
+  "matching permanents you control minus N" / halved `DynamicAmount` exists. The rest of the `*Sacrifices*` siblings are
+  fused (step 7/8) or one-card sacrifices with two filters. `SacrificeEachMatchingPermanentEffect` (no choice) and
+  `SacrificePermanentDamagedPlayerControlsEffect` are permanent verbs for step 5.
 
 ## Prompt
 

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,7 @@ public class NimDevourer extends Card {
                                 .returnAll(true)
                                 .build(),
                         new SacrificePermanentsEffect(
-                                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER)
+                                1, new PermanentIsCreaturePredicate(), Subjects.you())
                 ),
                 "{B}{B}: Return this card from your graveyard to the battlefield, then sacrifice a creature. "
                         + "Activate only during your upkeep.",

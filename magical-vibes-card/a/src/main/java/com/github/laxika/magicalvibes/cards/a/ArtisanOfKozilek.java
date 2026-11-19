@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,6 +34,6 @@ public class ArtisanOfKozilek extends Card {
                 "Return a creature card from your graveyard to the battlefield?"));
 
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                2, new PermanentTruePredicate(), Subjects.defendingPlayer()));
     }
 }

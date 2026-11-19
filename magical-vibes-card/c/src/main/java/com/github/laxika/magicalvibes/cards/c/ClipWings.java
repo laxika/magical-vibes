@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,6 +19,6 @@ public class ClipWings extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
         addSpellEffect(new SacrificePermanentsEffect(
-                1, flyingCreature, SacrificeRecipient.EACH_OPPONENT));
+                1, flyingCreature, Subjects.eachOpponent()));
     }
 }

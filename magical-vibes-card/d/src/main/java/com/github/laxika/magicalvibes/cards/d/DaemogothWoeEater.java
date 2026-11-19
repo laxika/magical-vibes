@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,7 +18,7 @@ public class DaemogothWoeEater extends Card {
 
     public DaemogothWoeEater() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
+                1, new PermanentIsCreaturePredicate(), Subjects.you()));
         addTrigger(Triggers.sacrificed(ObjectRelation.THIS), SequenceEffect.of(
                 new DiscardEffect(1, Subjects.eachOpponent()),
                 new DrawCardEffect(1),

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class Sheoldred extends Card {
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsPlaneswalkerPredicate())))),
-                SacrificeRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

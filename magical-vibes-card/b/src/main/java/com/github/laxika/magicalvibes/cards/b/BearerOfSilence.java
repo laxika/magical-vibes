@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -24,7 +24,7 @@ public class BearerOfSilence extends Card {
         )).addTrigger(Triggers.youCastThisSpell(), new MayPayManaEffect(
                 "{1}{C}",
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                        SacrificeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 "Pay {1}{C} to make target opponent sacrifice a creature?"));
     }
 }

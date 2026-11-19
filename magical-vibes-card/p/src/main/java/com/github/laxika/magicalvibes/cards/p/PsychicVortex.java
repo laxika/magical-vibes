@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,7 +21,7 @@ public class PsychicVortex extends Card {
     public PsychicVortex() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), CumulativeUpkeepEffect.drawCard());
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER),
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()),
                 new DiscardHandEffect()));
     }
 }

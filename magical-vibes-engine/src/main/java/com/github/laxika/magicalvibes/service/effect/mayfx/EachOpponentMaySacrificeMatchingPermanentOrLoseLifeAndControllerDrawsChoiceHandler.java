@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -79,7 +79,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
         var sacrifice = new SacrificePermanentsEffect(
                 1,
                 new PermanentSharesCardTypeWithSourcePermanentPredicate(),
-                SacrificeRecipient.TARGET_PLAYER);
+                Subjects.targetPlayer());
         var sacrificeEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",

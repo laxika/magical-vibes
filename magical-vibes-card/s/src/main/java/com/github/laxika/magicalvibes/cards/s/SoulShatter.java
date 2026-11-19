@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
@@ -23,6 +23,6 @@ public class SoulShatter extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate())),
-                SacrificeRecipient.EACH_OPPONENT));
+                Subjects.eachOpponent()));
     }
 }

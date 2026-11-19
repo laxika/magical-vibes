@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -24,7 +24,7 @@ public class FoulTongueInvocation extends Card {
         addCastingCost(RevealCardFromHandCost.optional(
                 new CardSubtypePredicate(CardSubtype.DRAGON), "Dragon"));
         addSpellEffect(new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                        SacrificeRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
         addSpellEffect(new ConditionalEffect(
                 new AnyOf(List.of(new RevealCardFromHandCostPaid(), new ControlledDragonAsCast())),
                 new GainLifeEffect(4)));

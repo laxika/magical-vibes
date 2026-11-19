@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,17 +23,17 @@ public class PickYourPoison extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices an artifact of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(),
-                                SacrificeRecipient.EACH_OPPONENT)),
+                                Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices an enchantment of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsEnchantmentPredicate(),
-                                SacrificeRecipient.EACH_OPPONENT)),
+                                Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices a creature with flying of their choice",
                         new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))),
-                                SacrificeRecipient.EACH_OPPONENT))
+                                Subjects.eachOpponent()))
         )));
     }
 }

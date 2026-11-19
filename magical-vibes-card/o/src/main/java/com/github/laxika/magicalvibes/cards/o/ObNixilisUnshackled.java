@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +19,7 @@ public class ObNixilisUnshackled extends Card {
         // choice and loses 10 life. The searching player is baked in as the trigger's targetId, so
         // both TARGET_PLAYER-scoped effects act on them.
         addTrigger(Triggers.opponentSearchesTheirLibrary(), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
+                1, new PermanentIsCreaturePredicate(), Subjects.targetPlayer()),
                 new LoseLifeEffect(10, Subjects.targetPlayer()));
 
         // Whenever another creature dies, put a +1/+1 counter on Ob Nixilis.

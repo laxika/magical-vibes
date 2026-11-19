@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerThenSacrificeLandIfNonredEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -75,7 +75,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerThenSacrificeLandIfNonredEf
                 });
         if (nonredPermanentDamaged) {
             sacrificePermanentsEffectHandler.resolve(gameData, entry,
-                    new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
+                    new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()));
         }
     }
 }

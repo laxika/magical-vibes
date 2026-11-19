@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHa
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class ExileIntoDarkness extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentMaxManaValuePredicate(3))),
-                SacrificeRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerHasMoreCardsInHandThanEachOpponent()),
                 new MayEffect(

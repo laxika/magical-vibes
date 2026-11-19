@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class KayasGuile extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.EACH_OPPONENT)),
+                                Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile all opponents' graveyards",
                         new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)),

@@ -76,7 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionE
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -887,7 +887,7 @@ public class DamagePreventionService {
                 new PermanentControlledBySourceControllerPredicate()));
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(creature.getCard(), controllerId,
                 creature.getCard().getName() + "'s triggered ability",
-                List.of(new SacrificePermanentsEffect(1, attachedEquipment, SacrificeRecipient.CONTROLLER)),
+                List.of(new SacrificePermanentsEffect(1, attachedEquipment, Subjects.you())),
                 (UUID) null, creature.getId());
         trigger.setNonTargeting(true);
         trigger.setSourcePermanentSnapshot(new Permanent(creature));

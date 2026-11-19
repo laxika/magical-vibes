@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class ShadowgrangeArchfiend extends Card {
                 new PermanentHasGreatestPowerAmongControllerCreaturesPredicate()));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new SacrificePermanentsEffect(1, greatestPowerCreature, SacrificeRecipient.EACH_OPPONENT)
+                new SacrificePermanentsEffect(1, greatestPowerCreature, Subjects.eachOpponent())
                         .withRecordedSacrificedPower(),
                 new GainLifeEffect(new EventValue()));
 

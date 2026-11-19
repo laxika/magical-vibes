@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class Thraximundar extends Card {
 
         // Whenever Thraximundar attacks, defending player sacrifices a creature of their choice.
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                1, new PermanentIsCreaturePredicate(), Subjects.defendingPlayer()));
 
         // Whenever a player sacrifices a creature, you may put a +1/+1 counter on Thraximundar.
         addTrigger(Triggers.sacrificed(Triggers.CREATURE, ObjectRelation.ANY), new MayEffect(

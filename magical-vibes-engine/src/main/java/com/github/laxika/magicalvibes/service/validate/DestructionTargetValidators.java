@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesTwoDistinctPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -30,14 +29,12 @@ public class DestructionTargetValidators {
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
 
-    // The validator is keyed by effect class and runs unconditionally, so only the
-    // target-player recipient requires a targeted player; controller / each-player / each-opponent
-    // recipients take no target. The PLAYER TargetSpec category is a no-op in the interpreter, so
+    // The validator is keyed by effect class and runs unconditionally, so only a declared
+    // target-player subject requires a targeted player; every other subject takes no target. The PLAYER TargetSpec category is a no-op in the interpreter, so
     // this guard cannot be expressed declaratively.
     @ValidatesTarget(SacrificePermanentsEffect.class)
     public void validateSacrificePermanents(TargetValidationContext ctx, SacrificePermanentsEffect effect) {
-        if (effect.recipient() == SacrificeRecipient.TARGET_PLAYER
-                || effect.recipient() == SacrificeRecipient.CONTROLLER_AND_TARGET_PLAYER) {
+        if (effect.player().declaresTarget()) {
             tvs.requireTargetPlayer(ctx);
         }
     }

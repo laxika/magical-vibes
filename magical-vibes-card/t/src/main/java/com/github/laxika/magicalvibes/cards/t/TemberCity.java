@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -18,6 +17,6 @@ public class TemberCity extends Card {
         addTrigger(Triggers.playerTapsLandForMana(),
                 new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
         addTrigger(Triggers.chaosEnsues(), new SacrificePermanentsEffect(
-                1, new PermanentNotPredicate(new PermanentIsLandPredicate()), SacrificeRecipient.EACH_OPPONENT));
+                1, new PermanentNotPredicate(new PermanentIsLandPredicate()), Subjects.eachOpponent()));
     }
 }

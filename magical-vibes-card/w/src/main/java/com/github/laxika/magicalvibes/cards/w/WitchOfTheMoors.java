@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class WitchOfTheMoors extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(
-                                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT),
+                                1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardTypePredicate(CardType.CREATURE))

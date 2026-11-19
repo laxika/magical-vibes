@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesNumberEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -37,6 +36,6 @@ public class ChoiceOfDamnations extends Card {
                                         new PermanentCount(allPermanents, CountScope.TARGET_PLAYER),
                                         new Scaled(new EventValue(), -1))),
                                 allPermanents,
-                                SacrificeRecipient.TARGET_PLAYER).withSimultaneousChoices()));
+                                Subjects.targetPlayer()).withSimultaneousChoices()));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -41,6 +41,6 @@ public class MoltenManInfernoIncarnate extends Card {
         addStaticEffect(new BoostSelfEffect(mountains, mountains));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()));
     }
 }

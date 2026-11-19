@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "83")
@@ -17,7 +16,7 @@ public class UndercityPlague extends Card {
     public UndercityPlague() {
         addSpellEffect(new LoseLifeEffect(1, Subjects.targetPlayer()));
         addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
-        addSpellEffect(new SacrificePermanentsEffect(1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER));
+        addSpellEffect(new SacrificePermanentsEffect(1, new PermanentTruePredicate(), Subjects.targetPlayer()));
         addSpellEffect(new MayEffect(new CipherEncodeEffect(), "Encode this spell on a creature you control?"));
     }
 }

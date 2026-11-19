@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -18,8 +18,8 @@ public class YouAreUnworthyOfMercy extends Card {
         PermanentNotPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
 
         addSpellEffect(new ConditionalEffect(sixLands,
-                new SacrificePermanentsEffect(3, nonland, SacrificeRecipient.EACH_OPPONENT)));
+                new SacrificePermanentsEffect(3, nonland, Subjects.eachOpponent())));
         addSpellEffect(new ConditionalEffect(new NotCondition(sixLands),
-                new SacrificePermanentsEffect(1, nonland, SacrificeRecipient.EACH_OPPONENT)));
+                new SacrificePermanentsEffect(1, nonland, Subjects.eachOpponent())));
     }
 }

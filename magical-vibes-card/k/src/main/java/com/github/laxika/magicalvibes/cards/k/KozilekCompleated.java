@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsDownToHan
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class KozilekCompleated extends Card {
                 new EachOpponentDiscardsDownToHandSizeEffect(2));
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 new DefendingPlayerPoisonCounters(), new PermanentTruePredicate(),
-                SacrificeRecipient.DEFENDING_PLAYER));
+                Subjects.defendingPlayer()));
     }
 }

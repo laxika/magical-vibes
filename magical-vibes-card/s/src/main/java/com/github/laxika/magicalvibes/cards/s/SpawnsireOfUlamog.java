@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfEldraziSpellsF
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class SpawnsireOfUlamog extends Card {
 
     public SpawnsireOfUlamog() {
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                1, new PermanentTruePredicate(), Subjects.defendingPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

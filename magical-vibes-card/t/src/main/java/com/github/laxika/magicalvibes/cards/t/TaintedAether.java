@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -23,6 +23,6 @@ public class TaintedAether extends Card {
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate())),
-                        SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                        Subjects.controllerOf(Subjects.triggering())));
     }
 }

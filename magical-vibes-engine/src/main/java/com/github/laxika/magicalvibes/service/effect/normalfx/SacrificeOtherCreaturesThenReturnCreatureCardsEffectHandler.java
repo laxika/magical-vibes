@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreaturesThenReturnCreatureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -50,7 +50,7 @@ public class SacrificeOtherCreaturesThenReturnCreatureCardsEffectHandler
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
-                SacrificeRecipient.EACH_PLAYER);
+                Subjects.eachPlayer());
         sacrificePermanentsEffectHandler.resolve(gameData, entry, sacrificeEffect);
 
         Map<UUID, List<Card>> cardsToReturn = removeCardsStillInGraveyards(gameData, cardsByGraveyard);

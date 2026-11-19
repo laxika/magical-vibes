@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToC
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class OriginOfBlackWidow extends Card {
 
     public OriginOfBlackWidow() {
         addTrigger(Triggers.chapter(1),
-                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
         addTrigger(Triggers.chapter(2),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES));
         addTrigger(Triggers.chapter(3),

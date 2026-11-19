@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColoredSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class EmrakulTheAeonsTorn extends Card {
         addStaticEffect(new ProtectionFromColoredSpellsEffect());
 
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                6, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
+                6, new PermanentTruePredicate(), Subjects.defendingPlayer()));
 
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),
                 new ShuffleGraveyardIntoLibraryEffect(false));

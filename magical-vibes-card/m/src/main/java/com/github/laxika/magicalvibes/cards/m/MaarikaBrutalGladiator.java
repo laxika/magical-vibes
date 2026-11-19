@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,6 +38,6 @@ public class MaarikaBrutalGladiator extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new TriggeringPermanentMatches(new PermanentDealtExcessDamageThisTurnPredicate())),
                 new SacrificePermanentsEffect(1, noncreatureNonland,
-                        SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                        Subjects.controllerOf(Subjects.triggering())));
     }
 }

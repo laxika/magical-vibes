@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +22,7 @@ public class WastelandRaider extends Card {
     public WastelandRaider() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new EachPlayerSacrificesCreatureEffect());
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
     }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +31,7 @@ public class ArchonOfCruelty extends Card {
             new PermanentIsPlaneswalkerPredicate()));
 
     private static final SequenceEffect CRUELTY = SequenceEffect.of(
-            new SacrificePermanentsEffect(1, CREATURE_OR_PLANESWALKER, SacrificeRecipient.TARGET_PLAYER),
+            new SacrificePermanentsEffect(1, CREATURE_OR_PLANESWALKER, Subjects.targetPlayer()),
             new DiscardEffect(1, Subjects.targetPlayer()),
             new LoseLifeEffect(3, Subjects.targetPlayer()),
             new DrawCardEffect(1),

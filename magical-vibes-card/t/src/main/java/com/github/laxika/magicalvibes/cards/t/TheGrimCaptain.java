@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -19,7 +19,7 @@ public class TheGrimCaptain extends Card {
         PermanentPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         // One ability: "each opponent sacrifices a nonland permanent. Then you may put ..."
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new SacrificePermanentsEffect(1, nonland, SacrificeRecipient.EACH_OPPONENT),
+                new SacrificePermanentsEffect(1, nonland, Subjects.eachOpponent()),
                 new MayEffect(
                         new ReturnCardExiledWithSourceToBattlefieldEffect(
                                 new CardTypePredicate(CardType.CREATURE), false, null, true, true),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class PhyrexianNegator extends Card {
 
     public PhyrexianNegator() {
         addTrigger(Triggers.dealtDamage(), new SacrificePermanentsEffect(
-                new EventValue(), new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER));
+                new EventValue(), new PermanentTruePredicate(), Subjects.you()));
     }
 }

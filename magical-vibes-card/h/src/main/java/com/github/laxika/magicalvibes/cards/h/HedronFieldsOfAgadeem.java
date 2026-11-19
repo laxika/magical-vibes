@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class HedronFieldsOfAgadeem extends Card {
                 List.of(CardSubtype.ELDRAZI), Set.of(), Set.of(), false, false,
                 List.of(
                         new TriggeredAbility(Triggers.attacks(), new SacrificePermanentsEffect(
-                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER))),
+                        1, new PermanentTruePredicate(), Subjects.defendingPlayer()))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class OniPossession extends Card {
                 // Bare creature predicate = the single-select "sacrifice a creature" primitive;
                 // any creature qualifies, including the enchanted one.
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
-                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER))
+                        1, new PermanentIsCreaturePredicate(), Subjects.you()))
                 // Enchanted creature gets +3/+3 and has trample.
                 .addStaticEffect(new StaticBoostEffect(
                         3, 3, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))

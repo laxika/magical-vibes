@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +34,7 @@ public class DoomsdayConfluence extends Card {
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()))),
-                                SacrificeRecipient.EACH_PLAYER)),
+                                Subjects.eachPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 3/3 black Dalek artifact creature token with menace",
                         new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,

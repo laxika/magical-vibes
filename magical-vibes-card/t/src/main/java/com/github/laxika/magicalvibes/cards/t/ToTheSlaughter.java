@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatureAndPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class ToTheSlaughter extends Card {
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsPlaneswalkerPredicate())),
-                        SacrificeRecipient.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 new TargetPlayerSacrificesCreatureAndPlaneswalkerEffect()));
     }
 }

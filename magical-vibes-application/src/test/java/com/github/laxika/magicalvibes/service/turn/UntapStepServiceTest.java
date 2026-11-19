@@ -107,7 +107,8 @@ class UntapStepServiceTest {
         GameQueryService subjectQueries = org.mockito.Mockito.mock(GameQueryService.class);
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "subjectResolutionService",
                 new SubjectResolutionService(subjectQueries,
-                        org.mockito.Mockito.mock(PredicateEvaluationService.class)));
+                        org.mockito.Mockito.mock(PredicateEvaluationService.class),
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
         org.mockito.Mockito.lenient().when(subjectQueries.findPermanentById(org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> gd.playerBattlefields.values().stream()

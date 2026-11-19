@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class HornedStoneseeker extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.POWERSTONE),
-                        SacrificeRecipient.CONTROLLER));
+                        Subjects.you()));
     }
 }

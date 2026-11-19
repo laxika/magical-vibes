@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -48,8 +48,8 @@ public class RiteOfRuin extends Card {
     private static ChooseOneOption order(String label, PermanentPredicate first,
             PermanentPredicate second, PermanentPredicate third) {
         return new ChooseOneOption(label, List.<CardEffect>of(
-                new SacrificePermanentsEffect(1, first, SacrificeRecipient.EACH_PLAYER),
-                new SacrificePermanentsEffect(2, second, SacrificeRecipient.EACH_PLAYER),
-                new SacrificePermanentsEffect(3, third, SacrificeRecipient.EACH_PLAYER)));
+                new SacrificePermanentsEffect(1, first, Subjects.eachPlayer()),
+                new SacrificePermanentsEffect(2, second, Subjects.eachPlayer()),
+                new SacrificePermanentsEffect(3, third, Subjects.eachPlayer())));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -24,6 +24,6 @@ public class StoneshakerShaman extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
-                SacrificeRecipient.ACTIVE_PLAYER));
+                Subjects.activePlayer()));
     }
 }

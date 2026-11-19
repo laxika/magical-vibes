@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,7 +31,7 @@ public class ArchdemonOfUnx extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))
                 )),
-                SacrificeRecipient.CONTROLLER), new CreateTokenEffect(
+                Subjects.you()), new CreateTokenEffect(
                 "Zombie", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ZOMBIE),
                 Set.of(), Set.of())));

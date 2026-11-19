@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -50,7 +50,7 @@ public class WorldQueller extends Card {
 
     private static ChooseOneEffect.ChooseOneOption sacrificeMode(String label, PermanentPredicate filter) {
         return new ChooseOneEffect.ChooseOneOption(label,
-                new SacrificePermanentsEffect(1, filter, SacrificeRecipient.EACH_PLAYER));
+                new SacrificePermanentsEffect(1, filter, Subjects.eachPlayer()));
     }
 
     private static PermanentPredicate noPermanentType() {

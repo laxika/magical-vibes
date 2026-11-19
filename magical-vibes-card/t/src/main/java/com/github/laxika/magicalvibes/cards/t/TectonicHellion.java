@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostLandsPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +13,6 @@ public class TectonicHellion extends Card {
 
     public TectonicHellion() {
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
-                2, new PermanentIsLandPredicate(), SacrificeRecipient.PLAYERS_WITH_MOST_LANDS));
+                2, new PermanentIsLandPredicate(), Subjects.matching(Subjects.eachPlayer(), new PlayerControlsMostLandsPredicate())));
     }
 }

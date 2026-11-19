@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +33,7 @@ public class GisasFavoriteShovel extends Card {
         SacrificePermanentsEffect sacrificeCreature = new SacrificePermanentsEffect(
                 1,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.DEFENDING_PLAYER).withRecordedSacrificeCount();
+                Subjects.defendingPlayer()).withRecordedSacrificeCount();
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 sacrificeCreature,
                 new ConditionalEffect(new EventValueAtLeast(1), walker)));

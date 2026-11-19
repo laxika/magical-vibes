@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class PhyrexianObliterator extends Card {
         // sacrifices that many permanents.
         addTrigger(Triggers.dealtDamage(), TriggerOptions.EACH_SOURCE,
                 new SacrificePermanentsEffect(new EventValue(), new PermanentTruePredicate(),
-                        SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+                        Subjects.controllerOf(Subjects.triggering())));
     }
 }

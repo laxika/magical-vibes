@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -51,7 +50,7 @@ public class ProfessorOnyx extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasGreatestPowerAmongControllerCreaturesPredicate())),
-                        SacrificeRecipient.EACH_OPPONENT)),
+                        Subjects.eachOpponent())),
                 "\u22123: Each opponent sacrifices a creature with the greatest power among creatures "
                         + "that player controls."
         ));

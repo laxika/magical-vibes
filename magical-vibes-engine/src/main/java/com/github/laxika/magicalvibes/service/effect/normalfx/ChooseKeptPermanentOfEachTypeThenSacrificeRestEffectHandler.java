@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -47,6 +47,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,7 +58,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect keepEffect =
                 (ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect) effect;
-        List<UUID> affectedPlayerIds = affectedPlayers(gameData, entry, keepEffect.recipient());
+        List<UUID> affectedPlayerIds = affectedPlayers(gameData, entry, keepEffect);
         step(gameData, entry.getControllerId(), affectedPlayerIds, affectedPlayerIds, 0, List.of(),
                 keepEffect.types(), keepEffect.sacrificeAllPermanents(), keepEffect.eachPlayerChooses(),
                 entry.getCard().getName(), List.of());
@@ -191,27 +192,11 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler
     }
 
     /** All players, active player first. */
-    private List<UUID> apnapPlayers(GameData gameData) {
-        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
-        int activeIndex = ordered.indexOf(gameData.activePlayerId);
-        if (activeIndex <= 0) {
-            return ordered;
-        }
-        List<UUID> rotated = new ArrayList<>(ordered.subList(activeIndex, ordered.size()));
-        rotated.addAll(ordered.subList(0, activeIndex));
-        return rotated;
-    }
-
-    private List<UUID> affectedPlayers(GameData gameData, StackEntry entry, SacrificeRecipient recipient) {
-        return switch (recipient) {
-            case EACH_PLAYER, EACH_OPPONENT -> apnapPlayers(gameData).stream()
-                    .filter(playerId -> recipient == SacrificeRecipient.EACH_PLAYER
-                            || !playerId.equals(entry.getControllerId()))
-                    .filter(playerId -> gameQueryService.canEffectCauseSacrifice(
-                            gameData, playerId, entry.getControllerId()))
-                    .toList();
-            default -> throw new IllegalArgumentException(
-                    "ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect requires EACH_PLAYER or EACH_OPPONENT");
-        };
+    private List<UUID> affectedPlayers(GameData gameData, StackEntry entry,
+            ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect effect) {
+        return subjectResolutionService.players(gameData, entry, effect, effect.players()).stream()
+                .filter(playerId -> gameQueryService.canEffectCauseSacrifice(
+                        gameData, playerId, entry.getControllerId()))
+                .toList();
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -46,7 +46,7 @@ public class DayOfTheDragons extends Card {
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
                 new SacrificePermanentsEffect(
                         new PermanentCount(dragonsYouControl, CountScope.CONTROLLER),
-                        dragonsYouControl, SacrificeRecipient.CONTROLLER),
+                        dragonsYouControl, Subjects.you()),
                 new ReturnAllCardsExiledWithSourceEffect(true)));
     }
 }

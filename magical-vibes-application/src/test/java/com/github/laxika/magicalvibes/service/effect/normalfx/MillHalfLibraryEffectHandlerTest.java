@@ -74,7 +74,8 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
         millHalfLibraryEffectHandler = new MillHalfLibraryEffectHandler(graveyardService, gameLogService,
-                new SubjectResolutionService(gameQueryService, predicateEvaluationService));
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
 
     }
 

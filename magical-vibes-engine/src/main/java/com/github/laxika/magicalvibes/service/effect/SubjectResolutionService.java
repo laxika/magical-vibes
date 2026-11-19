@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +60,7 @@ public class SubjectResolutionService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TargetLegalityService targetLegalityService;
 
     /** The permanents {@code subject} names that are on the battlefield, for a resolving effect. */
     public List<Permanent> permanents(GameData gameData, StackEntry entry, CardEffect effect,
@@ -307,6 +309,11 @@ public class SubjectResolutionService {
                 }
                 yield List.copyOf(union);
             }
+            case PlayerSubject.Matching matching -> players(ctx, matching.players()).stream()
+                    .filter(playerId -> targetLegalityService.matchesPlayerPredicate(gameData, ctx.controllerId(),
+                            playerId, matching.filter(), ctx.sourceId(),
+                            ctx.entry() == null ? null : ctx.entry().getTriggeringPlayerId()))
+                    .toList();
         };
         return inApnapOrder(gameData, players);
     }
