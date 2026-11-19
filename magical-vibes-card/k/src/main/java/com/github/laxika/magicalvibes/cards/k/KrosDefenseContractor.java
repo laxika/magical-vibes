@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GoadTriggeringCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -26,7 +26,7 @@ public class KrosDefenseContractor extends Card {
 
         addTrigger(Triggers.youPutCountersOnCreatureYouDontControl(),
                 new TapPermanentsEffect(TapUntapScope.TRIGGERING),
-                new GoadTriggeringCreatureUntilNextTurnEffect(),
+                GoadTargetCreatureUntilNextTurnEffect.ofTriggeringPermanent(),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TRIGGERING_PERMANENT,
                         Duration.UNTIL_YOUR_NEXT_TURN));
     }

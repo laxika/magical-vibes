@@ -74,7 +74,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
         placementEntry.setControllerId(ability.controllerId());
         int placed = permanentCounterSupport.placeCounterOnPermanent(
                 gameData, placementEntry, target, effect.counterType(), effect.count());
-        if (placed > 0 && effect.acceptedFollowUp() instanceof com.github.laxika.magicalvibes.model.effect.GoadTriggeringCreatureUntilNextTurnEffect) {
+        if (placed > 0 && effect.acceptedFollowUp() instanceof com.github.laxika.magicalvibes.model.effect.GoadStatusEffect) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ability.sourceCard().getName(), ability.sourcePermanentId(),
                     effect.sourceControllerId(), effect.acceptedFollowUp(), target.getId(), null, null,

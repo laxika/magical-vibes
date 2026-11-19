@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -15,7 +16,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves a targeted goad effect as a single-permanent floating combat requirement. */
+/**
+ * Resolves a goad effect as a single-permanent floating combat requirement, against the effect's
+ * targets or, for a triggering-permanent goad, the stack entry's triggering permanent.
+ */
 @Component
 @RequiredArgsConstructor
 public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
@@ -29,9 +33,15 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
+        List<UUID> targetIds;
+        if (((GoadTargetCreatureUntilNextTurnEffect) effect).goaded() == PermanentReference.TRIGGERING) {
+            targetIds = entry.getTriggeringPermanentId() == null
+                    ? List.of() : List.of(entry.getTriggeringPermanentId());
+        } else {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
         }
 
         for (UUID targetId : targetIds) {
