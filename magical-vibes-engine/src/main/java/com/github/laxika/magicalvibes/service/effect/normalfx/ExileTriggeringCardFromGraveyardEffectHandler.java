@@ -16,6 +16,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Resolves "exile it" of an ability about a card put into a graveyard (a creature-death trigger such as Patron of the
+ * Vein's or Illicit Masquerade's, Planar Void, a copy's reflexive ability): exiles the stack entry's triggering card
+ * from its owner's graveyard. A card that left that graveyard and came back is a new object the ability no longer
+ * refers to (CR 400.7), so it stays.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -40,16 +46,12 @@ public class ExileTriggeringCardFromGraveyardEffectHandler implements NormalEffe
 
         Card triggeringCard = gameQueryService.findCardInGraveyardById(gameData, triggeringCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, triggeringCardId);
-        if (triggeringCard == null || ownerId == null) {
+        if (triggeringCard == null || ownerId == null
+                || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(triggeringCardId))) {
             return;
         }
 
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(triggeringCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
-            return;
-        }
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, triggeringCardId);
         exileService.exileCard(gameData, ownerId, triggeringCard);
         gameLogService.append(gameData, GameLog.cardTextCard(triggeringCard, " is exiled by ", entry.getCard(), "."));
         log.info("Game {} - {} exiles {} from a graveyard", gameData.id,

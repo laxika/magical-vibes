@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class PatronOfTheVein extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
 
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), SequenceEffect.of(
-                new ExileTriggeringCreatureFromGraveyardEffect(),
+                new ExileTriggeringCardFromGraveyardEffect(),
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,

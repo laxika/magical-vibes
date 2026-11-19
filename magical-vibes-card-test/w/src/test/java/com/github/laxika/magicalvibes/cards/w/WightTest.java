@@ -60,6 +60,22 @@ class WightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its exile counts as a card exiled from a graveyard this turn")
+    void exileIsRecordedAsGraveyardExile() {
+        Permanent wight = addReadyCreature(player1, new Wight());
+        GrizzlyBears blockerCard = new GrizzlyBears();
+        blockerCard.setPower(1);
+        Permanent blocker = addReadyCreature(player2, blockerCard);
+        wight.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.cardsExiledFromGraveyardThisTurn).contains(blocker.getCard().getId());
+    }
+
+    @Test
     @DisplayName("Triggers when a creature it damaged dies later in the turn")
     void triggersWhenDamagedCreatureDiesLaterThisTurn() {
         Permanent wight = addReadyCreature(player1, new Wight());
