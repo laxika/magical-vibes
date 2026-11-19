@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -24,6 +25,6 @@ public class BarbedFoliage extends Card {
         // Whenever a creature without flying attacks you, this enchantment deals 1 damage to it.
         PermanentPredicate withoutFlying = new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING));
         addTrigger(Triggers.creatureAttacksYou().withFilter(withoutFlying),
-                new DealDamageToTriggeringPermanentEffect(1));
+                new DealDamageToTargetCreatureEffect(Subjects.triggering(), 1));
     }
 }

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
@@ -21,7 +22,7 @@ public class RecklessEmbermage extends Card {
                 "{1}{R}",
                 List.of(SequenceEffect.simultaneous(
                         new DealDamageToAnyTargetEffect(1),
-                        new DealDamageToSourceEffect(1)
+                        new DealDamageToTargetCreatureEffect(Subjects.source(), 1)
                 )),
                 "{1}{R}: Reckless Embermage deals 1 damage to any target and 1 damage to itself."
         ));

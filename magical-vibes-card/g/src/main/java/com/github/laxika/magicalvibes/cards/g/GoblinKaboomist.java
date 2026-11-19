@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -42,7 +42,7 @@ public class GoblinKaboomist extends Card {
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 CreateTokenEffect.ofArtifactToken(1, "Land Mine", List.of(), List.of(landMineAbility)),
-                new FlipCoinWinEffect(null, new DealDamageToSourceEffect(2))
+                new FlipCoinWinEffect(null, new DealDamageToTargetCreatureEffect(Subjects.source(), 2))
         ));
     }
 }

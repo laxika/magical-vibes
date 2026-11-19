@@ -265,7 +265,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   permanent of the event (`matchedAsItsEntryIsProcessed`, CR 603.2c), since it may be used up as it triggers.
 - Then `EtbTriggerService` runs what the pipeline doesn't match (Cosima's exiled voyage) and emits an `EntryCausedTriggerEvent` per ability the entry caused (Strict Proctor).
 - "Put counters on it", "it gets +X/+Y", "transform it", "attach this to it", "become a copy of that creature", "deals
-  N damage to it" (`DealDamageToTriggeringPermanentEffect`), graft, Agent's Toolkit, soulbond, "it connives", endure,
+  N damage to it" (`DealDamageToTargetCreatureEffect(Subjects.triggering(), n)`), graft, Agent's Toolkit, soulbond, "it connives", endure,
   Madame Null, Mana
   Echoes, Eldrazi Mimic and the graveyard Auras and Equipment that return attached to "that creature" read the entry's
   triggering permanent (`onTriggeringPermanent`, `PermanentReference.TRIGGERING`, `GrantScope.TRIGGERING_PERMANENT`,

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -52,7 +53,7 @@ public class JayaFieryNegotiator extends Card {
                 -2,
                 List.of(RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect.aboutOpponentCreature(
                         new TriggeredAbility(Triggers.youAttack(),
-                                new DealDamageToTriggeringPermanentEffect(new PermanentCount(
+                                new DealDamageToTargetCreatureEffect(Subjects.triggering(), new PermanentCount(
                                         new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER))))),
                 "−2: Choose target creature an opponent controls. Whenever you attack this turn, Jaya deals "
                         + "damage equal to the number of attacking creatures to that creature.",

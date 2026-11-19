@@ -1411,9 +1411,8 @@ public class ActivatedAbilityExecutionService {
                         dd.cantRegenerate(), dd.exileInsteadOfDie(), dd.targetGroup(), dd.unpreventableWhen()));
             } else if (effect instanceof DealDamageToTargetCreatureEffect dc
                     && dc.damage() instanceof CountersOnGrantingPermanent counters) {
-                snapshotEffects.add(new DealDamageToTargetCreatureEffect(
-                        new CountersOnGrantingPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
-                        dc.unpreventable()));
+                snapshotEffects.add(dc.withDamage(
+                        new CountersOnGrantingPermanent(counters.counterType(), ability.getGrantSourcePermanentId())));
             } else {
                 snapshotEffects.add(effect);
             }

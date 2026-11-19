@@ -39,6 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -682,7 +684,7 @@ public class GameSimulator {
         UUID opponentId = getOpponentId(gd, playerId);
         boolean harmful = ability.getEffects().stream()
                 .anyMatch(effect -> effect.targetSpec().harmful()
-                        || effect instanceof DamageDealingEffect);
+                        || isAimedDamage(effect));
 
         List<UUID> playerTargets = new ArrayList<>(validTargets.validPlayerIds());
         UUID preferredPlayer = harmful ? opponentId : playerId;
@@ -699,12 +701,19 @@ public class GameSimulator {
         return ranked;
     }
 
+    /** Damage the ability deals to what it aims at; a permanent damaging itself ("and 3 damage to itself") is not. */
+    private static boolean isAimedDamage(CardEffect effect) {
+        return effect instanceof DamageDealingEffect
+                && !(effect instanceof DealDamageToTargetCreatureEffect damage
+                && damage.subject() instanceof PermanentSubject.Source);
+    }
+
     private double abilityTargetPriority(GameData gd, UUID targetId, UUID playerId,
                                          UUID opponentId, Permanent source,
                                          ActivatedAbility ability, boolean harmful) {
         AmountContext amountContext = new AmountContext(playerId, source, null, 0, 0);
         int damage = ability.getEffects().stream()
-                .filter(DamageDealingEffect.class::isInstance)
+                .filter(GameSimulator::isAimedDamage)
                 .map(DamageDealingEffect.class::cast)
                 .mapToInt(effect -> amountEvaluationService.evaluate(
                         gd, effect.damageAmount(), amountContext))

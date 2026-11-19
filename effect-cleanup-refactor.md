@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -392,7 +392,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`) |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | done |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | done |
-| 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | open |
+| 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | done (`DealDamageToTargetPermanentEffect` kept: not a subject sibling) |
 | 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | open |
 | 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | open |
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | open |
@@ -2060,6 +2060,71 @@ Heliod's Punishment, Giant Oyster, `RemoveCounterFromSourceEffectTest`, `Subject
   (every counter kind). Only the target-permanent handler runs the vanishing last-time-counter check and the battle
   defense check; folding the other two into it fixes that for them.
 - `named(id)` is the subject for any other effect a resolving effect binds to one permanent for a delayed ability.
+
+### Step 5, run 5g (2026-11-20)
+
+**Survivor.** `DealDamageToTargetCreatureEffect` gained a last component `PermanentSubject subject` (every old
+constructor kept; null normalises to `target()`), new `(PermanentSubject, DynamicAmount|int)` constructors and
+`withDamage` (the granted-ability snapshot in `ActivatedAbilityExecutionService` now keeps every component). A non-target
+subject must be `source()`, `triggering()`, `attached()` or `attachedAtTrigger()` and rejects `unpreventable`, a
+`targetPredicate` and a non-`ABILITY_SOURCE` damage source. `targetSpec()` is the old harmful creature spec iff the
+subject declares a target, else `NONE`. The handler keeps the target path untouched; each other subject is named by
+`SubjectResolutionService` and keeps its old handler's path exactly: `source()` the live source through
+`resolveAnyTargetDamage` (old Source handler); `triggering()` the creature/planeswalker/battle check, the early
+`isDamagePreventedForCreature` check and its log line (old TriggeringPermanent handler); `attached()` /
+`attachedAtTrigger()` the Aura (live, else snapshot) must be attached and is the explicit damage source, no early check
+(old EnchantedCreature handler). The early prevention check was not spread to any path that lacked it.
+`DealDamageToPermanentsTargetControlsEffect` replaced `DamagedPermanentScope scope` with a `controlledBy` subject:
+the short constructors are `controlledBy(allOf(targetPlayerDeclaredElsewhere(), controllerOf(target())), creature)`
+("that player or that planeswalker's controller", the old target-player-else-permanent's-controller read),
+`toTargetedPlayers(n, filter)` for Chandra, Bold Pyromancer's creature-or-planeswalker −7; the handler returns before
+its early prevention check when the players name nobody, as before.
+
+**Deleted** (3 records, 3 handlers, the enum `DamagedPermanentScope`; ratchet 4,900 / 4,133):
+`DealDamageToSourceEffect` → `(Subjects.source(), n)` (9 cards), `DealDamageToTriggeringPermanentEffect` →
+`(Subjects.triggering(), n)` (8 cards plus the planeswalker payload of `RegisterDamageAtNextUpkeepUnlessPaysEffectHandler`),
+`DealDamageToEnchantedCreatureEffect` → `attached()` (Fatal Attraction, Tilonalli's Crown's `toCurrentlyEnchanted`) or
+`attachedAtTrigger()` (Guilty Conscience). 19 card files rewritten by a deleted scratch script, Chandra, Bold Pyromancer by
+hand. Kept: `DealDamageToTargetPermanentEffect` (Volcanic Spite, Shatter the Source, Rampaging Raptor) is not a subject
+sibling: its subject is `target()` too, but its target kind is creature/planeswalker/battle and it uses the any-target
+damage path; it belongs with the creature-or-planeswalker damage records (step 10).
+
+**Guilty Conscience.** "That creature" is the enchanted creature as the ability triggered, which the old default mode
+read as the triggering permanent with the Aura path. `DamageTriggers.queueEnchantedCreatureDealsDamageTriggers` now also
+records it as the entry's `attachedPermanentSnapshot`, so it is `attachedAtTrigger()`. The six other Auras with that
+trigger (Spirit Link, Soul Link, Vampiric Link, Spirit Loop, Armadillo Cloak, Visions of Brutality) use gain/lose-life
+effects that never read the snapshot; their tests pass.
+
+**AI parity.** The self-damage record was no `DamageDealingEffect`; the survivor is. `canDamageCreatures()` is false
+for `source()`, so every AI reader gated on it (SpellEvaluator, InstantCategoryClassifier, BoardEvaluator,
+HardAiDecisionEngine, AiTargetSelector) sees what it saw; `GameSimulator`'s ability-target ranking (which counted every
+`DamageDealingEffect`) skips a `source()` damage (`isAimedDamage`), so Psionic Sliver / Reckless Embermage rank targets
+by their 2 / 1 damage as before. `TargetPolarityClassifier` returns null for a non-target subject (no permanent in the
+spec), as the fall-through did. Triggering and Aura subjects were `DamageDealingEffect`s with the same answers before.
+
+**Behaviour differences.** (1) Fatal Attraction's enters trigger damages the creature the Aura enchants as it resolves
+("deals 2 damage to enchanted creature", the reading Tilonalli's Crown already had; CR 608.2h), not the host recorded
+when it triggered. Test: `FatalAttractionTest.enteringDamageFollowsAuraMovedInResponse`. (2) Chandra, Bold Pyromancer's
+−7 judges "planeswalker" with the layered type (`PermanentIsPlaneswalkerPredicate`); the old printed-type check was
+justified by a printed-type loyalty branch that `DamageSupport` no longer has (it uses `isPlaneswalker`). (3) The
+target-controls players come from the effect's own targets (`targetsForEffect`) before the entry's `targetId`, and a
+departed planeswalker's controller is its last-known one.
+
+**Tests**: 109 suites, 826 test cases, all pass: every rewritten card's test class, the target-controls cards, Quenchable Fire, the six
+enchanted-creature-deals-damage Auras, a 40-per-class sample of `DealDamageToTargetCreatureEffect`,
+`DealDamageToTargetCreatureEffectHandlerTest`, `SubjectResolutionServiceTest`, `ActivatedAbilityExecutionServiceTest`,
+the two ratchets, `GameSimulatorTest`.
+
+**For later runs.**
+
+- 5h ("a creature deals damage") is untouched. `DealDamageToDefendingPlayerCreaturesEffect` is almost
+  `DealDamageToPermanentsTargetControlsEffect` with `controlledBy(defendingPlayer(), creature ∧ filter)` but differs in
+  amount type, filter context and protection call; `DealDamageToEachMatchingPermanentEffect` (`EachPermanentScope`),
+  `DealDamageToEachCreatureDamagedPlayerControlsEffect`, `DealDamageToOtherCreaturesControlledByTargetEffect` and
+  `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` are the other set-wide damage records for a
+  `controlledBy` damage run (ledger).
+- The early `isDamageSourcePreventedWithLog` / `isDamagePreventedForCreature` checks still differ per path (4d); a run
+  that unifies them needs the user's sign-off.
 
 ## Prompt
 

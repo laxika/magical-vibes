@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +30,7 @@ public class VrondissRageOfAncients extends Card {
         addTrigger(Triggers.dealtDamage(),
                 new MayEffect(dragonSpiritToken, "Create a 5/4 Dragon Spirit creature token?"));
         addTrigger(Triggers.youRollOneOrMoreDice(),
-                new MayEffect(new DealDamageToSourceEffect(1),
+                new MayEffect(new DealDamageToTargetCreatureEffect(Subjects.source(), 1),
                         "Have Vrondiss deal 1 damage to itself?"));
     }
 }

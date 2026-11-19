@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
@@ -14,16 +16,26 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link DealDamageToTargetCreatureEffect}. A target is dealt the damage through the targeted-creature path
+ * (its multi-target loop, unpreventable damage, excess-damage tracking). Any other subject names one permanent through
+ * {@link SubjectResolutionService}, and each keeps the prevention it always had: {@code source()} through the
+ * any-target path, {@code triggering()} with the targeted-creature prevention check and its log line, the Aura
+ * subjects with the Aura, as it is or last existed, as the damage's source and only the damage pipeline's prevention.
+ */
 @Component
 @RequiredArgsConstructor
 public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
@@ -31,6 +43,8 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,6 +54,26 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToTargetCreatureEffect) effect;
+        switch (e.subject()) {
+            case PermanentSubject.Source ignored -> {
+                damageSource(gameData, entry, e);
+                return;
+            }
+            case PermanentSubject.Triggering ignored -> {
+                damageTriggeringPermanent(gameData, entry, e);
+                return;
+            }
+            case PermanentSubject.Attached ignored -> {
+                damageAuraHost(gameData, entry, e);
+                return;
+            }
+            case PermanentSubject.AttachedAtTrigger ignored -> {
+                damageAuraHost(gameData, entry, e);
+                return;
+            }
+            default -> {
+            }
+        }
         if (e.damageSource() == DamageSource.TRIGGERING_PERMANENT) {
             // The permanent the trigger event was about deals the damage (CR 608.2h), through an entry it is the
             // source of; the targets stay the resolving entry's.
@@ -120,6 +154,67 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
                     gameData, target, damageDealt, markedBefore, loyaltyBefore, deathtouch));
         }
 
+    }
+
+    /** "And X damage to itself": the live source permanent, through the any-target path. */
+    private void damageSource(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect e) {
+        Permanent source = subjectResolutionService.permanent(gameData, entry, e, e.subject());
+        if (source == null) return;
+
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
+        damageSupport.resolveAnyTargetDamage(gameData, entry, source.getId(), damage, false);
+    }
+
+    /**
+     * "Deals damage to it": the permanent the trigger event was about, as it is when the ability resolves, if it is
+     * still a creature, planeswalker or battle (CR 120.1); protection from the source and "prevent all damage this
+     * would deal" apply as to a targeted creature.
+     */
+    private void damageTriggeringPermanent(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect e) {
+        Permanent triggering = subjectResolutionService.permanent(gameData, entry, e, e.subject());
+        if (triggering == null || !gameQueryService.isCreature(gameData, triggering)
+                && !gameQueryService.isPlaneswalker(gameData, triggering)
+                && !triggering.getCard().hasType(CardType.BATTLE)) {
+            return;
+        }
+
+        Permanent source = entry.getSourcePermanentId() == null
+                ? entry.getSourcePermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
+        if (damageSupport.isDamagePreventedForCreature(gameData, entry, triggering)) {
+            return;
+        }
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ")
+                .card(triggering.getCard()).text(".").build());
+        damageSupport.dealCreatureDamage(gameData, entry, triggering, damage);
+    }
+
+    /**
+     * An Aura's damage to its creature: the Aura, as it is or last existed (CR 608.2h), must be attached and deals the
+     * damage to the creature the subject names.
+     */
+    private void damageAuraHost(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect e) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
+        if (aura == null || !aura.isAttached()) {
+            return;
+        }
+        Permanent creature = subjectResolutionService.permanent(gameData, entry, e, e.subject());
+        if (creature == null || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, aura));
+        damageSupport.dealCreatureDamage(gameData, entry, creature, damage, aura);
     }
 
     private boolean referencesExcessDamage(CardEffect effect) {

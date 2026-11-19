@@ -28,6 +28,26 @@ class FatalAttractionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The entering damage is dealt to the creature the Aura enchants as the ability resolves")
+    void enteringDamageFollowsAuraMovedInResponse() {
+        Permanent original = addCreatureReady(player2, new AncientBrontodon());
+        Permanent destination = addCreatureReady(player2, new AncientBrontodon());
+        harness.setHand(player1, List.of(new FatalAttraction()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof FatalAttraction)
+                .findFirst().orElseThrow();
+        aura.setAttachedTo(destination.getId());
+        resolveAllTriggers();
+
+        assertThat(original.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Fatal Attraction deals 4 damage during its controller's upkeep")
     void controllerUpkeepDealsDamageToEnchantedCreature() {
         Permanent creature = addCreatureReady(player2, new AncientBrontodon());

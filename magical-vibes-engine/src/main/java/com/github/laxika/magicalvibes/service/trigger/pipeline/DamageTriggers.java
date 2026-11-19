@@ -1685,7 +1685,8 @@ public class DamageTriggers {
      * "Whenever enchanted creature deals damage, …": each ability of an Aura attached to {@code sourceCreature} goes to
      * the stack door whole (CR 603.3), the ability the Aura's (CR 113.7); its record names, whatever its effects are,
      * the Aura's controller as the non-targeting "you", the damage as its event value and the enchanted creature, with
-     * its controller as it dealt the damage, as its triggering permanent ("its controller").
+     * its controller as it dealt the damage, as its triggering permanent ("its controller") and as the host the Aura
+     * had when the ability triggered ("that creature", {@code Subjects.attachedAtTrigger()}).
      */
     public void queueEnchantedCreatureDealsDamageTriggers(GameData gameData, Permanent sourceCreature,
                                                            int damageDealt) {
@@ -1709,6 +1710,7 @@ public class DamageTriggers {
                             entry.setTriggeringPermanentId(sourceCreature.getId());
                             entry.setTriggeringPermanentControllerId(sourceControllerId);
                             entry.setSourcePermanentSnapshot(auraSnapshot);
+                            entry.setAttachedPermanentSnapshot(new Permanent(sourceCreature));
                         });
             }
         });

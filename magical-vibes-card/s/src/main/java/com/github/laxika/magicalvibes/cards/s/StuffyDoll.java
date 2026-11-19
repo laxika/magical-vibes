@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class StuffyDoll extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "",
-                List.of(new DealDamageToSourceEffect(1)),
+                List.of(new DealDamageToTargetCreatureEffect(Subjects.source(), 1)),
                 "{T}: Stuffy Doll deals 1 damage to itself."
         ));
     }

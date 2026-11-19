@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -26,7 +28,9 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
 
     @Override
     protected void setUpHandler() {
-        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService, amountEvaluationService);
+        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService, amountEvaluationService,
+                mock(SubjectResolutionService.class),
+                mock(GameLogService.class));
     }
 
     @Test
