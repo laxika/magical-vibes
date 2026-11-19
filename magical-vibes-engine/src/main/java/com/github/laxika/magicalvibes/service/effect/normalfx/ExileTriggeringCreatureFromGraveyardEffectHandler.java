@@ -16,7 +16,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Resolves the exile half of Illicit Masquerade's impostor death trigger. */
+/**
+ * Resolves "exile it" of a death trigger about the creature card put into a graveyard (Illicit Masquerade's impostor,
+ * Patron of the Vein). A card that left that graveyard and came back is a new object the ability no longer refers to
+ * (CR 400.7), so it stays.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -41,7 +45,8 @@ public class ExileTriggeringCreatureFromGraveyardEffectHandler implements Normal
 
         Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
-        if (dyingCard == null || ownerId == null) {
+        if (dyingCard == null || ownerId == null
+                || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
 

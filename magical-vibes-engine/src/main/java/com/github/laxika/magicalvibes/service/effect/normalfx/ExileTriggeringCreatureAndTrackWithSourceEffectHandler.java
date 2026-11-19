@@ -7,10 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,8 @@ import org.springframework.stereotype.Component;
 /**
  * Death-trigger resolution for Colfenor's Urn: exile the dying creature card from the graveyard it
  * went to and track it as "exiled with" the source permanent (via source permanent ID on the stack
- * entry), so the source can later count and return those cards.
+ * entry), so the source can later count and return those cards. A card that left the graveyard and came back is a new
+ * object the ability no longer refers to (CR 400.7), so it stays.
  */
 @Slf4j
 @Component
@@ -28,7 +28,8 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
-    private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,22 +47,17 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
             return;
         }
 
-        // A card is put into its owner's graveyard — find it there and exile it, tracked with the source.
-        for (Map.Entry<UUID, List<Card>> gy : gameData.playerGraveyards.entrySet()) {
-            List<Card> graveyard = gy.getValue();
-            for (Card card : graveyard) {
-                if (card.getId().equals(dyingCardId)) {
-                    UUID ownerId = gy.getKey();
-                    graveyard.remove(card);
-                    graveyardService.notifyCardsExiledFromGraveyard(gameData, ownerId, card);
-                    exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
-                    
-                    gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled with ", entry.getCard(), "."));
-                    log.info("Game {} - {} exiled with {} (creature put into graveyard from battlefield)",
-                            gameData.id, card.getName(), entry.getCard().getName());
-                    return;
-                }
-            }
+        Card card = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
+        if (card == null || ownerId == null
+                || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
+            return;
         }
+
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
+        exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
+        gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled with ", entry.getCard(), "."));
+        log.info("Game {} - {} exiled with {} (creature put into graveyard from battlefield)",
+                gameData.id, card.getName(), entry.getCard().getName());
     }
 }

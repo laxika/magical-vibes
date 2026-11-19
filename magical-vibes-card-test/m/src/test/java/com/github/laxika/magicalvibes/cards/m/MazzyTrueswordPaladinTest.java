@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -70,6 +71,35 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(aura.getCard().getId(), player1.getId());
         assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(aura.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Does not exile an Aura card that left the graveyard and returned before the trigger resolves")
+    void doesNotExileAuraThatLeftAndReturnedToGraveyard() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(attacker.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+
+        gd.playerGraveyards.get(player1.getId()).remove(aura.getCard());
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        gd.markGraveyardEntry(aura.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(aura.getCard());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(aura.getCard().getId());
     }
 
     @Test

@@ -15,7 +15,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves Mari's opponent-creature death trigger. */
+/**
+ * Resolves Mari's opponent-creature death trigger. A card that left the graveyard and came back is a new object the
+ * ability no longer refers to (CR 400.7), so it stays.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -40,7 +43,8 @@ public class ExileTriggeringCreatureWithHitCounterEffectHandler implements Norma
 
         Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
-        if (dyingCard == null || ownerId == null) {
+        if (dyingCard == null || ownerId == null
+                || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
 

@@ -145,4 +145,26 @@ class PatronOfTheVeinTest extends BaseCardTest {
         assertThat(patron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingPatron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Does not exile a dying creature card that left the graveyard and returned before the trigger resolves")
+    void doesNotExileCardThatLeftAndReturnedToGraveyard() {
+        Permanent patron = addCreatureReady(player1, new PatronOfTheVein());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isNotEmpty();
+
+        gd.playerGraveyards.get(player2.getId()).remove(victim.getCard());
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+        gd.markGraveyardEntry(victim.getCard());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(victim.getCard());
+        assertThat(patron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }

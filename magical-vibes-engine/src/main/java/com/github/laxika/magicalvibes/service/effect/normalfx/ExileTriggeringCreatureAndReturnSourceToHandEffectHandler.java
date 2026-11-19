@@ -17,9 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves Diabolic Servitude's linked-creature death trigger. The dying creature is always exiled,
- * but the source is returned to hand only while it is still on the battlefield: once it has left, it
- * is a new object (CR 400.7) that "this enchantment" can no longer refer to.
+ * Resolves Diabolic Servitude's linked-creature death trigger. The dying creature card is exiled while it is
+ * still the graveyard object the death made, and the source is returned to hand while it is still on the
+ * battlefield; each half happens without the other, since a card that left its zone is a new object (CR 400.7)
+ * that "it" and "this enchantment" can no longer refer to.
  */
 @Slf4j
 @Component
@@ -41,9 +42,9 @@ public class ExileTriggeringCreatureAndReturnSourceToHandEffectHandler implement
         Card dyingCard = entry.getTriggeringCardId() == null
                 ? null
                 : gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
-        if (dyingCard != null) {
+        if (dyingCard != null && entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCard.getId()))) {
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
-            permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCard.getId());
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCard.getId());
             exileService.exileCard(gameData, ownerId, dyingCard);
             gameLogService.append(gameData, GameLog.cardTextCard(dyingCard, " is exiled by ", entry.getCard(), "."));
             log.info("Game {} - {} is exiled by {}", gameData.id, dyingCard.getName(), entry.getCard().getName());

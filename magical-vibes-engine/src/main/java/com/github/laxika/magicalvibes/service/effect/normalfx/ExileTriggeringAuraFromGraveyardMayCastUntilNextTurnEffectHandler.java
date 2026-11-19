@@ -16,6 +16,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves Mazzy's Aura trigger: exiles the Aura card put into a graveyard and lets the ability's controller cast it
+ * until the end of their next turn. A card that left the graveyard and came back is a new object the ability no longer
+ * refers to (CR 400.7), so it stays.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -56,7 +61,7 @@ public class ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffectHandler
             }
         }
 
-        if (aura == null) {
+        if (aura == null || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(auraId))) {
             return;
         }
 

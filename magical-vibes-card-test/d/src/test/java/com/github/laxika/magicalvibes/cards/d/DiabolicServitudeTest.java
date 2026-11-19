@@ -218,4 +218,26 @@ class DiabolicServitudeTest extends BaseCardTest {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Test
+    @DisplayName("A creature card that left the graveyard and returned is not exiled, but the enchantment still returns to hand")
+    void creatureThatLeftAndReturnedIsNotExiledButServitudeStillReturns() {
+        Card gorilla = castServitudeAndReturnGorilla();
+        Permanent reanimated = findPermanentByCardId(gorilla.getId());
+
+        harness.setHand(player1, List.of(new HeatRay()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castInstant(player1, 0, 3, reanimated.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+
+        gd.playerGraveyards.get(player1.getId()).remove(gorilla);
+        gd.playerGraveyards.get(player1.getId()).add(gorilla);
+        gd.markGraveyardEntry(gorilla);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(gorilla.getId()));
+        harness.assertInHand(player1, "Diabolic Servitude");
+    }
 }

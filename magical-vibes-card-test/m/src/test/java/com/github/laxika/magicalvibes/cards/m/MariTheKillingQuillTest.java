@@ -35,6 +35,27 @@ class MariTheKillingQuillTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not exile a creature card that left the graveyard and returned before the trigger resolves")
+    void doesNotExileCardThatLeftAndReturnedToGraveyard() {
+        addCreatureReady(player1, new MariTheKillingQuill());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        gd.playerGraveyards.get(player2.getId()).remove(victim.getCard());
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+        gd.markGraveyardEntry(victim.getCard());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(victim.getCard());
+        assertThat(gd.exiledCardHitCounters).doesNotContainKey(victim.getCard().getId());
+    }
+
+    @Test
     @DisplayName("An outlaw's combat damage may remove a hit counter, draw, and create Treasures")
     void combatDamageUsesHitCounter() {
         addCreatureReady(player1, new MariTheKillingQuill());

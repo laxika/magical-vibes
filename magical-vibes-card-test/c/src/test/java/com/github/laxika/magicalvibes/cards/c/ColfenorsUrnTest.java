@@ -71,6 +71,22 @@ class ColfenorsUrnTest extends BaseCardTest {
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         }
+
+        @Test
+        @DisplayName("Does not exile a creature card that left the graveyard and returned before the trigger resolves")
+        void doesNotExileCardThatLeftAndReturnedToGraveyard() {
+            Permanent urn = addUrn();
+            Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+            castWrath();
+
+            gd.playerGraveyards.get(player1.getId()).remove(spider.getCard());
+            gd.playerGraveyards.get(player1.getId()).add(spider.getCard());
+            gd.markGraveyardEntry(spider.getCard());
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.getCardsExiledByPermanent(urn.getId())).isEmpty();
+            harness.assertInGraveyard(player1, "Giant Spider");
+        }
     }
 
     @Test
