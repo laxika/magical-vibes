@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,8 +10,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -55,13 +55,13 @@ public class ElspethConquersDeath extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on it",
-                                new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.RETURNED,
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.returned(),
                                         CounterType.PLUS_ONE_PLUS_ONE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a loyalty counter on it",
-                                new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.RETURNED,
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.returned(),
                                         CounterType.LOYALTY))
                 ))
         ));

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,8 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,8 +26,8 @@ public class NornsInquisitor extends Card {
         addTrigger(Triggers.transforms(
                         new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN),
                         ObjectRelation.YOU_CONTROL),
-                new PutCounterOnReferencedPermanentEffect(
-                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCounterOnTargetPermanentEffect(
+                        Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     private static CreateTokenEffect incubatorToken() {

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
@@ -34,7 +35,7 @@ public class OrdealOfPurphoros extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(), SequenceEffect.of(
-                        new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new EnchantedPermanentMatches(
                                         new PermanentCounterCountAtLeastPredicate(

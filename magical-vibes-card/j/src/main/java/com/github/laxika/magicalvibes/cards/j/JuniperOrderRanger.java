@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,8 +22,8 @@ public class JuniperOrderRanger extends Card {
         // Whenever another creature you control enters, put a +1/+1 counter on that creature and a +1/+1 counter on this creature.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new PutCounterOnReferencedPermanentEffect(
-                                PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCounterOnTargetPermanentEffect(
+                                Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

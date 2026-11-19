@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "33")
@@ -14,8 +13,6 @@ public class KelethSunmaneFamiliar extends Card {
     public KelethSunmaneFamiliar() {
         // Whenever a commander you control attacks, put a +1/+1 counter on it.
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentIsCommanderPredicate()),
-                new PutCounterOnTargetPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1,
-                        new PermanentIsTriggeringPermanentPredicate()));
+                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

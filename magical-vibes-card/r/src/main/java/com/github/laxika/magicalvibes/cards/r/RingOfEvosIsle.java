@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,8 +31,8 @@ public class RingOfEvosIsle extends Card {
         ));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's blue.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnReferencedPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnTargetPermanentEffect(
+                Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

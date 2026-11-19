@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -7,8 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentReturnedWhenSourceLeftPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -88,7 +88,7 @@ public class ExileTargetCreaturesUntilSourceLeavesWithCounterEffectHandler
                 new TriggeredAbility(
                         Triggers.enters(new PermanentReturnedWhenSourceLeftPredicate(sourcePermanentId),
                                 ObjectRelation.YOU_CONTROL),
-                        new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                        new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
                                 exileEffect.counterType(), new Fixed(exileEffect.counterAmount()))),
                 null, sourcePermanentId, false));
         permanentRemovalService.removeOrphanedAuras(gameData);

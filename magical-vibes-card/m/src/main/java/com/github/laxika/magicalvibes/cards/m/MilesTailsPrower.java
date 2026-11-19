@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,8 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasKeyword;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +32,7 @@ public class MilesTailsPrower extends Card {
                 SequenceEffect.of(
                         new ConditionalEffect(hasFlying, new DrawCardEffect(1)),
                         new ConditionalEffect(new NotCondition(hasFlying),
-                                new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.TRIGGERING, CounterType.FLYING))));
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.triggering(), CounterType.FLYING))));
     }
 }

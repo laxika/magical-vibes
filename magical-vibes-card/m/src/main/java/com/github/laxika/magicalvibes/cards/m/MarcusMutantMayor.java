@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -7,8 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class MarcusMutantMayor extends Card {
                 SequenceEffect.of(
                         new ConditionalEffect(hasCounter, new DrawCardEffect(1)),
                         new ConditionalEffect(new NotCondition(hasCounter),
-                                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                                new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
                                         CounterType.PLUS_ONE_PLUS_ONE))));
     }
 }

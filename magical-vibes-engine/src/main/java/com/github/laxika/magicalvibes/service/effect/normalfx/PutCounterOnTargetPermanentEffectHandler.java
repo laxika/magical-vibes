@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 /**
  * Puts counters on a permanent. Handles the full counter-placement family:
  * <ul>
+ *   <li>a non-target subject → the permanents {@code SubjectResolutionService} names (non-targeting);</li>
  *   <li>a non-null {@code predicate} → resolution-time choice among the controller's matching
  *       permanents (non-targeting);</li>
  *   <li>otherwise a targeting effect, resolving {@code StackEntry.targetsForEffect} — the
@@ -53,6 +55,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Autowired @Lazy
     private InteractionHandlerRegistry interactionHandlerRegistry;
@@ -65,6 +68,10 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCounterOnTargetPermanentEffect) effect;
+        if (!(e.subject() instanceof PermanentSubject.Target)) {
+            resolveNamedPermanents(gameData, entry, e);
+            return;
+        }
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
@@ -73,14 +80,6 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         }
         int count = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
-
-        // "Put a counter on it" for the triggering permanent: the counter goes on that permanent wherever
-        // it is now, even if control changed before resolution.
-        if (e.predicate() instanceof PermanentIsTriggeringPermanentPredicate
-                && entry.getTriggeringPermanentId() != null) {
-            resolveTargets(gameData, entry, List.of(entry.getTriggeringPermanentId()), e, count);
-            return;
-        }
 
         // Predicate-based resolution: choose from controller's battlefield (non-targeting).
         if (e.predicate() != null) {
@@ -109,6 +108,24 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             return;
         }
         resolveTargets(gameData, entry, List.of(entry.getTargetId()), e, count);
+    }
+
+    /**
+     * A subject that names its permanents without targeting them ("put a +1/+1 counter on it", "on enchanted
+     * creature"): each named permanent still on the battlefield gets the counters, the count evaluated against that
+     * permanent ("equal to its power"), wherever it is now, even if control changed before resolution.
+     */
+    private void resolveNamedPermanents(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
+        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, e, e.subject());
+        for (int i = 0; i < named.size(); i++) {
+            Permanent permanent = named.get(i);
+            int count = amountEvaluationService.evaluate(gameData, e.amount(),
+                    AmountContext.forStackEntry(entry, permanent));
+            List<UUID> later = named.subList(i + 1, named.size()).stream().map(Permanent::getId).toList();
+            if (placeOnTarget(gameData, entry, permanent.getId(), e, count, later, false)) {
+                return;
+            }
+        }
     }
 
     private void resolveTargets(GameData gameData, StackEntry entry, List<UUID> targets,

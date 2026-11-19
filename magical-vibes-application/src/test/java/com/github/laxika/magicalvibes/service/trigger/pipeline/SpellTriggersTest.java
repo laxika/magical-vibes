@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextLoyaltyAbilityThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -73,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
@@ -638,7 +638,7 @@ class SpellTriggersTest {
             Permanent aura = createPermanent("Predatory Hunger");
             Permanent host = createPermanent("Enchanted Creature");
             aura.setAttachedTo(host.getId());
-            var innerEffect = new PutCountersOnEnchantedCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
+            var innerEffect = new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);

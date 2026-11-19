@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.e.EarthbendingStudent;
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SeismicTutelage.class, EarthbendingStudent.class})
+@CardUsed({SeismicTutelage.class, EarthbendingStudent.class, DoublingSeason.class, HardenedScales.class})
 class SeismicTutelageTest extends BaseCardTest {
 
     @Test
@@ -86,6 +89,19 @@ class SeismicTutelageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller orders counter replacements whose order matters (CR 616.1)")
+    void enchantedCreaturesControllerOrdersCounterReplacements() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent creature = addCreatureReady(player1, new EarthbendingStudent());
+
+        castSeismicTutelage(creature);
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void castSeismicTutelage(Permanent creature) {

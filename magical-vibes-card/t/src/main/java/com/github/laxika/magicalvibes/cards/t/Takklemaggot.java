@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +19,7 @@ public class Takklemaggot extends Card {
     public Takklemaggot() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                        new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ZERO_MINUS_ONE))
+                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.MINUS_ZERO_MINUS_ONE))
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect());
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -12,8 +14,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,8 +26,8 @@ import java.util.Set;
 public class VraskaSwarmsEminence extends Card {
 
     public VraskaSwarmsEminence() {
-        CardEffect putCounterOnDealer = new PutCounterOnReferencedPermanentEffect(
-                PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE);
+        CardEffect putCounterOnDealer = new PutCounterOnTargetPermanentEffect(
+                Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(List.of(
                         Triggers.sourceYouControlDealsDamageToPlayer()
                                 .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),

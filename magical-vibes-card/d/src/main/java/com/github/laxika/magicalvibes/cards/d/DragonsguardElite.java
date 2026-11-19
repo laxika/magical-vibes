@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +28,7 @@ public class DragonsguardElite extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{G}{G}",
-                List.of(new DoublePlusOneCountersOnSourceEffect()),
+                List.of(new DoublePlusOneCountersOnTargetCreatureEffect(Subjects.source())),
                 "{4}{G}{G}: Double the number of +1/+1 counters on this creature."));
     }
 }

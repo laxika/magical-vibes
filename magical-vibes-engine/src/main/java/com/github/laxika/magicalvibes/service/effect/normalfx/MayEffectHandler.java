@@ -141,7 +141,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         CardEffect firstEffect = e.wrapped() instanceof SequenceEffect sequence && !sequence.steps().isEmpty()
                 ? sequence.steps().getFirst() : e.wrapped();
         if (firstEffect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counters
-                && counters.predicate() == null) {
+                && counters.predicate() == null
+                && counters.subject() instanceof com.github.laxika.magicalvibes.model.effect.PermanentSubject.Target) {
             var target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null || gameQueryService.cantHaveCounters(gameData, target)
                     || counters.counterType() == com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -8,8 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -39,16 +39,16 @@ public class TheNightOfTheDoctor extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a first strike counter on it",
-                                new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.RETURNED, CounterType.FIRST_STRIKE)),
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.returned(), CounterType.FIRST_STRIKE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a vigilance counter on it",
-                                new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.RETURNED, CounterType.VIGILANCE)),
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.returned(), CounterType.VIGILANCE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a lifelink counter on it",
-                                new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.RETURNED, CounterType.LIFELINK))
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.returned(), CounterType.LIFELINK))
                 ))
         ));
     }

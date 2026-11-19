@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,7 +35,7 @@ public class RakdosRiteknife extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new SacrificeCreatureCost(), new PutCountersOnGrantingEquipmentEffect(CounterType.BLOOD)),
+                        List.of(new SacrificeCreatureCost(), new PutCounterOnTargetPermanentEffect(Subjects.granter(), CounterType.BLOOD)),
                         "{T}, Sacrifice a creature: Put a blood counter on Rakdos Riteknife."
                 ),
                 GrantScope.EQUIPPED_CREATURE

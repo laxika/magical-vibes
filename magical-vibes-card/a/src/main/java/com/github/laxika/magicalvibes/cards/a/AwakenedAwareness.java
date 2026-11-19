@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -28,8 +29,7 @@ public class AwakenedAwareness extends Card {
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCountersOnEnchantedCreatureEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
+                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE),

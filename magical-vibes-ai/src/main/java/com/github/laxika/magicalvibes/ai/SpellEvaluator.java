@@ -285,9 +285,11 @@ public class SpellEvaluator {
                     AmountContext.forEstimation(aiPlayerId));
             return creatureCount * per * 3.5;
         }
-        // +1/+1 counter on target creature
+        // +1/+1 counter on target creature, a chosen creature or the triggering creature
         if (effect instanceof PutCounterOnTargetPermanentEffect counters
-                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                && (counters.subject().declaresTarget()
+                || counters.subject() instanceof PermanentSubject.Triggering)) {
             return amountEvaluationService.evaluate(gameData, counters.amount(),
                     AmountContext.forEstimation(aiPlayerId)) * 3.5;
         }

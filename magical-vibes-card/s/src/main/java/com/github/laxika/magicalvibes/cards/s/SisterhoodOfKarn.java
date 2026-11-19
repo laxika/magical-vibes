@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +22,6 @@ public class SisterhoodOfKarn extends Card {
 
         // Paradox — Whenever you cast a spell from anywhere other than your hand, double the
         // number of +1/+1 counters on this creature.
-        addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), new DoublePlusOneCountersOnSourceEffect());
+        addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), new DoublePlusOneCountersOnTargetCreatureEffect(Subjects.source()));
     }
 }

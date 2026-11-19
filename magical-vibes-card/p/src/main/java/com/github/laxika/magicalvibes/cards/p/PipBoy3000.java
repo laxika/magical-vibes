@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,8 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +32,7 @@ public class PipBoy3000 extends Card {
                                 new DiscardEffect(1, Subjects.you()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Pick a Perk — Put a +1/+1 counter on that creature",
-                        new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                        new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
                                 CounterType.PLUS_ONE_PLUS_ONE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Check Map — Untap up to two target lands",

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -25,8 +25,8 @@ public class TemporalDistortion extends Card {
             new PermanentIsLandPredicate()));
 
     public TemporalDistortion() {
-        var hourglassCounter = new PutCounterOnReferencedPermanentEffect(
-                PermanentReference.TRIGGERING, CounterType.HOURGLASS);
+        var hourglassCounter = new PutCounterOnTargetPermanentEffect(
+                Subjects.triggering(), CounterType.HOURGLASS);
         addTrigger(List.of(
                         Triggers.permanentYouControlBecomesTapped().withFilter(CREATURE_OR_LAND),
                         Triggers.permanentOpponentControlsBecomesTapped().withFilter(CREATURE_OR_LAND)),

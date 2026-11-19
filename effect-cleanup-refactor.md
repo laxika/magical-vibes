@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -390,7 +390,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | done |
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | done |
 | 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`) |
-| 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | open |
+| 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | done |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | open |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | open |
 | 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | open |
@@ -1933,6 +1933,73 @@ non-targeting target; `ActivatedAbilityExecutionService`, `UntapPreventionSuppor
   result subject); `UntapTargetAndSharingCreatures` (step 6's shares-a-colour predicate); the rest unique.
 - "Becomes tapped" / "becomes untapped" triggers, "doesn't untap" restrictions, mana-ability taps, tapped-and-attacking
   tokens and `{T}` costs were not touched.
+
+### Step 5, run 5e (2026-11-20)
+
+**Survivors.** `PutCounterOnTargetPermanentEffect` gained a last component `PermanentSubject subject` (every old
+constructor and factory kept; null normalises to `target()`). New `(PermanentSubject, CounterType[, int|DynamicAmount[,
+PermanentPredicate condition]])` constructors and `withSubject`. A non-target subject rejects `predicate`,
+`targetPredicate`, `regenerateIfSurvives` and `optionalTarget`; `source()` is rejected (the self records own it, as
+`PutCounterOnReferenced` did). `targetSpec()` is the old benign permanent spec iff `predicate == null &&
+subject.declaresTarget()`, else `NONE`; `resolvesAgainstAttachedPermanent()` is true for `attached()`. The handler keeps
+the target path and the resolution-time own-permanent choice untouched; any other subject is resolved by
+`SubjectResolutionService` and each permanent goes through the same `placeOnTarget` (replacement-order prompt,
+`resolutionCondition`), with the count evaluated against the named permanent (the old referenced context: Experiment
+Twelve's "equal to its power", She-Hulk's "for each creature blocking it"). `onTriggeringPermanent` is now
+`(triggering(), ...)` (all 14 users have fixed counts, so the amount context change is moot); the
+`PermanentIsTriggeringPermanentPredicate` special case is gone (Keleth rewritten to the factory).
+`DoublePlusOneCountersOnTargetCreatureEffect` gained `PermanentSubject subject` (`()` = `target()`); target keeps its old
+lookup (`targetsForEffect` then `targetId`, creature check), other subjects resolve through the service; every subject
+places through `PermanentCounterSupport.placeCounterOnPermanent`.
+
+**Deleted** (5 records, 5 handlers; ratchet 4,905 / 4,138): `PutCounterOnReferencedPermanentEffect` (`TRIGGERING`
+`triggering()`, `ATTACHED` and the reference-less constructors `attached()`, `RETURNED` `returned()`; `condition` became
+`resolutionCondition`), `PutCountersOnEnchantedCreatureEffect` (`attached()`), `PutCountersOnGrantingEquipmentEffect`
+(`granter()`, bound at activation by `ActivatedAbilityExecutionService.snapshotEffects` like the 5c bounce),
+`DoublePlusOneCountersOnSourceEffect` (`source()`; `ofTriggeringPermanent()` `triggering()`),
+`DoublePlusOneCountersOnEnchantedCreatureEffect` (by Oracle text: "double the number of +1/+1 counters on it" after
+"whenever equipped/enchanted creature attacks / deals combat damage" is `triggering()` for Sword of Hours, Fractal
+Harness, Seismic Tutelage; "on enchanted creature" is `attached()` for Hydra's Growth; the old handler preferred the
+triggering permanent when the snapshot was attached to it, else the attachment). 96 card files rewritten by a deleted
+scratch script (plus Keleth by hand), 2 engine payloads, 1 application test, agent-docs. Readers: `MayEffectHandler`'s
+"can't have counters" else-branch now also requires `Target`; `SpellEvaluator` scores a +1/+1 placement only for a
+target or `triggering()` subject (what it saw before, plus the old referenced-triggering form); `TargetPolarityClassifier`
+unchanged (only targets reach it). `PermanentReference` stays (Boost 5i, RemoveFromCombat 5k, RemoveCounter 5f, ...).
+
+**Behaviour changes.** (1) Doubling +1/+1 counters is putting counters (CR 701.10e): the source and target doublings
+used private placement paths; the source path skipped the "you put +1/+1 counters on another creature" event, the
+self-placed event, the Hero event, the log and the can't-have-+1/+1 check, the target path skipped can't-have-counters.
+All now use `placeCounterOnPermanent`. Test: `DragonsguardEliteTest.doublingCountersIsPuttingCountersForOtherWatchers`
+(Knight of Wundagore triggers). (2) Non-target placements now ask the affected permanent's controller to order counter
+replacements when the order matters (CR 616.1), as targets did. Test:
+`SeismicTutelageTest.enchantedCreaturesControllerOrdersCounterReplacements`. (3) An Aura or Equipment whose activation
+cost moves it off the battlefield (Krasis Incubation) had its stack-entry snapshot taken after the cost had detached
+it; `ActivatedAbilityExecutionService.sourceAsItLastExisted` restores the host captured before costs, so `attached()`
+reads it as the Aura last existed (CR 608.2h). `KrasisIncubationTest` covers it; a resolver fallback to
+`attachedPermanentSnapshot` was tried and rejected because it broke `TortureTest`'s "Aura became unattached, then left"
+case. Not tested, no card depends on it: the referenced placements' log line is the shared one.
+
+**Kept exactly.** Counter replacements (`GameQueryService.replaceCounters` / `counterReplacementsFor`, Vorinclex,
+Hardened Scales, Doubling Season, can't-have-counters), `notifyCountersPlaced` and its batching, the +1/+1 and -1/-1
+annihilation state-based action (CR 704.5q), enter-with-counters replacements, proliferate (rad counters still skip
+replacements, run 4h).
+
+**Tests**: 155 classes, 4,090 test cases (every rewritten card's test, a 40-per-class sample of
+`PutCounterOnTargetPermanentEffect`, every `DoublePlusOneCountersOnTargetCreatureEffect` card, `SpellTriggersTest`,
+`SubjectResolutionServiceTest`, `ActivatedAbilityExecutionServiceTest`, the two ratchets, the application and AI tests
+naming the survivor), then 130 classes (every card naming `attached()` or `PermanentReference.ATTACHED`) after the
+activation-snapshot fix: all pass.
+
+**For later runs.**
+
+- Kept (ledger): `PutCountersOnSelfEffect` (988 cards, no rare subject sibling; still has its source-to-`targetId`
+  lookup and planar path) and `PutCountersOnSourceEffect` (370 cards, its own inline P/T-modifier placement) are step 10;
+  `DoublePlusOneCountersOnControlledCreaturesEffect`, `PutCounterOnEachControlledPermanentEffect` and
+  `PutCounterOnEachMatchingPermanentEffect` are `controlledBy` sets (one summary log, triggers after all placements:
+  check before folding); `PutCounterOnReturnedPermanentsEffect`, `PutCountersOnCreatedPermanentsEffect`,
+  `PutCountersOnChosenPermanentEffect` need step-7 subjects; the `...Then...` records are fused (step 8).
+- 5f (`RemoveCounterFromReferencedPermanentEffect`) and 5i should check the same activation-cost case; the snapshot
+  restore now covers every `attached()` reader.
 
 ## Prompt
 

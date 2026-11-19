@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInsta
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,6 +41,6 @@ public class TeferisTalent extends Card {
         ));
 
         addTrigger(Triggers.youDrawCard(),
-                new PutCounterOnReferencedPermanentEffect(CounterType.LOYALTY));
+                new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.LOYALTY));
     }
 }

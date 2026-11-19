@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,8 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,8 +22,8 @@ import java.util.List;
 public class Stensia extends Card {
 
     public Stensia() {
-        var putCounterOnDamagingCreature = new PutCounterOnReferencedPermanentEffect(
-                PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE);
+        var putCounterOnDamagingCreature = new PutCounterOnTargetPermanentEffect(
+                Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(List.of(
                         Triggers.sourceYouControlDealsDamageToOpponent(),
                         Triggers.permanentDealsDamageToYou(),

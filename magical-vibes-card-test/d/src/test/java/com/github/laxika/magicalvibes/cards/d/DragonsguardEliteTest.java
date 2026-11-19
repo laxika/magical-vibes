@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BarkshellBlessing;
 import com.github.laxika.magicalvibes.cards.f.FieldTrip;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KnightOfWundagore;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonsguardElite.class, GiantGrowth.class, GrizzlyBears.class, BarkshellBlessing.class})
+@CardUsed({DragonsguardElite.class, GiantGrowth.class, GrizzlyBears.class, BarkshellBlessing.class,
+        KnightOfWundagore.class})
 class DragonsguardEliteTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,22 @@ class DragonsguardEliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Doubling its counters puts +1/+1 counters on it, so \"whenever you put +1/+1 counters on another creature\" triggers (CR 701.10e)")
+    void doublingCountersIsPuttingCountersForOtherWatchers() {
+        Permanent knight = addCreatureReady(player1, new KnightOfWundagore());
+        Permanent elite = addCreatureReady(player1, new DragonsguardElite());
+        elite.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

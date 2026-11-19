@@ -82,7 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -1350,11 +1350,11 @@ public class ActivatedAbilityExecutionService {
                 Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
                 snapshotEffects.add(referenceEffect.bindToCard(imprintedCard != null ? imprintedCard.getId() : null));
                 gameData.setImprintedCard(permanent.getCard(), null);
-            } else if (effect instanceof PutCountersOnGrantingEquipmentEffect grantCounters) {
+            } else if (effect instanceof PutCounterOnTargetPermanentEffect grantCounters
+                    && grantCounters.subject() instanceof PermanentSubject.Granter) {
                 // Bind the granting Equipment now (Hankyu): at resolution the ability's source is the
                 // equipped creature, and the Equipment may no longer be attached to it.
-                snapshotEffects.add(new PutCountersOnGrantingEquipmentEffect(grantCounters.counterType(),
-                        grantCounters.count(), ability.getGrantSourcePermanentId()));
+                snapshotEffects.add(grantCounters.withSubject(Subjects.granter(ability.getGrantSourcePermanentId())));
             } else if (effect instanceof TargetPermanentControllerGainsControlOfGrantingEquipmentEffect gainControl) {
                 boolean sourceHadExcludedSubtype = gainControl.excludedSourceSubtype() != null
                         && GameQueryService.permanentHasSubtype(permanent, gainControl.excludedSourceSubtype());
@@ -2324,6 +2324,22 @@ public class ActivatedAbilityExecutionService {
         return result;
     }
 
+    /**
+     * The activated permanent's last-known information (CR 608.2h). A cost that moved an Aura or Equipment off the
+     * battlefield (Krasis Incubation's "return this Aura to its owner's hand") detached it on the way, so the host the
+     * activation captured before paying costs is restored: as the source last existed on the battlefield it was
+     * attached to that permanent, and "enchanted creature" still names it.
+     */
+    private Permanent sourceAsItLastExisted(GameData gameData, Permanent permanent, UUID capturedHostId) {
+        Permanent snapshot = new Permanent(permanent);
+        if (permanent.getAttachedTo() == null && capturedHostId != null
+                && capturedHostId.equals(permanent.getLastAttachedTo())
+                && gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
+            snapshot.setAttachedTo(capturedHostId);
+        }
+        return snapshot;
+    }
+
     private void pushAbilityOnStack(GameData gameData,
                                     UUID playerId,
                                     Permanent permanent,
@@ -2420,7 +2436,7 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setMultiTargetConstraint(ability.getMultiTargetConstraint());
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
-        stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
+        stackEntry.setSourcePermanentSnapshot(sourceAsItLastExisted(gameData, permanent, effectiveTargetId));
         stackEntry.setSourcePermanentControllerId(activatedPermanentControllerId);
         if (permanent.getAttachedTo() != null) {
             Permanent attached = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());

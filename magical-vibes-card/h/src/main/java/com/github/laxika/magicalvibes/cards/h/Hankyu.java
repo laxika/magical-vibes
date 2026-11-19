@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public class Hankyu extends Card {
                 new ActivatedAbility(
                         true,
                         null,
-                        List.of(new PutCountersOnGrantingEquipmentEffect(CounterType.AIM)),
+                        List.of(new PutCounterOnTargetPermanentEffect(Subjects.granter(), CounterType.AIM)),
                         "{T}: Put an aim counter on Hankyu."
                 ),
                 GrantScope.EQUIPPED_CREATURE

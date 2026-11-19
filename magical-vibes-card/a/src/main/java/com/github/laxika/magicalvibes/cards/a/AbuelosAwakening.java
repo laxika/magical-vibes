@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,8 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -47,7 +47,7 @@ public class AbuelosAwakening extends Card {
                         SetBasePowerToughnessEffect.indefinitely(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.PERMANENT)))
                 .build());
-        addSpellEffect(new PutCounterOnReferencedPermanentEffect(
-                PermanentReference.RETURNED, CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addSpellEffect(new PutCounterOnTargetPermanentEffect(
+                Subjects.returned(), CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

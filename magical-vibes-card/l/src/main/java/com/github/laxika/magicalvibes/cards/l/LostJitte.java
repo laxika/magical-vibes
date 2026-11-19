@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -52,7 +52,7 @@ public class LostJitte extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Remove a charge counter from Lost Jitte: Put a +1/+1 counter on equipped creature."
         ));

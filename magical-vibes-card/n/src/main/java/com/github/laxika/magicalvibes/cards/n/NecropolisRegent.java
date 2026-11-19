@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class NecropolisRegent extends Card {
         // +1/+1 counters on it: the damage is the entry's event value, "it" its triggering permanent.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),
-                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
                         CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
     }
 }

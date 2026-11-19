@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class RakishHeir extends Card {
         // Whenever a Vampire you control deals combat damage to a player, put a +1/+1 counter on it.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
-                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                new PutCounterOnTargetPermanentEffect(Subjects.triggering(),
                         CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

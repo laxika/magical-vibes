@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -38,8 +37,8 @@ public class CaseOfThePilferedProof extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))),
                         ObjectRelation.YOU_CONTROL),
-                new PutCounterOnReferencedPermanentEffect(
-                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCounterOnTargetPermanentEffect(
+                        Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

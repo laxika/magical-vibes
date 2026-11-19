@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -27,7 +28,7 @@ public class KrasisIncubation extends Card {
                 false,
                 "{1}{G}{U}",
                 List.of(new ReturnSelfToHandCost(),
-                        new PutCountersOnEnchantedCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                        new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "{1}{G}{U}, Return this Aura to its owner's hand: Put two +1/+1 counters on enchanted creature."
         ));
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -8,8 +10,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class DuchessWaywardTavernkeep extends Card {
 
     public DuchessWaywardTavernkeep() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING, CounterType.QUEST));
+                new PutCounterOnTargetPermanentEffect(Subjects.triggering(), CounterType.QUEST));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

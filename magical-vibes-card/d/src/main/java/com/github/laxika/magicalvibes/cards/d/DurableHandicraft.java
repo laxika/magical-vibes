@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,8 +23,8 @@ public class DurableHandicraft extends Card {
         // on that creature.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new MayPayManaEffect(
                 "{1}",
-                new PutCounterOnReferencedPermanentEffect(
-                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE),
+                new PutCounterOnTargetPermanentEffect(
+                        Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
                 "Pay {1} to put a +1/+1 counter on that creature?"));
 
         // {5}{G}, Sacrifice this enchantment: Put a +1/+1 counter on each creature you control.

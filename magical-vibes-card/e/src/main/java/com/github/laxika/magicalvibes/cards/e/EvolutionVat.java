@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -29,7 +29,7 @@ public class EvolutionVat extends Card {
                                 new ActivatedAbility(
                                         false,
                                         "{2}{G}{U}",
-                                        List.of(new DoublePlusOneCountersOnSourceEffect()),
+                                        List.of(new DoublePlusOneCountersOnTargetCreatureEffect(Subjects.source())),
                                         "{2}{G}{U}: Double the number of +1/+1 counters on this creature."),
                                 GrantScope.TARGET,
                                 null,

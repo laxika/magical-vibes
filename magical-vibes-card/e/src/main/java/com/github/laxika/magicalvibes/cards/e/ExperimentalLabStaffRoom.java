@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,8 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
@@ -46,8 +46,8 @@ public class ExperimentalLabStaffRoom extends Card {
                                         new ChooseOneEffect.ChooseOneOption("Turn that creature face up",
                                                 TurnSourceFaceUpEffect.ofTriggeringPermanent()),
                                         new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on it",
-                                                new PutCounterOnReferencedPermanentEffect(
-                                                        PermanentReference.TRIGGERING,
+                                                new PutCounterOnTargetPermanentEffect(
+                                                        Subjects.triggering(),
                                                         CounterType.PLUS_ONE_PLUS_ONE))))),
                         GrantScope.SELF)));
     }
