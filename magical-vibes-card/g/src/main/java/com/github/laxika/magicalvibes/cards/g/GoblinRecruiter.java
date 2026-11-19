@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 @CardRegistration(set = "VIS", collectorNumber = "80")
 @CardRegistration(set = "ATH", collectorNumber = "38")
 @CardRegistration(set = "SLD", collectorNumber = "925")
-@CardRegistration(set = "SLD", collectorNumber = "926")
 @CardRegistration(set = "SLD", collectorNumber = "1313")
 @CardRegistration(set = "MB2", collectorNumber = "193")
 public class GoblinRecruiter extends Card {
