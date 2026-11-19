@@ -1,9 +1,10 @@
 # Static-Evaluation Migration Plan
 
 Forward-looking plan for removing the `staticEvaluation` recursion guards and replacing them
-with CR 613 layered reads. Companion to `LAYER_SYSTEM.md`, which is the backward-looking step
-log — when a stage here completes, record the outcome there as the next numbered step and tick
-the checkbox here.
+with CR 613 layered reads. Companion to `LAYER_SYSTEM.md`, which describes the layer system as
+it is — when a stage here completes, update that document to the code and tick the checkbox here.
+The "step N in `LAYER_SYSTEM.md`" notes below point at its old step log, kept in git:
+`git show e59a9b3e0b:agent-docs/LAYER_SYSTEM.md`.
 
 **Line numbers drift.** Re-verify every `file:line` below with a grep before acting on it.
 Treat this document as a map, not as ground truth.

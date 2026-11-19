@@ -909,8 +909,8 @@ public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts
                                                         PermanentPredicate filter) implements CardEffect
 // + the four existing sugar ctors (filter = null) and a new (GrantScope, PermanentPredicate)
 
-public record GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration duration) implements CardEffect
-// enum NoMaximumHandSizeDuration { REST_OF_GAME, UNTIL_NEXT_TURN }
+public record GrantNoMaximumHandSizeEffect(Duration duration) implements CardEffect
+// the step added enum NoMaximumHandSizeDuration { REST_OF_GAME, UNTIL_NEXT_TURN }; it is now model.effect.Duration
 ```
 
 Nine records and five handlers deleted, four records + one enum + two handlers added — net −5 records
@@ -934,7 +934,7 @@ the merge touched no engine logic at all. `GrantProtectionChoice*` really does t
   "`GrantPermanentNoMaxHandSizeEffect` + duration", but "Permanent" there means *permanently*, so the
   name would have contradicted its own `UNTIL_NEXT_TURN` value — the same trap Step 8 avoided by
   renaming to `PutCounterOnReferencedPermanentEffect`. Both records are deleted and
-  `GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration)` replaces them, so this row deletes 2 and
+  `GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration)` (now `Duration`) replaces them, so this row deletes 2 and
   adds 1 rather than deleting 1.
 - **The `SpellCastingAbilityGrantingEffect` interface is deliberately kept** even though it now has a
   single implementor. It is the capability contract `ARCHITECTURE.md` requires the engine to read
@@ -1759,7 +1759,7 @@ source-restriction axis handled in `DamageSupport.dealCreatureDamage`.
 **Absorbs**: `AttachTargetAuraToTargetCreatureEffect` (2),
 `AttachTargetEquipmentToTargetCreatureEffect` (1).
 
-All four handlers share the identical core — `expireFloatingEffectsForUnattachedSource(x.getId())` →
+All four handlers share the identical core — `durationClock.sourceUnattached(gameData, x.getId())` →
 `x.setAttachedTo(target.getId())` → `x.setTimestamp(gameData.nextTimestamp())` with the same CR 613.7e
 comment. The two type-specific tails are **already self-guarding**, so the union is safe with no branch:
 `AttachmentTriggers.trigger` judges the Aura-attached abilities only when the card has the

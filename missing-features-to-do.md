@@ -165,6 +165,82 @@ agent-docs/ARCHITECTURE.md first.
 
 ---
 
+## 72. The AI's must-attack-alongside hint ignores attacker-count caps
+
+**Status:** open · **Found:** 2026-11-19, closing the durations refactor
+
+**Failing tests:**
+- None yet. Add an AI test: Silent Arbiter (or another "no more than one creature can attack") with a conditional
+  "attacks if another creature attacks" requirement; the AI's declaration must be legal.
+
+**What the rules require.** CR 508.1d: the declaration must obey the maximum number of requirements that can be obeyed
+without disobeying a restriction. The engine's legality check searches for that maximum (`CombatAttackService`), but
+`CombatAttackService.getMustAttackAlongsideIndices`, which `AiDecisionEngine` uses to add required attackers, adds every
+creature a conditional requirement names without checking attacker caps, so the AI can propose an illegal declaration.
+
+**Why it's large.** The hint has to reuse the requirement search's restriction model (caps, taxes, alone/power
+restrictions) rather than a list of indices.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 72: make CombatAttackService.getMustAttackAlongsideIndices (used by
+AiDecisionEngine) respect attacker-count caps and the other restrictions the requirement search obeys (CR 508.1d,
+verify with get_rule). Add an AI test with Silent Arbiter and a conditional requirement. Don't commit until I say so.
+```
+
+---
+
+## 73. Attack and block requirement searches give up after 200,000 declarations
+
+**Status:** open · **Found:** 2026-11-19, closing the durations refactor
+
+**Failing tests:**
+- None. A board large enough to exhaust the budget is needed to show it.
+
+**What the rules require.** CR 508.1d and 509.1c: a declaration is illegal if it obeys fewer requirements than the
+maximum possible. `CombatAttackService` and `CombatBlockService` find that maximum by search
+(`REQUIREMENT_SEARCH_BUDGET = 200_000`); past the budget they settle for the best found so far, so on a huge board a
+declaration obeying fewer than the true maximum can be accepted.
+
+**Why it's large.** An exact answer needs a better algorithm (pruning, a matching formulation for block requirements)
+whose cost stays bounded for AI simulations.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 73: replace the budgeted requirement searches in CombatAttackService and
+CombatBlockService (REQUIREMENT_SEARCH_BUDGET) with exact maximum-requirement computations that stay fast (CR 508.1d,
+509.1c; verify with get_rule). Benchmark against the current searches and keep the existing requirement tests green.
+Don't commit until I say so.
+```
+
+---
+
+## 74. Underbridge Warlock: is its one-time boon spent as it triggers or as it resolves?
+
+**Status:** open · **Found:** 2026-11-19, closing the durations refactor
+
+**Failing tests:**
+- None; this is an open rules question.
+
+**What the rules require.** Unsettled: Underbridge Warlock's boon ("at the beginning of your end step, if you have a
+boon, …") has no official ruling on when a one-time boon is used up. Other boons are spent as they trigger
+(`GameData.useDelayedAbility`); this one is spent as it resolves (`CreateBoonEffect.usedAsItResolves`,
+`ConsumeBoonEffect`), so its "if you have a boon" rider still sees it, which keeps the engine's earlier behaviour.
+
+**Why it's large.** Not large; it needs a ruling (Scryfall `get_rulings`, then the web) before any change.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 74: check Underbridge Warlock's rulings with get_rulings and search the web for how
+a one-time boon is used up. If spent as it triggers, drop usedAsItResolves/ConsumeBoonEffect for it and update its
+tests; otherwise remove this entry. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

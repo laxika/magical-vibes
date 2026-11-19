@@ -78,6 +78,11 @@ Static and floating continuous effects are applied by the CR 613 layered pass an
 Owner: `LayerSystemService`, `GameQueryService.computeStaticBonus()`.
 The board state is memoized behind a fingerprint: a new game-state input to the layered pass must be added to `LayerSystemService.computeBoardFingerprint`.
 
+### A resolution's lasting change is a floating effect with a `Duration`
+An effect a spell or ability makes that lasts ("until end of turn", "for as long as", none stated) is a floating effect with a `Duration`, ended by `DurationClock` on the rules events; a delayed triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or `GameData` field with a cleanup reset.
+Owner: `GameData.addFloatingEffect`, `DurationClock`, `TemporaryGlobalTriggeredAbility`.
+Why: a field skips timestamp order (CR 613.7) and needs its own expiry at every moment its duration can end.
+
 ### New game state is copied for simulations
 New state on `GameData`, `StackEntry` or `Permanent` is copied by the simulation copy, with a deep-copy test case, unless it is derived data that rebuilds itself.
 Owner: `GameData.simulationFrameCopy()`, `GameDataDeepCopyTest`.

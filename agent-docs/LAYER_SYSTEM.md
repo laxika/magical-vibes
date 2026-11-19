@@ -25,17 +25,17 @@ board is memoized per `GameData` behind a structural fingerprint (§10) — exte
 `computeBoardFingerprint` if the pass starts reading a new input. Rules for new code: register
 every new static effect type in `LayerClassifier` (`LayerClassifierTest` enforces it); ask
 characteristics via `GameQueryService` with a `GameData` (never `Permanent` fields directly);
-one-shot until-EOT effects create a floating effect (most also dual-write a legacy `Permanent`
-field for intrinsic readers — the floating effect is what drives ordering). The regression spec
-is `SevenLayerTest` (100/100, never weaken) plus `LayerDependencyTest`; resolved/open debt is
-tracked in §9. The forward-looking plan for retiring the `staticEvaluation` recursion guards
-(the remaining printed-only matchers named in the §9 cleanup-debt paragraph) is
-`STATIC_EVALUATION_MIGRATION.md` — that document is the checklist; this one stays the step log.
+every effect a resolution makes is a floating effect with a `Duration` (§6) and nothing else — no
+`Permanent` or `GameData` field mirrors it. The regression spec
+is `SevenLayerTest` (100/100, never weaken) plus `LayerDependencyTest`; open limitations are
+listed in §9 and the current state in §11. The plan for the remaining printed-only static-filter
+matchers is `STATIC_EVALUATION_MIGRATION.md`.
 
-Canonical reference for the migration of continuous-effect handling from the single-pass
-accumulator (`GameQueryService.computeStaticBonus` + `StaticBonusAccumulator`) to the official
-CR 613 layer system. **Every refactor session starts by reading this document** and ends by
-appending to the Progress Log at the bottom.
+Canonical reference for continuous-effect handling under the CR 613 layer system (it replaced
+the single-pass accumulator, `GameQueryService.computeStaticBonus` + `StaticBonusAccumulator`).
+**Every session that changes continuous effects starts by reading this document** and updates it
+to the code it leaves. The step-by-step migration history is in git:
+`git show e59a9b3e0b:agent-docs/LAYER_SYSTEM.md` (its "Progress Log").
 
 The acceptance spec is `SevenLayerTest`
 (`magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/layers/SevenLayerTest.java`,
@@ -241,7 +241,7 @@ memo is only used once the board is finished). **One-shot effects write nothing 
 a resolved colour, keyword, ability or "loses all abilities" effect is only its floating effect, applied at its
 own timestamp, which is what drives ordering. Remaining direct
 `Permanent.getEffectiveColor()` uses to clean up later: `ai/BoardEvaluator` (heuristics),
-`PermanentViewFactory`'s legacy transient-color branch, `Permanent.hasKeyword` direct callers
+`Permanent.hasKeyword` direct callers
 in null-`GameData` predicate fallbacks. The finished board is **memoized per `GameData` across
 external queries** since step 13 (see §10 "Board cache" for the structural-fingerprint
 invalidation contract); the per-target `StaticBonus` assembly still runs on every external
@@ -297,10 +297,9 @@ layered queries in step 7): the power/toughness predicate leaves (`PredicateEval
 and `AmountEvaluationService` toughness-based amounts
 — **all migrated in step 16** to `GameQueryService.powerForStaticFilter`, which keeps the direct
 `Permanent` read only as the bottom tier (mid-pass, and as the cycle breaker);
-the trigger pipeline's last-known-information power (`TriggerMatcher`, `TriggeredAbilityStackService`) (the permanent has left the
-battlefield, so the layered pass carries no state; since step 7 this LKI read also misses an
-active 7d switch — the floating effect can't be resolved against a departed permanent), and
-`PermanentViewFactory`'s raw term (already corrected by the broadcast diff, which since step 7
+and `PermanentViewFactory`'s raw term. The trigger pipeline's last-known power (`TriggerMatcher`,
+`TriggeredAbilityStackService`) reads `Permanent.lastKnownPower/Toughness`, which every departure records from the
+layered queries as the permanent leaves (CR 603.10a), so it includes a 7d switch (already corrected by the broadcast diff, which since step 7
 also carries the 7d switch to the views).
 
 **Implementation status (step 7 — layer 7d switches as floating effects):**
@@ -429,13 +428,10 @@ Each source is classified into one or more layers:
    `STATIC_EFFECT_HANDLERS.md` for the current handler inventory that must be re-classified.
 2. **Emblems** (`GameData.emblems`).
 3. **Floating effects** created by resolved spells/abilities (`FloatingContinuousEffect`,
-   stored on `GameData` — introduced in step 2). They replaced the scattered `Permanent` fields that held
-   P/T modifiers, keywords, granted abilities and "loses all abilities" flags, and expire by duration instead
-   of by `resetModifiers()` bucket. (`powerToughnessSwitched` was the first field fully
-   deleted this way — step 7; the four steal tracking sets — `untilEndOfTurnStolenCreatures`,
-   `sourceDependentStolenCreatures`, `enchantmentDependentStolenCreatures`,
-   `permanentControlStolenCreatures` — were deleted in step 8, leaving only the
-   `stolenCreatures` OWNERSHIP record, maintained by `recomputeControl`.)
+   stored on `GameData`). Every change a resolution makes to a permanent, a player, a card or the game rules
+   is one of these, ended by its `Duration` (below); no `Permanent` or `GameData` field holds such a change.
+   Control is derived from the floating layer-2 effects; `stolenCreatures` is only the ownership record,
+   maintained by `recomputeControl`.
 
 ### Duration
 
@@ -551,8 +547,8 @@ same place and timestamp), and a used-up or "next time" shield ends. A permanent
 (`onPermanent`): "prevent the next N damage" (`DamagePreventionShield`), each regeneration shield (`RegenerationShield`
 with its rider, CR 701.19a), "destroy it instead of the next damage" and "remove all damage instead of the next
 destruction" (the resolving effect itself), and they apply to that object only (CR 400.7). When several apply to one
-event the affected player chooses (CR 616.1); a permanent's prevention steps and regeneration riders are still taken
-in a fixed order. The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at
+event the affected player, or the affected permanent's controller, chooses one at a time (CR 616.1): each shield and
+regeneration rider is its own option, identical ones one option. The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at
 the matching cast (`Duration.UNTIL_MATCHING_SPELL_CAST`) or at cleanup.
 "Exile it instead" replacements (CR 614.1a) are such effects too: on a permanent ("if that creature would die this
 turn", `GameData.exileInsteadOfDying`, optionally linking the exiled card to its source; "if it would leave the
@@ -594,7 +590,7 @@ effects). `DurationClock.holds` judges the same conditions on the board for the 
 Every end, by event or by state, undoes what the effect kept, copies included; control is
 recomputed by the caller. As a permanent leaves the battlefield, `affectedLeft` ends the effects on it whatever their
 durations (CR 400.7); they stay readable as its last-known information through `GameData.floatingEffectsOnPermanent`
-(`departedPermanentEffects`) until their own durations would have ended them. The migration notes below name the expiry helpers the clock replaced.
+(`departedPermanentEffects`) until their own durations would have ended them.
 
 ## 7. Classification notes
 
@@ -840,83 +836,31 @@ hashes that face-down flag so abandoning a scheme invalidates the cached board.
   guard, so conditional SELF-animations of a stripped artifact still animate — pre-existing
   gap, unchanged).
 
-## 9. Migration status: Done and Known limitations
+## 9. Known limitations
 
-The migration (14 steps, all on 2026-07-10) is **complete**. The Progress Log below is the
-authoritative per-step record; this section is the reconciled summary.
+The CR 613 migration and the move of every resolution-made change onto floating effects are complete; §11 sums up
+where the code stands. Open limitations:
 
-### Done (resolved debt)
-
-- **Timestamps + floating-effect lifecycle** (steps 1-2): entry/attach/insertion stamping,
-  `GameData.floatingEffects` with duration-driven expiry at cleanup/departure/unattach/turn-start.
-- **Classification** (step 3): `LayerClassifier` covers every continuous-effect type;
-  `LayerClassifierTest` fails on unclassified new static effects.
-- **Layers 4/5/6 first-class** (steps 4-5): whole-battlefield pass, managed-instance replay,
-  per-filter CR 613.6 verdicts, layered keyword/color/protection queries.
-- **Layer 7 rules-accurate** (step 6): unified 7b setter ordering (the hardcoded
-  "one-shot flag beats static setter" guard deleted), 7a CDA as base-override, animation flags
-  migrated to floating 7b entries.
-- **`powerToughnessSwitched` deleted** (step 7): 7d switches are floating effects, no dual-write;
-  the pre-switch/post-switch composition fixed the asymmetric-static-boost bug.
-- **The four steal tracking sets deleted** (step 8): control is derived from floating L2 effects
-  (newest wins, fallback to earlier effects on expiry), physical list moves keep the engine's
-  membership==control invariant.
-- **Layer 3 text changes** (step 9): `TextChangeTransformer` rewrites effect instances at
-  collection; Mind Bent lands tap for the new color.
-- **Layer 1 integrated** (step 10): copy-card swap verified CR 707.2-correct; duration copies
-  revert via floating-effect expiry.
-- **CR 613.8 dependency for layers 4-6** (step 11): trial-application fingerprints, existence
-  (`printedAbilitiesRemoved`/`losesAllAbilities` kill a stripped source's static instances) and
-  applicability drivers, loop fallback to timestamps.
-- **Remnant audit** (step 12): no deletable `Permanent` fields remained (dual-write is
-  intentional); private `getRawPower/getRawToughness` inlined; docs synced.
-- **Cross-query board memoization** (step 13): the step-4 perf follow-up — per-`GameData`
-  fingerprint-keyed cache, ~26-45A� on layered-query throughput; AI simulation copies start cold.
-
-### Known limitations
-
-- **Dual-write fields remain** for abilities:
-  one-shot handlers write legacy `Permanent` fields AND the floating effect; the fields feed
-  LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. One-shot colours, card
-  types, subtypes (land and creature type setters, lost subtypes), animations, keyword grants and
-  removals, protection grants, base-P/T setters and P/T boosts are floating effects only, applied in timestamp order (CR 613.7) with no legacy precedence; `Permanent`'s
-  `getEffectiveColor(s)` and the `GameData`-less type checks are intrinsic only. A departed
-  snapshot carries the layered colours and types copied at departure, and `computeStaticBonus`
-  folds the floating card-type, subtype and keyword grants, keyword removals, base-P/T setters and
-  P/T boosts still on its id, plus the keywords baked into `Permanent.lastKnownKeywords` (CR 608.2h).
-  `Permanent.getEffectivePower/Toughness` are intrinsic only (base, counters, perpetual modifier). Every departure
-  records the layered power and toughness as it leaves (`lastKnownPower/Toughness`, CR 603.10a), the state-based Aura
-  sweep included (with its last-known card types); `ownPower/ownToughness` is only the fallback for an object that
-  left as a noncreature.
-- **Flag-only 7b stragglers**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
+- **Flag-only 7b straggler**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
   real 7b entry beats it regardless of relative order.
-- **LKI misses layered state**: a dying creature's last-known power
-  (read by the trigger pipeline, `TriggerMatcher`/`TriggeredAbilityStackService`) misses an active 7d switch — the departed permanent has no
-  state in the pass.
 - **Dependency limits** (§8): computed once per layer, not re-evaluated per application;
   blind to applicability conditions living outside `CharacteristicState`; 7b/7d and layers 1-3
   are not dependency-ordered; the assembly's `sourceAbilitiesGone` skip can over-remove a
   hypothetical conditional-wrapper contribution of a stripped source.
-- **Unmanaged L5/L6 sources** (conditional wrappers, emblems) still apply legacy-additive,
-  outside timestamp order. Step 17 admitted conditional wrappers to layer 4 only, and only for
-  fingerprint-stable conditions; layers 5-7 are untouched.
-- **L1 out-of-scope** (step 10): face-down/manifest copying, tokens copying permanents,
-  enters-as-copy replacement timing, stacking a UEOT and an until-next-turn copy on one
-  permanent, and the unfrozen runtime copy card (`Card.freeze` hardening gap — also the board
-  cache's one blind spot).
-- **L2 wording nuance**: Sower-of-Temptation-style "for as long as ~ remains on the battlefield"
-  keeps the stricter Olivia-style "creator still controls the source" condition (needs a fourth
-  duration flavor); equipment auto-unattach on control revert happens only for reverts to the
-  default controller.
-- **L3 transformer coverage**: the effect types listed in the step-9 status note (§5) are not
+- **Unmanaged L5/L6 sources** (conditional wrappers, emblems) still apply additively,
+  outside timestamp order. Conditional wrappers are admitted to layer 4 only, and only for
+  fingerprint-stable conditions (`admitsConditionalWrapper`); layers 5-7 are untouched.
+- **L1 gaps**: face-down/manifest copying, tokens copying permanents, enters-as-copy replacement
+  timing, and the unfrozen runtime copy card
+  (`Card.freeze` hardening gap — also the board cache's one blind spot).
+- **L2**: equipment auto-unattach on control revert happens only for reverts to the default controller.
+- **L3 transformer coverage**: the effect types listed in the layer-3 status note (§5) are not
   yet rewritten; a text-changed filter shared across an ability's parts misses the CR 613.6
   verdict memo in the legacy funnel (acceptable drift, no current card hits it).
-- **Ad-hoc characteristic reads outside the layered funnel** (pre-existing, pre-dates the
-  migration): `BoostBySharedCreatureTypeEffectHandler` (Coat of Arms) and
-  `LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler` (Call to the
-  Kindred) read card+transient subtypes and intrinsic changeling, so they never see statically
-  granted subtypes (e.g. Arcane Adaptation); Manor Gargoyle's `SelfHasKeyword` condition reads
-  intrinsic keywords — a deliberate self-recursion guard, kept correct by the dual-write.
+- **Ad-hoc characteristic reads outside the layered funnel**: `BoostBySharedCreatureTypeEffectHandler`
+  (Coat of Arms) and `LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler` (Call to the
+  Kindred) compare the permanents' own subtypes and intrinsic changeling, so they never see statically or
+  floating-granted subtypes (e.g. Arcane Adaptation).
 
 ## 10. Board cache (cross-query memoization, step 13)
 
@@ -1001,8 +945,7 @@ detection — `RulesEventPipeline` judges every observer's and moving object's a
 zone-change events in one scope, since matching only puts abilities through the stack door (same
 CR 603.2 argument and write audit as becomes-the-target). State an assembly may read — the death counts and the
 `graveyardLookBackExcludedCardIds` set/cleared around the look-back call — is written between those
-scopes, never inside one; the `processDelayedSacrifice…` steps stay unscoped because they can
-sacrifice permanents on the spot, and so do `removeFromBattlefield`'s last-known reads, which write
+scopes, never inside one; `removeFromBattlefield`'s last-known reads stay unscoped, because they write
 the live permanent's `lastKnownPower` (read by `PermanentPowerDifferentFromBasePowerPredicate` while
 it is still on the battlefield) and can destroy an attached permanent on unattach. Independent of
 scopes, `assembleStaticBonusUnguarded` leaves out battlefield sources with nothing to apply — no
@@ -1121,833 +1064,32 @@ fingerprint), same build otherwise: steady state 433.9 → 753.0 sweeps/s, one t
 
 ---
 
-## Progress Log
+## 11. Current state
 
-Append one entry per refactor session: what was done, what flipped green in SevenLayerTest,
-and any deviations from this document.
-
-1. **2026-07-10 — Step 1: design doc, domain scaffolding, timestamp infrastructure.**
-   Created this document. Added `model/layer/` in `magical-vibes-domain` with `Layer`,
-   `FloatingContinuousEffect`, and `CharacteristicState` (not yet wired into the engine).
-   Extended `Duration` with `WHILE_ATTACHED` instead of adding the planned
-   `FloatingDuration` enum (deviation: reuse over creation; mapping table in §6). Added
-   `GameData.timestampCounter`/`nextTimestamp()` (copied in `simulationCopy`),
-   `Permanent.timestamp` (copied in the copy constructor; no field-count guard test exists
-   for `Permanent`, only `CardFreezeTest` for `Card`), entry stamping in
-   `BattlefieldEntryService.putPermanentOntoBattlefield`, and CR 613.7e re-stamps at the ten
-   resolution sites that attach an already-on-battlefield permanent
-   (`EquipEffectHandler`, `AttachTarget*`/`AttachSource*` handlers, `AnimationSupport`
-   transform-and-attach, `LivingWeaponEffectHandler`, `ReturnDyingCreature...`,
-   `SacrificeEnchantedPermanentAndReattachSourceAura...`, `MayMiscHandlerService`,
-   `PermanentChoiceBattlefieldHandlerService` Aura Graft + reattach-after-sacrifice).
-   Control-change moves (`CreatureControlService`, `AuraAttachmentService` revert,
-   `GainControlOfTargetAuraEffectHandler`) intentionally do NOT re-stamp (CR 613.7c). New
-   unit tests: `service/battlefield/PermanentTimestampTest` (entry stamping, attach
-   re-stamp, steal keeps stamp, copy semantics). SevenLayerTest unchanged at 69 green /
-   31 red (no behavior change intended or made).
-
-2. **2026-07-10 — Step 2: floating-effect store + lifecycle plumbing.** Added
-   `GameData.floatingEffects` (`Collections.synchronizedList`, matching existing GameData
-   conventions) with `addFloatingEffect(...)` stamping `nextTimestamp()` on insertion (via a
-   new `FloatingContinuousEffect.withTimestamp(...)`; the record is immutable, so
-   `simulationCopy()` shares instances via `addAll`, list itself independent). Expiry helpers
-   on `GameData` (mirroring the `drainDelayedActions` pattern, each returns the removed
-   effects): `expireEndOfTurnFloatingEffects()` (or, while Runed Terror's sequential phases
-   run, `expireEndOfTurnFloatingEffectsCreatedDuring(activePlayerId)`, which keeps effects
-   created under another active player — `addFloatingEffect` records each effect's creating
-   active player in `floatingEffectCreatingActivePlayerIds`) — called at the top of
-   `TurnCleanupService.resetEndOfTurnModifiers` BEFORE the `resetModifiers()` loop (covers
-   both the cleanup step and the "end the turn" effect via `TurnSupport`);
-   `expireFloatingEffectsForDepartedSource(id)` (WHILE_SOURCE_ON_BATTLEFIELD + WHILE_ATTACHED)
-   — called from `PermanentRemovalService.processRemovalCleanup` (the funnel both
-   `removeFromBattlefield` and `processAlreadyRemovedToGraveyard` converge on) AND from the
-   one leave-battlefield path outside the funnel found by grep:
-   `AuraAttachmentService.removeOrphanedAuras`'s orphaned-aura `it.remove()` (the other direct
-   `battlefield.remove(` sites are control-change moves or a lookahead that restores state);
-   `expireFloatingEffectsForUnattachedSource(id)` (WHILE_ATTACHED) — called at every
-   `setAttachedTo(null)` site (AuraAttachmentService equipment-orphan + control-change
-   unattach, AnimationSupport equipment-animation A�2 + transform-to-non-Equipment,
-   UnattachEquipmentFromTargetPermanentsEffectHandler) and, since reattaching ends the old
-   attachment's effects, immediately before the attach at the same ten CR 613.7e re-stamp
-   sites from step 1; `expireFloatingEffectsAtTurnStart(playerId)` (UNTIL_YOUR_NEXT_TURN) —
-   called next to the `clearUntilNextTurnEffects()` hook in `TurnProgressionService`. No
-   game-log entries for expiry (deviation from "log if obvious pattern": existing wear-offs —
-   `resetModifiers`, `clearUntilNextTurnEffects` — are not logged either, so there is no
-   pattern to follow). UNTIL_END_OF_COMBAT floating expiry is NOT plumbed yet — add it at
-   `clearCombatState` time when a consumer needs it. Nothing reads `floatingEffects` yet.
-   New tests: `layers/FloatingEffectLifecycleTest` (stamping, cleanup-step expiry,
-   destroyed-source expiry, unattach expiry, per-controller turn-start expiry, simulation-copy
-   independence). SevenLayerTest unchanged at 69 green / 31 red.
-
-3. **2026-07-10 — Step 3: layer classification for every known continuous-effect type.**
-   Added `LayerClassifier` (engine `service/effect/`, static registry keyed by effect class —
-   no behavior change, nothing consumes it yet) covering every effect type registered in
-   `StaticEffectHandlerRegistry` plus the one-shot continuous effects SevenLayerTest exercises
-   (copy/control/text/type-loss/color/base-P/T/boost/switch). Full reasoning in the new §7
-   "Classification notes"; headline calls: `StaticBoostEffect` w/ keywords → L6+7c,
-   `AnimateNoncreatureArtifactsEffect` → L4+7b, `SetPowerToughnessToAmountEffect` own-static-ability
-   → 7a CDA else 7b, Cairn-Wanderer-family self scans → L6 with a (rules-inexact, documented)
-   CDA flag, wrappers delegate to their wrapped effect. Deviation from the step's plan found by
-   oracle-text check: Deep Freeze's "is a blue Wall" is ADDITIVE ("in addition to its other
-   colors and types"), not setting — `GrantColorEffect` classifies by its `overriding` flag;
-   `GrantColorUntilEndOfTurnEffect` ("becomes red/blue") is always setting. New test:
-   `service/effect/staticfx/LayerClassifierTest` — walks every `StaticEffectHandlerBean` in the
-   engine context and asserts a non-empty layer set per handled effect type (enforces that new
-   static effects get classified), plus direct pins of the mappings above. SevenLayerTest
-   unchanged at 69 green / 31 red; staticfx suite green.
-
-4. **2026-07-10 — Step 4: whole-battlefield layer-4 pass + timestamp-ordered legacy 5–7.**
-   Added `LayerSystemService` (engine `service/effect/`): `computeBoardState(GameData)` seeds a
-   `CharacteristicState` per permanent (constructor seeding plus engine-side transient granted
-   card types and transient subtypes — one-shot type state is not yet floating effects), collects
-   every L4-classified effect from static abilities and `gameData.floatingEffects` into uniform
-   instances (source, effect, timestamp, CDA flag; unclassified types — e.g. the conditional
-   self-animations wrapping `AnimatePermanentsEffect` — are skipped and stay legacy-only), and
-   applies them CDA-first then (timestamp, battlefield position) order. Real L4 semantics:
-   additive grants append; creature-type setters (`GrantSubtypeEffect(overriding)`) clear the
-   creature-type class; land-type setters (`EnchantedPermanentBecomes[Chosen]TypeEffect`,
-   `NonbasicLandsBecomeTypeEffect`) clear the land types (incl. LOCUS per CR 305.7) and record
-   the per-land override that now drives `getOverriddenLandManaColor`/`tapPermanent`;
-   `GrantChosenBasicLandTypeToOwnLandsEffect` is additive in layer 4 and contributes the matching
-   intrinsic mana ability in layer 6 only to lands carrying the source's final chosen subtype;
-   `AnimateNoncreatureArtifactsEffect` adds CREATURE and records the animated set. Tideshaper's
-   transient land override applies after all statics (legacy precedence), the
-   `losesAllCreatureTypes` flag strips creature types last. Scope filters during the pass are
-   evaluated via the new `PredicateEvaluationService.matchesPermanentPredicate(CharacteristicState, ...)`
-   overload with a **null FilterContext** — the pass must never recurse into
-   `computeStaticBonus`. Two hand-off mechanisms keep the legacy assembly consistent with the
-   pass (both born from Bludgeon Brawl's "each non-Equipment artifact is an Equipment"
-   self-negating when its filter was re-evaluated against the finished states): (a) effects the
-   pass fully applied are **managed** — the assembly skips their legacy handler and replays the
-   recorded per-target `L4Contribution` (same accumulator ops the handler would have done, but
-   with membership decided as of the effect's own application); (b) every filter evaluated
-   during L4 memoizes its per-permanent **verdict keyed by filter instance**, and
-   `StaticEffectSupport.matchesStaticFilter` returns that verdict when the same filter object
-   shows up in a later-layer part of the same ability (`GrantEquipByManaValueEffect` shares
-   Bludgeon Brawl's filter instance) — CR 613.6: all parts of one effect apply to the set
-   determined when the first part applied. Layers 5–7: `computeStaticBonus` wraps everything in a per-call "pass"
-   (ThreadLocal; nested calls reuse the board and a per-pass bonus memo) and assembles the
-   legacy accumulator with sources sorted by (timestamp, position) — 7b setter last-write-wins
-   is now timestamp-correct — plus the March MV base P/T injected as a 7b entry at March's
-   timestamp (the additive MV hack is deleted; gated off for self-animated artifacts). The two
-   subtype predicate leaves in `PredicateEvaluationService` and
-   `StaticEffectSupport.matchesStaticFilter` answer from the L4 states while a pass is active
-   (`LayerSystemService.activeStateFor`), so lord/aura filters and 7a CDA counts
-   (`AmountEvaluationService`'s null-context counting) see L4-decided types. `StaticBonus`
-   keeps its exact shape and its type fields keep their legacy-accumulated values (views
-   unchanged); only P/T base-override values and filter-driven contributions changed.
-   **Cache status:** one L4 board computation per external
-   `computeStaticBonus`/`getOverriddenLandManaColor` call, per-pass memo only — no cross-call
-   `GameData` modCount cache yet; that is the recorded perf follow-up (AI simulation calls
-   these constantly). CR 613.8 dependency not implemented (see §5 status note for the known
-   timestamp-only consequence). **Rules adjudications** (oracle checked via cache + live
-   Scryfall): Nim Deathmantle costs {2}, so the March tests' hard-coded 4/4 was wrong card
-   data — `marchAnimatesArtifact`/`setterOverridesAnimationBasePT` now expect MV 2/2 (the CR
-   semantics "base P/T = MV as a 7b entry" is unchanged and is what the tests pin); Lignify is
-   a Kindred Enchantment — Treefolk, so Dauntless Dourbark's CDA counts it (CR 205.3f) —
-   `cdaSeesLayer4TypeChanges` corrected from 3 to 4 (its baseline green at 3 was a
-   coincidence: the accumulator counted the kindred aura but missed the granted Treefolk type
-   on the enchanted bear). SevenLayerTest 69 → **78 green (22 red)**; the flips are exactly the
-   step's targets: `laterLandTypeOverrideWins` (both orders), `bloodMoonAfterAuraWins`,
-   `subtypeOverrideRemovesLordBoost`, `chosenSubtypeGrantFeedsLaterLayers`,
-   `marchAnimatesArtifact`, `laterSetterBeatsAnimationBasePT`, `cdaSeesLandTypeOverrides`,
-   `setterOverridesAnimationBasePT`. New unit tests: `GameQueryServiceTest`
-   `getOverriddenLandManaColor` timestamp-ordering pins (two auras; Blood Moon after aura).
-   Post-verification fix: `CharacteristicState`'s constructor now tolerates a null card type
-   (bare `new Card()` test stand-ins carry only a name — Urza's land tests seat such cards;
-   the constructor already guarded null color and null P/T the same way).
-
-5. **2026-07-10 — Step 5: first-class layers 5 (colors) and 6 (abilities).** The
-   whole-battlefield pass now applies L5 and L6 with real CR 613 semantics (see the rewritten
-   §5 status note for the architecture): instances collected from static abilities + floating
-   effects, CDA-first then (timestamp, position, removal-before-grant) order, static instances
-   applied by invoking their legacy staticfx handlers into a throwaway accumulator and
-   harvesting into `CharacteristicState` (which grew protection colors, a colors-overridden
-   flag, and seeded-color/keyword snapshots); the assembly suppresses managed handlers'
-   layered outputs and merges the finished states into `StaticBonus` (complete final keyword
-   set, diff-based removed keywords, layered colors/protection/abilities/effects/lose-all).
-   `hasKeyword`, `hasProtectionFrom(Source)`, fear/intimidate, color predicates, chosen-color
-   boosts, convoke, and color damage-prevention all read the layered answers
-   (`getEffectiveColors`/`hasColor`/`getEffectiveColor(GameData,·)` added). One-shot handlers
-   migrated to floating effects with DUAL-WRITE of the legacy fields (deviation from the plan's
-   "migrate away from Permanent fields": ~50 card tests and direct engine callers read
-   `Permanent.hasKeyword`/`getEffectiveColor`; the pass seeds the legacy state and replays the
-   floating instance at its real timestamp, so ordering is layered while intrinsic reads keep
-   working): Incite/Grand Architect color setters, Merfolk Trickster lose-all, one-shot keyword
-   removals, and the SELF/TARGET/TOKENS paths of the one-shot `GrantKeywordEffect` handler
-   (OWN_CREATURES/ALL_CREATURES/TARGET_PLAYERS_CREATURES stay bucket-only — locked-set effects,
-   later step). **New timestamp infrastructure:** battlefield lists stamp unstamped permanents
-   on insertion (`GameData.newBattlefieldList`, §4) — required because the Layer6 target tests
-   distinguish cross-battlefield INSERTION order, which the owner-order position fallback
-   cannot express. 7a suppression: the assembly skips the own `SetPowerToughnessToAmountEffect`
-   self handler when the state lost its abilities (CR 613.4a, not retroactive on L2–L5).
-   **Rules adjudications:** Deep Freeze re-verified additive (live Scryfall) —
-   `colorSetterReplacesNaturalColor` corrected to Nim Deathmantle (wrong card data, step-4
-   precedent); changeling keyword grants classified L4+L6 (CR 702.73a) so an earlier-timestamp
-   lord boosts a later changeling grant without CR 613.8 dependency (fixes what would have
-   been a regression in `allCreatureTypesGrantFeedsLordBoost`). SevenLayerTest 78 → **86 green
-   (14 red)**; flips: both Layer5 targets (`colorSetterReplacesNaturalColor`,
-   `laterAttachmentColorOverridesEarlier`) and all six red Layer6 targets
-   (`keywordGrantAfterLoseAllApplies`, `keywordGrantBeforeLoseAllIsRemoved`,
-   `keywordGrantAfterOneShotLoseAllApplies`, `loseAllRemovesPTDefiningCda`,
-   `lordGrantBeforeLoseAllIsRemoved`, `grantAfterRemovalApplies`); the other four Layer6
-   targets were already coincidentally green and stayed green. Remaining 14 red = L2 control
-   (3), L3 text (7), 7a/7b one-shot-flag precedence (3), 7d self-switch SBA (1) — all
-   future-step targets, verified identical to the pre-step baseline. Test updates: white-box
-   `transientColors`/`colorOverridden`/intrinsic-`hasKeyword` assertions in
-   Incite/GrandArchitect/WingsOfVelisVel tests replaced with layered queries;
-   MerfolkTrickster/GrandArchitect cleanup simulations now also call
-   `expireEndOfTurnFloatingEffects()`; GameQueryServiceTest/PredicateEvaluationServiceTest
-   inject the registry into their hand-built `LayerSystemService`;
-   AbilityActivationServiceTest sacrifice tests stub `getEffectiveColors`; new
-   battlefield-list stamping tests in `PermanentTimestampTest`. Ran SevenLayerTest, the
-   staticfx/battlefield/filter/turn/combat/spell/ability unit suites, the layer lifecycle
-   tests, ~20 affected card tests (DeepFreeze, MerfolkTrickster, MagebaneArmor, Incite,
-   NimDeathmantle, GoblinKing, ElvishChampion, KnightOfGrace, PaladinEnVec, VoiceOfAll,
-   WingsOfVelisVel, CairnWanderer, AshlingsPrerogative, GrandArchitect, AmoeboidChangeling,
-   Lignify, BloodMoon, Xenograft, changeling family, AdamantWill, AssaultStrobe,
-   BlessingOfBelzenlok, MarchOfTheMachines) and the full AI module suite — all green
-   (BoardEvaluator hypothetical scoring needed the off-battlefield keyword fallback in the
-   assembly).
-
-6. **2026-07-10 — Step 6: rules-accurate layer 7a/7b/7c.** Sublayer 7b is now resolved
-   entirely by `LayerSystemService.applyLayer7b` (see the new §5 step-6 status note for the
-   architecture): ALL base-P/T setters — static aura setters via handler harvest, one-shot
-   floating effects, March MV entries, animation base P/T, permanent exchange overrides —
-   apply in one (timestamp, position) order, per component, into
-   `LayeredBoardState.basePt7b`; the assembly merges the result OVER the 7a base and
-   `getEffectivePower(Permanent, StaticBonus)` trusts `bonus.basePTOverridden()`
-   unconditionally (the `!isBasePowerToughnessOverriddenUntilEndOfTurn()` hardcoded precedence
-   guard and the assembly's in-loop March injection are deleted). 7a:
-   `SetPowerToughnessToAmountSelfEffectHandler` switched from `addPower/addToughness` on a 0/0
-   base to `setBasePTOverride`, so a 7b setter overrides the CDA instead of the CDA amount
-   surviving as a 7c addition. `Permanent.getRawPower/getRawToughness` split into public
-   `getBasePower()/getBaseToughness()` + modifiers — the if-else ladder is demoted to a
-   fallback for direct readers (list in §5) and no longer decides layered precedence.
-   **Deviation:** the one-shot `SetBasePowerToughnessEffect` handlers DUAL-WRITE the legacy
-   UEOT fields instead of dropping them (step-5 precedent: last-known-information reads —
-   the death-trigger last-known power read — plus predicate leaves and white-box card tests read the
-   fields directly; the floating instance is what drives precedence). **Animation flags
-   migrated** (dual-write flag + floating 7b entry): `animatedUntilEndOfTurn`,
-   `animatedUntilNextTurn`, `permanentlyAnimated` (both writers, incl. Awakener Druid's
-   `WHILE_SOURCE_ON_BATTLEFIELD`). **Deferred:** `animatedUntilEndOfCombat` (no
-   end-of-combat floating expiry yet) and the AWAKENING-counter 8/8 (no timestamp) — both
-   flag-only, beaten by ANY real 7b entry. Exchange overrides got
-   `Permanent.permanentBase*OverrideTimestamp` stamped in
-   `ExchangeLifeTotalWithCreatureStatEffectHandler`. SevenLayerTest 86 → **89 green (11
-   red)**; flips are exactly the step's remaining targets: `basePTSetterOverridesCda`,
-   `auraSetterAfterSpellSetterWins`, `deepFreezeAfterWingsWins` (`wingsAfterDeepFreezeWins`,
-   `setterOverridesAnimationBasePT`, `laterSetterBeatsAnimationBasePT` were already green from
-   step 4/5 and stayed green, as did the whole Layer7c group, `secondSpellSetterWins` both
-   orders, `countersApplyOnTopOfSetter`, `pumpBeforeSetterStillApplies`,
-   `temporarySetterExpires`, `loseAllRemovesPTDefiningCda`). Remaining 11 red = L2 control
-   (3), L3 text (7), 7d self-switch SBA (1) — future-step targets. Test setups for the
-   hand-built `LayerSystemService` (GameQueryServiceTest, PredicateEvaluationServiceTest) now
-   also inject `gameQueryService`. Ran SevenLayerTest, the staticfx/battlefield/turn/filter/
-   state/combat/spell/ability unit suites, FloatingEffectLifecycleTest, the card tests
-   (Diminish, WingsOfVelisVel, Lignify, DeepFreeze, MarchOfTheMachines, GiantGrowth,
-   GloriousAnthem, Nightmare, Maro, DauntlessDourbark, QuandrixCharm, MarshFlitter), the
-   animation/exchange card tests (AwakenerDruid, ChimericMass/Staff, Evra, TreeOfRedemption,
-   FaerieConclave, ForbiddingWatchtower, GhituEncampment, Koth, RustedRelic, SleekSchooner,
-   SpawningPool, SylvanAwakening, Tezzeret, TheAntiquitiesWar, TreetopVillage, WardenOfTheWall,
-   Weatherlight, WakerOfTheWilds, InkmothNexus, GlintHawkIdol, JadeStatue, NaturalAffinity,
-   ElvishBranchbender, FellFlagship, ConquerorsGalleon, ShadowedCaravel, DuskLegionDreadnought)
-   and the full AI module suite — all green (two MCTS time-budget tests flaked under load and
-   pass in isolation).
-
-7. **2026-07-10 — Step 7: layer 7d switches as floating effects; `powerToughnessSwitched`
-   deleted.** Each `SwitchPowerToughnessEffect` resolution now adds ONE floating
-   `L7D_SWITCH_PT` effect (`UNTIL_END_OF_TURN`; expiry was already plumbed in step 2);
-   `LayerSystemService.applyLayer7d` reduces the active switches to a per-permanent parity in
-   `LayeredBoardState.switchedPt7d`; `StaticBonus.ptSwitched` carries it to
-   `GameQueryService.getEffectivePower/getEffectiveToughness`, which compute the FULL
-   pre-switch P and T through 7c and swap the finished values (CR 613.4d) — see the new §5
-   step-7 status note, including the rules fix over the old flag path (the static-bonus term
-   used to be added post-swap). The `Permanent` flag is deleted outright — first floating-
-   effect migration with NO dual-write (every consumer that must see the switch — combat
-   damage, SBA lethal/zero-toughness checks, power-based damage, AI evaluators, view
-   broadcast diff — already reads the layered queries); `Permanent.getEffectivePower()/
-   getEffectiveToughness()` are now plain pre-switch raw accessors,
-   `TurnCleanupService`'s reset condition dropped the flag. Zero-arg P/T reads in
-   `TriggerCollectionService`/`IncrementTriggerEffectHandler` (Increment's
-   mana-spent-vs-P/T checks) migrated to the layered queries; the remaining direct readers
-   are re-listed in the step-6 debt note with reasons (predicate leaves and
-   `StaticEffectSupport` can run mid-pass, `AmountEvaluationService`'s static branch is a
-   recursion guard, the death trigger's LKI has no battlefield state — a dying
-   switched creature's LKI power now misses the switch, new debt), plus
-   `PermanentViewFactory`'s raw term. **Rules adjudication** (cache + live Scryfall):
-   Turtleshell Changeling is **1/4**, not the 0/4 the test setup claimed —
-   `selfSwitchToZeroToughnessDies` could never die off one self-switch with correct data; the
-   setup now puts a -1/-1 counter on it (0/3 → switch → 3/0), keeping the pinned rule (a 7d
-   swap of the 7c-finished values must kill via SBAs) intact per the step-4/5 wrong-card-data
-   precedent. SevenLayerTest 89 → **90 green (10 red)**: the flip is `selfSwitchToZeroToughnessDies`;
-   `secondSwitchCancelsFirst` (named as a step target) was already green at baseline — the
-   boolean toggle also cancelled pairs — and stays green via even parity, as do the other
-   eight Layer7dSwitch tests and all Layer7a/7b/7c tests. Remaining 10 red = L2 control (3),
-   L3 text (7). Test updates: white-box `isPowerToughnessSwitched()` assertions in
-   TwistedImageTest/TurtleshellChangelingTest replaced with layered-query assertions; the
-   three unit tests hand-building `StaticBonus` gained the new `ptSwitched=false` arg. Ran
-   SevenLayerTest, TwistedImage/TurtleshellChangeling, the staticfx/state/turn/battlefield/
-   filter/ability/cast/combat/trigger/spell unit suites, FloatingEffectLifecycleTest, the
-   setter/boost/CDA card tests (Diminish, Lignify, GiantGrowth, MarchOfTheMachines,
-   DeepFreeze, WingsOfVelisVel, Maro, Nightmare) and the full AI module suite — all green.
-
-8. **2026-07-10 — Step 8: layer 2 control as floating effects; the four steal tracking sets
-   deleted.** Every control-changing effect is now a floating `L2_CONTROL` effect and the
-   controller of a permanent is DERIVED (newest active effect wins, CR 613.2/613.7; see the
-   rewritten §5 point 2 for the architecture — derivation lives on `GameData`
-   (`deriveControllerOf`/`defaultControllerOf`/`newestControlEffectFor`/
-   `resolveControlEffectController`), the eager physical battlefield-list move in
-   `CreatureControlService.recomputeControl`, and `reconcileControl` replaces
-   `returnStolenCreatures` at `removeOrphanedAuras`/cleanup time). Producers migrated to
-   `CreatureControlService.applyControlEffect` (which replaces `stealPermanent`):
-   `GainControlOfTargetEffectHandler` (each control `Duration`), the four control-Aura attach sites
-   (StackResolutionService, WarpWorldService, AnimationSupport transform-attach,
-   PermanentChoiceBattlefieldHandlerService — `WHILE_ATTACHED` keyed to the Aura;
-   `reconcileControl` additionally auto-creates missing Aura effects as the reattach safety
-   net, e.g. Aura Graft), `GainControlOfEnchantedTargetEffectHandler` (PERMANENT + the
-   while-enchanted condition enforced in reconcile, keyed on the wrapped effect type),
-   `TargetPlayerGainsControlOfSource`/`ClashForControl`/the damage-trigger code
-   (PERMANENT), and `GraveyardReturnSupport.trackStolenCreature` (now takes the controller,
-   creates the PERMANENT effect). GameData deletions: `untilEndOfTurnStolenCreatures`
-   (replaced by the derived `isStolenUntilEndOfTurn` — newest effect is UEOT AND control
-   would change once it expires; consumed by `CombatSimulator`),
-   `sourceDependentStolenCreatures`, `enchantmentDependentStolenCreatures`,
-   `permanentControlStolenCreatures`; `stolenCreatures` survives as the pure OWNERSHIP record
-   maintained by `recomputeControl` (put on first move away from the owner, removed on
-   arriving back). `processRemovalCleanup` and WarpWorld additionally drop control effects
-   AFFECTING a departed permanent (`expireControlEffectsForDepartedPermanent`); Karn's
-   restart clears `floatingEffects` wholesale. **Rules fixes over the old mechanism:** an
-   expiring/removed control effect falls back to the next most recent still-active effect
-   (the three step targets); a control effect on a creature you already control is still
-   created (Threaten your own Sower-stolen creature keeps it if Sower dies before cleanup);
-   stealing a control Aura (Aura Graft) moves the enchanted permanent with it —
-   `WHILE_ATTACHED` effects resolve to the Aura's CURRENT controller and the
-   `GainControlOfTargetAuraEffectHandler` recomputes after moving the Aura. **Deviations:**
-   `WHILE_SOURCE_ON_BATTLEFIELD` keeps the legacy "creator must still control the source"
-   condition on top of battlefield presence — right for Olivia Voldaren ("for as long as you
-   control Olivia"), strictly wrong for Sower of Temptation (oracle: battlefield presence
-   only; per the official ruling the steal survives Sower changing controllers) — kept to
-   match the pre-refactor engine, the control durations' documented semantics, and the existing
-   card tests; distinguishing the two wordings needs a fourth duration flavor, deferred. The
-   legacy "attached Equipment becomes unattached when control reverts" behavior is preserved
-   only for reverts to the DEFAULT controller (no active effect), not for fallbacks to an
-   earlier effect. Summoning sickness preserved: every recompute move sets it (CR 302.6);
-   Threaten's haste rider is untouched, Sower grants none. SevenLayerTest 90 → **93 green
-   (7 red)**; flips are exactly the step targets: `expiredControlEffectFallsBackToEarlierEffect`,
-   `removedControlEffectLeavesLaterOneActive`, `temporaryStealOverridesAuraControlUntilCleanup`;
-   the other seven Layer2Control tests stayed green. Remaining 7 red = L3 text only. Test
-   updates: `CreatureControlServiceTest` rewritten around
-   `applyControlEffect`/`reconcileControl`/derived views; `AuraAttachmentServiceTest`'s
-   returnStolenCreatures sections folded into it; `GainControlOfTargetEffectHandlerTest`
-   verifies `applyControlEffect` (incl. a new lost-source-control fizzle pin); the ~15 card
-   tests asserting the deleted sets moved to `gd.isStolenUntilEndOfTurn`/
-   `newestControlEffectFor`/`controlEffectsFor`; `CombatSimulatorTest` gained a
-   `markStolenUntilEndOfTurn` helper (ownership record + floating effect). Ran SevenLayerTest,
-   all ~40 control-related card tests (Threaten, Sower, Clutches, Goatnapper,
-   MetallicMastery, KeldonOverseer, Olivia, ActOfTreason/Aggression, Hijack,
-   TraitorousBlood, CaptivatingCrew/Vampire/Glance, EntrancingMelody, Jace, Rootwater,
-   Persuasion, MindControl, Confiscate, Annex, Enslave, CorruptedConscience, VolitionReins,
-   SoulSeizer, BeguilerOfWills, Geth, GruesomeEncore, WarpWorld, GhastlyHaunting,
-   OgreGeargrabber, SleeperAgent, JinxedIdol, AdmiralBeckettBrass, SavingGrasp, Daydream,
-   SirensRuse, KarnLiberated), the affected unit suites (CreatureControl, AuraAttachment,
-   GainControlOfTargetEffectHandler, TurnCleanup, EndTurnEffectHandler, StackResolution,
-   PermanentRemoval, PermanentTimestamp, FloatingEffectLifecycle,
-   Flicker, ReturnToHand, ExileUntilSourceLeaves, both graveyard-steal handlers) and the
-   full AI module suite — all green.
-
-9. **2026-07-10 — Step 9: layer 3 text changes (CR 612/613.2c).** Added `TextChangeTransformer`
-   (engine `service/effect/`, static identity-preserving visitor — see the new §5 step-9 status
-   note for coverage, wiring, and the documented unhandled-type gaps): a source's
-   `Permanent.textReplacements` (unchanged storage; Mind Bend's resolution writes them, they
-   survive turns and are not copiable) now rewrite the color words, basic-land-type words,
-   landwalk keywords, and filter predicates of every effect instance that source contributes,
-   applied in composition order. Wiring: `LayerSystemService.collectInstances` transforms
-   static-ability effects before ANY layer applies them (`EffectInstance` grew an `original` field
-   that keys the identity-based managed/contribution maps, since the assembly iterates the
-   card's untransformed abilities); the object's own printed protection is seeded transformed
-   (`seedLegacyColorAndAbilityState`); the object's own printed basic land types are rewritten
-   at seed time and recorded as the land-type override so a Mind Bent Forest taps for blue
-   (`applyTextChangesToPrintedLandTypes` — CR 305.6; a later-timestamp L4 setter overwrites);
-   and `GameQueryService.assembleStaticBonus` hands both handler loops the transformed view
-   (managed-suppression checks still use the original), so unmanaged 7a/7c outputs follow the
-   rewritten words too. Verified pre-existing invariants: `resetModifiers` never touched
-   `textReplacements` (persists across turns) and Clone copies the `Card` only (not copiable).
-   No new `LayerClassifier` entries needed — `ChangeColorTextEffect` was already classified L3
-   and text changes apply at collection time rather than as a pass layer. SevenLayerTest 93 →
-   **100 green (0 red)**; flips are exactly the seven Layer3Text targets
-   (`textChangeRewritesProtectionColor`, `textChangeRewritesGrantedLandwalk`,
-   `textChangeOnAuraChangesGrantedLandType`, `textChangeOnBloodMoon`, `textChangeOnEvilPresence`,
-   `sequentialTextChangesCompose`, `textChangePersistsAcrossTurns`); `textChangeDoesNotChangeColor`,
-   `textChangeIsNotCopiable`, `textChangeUpdatesChosenColor` and every other group stayed green —
-   the CR 613 layered pass target spec is now fully green. New unit test:
-   `service/effect/TextChangeTransformerTest` (color/land-type/landwalk/filter rewriting,
-   composition order, identity preservation, wrapper recursion). Ran SevenLayerTest (100/100),
-   MindBend/BloodMoon/SeasClaim/EvilPresence/GoblinKing/PaladinEnVec/ChangeColorTextEffectHandler
-   tests, the adjacent unit suites (GameQueryService, PredicateEvaluationService, LayerClassifier,
-   FloatingEffectLifecycle, PermanentTimestamp), a static-effect regression batch (Lignify,
-   DeepFreeze, Xenograft, ElvishChampion, VoiceOfAll, Nightmare, DauntlessDourbark,
-   MarchOfTheMachines, CairnWanderer, AmoeboidChangeling, WingsOfVelisVel, MerfolkTrickster,
-   GrandArchitect, Incite, NimDeathmantle, BludgeonBrawl, FavorOfTheMighty, TideshaperMystic,
-   Maro) and the full AI module suite — all green.
-
-10. **2026-07-10 — Step 10: layer 1 copy effects audited & integrated with the lifecycle.**
-    Audit outcome (no rules bugs found — see the new §5 step-10 status note): every copy path
-    funnels through `PermanentCopierService.applyCloneCopy`, which reads the target's CURRENT
-    `Card` only (CR 707.2 copiable values; copy-of-copy inherits baked exceptions), exceptions
-    are baked into the L1 copy card (Quicksilver 7/7 with the CR 707.9d CDA skip, Metamorph
-    ARTIFACT, Evil Twin/Cryptoplasm extra abilities), and `CharacteristicState` seeding from
-    `Permanent.card` already makes copies re-enter the pass as their copied identity.
-    Integration: the two duration copies now ALSO register a floating `L1_COPY` effect
-    (`BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` → `UNTIL_END_OF_TURN`;
-    `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` → `UNTIL_YOUR_NEXT_TURN`, newly
-    registered in `LayerClassifier`), and the card revert moved from the ad-hoc timing to the
-    step-2 lifecycle: `Permanent.resetModifiers()` no longer reverts copies —
-    `TurnCleanupService.resetEndOfTurnModifiers` processes the `expireEndOfTurnFloatingEffects()`
-    result and calls the new `Permanent.revertEndOfTurnCopy()`; `TurnProgressionService`'s
-    per-permanent until-next-turn revert loop was replaced by processing the
-    `expireFloatingEffectsAtTurnStart` result (guarded on `copyUntilNextTurnControllerId`, so an
-    older expiring effect cannot revert a newer still-active copy — matches the old
-    latest-writer-wins field semantics). Same game moments as before; the card tests pin it.
-    **Rules verification (live Scryfall rulings):** Cryptoplasm's copy "lasts indefinitely" →
-    no duration marker (deviation from this step's prompt, which grouped Cryptoplasm with the
-    duration copies); Tilonalli 2017-09-29 confirms CR 611.2c ("an effect that began to apply
-    before it became a copy will continue to apply") and that the UEOT revert coincides with
-    cleanup damage removal. New tests: `QuicksilverGargantuanTest.cloneOfGargantuanCopyIsSevenSeven`
-    (Clone of a Gargantuan copy is 7/7 — exception is copiable),
-    `TilonallisSkinshifterTest.pumpBeforeCopyPersistsOnTheCopy` (Giant Growth before the copy →
-    5/5 copy, CR 611.2c), and two `TurnCleanupServiceTest` pins (expiry-driven revert;
-    departed-permanent expiry no-op). Out-of-scope noted in §5: face-down/manifest, token
-    copying, enters-as-copy replacement timing, UEOT+until-next-turn copy stacking on one
-    permanent, and the unfrozen runtime copy card (`Card.freeze` hardening gap). SevenLayerTest
-    stays **100 green** (all ten Layer1Copy included). Ran SevenLayerTest, the copy card tests
-    (Clone, CloneShell, Cryptoplasm, EvilTwin, PhyrexianMetamorph, QuicksilverGargantuan,
-    SculptingSteel, TilonallisSkinshifter, Shapesharer, NaruMehaMasterWizard),
-    TurnCleanupServiceTest, TurnProgressionServiceTest, LayerClassifierTest,
-    FloatingEffectLifecycleTest, BecomeCopyOfTargetCreatureEffectHandlerTest and the full AI
-    module suite — all green.
-
-11. **2026-07-10 — Step 11: CR 613.8 dependency for layers 4-6.** Added
-    `LayerSystemService.orderByDependency` (see the new §8 "Dependency"): before a layer's
-    non-CDA instances apply (CDA prefix first, per the existing sort), each ordered pair is
-    trial-applied onto `RecordingCharacteristicState` copies (new engine class — a
-    `CharacteristicState` subclass logging every mutator as a normalized operation string;
-    `CharacteristicState` gained a copy constructor) with the active pass's board swapped to a
-    throwaway trial board (copied L4 filter verdicts and land-type overrides); A depends on B
-    when A's per-permanent operation fingerprint changes once B is applied first. Topological
-    (Kahn) order preferring (timestamp, position); loops fall back to timestamp order
-    (CR 613.8c). Skipped entirely at 0/1 non-CDA instances. **Doctrine verified by web search
-    before implementing** (decisive for the detector): Humility ordering — lose-all vs. grants
-    to the same creature — is pure timestamps (NOT dependent), and Blood Moon vs. Dryad-style
-    additive land types is ALSO timestamps (the plan-era "Blood Moon vs. additive is
-    dependent" assumption was wrong); the real drivers are existence and applicability, hence
-    operation fingerprints ("what it attempts"), not state deltas (which would have broken
-    SevenLayerTest's `keywordGrantAfterLoseAllApplies`). **Existence is now modeled in the
-    apply path** (`staticSourceAbilitiesGone`): `setLandType` marks the new
-    `CharacteristicState.printedAbilitiesRemoved` as part of the L4 type change (CR 305.7 —
-    Blood Moon's "loses abilities" was previously modeled only as the mana-ability override),
-    killing the land's static-ability instances from L4 onward; `losesAllAbilities` kills the
-    source's static instances from L6 onward only (not retroactive on L4/L5 — changeling
-    doctrine, §3); both flags also gate the 7b static setters and, via a new per-source
-    `sourceAbilitiesGone` skip in `assembleStaticBonus` (after the managed-L4 replay branch),
-    all layer-7 handler outputs — a lose-all'd lord grants neither keyword nor 7c boost, a
-    rules FIX over the old behavior (Adaptive-Automaton-under-Humility). applyLayer4/5/6 were
-    refactored onto a shared `InstanceApplier` shape (`applyL4Instance`/`applyL5Instance`/
-    `applyL6Instance` + `applyInstances`) reused by the trials. 7b/7d are not
-    dependency-ordered (§8 limits); the Cairn Wanderer family stays CDA-first (613.2b), not a
-    dependency matter. SevenLayerTest stays **100 green** (the suite's ordering tests are
-    timestamp-based and unaffected — verified the Humility-doctrine pins in particular). New
-    acceptance suite: `layers/LayerDependencyTest` (9 tests, all green): Xenograft grant
-    applies to an artifact a LATER March animates (both orders), synthetic Urborg-style land
-    vs. Blood Moon (existence, both orders, basic-land beneficiary pin), Blood-Mooned land's
-    L6 keyword grant + 7c boost stop (both orders — the CR 305.7 cross-layer part), lose-all
-    on a synthetic lord with a LATER timestamp strips its grant+boost from others, and a
-    mutual-dependency loop (two subtype grants keyed on each other's output) falling back to
-    timestamp order. Ran LayerDependencyTest, SevenLayerTest, FloatingEffectLifecycleTest,
-    the named card tests (BloodMoon, TideshaperMystic, StormtideLeviathan, Xenograft,
-    ArcaneAdaptation, MarchOfTheMachines, MerfolkTrickster, DeepFreeze, GoblinKing,
-    ElvishChampion, Lignify, Nightmare, Maro, BludgeonBrawl, EvilPresence, SeasClaim,
-    MindBend), the staticfx/battlefield/filter unit suites (incl. GameQueryServiceTest,
-    PermanentTimestampTest, LayerClassifierTest, PredicateEvaluationServiceTest,
-    TextChangeTransformerTest) and the full AI module suite — all green.
-
-12. **2026-07-10 — Step 12: cleanup audit of layer-replaced remnants.** Grepped every
-    candidate from the steps 4–10 cleanup-debt notes before touching anything. **Audit
-    outcome: NO `Permanent` field was deletable** — every candidate still has live main-code
-    writers, because the dual-write pattern is intentional (the floating effect drives layered
-    ordering; the field feeds direct intrinsic readers that cannot go layered). Confirmed
-    already-deleted: `powerToughnessSwitched` (step 7) and the four GameData steal sets
-    (step 8; `untilEndOfTurnStolenCreatures` survives only as a javadoc back-reference on
-    `isStolenUntilEndOfTurn`). **Remaining debt, per family, with the blocking readers/writers:**
-    `basePowerToughnessOverriddenUntilEndOfTurn`/`basePowerOverride`/`baseToughnessOverride`
-    (dual-written by both `SetBasePowerToughness*` handlers; read by the TurnCleanup reset
-    gate, LKI, the base-P/T fallback ladder, white-box card tests);
-    `losesAllAbilitiesUntilEndOfTurn` (dual-written by `LosesAllAbilitiesEffectHandler`; read
-    by TriggerCollectionService, GameQueryService, AbilityActivationService,
-    GameViewProjectionFactory, pass seeding); `transientColors`/`colorOverridden` (dual-written by
-    `GrantColorUntilEndOfTurnEffectHandler`; read by `Permanent.getEffectiveColor`,
-    PermanentViewFactory's legacy branch, predicate/staticfx null-GameData fallbacks,
-    ActivatedAbilityExecutionService); `transientSubtypes` and `transientLandTypeOverride`
-    (NOT migrated — one-shot type state is still not floating effects; writers
-    AnimationSupport + `GrantBasicLandTypeToTargetEffectHandler`, readers throughout, the pass
-    seeds from them); `removedKeywords` (dual-written by `RemoveKeywordEffectHandler`);
-    `grantedKeywords` (many BUCKET-ONLY writers remain beyond the migrated SELF/TARGET/TOKENS
-    grant paths: haste riders in GraveyardReturnSupport/CardChoiceHandlerService/
-    GraveyardChoiceHandlerService/PutCreatureFromOpponentGraveyard...,
-    `GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler`, InnerFlameIgniter,
-    PermanentControlSupport token grants, ChoiceHandlerService, AnimationSupport incl. the
-    until-end-of-combat Jade Statue path); the animation flag families (dual-write by design,
-    step 6; `animatedUntilEndOfCombat` and the AWAKENING 8/8 still flag-only); all
-    `untilNextTurn*` fields (writers AnimationSupport/`GrantKeywordEffectHandler`/
-    `GrantActivatedAbilityEffectHandler`; readers `hasKeyword`, views, broadcast).
-    **Deleted:** the private `Permanent.getRawPower()/getRawToughness()` remnants (inlined
-    into `getEffectivePower()/getEffectiveToughness()` — the last pre-step-6 ladder names; the
-    `getBasePower()/getBaseToughness()` fallback ladder itself STAYS while the dual-written
-    fields exist, since its readers — LKI, mid-pass predicate leaves, null-GameData fallbacks —
-    cannot call the layered queries). No copy-constructor/field-count guard test exists for
-    `Permanent` (re-confirmed). **Kept with reasons:** the null-`FilterContext` recursion
-    guard is only PARTIALLY replaced by layered threading (subtype/color/keyword leaves read
-    `CharacteristicState` mid-pass; P/T leaves and toughness-based amounts still need the
-    null-context intrinsic fallback) — §5 point 4 rewritten accordingly;
-    `StaticBonusAccumulator` and the `StaticBonus` assembly remain the harvesting vehicle of
-    the pass (handlers write the accumulator; deletable only when handlers write
-    `CharacteristicState` directly). **Docs:** STATIC_EFFECT_HANDLERS.md intro rewritten
-    around the layered pass (handlers = what/who, pass = when) with a pointer to this doc;
-    its CDA paragraph corrected (7a base-P/T override since step 6, not add-on-0/0) and the
-    recursion-safety note updated. EFFECTS_INDEX.md entries updated to the layered mechanics:
-    `LosesAllAbilitiesEffect`, `SetBasePowerToughnessEffect`, `SwitchPowerToughnessEffect`,
-    `GrantColorUntilEndOfTurnEffect`, `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (was
-    factually wrong — revert is floating-L1-expiry driven, not `resetModifiers()`),
-    `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `GrantBasicLandTypeToTargetEffect`,
-    `ChangeColorTextEffect`. CLAUDE.md's static-effects bullet now describes the layered pass.
-    The implement-card skill docs contain no accumulator references (grepped) — unchanged.
-    SevenLayerTest's javadoc and this doc's header rewritten: the suite is the layer-system
-    REGRESSION spec, 100/100 green, never to be weakened. Verification: full multi-module
-    compile; SevenLayerTest 100/100 green (10A�10 groups), LayerDependencyTest 9/9,
-    FloatingEffectLifecycleTest 6/6; staticfx suite + TextChangeTransformerTest; the union of
-    the card tests named in the step 4–10 log entries (steal/control batch, animation/exchange
-    batch, setter/boost/CDA batch, text-change batch, copy batch) plus PermanentTimestampTest,
-    TurnCleanupServiceTest, TurnProgressionServiceTest, GameQueryServiceTest,
-    PredicateEvaluationServiceTest, CreatureControlServiceTest,
-    BecomeCopyOfTargetCreatureEffectHandlerTest — all green.
-
-13. **2026-07-10 — Step 13: per-GameData board cache (perf).** The whole-board computation now
-    runs once per board state instead of once per external query: `LayerSystemService.beginPass`
-    memoizes the finished `LayeredBoardState` in the new opaque `GameData.layeredBoardCache`
-    slot, keyed by a structural fingerprint of every input `computeBoardState` reads — see the
-    new §10 "Board cache" for the full invalidation contract. **Deviation from the step's
-    "modification counter in the mutation funnels" plan:** no counter exists at all — the
-    fingerprint is recomputed from the inputs themselves on every query (O(board) cheap field
-    reads), because step 12's audit showed many direct `Permanent` writers with no funnel, and
-    SevenLayerTest-style setups mutate battlefield lists and permanents directly; a
-    counter-with-funnels scheme could not keep those honest, while re-derivation makes false
-    HITs impossible short of a 64-bit hash collision (false misses just recompute). The
-    canonical input list lives in the `computeBoardFingerprint` javadoc; CLAUDE.md now tells
-    future work to extend it when the pass reads new inputs. Cache scope is the BOARD ONLY
-    (correctness-first): the per-target `StaticBonus` assembly and per-`Pass` bonus memo still
-    run per external query, because assembly reads inputs the fingerprint deliberately omits
-    (emblems, conditional wrappers, life totals, turn/step, amounts). The finished board was
-    verified read-only (verdict/state writes happen only during the pass; dependency trials
-    swap in trial boards), the cache entry is immutable and volatile-published, and
-    `simulationCopy()` does not copy the slot — AI copies start cold (LayeredBoardCacheTest
-    pins cold-start + no-leak both directions). Escape hatch: `-DdisableLayerBoardCache=true`.
-    **Benchmark** (new `LayerPassBenchmarkTest`, `-DlayerBench=true`, time-boxed sweeps of 4
-    layered queries A� 24 permanents on a static-heavy board; before measured from the same
-    build via the escape hatch): steady-state 595 → 26 970 queries/s (~45A�); with one
-    tap-toggle mutation per sweep 593 → 15 678 queries/s (~26A�) — numbers also in §10.
-    New tests: `layers/LayeredBoardCacheTest` (6: reuse of the cached entry, direct
-    battlefield-list mutation, direct permanent-field mutation behind a lord filter, direct
-    attachment mutation, floating-effect add/expiry, simulation-copy cold start + isolation).
-    SevenLayerTest stays **100 green**. Ran SevenLayerTest, LayerDependencyTest,
-    FloatingEffectLifecycleTest, LayeredBoardCacheTest, the staticfx suite +
-    TextChangeTransformerTest, GameQueryServiceTest, PredicateEvaluationServiceTest,
-    PermanentTimestampTest, TurnCleanupServiceTest, TurnProgressionServiceTest,
-    CreatureControlServiceTest, a layer-affected card-test batch (BloodMoon, Lignify,
-    DeepFreeze, Xenograft, ElvishChampion, GoblinKing, MarchOfTheMachines, Nightmare, Maro,
-    CairnWanderer, WingsOfVelisVel, MerfolkTrickster, Incite, NimDeathmantle, BludgeonBrawl,
-    MindBend, Clone, TilonallisSkinshifter, Shapesharer, Threaten, SowerOfTemptation,
-    TideshaperMystic, AmoeboidChangeling), the full AI module suite, and a 2-game
-    RandomAiFuzzTest run — all green.
-
-14. **2026-07-10 — Step 14: final pass — verification, straggler sweep, doc reconciliation.**
-    No engine code changes. **Verification:** one Gradle run of SevenLayerTest (**100/100**),
-    LayerDependencyTest, FloatingEffectLifecycleTest, LayeredBoardCacheTest, the staticfx
-    suite, the layer-adjacent unit suites (TextChangeTransformer, GameQueryService,
-    PredicateEvaluationService, PermanentTimestamp, TurnCleanup, TurnProgression,
-    CreatureControl, AuraAttachment, BecomeCopyOfTargetCreature, ChangeColorText,
-    GainControlOfTarget handlers) and the UNION of every card-test list from the step 4-13
-    log entries (~120 card test classes, changeling family and control batch included;
-    Ghastly Haunting is covered by SoulSeizerTest — same card, back face) — **1587 tests,
-    0 failures, 0 skips**. **Straggler sweep** (grep of engine/ai/networking main for the
-    retired mechanisms): `powerToughnessSwitched` — zero hits (deleted, step 7);
-    `untilEndOfTurnStolenCreatures` — only the documented javadoc back-reference on
-    `GameData.isStolenUntilEndOfTurn`; every remaining `Permanent.hasKeyword`/
-    `getEffectivePower()/getEffectiveToughness()` zero-arg/`transientColors`/
-    `losesAllAbilitiesUntilEndOfTurn` hit classified as (a) documented dual-write
-    writer/reader (step-12 inventory), (b) null-`GameData`/mid-pass fallback or doctrine-
-    mandated intrinsic changeling check, (c) view-layer (`PermanentViewFactory` raw term +
-    legacy color branch — corrected by the broadcast diff), or (d) the pass's own
-    seeding/fingerprint reads. No missed migrations. Three pre-existing ad-hoc readers
-    documented as Known limitations instead of changed: Coat of Arms and Call to the
-    Kindred's shared-type scans (never saw statically granted subtypes, pre-dates the
-    migration; dual-write keeps them correct for every current card) and Manor Gargoyle's
-    `SelfHasKeyword` (intrinsic read = deliberate self-recursion guard — the condition asks
-    about the permanent whose bonus is being assembled). **Docs:** added the top-of-file
-    architecture summary for card-implementation sessions; rewrote §9 from "migration plan
-    context" into the reconciled **Done** (resolved debt, steps 1-13) and **Known
-    limitations** lists. **Full-suite triage:** the user's full run surfaced 7 failing card
-    tests (8 failures) missed by every step batch. Root cause for five (SerraAscendant,
-    VillageSurvivors, ViridianBetrayers, VampireNocturnus, JoustingLance): `collectInstances`
-    was collecting `ConditionalEffect`/`EnchantedPermanentConditionalEffect` into the pass —
-    contradicting this doc's "unmanaged" claim — so the condition's result (life totals,
-    poison, top-of-library, active player) was baked into the step-13 CACHED board while the
-    fingerprint deliberately omits those inputs → stale keyword/boost answers once the
-    condition flipped. ENGINE FIX (rules: CR 613 continuous effects apply to current game
-    state; conditions must be re-evaluated continuously): conditional wrappers are now skipped
-    at collection (both loops) and stay assembly-evaluated per query — the pre-cache dynamic
-    behavior, now honest under the cache; new pin
-    `LayeredBoardCacheTest.conditionalStaticGrantsToggleWithoutInvalidatingTheBoard` (the
-    cached entry is REUSED across the toggle while the answer changes). Survey confirmed no
-    conditional wraps a layer-4 type-changer (the two `AnimatePermanentsEffect` wraps were
-    already legacy-only), so the skip only moves L6/7c payloads — the documented unmanaged
-    altitude. TEST FIXES for the other two (pre-layer expectations, step-1 triage rule):
-    `GutterGrimeTest` asserted the Ooze CDA as `card power + bonus.power()` — the `*/*` CDA
-    SETS base P/T in 7a (CR 604.3/613.3a, a base override since step 6), corrected to the
-    layered queries; `BladesOfVelisVelTest.wearsOff` simulated cleanup with `resetModifiers()`
-    only, missing `expireEndOfTurnFloatingEffects()` for the floating changeling grant
-    (step-5 MerfolkTrickster/GrandArchitect precedent). Verified: SevenLayerTest 100/100,
-    LayerDependencyTest, FloatingEffectLifecycleTest, LayeredBoardCacheTest (7 incl. the new
-    pin), staticfx suite, GameQueryService/PredicateEvaluation/TextChangeTransformer tests,
-    all 58 conditional-static card tests (metalcraft/fateful-hour/hellbent families,
-    ManorGargoyle, BondsOfFaith) plus the layer-heavy regression batch — all green.
-
-15. **2026-07-30 — Step 15: Stage A of `STATIC_EVALUATION_MIGRATION.md` — static-filter type
-    leaves read layer-4 state.** The recursion-safe matchers selected by
-    `ConditionContext.staticEvaluation()` read printed/stored characteristics only, so
-    continuous effects were invisible to them. `GameQueryService.isCreature` used the layered
-    artifact count while static-bonus assembly used the printed one — the same condition
-    answered two ways depending on caller. Visible break: `Rusted Relic` + `Silverskin Armor`
-    equipped to any creature. Printed artifacts = 2, but the Armor's `GrantCardTypeEffect` makes
-    the equipped creature an artifact in layer 4 (CR 613.1d), so the true count is 3 and
-    metalcraft is met; the layered path animated the Relic, the static path did not supply 5/5,
-    and the 0/0 died to CR 704.5f. Reproduced as a failing test FIRST
-    (`RustedRelicTest.grantedArtifactTypeCountsTowardMetalcraft`, observed 0/0), then fixed.
-    ENGINE CHANGES (all in `StaticEffectSupport.matchesStaticFilter` unless noted): extracted
-    `isArtifactForStaticFilter` — reads `LayerSystemService.activeStateFor` during a pass, falls
-    back to `gameQueryService.isArtifact` (printed + transient + persistent grants) outside one —
-    and pointed the artifact leaf, the historic leaf and
-    `ConditionEvaluationService.isMetalcraftMet`'s static branch at it. Enchantment leaf now
-    layered, falling back to `isEnchantment`. New `hasSupertypeForStaticFilter`: per-permanent
-    persistent grants win, persistent removals block, then layer-4 grants
-    (`GrantSupertypeToEnchantedPermanentEffect`, which had no reader — added
-    `CharacteristicState.hasSupertype`, the only domain change). Historic leaf recomposed from
-    those plus a `hasSagaSubtypeForStaticFilter` that also reads granted subtypes. Closed two
-    divergences from `PredicateEvaluationService`, which already read both: the creature leaf
-    now includes `isPermanentlyAnimated()` (`:353` there) and the color leaf now includes
-    `getGrantedColors()` (`:513` there). **Deviation from the plan:** metalcraft calls the
-    extracted method directly rather than entering `matchesStaticFilter` as Stage A's second
-    bullet reads — the funnel's CR 613.6 verdict memo is keyed by filter instance and
-    `PermanentIsArtifactPredicate` is a component-less record, so every instance compares equal
-    and an unrelated caller would collect a verdict memoized for another ability. **Known
-    limitation carried forward:** the supertype leaf passes a `null` GameData to
-    `hasEffectiveSupertype`, so global removals (`Melting`) stay invisible; that scan would
-    re-enter static-bonus assembly. Note the change is not purely additive — a layer-4
-    `overrideCardTypes` (Song of the Dryads, Lignify, Imprisoned in the Moon) can now correctly
-    make a permanent stop counting as an artifact/enchantment where the printed read kept it.
-    **Verification:** SevenLayerTest **100/100**, LayerDependencyTest 9/9,
-    LayeredBoardCacheTest, FloatingEffectLifecycleTest, ModifierExplanationTest,
-    LayerPassBenchmarkTest, the staticfx suite, PredicateEvaluationService, GameQueryService,
-    TargetFilters; plus **173 card tests** — every card whose source combines a static ability
-    with one of the changed predicates, unioned with all 30 metalcraft cards — and a divergence
-    batch (AwakenerDruid, WakerOfTheWilds, TezzeretAgentOfBolas, PermanentViewFactory,
-    MirageMirror, EnchantedEvening, BludgeonBrawl, MoxOpal). All green; no card test needed a
-    rules verdict, so no card was silently relying on the approximation in a way this stage
-    changed. The user's full-suite run surfaced one failure,
-    `MCTSEngineTest.abilityMctsPrefersOpponentOverWardedNonlethalCreature`, diagnosed as
-    pre-existing flakiness unrelated to this step and left unfixed: `GameSetupService:41`
-    holds an unseeded `Random` and `:167` shuffles each deck with it, so MCTS's own `42L` seed
-    fixes the search but not the game state it searches; the sibling test
-    `abilityMctsFallsBackOnTargetRankingAtTinyBudget` documents a measured 17% wrong-target rate
-    on the same board and pins hands and libraries to suppress it, which the failing test does
-    not do. Stage A is provably inert there — nothing on that board or in the
-    `10e-white-theme-deck` carries a STATIC effect using a changed predicate, no metalcraft, no
-    permanently-animated permanent, no granted colors.
-
-16. **P/T static-filter leaves read layered numbers (`STATIC_EVALUATION_MIGRATION.md` Stage B,
-    2026-07-30).** The five P/T leaves of `StaticEffectSupport.matchesStaticFilter` and the five
-    null-`GameData` P/T branches of `PredicateEvaluationService` no longer read
-    `Permanent.getEffectivePower()/getEffectiveToughness()`; they call the new
-    `GameQueryService.powerForStaticFilter` / `toughnessForStaticFilter`, which answer in three
-    tiers — fully layered when the board is finished and the permanent is not itself being
-    assembled; a **preliminary** second assembly when it is (the dominant shape, since a P/T
-    filter describes the permanent whose bonus is being built), run with that permanent in
-    `PT_LEAF_FROM_BOARD` so the leaves inside drop to the third tier and the recursion closes
-    after one level; and **board-derived** otherwise — the 7b winner from `basePt7b`, own
-    modifiers and counters, and the 7d parity from `switchedPt7d`. Board-derived is also what a
-    leaf reached mid-pass gets, which is the layer order, not an approximation. New machinery:
-    `ASSEMBLY_IN_PROGRESS` and `PT_LEAF_FROM_BOARD` ThreadLocals in `GameQueryService`
-    (`assembleStaticBonusInternal` became a recording wrapper around
-    `assembleStaticBonusUnguarded`; recording never blocks re-entry), `Pass.preliminaryBonusMemo`
-    kept apart from `bonusMemo` because only the P/T of a preliminary bonus is trustworthy, plus
-    a static `LayerSystemService.activePass()` hook and `Pass.gameData()` — same ambient pattern
-    as `activeStateFor`, for leaves reached through handler chains that no longer carry the game
-    state. Also in this step: `totalToughnessOfControlledCreatures` uses the accessor (no card
-    produces that amount today); `countPermanents` supplies the source card and controller ids in
-    static evaluation via `FilterContext.empty()`, so source-relative predicates can match
-    (layered *types* there are still Stage C); Domain
-    (`countBasicLandTypesAmongControlledLands`) honors CR 305.7 overrides in both branches via
-    `basicLandTypesForStaticEvaluation`, which falls back to printed types only for a land whose
-    own bonus is being assembled. A stale CR citation was corrected — Domain is an ability word
-    (CR 207.2c, verified); 702.42 is Entwine. **Blocker found, carried to Stage C:** pass-managed
-    L4/L5/L6 instances evaluate their filters during `applyLayer5And6`, before layer 7 exists,
-    and the assembly re-run is output-suppressed for them, so a P/T-filtered layer-6 grant still
-    reads printed numbers. `Tetsuko Umezawa, Fugitive` under a `Glorious Anthem` is the
-    reproduction and the rules-correct answer is the opposite of what the engine gives; nothing
-    about those creatures' P/T depends on the layer-6 grant, so this is the "layer N never reads
-    layer >N" invariant over-approximating rather than a genuine circularity. Fixing it means
-    resolving per-permanent layer 7 ahead of the L6 decision — C1 work. **Verification:**
-    SevenLayerTest 100/100, LayerDependencyTest, LayeredBoardCacheTest, LayerClassifierTest,
-    RustedRelicTest, GameQueryServiceTest, PredicateEvaluationServiceTest, the staticfx suite,
-    the Domain/count batch (Draco, ManaforceMace, AvenTrailblazer, WanderingGoblins, MightOfAlara,
-    SporeBurst, ExplodingBorders, VoicesFromTheVoid, DragDown, PowerstoneShard, BloodMoon,
-    PrismaticOmen) and **all 52 card tests** whose card uses a P/T predicate. All green. New test:
-    `MatcaRiotersTest.countsGrantedBasicLandTypes` — a lone Forest under `Prismatic Omen` is every
-    basic land type, so Matca Rioters is 5/5 where the printed-only read made it 1/1.
-
-17. **Conditional layer-4 wrappers admitted to the pass (`STATIC_EVALUATION_MIGRATION.md` Stage C,
-    C0 + C1, 2026-07-31).** `LayerSystemService.collectInstances` no longer skips every
-    conditional wrapper unconditionally. **C0 (the fingerprint decision, owned by the user) chose
-    the hybrid, default-deny option:** the new `ConditionBoardStability` (engine
-    `service/effect/`) answers whether a `Condition` reads only state
-    `computeBoardFingerprint` hashes; an unlisted condition keeps the pre-existing
-    legacy-additive behavior, so introducing a condition can never silently make the board cache
-    unsound. `admitsConditionalWrapper` additionally requires the layer to be **layer 4** — a
-    type change is what the rest of the pass and the recursion-safe filter leaves have to see
-    mid-pass, whereas a conditional grant landing in layers 5-7 changes nothing another layer
-    reads and stays with the per-query assembly. A survey of the card pool (recorded in the
-    migration doc) found 149 static-ability conditional cards using 20 of the 102 `Condition`
-    variants, of which only nine conditions read anything outside the fingerprint (life totals,
-    `activePlayerId`, `isAttacking`/`isBlocking`, poison, library size, and four per-turn
-    trackers). **C1:** the real blocker was not the wrapper skip — `LayerClassifier` already
-    delegated wrappers to `wrapped()` — but that `AnimatePermanentsEffect` had **no
-    classification at all**, so `ConditionalEffect(Metalcraft, AnimatePermanentsEffect)` was
-    excluded twice over. It is now registered as L4 only, the same split
-    `AllLandsAreCreaturesEffect` and `EnchantedPermanentBecomesCreatureEffect` use: layer 4 adds
-    the creature card type and the granted subtypes/card types to the `CharacteristicState` and
-    leaves the instance UNmanaged, so the legacy self-handler
-    (`StaticEffectSupport.applySelfOnlyConditionalStaticEffect`) keeps supplying base P/T, colour
-    and keywords during assembly. `applyL4Instance` was split into a guard plus
-    `applyL4Effect(instance, effect, …)` so an admitted wrapper hands its wrapped effect back in
-    with the instance's source, timestamp and CR 613.6 bookkeeping intact; the condition is
-    evaluated with `ConditionContext.forStaticEffect` against the states as of the layer-4
-    instances applied so far. **No new ordering logic was needed** — `orderByDependency`'s
-    trial-application fingerprints already detect Silverskin Armor → Rusted Relic (CR 613.8a: the
-    animation's recorded operations appear only in the world where the Armor's layer-4 artifact
-    grant applied first), so the relic applies after the Armor despite its earlier timestamp.
-    Exactly **one** card of the 149 is admitted today: `Rusted Relic`. `Warden of the Wall` is
-    the only other conditional self-animation and its `NotControllerTurn` reads `activePlayerId`,
-    so it stays legacy-only. **Observable change:** the animated relic's CREATURE type and GOLEM
-    subtype now sit in its state, so the static-filter leaves see them — `Wing Splicer`'s "Golem
-    creatures you control have flying" reaches it, where before the subtype existed only in the
-    accumulator, which no filter reads. Its P/T was already correct after step 15. **Residual
-    approximation:** the pass evaluates the condition mid-layer-4 and the assembly re-evaluates it
-    against the finished states; they agree because type changes are layer-4-only and dependency
-    ordering puts the conditional after what it reads, except inside a CR 613.8c dependency loop
-    (timestamp-order fallback), which no current card pair forms. **Verification:** SevenLayerTest
-    100/100, LayerDependencyTest, LayeredBoardCacheTest, LayerClassifierTest, RustedRelicTest,
-    WardenOfTheWallTest, MarchOfTheMachinesTest, the Splicer/Golem batch (WingSplicer,
-    MasterSplicer, MaulSplicer, PrecursorGolem), the animation batch (JadeStatue, Mutavault,
-    InkmothNexus) and the metalcraft batch (ArdentRecruit, AuriokEdgewright, EtchedChampion,
-    IndomitableArchangel, JorKadeenThePrevailer, PuresteelPaladin, SilverskinArmor, SpireSerpent,
-    CarapaceForger, ChromeSteed). All green. New tests in `RustedRelicTest`:
-    `animatedRelicIsAGolemForAnotherStaticEffect`, `unanimatedRelicIsNotAGolem`,
-    `grantedArtifactTypeOrdersAheadOfTheAnimation`.
-
-18. **The Tetsuko blocker closed by re-modeling, not by restructuring the pass
-    (`STATIC_EVALUATION_MIGRATION.md` Stage C, C1 remainder, 2026-07-31).** Step 16 left a case it
-    called "layer-6 filters still cannot see layer 7": `Tetsuko Umezawa, Fugitive` ("Creatures you
-    control with power or toughness 1 or less can't be blocked") kept its evasion under a
-    `Glorious Anthem` that lifted a 1/1 to 2/2, because the effect was written as
-    `GrantEffectEffect(CantBeBlockedEffect, ALL_OWN_CREATURES, AnyOf(PowerAtMost(1),
-    ToughnessAtMost(1)))`, `GrantEffectEffect` classifies as L6, and a managed L6 instance has its
-    scope filter evaluated during the pass — before `applyLayer7b`/`applyLayer7d` run, so
-    `ptForStaticFilter` degrades to the board-derived reading. The prescribed fix was to make
-    per-permanent layer-7 numbers computable ahead of L6. **That was the wrong fix.** Verified with
-    the `rules` MCP: **CR 613.11** applies continuous effects that affect the rules of the game
-    rather than objects *after all other continuous effects*, and **CR 509.1a** defines an evasion
-    ability as "a static ability an attacking creature has". Tetsuko's wording grants the creatures
-    no ability — it states a blocking restriction — so by rule its matching set is decided after the
-    layer system, from fully layered P/T. There is no layer-6-reads-layer-7 circularity to engineer
-    around; the effect never belonged in layer 6. The official Gatherer ruling confirms the dynamics
-    ("once a creature you control has been blocked, changing its power to 1 or less won't cause it to
-    become unblocked" — before blockers are declared, changing power *does* change qualification).
-    The engine already had the right convention: ~50 blocking/attacking/untap restriction effect
-    types carry no `LayerClassifier` entry and no static handler, and are read straight off
-    `addStaticEffect` by `BlockLegalityService` / `AttackLegalityService` / `UntapStepService` via
-    the fully layered `matchesPermanentPredicate`. A pool survey found 17 P/T-filtered static-ability
-    effects across 16 cards, of which Tetsuko was the **only** layer-classified one. **Change:** new
-    `ControlledCreaturesMatchingCantBeBlockedEffect(PermanentPredicate filter)` (domain
-    `model/effect/`), consumed by `GameQueryService.controllerMakesMatchingCreaturesUnblockable` off
-    `hasCantBeBlocked`, mirroring `ControlledCreaturesCantAttackUnlessPredicateEffect`; Tetsuko
-    rewritten to use it. Deliberately unclassified and unmanaged, like its ~50 siblings. **Standing
-    consequence:** no card has a genuine P/T-filtered layer-4/5/6 ability grant, so the "layer 7
-    ahead of L6" capability has zero cards behind it and is not scheduled; §5.4's "layer N never
-    reads layer >N" invariant is correct as written. **Cosmetic regression:** qualifying creatures no
-    longer list "Can't be blocked" among granted abilities in the client
-    (`GrantedAbilityViewFactory`) — it is not a granted ability, and the other 16 restriction cards
-    already behave this way. **Verification:** both new tests
-    (`TetsukoUmezawaFugitiveTest.anthemRemovesEvasion`, `.opponentDebuffConfersEvasion`) confirmed
-    FAILING under the old modeling and passing under the new; the 7 pre-existing Tetsuko tests,
-    JacesSentinelTest and SteelOfTheGodheadTest (the other `CantBeBlockedEffect` users),
-    GameQueryServiceTest, the block-legality suite, `layers.*` (SevenLayerTest 100/100) and
-    RustedRelicTest all green.
-
-19. **Recursion-safety is ambient; the `staticEvaluation` flags are deleted
-    (`STATIC_EVALUATION_MIGRATION.md` Stage C, C2 slice 3, 2026-07-31).** `ConditionContext` and
-    `AmountContext` no longer carry a `staticEvaluation` component, and
-    `GameQueryService.hasSelfBecomeCreatureEffect`'s boolean overload is gone. The seven branches
-    that read the flags (four in `ConditionEvaluationService` — the creature check, the permanent
-    matcher, metalcraft and the graveyard card count; three in `AmountEvaluationService` —
-    `countPermanents`, Domain and `totalToughnessOfControlledCreatures`) now ask the new
-    `GameQueryService.isStaticEvaluationActive()`, true when `ASSEMBLY_IN_PROGRESS` is non-empty
-    (step 16's ThreadLocal — this thread is inside `assembleStaticBonusInternal`) or when the new
-    `LayerSystemService.buildingBoard()` reports a pass on this thread whose board is unfinished.
-    The flag was a claim each call site made about where it was, and a call site reached through a
-    chain it did not write got it wrong — which is how the original stack overflow happened
-    (`isCreature` → `hasSelfBecomeCreatureEffect` → metalcraft on the layered branch during an
-    assembly); the boolean overload was a manual patch for the three chains someone had found.
-    Both facts are recorded by the machinery that creates the situation, so the boundary is now
-    observed rather than declared, and chains nobody has found are covered too.
-    `buildingBoard()` walks the whole `Pass` parent chain: a nested pass opened mid-build finishes
-    its own board while the outer build is still in flight, so reading only the innermost pass
-    would report ready and re-open the hole. Two surfaces widened deliberately: everything reached
-    during a board build is recursion-safe now, not only the handlers that remembered to say so
-    (which is also the CR 613 reading order — mid-build there are no layer-7 numbers); and
-    `AttackLegalityService`'s `CreaturesWithPowerGreaterThanAmountCantAttackEffect` branch, which
-    used `AmountContext.forStaticEffect` from outside any assembly purely to carry source and
-    controller, now evaluates fully layered (inert — `Ensnaring Bridge` is the only card with the
-    effect and `CardsInHand` reads no permanent). `forStaticEffect` survives on both context types
-    for what it says at the call site; on `ConditionContext` it is now identical to `forPermanent`.
-    **Verification:** `layers.*` (SevenLayerTest 100/100, LayerDependencyTest, LayeredBoardCacheTest,
-    LayerClassifierTest, ModifierExplanationTest, FloatingEffectLifecycleTest), GameQueryServiceTest,
-    PredicateEvaluationServiceTest, the staticfx suite, RustedRelicTest, WardenOfTheWallTest,
-    TetsukoUmezawaFugitiveTest, EnsnaringBridgeTest, the metalcraft, animation, Splicer/Golem,
-    divergence and Domain batches. All green.
-
-20. **Structural fingerprint empty-collection fast path (2026-08-20).** JProfiler showed layer-board
-    fingerprinting was a major part of MCTS simulation time, with enum-collection hashing as its
-    largest component. `hashEnums` now returns immediately for empty `Collection` instances, which
-    are the common case across a permanent's mutable keyword, type and color collections. The
-    full-text-copy probe likewise avoids stream allocation and exits immediately when a card has no
-    static effects. Empty fields retain an explicit hash marker, so their positions cannot disappear
-    from the structural representation. Fingerprint validation remains structural rather than
-    epoch-only, so direct field and collection mutation continues to invalidate cached boards; a new
-    `LayeredBoardCacheTest.directMutableCardFieldMutationInvalidates` case pins mutable card subtype
-    changes after cache population. In a back-to-back opt-in 24-permanent layer benchmark under the
-    same competing system load, best steady-state throughput increased from 30,247 to 38,755
-    queries/s and mutation-heavy throughput from 20,989 to 24,603 queries/s. End-to-end MCTS benchmark
-    runs were not comparable because a concurrent long-running JVM changed CPU pressure between
-    variants, so no MCTS pass-count claim is recorded here. **Verification:** `LayeredBoardCacheTest`,
-    `LayerPassBenchmarkTest`, `MCTSBenchmarkTest`, and all 74 `HardAiDecisionEngineTest` cases passed.
-
-Intrinsic basic-land mana abilities follow effective basic land types. GameQueryService.intrinsicBasicLandManaColors derives each color from the layered Plains, Island, Swamp, Mountain, and Forest subtypes, and activation enumeration includes those abilities. Additive subtype effects such as Blanket of Night and Yavimaya, Cradle of Growth therefore need only GrantSubtypeEffect; adding a separate GrantActivatedAbilityEffect would preserve an incorrect redundant mana ability after a later effect replaces that land type.
+- **Every change a resolution makes is a floating effect** with a `Duration` (§6): characteristics (copies, control,
+  text, types, colours, abilities, keywords, protection, P/T) in their layers, rules changes on a player, a permanent,
+  a card or the game after the layers (CR 613.10, 613.11). `GameData` alone changes `floatingEffects` (§6), and
+  `DurationClock` ends each effect at its rules event or as its "for as long as" condition stops holding (CR 611.2a,
+  611.2b). No `Permanent` or `GameData` field mirrors such an effect, and `Permanent`'s `GameData`-less accessors
+  (`hasKeyword`, `getEffectiveColor(s)`, `getEffectivePower/Toughness`, the type checks) are intrinsic only: ask
+  `GameQueryService` with a `GameData`. `EndOfTurnStateField` holds only turn history and per-turn bookkeeping
+  (blocked-without-blockers, saddled, regeneration counts, crew and tap-for-ability records, the "this turn" delayed
+  abilities, the per-turn player and card sets), reset at cleanup.
+- **Delayed triggered abilities are not floating effects**: each is a `TemporaryGlobalTriggeredAbility`
+  (`architecture/triggers.md`), including boons, watcher lists and opening-hand reveals.
+- **Rules effects stay out of the layers.** A static blocking, attacking or untap restriction ("creatures you control
+  with power 1 or less can't be blocked", Tetsuko Umezawa) has no `LayerClassifier` entry and no static handler; the
+  legality services read it straight off the static abilities and judge its filter on the fully layered board
+  (CR 613.11), so a P/T filter sees layer 7 (`ControlledCreaturesMatchingCantBeBlockedEffect`,
+  `GameQueryService.controllerMakesMatchingCreaturesUnblockable`). No card has a P/T-filtered layer-4/5/6 grant, so
+  "layer N never reads layer >N" (§5) holds.
+- **Recursion safety is ambient**: `GameQueryService.isStaticEvaluationActive()` is true inside a static-bonus
+  assembly or while `LayerSystemService.buildingBoard()` reports an unfinished board on this thread (the whole `Pass`
+  parent chain); condition and amount evaluation then take their recursion-safe branch instead of re-entering the pass.
+- **Basic land mana follows the layered land types**: `GameQueryService.intrinsicBasicLandManaColors` derives each
+  colour from the effective basic land subtypes, so an added land type needs only `GrantSubtypeEffect`; a separate
+  `GrantActivatedAbilityEffect` would leave a stale mana ability after a later effect replaces the type.
+- **Tests**: `SevenLayerTest` (100/100) and `LayerDependencyTest` are the spec; `testutil.PermanentGrants` gives and
+  reads floating grants; a test ends a duration by emitting its event (`gd.rulesEvents.occur(...)`).
+  `python3 -I scripts/duration-inventory.py` counts any duration still held outside `Duration`.
+- **History**: the per-step migration log (steps 1-20) is in `git show e59a9b3e0b:agent-docs/LAYER_SYSTEM.md`.

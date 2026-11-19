@@ -1,11 +1,5 @@
 # Card Patterns: Lands & Spells
 
-> A row that still writes a "whenever [a player] casts a spell" ability as `SpellCastTriggerEffect(filter, effects, …)`
-> (or a factory such as `.nth(n, …)` / `.withIntervening(…)`) is shorthand: author it as the cast trigger's filter and the
-> ability's effects, `addTrigger(Triggers.youCastSpell().withFilter(filter)[.nthThisTurn(n)…][, TriggerOptions…], effects…)`
-> (`.anySpell()` for a null filter), with "you may" a `MayEffect`, a mana cost a `MayPayManaEffect` and a target filter a
-> target group. The record is gone.
-
 > `SPELL` in this file means the card's spell ability (CR 113.3a), written `addSpellEffect(e)`,
 > `addSimultaneousSpellEffects(a, b)` or `target(f).addSpellEffect(e)`. A `…Cost` listed under `SPELL`
 > is a casting cost (CR 601.2b, 601.2f), written `addCastingCost(c)`; it is not part of the spell ability.
@@ -74,7 +68,7 @@ on what the mana may pay for.
 | Utility land | `q/Quicksand.java` | mana ability + sacrifice-to-debuff ability |
 | Scry, then optional basic-land reveal to tapped battlefield | `i/IsolatedWatchtower.java` | colorless mana plus `{2}`, `{T}` ability using `ScryEffect(1)` followed by `RevealTopCardMayPutMatchingOntoBattlefieldTappedEffect(CardPredicateUtils.basicLand())`; activation requires an opponent to control at least two more lands |
 | Commander color-identity life-payment draw land | `w/WarRoom.java` | colorless mana ability + `{3}`, `{T}`, dynamic life payment, and `DrawCardEffect` |
-| Commander-identity mana with a source-linked creature-cast trigger | `p/PathOfAncestry.java` | `EntersTappedEffect` + `AwardAnyColorManaEffect.forCommanderColorIdentity()` + `SpellCastTriggerEffect.usingManaProducedBySource(CardAllOfPredicate(CREATURE, CardSharesCreatureTypeWithCommanderPredicate), ScryEffect(1))` |
+| Commander-identity mana with a source-linked creature-cast trigger | `p/PathOfAncestry.java` | `EntersTappedEffect` + `AwardAnyColorManaEffect(1, COMMANDER_COLOR_IDENTITY).withProducingSourceForSpellCastTriggers()` + `addTrigger(Triggers.youCastSpell().withFilter(CardAllOfPredicate(CREATURE, CardSharesCreatureTypeWithCommanderPredicate)).paidWithManaFromThis(), ScryEffect(1))` |
 | Landfall counter land | `o/OranRiefTheVastwood.java` | STATIC `EntersTappedEffect` + `ManaAbilities.tapFor(GREEN)` + `{T}` `PutCounterOnEachMatchingPermanentEffect(PLUS_ONE_PLUS_ONE, 1, AllOf(IsCreature, ColorIn(GREEN), EnteredBattlefieldThisTurn), ALL_PLAYERS)` |
 | Gate-count land | `m/MazesEnd.java` | STATIC `EntersTappedEffect` + `ManaAbilities.tapFor(COLORLESS)` + `{3},{T},ReturnSelfToHandCost` ability with `SearchLibraryEffect(CardSubtypePredicate(GATE), BATTLEFIELD)` followed by `ConditionalEffect(ControlsDistinctPermanentNamesCount(10, PermanentHasSubtypePredicate(GATE)), WinGameEffect())` |
 | Grant flash to the next spell of a type + cantrip | `q/Quicken.java` | SPELL GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.SORCERY) + DrawCardEffect(1) — one pending grant, consumed by the next sorcery cast this turn |

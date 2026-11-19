@@ -79,14 +79,14 @@ Why: one reveal finishes before the next.
 ## Sequential phases (Runed Terror)
 
 ### "This turn" state ends at its creator's cleanup step (CR 514.2)
-Every store the cleanup step clears has an `EndOfTurnStateField` (how to add one: the enum's Javadoc).
-Owner: `EndOfTurnStateField`, `TurnCleanupService`.
+An "until end of turn" effect is a floating effect with `Duration.UNTIL_END_OF_TURN`; the duration clock ends it at its creator's share of the cleanup step. Every other store the cleanup step clears (turn history, per-turn bookkeeping) has an `EndOfTurnStateField` (how to add one: the enum's Javadoc).
+Owner: `DurationClock`, `EndOfTurnStateField`, `TurnCleanupService`.
 Why: an untracked store ends at another player's cleanup step.
 
-### A partly used shield reports its replacement
-Replacing a `LIST` shield record by a reduced copy calls `replaceGameEndOfTurnElement`; keep-the-strongest stores are written through `addDamageLifeFloorUntilEndOfTurn`.
-Owner: `GameData`.
-Why: the copy stays credited to its player; a weaker value outlives the stronger one's cleanup.
+### A partly used shield keeps its place
+Using part of a shield ("prevent the next 3 damage") replaces its floating effect with a reduced copy through `GameData.reduceShield` (`replaceFloatingEffect`), keeping its place and timestamp; several "can't go below" floors (`DamageLifeFloorUntilEndOfTurnEffect`) are separate floating effects and the strongest applies.
+Owner: `GameData`, `GameQueryService`.
+Why: a shield that moved last would be offered in the wrong order; a weaker floor must not outlive or override the stronger one.
 
 ## Unverified
 
