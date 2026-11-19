@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ORI", collectorNumber = "92")
 @CardRegistration(set = "AKR", collectorNumber = "99")
@@ -31,7 +31,7 @@ public class DemonicPact extends Card {
                         List.of(new DealDamageToAnyTargetEffect(4), new GainLifeEffect(4))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",
-                        List.of(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)),
+                        List.of(new DiscardEffect(2, Subjects.targetPlayer())),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent")),

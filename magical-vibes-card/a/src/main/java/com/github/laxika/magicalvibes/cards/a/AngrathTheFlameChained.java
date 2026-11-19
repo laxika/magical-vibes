@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -28,7 +27,7 @@ public class AngrathTheFlameChained extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                        new DiscardEffect(1, Subjects.eachOpponent()),
                         new LoseLifeEffect(2, Subjects.eachOpponent())
                 ),
                 "+1: Each opponent discards a card and loses 2 life."

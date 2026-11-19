@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOK", collectorNumber = "69")
 @CardRegistration(set = "DDD", collectorNumber = "34")
@@ -22,7 +22,7 @@ public class GhostLitStalker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{B}",
-                List.of(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)),
+                List.of(new DiscardEffect(2, Subjects.targetPlayer())),
                 "{4}{B}, {T}: Target player discards two cards. Activate only as a sorcery.",
                 anyPlayer(),
                 null,
@@ -33,7 +33,7 @@ public class GhostLitStalker extends Card {
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{5}{B}{B}",
-                List.of(new DiscardEffect(4, DiscardRecipient.TARGET_PLAYER)),
+                List.of(new DiscardEffect(4, Subjects.targetPlayer())),
                 "Channel — {5}{B}{B}, Discard this card: Target player discards four cards. Activate only as a sorcery.",
                 anyPlayer(),
                 null,

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "APC", collectorNumber = "20")
 public class CetaSanctuary extends Card {
@@ -31,6 +31,6 @@ public class CetaSanctuary extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(controlsRed, controlsGreen))),
                 SequenceEffect.of(
                         new DrawCardEffect(new FixedIfCondition(controlsRedAndGreen, 2, 1)),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                        new DiscardEffect(1, Subjects.you())));
     }
 }

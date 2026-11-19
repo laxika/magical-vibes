@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "VIS", collectorNumber = "61")
 @CardRegistration(set = "TSB", collectorNumber = "44")
@@ -22,7 +22,7 @@ public class FuneralCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player discards a card",
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
+                        new DiscardEffect(1, Subjects.targetPlayer())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/-1 until end of turn",
                         new BoostTargetCreatureEffect(2, -1),

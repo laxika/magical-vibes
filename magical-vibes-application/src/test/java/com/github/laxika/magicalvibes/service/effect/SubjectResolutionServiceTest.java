@@ -352,6 +352,21 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("A union of players names a target player itself and a targeted permanent's controller, without declaring a target")
+        void allOfPlayersVariant() {
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            PlayerSubject playerOrController = allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()));
+
+            assertThat(players(entry(player1, player2.getId(), null), playerOrController))
+                    .containsExactly(player2.getId());
+            assertThat(players(entry(player1, giant.getId(), null), playerOrController))
+                    .containsExactly(player2.getId());
+            assertThat(playerOrController.declaresTarget()).isFalse();
+            assertThatThrownBy(() -> allOf(targetPlayer(), you()))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
         @DisplayName("Opponents of a player are every other player, and nobody when that player is unknown")
         void opponentsOfVariant() {
             StackEntry baked = entry(player1, player2.getId(), null);

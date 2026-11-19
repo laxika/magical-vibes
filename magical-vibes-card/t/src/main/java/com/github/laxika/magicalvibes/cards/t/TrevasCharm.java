@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PLS", collectorNumber = "129")
 @CardRegistration(set = "DDE", collectorNumber = "61")
@@ -30,7 +30,7 @@ public class TrevasCharm extends Card {
                         "Draw a card, then discard a card",
                         List.of(
                                 new DrawCardEffect(),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                                new DiscardEffect(1, Subjects.you())))
         )));
     }
 }

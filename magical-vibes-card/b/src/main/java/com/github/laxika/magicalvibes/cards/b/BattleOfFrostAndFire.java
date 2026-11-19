@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KHM", collectorNumber = "204")
 public class BattleOfFrostAndFire extends Card {
@@ -35,7 +35,7 @@ public class BattleOfFrostAndFire extends Card {
         addTrigger(Triggers.chapter(3),
                 RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(
                                 new DrawCardEffect(2),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                                new DiscardEffect(1, Subjects.you())))
                 .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(4))));
     }
 }

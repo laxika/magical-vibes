@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInstantSpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M21", collectorNumber = "75")
 @CardRegistration(set = "M21", collectorNumber = "275")
@@ -32,7 +32,7 @@ public class TeferiMasterOfTime extends Card {
                 +1,
                 List.of(
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(1, Subjects.you())
                 ),
                 "+1: Draw a card, then discard a card."
         ));

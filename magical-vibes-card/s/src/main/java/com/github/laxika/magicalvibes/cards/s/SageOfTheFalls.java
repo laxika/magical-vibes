@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ELD", collectorNumber = "63")
 public class SageOfTheFalls extends Card {
@@ -26,7 +26,7 @@ public class SageOfTheFalls extends Card {
     public SageOfTheFalls() {
         MayEffect loot = new MayEffect(SequenceEffect.of(
                 new DrawCardEffect(1),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                new DiscardEffect(1, Subjects.you())),
                 "You may draw a card. If you do, discard a card.");
         addTriggeredAbility(new TriggeredAbility(List.of(
                         new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),

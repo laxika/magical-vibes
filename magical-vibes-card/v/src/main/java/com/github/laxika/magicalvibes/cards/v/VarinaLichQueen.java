@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SLD", collectorNumber = "861")
 @CardRegistration(set = "SLD", collectorNumber = "1355")
@@ -28,7 +28,7 @@ public class VarinaLichQueen extends Card {
         addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
                 SequenceEffect.of(
                         new DrawCardEffect(new EventValue()),
-                        new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(new EventValue(), Subjects.you()),
                         new GainLifeEffect(new EventValue())));
 
         addActivatedAbility(new ActivatedAbility(

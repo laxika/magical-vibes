@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "101")
 public class AshenSkinZubera extends Card {
@@ -23,6 +23,6 @@ public class AshenSkinZubera extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.dies(ObjectRelation.THIS), new DiscardEffect(
                 new CreatureSubtypeDeathsThisTurn(CardSubtype.ZUBERA, CountScope.ANY_PLAYER),
-                DiscardRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
     }
 }

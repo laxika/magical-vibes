@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONS", collectorNumber = "193")
 public class ChainOfPlasma extends Card {
@@ -24,7 +24,7 @@ public class ChainOfPlasma extends Card {
                                 MayChoicePlayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER
                         ),
                         "a card",
-                        DiscardRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
+                        Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target())),
                         true
                 ),
                 "Discard a card?",

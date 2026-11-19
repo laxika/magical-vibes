@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CSP", collectorNumber = "126")
 @CardRegistration(set = "IMA", collectorNumber = "194")
@@ -21,7 +21,7 @@ public class BlizzardSpecter extends Card {
                 new ChooseOneEffect.ChooseOneOption("That player returns a permanent they control to its owner's hand.",
                         new ReturnPermanentControlledByPlayerToHandEffect(new PermanentTruePredicate(), "permanent")),
                 new ChooseOneEffect.ChooseOneOption("That player discards a card.",
-                        new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER))
+                        new DiscardEffect(1, Subjects.triggeringPlayer()))
         ))));
     }
 }

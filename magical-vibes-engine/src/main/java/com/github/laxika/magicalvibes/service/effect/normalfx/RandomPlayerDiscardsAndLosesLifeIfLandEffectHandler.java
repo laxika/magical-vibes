@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RandomPlayerDiscardsAndLosesLifeIfLandEffect;
@@ -26,7 +25,7 @@ public class RandomPlayerDiscardsAndLosesLifeIfLandEffectHandler implements Norm
             true,
             null,
             null,
-            DiscardRecipient.TARGET_PLAYER,
+            Subjects.targetPlayerDeclaredElsewhere(),
             true);
 
     private final DiscardCardThenEffectHandler discardCardThenEffectHandler;

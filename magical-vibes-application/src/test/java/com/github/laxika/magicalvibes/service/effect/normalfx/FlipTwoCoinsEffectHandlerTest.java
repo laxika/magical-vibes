@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 class FlipTwoCoinsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -23,7 +23,7 @@ class FlipTwoCoinsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest
             void broadcastsTwoFlipResults() {
                 Card card = createCard("Tavern Swindler");
                 DrawCardEffect headsEffect = new DrawCardEffect(2);
-                DiscardEffect tailsEffect = new DiscardEffect(1, DiscardRecipient.CONTROLLER);
+                DiscardEffect tailsEffect = new DiscardEffect(1, Subjects.you());
                 FlipTwoCoinsEffect effect = new FlipTwoCoinsEffect(headsEffect, tailsEffect);
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 CoinFlipService.CoinFlipResult heads = new CoinFlipService.CoinFlipResult(true, 1);

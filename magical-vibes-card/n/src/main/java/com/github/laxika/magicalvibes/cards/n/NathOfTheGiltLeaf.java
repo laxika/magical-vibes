@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LRW", collectorNumber = "250")
 @CardRegistration(set = "C16", collectorNumber = "213")
@@ -27,7 +27,7 @@ public class NathOfTheGiltLeaf extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true),
+                new DiscardEffect(1, Subjects.targetPlayer(), true),
                 "Have target opponent discard a card at random?"
         ));
 

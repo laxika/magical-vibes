@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MSC", collectorNumber = "657")
 public class GreenGoblinBackForMore extends Card {
@@ -21,7 +21,7 @@ public class GreenGoblinBackForMore extends Card {
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 DiscardCardThenEffect.continuing(null,
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT), "a card"),
+                        new DiscardEffect(1, Subjects.eachOpponent()), "a card"),
                 "Discard a card?"));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SNC", collectorNumber = "34")
 public class AllSeeingArbiter extends Card {
@@ -26,7 +26,7 @@ public class AllSeeingArbiter extends Card {
     public AllSeeingArbiter() {
         SequenceEffect drawTwoThenDiscard = SequenceEffect.of(
                 new DrawCardEffect(2),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawTwoThenDiscard);
         addTrigger(Triggers.attacks(), drawTwoThenDiscard);
 

@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOB", collectorNumber = "167")
 public class ThranduilTheElvenking extends Card {
@@ -31,6 +31,6 @@ public class ThranduilTheElvenking extends Card {
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new PermanentHasSubtypePredicate(CardSubtype.ELF))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                SequenceEffect.of(new DrawCardEffect(2), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                SequenceEffect.of(new DrawCardEffect(2), new DiscardEffect(1, Subjects.you())));
     }
 }

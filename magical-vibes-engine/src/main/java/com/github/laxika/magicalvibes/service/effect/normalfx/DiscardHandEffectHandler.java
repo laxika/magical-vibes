@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DiscardHandEffect}: each affected player discards their entire hand. Single-player
- * recipients (controller / target player) discard directly; each-player recipients iterate in APNAP
- * order (active player first). There is no player choice — every card goes to the graveyard, firing
- * discard triggers per card.
+ * Resolves {@link DiscardHandEffect}: each player {@link SubjectResolutionService} names discards their entire hand,
+ * in APNAP order. There is no player choice, so nothing is asked before the discards (CR 101.4); every card goes to
+ * the graveyard, firing discard triggers per card. A {@code you()} discard records the number of cards discarded as
+ * the entry's event value.
  */
 @Slf4j
 @Component
@@ -29,6 +30,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,43 +43,13 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         String cardName = entry.getCard().getName();
         UUID controllerId = entry.getControllerId();
 
-        switch (e.recipient()) {
-            case CONTROLLER -> entry.setEventValue(discardHand(gameData, controllerId, controllerId, cardName));
-            case TARGET_PLAYER -> {
-                List<UUID> targetPlayerIds = entry.targetsForEffect(e);
-                if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
-                    targetPlayerIds = List.of(entry.getTargetId());
-                }
-                for (UUID targetPlayerId : targetPlayerIds) {
-                    discardHand(gameData, targetPlayerId, controllerId, cardName);
-                }
-            }
-            case TRIGGERING_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
-            case ACTIVE_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
-            case EACH_PLAYER, EACH_OPPONENT -> {
-                boolean opponentsOnly = e.recipient() == DiscardRecipient.EACH_OPPONENT;
-                for (UUID playerId : apnapOrder(gameData)) {
-                    if (opponentsOnly && playerId.equals(controllerId)) {
-                        continue;
-                    }
-                    discardHand(gameData, playerId, controllerId, cardName);
-                }
-            }
+        if (e.player() instanceof PlayerSubject.You) {
+            entry.setEventValue(discardHand(gameData, controllerId, controllerId, cardName));
+            return;
         }
-    }
-
-    private List<UUID> apnapOrder(GameData gameData) {
-        List<UUID> order = new ArrayList<>();
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId != null) {
-            order.add(activePlayerId);
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.player())) {
+            discardHand(gameData, playerId, controllerId, cardName);
         }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(activePlayerId)) {
-                order.add(playerId);
-            }
-        }
-        return order;
     }
 
     /** Discards one player's entire hand and returns the number of cards discarded. */

@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MRD", collectorNumber = "203")
 @CardRegistration(set = "HOP", collectorNumber = "119")
@@ -23,7 +23,7 @@ public class MaskOfMemory extends Card {
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(2),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(1, Subjects.you())
                 ),
                 "Draw two cards and discard a card?"
         ));

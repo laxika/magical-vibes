@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FDN", collectorNumber = "45")
 @CardRegistration(set = "FDN", collectorNumber = "309")
@@ -28,7 +28,7 @@ public class KioraTheRisingTide extends Card {
     public KioraTheRisingTide() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DrawCardEffect(2),
-                new DiscardEffect(2, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(2, Subjects.you())));
 
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new GraveyardCardThreshold(7, null)),

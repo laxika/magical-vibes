@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TLE", collectorNumber = "91")
 @CardRegistration(set = "TLE", collectorNumber = "179")
@@ -45,6 +45,6 @@ public class ChakraMeditation extends Card {
                 new ConditionalEffect(
                         new NotCondition(new GraveyardCardThreshold(
                                 3, new CardSubtypePredicate(CardSubtype.LESSON))),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                        new DiscardEffect(1, Subjects.you())));
     }
 }

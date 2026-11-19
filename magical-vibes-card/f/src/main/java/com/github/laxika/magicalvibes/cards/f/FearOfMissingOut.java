@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -15,13 +14,14 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DSK", collectorNumber = "136")
 public class FearOfMissingOut extends Card {
 
     public FearOfMissingOut() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DiscardEffect(1, Subjects.you()),
                 new DrawCardEffect());
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new Delirium())

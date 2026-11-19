@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TOR", collectorNumber = "26")
 @CardRegistration(set = "2X2", collectorNumber = "41")
@@ -23,6 +23,6 @@ public class Breakthrough extends Card {
                 new Max(new Fixed(0), new Sum(
                         new CardsInHand(CountScope.CONTROLLER),
                         new Scaled(new XValue(), -1))),
-                DiscardRecipient.CONTROLLER));
+                Subjects.you()));
     }
 }

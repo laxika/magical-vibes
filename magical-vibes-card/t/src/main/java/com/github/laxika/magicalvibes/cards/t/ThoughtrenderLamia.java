@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "JOU", collectorNumber = "85")
 public class ThoughtrenderLamia extends Card {
@@ -23,6 +23,6 @@ public class ThoughtrenderLamia extends Card {
                         new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                 ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)))));
+                        new DiscardEffect(1, Subjects.eachOpponent())))));
     }
 }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KLD", collectorNumber = "47")
 public class FailedInspection extends Card {
@@ -13,6 +13,6 @@ public class FailedInspection extends Card {
     public FailedInspection() {
         addSpellEffect(new CounterSpellEffect());
         addSpellEffect(new DrawCardEffect());
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(1, Subjects.you()));
     }
 }

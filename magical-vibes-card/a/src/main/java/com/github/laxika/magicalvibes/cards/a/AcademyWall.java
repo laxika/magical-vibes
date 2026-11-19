@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DMU", collectorNumber = "41")
 public class AcademyWall extends Card {
@@ -29,7 +29,7 @@ public class AcademyWall extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                                new DiscardEffect(1, Subjects.you())
                         ),
                         "Draw a card, then discard a card?"
                 ));

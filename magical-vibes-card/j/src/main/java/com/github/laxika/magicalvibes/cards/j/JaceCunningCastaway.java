@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "XLN", collectorNumber = "60")
 public class JaceCunningCastaway extends Card {
@@ -29,7 +29,7 @@ public class JaceCunningCastaway extends Card {
                 +1,
                 List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
                         Triggers.creatureYouControlDealsCombatDamageToPlayer(), TriggerOptions.ONE_OR_MORE,
-                        new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)))),
+                        new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())))),
                 "+1: Whenever one or more creatures you control deal combat damage to a player this turn, draw a card, then discard a card."
         ));
 

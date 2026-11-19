@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -16,6 +15,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /** Resolves Juggle the Performance's symmetric discard and adjacent-library conjure. */
 @Component
@@ -36,7 +36,7 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
         EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffect conjure =
                 (EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffect) effect;
         discardHandEffectHandler.resolve(
-                gameData, entry, new DiscardHandEffect(DiscardRecipient.EACH_PLAYER));
+                gameData, entry, new DiscardHandEffect(Subjects.eachPlayer()));
 
         List<UUID> players = new ArrayList<>(gameData.orderedPlayerIds);
         if (players.size() < 2 || conjure.count() <= 0) {

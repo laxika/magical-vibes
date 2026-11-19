@@ -7,16 +7,16 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "66")
 public class GruesomeDiscovery extends Card {
 
     public GruesomeDiscovery() {
         addSpellEffect(new ConditionalReplacementEffect(new Morbid(), 
-                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
+                new DiscardEffect(2, Subjects.targetPlayer()),
                 new ChooseCardsFromTargetHandEffect(2, List.of(), HandChoiceDestination.DISCARD)
         ));
     }

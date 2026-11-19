@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YECL", collectorNumber = "7")
 public class ThoughtstealSprites extends Card {
@@ -35,6 +35,6 @@ public class ThoughtstealSprites extends Card {
         addTrigger(Triggers.youCastSpell().duringOpponentsTurn(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new DraftFromSpellbookEffect(SPELLBOOK, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
     }
 }

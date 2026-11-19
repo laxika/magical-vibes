@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DRC", collectorNumber = "4")
 public class TemmetNaktamunsWill extends Card {
@@ -18,7 +18,7 @@ public class TemmetNaktamunsWill extends Card {
         addTrigger(Triggers.youAttack(),
                 SequenceEffect.of(
                         new DrawCardEffect(),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                        new DiscardEffect(1, Subjects.you())));
 
         addTrigger(Triggers.youDrawCard(),
                 new BoostAllOwnCreaturesEffect(1, 1,

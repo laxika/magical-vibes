@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CON", collectorNumber = "120")
 @CardRegistration(set = "M13", collectorNumber = "199")
@@ -53,7 +53,7 @@ public class NicolBolasPlaneswalker extends Card {
                 -9,
                 List.of(
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(7),
-                        new DiscardEffect(7, DiscardRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER),
+                        new DiscardEffect(7, Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target()))),
                         new SacrificePermanentsEffect(
                                 7, new PermanentTruePredicate(),
                                 SacrificeRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER)

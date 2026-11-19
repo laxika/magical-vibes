@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -43,7 +42,7 @@ public class VoharVodalianDesecrator extends Card {
                                 false,
                                 null,
                                 null,
-                                DiscardRecipient.CONTROLLER,
+                                Subjects.you(),
                                 true)),
                 "{T}: Draw a card, then discard a card. If you discarded an instant or sorcery card "
                         + "this way, each opponent loses 1 life and you gain 1 life."));

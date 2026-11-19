@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -16,7 +17,8 @@ import java.util.Objects;
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
-        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.Except {
+        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.Except,
+        PlayerSubject.AllOf {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -185,6 +187,28 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         @Override
         public boolean needsStackEntry() {
             return players.needsStackEntry() || excluded.needsStackEntry();
+        }
+    }
+
+    /**
+     * Every player any of {@code subjects} names, each once: "that player or that planeswalker's controller" is
+     * {@code allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))} over a "target player or planeswalker".
+     */
+    record AllOf(List<PlayerSubject> subjects) implements PlayerSubject {
+
+        public AllOf {
+            subjects = List.copyOf(subjects);
+            if (subjects.size() < 2) {
+                throw new IllegalArgumentException("AllOf joins at least two subjects: " + subjects);
+            }
+            if (subjects.stream().anyMatch(PlayerSubject::declaresTarget)) {
+                throw new IllegalArgumentException("A union of players can't declare a target: " + subjects);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return subjects.stream().anyMatch(PlayerSubject::needsStackEntry);
         }
     }
 }

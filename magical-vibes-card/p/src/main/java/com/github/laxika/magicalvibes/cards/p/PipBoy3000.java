@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PIP", collectorNumber = "140")
 @CardRegistration(set = "PIP", collectorNumber = "435")
@@ -31,7 +31,7 @@ public class PipBoy3000 extends Card {
                         "Sort Inventory — Draw a card, then discard a card",
                         SequenceEffect.of(
                                 new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
+                                new DiscardEffect(1, Subjects.you()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Pick a Perk — Put a +1/+1 counter on that creature",
                         new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,

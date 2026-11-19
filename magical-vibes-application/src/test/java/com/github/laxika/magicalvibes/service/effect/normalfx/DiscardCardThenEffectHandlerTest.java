@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 class DiscardCardThenEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -95,7 +95,7 @@ class DiscardCardThenEffectHandlerTest extends AbstractPlayerInteractionHandlerT
         CreateTokenEffect copy = new CreateTokenEffect("Copy", 1, 1,
                 CardColor.BLUE, List.of(CardSubtype.ILLUSION), Set.of(), Set.of());
         DiscardCardThenEffect effect = new DiscardCardThenEffect(
-                null, copy, "a card", DiscardRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER, true);
+                null, copy, "a card", Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target())), true);
         StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), targetId);
 
         resolveEffect(gd, entry, effect);

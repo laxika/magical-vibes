@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -29,7 +28,7 @@ public class ConsultTheNecrosages extends Card {
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player discards two cards",
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(2, Subjects.targetPlayer()),
                         anyPlayer)
         )));
     }

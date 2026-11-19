@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ACR", collectorNumber = "20")
 @CardRegistration(set = "ACR", collectorNumber = "118")
@@ -62,7 +62,7 @@ public class LeonardoDaVinci extends Card {
                                 false,
                                 null,
                                 null,
-                                DiscardRecipient.CONTROLLER,
+                                Subjects.you(),
                                 true)),
                 "{2}{U}, {T}: Draw a card, then discard a card. If the discarded card was an artifact card, "
                         + "exile it from your graveyard. If you do, create a token that's a copy of it, except "

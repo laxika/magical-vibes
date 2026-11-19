@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Resolves {@link DiscardHandUnlessPaysLifeEffect}: the target player either pays the life or
@@ -61,9 +61,9 @@ public class DiscardHandUnlessPaysLifeEffectHandler implements NormalEffectHandl
     public void discardTargetHand(GameData gameData, UUID casterId, UUID targetPlayerId, com.github.laxika.magicalvibes.model.Card sourceCard) {
         StackEntry syntheticEntry = StackEntry.carrier(sourceCard, casterId,
                 sourceCard.getName() + " - discard hand",
-                List.of(new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER)),
+                List.of(new DiscardHandEffect(Subjects.targetPlayer())),
                 targetPlayerId, (UUID) null);
         discardHandEffectHandler.resolve(gameData, syntheticEntry,
-                new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER));
+                new DiscardHandEffect(Subjects.targetPlayer()));
     }
 }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "87")
 @CardRegistration(set = "DDK", collectorNumber = "59")
@@ -36,7 +36,7 @@ public class FaithlessLooting extends Card {
     public FaithlessLooting() {
         // Draw two cards, then discard two cards.
         addSpellEffect(new DrawCardEffect(2));
-        addSpellEffect(new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(2, Subjects.you()));
         addCastingOption(new FlashbackCast("{2}{R}"));
     }
 }

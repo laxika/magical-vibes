@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "10E", collectorNumber = "151")
 @CardRegistration(set = "M10", collectorNumber = "100")
@@ -23,6 +23,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HypnoticSpecter extends Card {
 
     public HypnoticSpecter() {
-        addTrigger(Triggers.dealsDamageToOpponent(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true));
+        addTrigger(Triggers.dealsDamageToOpponent(), new DiscardEffect(1, Subjects.targetPlayer(), true));
     }
 }

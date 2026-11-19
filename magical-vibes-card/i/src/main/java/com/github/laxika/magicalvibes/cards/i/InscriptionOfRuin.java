@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -25,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZNR", collectorNumber = "108")
 public class InscriptionOfRuin extends Card {
@@ -49,7 +49,7 @@ public class InscriptionOfRuin extends Card {
         addSpellEffect(ChooseOneEffect.anyNumberWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER), opponent),
+                        new DiscardEffect(2, Subjects.targetPlayer()), opponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card with mana value 2 or less from your graveyard to the battlefield",
                         ReturnCardFromGraveyardEffect.builder()

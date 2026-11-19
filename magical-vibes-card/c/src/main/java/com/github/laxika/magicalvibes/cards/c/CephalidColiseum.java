@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,7 +38,7 @@ public class CephalidColiseum extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new DrawCardEffect(3, Subjects.targetPlayer()),
-                        new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)
+                        new DiscardEffect(3, Subjects.targetPlayer())
                 ),
                 "Threshold — {U}, {T}, Sacrifice this land: Target player draws three cards, then discards three cards.",
                 new PlayerPredicateTargetFilter(

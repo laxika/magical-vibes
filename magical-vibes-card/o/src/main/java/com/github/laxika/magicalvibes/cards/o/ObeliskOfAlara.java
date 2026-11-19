@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CON", collectorNumber = "140")
 public class ObeliskOfAlara extends Card {
@@ -24,7 +24,7 @@ public class ObeliskOfAlara extends Card {
 
         // {1}{U}, {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(true, "{1}{U}",
-                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                 "{1}{U}, {T}: Draw a card, then discard a card."));
 
         // {1}{B}, {T}: Target creature gets -2/-2 until end of turn.

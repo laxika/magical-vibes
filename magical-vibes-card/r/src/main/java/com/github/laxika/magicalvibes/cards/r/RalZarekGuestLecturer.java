@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinsPerHeadsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 
 @CardRegistration(set = "SOS", collectorNumber = "97")
 public class RalZarekGuestLecturer extends Card {
@@ -33,7 +34,7 @@ public class RalZarekGuestLecturer extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new EachTargetPlayerDiscardsEffect(1)),
+                List.of(new DiscardEffect(1, Subjects.targetPlayer())),
                 "−1: Any number of target players each discard a card.",
                 anyPlayer(), -1, null, null, List.of(), 0, 99
         ));

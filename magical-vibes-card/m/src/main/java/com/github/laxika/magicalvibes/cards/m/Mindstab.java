@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TSP", collectorNumber = "119")
 @CardRegistration(set = "TSR", collectorNumber = "123")
 public class Mindstab extends Card {
 
     public Mindstab() {
-        addSpellEffect(new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(3, Subjects.targetPlayer()));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{B}",

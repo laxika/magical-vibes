@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DSK", collectorNumber = "65")
 public class MeatLockerDrownedDiner extends Card {
@@ -37,6 +37,6 @@ public class MeatLockerDrownedDiner extends Card {
         addTrigger(Triggers.doorUnlocked(1),
                 SequenceEffect.of(
                         new DrawCardEffect(3),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                        new DiscardEffect(1, Subjects.you())));
     }
 }

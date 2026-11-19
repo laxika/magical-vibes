@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DIS", collectorNumber = "41")
 @CardRegistration(set = "MM3", collectorNumber = "65")
 public class DeliriumSkeins extends Card {
 
     public DeliriumSkeins() {
-        addSpellEffect(new DiscardEffect(3, DiscardRecipient.EACH_PLAYER));
+        addSpellEffect(new DiscardEffect(3, Subjects.eachPlayer()));
     }
 }

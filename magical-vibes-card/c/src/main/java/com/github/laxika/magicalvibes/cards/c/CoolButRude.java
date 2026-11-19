@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
@@ -56,6 +55,6 @@ public class CoolButRude extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 new DealDamageToPlayersEffect(2, Subjects.eachOpponent()));
         addTrigger(Triggers.reachesLevelThree(), new SearchLibraryEffect(),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
+                new DiscardEffect(1, Subjects.you(), true));
     }
 }

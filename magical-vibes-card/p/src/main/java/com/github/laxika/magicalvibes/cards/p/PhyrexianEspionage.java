@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DMU", collectorNumber = "60")
 public class PhyrexianEspionage extends Card {
@@ -15,6 +15,6 @@ public class PhyrexianEspionage extends Card {
     public PhyrexianEspionage() {
         addStaticEffect(new KickerEffect("{1}{B}"));
         addSpellEffect(new DrawCardEffect(2));
-        addSpellEffect(new ConditionalEffect(new Kicked(), new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new DiscardEffect(1, Subjects.eachOpponent())));
     }
 }

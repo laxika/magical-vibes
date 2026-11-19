@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ICE", collectorNumber = "111")
 public class ZuranEnchanter extends Card {
@@ -19,7 +19,7 @@ public class ZuranEnchanter extends Card {
         // {2}{B}, {T}: Target player discards a card. Activate only during your turn.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{B}",
-                List.of(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
+                List.of(new DiscardEffect(1, Subjects.targetPlayer())),
                 "{2}{B}, {T}: Target player discards a card. Activate only during your turn.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

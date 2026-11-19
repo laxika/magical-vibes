@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,7 +28,7 @@ public class MemoryWorm extends Card {
         List<CardEffect> paradox = List.of(
                 new DealDamageToPlayersEffect(2, Subjects.targetPlayer()),
                 SequenceEffect.of(
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(1, Subjects.targetPlayer()),
                         new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere())),
                 new PutCountersOnSourceEffect(1, 1, 1));
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player")).addTrigger(Triggers.youCastSpell()

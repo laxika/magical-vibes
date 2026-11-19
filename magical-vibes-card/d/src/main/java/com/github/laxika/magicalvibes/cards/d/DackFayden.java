@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -36,7 +35,7 @@ public class DackFayden extends Card {
                 +1,
                 List.of(
                         new DrawCardEffect(2, Subjects.targetPlayer()),
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)
+                        new DiscardEffect(2, Subjects.targetPlayer())
                 ),
                 "+1: Target player draws two cards, then discards two cards.",
                 anyPlayer()

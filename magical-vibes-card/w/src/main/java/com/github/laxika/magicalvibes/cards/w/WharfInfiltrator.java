@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EMN", collectorNumber = "80")
 @CardRegistration(set = "SIR", collectorNumber = "96")
@@ -23,7 +23,7 @@ public class WharfInfiltrator extends Card {
 
     public WharfInfiltrator() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                 "Draw a card and discard a card?"
         ));
 

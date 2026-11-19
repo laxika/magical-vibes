@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MKM", collectorNumber = "81")
 public class CerebralConfiscation extends Card {
@@ -25,7 +25,7 @@ public class CerebralConfiscation extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(2, Subjects.targetPlayer()),
                         opponentFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent reveals their hand. You choose a nonland card from it. That player discards that card.",

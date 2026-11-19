@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -41,7 +40,7 @@ public class VindictiveLich extends Card {
                         opponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(2, Subjects.targetPlayer()),
                         opponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent loses 5 life",

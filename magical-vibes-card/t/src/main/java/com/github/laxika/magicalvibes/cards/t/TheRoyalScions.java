@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ELD", collectorNumber = "199")
 @CardRegistration(set = "ELD", collectorNumber = "272")
@@ -27,7 +27,7 @@ public class TheRoyalScions extends Card {
     public TheRoyalScions() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                 "+1: Draw a card, then discard a card."
         ));
 

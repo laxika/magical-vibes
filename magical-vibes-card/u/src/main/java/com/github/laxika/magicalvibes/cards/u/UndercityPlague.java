@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -17,7 +16,7 @@ public class UndercityPlague extends Card {
 
     public UndercityPlague() {
         addSpellEffect(new LoseLifeEffect(1, Subjects.targetPlayer()));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
         addSpellEffect(new SacrificePermanentsEffect(1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER));
         addSpellEffect(new MayEffect(new CipherEncodeEffect(), "Encode this spell on a creature you control?"));
     }

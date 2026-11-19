@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -46,7 +47,7 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DiscardCardThenEffect) effect;
 
-        UUID discardPlayerId = resolveDiscardPlayer(gameData, entry, e.recipient());
+        UUID discardPlayerId = subjectResolutionService.player(gameData, entry, e, e.player());
         if (discardPlayerId == null) {
             return;
         }
@@ -78,8 +79,7 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.discardCausedByOpponent = e.recipient() != DiscardRecipient.CONTROLLER
-                && !Objects.equals(entry.getControllerId(), discardPlayerId);
+        gameData.discardCausedByOpponent = !Objects.equals(entry.getControllerId(), discardPlayerId);
         if (gameData.discardCausedByOpponent
                 && gameQueryService.isDiscardPrevented(gameData, discardPlayerId)) {
             return;
@@ -119,23 +119,5 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing {} to discard for {}",
                 gameData.id, playerName, e.cardDescription(), entry.getCard().getName());
-    }
-
-    private UUID resolveDiscardPlayer(GameData gameData, StackEntry entry, DiscardRecipient recipient) {
-        return switch (recipient) {
-            case CONTROLLER -> entry.getControllerId();
-            case TARGET_PLAYER -> entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
-                    ? entry.getTargetId() : null;
-            case TARGET_PERMANENT_CONTROLLER, TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> {
-                UUID targetId = entry.getTargetId();
-                if (targetId == null) {
-                    yield null;
-                }
-                yield gameData.playerIds.contains(targetId)
-                        ? targetId : gameQueryService.findPermanentController(gameData, targetId);
-            }
-            case TRIGGERING_PERMANENT_CONTROLLER -> gameQueryService.findTriggeringPermanentController(gameData, entry);
-            default -> entry.getControllerId();
-        };
     }
 }

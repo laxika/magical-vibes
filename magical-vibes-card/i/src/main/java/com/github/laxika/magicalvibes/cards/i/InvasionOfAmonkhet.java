@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.l.LazotepConvert;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MOM", collectorNumber = "231")
 public class InvasionOfAmonkhet extends Card {
@@ -20,7 +20,7 @@ public class InvasionOfAmonkhet extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MillEffect(3, MillRecipient.CONTROLLER),
                 new MillEffect(3, MillRecipient.EACH_OPPONENT),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                new DiscardEffect(1, Subjects.eachOpponent()),
                 new DrawCardEffect(1));
     }
 

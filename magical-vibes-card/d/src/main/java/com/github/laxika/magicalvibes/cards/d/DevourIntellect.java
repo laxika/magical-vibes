@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "97")
 public class DevourIntellect extends Card {
@@ -28,6 +28,6 @@ public class DevourIntellect extends Card {
         opponentTarget.addSpellEffect(new ConditionalEffect(treasureManaSpent,
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD)));
         opponentTarget.addSpellEffect(new ConditionalEffect(new NotCondition(treasureManaSpent),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)));
+                new DiscardEffect(1, Subjects.targetPlayer())));
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOB", collectorNumber = "55")
 public class SoundTheTrumpets extends Card {
@@ -36,6 +36,6 @@ public class SoundTheTrumpets extends Card {
                                         false, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                                 "a card",
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                                false, null, null, DiscardRecipient.CONTROLLER, true))));
+                                false, null, null, Subjects.you(), true))));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileHandFaceDownThenReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TMP", collectorNumber = "60")
 public class Duplicity extends Card {
@@ -30,7 +30,7 @@ public class Duplicity extends Card {
                 "Exile all cards from your hand face down and take back the cards exiled with Duplicity?"));
 
         // At the beginning of your end step, discard a card.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new DiscardEffect(1, Subjects.you()));
 
     }
 }

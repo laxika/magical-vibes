@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PCY", collectorNumber = "65")
 public class Flay extends Card {
@@ -19,13 +19,13 @@ public class Flay extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true))
+                .addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer(), true))
                 .addSpellEffect(new MayPayManaEffect(
                         "{1}",
                         null,
                         "Pay {1} to avoid discarding another card?",
                         MayPayPayer.TRIGGERING_PLAYER,
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true),
+                        new DiscardEffect(1, Subjects.targetPlayer(), true),
                         0));
     }
 }

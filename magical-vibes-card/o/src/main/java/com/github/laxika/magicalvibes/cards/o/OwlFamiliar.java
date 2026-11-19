@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "POR", collectorNumber = "63")
 @CardRegistration(set = "S99", collectorNumber = "43")
@@ -19,6 +19,6 @@ public class OwlFamiliar extends Card {
         // Flying (metadata). When this creature enters, draw a card, then discard a card.
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DrawCardEffect(1),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 }

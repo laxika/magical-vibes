@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EVE", collectorNumber = "41")
 @CardRegistration(set = "MMA", collectorNumber = "95")
@@ -12,7 +12,7 @@ public class RavensCrime extends Card {
 
     public RavensCrime() {
         // Target player discards a card.
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
         // Retrace — may be recast from the graveyard by additionally discarding a land card.
         addCastingOption(new Retrace());
     }

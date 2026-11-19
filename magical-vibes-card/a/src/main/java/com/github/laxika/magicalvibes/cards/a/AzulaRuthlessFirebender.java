@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TLE", collectorNumber = "101")
 @CardRegistration(set = "TLE", collectorNumber = "184")
@@ -28,7 +28,7 @@ public class AzulaRuthlessFirebender extends Card {
         addTrigger(Triggers.attacks(),
                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new MayEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new MayEffect(new DiscardEffect(1, Subjects.you()),
                         "Discard a card?"),
                 new ExperienceCountersEffect(new PlayersWhoDiscardedThisTurn())));
 

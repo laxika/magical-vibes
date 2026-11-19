@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "STH", collectorNumber = "48")
 @CardRegistration(set = "VMA", collectorNumber = "101")
@@ -16,7 +16,7 @@ public class VolrathsShapeshifter extends Card {
     public VolrathsShapeshifter() {
         addStaticEffect(new HaveFullTextOfTopCreatureCardInGraveyardEffect());
         addActivatedAbility(new ActivatedAbility(false, "{2}",
-                List.of(new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DiscardEffect(1, Subjects.you())),
                 "{2}: Discard a card."));
     }
 }

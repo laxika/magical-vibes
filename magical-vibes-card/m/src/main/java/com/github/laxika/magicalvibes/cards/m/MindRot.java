@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "10E", collectorNumber = "159")
 @CardRegistration(set = "M10", collectorNumber = "105")
@@ -30,6 +30,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MindRot extends Card {
 
     public MindRot() {
-        addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()));
     }
 }

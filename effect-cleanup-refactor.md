@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -353,7 +353,7 @@ fold in, the enum and the absorbed classes are deleted.
 | 4b | Lose life: `LoseLifeEffect` | `LoseLifeRecipient` (740 cards) | check `--family LoseLife` | done |
 | 4c | Gain life: `GainLifeEffect` | `GainLifeRecipient` | check `--family GainLife` | done |
 | 4d | Damage to players: `DealDamageToPlayersEffect` | `DamageRecipient` (650 cards) | `DealDamageTo{EndStepPlayer,TriggeringSpellController,EnchantedPermanentController,RandomOpponent,CombatOpponentController}Effect` | | done |
-| 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | open |
+| 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | done |
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | open |
 | 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | open |
 | 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | open |
@@ -1320,6 +1320,70 @@ looks for its pending choose-a-player enters ability instead of the baked target
   needs the user's sign-off and is not part of this plan.
 - Per-receiving-player damage siblings (`DealDamageToEachOpponentEqualTo*`, `DealDamageToEachPlayerControllingMatchingPermanentEffect`)
   need a per-player amount context or a filtered `each`, as 4b noted for life loss.
+
+### Step 4, run 4e (2026-11-19)
+
+**Survivors.** `DiscardEffect`, `DiscardHandEffect` and `DiscardCardThenEffect` replaced `DiscardRecipient recipient` with
+`PlayerSubject player` (every constructor kept with the subject in the recipient's place; no-arg / filter-only
+`DiscardHandEffect` and `DiscardCardThenEffect` constructors are `you()`). `targetSpec()`: `DiscardEffect` and
+`DiscardHandEffect` declare a benign player target iff `player.declaresTarget()` (the old `TARGET_PLAYER` spec);
+`DiscardCardThenEffect` never declared a player, so its constructor rejects a declaring subject. The three handlers resolve
+the players through `SubjectResolutionService`. `DiscardEffectHandler` keeps its three paths, picked by subject shape:
+a `TargetPlayer` with several players chooses and discards one player after another (the old multi-target
+`DiscardFollowUp.eachPlayer` queue); `Each` (and any other subject naming several players) makes every player choose in
+APNAP order and then discards the chosen cards at once (`eachPlayerRummage`, deferred discards: CR 101.4, so `each(...)`
+is accepted), random ones inline; one player goes through the single-player path (zero-amount log, drawn-card-only,
+stop-after-type/predicate). `discardCausedByOpponent` is "discarding player is not the controller" everywhere (the old
+`DEFENDING_PLAYER` `true` and `CONTROLLER` `false` are the same values). `DiscardHandEffect` sets the event value only for
+`you()`, as before; its other players discard one hand at a time (no choice to make). Discard triggers, madness,
+"if you do" follow-ups, drawn-card and last-discarded recording are untouched (same `PlayerInteractionSupport` /
+`PlayerInputService` / `discardHand` calls).
+
+**Deleted**: the enum `DiscardRecipient`, `EachTargetPlayerDiscardsEffect` and `TargetSpellControllerDiscardsEffect` with
+their handlers (ratchet 4,930 / 4,163). Mapping: `CONTROLLER` → `you()`; `TARGET_PLAYER` → `targetPlayer()` for every
+`DiscardEffect` / `DiscardHandEffect` use (it always declared; engine-built payloads included, so `MayEffectHandler`'s
+"empty hand, skip the may" check and the AI see the same set), and for the two non-declaring `DiscardCardThenEffect` uses:
+`triggeringPlayer()` (Curse of Chaos, "that attacking player", the same player its draw already reads) and
+`targetPlayerDeclaredElsewhere()` (Furnace Layer's engine-built discard, the trigger's random player target);
+`TRIGGERING_PLAYER` and `ACTIVE_PLAYER` (Necrogoyf, Necrogen Mists, Gibbering Descent, Doom Foretold, Bottomless Pit:
+"that player" of an upkeep trigger) → `triggeringPlayer()` (baked player kept); `TRIGGERING_PERMANENT_CONTROLLER` →
+`controllerOf(triggering())`; `TARGET_PERMANENT_CONTROLLER` → `controllerOf(target())`; `TARGET_PLAYER_OR_PERMANENT_CONTROLLER`
+(Blightning, Rakdos's Return, Nicol Bolas, Planeswalker, Chain of Plasma) → `allOf(targetPlayerDeclaredElsewhere(),
+controllerOf(target()))`; `DEFENDING_PLAYER` → `defendingPlayer()`; `EACH_PLAYER` / `EACH_OPPONENT` → `eachPlayer()` /
+`eachOpponent()`. `EachTargetPlayerDiscardsEffect(n)` → `DiscardEffect(n, targetPlayer())` (Ral Zarek, Guest Lecturer);
+`TargetSpellControllerDiscardsEffect(n)` → `DiscardEffect(n, controllerOf(targetSpell()))` (Frightful Delusion, Dismal
+Failure; its handler test moved into `DiscardEffectHandlerTest`). 686 card files rewritten by a deleted scratch script (683
+named the enum, 3 the absorbed records), 18 engine, 1 AI and 11 application-test files.
+
+**New variant.** `allOf(PlayerSubject...)` (`PlayerSubject.AllOf`): every player any part names, once, APNAP order; it
+rejects a declaring part. **Resolver fix.** `controllerOf(targetSpell())` on an entry with no target now reads the
+countered-spell controller the entry recorded: a counter-unless-pays rider entry carries only that
+(`FrightfulDelusionTest`'s paid case failed without it; the old sibling read it).
+
+**AI and other readers.** `SpellEvaluator` scores a non-random discard whose `player().declaresTarget()` (was
+`TARGET_PLAYER`); `MayPayManaEffectHandler` matches `you()` where it matched `CONTROLLER`; `MayEffectHandler` matches `you()`
+and `declaresTarget()`. The absorbed records implemented no capability interface.
+
+**Behaviour differences** (none changes a tested outcome): several players discard in rotated APNAP order (CR 101.4)
+instead of "active player, then seat order"; `triggeringPlayer()` prefers the recorded triggering player over the baked
+target (the same player for every collector these cards use) and a missing one discards nothing instead of throwing;
+"that planeswalker's controller" and `controllerOf(target())` fall back to the last-known controller once the permanent
+left (unreachable for the damage cards: the planeswalker leaves by state-based action after the resolution); a single
+Ral Zarek target discards through the single-player path rather than a one-player queue (same prompt, same flag).
+
+**For later runs.**
+
+- 4g: `SacrificeRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER` (Nicol Bolas, Planeswalker) is the same
+  `allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))`. `allOf` also unblocks 4a's
+  `DrawCardForYouAndDamagedPlayerEffect` (`allOf(you(), triggeringPlayer())`). `MayChoicePlayer` still has its own
+  `TARGET_PLAYER` / `TARGET_PLAYER_OR_PERMANENT_CONTROLLER` constants (Chain of Plasma, Curse of Chaos); it is a who-axis
+  for the "may" asker, not converted here.
+- Kept (ledger): `TargetPlayerDiscardsByConvergeEffect` is the converge marker of `EffectResolution.hasConvergeEffect`;
+  fold it with a converge `DynamicAmount`. `EachPlayerDiscards{DownToFewest,FractionOfHandRounded{Up,Down},NonlandCard}`
+  need a per-player amount or a discard filter (`blocked-player-loop`). The rest of the family is fused discard + another
+  instruction (step 8), including the subject siblings `{Active,Defending,Target,Each}Player...DiscardsHandThenDraws*`.
+- `DiscardEffect`'s random each-player path discards one player at a time (no choice is made, so only the "at once" half
+  of CR 101.4 differs: each player's discards are their own discard event).
 
 ## Prompt
 

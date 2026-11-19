@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "C16", collectorNumber = "20")
 @CardRegistration(set = "SCD", collectorNumber = "155")
@@ -23,7 +23,7 @@ public class RunehornHellkite extends Card {
                 List.of(
                         new ExileSelfFromGraveyardCost(),
                         SequenceEffect.of(
-                                new DiscardHandEffect(DiscardRecipient.EACH_PLAYER),
+                                new DiscardHandEffect(Subjects.eachPlayer()),
                                 new EachPlayerDrawsCardEffect(7))
                 ),
                 "{5}{R}, Exile this card from your graveyard: Each player discards their hand, then draws seven cards."

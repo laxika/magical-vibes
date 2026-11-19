@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileMatchingCardsFromGraveyardAndLibraryMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M21", collectorNumber = "135")
 @CardRegistration(set = "M21", collectorNumber = "283")
@@ -30,7 +30,7 @@ public class ChandraHeartOfFire extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new DiscardEffect(new CardsInHand(CountScope.CONTROLLER), DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(new CardsInHand(CountScope.CONTROLLER), Subjects.you()),
                         new ExileTopCardMayPlayThisTurnEffect(3, false)
                 ),
                 "+1: Discard your hand, then exile the top three cards of your library. Until end of turn, you may play cards exiled this way."

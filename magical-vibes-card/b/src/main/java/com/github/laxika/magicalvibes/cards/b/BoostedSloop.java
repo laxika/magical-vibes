@@ -6,17 +6,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DFT", collectorNumber = "190")
 public class BoostedSloop extends Card {
 
     public BoostedSloop() {
-        addTrigger(Triggers.youAttack(), new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.youAttack(), new DrawCardEffect(), new DiscardEffect(1, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

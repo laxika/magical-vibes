@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONE", collectorNumber = "73")
 public class TransplantTheorist extends Card {
@@ -43,7 +43,7 @@ public class TransplantTheorist extends Card {
         return new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                        new DiscardEffect(1, Subjects.you())),
                 "You may draw a card. If you do, discard a card.");
     }
 }

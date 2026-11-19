@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -40,7 +39,7 @@ public class CarnivalCarnage extends Card {
         CardEffect carnivalControllerDamage = new DealDamageToPlayersEffect(
                 1, Subjects.controllerOf(Subjects.target()));
         CardEffect carnageDamage = new DealDamageToPlayersEffect(3, Subjects.targetPlayer());
-        CardEffect carnageDiscard = new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER);
+        CardEffect carnageDiscard = new DiscardEffect(2, Subjects.targetPlayer());
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

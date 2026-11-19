@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "131")
 public class NezumiShortfang extends Card {
@@ -26,7 +26,7 @@ public class NezumiShortfang extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}{B}",
                 List.of(
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false),
+                        new DiscardEffect(1, Subjects.targetPlayer(), false),
                         new ConditionalEffect(new TargetPlayerHandEmpty(), new TransformToBackFaceEffect(true))
                 ),
                 "{1}{B}, {T}: Target opponent discards a card. Then if that player has no cards in "

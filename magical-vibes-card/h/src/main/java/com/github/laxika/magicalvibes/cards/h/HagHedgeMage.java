@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EVE", collectorNumber = "123")
 public class HagHedgeMage extends Card {
@@ -24,7 +24,7 @@ public class HagHedgeMage extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
-                new MayEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                new MayEffect(new DiscardEffect(1, Subjects.targetPlayer()),
                         "Have target player discard a card?"));
 
         // When this creature enters, if you control two or more Forests, you may put target card

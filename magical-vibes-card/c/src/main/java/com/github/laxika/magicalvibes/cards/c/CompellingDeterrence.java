@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Compelling Deterrence — {1}{U} Instant.
@@ -31,7 +31,7 @@ public class CompellingDeterrence extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
         )).addSpellEffect(new ReturnTargetPermanentToHandThenEffect(
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                new DiscardEffect(1, Subjects.targetPlayer()),
                 ThenEffectRecipient.TARGET_OWNER_AS_TARGET,
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))));
     }

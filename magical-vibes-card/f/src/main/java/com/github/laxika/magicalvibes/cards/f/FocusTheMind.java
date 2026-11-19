@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TDM", collectorNumber = "45")
 public class FocusTheMind extends Card {
@@ -19,6 +19,6 @@ public class FocusTheMind extends Card {
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
         addSpellEffect(new DrawCardEffect(3));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(1, Subjects.you()));
     }
 }

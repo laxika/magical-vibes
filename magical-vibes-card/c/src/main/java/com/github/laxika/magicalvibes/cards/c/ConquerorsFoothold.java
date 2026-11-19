@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Conqueror's Foothold — back face of Conqueror's Galleon.
@@ -27,7 +27,7 @@ public class ConquerorsFoothold extends Card {
         // {2}, {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}",
-                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                 "{2}, {T}: Draw a card, then discard a card."
         ));
 

@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RNA", collectorNumber = "109")
 public class RixMaadiReveler extends Card {
@@ -28,6 +28,6 @@ public class RixMaadiReveler extends Card {
                 new ConditionalEffect(
                 new NotCondition(new CastForSpectacleCost()),
                 new DiscardCardThenEffect(null, new DrawCardEffect(1), "a card", null, false, null, null,
-                        DiscardRecipient.CONTROLLER, true, true)));
+                        Subjects.you(), true, true)));
     }
 }

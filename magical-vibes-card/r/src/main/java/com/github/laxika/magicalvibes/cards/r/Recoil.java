@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INV", collectorNumber = "264")
 @CardRegistration(set = "DDH", collectorNumber = "61")
@@ -18,7 +18,7 @@ public class Recoil extends Card {
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
                 .addSpellEffect(new ReturnTargetPermanentToHandThenEffect(
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(1, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
     }
 }

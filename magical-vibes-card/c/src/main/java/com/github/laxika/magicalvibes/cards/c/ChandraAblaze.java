@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZEN", collectorNumber = "120")
 public class ChandraAblaze extends Card {
@@ -30,14 +30,14 @@ public class ChandraAblaze extends Card {
                         null,
                         new DealDamageToAnyTargetEffect(4),
                         "a card",
-                        redCard, true, null, null, DiscardRecipient.CONTROLLER, true)),
+                        redCard, true, null, null, Subjects.you(), true)),
                 "+1: Discard a card. If a red card is discarded this way, Chandra deals 4 damage to any target."
         ));
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
-                        new DiscardHandEffect(DiscardRecipient.EACH_PLAYER),
+                        new DiscardHandEffect(Subjects.eachPlayer()),
                         new EachPlayerDrawsCardEffect(3)),
                 "−2: Each player discards their hand, then draws three cards."
         ));

@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 
 /**
  * Moves the controller's venture marker (CR 309.5): into the first room of a dungeon they choose
@@ -202,7 +203,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 2 -> List.of(new com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentOrLosesLifeEffect(
                         eligibleSacrifice, 2, "an artifact, creature, or land"));
                 case 3 -> List.of(new com.github.laxika.magicalvibes.model.effect.DiscardEffect(1,
-                        com.github.laxika.magicalvibes.model.effect.DiscardRecipient.CONTROLLER),
+                        Subjects.you()),
                         new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate(),
                                 com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER),

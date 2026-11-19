@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "84")
 @CardRegistration(set = "DDS", collectorNumber = "9")
@@ -21,7 +21,7 @@ public class SiftThroughSands extends Card {
 
     public SiftThroughSands() {
         addSpellEffect(new DrawCardEffect(2));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER, false));
+        addSpellEffect(new DiscardEffect(1, Subjects.you(), false));
         addSpellEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new ControllerCastAnotherSpellThisTurn(new CardNamedPredicate("Peer Through Depths")),

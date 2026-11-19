@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "83")
@@ -20,8 +20,8 @@ public class ResoundingScream extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true))
-                .addTrigger(Triggers.youCycleThisCard(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER, true));
+                .addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer(), true))
+                .addTrigger(Triggers.youCycleThisCard(), new DiscardEffect(2, Subjects.targetPlayer(), true));
 
         // Cycling {5}{U}{B}{R} ({5}{U}{B}{R}, Discard this card: Draw a card.)
         addCycling("{5}{U}{B}{R}");

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOB", collectorNumber = "169")
 public class TomBertAndWilliam extends Card {
@@ -30,7 +30,7 @@ public class TomBertAndWilliam extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, true, false, true),
                         new DrawCardEffect(new XValue()),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(1, Subjects.you())
                 ),
                 "{1}, Sacrifice another creature: Draw cards equal to the sacrificed creature's power, "
                         + "then discard a card."

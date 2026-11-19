@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCar
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SNC", collectorNumber = "227")
 public class TaintedIndulgence extends Card {
@@ -16,6 +16,6 @@ public class TaintedIndulgence extends Card {
         addSpellEffect(new DrawCardEffect(2));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new DistinctManaValuesAmongCardsInGraveyardAtLeast(5)),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 }

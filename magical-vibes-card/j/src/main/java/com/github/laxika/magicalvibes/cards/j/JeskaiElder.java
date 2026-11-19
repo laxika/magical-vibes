@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KTK", collectorNumber = "43")
 @CardRegistration(set = "M21", collectorNumber = "53")
@@ -22,7 +22,7 @@ public class JeskaiElder extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(1, Subjects.you())
                 ),
                 "Draw a card, then discard a card?"
         ));

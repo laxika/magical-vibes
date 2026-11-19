@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AKH", collectorNumber = "228")
 @CardRegistration(set = "AKR", collectorNumber = "271")
@@ -29,7 +29,7 @@ public class GateToTheAfterlife extends Card {
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                 new GainLifeEffect(1),
                 new MayEffect(
-                        SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                        SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                         "Draw a card and discard a card?")
         ));
 

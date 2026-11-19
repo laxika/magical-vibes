@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KLD", collectorNumber = "65")
 @CardRegistration(set = "KLR", collectorNumber = "68")
@@ -18,6 +18,6 @@ public class TezzeretsAmbition extends Card {
         addSpellEffect(new DrawCardEffect(3));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentIsArtifactPredicate())),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 }

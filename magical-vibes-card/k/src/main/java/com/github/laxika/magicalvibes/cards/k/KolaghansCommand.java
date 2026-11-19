@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DTK", collectorNumber = "224")
 @CardRegistration(set = "HA5", collectorNumber = "20")
@@ -45,7 +45,7 @@ public class KolaghansCommand extends Card {
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player discards a card",
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(1, Subjects.targetPlayer()),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact",

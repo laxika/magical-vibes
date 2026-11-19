@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GRN", collectorNumber = "167")
 @CardRegistration(set = "MKC", collectorNumber = "208")
@@ -16,7 +16,7 @@ public class DisinformationCampaign extends Card {
     public DisinformationCampaign() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+                new DiscardEffect(1, Subjects.eachOpponent()));
         addTrigger(Triggers.youSurveil(), ReturnToHandEffect.self());
     }
 }

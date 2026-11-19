@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToCombatDamageCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -956,7 +955,7 @@ class TriggeredAbilityStackServiceTest {
         Permanent creature = new Permanent(card);
 
         stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)), card, creature));
+                new DiscardEffect(1, Subjects.targetPlayer())), card, creature));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(PLAYER2_ID);
@@ -1228,7 +1227,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Emblem", 0, 0);
         Permanent source = new Permanent(card);
         var ability = new TriggeredAbility(Triggers.youCastSpell(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))
+                new DiscardEffect(1, Subjects.targetPlayer()))
                 .withTargetFilter(new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));
 

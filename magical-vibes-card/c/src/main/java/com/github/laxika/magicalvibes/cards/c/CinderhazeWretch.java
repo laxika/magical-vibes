@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SHM", collectorNumber = "60")
 public class CinderhazeWretch extends Card {
@@ -20,7 +20,7 @@ public class CinderhazeWretch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
+                List.of(new DiscardEffect(1, Subjects.targetPlayer())),
                 "{T}: Target player discards a card. Activate only during your turn.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_TURN));
 

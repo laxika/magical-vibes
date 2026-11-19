@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONS", collectorNumber = "131")
 public class CabalSlaver extends Card {
@@ -16,9 +16,9 @@ public class CabalSlaver extends Card {
         // The trigger is Cabal Slaver's own, so its controller controls it whoever controls the Goblin.
         addTrigger(Triggers.creatureDealsCombatDamageToYou()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
-                new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER));
+                new DiscardEffect(1, Subjects.triggeringPlayer()));
     }
 }

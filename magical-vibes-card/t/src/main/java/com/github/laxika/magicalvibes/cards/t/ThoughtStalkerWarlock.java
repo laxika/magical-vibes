@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTu
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BLB", collectorNumber = "118")
 public class ThoughtStalkerWarlock extends Card {
@@ -29,7 +29,7 @@ public class ThoughtStalkerWarlock extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalReplacementEffect(
                 new TargetPlayerLostLifeThisTurn(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                new DiscardEffect(1, Subjects.targetPlayer()),
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD)
         ));
     }

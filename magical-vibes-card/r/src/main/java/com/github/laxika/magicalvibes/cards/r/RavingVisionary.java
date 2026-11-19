@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH2", collectorNumber = "56")
 public class RavingVisionary extends Card {
@@ -17,7 +17,7 @@ public class RavingVisionary extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(), new DiscardEffect(1, Subjects.you())),
                 "{U}, {T}: Draw a card, then discard a card."
         ));
 

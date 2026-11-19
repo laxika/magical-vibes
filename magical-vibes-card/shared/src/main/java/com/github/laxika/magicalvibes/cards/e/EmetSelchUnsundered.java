@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.h.HadesSorcererOfEld;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FIN", collectorNumber = "218")
 @CardRegistration(set = "FIN", collectorNumber = "394")
@@ -26,7 +26,7 @@ public class EmetSelchUnsundered extends Card {
 
         SequenceEffect loot = SequenceEffect.of(
                 new DrawCardEffect(1),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), loot);
         addTrigger(Triggers.attacks(), loot);
 

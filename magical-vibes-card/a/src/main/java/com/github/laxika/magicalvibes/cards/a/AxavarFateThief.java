@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HeistTargetOpponentLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YEOE", collectorNumber = "23")
 public class AxavarFateThief extends Card {
@@ -29,7 +29,7 @@ public class AxavarFateThief extends Card {
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new VoidCondition()),
                 SequenceEffect.of(
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(1, Subjects.you()),
                         new HeistTargetOpponentLibraryEffect()));
     }
 }

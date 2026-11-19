@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalLoyaltyCountersToCastSpellEffect;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AER", collectorNumber = "128")
 @CardRegistration(set = "KLR", collectorNumber = "191")
@@ -40,7 +40,7 @@ public class DarkIntimations extends Card {
                 )),
                 SacrificeRecipient.EACH_OPPONENT
         ));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addSpellEffect(new DiscardEffect(1, Subjects.eachOpponent()));
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAnyOfPredicate(List.of(

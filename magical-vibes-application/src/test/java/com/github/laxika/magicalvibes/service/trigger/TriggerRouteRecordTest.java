@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
@@ -455,7 +454,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> test.helperAbilityResolves(cards, new DrawCardEffect(1))),
                 watch("you discard a card", "youDiscardCard", Triggers::youDiscardCard, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true))),
+                                new DiscardEffect(1, Subjects.you(), true))),
                 watch("counters put on this", "countersPutOnThis", Triggers::countersPutOnThis, CardType.CREATURE,
                         TriggerRouteRecordTest::countersArePutOnFixtures),
                 watch("counters put on a creature you control", "countersPutOnCreatureYouControl", Triggers::countersPutOnCreatureYouControl,
@@ -650,7 +649,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> test.helperAbilityResolves(cards, new DrawCardEffect(2))),
                 watch("you discard one or more cards", "youDiscardOneOrMoreCards", Triggers::youDiscardOneOrMoreCards, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true))),
+                                new DiscardEffect(1, Subjects.you(), true))),
                 watch("a library is shuffled", "playerShufflesLibrary", Triggers::playerShufflesLibrary, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards, new ShuffleLibraryEffect(false))),
                 watch("you proliferate", "youProliferate", Triggers::youProliferate, CardType.ENCHANTMENT,
@@ -930,13 +929,13 @@ class TriggerRouteRecordTest extends BaseCardTest {
                 watch("an opponent discards a card", "opponentDiscardsCard", Triggers::opponentDiscardsCard,
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
-                                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT, true))),
+                                new DiscardEffect(1, Subjects.eachOpponent(), true))),
                 watch("an opponent causes you to discard a card", "opponentCausesYouToDiscardCard",
                         Triggers::opponentCausesYouToDiscardCard, CardType.ENCHANTMENT,
                         (test, cards) -> {
                             test.fixturePermanents(cards);
                             test.opponentHelperAbilityResolves(
-                                    new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT, true));
+                                    new DiscardEffect(1, Subjects.eachOpponent(), true));
                         }),
                 watch("a player cycles a card", "playerCyclesCard", Triggers::playerCyclesCard, CardType.ENCHANTMENT,
                         TriggerRouteRecordTest::youCycleACard),
@@ -949,7 +948,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             for (Card card : cards) {
                                 test.harness.setHand(test.player1, List.of(card));
                                 test.helperEntersAndItsAbilityResolves(
-                                        new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
+                                        new DiscardEffect(1, Subjects.you(), true));
                                 test.answerAll();
                             }
                         }),
@@ -959,7 +958,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             for (Card card : cards) {
                                 test.harness.setHand(test.player1, List.of(card));
                                 test.opponentHelperAbilityResolves(
-                                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT, true));
+                                        new DiscardEffect(1, Subjects.eachOpponent(), true));
                                 test.answerAll();
                             }
                         }),

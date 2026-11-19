@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDrawsCardsEqualToHandThenDiscardsThatManyEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /** Resolves Laquatus's Creativity's draw-then-discard effect. */
 @Component
@@ -42,7 +42,7 @@ public class TargetPlayerDrawsCardsEqualToHandThenDiscardsThatManyEffectHandler
             return;
         }
 
-        DiscardEffect discard = new DiscardEffect(count, DiscardRecipient.TARGET_PLAYER, false);
+        DiscardEffect discard = new DiscardEffect(count, Subjects.targetPlayer(), false);
         if (gameData.interaction.isAwaitingInput() || !gameData.pendingReplacementCardDraws.isEmpty()) {
             insertAfter(entry, effect, discard);
             return;

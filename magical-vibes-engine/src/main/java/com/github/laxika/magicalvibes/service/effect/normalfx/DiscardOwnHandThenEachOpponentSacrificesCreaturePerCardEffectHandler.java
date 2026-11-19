@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Resolves {@link DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect} (Malfegor): the
@@ -47,7 +47,7 @@ public class DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffectHandle
         List<Card> hand = gameData.playerHands.get(controllerId);
         int discardCount = hand == null ? 0 : hand.size();
 
-        discardHandEffectHandler.resolve(gameData, entry, new DiscardHandEffect(DiscardRecipient.CONTROLLER));
+        discardHandEffectHandler.resolve(gameData, entry, new DiscardHandEffect(Subjects.you()));
 
         if (discardCount <= 0) {
             return;

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LCC", collectorNumber = "16")
 @CardRegistration(set = "LCC", collectorNumber = "36")
@@ -27,7 +27,7 @@ public class PaleontologistsPickAxe extends Card {
         setBackFaceCard(new DinosaurHeaddress());
 
         addTrigger(Triggers.creatureAttacks().withFilter(new PermanentIsHostOfSourceAuraPredicate()),
-                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())));
 
         addActivatedAbility(new EquipActivatedAbility("{1}"));
 

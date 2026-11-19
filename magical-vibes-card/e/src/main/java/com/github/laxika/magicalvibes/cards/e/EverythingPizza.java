@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -70,7 +69,7 @@ public class EverythingPizza extends Card {
                         new SacrificeSelfCost(),
                         gainLife,
                         draw,
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                        new DiscardEffect(1, Subjects.eachOpponent()),
                         damage,
                         counters),
                 "{2}{W}{U}{B}{R}{G}, {T}, Sacrifice this artifact: Target player gains 3 life and draws a card. "

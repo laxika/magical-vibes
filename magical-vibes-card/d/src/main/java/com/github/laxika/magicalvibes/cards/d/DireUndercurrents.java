@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -37,7 +36,7 @@ public class DireUndercurrents extends Card {
                                 Triggers.CREATURE,
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                new MayEffect(new DiscardEffect(1, Subjects.targetPlayer()),
                         "have target player discard a card"));
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DSK", collectorNumber = "238")
 public class VictorValgavothsSeneschal extends Card {
@@ -25,7 +25,7 @@ public class VictorValgavothsSeneschal extends Card {
         SequenceEffect eerie = SequenceEffect.of(
                 new ConditionalEffect(new NthAbilityResolutionThisTurn(1), new SurveilEffect(2)),
                 new ConditionalEffect(new NthAbilityResolutionThisTurn(2),
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)),
+                        new DiscardEffect(1, Subjects.eachOpponent())),
                 new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

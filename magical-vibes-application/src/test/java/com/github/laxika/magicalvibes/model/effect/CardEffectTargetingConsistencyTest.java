@@ -68,9 +68,7 @@ class CardEffectTargetingConsistencyTest {
             // Triggers.drawStep(ActivePlayer.ANY) trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.
             "TargetPlayerLosesLifeAndSearchesLibraryToHandEffect",
-            // Piggyback: rides on a counterspell's existing target (e.g. Frightful Delusion,
-            // Psychic Barrier).
-            "TargetSpellControllerDiscardsEffect",
+            // Piggyback: rides on a counterspell's existing target (e.g. Psychic Barrier).
             "TargetSpellControllerLosesLifeEffect",
             // Piggyback: rides on the spell-level player target declared via the card's
             // target(PlayerPredicateTargetFilter) (Mana Short) — the handler reads the stack

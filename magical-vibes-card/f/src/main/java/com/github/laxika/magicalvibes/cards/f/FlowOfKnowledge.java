@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BRO", collectorNumber = "49")
 public class FlowOfKnowledge extends Card {
@@ -17,6 +17,6 @@ public class FlowOfKnowledge extends Card {
         // Draw a card for each Island you control, then discard two cards.
         addSpellEffect(new DrawCardEffect(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER)));
-        addSpellEffect(new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(2, Subjects.you()));
     }
 }

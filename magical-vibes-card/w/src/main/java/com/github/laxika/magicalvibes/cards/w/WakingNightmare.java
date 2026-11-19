@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "149")
 @CardRegistration(set = "MM2", collectorNumber = "103")
 public class WakingNightmare extends Card {
 
     public WakingNightmare() {
-        addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()));
     }
 }

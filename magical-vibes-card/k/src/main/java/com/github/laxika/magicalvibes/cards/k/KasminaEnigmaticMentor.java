@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WAR", collectorNumber = "56")
 @CardRegistration(set = "SLD", collectorNumber = "507")
@@ -34,7 +34,7 @@ public class KasminaEnigmaticMentor extends Card {
                         new CreateTokenEffect("Wizard", 2, 2, CardColor.BLUE,
                                 List.of(CardSubtype.WIZARD), Set.of(), Set.of()),
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(1, Subjects.you())
                 ),
                 "-2: Create a 2/2 blue Wizard creature token. Draw a card, then discard a card."
         ));

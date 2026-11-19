@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MBS", collectorNumber = "138")
 @CardRegistration(set = "MD1", collectorNumber = "10")
@@ -35,7 +35,7 @@ public class SwordOfFeastAndFamine extends Card {
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player discards a card and you untap all lands you control
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, Subjects.targetPlayer()),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
 
         // Equip {2}

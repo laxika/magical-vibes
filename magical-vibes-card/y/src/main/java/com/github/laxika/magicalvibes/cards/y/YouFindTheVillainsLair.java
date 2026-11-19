@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "84")
 @CardRegistration(set = "HBG", collectorNumber = "137")
@@ -21,7 +21,7 @@ public class YouFindTheVillainsLair extends Card {
                         new CounterSpellEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Learn Their Secrets — Draw two cards, then discard two cards",
-                        List.of(new DrawCardEffect(2), new DiscardEffect(2, DiscardRecipient.CONTROLLER)))
+                        List.of(new DrawCardEffect(2), new DiscardEffect(2, Subjects.you())))
         )));
     }
 }

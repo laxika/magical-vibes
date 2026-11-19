@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +25,7 @@ public class LetsPlayAGame extends Card {
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent discards two cards",
-                        new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT)),
+                        new DiscardEffect(2, Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses 3 life and you gain 3 life",
                         List.of(

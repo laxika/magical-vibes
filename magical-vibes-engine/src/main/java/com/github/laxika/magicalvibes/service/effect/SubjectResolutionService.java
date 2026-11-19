@@ -300,6 +300,13 @@ public class SubjectResolutionService {
                         .filter(playerId -> !excluded.contains(playerId))
                         .toList();
             }
+            case PlayerSubject.AllOf allOf -> {
+                Set<UUID> union = new LinkedHashSet<>();
+                for (PlayerSubject part : allOf.subjects()) {
+                    union.addAll(players(ctx, part));
+                }
+                yield List.copyOf(union);
+            }
         };
         return inApnapOrder(gameData, players);
     }
@@ -326,21 +333,24 @@ public class SubjectResolutionService {
     /**
      * "That spell's controller": the controller of the spell the entry targets while it is on the stack; once an
      * earlier step of this resolution countered it, the controller recorded as it was countered; else the controller
-     * the entry recorded as it removed it.
+     * the entry recorded as it removed it. A counter-unless-pays rider's entry carries no target, only the recorded
+     * controller (Frightful Delusion's paid branch).
      */
     private static UUID targetSpellController(Context ctx) {
         StackEntry entry = ctx.entry();
         UUID spellCardId = entry.getTargetId();
-        if (spellCardId == null) {
-            return null;
-        }
-        for (StackEntry onStack : ctx.gameData().stack) {
-            if (spellCardId.equals(onStack.getTargetableId())) {
-                return onStack.getControllerId();
+        if (spellCardId != null) {
+            for (StackEntry onStack : ctx.gameData().stack) {
+                if (spellCardId.equals(onStack.getTargetableId())) {
+                    return onStack.getControllerId();
+                }
             }
         }
         UUID countered = entry.getCounteredSpellControllerId();
-        return countered != null ? countered : entry.lastKnownPermanentController(spellCardId);
+        if (countered != null || spellCardId == null) {
+            return countered;
+        }
+        return entry.lastKnownPermanentController(spellCardId);
     }
 
     private UUID controllerOf(Context ctx, UUID permanentId) {

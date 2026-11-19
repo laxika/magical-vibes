@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ELD", collectorNumber = "193")
 @CardRegistration(set = "ELD", collectorNumber = "396")
@@ -26,7 +26,7 @@ public class ImprobableAlliance extends Card {
                         List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(false, "{4}{U}{R}",
-                List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(), new DiscardEffect(1, Subjects.you())),
                 "{4}{U}{R}: Draw a card, then discard a card."));
     }
 }

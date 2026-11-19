@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -50,7 +51,8 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         Card handCard2 = createCard("Forest");
         gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
 
-        int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService)
+        int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService))
                 .discardHand(gd, player1Id, player1Id, "One with Nothing");
 
         assertThat(discardCount).isEqualTo(2);
@@ -100,7 +102,7 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
     @DisplayName("Discards every player in a target group")
     void discardsEveryTargetPlayer() {
         Card card = createCard("Wheel and Deal");
-        DiscardHandEffect effect = new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER);
+        DiscardHandEffect effect = new DiscardHandEffect(Subjects.targetPlayer());
         card.target(0, 2).addSpellEffect(effect);
         Card player1Card = createCard("Mountain");
         Card player2Card = createCard("Forest");

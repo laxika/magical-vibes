@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOB", collectorNumber = "32")
 public class BilboLuckwearer extends Card {
@@ -19,7 +19,7 @@ public class BilboLuckwearer extends Card {
         addStaticEffect(new CantBeBlockedEffect());
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new DrawCardEffect(1),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 
     @Override

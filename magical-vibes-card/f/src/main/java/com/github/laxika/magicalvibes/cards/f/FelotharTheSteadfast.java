@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCanAttackAsThoughNoDefenderEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TDC", collectorNumber = "4")
 public class FelotharTheSteadfast extends Card {
@@ -33,7 +33,7 @@ public class FelotharTheSteadfast extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true, null, true),
                         new DrawCardEffect(new SacrificedPermanentToughness()),
-                        new DiscardEffect(new SacrificedPermanentPower(), DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(new SacrificedPermanentPower(), Subjects.you())
                 ),
                 "{3}, {T}, Sacrifice another creature: Draw cards equal to the sacrificed creature's toughness, then discard cards equal to its power."
         ));

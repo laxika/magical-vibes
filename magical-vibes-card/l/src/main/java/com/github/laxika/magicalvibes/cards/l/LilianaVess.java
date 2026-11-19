@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LRW", collectorNumber = "121")
 @CardRegistration(set = "M10", collectorNumber = "102")
@@ -30,7 +30,7 @@ public class LilianaVess extends Card {
         // +1: Target player discards a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
+                List.of(new DiscardEffect(1, Subjects.targetPlayer())),
                 "+1: Target player discards a card."
         ));
 

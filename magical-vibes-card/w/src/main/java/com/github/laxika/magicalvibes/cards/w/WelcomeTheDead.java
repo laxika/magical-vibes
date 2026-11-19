@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TDC", collectorNumber = "30")
 @CardRegistration(set = "TDC", collectorNumber = "70")
@@ -25,7 +25,7 @@ public class WelcomeTheDead extends Card {
     public WelcomeTheDead() {
         addSpellEffect(SequenceEffect.of(
                 new DrawCardEffect(2),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DiscardEffect(1, Subjects.you()),
                 new LoseLifeEffect(2),
                 tappedBlackZombie(new CardsPutIntoGraveyardFromHandOrLibraryThisTurn())
         ));

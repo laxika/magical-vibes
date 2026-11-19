@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INV", collectorNumber = "109")
 @CardRegistration(set = "DDM", collectorNumber = "67")
@@ -21,8 +21,8 @@ public class HypnoticCloud extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
-                new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)
+                new DiscardEffect(1, Subjects.targetPlayer()),
+                new DiscardEffect(3, Subjects.targetPlayer())
         ));
     }
 }

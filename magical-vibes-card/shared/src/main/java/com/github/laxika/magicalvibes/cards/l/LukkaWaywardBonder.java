@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 public class LukkaWaywardBonder extends Card {
 
@@ -29,7 +29,7 @@ public class LukkaWaywardBonder extends Card {
                 +1,
                 List.of(new MayEffect(new DiscardCardThenEffect(
                         null, new DrawCardEffect(1), "a card", null, false, CardType.CREATURE,
-                        new DrawCardEffect(2), DiscardRecipient.CONTROLLER, true), "Discard a card?")),
+                        new DrawCardEffect(2), Subjects.you(), true), "Discard a card?")),
                 "+1: You may discard a card. If you do, draw a card. If a creature card was discarded this way, draw two cards instead."
         ));
 

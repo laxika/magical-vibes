@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaUpToNTimesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MSH", collectorNumber = "130")
 public class HawkeyeMasterMarksman extends Card {
@@ -29,7 +29,7 @@ public class HawkeyeMasterMarksman extends Card {
         DealDamageToTargetPlayerOrPlaneswalkerEffect explosive =
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
         SequenceEffect boomerang = SequenceEffect.of(
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DiscardEffect(1, Subjects.you()),
                 new DrawCardEffect(1));
 
         target(TargetFilters.creature(), 0, 1);

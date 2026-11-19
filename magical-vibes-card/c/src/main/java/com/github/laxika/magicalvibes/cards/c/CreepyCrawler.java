@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsAfraidOfController;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MB2", collectorNumber = "308")
 @CardRegistration(set = "MB2", collectorNumber = "544")
@@ -17,6 +17,6 @@ public class CreepyCrawler extends Card {
     public CreepyCrawler() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withEventCondition(new TargetPlayerIsAfraidOfController()),
-                SequenceEffect.of(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER), new DrawCardEffect()));
+                SequenceEffect.of(new DiscardEffect(1, Subjects.targetPlayer()), new DrawCardEffect()));
     }
 }

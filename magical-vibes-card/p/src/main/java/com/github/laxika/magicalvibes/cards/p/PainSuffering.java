@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INV", collectorNumber = "294")
 @CardRegistration(set = "DDH", collectorNumber = "72")
@@ -17,7 +17,7 @@ import java.util.List;
 public class PainSuffering extends Card {
 
     public PainSuffering() {
-        CardEffect pain = new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER);
+        CardEffect pain = new DiscardEffect(1, Subjects.targetPlayer());
         CardEffect suffering = new DestroyTargetPermanentEffect();
 
         addSpellEffect(new ChooseOneEffect(List.of(

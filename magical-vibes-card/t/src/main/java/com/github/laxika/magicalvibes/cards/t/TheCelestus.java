@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.BecomeDayAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ToggleDayNightEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MID", collectorNumber = "252")
 @CardRegistration(set = "DBL", collectorNumber = "252")
@@ -36,7 +36,7 @@ public class TheCelestus extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                                new DiscardEffect(1, Subjects.you())
                         ),
                         "Draw a card, then discard a card?"
                 )

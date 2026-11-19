@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,6 +24,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MOC", collectorNumber = "5")
 @CardRegistration(set = "MOC", collectorNumber = "97")
@@ -34,7 +34,7 @@ public class SidarJabariOfZhalfir extends Card {
     public SidarJabariOfZhalfir() {
         SequenceEffect attackEffect = SequenceEffect.of(
                 new DrawCardEffect(1),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
         ConditionalEffect eminenceGate = new ConditionalEffect(
                 new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield())),
                 attackEffect);

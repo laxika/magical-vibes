@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TSP", collectorNumber = "66")
 @CardRegistration(set = "TSR", collectorNumber = "74")
@@ -17,6 +17,6 @@ public class LooterIlKor extends Card {
     public LooterIlKor() {
         addTrigger(Triggers.dealsDamageToOpponent(), SequenceEffect.of(
                 new DrawCardEffect(),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "OTJ", collectorNumber = "75")
 @CardRegistration(set = "MAR", collectorNumber = "62")
@@ -36,7 +36,7 @@ public class ThreeStepsAhead extends Card {
                                 "Target must be an artifact or creature you control.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw two cards, then discard a card",
-                        List.of(new DrawCardEffect(2), new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                        List.of(new DrawCardEffect(2), new DiscardEffect(1, Subjects.you())))
         )));
     }
 }

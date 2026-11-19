@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
@@ -30,7 +29,7 @@ public class TibaltTheFiendBlooded extends Card {
         // +1: Draw a card, then discard a card at random.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER, true)),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you(), true)),
                 "+1: Draw a card, then discard a card at random."
         ));
 

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DGM", collectorNumber = "126")
 @CardRegistration(set = "PIO", collectorNumber = "387")
@@ -27,7 +27,7 @@ public class DownDirty extends Card {
         TargetFilter graveyardCard = new GraveyardCardPredicateTargetFilter(
                 null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
 
-        CardEffect down = new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER);
+        CardEffect down = new DiscardEffect(2, Subjects.targetPlayer());
         CardEffect dirty = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .targetGraveyard(true)

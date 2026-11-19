@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -81,6 +80,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Begins the steps and phases of a turn for their triggered abilities (CR 603.2b): upkeep, draw step, the main phases,
@@ -950,7 +950,7 @@ public class StepTriggerService {
                                 pending.followUpSourceCard().getName() + "'s delayed trigger — discard "
                                         + discardCount + " cards",
                                 new ArrayList<>(List.of(new DiscardEffect(
-                                        discardCount, DiscardRecipient.CONTROLLER))));
+                                        discardCount, Subjects.you()))));
                         discardEntry.setNonTargeting(true);
                         gameLogService.append(gameData,
                                 GameLog.cardThen(pending.followUpSourceCard(), "'s delayed trigger discards cards."));

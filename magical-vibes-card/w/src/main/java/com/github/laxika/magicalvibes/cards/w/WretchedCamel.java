@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOU", collectorNumber = "82")
 public class WretchedCamel extends Card {
@@ -33,6 +33,6 @@ public class WretchedCamel extends Card {
                 "Target must be a player"
         )).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)), new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))))),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(1, Subjects.targetPlayer()));
     }
 }

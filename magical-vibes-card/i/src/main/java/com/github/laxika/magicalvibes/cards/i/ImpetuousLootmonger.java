@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HeistTargetOpponentLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YOTJ", collectorNumber = "12")
 public class ImpetuousLootmonger extends Card {
@@ -23,7 +23,7 @@ public class ImpetuousLootmonger extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(1, Subjects.you()),
                         new HeistTargetOpponentLibraryEffect()));
 
         // Whenever you cast a spell you don't own, create a tapped Treasure token.

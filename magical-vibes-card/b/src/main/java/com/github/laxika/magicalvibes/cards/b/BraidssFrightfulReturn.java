@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,7 +38,7 @@ public class BraidssFrightfulReturn extends Card {
         addTrigger(Triggers.chapter(1), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentIsCreaturePredicate(),
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                        new DiscardEffect(1, Subjects.eachOpponent()),
                         "a creature", false, false),
                 "Sacrifice a creature?"));
 

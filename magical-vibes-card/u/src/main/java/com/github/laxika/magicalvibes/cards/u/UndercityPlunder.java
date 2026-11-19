@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YNEO", collectorNumber = "15")
 public class UndercityPlunder extends Card {
@@ -18,9 +18,9 @@ public class UndercityPlunder extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))
+                .addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()))
                 .addSpellEffect(new MayEffect(
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(1, Subjects.targetPlayer()),
                         "Discard an additional card?",
                         new ConjureRandomCardFromTargetPlayerLibraryEffect(),
                         MayChoicePlayer.TARGET_PLAYER));

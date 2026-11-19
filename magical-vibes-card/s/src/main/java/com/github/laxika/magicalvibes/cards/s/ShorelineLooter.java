@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BLB", collectorNumber = "70")
 public class ShorelineLooter extends Card {
@@ -21,6 +21,6 @@ public class ShorelineLooter extends Card {
                 new DrawCardEffect(1),
                 new ConditionalEffect(
                         new NotCondition(new GraveyardCardThreshold(7, null)),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                        new DiscardEffect(1, Subjects.you()))));
     }
 }

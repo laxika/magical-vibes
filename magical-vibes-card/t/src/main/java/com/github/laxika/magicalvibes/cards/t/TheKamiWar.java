@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.o.OKagachiMadeManifest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "NEO", collectorNumber = "227")
 public class TheKamiWar extends Card {
@@ -38,7 +38,7 @@ public class TheKamiWar extends Card {
                 "Target must be another nonland permanent");
         addTrigger(Triggers.chapter(2),
                 new ReturnTargetPermanentsThenEffect(
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                        new DiscardEffect(1, Subjects.eachOpponent()),
                         chapterTwoTarget.predicate(), true));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(chapterTwoTarget, 0, 1)));

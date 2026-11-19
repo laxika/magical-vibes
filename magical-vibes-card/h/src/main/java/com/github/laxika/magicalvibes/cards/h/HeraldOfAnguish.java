@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AER", collectorNumber = "64")
 @CardRegistration(set = "KLR", collectorNumber = "94")
@@ -21,7 +21,7 @@ public class HeraldOfAnguish extends Card {
 
     public HeraldOfAnguish() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+                new DiscardEffect(1, Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

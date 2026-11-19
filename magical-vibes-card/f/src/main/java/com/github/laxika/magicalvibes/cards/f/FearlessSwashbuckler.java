@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DFT", collectorNumber = "204")
 public class FearlessSwashbuckler extends Card {
@@ -34,6 +34,6 @@ public class FearlessSwashbuckler extends Card {
                                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
                                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))
                                 ))),
-                SequenceEffect.of(new DrawCardEffect(3), new DiscardEffect(2, DiscardRecipient.CONTROLLER)));
+                SequenceEffect.of(new DrawCardEffect(3), new DiscardEffect(2, Subjects.you())));
     }
 }

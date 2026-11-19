@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Liliana, Defiant Necromancer — back face of Liliana, Heretical Healer.
@@ -30,7 +30,7 @@ public class LilianaDefiantNecromancer extends Card {
         // +2: Each player discards a card.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new DiscardEffect(1, DiscardRecipient.EACH_PLAYER, false)),
+                List.of(new DiscardEffect(1, Subjects.eachPlayer(), false)),
                 "+2: Each player discards a card."
         ));
 

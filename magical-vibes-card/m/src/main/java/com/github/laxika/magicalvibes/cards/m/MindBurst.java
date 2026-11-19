@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "148")
 public class MindBurst extends Card {
@@ -23,6 +23,6 @@ public class MindBurst extends Card {
         )).addSpellEffect(new DiscardEffect(
                 new Sum(new Fixed(1), new CardsInGraveyard(
                         new CardNamedPredicate("Mind Burst"), CountScope.ANY_PLAYER)),
-                DiscardRecipient.TARGET_PLAYER));
+                Subjects.targetPlayer()));
     }
 }

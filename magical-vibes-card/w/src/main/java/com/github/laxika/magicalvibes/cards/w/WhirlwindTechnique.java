@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -22,7 +21,7 @@ public class WhirlwindTechnique extends Card {
 
         target(anyPlayer)
                 .addSpellEffect(new DrawCardEffect(2, Subjects.targetPlayer()))
-                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+                .addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
         target(TargetFilters.creature(), 0, 2)
                 .addSpellEffect(new AirbendTargetPermanentEffect());
     }

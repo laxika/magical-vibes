@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -18,8 +17,8 @@ public class CarefulConsideration extends Card {
     public CarefulConsideration() {
         addSpellEffect(new DrawCardEffect(4, Subjects.targetPlayerDeclaredElsewhere()));
         addSpellEffect(new ConditionalEffect(
-                new CastDuringMainPhase(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
+                new CastDuringMainPhase(), new DiscardEffect(2, Subjects.targetPlayer())));
         addSpellEffect(new ConditionalEffect(
-                new NotCondition(new CastDuringMainPhase()), new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)));
+                new NotCondition(new CastDuringMainPhase()), new DiscardEffect(3, Subjects.targetPlayer())));
     }
 }

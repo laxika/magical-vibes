@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH1", collectorNumber = "95")
 public class HeadlessSpecter extends Card {
@@ -14,6 +14,6 @@ public class HeadlessSpecter extends Card {
     public HeadlessSpecter() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerHandEmpty()),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true));
+                new DiscardEffect(1, Subjects.targetPlayer(), true));
     }
 }

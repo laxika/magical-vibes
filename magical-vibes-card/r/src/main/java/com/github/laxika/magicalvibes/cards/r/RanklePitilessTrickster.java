@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YOTJ", collectorNumber = "11")
 public class RanklePitilessTrickster extends Card {
@@ -30,7 +30,7 @@ public class RanklePitilessTrickster extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayLifeEffect(
                 1,
                 SequenceEffect.of(
-                        new DiscardEffect(1, DiscardRecipient.EACH_PLAYER),
+                        new DiscardEffect(1, Subjects.eachPlayer()),
                         new EachPlayerSacrificesCreatureEffect()),
                 "Pay 1 life to have each player discard a card and sacrifice a creature?"));
 

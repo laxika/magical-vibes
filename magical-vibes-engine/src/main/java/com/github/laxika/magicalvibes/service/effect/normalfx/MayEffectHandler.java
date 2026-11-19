@@ -250,11 +250,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         CardEffect optionalAction = e.wrapped() instanceof SequenceEffect sequence
                 && !sequence.steps().isEmpty() ? sequence.steps().getFirst() : e.wrapped();
         UUID discarderId = optionalAction instanceof DiscardEffect discard
-                ? switch (discard.recipient()) {
-                    case CONTROLLER -> entry.getControllerId();
-                    case TARGET_PLAYER -> !discard.random() && !entry.isNonTargeting() ? targetId : null;
-                    default -> null;
-                }
+                ? discard.player() instanceof PlayerSubject.You ? entry.getControllerId()
+                : discard.player().declaresTarget() && !discard.random() && !entry.isNonTargeting() ? targetId : null
                 : null;
         if (discarderId != null && gameData.playerHands.getOrDefault(discarderId, List.of()).isEmpty()) {
             // Nothing can be discarded, so no discard choice is offered and "if you don't" applies. A random

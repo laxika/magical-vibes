@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KHM", collectorNumber = "217")
 public class KardursViciousReturn extends Card {
@@ -25,7 +25,7 @@ public class KardursViciousReturn extends Card {
                         "a creature"),
                 "Sacrifice a creature?"));
 
-        addTrigger(Triggers.chapter(2), new DiscardEffect(1, DiscardRecipient.EACH_PLAYER));
+        addTrigger(Triggers.chapter(2), new DiscardEffect(1, Subjects.eachPlayer()));
 
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

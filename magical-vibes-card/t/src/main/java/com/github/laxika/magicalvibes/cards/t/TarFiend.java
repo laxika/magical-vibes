@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ALA", collectorNumber = "89")
 public class TarFiend extends Card {
@@ -26,6 +26,6 @@ public class TarFiend extends Card {
                 "Target must be a player"
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(new CreaturesDevoured(), DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(new CreaturesDevoured(), Subjects.targetPlayer()));
     }
 }

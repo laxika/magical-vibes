@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BLC", collectorNumber = "356")
 public class FlubsTheFool extends Card {
@@ -22,7 +22,7 @@ public class FlubsTheFool extends Card {
     private static ConditionalReplacementEffect drawOrDiscard() {
         return new ConditionalReplacementEffect(
                 new ControllerHandEmpty(),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DiscardEffect(1, Subjects.you()),
                 new DrawCardEffect(1));
     }
 }

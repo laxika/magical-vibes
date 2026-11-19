@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "182")
 @CardRegistration(set = "GK1", collectorNumber = "42")
@@ -25,7 +25,7 @@ public class NivixGuildmage extends Card {
     public NivixGuildmage() {
         // {1}{U}{R}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(false, "{1}{U}{R}",
-                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                 "{1}{U}{R}: Draw a card, then discard a card."));
 
         // {2}{U}{R}: Copy target instant or sorcery spell you control. You may choose new targets for the copy.

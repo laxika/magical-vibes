@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,7 +18,7 @@ public class WheelAndDeal extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ), 0, 99)
-                .addSpellEffect(new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER))
+                .addSpellEffect(new DiscardHandEffect(Subjects.targetPlayer()))
                 .addSpellEffect(new DrawCardEffect(7, Subjects.targetPlayer()));
         addSpellEffect(new DrawCardEffect(1));
     }

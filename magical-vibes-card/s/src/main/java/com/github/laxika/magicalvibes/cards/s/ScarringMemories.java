@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -34,7 +33,7 @@ public class ScarringMemories extends Card {
                 "Target must be an opponent"
         )).addSpellEffect(new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER))
-                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))
+                .addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()))
                 .addSpellEffect(new LoseLifeEffect(3, Subjects.targetPlayer()));
     }
 }

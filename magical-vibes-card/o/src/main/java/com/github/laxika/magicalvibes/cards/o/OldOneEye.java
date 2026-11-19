@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "40K", collectorNumber = "96")
 public class OldOneEye extends Card {
@@ -38,8 +38,8 @@ public class OldOneEye extends Card {
                 new ConditionalEffect(new CardsInHandAtLeast(2),
                         new DiscardCardThenEffect(null, new DiscardCardThenEffect(
                                 null, new ReturnSourceCardFromGraveyardToOwnerHandEffect(), "a card",
-                                null, false, null, null, DiscardRecipient.CONTROLLER, true), "a card",
-                                null, false, null, null, DiscardRecipient.CONTROLLER, true)),
+                                null, false, null, null, Subjects.you(), true), "a card",
+                                null, false, null, null, Subjects.you(), true)),
                 "Discard two cards to return Old One Eye to your hand?"));
     }
 }

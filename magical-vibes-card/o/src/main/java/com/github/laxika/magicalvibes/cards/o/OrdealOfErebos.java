@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastP
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "THS", collectorNumber = "99")
 public class OrdealOfErebos extends Card {
@@ -31,6 +31,6 @@ public class OrdealOfErebos extends Card {
                                                 CounterType.PLUS_ONE_PLUS_ONE, 3),
                                         "enchanted creature has three or more +1/+1 counters"),
                                 new SacrificeSelfEffect())));
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new DiscardEffect(2, Subjects.targetPlayer()));
     }
 }

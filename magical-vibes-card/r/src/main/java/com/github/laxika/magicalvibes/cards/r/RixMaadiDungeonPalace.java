@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DIS", collectorNumber = "179")
 @CardRegistration(set = "C19", collectorNumber = "269")
@@ -20,7 +20,7 @@ public class RixMaadiDungeonPalace extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}{R}",
-                List.of(new DiscardEffect(1, DiscardRecipient.EACH_PLAYER)),
+                List.of(new DiscardEffect(1, Subjects.eachPlayer())),
                 "{1}{B}{R}, {T}: Each player discards a card. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

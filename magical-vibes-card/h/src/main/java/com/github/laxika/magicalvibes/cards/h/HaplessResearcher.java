@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "JUD", collectorNumber = "42")
 public class HaplessResearcher extends Card {
@@ -20,7 +20,7 @@ public class HaplessResearcher extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                        new DiscardEffect(1, Subjects.you())),
                 "Sacrifice this creature: Draw a card, then discard a card."
         ));
     }

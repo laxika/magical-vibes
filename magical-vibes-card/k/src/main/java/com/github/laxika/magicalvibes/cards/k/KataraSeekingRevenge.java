@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TLE", collectorNumber = "148")
 public class KataraSeekingRevenge extends Card {
@@ -27,7 +27,7 @@ public class KataraSeekingRevenge extends Card {
                 new DrawCardEffect(1),
                 new ConditionalEffect(
                         new NotCondition(new WaterbendCostPaid()),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                        new DiscardEffect(1, Subjects.you()))));
 
         CardsInGraveyard lessons = new CardsInGraveyard(
                 new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER);

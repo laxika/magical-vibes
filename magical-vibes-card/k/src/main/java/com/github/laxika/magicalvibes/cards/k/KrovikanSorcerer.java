@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "5ED", collectorNumber = "96")
 @CardRegistration(set = "ICE", collectorNumber = "81")
@@ -38,7 +38,7 @@ public class KrovikanSorcerer extends Card {
                 List.of(
                         new DiscardCardTypeCost(new CardColorPredicate(CardColor.BLACK), "black"),
                         new DrawCardEffect(2),
-                        DiscardEffect.cardsDrawnThisResolution(1, DiscardRecipient.CONTROLLER)
+                        DiscardEffect.cardsDrawnThisResolution(1, Subjects.you())
                 ),
                 "{T}, Discard a black card: Draw two cards, then discard one of them."
         ));

@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EMN", collectorNumber = "203")
 @CardRegistration(set = "SLD", collectorNumber = "1408")
@@ -30,7 +30,7 @@ public class GeierReachSanitarium extends Card {
                 "{2}",
                 List.of(
                         new EachPlayerDrawsCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.EACH_PLAYER)
+                        new DiscardEffect(1, Subjects.eachPlayer())
                 ),
                 "{2}, {T}: Each player draws a card, then discards a card."
         ));

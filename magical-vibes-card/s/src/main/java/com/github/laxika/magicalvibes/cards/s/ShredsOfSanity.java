@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EMN", collectorNumber = "141")
 @CardRegistration(set = "SIR", collectorNumber = "176")
@@ -23,7 +23,7 @@ public class ShredsOfSanity extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.SORCERY), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1);
         addSpellEffect(new ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect());
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(1, Subjects.you()));
         addSpellEffect(new ExileSpellEffect());
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY);
     }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnFrontEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 public class TheTrueScriptures extends Card {
 
@@ -41,7 +41,7 @@ public class TheTrueScriptures extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addTrigger(Triggers.chapter(2),
-                new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT),
+                new DiscardEffect(3, Subjects.eachOpponent()),
                 new MillEffect(3, MillRecipient.EACH_OPPONENT));
 
         addTrigger(Triggers.chapter(3),

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -34,7 +33,7 @@ public class KayaGhostAssassin extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT), new DrawCardEffect(1)),
+                List.of(new DiscardEffect(1, Subjects.eachOpponent()), new DrawCardEffect(1)),
                 "−2: Each opponent discards a card and you draw a card."));
     }
 }

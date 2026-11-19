@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "XLN", collectorNumber = "238")
 public class FellFlagship extends Card {
@@ -25,7 +25,7 @@ public class FellFlagship extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PIRATE))));
 
         // Whenever Fell Flagship deals combat damage to a player, that player discards a card.
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, Subjects.targetPlayer()));
 
         // Crew 3
         addActivatedAbility(new ActivatedAbility(

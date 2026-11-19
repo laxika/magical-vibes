@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "230")
 public class IzzetKeyrune extends Card {
@@ -37,7 +37,7 @@ public class IzzetKeyrune extends Card {
                 "{U}{R}: Until end of turn, this artifact becomes a 2/1 blue and red Elemental artifact creature."
         ));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                 "Draw a card and discard a card?"
         ));
     }

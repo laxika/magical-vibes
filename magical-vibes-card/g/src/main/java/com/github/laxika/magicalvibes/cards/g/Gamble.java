@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "USG", collectorNumber = "188")
 @CardRegistration(set = "EMA", collectorNumber = "132")
@@ -19,7 +19,7 @@ public class Gamble extends Card {
 
     public Gamble() {
         addSpellEffect(SearchLibraryEffect.withDeferredShuffle());
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
+        addSpellEffect(new DiscardEffect(1, Subjects.you(), true));
         addSpellEffect(new ShuffleLibraryEffect(false));
     }
 }

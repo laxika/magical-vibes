@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.Objects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 
@@ -21,7 +22,9 @@ import com.github.laxika.magicalvibes.model.CardType;
  * @param alternateCardType if non-null, use {@code alternateThenEffect} when the discarded card
  *                          has this type
  * @param alternateThenEffect alternate reflexive effect selected by {@code alternateCardType}
- * @param recipient         player who must discard; the default is the stack-entry controller
+ * @param player            who must discard ({@code you()} by default); never a declared target: the
+ *                          player is read from the entry ({@code triggeringPlayer()},
+ *                          {@code targetPlayerDeclaredElsewhere()}, ...)
  * @param resolveThenDuringSameResolution continue resolving the current spell or ability after the discard
  *                          instead of creating a trigger
  * @param thenWithoutDiscard when true, {@code thenEffect} still resolves when there is no card to
@@ -35,71 +38,78 @@ public record DiscardCardThenEffect(
         boolean useEntryTarget,
         CardType alternateCardType,
         CardEffect alternateThenEffect,
-        DiscardRecipient recipient,
+        PlayerSubject player,
         boolean resolveThenDuringSameResolution,
         boolean thenWithoutDiscard
 ) implements CardEffect {
 
-    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
-                                 CardPredicate condition, boolean useEntryTarget,
-                                 CardType alternateCardType, CardEffect alternateThenEffect,
-                                 DiscardRecipient recipient, boolean resolveThenDuringSameResolution) {
-        this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
-                alternateThenEffect, recipient, resolveThenDuringSameResolution, false);
+    public DiscardCardThenEffect {
+        Objects.requireNonNull(player, "player");
+        if (player.declaresTarget()) {
+            throw new IllegalArgumentException("A discard-then effect declares no player target: " + player);
+        }
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardPredicate condition, boolean useEntryTarget,
                                  CardType alternateCardType, CardEffect alternateThenEffect,
-                                 DiscardRecipient recipient) {
+                                 PlayerSubject player, boolean resolveThenDuringSameResolution) {
         this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
-                alternateThenEffect, recipient, false);
+                alternateThenEffect, player, resolveThenDuringSameResolution, false);
+    }
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 CardPredicate condition, boolean useEntryTarget,
+                                 CardType alternateCardType, CardEffect alternateThenEffect,
+                                 PlayerSubject player) {
+        this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
+                alternateThenEffect, player, false);
     }
 
     /** Continues resolving the current spell after the discard instead of creating a trigger. */
     public static DiscardCardThenEffect continuing(CardPredicate filter, CardEffect thenEffect,
                                                    String cardDescription) {
         return new DiscardCardThenEffect(filter, thenEffect, cardDescription, null, false,
-                null, null, DiscardRecipient.CONTROLLER, true);
+                null, null, Subjects.you(), true);
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription) {
-        this(filter, thenEffect, cardDescription, null, false, null, null, DiscardRecipient.CONTROLLER);
+        this(filter, thenEffect, cardDescription, null, false, null, null, Subjects.you());
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardPredicate condition) {
         this(filter, thenEffect, cardDescription, condition, false, null, null,
-                DiscardRecipient.CONTROLLER);
+                Subjects.you());
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  boolean useEntryTarget) {
         this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null,
-                DiscardRecipient.CONTROLLER);
+                Subjects.you());
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardType alternateCardType, CardEffect alternateThenEffect) {
         this(filter, thenEffect, cardDescription, null, false, alternateCardType, alternateThenEffect,
-                DiscardRecipient.CONTROLLER);
+                Subjects.you());
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardPredicate condition, boolean useEntryTarget,
                                  CardType alternateCardType, CardEffect alternateThenEffect) {
         this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
-                alternateThenEffect, DiscardRecipient.CONTROLLER);
+                alternateThenEffect, Subjects.you());
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
-                                 DiscardRecipient recipient) {
-        this(filter, thenEffect, cardDescription, null, false, null, null, recipient);
+                                 PlayerSubject player) {
+        this(filter, thenEffect, cardDescription, null, false, null, null, player);
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
-                                 DiscardRecipient recipient, boolean useEntryTarget) {
-        this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null, recipient);
+                                 PlayerSubject player, boolean useEntryTarget) {
+        this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null, player);
     }
 
     @Override

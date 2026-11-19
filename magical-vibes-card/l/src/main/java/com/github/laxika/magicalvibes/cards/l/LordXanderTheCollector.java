@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillHalfDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SNC", collectorNumber = "197")
 public class LordXanderTheCollector extends Card {
@@ -28,7 +28,7 @@ public class LordXanderTheCollector extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DiscardEffect(
                                 new Divided(new CardsInHand(CountScope.TARGET_PLAYER), 2),
-                                DiscardRecipient.TARGET_PLAYER))
+                                Subjects.targetPlayer()))
                 .addTrigger(Triggers.dies(ObjectRelation.THIS),
                         new SacrificePermanentsEffect(
                                 new Divided(new PermanentCount(nonland, CountScope.TARGET_PLAYER), 2),

@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ORI", collectorNumber = "60")
 @CardRegistration(set = "V17", collectorNumber = "12")
@@ -28,7 +28,7 @@ public class JaceVrynsProdigy extends Card {
                 true, null,
                 List.of(
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(1, Subjects.you()),
                         new ConditionalEffect(
                                 new GraveyardCardThreshold(5, new CardTruePredicate()),
                                 new ExileSelfAndReturnTransformedEffect())

@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONS", collectorNumber = "132")
 public class ChainOfSmog extends Card {
@@ -19,7 +19,7 @@ public class ChainOfSmog extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER))
+                .addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()))
                 .addSpellEffect(new MayEffect(
                         new CopyThisSpellForTargetPlayerEffect(),
                         "Copy Chain of Smog?",

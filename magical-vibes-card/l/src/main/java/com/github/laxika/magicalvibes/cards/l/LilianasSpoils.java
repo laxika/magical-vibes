@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M19", collectorNumber = "294")
 public class LilianasSpoils extends Card {
@@ -19,7 +19,7 @@ public class LilianasSpoils extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
         addSpellEffect(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5,
                 new CardColorPredicate(CardColor.BLACK)));
     }

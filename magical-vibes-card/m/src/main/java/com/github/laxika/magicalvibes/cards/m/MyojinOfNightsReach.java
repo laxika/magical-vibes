@@ -11,13 +11,13 @@ import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "126")
 public class MyojinOfNightsReach extends Card {
@@ -35,7 +35,7 @@ public class MyojinOfNightsReach extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.DIVINITY),
-                        new DiscardHandEffect(DiscardRecipient.EACH_OPPONENT)
+                        new DiscardHandEffect(Subjects.eachOpponent())
                 ),
                 "Remove a divinity counter from Myojin of Night's Reach: Each opponent discards their hand."
         ));

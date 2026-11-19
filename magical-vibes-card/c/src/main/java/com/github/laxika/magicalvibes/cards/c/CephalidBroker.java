@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -24,7 +23,7 @@ public class CephalidBroker extends Card {
                 null,
                 List.of(
                         new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()),
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)
+                        new DiscardEffect(2, Subjects.targetPlayer())
                 ),
                 "{T}: Target player draws two cards, then discards two cards.",
                 new PlayerPredicateTargetFilter(

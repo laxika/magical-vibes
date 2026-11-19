@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZNR", collectorNumber = "68")
 public class MasterOfWinds extends Card {
@@ -27,7 +27,7 @@ public class MasterOfWinds extends Card {
     public MasterOfWinds() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(2),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
 
         CardAnyOfPredicate instantSorceryOrWizard = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

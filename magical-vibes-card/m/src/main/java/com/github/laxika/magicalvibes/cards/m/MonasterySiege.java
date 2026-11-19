@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FRF", collectorNumber = "43")
 @CardRegistration(set = "C17", collectorNumber = "88")
@@ -28,7 +28,7 @@ public class MonasterySiege extends Card {
 
         addTrigger(Triggers.drawStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
-                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(DRAGONS),
                         IncreaseOpponentCostForTargetingControlledPermanentEffect

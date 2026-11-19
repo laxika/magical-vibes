@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -21,15 +22,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves the whole discard family via {@link DiscardEffect}: the {@link DiscardRecipient} routes
- * who discards and {@code random} chooses between chosen and random discard. Single-player
- * recipients (controller / target player) evaluate the amount and discard directly; multiple
- * target-player recipients continue in APNAP order; each-player
- * recipients iterate in APNAP order — chosen discards ride a {@link DiscardFollowUp} queue (each
- * player picks sequentially), random discards run inline. The {@code discardCausedByOpponent} flag
- * — read by discard-punisher triggers (e.g. Raider's Wake) — is set exactly as before: {@code true}
- * for target-player discards and per-player ({@code true} unless that player is the controller) for
- * each-player discards.
+ * Resolves the whole discard family via {@link DiscardEffect}: {@link SubjectResolutionService} names who discards
+ * and {@code random} chooses between chosen and random discard. One player discards directly; several target players
+ * each choose and discard in turn, in APNAP order; {@code eachPlayer()} / {@code eachOpponent()} (and any other
+ * subject naming several players) make every player choose in APNAP order and then discard the chosen cards at once
+ * (CR 101.4), while random discards run inline in APNAP order. The {@code discardCausedByOpponent} flag, read by
+ * discard-punisher triggers (e.g. Raider's Wake), is {@code true} for each discarding player other than the
+ * controller.
  */
 @Component
 @RequiredArgsConstructor
@@ -39,6 +38,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
     private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -71,29 +71,24 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
-        switch (e.recipient()) {
-            case TARGET_PLAYER -> resolveTargetPlayers(gameData, entry, e, amount);
-            case CONTROLLER, TRIGGERING_PLAYER, TRIGGERING_PERMANENT_CONTROLLER, ACTIVE_PLAYER,
-                    TARGET_PERMANENT_CONTROLLER, TARGET_PLAYER_OR_PERMANENT_CONTROLLER, DEFENDING_PLAYER ->
-                    resolveSinglePlayer(gameData, entry, e, amount);
-            case EACH_PLAYER, EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, amount);
+        PlayerSubject subject = e.player();
+        List<UUID> players = subjectResolutionService.players(gameData, entry, e, subject);
+        if (subject instanceof PlayerSubject.TargetPlayer) {
+            if (players.size() > 1) {
+                resolveTargetPlayers(gameData, entry, e, amount, players);
+            } else if (!players.isEmpty()) {
+                resolveSinglePlayer(gameData, entry, e, amount, players.getFirst());
+            }
+        } else if (subject instanceof PlayerSubject.Each || players.size() > 1) {
+            resolveEachPlayer(gameData, entry, e, amount, players);
+        } else if (!players.isEmpty()) {
+            resolveSinglePlayer(gameData, entry, e, amount, players.getFirst());
         }
     }
 
-    private void resolveTargetPlayers(GameData gameData, StackEntry entry, DiscardEffect e, int amount) {
-        List<UUID> targetPlayers = new ArrayList<>(entry.targetsForEffect(e));
-        if (targetPlayers.isEmpty() && entry.getTargetId() != null) {
-            targetPlayers.add(entry.getTargetId());
-        }
-        targetPlayers.removeIf(playerId -> !gameData.playerIds.contains(playerId));
-        if (targetPlayers.isEmpty()) {
-            return;
-        }
-        if (targetPlayers.size() == 1) {
-            resolveSinglePlayer(gameData, entry, e, amount, targetPlayers.get(0));
-            return;
-        }
-
+    /** Several target players choose and discard one after another, in APNAP order. */
+    private void resolveTargetPlayers(GameData gameData, StackEntry entry, DiscardEffect e, int amount,
+                                      List<UUID> targetPlayers) {
         if (e.random()) {
             for (UUID playerId : targetPlayers) {
                 gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
@@ -102,101 +97,13 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
             }
             return;
         }
-
-        List<UUID> choosers = new ArrayList<>();
-        if (targetPlayers.contains(gameData.activePlayerId)) {
-            choosers.add(gameData.activePlayerId);
-        }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(gameData.activePlayerId) && targetPlayers.contains(playerId)) {
-                choosers.add(playerId);
-            }
-        }
         playerInteractionSupport.startNextEachPlayerDiscard(
-                gameData, DiscardFollowUp.eachPlayer(choosers, entry.getControllerId(), amount));
-    }
-
-    private void resolveSinglePlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount) {
-        resolveSinglePlayer(gameData, entry, e, amount, null);
+                gameData, DiscardFollowUp.eachPlayer(targetPlayers, entry.getControllerId(), amount));
     }
 
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount,
-                                     UUID targetPlayerOverride) {
-        UUID playerId;
-        boolean opponentCaused;
-        switch (e.recipient()) {
-            case TARGET_PLAYER -> {
-                playerId = targetPlayerOverride != null ? targetPlayerOverride : entry.getTargetId();
-                opponentCaused = !playerId.equals(entry.getControllerId());
-            }
-            case TRIGGERING_PLAYER -> {
-                playerId = entry.getTargetId();
-                opponentCaused = !playerId.equals(entry.getControllerId());
-            }
-            case TRIGGERING_PERMANENT_CONTROLLER -> {
-                playerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
-                if (playerId == null) {
-                    return;
-                }
-                opponentCaused = !playerId.equals(entry.getControllerId());
-            }
-            case ACTIVE_PLAYER -> {
-                playerId = entry.getTargetId();
-                opponentCaused = !playerId.equals(entry.getControllerId());
-            }
-            case TARGET_PERMANENT_CONTROLLER -> {
-                // targetId is the targeted permanent; the discarder is its controller. If an earlier
-                // destroy effect already removed it, the controller it recorded is used instead.
-                UUID targetId = entry.getTargetId();
-                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                playerId = target != null
-                        ? gameQueryService.findPermanentController(gameData, target.getId())
-                        : entry.getRemovedPermanentControllers().get(targetId);
-                if (playerId == null) {
-                    return;
-                }
-                opponentCaused = !playerId.equals(entry.getControllerId());
-            }
-            case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> {
-                // targetId is either a player or a planeswalker; the discarder is that player or the
-                // planeswalker's controller (piggybacks on a companion player-or-planeswalker effect).
-                UUID targetId = entry.getTargetId();
-                if (gameData.playerIds.contains(targetId)) {
-                    playerId = targetId;
-                } else {
-                    playerId = gameQueryService.findPermanentController(gameData, targetId);
-                    if (playerId == null) {
-                        return;
-                    }
-                }
-                opponentCaused = !playerId.equals(entry.getControllerId());
-            }
-            case DEFENDING_PLAYER -> {
-                // The attacked player/planeswalker was baked onto the combat trigger as
-                // attackedTargetId; the discarder is that player or the planeswalker's controller.
-                UUID attackedTargetId = entry.getAttackedTargetId();
-                if (entry.getDefendingPlayerId() != null) {
-                    // Fixed when the attack trigger was put on the stack, so an attacked planeswalker
-                    // that has since left the battlefield does not change who discards.
-                    playerId = entry.getDefendingPlayerId();
-                } else if (attackedTargetId == null) {
-                    return;
-                } else {
-                    playerId = gameData.playerIds.contains(attackedTargetId)
-                            ? attackedTargetId
-                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                }
-                if (playerId == null) {
-                    return;
-                }
-                opponentCaused = true;
-            }
-            default -> {
-                playerId = entry.getControllerId();
-                opponentCaused = false;
-            }
-        }
-        gameData.discardCausedByOpponent = opponentCaused;
+                                     UUID playerId) {
+        gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
 
         if (amount <= 0) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -225,19 +132,20 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveEachPlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount) {
+    /**
+     * Several players discard: random discards run inline in APNAP order; chosen discards are chosen by every player in
+     * APNAP order first and then discarded together (CR 101.4). The handler is rerun after each choice, so the players
+     * are fixed on the first run.
+     */
+    private void resolveEachPlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount,
+                                   List<UUID> players) {
         UUID controllerId = entry.getControllerId();
-        UUID activePlayerId = gameData.activePlayerId;
-        boolean opponentsOnly = e.recipient() == DiscardRecipient.EACH_OPPONENT;
 
         if (e.random()) {
-            // Random discards need no player choice, so run inline in APNAP order.
             String sourceName = entry.getCard().getName();
-            discardRandomForPlayer(gameData, activePlayerId, controllerId, opponentsOnly, sourceName, amount);
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                if (!playerId.equals(activePlayerId)) {
-                    discardRandomForPlayer(gameData, playerId, controllerId, opponentsOnly, sourceName, amount);
-                }
+            for (UUID playerId : players) {
+                gameData.discardCausedByOpponent = !playerId.equals(controllerId);
+                playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId, sourceName, amount);
             }
             return;
         }
@@ -246,12 +154,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         if (!state.active) {
             state.active = true;
             state.deferDiscards = true;
-            if (!opponentsOnly || !activePlayerId.equals(controllerId)) state.remaining.add(activePlayerId);
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                if (!playerId.equals(activePlayerId) && (!opponentsOnly || !playerId.equals(controllerId))) {
-                    state.remaining.add(playerId);
-                }
-            }
+            state.remaining.addAll(players);
         }
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.removeFirst();
@@ -274,14 +177,5 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         state.reset();
         cardChoiceHandlerService.discardCollectedCards(gameData, selected, controllerId);
         gameData.rerunCurrentEffectAfterInteraction = false;
-    }
-
-    private void discardRandomForPlayer(GameData gameData, UUID playerId, UUID controllerId,
-            boolean opponentsOnly, String sourceName, int amount) {
-        if (opponentsOnly && playerId.equals(controllerId)) {
-            return;
-        }
-        gameData.discardCausedByOpponent = !playerId.equals(controllerId);
-        playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId, sourceName, amount);
     }
 }

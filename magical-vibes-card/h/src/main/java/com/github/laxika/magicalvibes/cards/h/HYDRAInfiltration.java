@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +24,7 @@ public class HYDRAInfiltration extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER))
+                        new DiscardEffect(2, Subjects.targetPlayer()))
                 .addTrigger(Triggers.creatureYouControlAttacks(),
                         TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         SequenceEffect.of(

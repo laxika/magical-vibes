@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -93,7 +93,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (e.wrapped() instanceof DiscardCardThenEffect discard && discard.filter() == null
-                && !discard.thenWithoutDiscard() && discard.recipient() == DiscardRecipient.CONTROLLER
+                && !discard.thenWithoutDiscard() && discard.player() instanceof PlayerSubject.You
                 && gameData.playerHands.getOrDefault(payer, List.of()).isEmpty()) {
             // "you may pay {M} and discard a card": discarding is part of the cost, so with no card
             // to discard the payment cannot be made.

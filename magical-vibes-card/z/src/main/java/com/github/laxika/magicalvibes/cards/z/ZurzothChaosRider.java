@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -43,7 +42,7 @@ public class ZurzothChaosRider extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(),
                         new DrawCardEffect(1, Subjects.defendingPlayer()),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER, true),
-                        new DiscardEffect(1, DiscardRecipient.DEFENDING_PLAYER, true)));
+                        new DiscardEffect(1, Subjects.you(), true),
+                        new DiscardEffect(1, Subjects.defendingPlayer(), true)));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AER", collectorNumber = "159")
 @CardRegistration(set = "KLR", collectorNumber = "245")
@@ -25,7 +25,7 @@ public class ImplementOfMalice extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new SacrificeSelfCost(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
+                List.of(new SacrificeSelfCost(), new DiscardEffect(1, Subjects.targetPlayer())),
                 "{B}, Sacrifice this artifact: Target player discards a card. Activate only as a sorcery.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

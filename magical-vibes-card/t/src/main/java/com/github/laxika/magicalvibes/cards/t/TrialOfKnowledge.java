@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AKH", collectorNumber = "73")
 @CardRegistration(set = "AKR", collectorNumber = "84")
@@ -22,7 +22,7 @@ public class TrialOfKnowledge extends Card {
     public TrialOfKnowledge() {
         // When this enchantment enters, draw three cards, then discard a card.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                SequenceEffect.of(new DrawCardEffect(3), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                SequenceEffect.of(new DrawCardEffect(3), new DiscardEffect(1, Subjects.you())));
 
         // When a Cartouche you control enters, return this enchantment to its owner's hand.
         addTrigger(Triggers.enters(

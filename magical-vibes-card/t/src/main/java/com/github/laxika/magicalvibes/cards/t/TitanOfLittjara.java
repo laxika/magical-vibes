@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MSC", collectorNumber = "280")
 @CardRegistration(set = "MSC", collectorNumber = "335")
@@ -42,7 +42,7 @@ public class TitanOfLittjara extends Card {
                                         new PermanentSharesCreatureTypeWithSourcePermanentPredicate())),
                                 CountScope.CONTROLLER,
                                 true)),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                        new DiscardEffect(1, Subjects.you())),
                 "Draw cards and discard a card?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawAndDiscard);
         addTrigger(Triggers.attacks(), drawAndDiscard);

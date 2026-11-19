@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH1", collectorNumber = "145")
 @CardRegistration(set = "2X2", collectorNumber = "123")
@@ -33,11 +33,11 @@ public class SeasonedPyromancer extends Card {
                 new DiscardCardThenEffect(
                         null, elemental, "a card",
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        false, null, null, DiscardRecipient.CONTROLLER, true),
+                        false, null, null, Subjects.you(), true),
                 new DiscardCardThenEffect(
                         null, elemental, "a card",
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        false, null, null, DiscardRecipient.CONTROLLER, true),
+                        false, null, null, Subjects.you(), true),
                 new DrawCardEffect(2)
         ));
 

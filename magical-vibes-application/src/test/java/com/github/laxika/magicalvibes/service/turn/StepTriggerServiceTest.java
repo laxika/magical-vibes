@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -508,7 +507,7 @@ class StepTriggerServiceTest {
             Card source = createCardWithName("Casey Jones, Vigilante");
             gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     Triggers.upkeep(ActivePlayer.YOU), player1Id, source, null, null,
-                    new DiscardEffect(3, DiscardRecipient.CONTROLLER, true)));
+                    new DiscardEffect(3, Subjects.you(), true)));
 
             gd.activePlayerId = player2Id;
             sut.handleUpkeepTriggers(gd);
@@ -522,7 +521,7 @@ class StepTriggerServiceTest {
             assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new DiscardEffect(3, DiscardRecipient.CONTROLLER, true));
+                    .containsExactly(new DiscardEffect(3, Subjects.you(), true));
             assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
 
@@ -2420,7 +2419,7 @@ class StepTriggerServiceTest {
             Card sourceCard = createCardWithName("Ideas Unbound");
             gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     Triggers.endStep(ActivePlayer.ANY), player1Id, sourceCard, null, null,
-                    new DiscardEffect(3, DiscardRecipient.CONTROLLER)));
+                    new DiscardEffect(3, Subjects.you())));
 
             sut.handleEndStepTriggers(gd);
 
@@ -2428,7 +2427,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new DiscardEffect(3, DiscardRecipient.CONTROLLER));
+                    .containsExactly(new DiscardEffect(3, Subjects.you()));
             assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
     }

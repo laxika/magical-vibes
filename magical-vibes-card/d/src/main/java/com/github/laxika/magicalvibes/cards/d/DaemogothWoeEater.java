@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "STX", collectorNumber = "175")
 public class DaemogothWoeEater extends Card {
@@ -21,7 +21,7 @@ public class DaemogothWoeEater extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
         addTrigger(Triggers.sacrificed(ObjectRelation.THIS), SequenceEffect.of(
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                new DiscardEffect(1, Subjects.eachOpponent()),
                 new DrawCardEffect(1),
                 new GainLifeEffect(2)));
     }

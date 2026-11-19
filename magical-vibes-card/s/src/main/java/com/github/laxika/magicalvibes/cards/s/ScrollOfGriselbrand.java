@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -27,7 +26,7 @@ public class ScrollOfGriselbrand extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{1}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(1, Subjects.targetPlayer()),
                         new ConditionalEffect(
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DEMON)),
                                 new LoseLifeEffect(3, Subjects.targetPlayer()))),

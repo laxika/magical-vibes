@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Gloomlance — {3}{B}{B} Sorcery.
@@ -31,7 +31,7 @@ public class Gloomlance extends Card {
         ))
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(1, Subjects.you()),
                         ThenEffectRecipient.TARGET_CONTROLLER,
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))));
     }

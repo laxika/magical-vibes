@@ -8,18 +8,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOS", collectorNumber = "100")
 public class SendInThePest extends Card {
 
     public SendInThePest() {
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addSpellEffect(new DiscardEffect(1, Subjects.eachOpponent()));
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),

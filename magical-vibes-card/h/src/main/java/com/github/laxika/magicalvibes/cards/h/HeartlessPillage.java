@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "XLN", collectorNumber = "109")
 @CardRegistration(set = "2XM", collectorNumber = "96")
@@ -21,7 +21,7 @@ public class HeartlessPillage extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        )).addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()));
         // Raid — If you attacked this turn, create a Treasure token.
         addSpellEffect(new ConditionalEffect(new Raid(), CreateTokenEffect.ofTreasureToken(1)));
     }

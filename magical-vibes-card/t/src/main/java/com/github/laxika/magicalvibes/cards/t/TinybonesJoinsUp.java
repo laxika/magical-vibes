@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -22,7 +21,7 @@ public class TinybonesJoinsUp extends Card {
 
     public TinybonesJoinsUp() {
         target(0, 99).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(1, Subjects.targetPlayer()));
         target(0, 99).addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,

@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -93,7 +92,7 @@ public class LuluForgetfulHollyphant extends Card {
             case WHITE -> new GainLifeEffect(new Scaled(new EventValue(), 2));
             case BLUE -> SequenceEffect.of(
                     new DrawCardEffect(new EventValue()),
-                    new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                    new DiscardEffect(1, Subjects.you()));
             case BLACK -> SequenceEffect.of(
                     new LoseLifeEffect(new EventValue(), Subjects.eachOpponent()),
                     new GainLifeEffect(new EventValue()));

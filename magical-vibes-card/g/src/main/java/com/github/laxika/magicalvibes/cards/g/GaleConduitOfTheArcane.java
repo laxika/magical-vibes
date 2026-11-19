@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -88,7 +87,7 @@ public class GaleConduitOfTheArcane extends Card {
                     new CreateTokenEffect("Pegasus", 1, 1, CardColor.WHITE,
                             List.of(CardSubtype.PEGASUS), Set.of(Keyword.FLYING), Set.of()));
             case BLUE -> card.addTrigger(instantOrSorcery,
-                    new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                    new DrawCardEffect(), new DiscardEffect(1, Subjects.you()));
             case BLACK -> card.addTrigger(instantOrSorcery,
                     new LoseLifeEffect(2, Subjects.eachOpponent()));
             case RED -> card.addTrigger(instantOrSorcery,

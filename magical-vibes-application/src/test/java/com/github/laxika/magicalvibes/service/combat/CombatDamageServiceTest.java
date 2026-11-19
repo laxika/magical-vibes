@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1391,7 +1390,7 @@ class CombatDamageServiceTest {
         void targetPlayerDiscardsEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
                     Triggers.dealsCombatDamageToPlayer(),
-                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+                    new DiscardEffect(1, Subjects.targetPlayer()));
 
             combatDamageService.resolveCombatDamage(gameData);
 
@@ -1409,7 +1408,7 @@ class CombatDamageServiceTest {
             addAttackerWithEffect("Jagged Poppet", 3, 3,
                     Triggers.dealsCombatDamageToPlayer(),
                     new ConditionalEffect(condition,
-                            new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER)));
+                            new DiscardEffect(new EventValue(), Subjects.targetPlayer())));
             when(conditionEvaluationService.isMet(eq(gameData), eq(condition), any())).thenReturn(true);
 
             combatDamageService.resolveCombatDamage(gameData);
@@ -1429,7 +1428,7 @@ class CombatDamageServiceTest {
                     Triggers.dealsCombatDamageToPlayer(),
                     SequenceEffect.of(
                             new DrawCardEffect(new EventValue()),
-                            new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                            new DiscardEffect(1, Subjects.you())));
 
             combatDamageService.resolveCombatDamage(gameData);
 

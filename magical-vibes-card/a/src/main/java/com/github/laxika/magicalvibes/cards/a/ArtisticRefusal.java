@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MOM", collectorNumber = "46")
 public class ArtisticRefusal extends Card {
@@ -23,7 +23,7 @@ public class ArtisticRefusal extends Card {
                         "Draw two cards, then discard a card",
                         SequenceEffect.of(
                                 new DrawCardEffect(2),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                                new DiscardEffect(1, Subjects.you())))
         )));
     }
 }

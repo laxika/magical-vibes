@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -38,7 +37,7 @@ public class NinjasBlades extends Card {
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(1, Subjects.you()),
                         new LoseLifeEffect(new LastDiscardedCardManaValue(), Subjects.targetPlayer()))),
                 GrantScope.EQUIPPED_CREATURE));
 

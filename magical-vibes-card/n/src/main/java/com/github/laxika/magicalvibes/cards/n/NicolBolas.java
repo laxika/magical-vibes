@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DRB", collectorNumber = "10")
 @CardRegistration(set = "CHR", collectorNumber = "81")
@@ -31,6 +31,6 @@ public class NicolBolas extends Card {
 
         // Whenever Nicol Bolas deals damage to an opponent, that player discards their hand.
         addTrigger(Triggers.dealsDamageToOpponent(),
-                new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER));
+                new DiscardHandEffect(Subjects.targetPlayer()));
     }
 }

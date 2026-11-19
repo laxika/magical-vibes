@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M21", collectorNumber = "68")
 public class SanctumOfCalmWaters extends Card {
@@ -25,7 +25,7 @@ public class SanctumOfCalmWaters extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new DrawCardEffect(shrinesYouControl),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                                new DiscardEffect(1, Subjects.you())),
                         "Draw cards equal to the number of Shrines you control?"));
     }
 }

@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "NPH", collectorNumber = "154")
 public class ShrineOfLimitlessPower extends Card {
@@ -31,7 +31,7 @@ public class ShrineOfLimitlessPower extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new SacrificeSelfCost(), new DiscardEffect(new CountersOnSource(CounterType.CHARGE), DiscardRecipient.TARGET_PLAYER)),
+                List.of(new SacrificeSelfCost(), new DiscardEffect(new CountersOnSource(CounterType.CHARGE), Subjects.targetPlayer())),
                 "{4}, {T}, Sacrifice Shrine of Limitless Power: Target player discards a card for each charge counter on Shrine of Limitless Power."
         ));
     }

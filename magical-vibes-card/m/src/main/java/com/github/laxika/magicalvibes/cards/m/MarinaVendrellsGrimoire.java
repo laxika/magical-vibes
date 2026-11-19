@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DSK", collectorNumber = "64")
 public class MarinaVendrellsGrimoire extends Card {
@@ -30,7 +30,7 @@ public class MarinaVendrellsGrimoire extends Card {
 
         addTrigger(Triggers.youGainLife(), new DrawCardEffect(new EventValue()));
         addTrigger(Triggers.youLoseLife(), SequenceEffect.of(
-                new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER),
+                new DiscardEffect(new EventValue(), Subjects.you()),
                 new ConditionalEffect(new ControllerHandEmpty(), new ControllerLosesGameEffect())));
     }
 }

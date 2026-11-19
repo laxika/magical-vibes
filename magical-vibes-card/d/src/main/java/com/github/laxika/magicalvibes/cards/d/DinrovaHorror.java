@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Dinrova Horror — {4}{U}{B} Creature — Horror 4/4.
@@ -29,7 +29,7 @@ public class DinrovaHorror extends Card {
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnTargetPermanentToHandThenEffect(
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        new DiscardEffect(1, Subjects.targetPlayer()),
                         ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
     }
 }

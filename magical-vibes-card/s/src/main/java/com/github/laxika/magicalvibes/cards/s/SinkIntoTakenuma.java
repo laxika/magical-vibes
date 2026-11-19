@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOK", collectorNumber = "89")
 public class SinkIntoTakenuma extends Card {
@@ -21,6 +21,6 @@ public class SinkIntoTakenuma extends Card {
                 "Target must be a player"
         )).addSpellEffect(new ReturnAnyNumberOfPermanentsToHandEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.SWAMP)));
-        addSpellEffect(new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(new EventValue(), Subjects.targetPlayer()));
     }
 }

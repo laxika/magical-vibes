@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOI", collectorNumber = "263")
 public class SkeletonKey extends Card {
@@ -26,7 +26,7 @@ public class SkeletonKey extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new DrawCardEffect(),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                                new DiscardEffect(1, Subjects.you())),
                         "Draw a card?"));
 
         // Equip {2}

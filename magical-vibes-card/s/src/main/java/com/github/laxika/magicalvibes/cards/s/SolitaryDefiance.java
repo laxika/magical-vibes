@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YOTJ", collectorNumber = "7")
 public class SolitaryDefiance extends Card {
@@ -48,6 +48,6 @@ public class SolitaryDefiance extends Card {
                 SequenceEffect.of(
                         new SeekCardsToHandEffect(new Fixed(2),
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                        new DiscardEffect(1, Subjects.you())));
     }
 }

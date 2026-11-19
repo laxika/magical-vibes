@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardOneThenApplyEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
@@ -20,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Resolves each player's optional discard and the shared discard-type riders. Players choose in APNAP
@@ -90,7 +90,7 @@ public class EachPlayerMayDiscardOneThenApplyEffectsEffectHandler implements Nor
             entry.setTargetId(playerId);
 
             MayEffect mayDiscard = new MayEffect(
-                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                    new DiscardEffect(1, Subjects.targetPlayer()),
                     "Discard a card?",
                     null,
                     MayChoicePlayer.TARGET_PLAYER);

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TLA", collectorNumber = "246")
 public class TophHardheadedTeacher extends Card {
@@ -32,7 +32,7 @@ public class TophHardheadedTeacher extends Card {
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),
                                         new CardTypePredicate(CardType.SORCERY)))),
-                        "a card", null, true, null, null, DiscardRecipient.CONTROLLER, true),
+                        "a card", null, true, null, null, Subjects.you(), true),
                 "Discard a card to return target instant or sorcery card from your graveyard to your hand?"));
 
         target(TargetFilters.landYouControl()).addTrigger(Triggers.youCastSpell()

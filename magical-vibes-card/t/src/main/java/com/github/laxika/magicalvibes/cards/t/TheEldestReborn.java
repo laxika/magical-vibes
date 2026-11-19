@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * The Eldest Reborn — {4}{B} Enchantment — Saga
@@ -43,7 +43,7 @@ public class TheEldestReborn extends Card {
         ));
 
         // Chapter II: Each opponent discards a card
-        addTrigger(Triggers.chapter(2), new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2), new DiscardEffect(1, Subjects.eachOpponent()));
 
         // Chapter III: Put target creature or planeswalker card from a graveyard
         // onto the battlefield under your control

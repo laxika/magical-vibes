@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "10E", collectorNumber = "208")
 @CardRegistration(set = "P02", collectorNumber = "99")
@@ -13,6 +13,6 @@ public class GoblinLore extends Card {
 
     public GoblinLore() {
         addSpellEffect(new DrawCardEffect(4));
-        addSpellEffect(new DiscardEffect(3, DiscardRecipient.CONTROLLER, true));
+        addSpellEffect(new DiscardEffect(3, Subjects.you(), true));
     }
 }

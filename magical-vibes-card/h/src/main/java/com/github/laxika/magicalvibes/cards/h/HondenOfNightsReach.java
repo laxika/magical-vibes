@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "116")
 @CardRegistration(set = "EMA", collectorNumber = "91")
@@ -28,6 +28,6 @@ public class HondenOfNightsReach extends Card {
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DiscardEffect(
                         new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER),
-                        DiscardRecipient.TARGET_PLAYER));
+                        Subjects.targetPlayer()));
     }
 }

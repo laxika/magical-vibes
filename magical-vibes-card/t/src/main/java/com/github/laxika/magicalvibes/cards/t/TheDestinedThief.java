@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FIC", collectorNumber = "446")
 public class TheDestinedThief extends Card {
@@ -46,7 +46,7 @@ public class TheDestinedThief extends Card {
                         new FullParty(),
                         SequenceEffect.of(
                                 new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                                new DiscardEffect(1, Subjects.you())),
                         new DrawCardEffect(3)));
     }
 }

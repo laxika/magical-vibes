@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "188")
 @CardRegistration(set = "GK2", collectorNumber = "72")
@@ -26,6 +26,6 @@ public class RakdossReturn extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
         )).addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue(), PlayerRelation.OPPONENT));
-        addSpellEffect(new DiscardEffect(new XValue(), DiscardRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER));
+        addSpellEffect(new DiscardEffect(new XValue(), Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(), Subjects.controllerOf(Subjects.target()))));
     }
 }

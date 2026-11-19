@@ -12,13 +12,13 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThis
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DMU", collectorNumber = "103")
 @CardRegistration(set = "DMU", collectorNumber = "289")
@@ -32,7 +32,7 @@ public class TheRavenMan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{B}",
-                List.of(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)),
+                List.of(new DiscardEffect(1, Subjects.eachOpponent())),
                 "{3}{B}, {T}: Each opponent discards a card. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

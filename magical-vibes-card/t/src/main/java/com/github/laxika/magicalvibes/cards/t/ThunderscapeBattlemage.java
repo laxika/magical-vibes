@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PLS", collectorNumber = "75")
 @CardRegistration(set = "DDE", collectorNumber = "41")
@@ -35,7 +35,7 @@ public class ThunderscapeBattlemage extends Card {
                 "Target must be a player"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(2, Subjects.targetPlayer()));
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{G}"), new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(), "Target must be an enchantment"), 1)

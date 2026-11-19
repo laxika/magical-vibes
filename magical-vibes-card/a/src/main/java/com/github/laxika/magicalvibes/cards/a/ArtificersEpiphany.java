@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ORI", collectorNumber = "45")
 @CardRegistration(set = "DDU", collectorNumber = "36")
@@ -18,6 +18,6 @@ public class ArtificersEpiphany extends Card {
         addSpellEffect(new DrawCardEffect(2));
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanentCountAtMost(0, new PermanentIsArtifactPredicate()),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 }

@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FDN", collectorNumber = "72")
 @CardRegistration(set = "FDN", collectorNumber = "324")
@@ -25,7 +25,7 @@ public class TinybonesBaubleBurglar extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{B}",
-                List.of(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)),
+                List.of(new DiscardEffect(1, Subjects.eachOpponent())),
                 "{3}{B}, {T}: Each opponent discards a card. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

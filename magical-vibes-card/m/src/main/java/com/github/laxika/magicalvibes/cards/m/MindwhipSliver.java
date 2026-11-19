@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TMP", collectorNumber = "145")
 public class MindwhipSliver extends Card {
@@ -26,7 +26,7 @@ public class MindwhipSliver extends Card {
         ActivatedAbility discardAbility = new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true)),
+                List.of(new SacrificeSelfCost(), new DiscardEffect(1, Subjects.targetPlayer(), true)),
                 "{2}, Sacrifice this permanent: Target player discards a card at random. Activate only as a sorcery.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

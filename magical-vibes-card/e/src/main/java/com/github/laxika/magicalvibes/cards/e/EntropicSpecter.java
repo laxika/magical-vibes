@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EXO", collectorNumber = "61")
 public class EntropicSpecter extends Card {
@@ -20,6 +20,6 @@ public class EntropicSpecter extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(chosenOpponentHand, chosenOpponentHand));
 
         addTrigger(Triggers.dealsDamageToPlayer(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(1, Subjects.targetPlayer()));
     }
 }

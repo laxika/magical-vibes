@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "121")
 public class CabalShrine extends Card {
@@ -17,6 +17,6 @@ public class CabalShrine extends Card {
         // cards in all graveyards with the same name as that spell.
         addTrigger(Triggers.playerCastsSpell().anySpell(), new DiscardEffect(
                 new CardsInGraveyard(new CardSharesNameWithTriggeringSpellPredicate(), CountScope.ANY_PLAYER),
-                DiscardRecipient.TRIGGERING_PLAYER));
+                Subjects.triggeringPlayer()));
     }
 }

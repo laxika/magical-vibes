@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "127")
 @CardRegistration(set = "PHUK", collectorNumber = "50")
@@ -24,7 +24,7 @@ public class NezumiBoneReader extends Card {
                 "{B}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)
+                        new DiscardEffect(1, Subjects.targetPlayer())
                 ),
                 "{B}, Sacrifice a creature: Target player discards a card. Activate only as a sorcery.",
                 new PlayerPredicateTargetFilter(

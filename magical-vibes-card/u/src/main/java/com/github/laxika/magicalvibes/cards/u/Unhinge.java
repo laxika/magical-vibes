@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TOR", collectorNumber = "87")
 public class Unhinge extends Card {
@@ -17,7 +17,7 @@ public class Unhinge extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
         addSpellEffect(new DrawCardEffect(1));
     }
 }

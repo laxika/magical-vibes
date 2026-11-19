@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachOtherControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "OTJ", collectorNumber = "223")
 public class OkoTheRingleader extends Card {
@@ -38,9 +38,9 @@ public class OkoTheRingleader extends Card {
                 List.of(
                         new DrawCardEffect(2),
                         new ConditionalEffect(new CommittedCrimeThisTurn(),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                                new DiscardEffect(1, Subjects.you())),
                         new ConditionalEffect(new NotCondition(new CommittedCrimeThisTurn()),
-                                new DiscardEffect(2, DiscardRecipient.CONTROLLER))
+                                new DiscardEffect(2, Subjects.you()))
                 ),
                 "+1: Draw two cards. If you've committed a crime this turn, discard a card. "
                         + "Otherwise, discard two cards."));

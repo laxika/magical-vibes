@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -33,7 +32,7 @@ public class CharmingScoundrel extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discard a card, then draw a card",
-                        SequenceEffect.of(new DiscardEffect(1, DiscardRecipient.CONTROLLER), new DrawCardEffect())),
+                        SequenceEffect.of(new DiscardEffect(1, Subjects.you()), new DrawCardEffect())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Treasure token",
                         CreateTokenEffect.ofTreasureToken(1)),

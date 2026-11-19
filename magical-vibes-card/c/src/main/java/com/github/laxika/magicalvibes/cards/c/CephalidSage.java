@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TOR", collectorNumber = "29")
 @CardRegistration(set = "EMA", collectorNumber = "41")
@@ -25,7 +25,7 @@ public class CephalidSage extends Card {
                         new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         SequenceEffect.of(
                                 new DrawCardEffect(3),
-                                new DiscardEffect(2, DiscardRecipient.CONTROLLER))),
+                                new DiscardEffect(2, Subjects.you()))),
                         GrantScope.SELF)));
     }
 }

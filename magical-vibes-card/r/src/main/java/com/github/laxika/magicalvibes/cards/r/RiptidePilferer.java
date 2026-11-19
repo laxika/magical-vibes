@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PLC", collectorNumber = "60")
 @CardRegistration(set = "TSR", collectorNumber = "83")
@@ -13,6 +13,6 @@ public class RiptidePilferer extends Card {
     public RiptidePilferer() {
         addMorph("{U}");
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));
+                new DiscardEffect(1, Subjects.targetPlayer(), false));
     }
 }

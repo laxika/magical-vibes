@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -52,7 +51,7 @@ public class PrismariCommand extends Card {
                         "Target player draws two cards, then discards two cards",
                         List.of(
                                 new DrawCardEffect(2, Subjects.targetPlayer()),
-                                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)),
+                                new DiscardEffect(2, Subjects.targetPlayer())),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player creates a Treasure token",

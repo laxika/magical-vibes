@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M19", collectorNumber = "221")
 @CardRegistration(set = "2X2", collectorNumber = "266")
@@ -21,7 +21,7 @@ public class PsychicSymbiont extends Card {
                 "Target must be an opponent"
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                new DiscardEffect(1, Subjects.targetPlayer()),
                 new DrawCardEffect(1));
     }
 }

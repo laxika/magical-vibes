@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "NEO", collectorNumber = "67")
 public class MoonCircuitHacker extends Card {
@@ -23,7 +23,7 @@ public class MoonCircuitHacker extends Card {
                         new DrawCardEffect(1),
                         new ConditionalEffect(
                                 new NotCondition(new SourceEnteredBattlefieldThisTurn()),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
+                                new DiscardEffect(1, Subjects.you()))),
                 "Draw a card?"));
     }
 }

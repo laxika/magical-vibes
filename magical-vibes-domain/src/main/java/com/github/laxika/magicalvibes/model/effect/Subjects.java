@@ -211,4 +211,9 @@ public final class Subjects {
     public static PlayerSubject except(PlayerSubject players, PlayerSubject excluded) {
         return new PlayerSubject.Except(players, excluded);
     }
+
+    /** Every player any of {@code subjects} names, each once ("that player or that planeswalker's controller"). */
+    public static PlayerSubject allOf(PlayerSubject... subjects) {
+        return new PlayerSubject.AllOf(List.of(subjects));
+    }
 }

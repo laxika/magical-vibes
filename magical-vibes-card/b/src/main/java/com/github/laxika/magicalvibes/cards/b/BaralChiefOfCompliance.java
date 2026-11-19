@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.CardDrawnThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AER", collectorNumber = "28")
 @CardRegistration(set = "SLD", collectorNumber = "1164")
@@ -39,7 +39,7 @@ public class BaralChiefOfCompliance extends Card {
 
         addTrigger(Triggers.youCounterSpell(), new MayEffect(
                 SequenceEffect.of(new DrawCardEffect(1), new ConditionalEffect(new CardDrawnThisWay(),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
+                        new DiscardEffect(1, Subjects.you()))),
                 "Draw a card? If you do, discard a card."));
     }
 }

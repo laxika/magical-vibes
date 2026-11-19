@@ -4,17 +4,19 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -26,7 +28,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Sets discardCausedByOpponent to false and begins discard")
         void setsDiscardFlag() {
             Card card = createCard("Sift");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.CONTROLLER);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.you());
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
@@ -41,7 +43,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Logs message when hand is empty")
         void logsWhenHandEmpty() {
             Card card = createCard("Sift");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.CONTROLLER);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.you());
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
             resolveEffect(gd, entry, effect);
@@ -61,7 +63,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Target player discards with opponent flag set")
         void targetPlayerDiscardsWithOpponentFlag() {
             Card card = createCard("Mind Rot");
-            DiscardEffect effect = new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER);
+            DiscardEffect effect = new DiscardEffect(2, Subjects.targetPlayer());
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B")));
 
@@ -76,7 +78,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Logs when target has empty hand")
         void logsWhenTargetHandEmpty() {
             Card card = createCard("Mind Rot");
-            DiscardEffect effect = new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER);
+            DiscardEffect effect = new DiscardEffect(2, Subjects.targetPlayer());
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
             resolveEffect(gd, entry, effect);
@@ -90,7 +92,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         void logsZeroWhenAmountZero() {
             Card card = createCard("Shrine of Limitless Power");
             // XValue with no cast-time X => evaluates to 0
-            DiscardEffect effect = new DiscardEffect(new XValue(), DiscardRecipient.TARGET_PLAYER);
+            DiscardEffect effect = new DiscardEffect(new XValue(), Subjects.targetPlayer());
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).add(createCard("A"));
 
@@ -111,7 +113,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Triggering player discards without a target and tracks opponent cause")
         void triggeringPlayerDiscards() {
             Card card = createCard("Putrefaction");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.triggeringPlayer());
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).add(createCard("A"));
 
@@ -127,7 +129,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Controller casting their own spell is not opponent-caused")
         void controllerIsNotOpponentCause() {
             Card card = createCard("Putrefaction");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.triggeringPlayer());
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player1Id);
             gd.playerHands.get(player1Id).add(createCard("A"));
 
@@ -145,7 +147,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("APNAP order: the active player chooses first, for the effect's amount")
         void activePlayerFirst() {
             Card card = createCard("Liliana of the Veil");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.EACH_PLAYER);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.eachPlayer());
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player1Id).add(createCard("A"));
@@ -161,7 +163,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Opponent waits in the queue after the active player, and nothing is discarded yet")
         void opponentInQueueAfterActivePlayer() {
             Card card = createCard("Liliana of the Veil");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.EACH_PLAYER);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.eachPlayer());
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player1Id).add(createCard("A"));
@@ -186,7 +188,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Only opponents discard; active opponent is first")
         void onlyOpponentsDiscard() {
             Card card = createCard("Hymn to Tourach");
-            DiscardEffect effect = new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT);
+            DiscardEffect effect = new DiscardEffect(2, Subjects.eachOpponent());
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.activePlayerId = player2Id;
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B")));
@@ -202,7 +204,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Controller is excluded from the queue")
         void controllerExcludedFromQueue() {
             Card card = createCard("Hymn to Tourach");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.eachOpponent());
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player2Id).add(createCard("A"));
@@ -277,7 +279,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Target player discards at random with opponent flag")
         void targetDiscardsAtRandom() {
             Card card = createCard("Hypnotic Specter");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.targetPlayer(), true);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
@@ -292,7 +294,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Controller discards at random for a self-discard (CONTROLLER)")
         void controllerDiscardsAtRandom() {
             Card card = createCard("Goblin Lore");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.CONTROLLER, true);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.you(), true);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
@@ -306,7 +308,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("No random discard when hand is empty")
         void noDiscardWhenHandEmpty() {
             Card card = createCard("Hypnotic Specter");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.targetPlayer(), true);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
             resolveEffect(gd, entry, effect);
@@ -319,7 +321,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         @DisplayName("Each player discards at random in APNAP order")
         void eachPlayerDiscardsAPNAP() {
             Card card = createCard("Burning Inquiry");
-            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.EACH_PLAYER, true);
+            DiscardEffect effect = new DiscardEffect(1, Subjects.eachPlayer(), true);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
@@ -330,6 +332,55 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
             verify(graveyardService, times(2)).discardCard(eq(gd), any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("controllerOf(targetSpell()) (chosen)")
+    class TargetSpellController {
+
+        @Test
+        @DisplayName("Discards for the controller of the targeted spell")
+        void discardsForSpellController() {
+            Card sourceCard = createCard("Counterspell");
+            Card targetSpellCard = createCard("Lightning Bolt");
+            StackEntry targetSpell = new StackEntry(StackEntryType.INSTANT_SPELL, targetSpellCard,
+                    player2Id, targetSpellCard.getName(), List.of());
+            gd.stack.add(targetSpell);
+
+            DiscardEffect effect = new DiscardEffect(1, Subjects.controllerOf(Subjects.targetSpell()));
+            StackEntry entry = createEntryWithTarget(sourceCard, player1Id, List.of(effect), targetSpellCard.getId());
+            gd.playerHands.get(player2Id).add(createCard("Mountain"));
+
+            resolveEffect(gd, entry, effect);
+
+            assertThat(gd.discardCausedByOpponent).isTrue();
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt(),
+                    any(DiscardFollowUp.class));
+        }
+
+        @Test
+        @DisplayName("Does nothing when the targeted spell is not on the stack")
+        void doesNothingWhenTargetNotOnStack() {
+            Card sourceCard = createCard("Counterspell");
+            DiscardEffect effect = new DiscardEffect(1, Subjects.controllerOf(Subjects.targetSpell()));
+            StackEntry entry = createEntryWithTarget(sourceCard, player1Id, List.of(effect), UUID.randomUUID());
+
+            resolveEffect(gd, entry, effect);
+
+            verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(), any(DiscardFollowUp.class));
+        }
+
+        @Test
+        @DisplayName("Does nothing when the entry has no target")
+        void doesNothingWhenTargetIdNull() {
+            Card sourceCard = createCard("Counterspell");
+            DiscardEffect effect = new DiscardEffect(1, Subjects.controllerOf(Subjects.targetSpell()));
+            StackEntry entry = createEntry(sourceCard, player1Id, List.of(effect));
+
+            resolveEffect(gd, entry, effect);
+
+            verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(), any(DiscardFollowUp.class));
         }
     }
 }

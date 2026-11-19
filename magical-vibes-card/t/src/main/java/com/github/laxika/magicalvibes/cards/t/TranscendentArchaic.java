@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOS", collectorNumber = "5")
 public class TranscendentArchaic extends Card {
@@ -21,7 +21,7 @@ public class TranscendentArchaic extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(new XValue()),
                         new ConditionalEffect(new SpellXAtLeast(1),
-                                new DiscardEffect(2, DiscardRecipient.CONTROLLER))),
+                                new DiscardEffect(2, Subjects.you()))),
                 "Draw X cards?"));
     }
 }

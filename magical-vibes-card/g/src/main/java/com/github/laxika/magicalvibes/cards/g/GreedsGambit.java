@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BIG", collectorNumber = "8")
 public class GreedsGambit extends Card {
@@ -34,14 +34,14 @@ public class GreedsGambit extends Card {
                         List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of())));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DiscardEffect(1, Subjects.you()),
                 new LoseLifeEffect(2),
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                         SacrificeRecipient.CONTROLLER)));
 
         var creatures = new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate()));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
-                new DiscardEffect(3, DiscardRecipient.CONTROLLER),
+                new DiscardEffect(3, Subjects.you()),
                 new LoseLifeEffect(6),
                 new SacrificePermanentsEffect(3, creatures, SacrificeRecipient.CONTROLLER)));
     }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
@@ -21,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Resolves an APNAP "discard a card or lose life" choice for every player. Players choose in APNAP
@@ -91,7 +91,7 @@ public class EachPlayerMayDiscardOrLoseLifeEffectHandler implements NormalEffect
             entry.setTargetId(playerId);
 
             MayEffect mayDiscard = new MayEffect(
-                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                    new DiscardEffect(1, Subjects.targetPlayer()),
                     "Discard a card? If you don't, you lose " + lifeEffect.lifeLoss() + " life.",
                     null,
                     MayChoicePlayer.TARGET_PLAYER);

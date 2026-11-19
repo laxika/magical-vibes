@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PCY", collectorNumber = "66")
 public class GreelMindRaker extends Card {
@@ -22,7 +22,7 @@ public class GreelMindRaker extends Card {
                 "{X}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null, 2),
-                        new DiscardEffect(new XValue(), DiscardRecipient.TARGET_PLAYER, true)
+                        new DiscardEffect(new XValue(), Subjects.targetPlayer(), true)
                 ),
                 "{X}{B}, {T}, Discard two cards: Target player discards X cards at random.",
                 new PlayerPredicateTargetFilter(

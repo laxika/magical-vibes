@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PLC", collectorNumber = "124")
 public class AnaBattlemage extends Card {
@@ -39,7 +39,7 @@ public class AnaBattlemage extends Card {
                 "Target must be a player"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(3, Subjects.targetPlayer()));
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{1}{B}"), new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

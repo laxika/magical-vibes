@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M20", collectorNumber = "135")
 @CardRegistration(set = "SCG", collectorNumber = "87")
@@ -18,7 +18,7 @@ public class DragonMage extends Card {
 
     public DragonMage() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                new DiscardHandEffect(DiscardRecipient.EACH_PLAYER),
+                new DiscardHandEffect(Subjects.eachPlayer()),
                 new EachPlayerDrawsCardEffect(7)));
     }
 }

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SHM", collectorNumber = "39")
 public class GhastlyDiscovery extends Card {
@@ -13,6 +13,6 @@ public class GhastlyDiscovery extends Card {
         // Draw two cards, then discard a card.
         // (Conspire is driven by the Scryfall-loaded CONSPIRE keyword and handled by the casting flow.)
         addSpellEffect(new DrawCardEffect(2));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(1, Subjects.you()));
     }
 }

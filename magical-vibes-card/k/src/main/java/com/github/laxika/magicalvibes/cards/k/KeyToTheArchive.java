@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YMID", collectorNumber = "59")
 public class KeyToTheArchive extends Card {
@@ -39,7 +39,7 @@ public class KeyToTheArchive extends Card {
         addStaticEffect(new EntersTappedEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DraftCardFromSpellbookEffect(SPELLBOOK),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

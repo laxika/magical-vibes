@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EVE", collectorNumber = "39")
 public class NeedleSpecter extends Card {
@@ -15,6 +15,6 @@ public class NeedleSpecter extends Card {
         // Whenever Needle Specter deals combat damage to a player, that player discards that many
         // cards. EventValue reads the combat damage dealt, wired onto the trigger by CombatDamageService.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER));
+                new DiscardEffect(new EventValue(), Subjects.targetPlayer()));
     }
 }

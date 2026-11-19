@@ -7,19 +7,19 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RNA", collectorNumber = "80")
 public class OrzhovRacketeers extends Card {
 
     public OrzhovRacketeers() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));
+                new DiscardEffect(1, Subjects.targetPlayer(), false));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 2, "Spirit", 1, 1, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLACK),

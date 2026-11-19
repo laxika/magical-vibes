@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -28,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BRO", collectorNumber = "238b")
 public class UrzaPlaneswalker extends Card {
@@ -49,7 +49,7 @@ public class UrzaPlaneswalker extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(2), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(2), new DiscardEffect(1, Subjects.you())),
                 "+1: Draw two cards, then discard a card."
         ));
 

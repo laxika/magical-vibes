@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterRandomDiscardAtNextUpkeepEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @Slf4j
 @Component
@@ -27,7 +27,7 @@ public class RegisterRandomDiscardAtNextUpkeepEffectHandler implements NormalEff
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.upkeep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
                 entry.getSourcePermanentId(), null,
-                new DiscardEffect(e.count(), DiscardRecipient.CONTROLLER, true)));
+                new DiscardEffect(e.count(), Subjects.you(), true)));
         log.info("Game {} - {} registers delayed random discard of {} card(s) at next upkeep",
                 gameData.id, entry.getCard().getName(), e.count());
     }

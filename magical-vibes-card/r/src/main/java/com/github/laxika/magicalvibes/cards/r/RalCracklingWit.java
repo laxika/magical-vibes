@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BLB", collectorNumber = "230")
 public class RalCracklingWit extends Card {
@@ -39,7 +39,7 @@ public class RalCracklingWit extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new DrawCardEffect(3), new DiscardEffect(2, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(3), new DiscardEffect(2, Subjects.you())),
                 "−3: Draw three cards, then discard two cards."
         ));
 

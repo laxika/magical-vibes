@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "119")
 public class CabalInquisitor extends Card {
@@ -23,7 +23,7 @@ public class CabalInquisitor extends Card {
                 "{1}{B}",
                 List.of(
                         new ExileNCardsFromGraveyardCost(2, null),
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)
+                        new DiscardEffect(1, Subjects.targetPlayer())
                 ),
                 "Threshold — {1}{B}, {T}, Exile two cards from your graveyard: Target player discards a card. "
                         + "Activate only as a sorcery and only if there are seven or more cards in your graveyard.",

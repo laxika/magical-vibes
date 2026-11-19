@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KTK", collectorNumber = "204")
 @CardRegistration(set = "DMC", collectorNumber = "168")
@@ -44,7 +44,7 @@ public class SultaiCharm extends Card {
                         "Draw two cards, then discard a card",
                         List.of(
                                 new DrawCardEffect(2),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                                new DiscardEffect(1, Subjects.you())))
         )));
     }
 }

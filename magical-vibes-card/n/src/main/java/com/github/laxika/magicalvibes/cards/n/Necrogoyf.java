@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH2", collectorNumber = "93")
 @CardRegistration(set = "M3C", collectorNumber = "202")
@@ -24,7 +24,7 @@ public class Necrogoyf extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 creaturesInAllGraveyards, new Fixed(4)));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER));
+                new DiscardEffect(1, Subjects.triggeringPlayer()));
         addCastingOption(new MadnessCast("{1}{B}{B}"));
     }
 }

@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TSP", collectorNumber = "187")
 @CardRegistration(set = "TSR", collectorNumber = "198")
@@ -17,7 +17,7 @@ import java.util.List;
 public class WheelOfFate extends Card {
 
     public WheelOfFate() {
-        addSpellEffect(new DiscardHandEffect(DiscardRecipient.EACH_PLAYER));
+        addSpellEffect(new DiscardHandEffect(Subjects.eachPlayer()));
         addSpellEffect(new EachPlayerDrawsCardEffect(7));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

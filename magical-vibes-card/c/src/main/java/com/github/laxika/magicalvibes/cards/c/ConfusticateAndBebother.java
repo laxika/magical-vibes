@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOB", collectorNumber = "35")
 public class ConfusticateAndBebother extends Card {
@@ -22,7 +22,7 @@ public class ConfusticateAndBebother extends Card {
                         "Draw two cards, then discard a card",
                         List.of(
                                 new DrawCardEffect(2),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                                new DiscardEffect(1, Subjects.you())))
         )));
     }
 }

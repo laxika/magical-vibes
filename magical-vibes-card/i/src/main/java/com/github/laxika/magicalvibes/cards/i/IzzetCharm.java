@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "172")
 @CardRegistration(set = "MM3", collectorNumber = "171")
@@ -51,7 +51,7 @@ public class IzzetCharm extends Card {
                         "Draw two cards, then discard two cards",
                         List.of(
                                 new DrawCardEffect(2),
-                                new DiscardEffect(2, DiscardRecipient.CONTROLLER)))
+                                new DiscardEffect(2, Subjects.you())))
         )));
     }
 }

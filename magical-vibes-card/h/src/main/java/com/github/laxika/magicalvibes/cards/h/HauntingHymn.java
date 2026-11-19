@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TSP", collectorNumber = "112")
 @CardRegistration(set = "IMA", collectorNumber = "93")
@@ -21,9 +21,9 @@ public class HauntingHymn extends Card {
                 "Target must be a player"
         ));
         addSpellEffect(new ConditionalEffect(
-                new CastDuringMainPhase(), new DiscardEffect(4, DiscardRecipient.TARGET_PLAYER)));
+                new CastDuringMainPhase(), new DiscardEffect(4, Subjects.targetPlayer())));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastDuringMainPhase()),
-                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
+                new DiscardEffect(2, Subjects.targetPlayer())));
     }
 }

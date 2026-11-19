@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MSH", collectorNumber = "108")
 public class NinjaOfTheHand extends Card {
@@ -18,7 +18,7 @@ public class NinjaOfTheHand extends Card {
                 false,
                 "{4}{B}",
                 List.of(
-                        new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                        new DiscardEffect(1, Subjects.eachOpponent()),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Power-up — {4}{B}: Each opponent discards a card. Put a +1/+1 counter on this creature. "

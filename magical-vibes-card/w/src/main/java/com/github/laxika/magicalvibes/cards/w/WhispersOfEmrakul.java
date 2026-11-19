@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EMN", collectorNumber = "114")
 public class WhispersOfEmrakul extends Card {
@@ -19,8 +19,8 @@ public class WhispersOfEmrakul extends Card {
                 "Target must be an opponent"
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new Delirium(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true),
-                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER, true)
+                new DiscardEffect(1, Subjects.targetPlayer(), true),
+                new DiscardEffect(2, Subjects.targetPlayer(), true)
         ));
     }
 }

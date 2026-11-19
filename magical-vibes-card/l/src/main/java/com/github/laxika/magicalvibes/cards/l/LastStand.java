@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -51,6 +50,6 @@ public class LastStand extends Card {
         DynamicAmount islands = new DeterminedOnce(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER));
         addSpellEffect(new DrawCardEffect(islands));
-        addSpellEffect(new DiscardEffect(islands, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(islands, Subjects.you()));
     }
 }

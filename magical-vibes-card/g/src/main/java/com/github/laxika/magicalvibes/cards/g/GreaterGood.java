@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "9ED", collectorNumber = "245")
 @CardRegistration(set = "USG", collectorNumber = "257")
@@ -33,7 +33,7 @@ public class GreaterGood extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, true),
                         new DrawCardEffect(new XValue()),
-                        new DiscardEffect(3, DiscardRecipient.CONTROLLER)
+                        new DiscardEffect(3, Subjects.you())
                 ),
                 "Sacrifice a creature: Draw cards equal to the sacrificed creature's power, then discard three cards."
         ));

@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MOR", collectorNumber = "102")
 public class SensationGorger extends Card {
@@ -19,7 +19,7 @@ public class SensationGorger extends Card {
         // If it shares a creature type with this creature, you may reveal it. If you do, each player
         // discards their hand, then draws four cards.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new KinshipEffect(List.of(
-                new DiscardHandEffect(DiscardRecipient.EACH_PLAYER),
+                new DiscardHandEffect(Subjects.eachPlayer()),
                 new EachPlayerDrawsCardEffect(4))));
     }
 }

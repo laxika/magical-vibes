@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -37,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HBG", collectorNumber = "8")
 public class VhalEagerScholar extends Card {
@@ -55,7 +55,7 @@ public class VhalEagerScholar extends Card {
         card.addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                List.of(new DrawCardEffect(), new DiscardEffect(1, Subjects.you()),
                         new PutCountersOnSelfEffect(CounterType.STUDY)),
                 "{T}: Draw a card, then discard a card. Put a study counter on Vhal, Eager Scholar."));
     }
@@ -64,7 +64,7 @@ public class VhalEagerScholar extends Card {
         card.addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                List.of(new DrawCardEffect(), new DiscardEffect(1, Subjects.you())),
                 "{T}: Draw a card, then discard a card."));
     }
 

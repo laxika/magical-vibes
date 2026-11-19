@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MSC", collectorNumber = "641")
 public class TimelineInquiry extends Card {
@@ -18,6 +18,6 @@ public class TimelineInquiry extends Card {
         addSpellEffect(new DrawCardEffect(3));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new TeamworkCostPaid()),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                new DiscardEffect(1, Subjects.you())));
     }
 }

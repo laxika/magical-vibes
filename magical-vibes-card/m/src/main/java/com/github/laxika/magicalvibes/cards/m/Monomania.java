@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Keeping one card of the target's choice is the same as discarding all but one card of their
@@ -27,7 +27,7 @@ public class Monomania extends Card {
         ))
                 .addSpellEffect(new DiscardEffect(
                         new Max(new Fixed(0), new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-1))),
-                        DiscardRecipient.TARGET_PLAYER
+                        Subjects.targetPlayer()
                 ));
     }
 }

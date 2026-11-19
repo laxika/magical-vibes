@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SUM", collectorNumber = "185")
 @CardRegistration(set = "LEA", collectorNumber = "183")
@@ -17,7 +17,7 @@ public class WheelOfFortune extends Card {
 
     public WheelOfFortune() {
         // Each player discards their hand, then draws seven cards.
-        addSpellEffect(new DiscardHandEffect(DiscardRecipient.EACH_PLAYER));
+        addSpellEffect(new DiscardHandEffect(Subjects.eachPlayer()));
         addSpellEffect(new EachPlayerDrawsCardEffect(7));
     }
 }

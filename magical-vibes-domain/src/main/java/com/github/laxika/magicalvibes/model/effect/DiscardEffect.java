@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.Objects;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Makes one or more players discard cards. A single record covers the whole discard family:
- * the {@link DiscardRecipient} routes who discards (controller / target player / triggering player /
- * each player /
- * each opponent), {@code random} chooses between the player picking their discards and a random
+ * Makes one or more players discard cards (CR 701.9a). A single record covers the whole discard family:
+ * the {@link PlayerSubject} names who discards ({@code you()}, {@code targetPlayer()},
+ * {@code triggeringPlayer()}, {@code eachPlayer()}, {@code controllerOf(targetSpell())}, ...),
+ * {@code random} chooses between the player picking their discards and a random
  * discard, and the {@link DynamicAmount} count covers fixed counts ("discards two cards"), an X
  * value (Mind Shatter), or a source-relative count such as {@code CountersOnSource(CHARGE)}
  * (Shrine of Limitless Power). When {@code stopAfterDiscardingType} or
@@ -18,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * (Thirst for Knowledge and Thirst for Discovery).
  *
  * @param amount                  number of cards to discard
- * @param recipient               who discards
+ * @param player                  who discards; only {@code targetPlayer()} declares a player target
  * @param random                  when {@code true} the discard is at random; when {@code false}
  *                                the discarding player chooses which cards to discard
  * @param stopAfterDiscardingType matching card type that makes the remaining discard optional;
@@ -29,58 +30,62 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param onlyCardsDrawnThisResolution when {@code true}, choices are restricted to cards drawn
  *                                earlier while resolving the same stack entry
  */
-public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
+public record DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
                             CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
                             CardPredicate stopAfterDiscardingPredicate)
         implements CardEffect {
 
-    public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random) {
-        this(amount, recipient, random, null, false, null);
+    public DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random) {
+        this(amount, player, random, null, false, null);
     }
 
-    public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
+    public DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
                          CardType stopAfterDiscardingType) {
-        this(amount, recipient, random, stopAfterDiscardingType, false, null);
+        this(amount, player, random, stopAfterDiscardingType, false, null);
     }
 
-    public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient,
+    public DiscardEffect(DynamicAmount amount, PlayerSubject player,
                          CardPredicate stopAfterDiscardingPredicate) {
-        this(amount, recipient, false, null, false, stopAfterDiscardingPredicate);
+        this(amount, player, false, null, false, stopAfterDiscardingPredicate);
     }
 
     /** Fixed count, chosen or random per {@code random}. */
-    public DiscardEffect(int amount, DiscardRecipient recipient, boolean random) {
-        this(new Fixed(amount), recipient, random);
+    public DiscardEffect(int amount, PlayerSubject player, boolean random) {
+        this(new Fixed(amount), player, random);
     }
 
     /** Chosen discard that may finish after a matching card. */
-    public DiscardEffect(int amount, DiscardRecipient recipient, CardType stopAfterDiscardingType) {
-        this(new Fixed(amount), recipient, false, stopAfterDiscardingType);
+    public DiscardEffect(int amount, PlayerSubject player, CardType stopAfterDiscardingType) {
+        this(new Fixed(amount), player, false, stopAfterDiscardingType);
     }
 
     /** Chosen discard that may finish after a matching card predicate. */
-    public DiscardEffect(int amount, DiscardRecipient recipient,
+    public DiscardEffect(int amount, PlayerSubject player,
                          CardPredicate stopAfterDiscardingPredicate) {
-        this(new Fixed(amount), recipient, stopAfterDiscardingPredicate);
+        this(new Fixed(amount), player, stopAfterDiscardingPredicate);
     }
 
     /** Dynamic count, non-random (the discarding player chooses). */
-    public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient) {
-        this(amount, recipient, false);
+    public DiscardEffect(DynamicAmount amount, PlayerSubject player) {
+        this(amount, player, false);
     }
 
     /** Fixed count, non-random (the discarding player chooses). */
-    public DiscardEffect(int amount, DiscardRecipient recipient) {
-        this(new Fixed(amount), recipient, false);
+    public DiscardEffect(int amount, PlayerSubject player) {
+        this(new Fixed(amount), player, false);
     }
 
-    public static DiscardEffect cardsDrawnThisResolution(int amount, DiscardRecipient recipient) {
-        return new DiscardEffect(new Fixed(amount), recipient, false, null, true, null);
+    public DiscardEffect {
+        Objects.requireNonNull(player, "player");
+    }
+
+    public static DiscardEffect cardsDrawnThisResolution(int amount, PlayerSubject player) {
+        return new DiscardEffect(new Fixed(amount), player, false, null, true, null);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return recipient == DiscardRecipient.TARGET_PLAYER
+        return player.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

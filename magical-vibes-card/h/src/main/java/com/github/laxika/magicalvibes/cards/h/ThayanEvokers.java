@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HBG", collectorNumber = "39")
 public class ThayanEvokers extends Card {
@@ -15,7 +15,7 @@ public class ThayanEvokers extends Card {
     public ThayanEvokers() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConjureCardToHandEffect("M10", "146"),
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(1, Subjects.you()));
         addTrigger(Triggers.youConjure(),
                 new PutCountersOnSourceEffect(1, 1, 1));
     }

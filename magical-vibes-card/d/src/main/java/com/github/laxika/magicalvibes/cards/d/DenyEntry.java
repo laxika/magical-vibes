@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TLE", collectorNumber = "222")
 public class DenyEntry extends Card {
@@ -22,6 +22,6 @@ public class DenyEntry extends Card {
                 "Target must be a creature spell."
         )).addSpellEffect(new CounterSpellEffect())
                 .addSpellEffect(new DrawCardEffect())
-                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+                .addSpellEffect(new DiscardEffect(1, Subjects.you()));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -21,7 +20,7 @@ public class AtreusImpulsiveSon extends Card {
                 "{3}",
                 List.of(
                         new DrawCardEffect(new ControllerExperienceCounters()),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                        new DiscardEffect(1, Subjects.you()),
                         new DealDamageToPlayersEffect(2, Subjects.eachOpponent())
                 ),
                 "{3}, {T}: Draw a card for each experience counter you have, then discard a card. "

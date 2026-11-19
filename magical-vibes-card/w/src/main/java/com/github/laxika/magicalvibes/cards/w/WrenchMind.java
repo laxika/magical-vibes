@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MRD", collectorNumber = "84")
 @CardRegistration(set = "IMA", collectorNumber = "115")
 public class WrenchMind extends Card {
 
     public WrenchMind() {
-        addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER, CardType.ARTIFACT));
+        addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer(), CardType.ARTIFACT));
     }
 }

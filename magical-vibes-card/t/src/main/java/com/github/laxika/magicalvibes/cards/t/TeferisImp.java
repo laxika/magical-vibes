@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Teferi's Imp — {2}{U} Creature — Imp 1/1.
@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TeferisImp extends Card {
 
     public TeferisImp() {
-        addTrigger(Triggers.phasesOut(null, ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.phasesOut(null, ObjectRelation.THIS), new DiscardEffect(1, Subjects.you()));
         addTrigger(Triggers.phasesIn(null, ObjectRelation.THIS), new DrawCardEffect(1));
     }
 }

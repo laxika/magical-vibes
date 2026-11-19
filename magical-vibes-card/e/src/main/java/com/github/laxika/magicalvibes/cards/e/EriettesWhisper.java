@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +31,7 @@ public class EriettesWhisper extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        )).addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()));
 
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken()));

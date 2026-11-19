@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DGM", collectorNumber = "55")
 @CardRegistration(set = "UMA", collectorNumber = "197")
@@ -16,7 +16,7 @@ public class BlastOfGenius extends Card {
         // Choose any target. Draw three cards, then discard a card. Blast of Genius deals damage
         // equal to the discarded card's mana value to that permanent or player.
         addSpellEffect(new DrawCardEffect(3));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DiscardEffect(1, Subjects.you()));
         addSpellEffect(new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue()));
     }
 }

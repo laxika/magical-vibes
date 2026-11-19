@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentFromTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -29,6 +28,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "233")
 public class SorcererClass extends Card {
@@ -40,7 +40,7 @@ public class SorcererClass extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(2),
-                new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+                new DiscardEffect(2, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

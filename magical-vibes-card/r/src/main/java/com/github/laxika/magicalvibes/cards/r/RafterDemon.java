@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RNA", collectorNumber = "196")
 public class RafterDemon extends Card {
@@ -18,6 +18,6 @@ public class RafterDemon extends Card {
         addCastingOption(AlternateHandCast.spectacle("{3}{B}{R}", new OpponentLostLifeThisTurn(1)));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForSpectacleCost()),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+                new DiscardEffect(1, Subjects.eachOpponent()));
     }
 }

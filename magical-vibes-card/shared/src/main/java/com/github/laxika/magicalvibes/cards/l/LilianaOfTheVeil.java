@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ISD", collectorNumber = "105")
 @CardRegistration(set = "INR", collectorNumber = "475")
@@ -23,7 +23,7 @@ public class LilianaOfTheVeil extends Card {
         // +1: Each player discards a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DiscardEffect(1, DiscardRecipient.EACH_PLAYER)),
+                List.of(new DiscardEffect(1, Subjects.eachPlayer())),
                 "+1: Each player discards a card."
         ));
 

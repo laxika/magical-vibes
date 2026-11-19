@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RippleEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CSP", collectorNumber = "72")
 public class SurgingDementia extends Card {
@@ -20,6 +20,6 @@ public class SurgingDementia extends Card {
                 "Target must be a player"));
         addTrigger(Triggers.youCastThisSpell(),
                 new MayEffect(new RippleEffect(4), "Reveal the top four cards of your library?"));
-        addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer()));
     }
 }
