@@ -446,7 +446,6 @@ public sealed interface Condition permits
         TriggeringPermanentPowerGreaterThanSourcePower,
         TriggeringPermanentHasGreaterPowerOrToughnessThanSource,
         TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures,
-        TriggeringPermanentPowerGreaterThanEachOtherCreature,
         TriggeringPermanentPowerAtLeast,
         TriggeringPermanentToughnessEqualsEventValue,
         TriggeringPermanentHasSubtype,

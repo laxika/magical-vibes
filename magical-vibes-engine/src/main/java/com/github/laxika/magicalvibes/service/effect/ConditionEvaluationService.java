@@ -497,7 +497,6 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubt
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentToughnessEqualsEventValue;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
@@ -2011,30 +2010,6 @@ public class ConditionEvaluationService {
                         : gameQueryService.ownPower(gameData, triggeringPermanent);
                 yield gameQueryService.hasUniqueGreatestPowerAmongAllCreatures(
                         gameData, triggeringPermanent, triggeringPower);
-            }
-            case TriggeringPermanentPowerGreaterThanEachOtherCreature ignored -> {
-                UUID triggeringPermanentId = ctx.triggeringPermanentId() != null
-                        ? ctx.triggeringPermanentId() : ctx.sourcePermanentId();
-                Permanent triggeringPermanent = triggeringPermanentId == null
-                        ? null : gameQueryService.findPermanentById(gameData, triggeringPermanentId);
-                int triggeringPower;
-                if (triggeringPermanent != null) {
-                    triggeringPower = gameQueryService.getEffectivePower(gameData, triggeringPermanent);
-                } else if (ctx.triggeringPermanentPowerAtTrigger() != null) {
-                    triggeringPower = ctx.triggeringPermanentPowerAtTrigger();
-                } else if (ctx.sourcePermanent() != null) {
-                    triggeringPower = gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent());
-                } else {
-                    yield false;
-                }
-
-                final int power = triggeringPower;
-                yield gameData.playerBattlefields.values().stream()
-                        .flatMap(List::stream)
-                        .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                        .filter(permanent -> triggeringPermanentId == null
-                                || !triggeringPermanentId.equals(permanent.getId()))
-                        .allMatch(permanent -> power > gameQueryService.getEffectivePower(gameData, permanent));
             }
             case TriggeringPermanentMatches c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null

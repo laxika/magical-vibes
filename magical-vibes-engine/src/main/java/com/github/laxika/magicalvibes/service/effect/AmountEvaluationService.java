@@ -1368,8 +1368,8 @@ public class AmountEvaluationService {
 
     /**
      * "That creature's power" as the ability resolves: the triggering permanent's current power, else its power as it
-     * last existed on the battlefield (CR 608.2h), which the collector recorded as the ability triggered (a dying
-     * creature's last-known power) or the departure recorded since.
+     * last existed on the battlefield (CR 608.2h), which the trigger's matcher recorded on the entry as the ability
+     * triggered (a dying creature's last-known power) or the departure recorded since.
      */
     private int triggeringPermanentPower(GameData gameData, AmountContext ctx, boolean allowNegative) {
         StackEntry entry = ctx.stackEntry();
@@ -1662,7 +1662,7 @@ public class AmountEvaluationService {
 
     /**
      * Whether the amount (recursively) reads the stack entry's snapshotted x value —
-     * used by trigger collectors to decide if an entry needs {@code xValue} populated.
+     * used by the AI to tell amounts that scale with the X chosen for a spell.
      */
     public boolean referencesXValue(DynamicAmount amount) {
         return switch (amount) {

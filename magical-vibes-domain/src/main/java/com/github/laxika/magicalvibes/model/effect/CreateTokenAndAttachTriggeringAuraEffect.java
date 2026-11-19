@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * Ajani's Chosen: "create a 2/2 white Cat creature token. If that enchantment is an Aura, you may
- * attach it to the token." Placed in the {@code ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD} slot.
+ * attach it to the token." Used with {@code Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)};
+ * the enters matcher records the entering enchantment as the stack entry's triggering permanent.
  *
  * <p>The token is always created; the move is offered only when the enchantment that triggered the
  * ability is an Aura that is still on the battlefield and could legally enchant the new token
