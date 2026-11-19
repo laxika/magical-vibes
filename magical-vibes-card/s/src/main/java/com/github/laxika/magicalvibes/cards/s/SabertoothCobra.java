@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterPoisonAtNextUpkeepUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class SabertoothCobra extends Card {
         // poison trigger at that player's next upkeep. The "unless they pay {2} before that step"
         // window is not modelled: no payment is offered, since the payment must be made before upkeep.
         addTrigger(Triggers.dealsDamageToPlayer(), SequenceEffect.of(
-                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER),
+                new GivePoisonCountersEffect(1, Subjects.targetPlayer()),
                 new RegisterPoisonAtNextUpkeepUnlessPaysEffect(1, "{2}")));
     }
 }

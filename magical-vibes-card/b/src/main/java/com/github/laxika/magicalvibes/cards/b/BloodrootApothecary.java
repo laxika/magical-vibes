@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -37,6 +37,6 @@ public class BloodrootApothecary extends Card {
                                 new PermanentIsTokenPredicate(),
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                         ObjectRelation.OPPONENT_CONTROLS),
-                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER));
+                new GivePoisonCountersEffect(2, Subjects.targetPlayer()));
     }
 }

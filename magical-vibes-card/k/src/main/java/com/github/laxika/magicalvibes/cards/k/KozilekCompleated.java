@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsDownToHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -17,7 +16,7 @@ public class KozilekCompleated extends Card {
 
     public KozilekCompleated() {
         addTrigger(Triggers.youCastThisSpell(),
-                new GivePoisonCountersEffect(2, PoisonRecipient.EACH_OPPONENT),
+                new GivePoisonCountersEffect(2, Subjects.eachOpponent()),
                 new EachOpponentDiscardsDownToHandSizeEffect(2));
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 new DefendingPlayerPoisonCounters(), new PermanentTruePredicate(),

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
@@ -43,7 +43,7 @@ public class MoxPoison extends Card {
                 null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        new GivePoisonCountersEffect(2, PoisonRecipient.CONTROLLER)),
+                        new GivePoisonCountersEffect(2, Subjects.you())),
                 "{T}: Add one mana of any color. You get two poison counters."));
     }
 }

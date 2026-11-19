@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostOpponentCreaturesByPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONC", collectorNumber = "12")
 @CardRegistration(set = "ONC", collectorNumber = "50")
 public class PhyresisOutbreak extends Card {
 
     public PhyresisOutbreak() {
-        addSpellEffect(new GivePoisonCountersEffect(1, PoisonRecipient.EACH_OPPONENT));
+        addSpellEffect(new GivePoisonCountersEffect(1, Subjects.eachOpponent()));
         addSpellEffect(new BoostOpponentCreaturesByPoisonCountersEffect());
     }
 }

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.GiveEachOpponentRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +23,6 @@ public class FeralGhoul extends Card {
 
         // When this creature dies, each opponent gets rad counters equal to its power.
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new GiveEachOpponentRadCountersEffect(new EventValue()));
+                new GiveRadCountersEffect(new EventValue(), Subjects.eachOpponent()));
     }
 }

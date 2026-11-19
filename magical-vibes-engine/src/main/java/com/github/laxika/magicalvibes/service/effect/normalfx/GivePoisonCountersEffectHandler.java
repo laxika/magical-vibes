@@ -4,28 +4,27 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 /**
- * Resolves the whole give-poison family via {@link GivePoisonCountersEffect}: the
- * {@link com.github.laxika.magicalvibes.model.effect.PoisonRecipient} routes who gets the poison
- * counters. All placement goes through the central {@link LifeSupport#applyPoisonCounters} path so
- * poison-suppression (Melira / {@code PlayerCantGetPoisonCountersEffect}), infect interactions and
- * poison-loss checks keep working uniformly.
+ * Resolves {@link GivePoisonCountersEffect}: evaluates the amount once in the entry's context, asks
+ * {@link SubjectResolutionService} for the players and gives each of them the counters through
+ * {@link LifeSupport#applyPoisonCounters}, so poison suppression (Melira, {@code PlayerCantGetPoisonCountersEffect}),
+ * counter replacements and the "you put counters" triggers apply alike.
  */
 @Component
 @RequiredArgsConstructor
 public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,44 +36,8 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
         var e = (GivePoisonCountersEffect) effect;
         String sourceName = entry.getCard().getName();
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, null));
-
-        switch (e.recipient()) {
-            case CONTROLLER -> lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), amount, sourceName, entry.getControllerId());
-            case TARGET_PLAYER -> {
-                UUID targetPlayerId = entry.getTargetId();
-                if (targetPlayerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, targetPlayerId, amount, sourceName, entry.getControllerId());
-            }
-            case EACH_PLAYER -> {
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
-                }
-            }
-            case EACH_OPPONENT -> {
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    if (!playerId.equals(entry.getControllerId())) {
-                        lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
-                    }
-                }
-            }
-            case TARGET_PERMANENT_CONTROLLER -> {
-                UUID targetPermanentId = entry.getTargetId();
-                if (targetPermanentId == null) return;
-                UUID playerId = gameQueryService.findPermanentController(gameData, targetPermanentId);
-                if (playerId == null) {
-                    playerId = entry.getRemovedPermanentControllers().get(targetPermanentId);
-                }
-                if (playerId == null && targetPermanentId.equals(entry.getTriggeringPermanentId())) {
-                    playerId = entry.getTriggeringPermanentControllerId();
-                }
-                if (playerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
-            }
-            case TRIGGERING_PERMANENT_CONTROLLER -> {
-                UUID playerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
-                if (playerId == null || !gameData.playerIds.contains(playerId)) return;
-                lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
-            }
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
+            lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
         }
     }
 }

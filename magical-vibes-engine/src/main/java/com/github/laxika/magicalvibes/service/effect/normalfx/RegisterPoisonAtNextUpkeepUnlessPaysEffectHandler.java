@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,7 +43,7 @@ public class RegisterPoisonAtNextUpkeepUnlessPaysEffectHandler implements Normal
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
-                        new GivePoisonCountersEffect(e.amount(), PoisonRecipient.TARGET_PLAYER)),
+                        new GivePoisonCountersEffect(e.amount(), Subjects.targetPlayer())),
                 entry.getSourcePermanentId(), null, playerId, e.manaCost()));
 
         String playerName = gameData.playerIdToName.get(playerId);

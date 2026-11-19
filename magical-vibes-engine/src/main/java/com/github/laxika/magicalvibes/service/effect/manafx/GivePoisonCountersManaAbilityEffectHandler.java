@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -35,7 +35,7 @@ public class GivePoisonCountersManaAbilityEffectHandler implements ManaAbilityEf
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
         GivePoisonCountersEffect poison = (GivePoisonCountersEffect) effect;
-        if (poison.recipient() != PoisonRecipient.CONTROLLER) return;
+        if (!(poison.player() instanceof PlayerSubject.You)) return;
 
         int amount = amountEvaluationService.evaluate(gameData, poison.amount(),
                 AmountContext.forManaAbility(permanent, playerId));

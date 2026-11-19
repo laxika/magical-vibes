@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TotalRadCountersAmongPlayers;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerRadCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -22,7 +23,7 @@ import java.util.Set;
 public class Vault12TheNecropolis extends Card {
 
     public Vault12TheNecropolis() {
-        addTrigger(Triggers.chapter(1), new GiveEachPlayerRadCounterEffect(3));
+        addTrigger(Triggers.chapter(1), new GiveRadCountersEffect(3, Subjects.eachPlayer()));
 
         addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 new TotalRadCountersAmongPlayers(), "Zombie Mutant", 2, 2, CardColor.BLACK,

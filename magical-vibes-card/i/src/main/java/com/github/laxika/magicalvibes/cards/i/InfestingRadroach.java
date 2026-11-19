@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +21,7 @@ public class InfestingRadroach extends Card {
     public InfestingRadroach() {
         addStaticEffect(new CantBlockEffect());
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new GiveTargetPlayerRadCountersEffect(new EventValue()));
+                new GiveRadCountersEffect(new EventValue(), Subjects.targetPlayer()));
         addTrigger(new TriggerCondition(Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayEffect(

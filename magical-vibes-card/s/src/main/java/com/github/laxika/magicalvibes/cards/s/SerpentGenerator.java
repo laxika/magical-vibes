@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class SerpentGenerator extends Card {
         // creature deals damage to a player, that player gets a poison counter."
         List<Ability> tokenEffects =
                 List.of(new TriggeredAbility(Triggers.dealsDamageToPlayer(),
-                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)));
+                        new GivePoisonCountersEffect(1, Subjects.targetPlayer())));
         CreateTokenEffect snakeToken = new CreateTokenEffect(CardType.CREATURE, 1, "Snake", 1, 1,
                 null, null, List.of(CardSubtype.SNAKE), Set.of(), Set.of(CardType.ARTIFACT),
                 false, false, tokenEffects, List.of(), false, false, false, 0, Set.of());

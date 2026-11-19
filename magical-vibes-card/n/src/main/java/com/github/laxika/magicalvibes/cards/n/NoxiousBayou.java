@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class NoxiousBayou extends Card {
                 null,
                 List.of(
                         new AwardManaOfColorsEffect(List.of(ManaColor.BLACK, ManaColor.GREEN)),
-                        new GivePoisonCountersEffect(1, PoisonRecipient.CONTROLLER)
+                        new GivePoisonCountersEffect(1, Subjects.you())
                 ),
                 "{T}: Add {B} or {G}. You get a poison counter."
         ));

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,8 +22,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheWiseMothman extends Card {
 
     public TheWiseMothman() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GiveEachPlayerRadCountersEffect(1));
-        addTrigger(Triggers.attacks(), new GiveEachPlayerRadCountersEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GiveRadCountersEffect(1, Subjects.eachPlayer()));
+        addTrigger(Triggers.attacks(), new GiveRadCountersEffect(1, Subjects.eachPlayer()));
         targetUpTo(new EventValue(), TargetFilters.creature(), 100)
                 .addTrigger(new TriggerCondition(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)),
                         TriggerOptions.ONE_OR_MORE,

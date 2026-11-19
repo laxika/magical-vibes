@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NightkinAmbusher.class, GrizzlyBears.class, Shock.class, ProdigalPyromancer.class})
+@CardUsed({NightkinAmbusher.class, GrizzlyBears.class, Shock.class, ProdigalPyromancer.class,
+        VorinclexMonstrousRaider.class})
 class NightkinAmbusherTest extends BaseCardTest {
 
     @Test
@@ -30,6 +32,19 @@ class NightkinAmbusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Vorinclex doubles the rad counters its controller gives the target player")
+    void vorinclexDoublesRadCountersGivenToTargetPlayer() {
+        harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+        harness.enterBattlefieldAndReturn(player1, new NightkinAmbusher());
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(8);
     }
 
     @Test

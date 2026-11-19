@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsController;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +24,7 @@ import java.util.List;
 public class TheGhoulGunslinger extends Card {
 
     private static final CardEffect RAD_AND_TREASURE = SequenceEffect.of(
-            new GiveTargetPlayerRadCountersEffect(2),
+            new GiveRadCountersEffect(2, Subjects.targetPlayer()),
             new ConditionalEffect(new TargetPlayerIsController(),
                     CreateTokenEffect.ofTreasureToken(1)));
 

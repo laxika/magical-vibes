@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -135,7 +135,7 @@ class EmblemZoneChangeTriggersTest extends BaseCardTest {
     @DisplayName("An emblem's targeted \"whenever a creature dies\" ability queues its target choice with its own "
             + "target filter, and its \"put into your graveyard\" ability doesn't see a creature")
     void targetedEmblemCreatureDeathAbilityQueuesItsTargetChoice() {
-        GivePoisonCountersEffect poison = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
+        GivePoisonCountersEffect poison = new GivePoisonCountersEffect(1, Subjects.targetPlayer());
         TargetFilter opponent = TargetFilters.permanentAnOpponentControls();
         Card source = emblemOf(player1.getId(), new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), poison)
                 .withTargetFilter(opponent));

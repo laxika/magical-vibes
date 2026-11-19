@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -26,6 +26,6 @@ public class PistusStrike extends Card {
                 "Target must be a creature with flying"
         ))
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PERMANENT_CONTROLLER), ThenEffectRecipient.CONTROLLER));
+                        new GivePoisonCountersEffect(1, Subjects.controllerOf(Subjects.target())), ThenEffectRecipient.CONTROLLER));
     }
 }

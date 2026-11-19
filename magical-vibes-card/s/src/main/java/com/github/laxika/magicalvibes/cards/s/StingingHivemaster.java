@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -43,7 +43,7 @@ public class StingingHivemaster extends Card {
                 List.of(
                         StaticAbility.of(new CantBlockEffect()),
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER))),
+                                new GivePoisonCountersEffect(1, Subjects.targetPlayer()))),
                 List.of(),
                 false,
                 false,

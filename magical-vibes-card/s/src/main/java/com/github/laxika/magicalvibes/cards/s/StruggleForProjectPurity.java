@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -45,6 +46,6 @@ public class StruggleForProjectPurity extends Card {
                         new AllOf(List.of(
                                 new SourceHasChosenMode(ENCLAVE),
                                 new OpponentAttacksWithAtLeastCreatures(1, false)))),
-                        new GiveTargetPlayerRadCountersEffect(new Scaled(new XValue(), 2)));
+                        new GiveRadCountersEffect(new Scaled(new XValue(), 2), Subjects.targetPlayer()));
     }
 }

@@ -16,7 +16,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 1 | Inventory script, audit ledger and count ratchet | done |
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
-| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e, 4f, 4g done |
+| 4 | Player verbs take a `PlayerSubject` (repeatable) | in progress: 4a, 4b, 4c, 4d, 4e, 4f, 4g, 4h done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
@@ -356,7 +356,7 @@ fold in, the enum and the absorbed classes are deleted.
 | 4e | Discard: `DiscardEffect` | `DiscardRecipient` (683 cards) | `--family Discard`, `TargetPlayerDiscards*`, `EachOpponentDiscards*` | done |
 | 4f | Mill: `MillEffect` | `MillRecipient` (419 cards) | `--family Mill` | done |
 | 4g | Player sacrifices: `SacrificePermanentsEffect` | `SacrificeRecipient` (301 cards) | `--family Sacrifice`, `TargetPlayerSacrifices*`, `EachPlayerSacrifices*` | done |
-| 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | open |
+| 4h | Player counters: poison, rad, energy, experience | `PoisonRecipient` | `Give{TargetPlayer,Controller,EachPlayer,EachOpponent,DefendingPlayer}RadCountersEffect` | done |
 | 4i | The small ones: `SetLifeTotalRecipient`, `SkipRecipient`, `EmblemRecipient`, `LibraryOwner`, `LibraryScope`, `GraveyardOwner`, `DestroyRecipient`, `DraftCardRecipient`, `AnteRecipient`, `FractionalLifeLossRecipient` | each | their own families | open |
 
 Notes for every run:
@@ -1514,6 +1514,62 @@ targets before the entry's `targetId` (no sacrifice card has several targets); t
   "matching permanents you control minus N" / halved `DynamicAmount` exists. The rest of the `*Sacrifices*` siblings are
   fused (step 7/8) or one-card sacrifices with two filters. `SacrificeEachMatchingPermanentEffect` (no choice) and
   `SacrificePermanentDamagedPlayerControlsEffect` are permanent verbs for step 5.
+
+### Step 4, run 4h (2026-11-19)
+
+**Survivors.** Poison: `GivePoisonCountersEffect`'s `PoisonRecipient recipient` became `PlayerSubject player` (constructors
+`(int|DynamicAmount, PlayerSubject)`). Rad: the five `Give*RadCounters*` siblings (six records: `GiveEachPlayerRadCounterEffect`
+and `GiveEachPlayerRadCountersEffect` were duplicates) fold into one `GiveRadCountersEffect(int|DynamicAmount,
+PlayerSubject)`. It is the most used record, `GiveTargetPlayerRadCountersEffect`, renamed: every rad call site was
+rewritten anyway (20 card files), and a "target player" name with an `eachPlayer()` subject would mislead. Energy
+(`EnergyCountersEffect`) and experience (`ExperienceCountersEffect`) have no subject siblings and only ever act on the
+controller, so they got no subject (ledger `survivor`). Both survivors declare a benign player target iff
+`player.declaresTarget()`; `LifeTargetValidators` requires a player for poison iff it declares. Both handlers evaluate the
+amount once in the entry's context (rad: the defending player is the amount's target for `defendingPlayer()`, as the old
+defending handler did) and ask `SubjectResolutionService` for the players.
+
+**Deleted**: the enum `PoisonRecipient`; `GiveTargetPlayerPoisonCountersEffect`, `GiveTargetPlayerRadCountersEffect`,
+`GiveControllerRadCountersEffect`, `GiveDefendingPlayerRadCountersEffect`, `GiveEachOpponentRadCountersEffect`,
+`GiveEachPlayerRadCounterEffect`, `GiveEachPlayerRadCountersEffect` and six handlers (the target-rad handler became
+`GiveRadCountersEffectHandler`, the mana-ability rider handler `GiveRadCountersManaAbilityEffectHandler`, `you()` only);
+`GiveRadCountersEffect` is new (ratchet 4,920 / 4,153). Mapping: `CONTROLLER` → `you()`; `TARGET_PLAYER` →
+`targetPlayer()` everywhere (it always declared; the Sabertooth Cobra upkeep payload and `CreateEmblemEffect`'s Javadoc
+example too); `EACH_PLAYER` / `EACH_OPPONENT` → `eachPlayer()` / `eachOpponent()`; `TARGET_PERMANENT_CONTROLLER` →
+`controllerOf(target())` (Noxious Assault, Norn's Decree, Pistus Strike: the resolver's chain is the old one, current →
+`removedPermanentControllers` → recorded triggering controller); `TRIGGERING_PERMANENT_CONTROLLER` →
+`controllerOf(triggering())` (`findTriggeringPermanentController`, as before). Rad: the target/controller/defending/
+each-opponent/each-player records → `targetPlayer()` (declared, as before, also on the combat-damage and cast triggers
+of Vexing Radgull, Infesting Radroach, Glowing One, Nuka-Nuke Launcher, Struggle for Project Purity) / `you()` /
+`defendingPlayer()` / `eachOpponent()` / `eachPlayer()`. `DestructionSupport` (Sabertooth Cobra's else-branch) and
+`GivePoisonCountersManaAbilityEffectHandler` match `You` where they matched `CONTROLLER`. 61 card files rewritten by a
+deleted scratch script (40 named the enum, 21 the absorbed records), 3 domain, 8 engine and 2 application-test files. No AI
+code read any of these classes; none implemented a capability interface.
+
+**Kept exactly.** Poison still goes only through `LifeSupport.applyPoisonCounters` (Melira, can't-get-poison, counter
+replacements, one "you put counters" event per player); the ten-counter loss stays the state-based action (CR 704.5c),
+and `DestructionSupport`'s `checkWinCondition` call is unchanged. Proliferate (`MultiPermanentChoiceHandlerService`),
+infect/toxic damage (`DamageSupport`, `CombatDamageService`) and `CounterTriggers` were not touched.
+
+**Behaviour changes.** The rad handlers disagreed: only the target-player and `GiveEachPlayerRadCountersEffect` paths
+raised the "you put counters on a player" event, only `GiveEachPlayerRadCounterEffect` applied counter replacements, and
+the defending/each-opponent paths ignored "players can't get counters". Now every rad placement is
+`GameQueryService.replaceRadCounters` then `LifeSupport.applyRadCounters` (the mana rider too). (1) Vorinclex,
+Monstrous Raider ("If you would put one or more counters on a permanent or player, put twice that many ...") doubles
+rad counters its controller gives. Test: `NightkinAmbusherTest.vorinclexDoublesRadCountersGivenToTargetPlayer`. (2) All
+Will Be One (ruling 2023-02-04: "will trigger any time you put one or more counters on a permanent or player") triggers on
+rad counters from the controller, defending-player, each-opponent and Vault 12 / Scorchbeast / Nuclear Fallout / Megaton's
+Fate paths. Test: `FeralGhoulTest.radCountersOnOpponentTriggerAllWillBeOne`. Rad logs now name the source. Not tested,
+no card depends on them: several players get poison / rad in APNAP order instead of seat order; a `targetPlayer()` reads
+the effect's bound targets before the entry's `targetId`.
+
+**For later runs.**
+
+- Proliferate's rad step (`applyRadCounters` without `replaceRadCounters`) and `ExperienceCountersEffectHandler` (no "you
+  put counters" event) still skip what the rad verb now does; both were out of scope (proliferate kept as is).
+- An "each player" poison / rad is one event per player, as before; whether it should be one batched event for "you put
+  counters" triggers is undecided (All Will Be One's rulings only settle simultaneous toxic damage).
+- `CounterUnlessGetsPoisonCountersEffect` is fused (step 8); `EachOpponentWithPoisonCountersLosesLifeEffect` can now use
+  `matching(eachOpponent(), <has poison counters>)` (4b's ledger row).
 
 ## Prompt
 

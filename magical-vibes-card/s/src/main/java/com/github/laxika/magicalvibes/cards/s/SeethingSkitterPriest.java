@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToMatchingCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -49,7 +49,7 @@ public class SeethingSkitterPriest extends Card {
                 List.of(
                         StaticAbility.of(new CantBlockEffect()),
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER))),
+                                new GivePoisonCountersEffect(1, Subjects.targetPlayer()))),
                 List.of(),
                 false,
                 false,

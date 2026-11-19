@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -37,9 +36,7 @@ public class LifeTargetValidators {
 
     @ValidatesTarget(GivePoisonCountersEffect.class)
     public void validateGivePoisonCounters(TargetValidationContext ctx, GivePoisonCountersEffect effect) {
-        // Only the target-player recipient targets a player; controller / each-player /
-        // target-permanent-controller / enchanted-permanent-controller take no player target.
-        if (effect.recipient() == PoisonRecipient.TARGET_PLAYER) {
+        if (effect.player().declaresTarget()) {
             tvs.requireTargetPlayer(ctx);
         }
     }

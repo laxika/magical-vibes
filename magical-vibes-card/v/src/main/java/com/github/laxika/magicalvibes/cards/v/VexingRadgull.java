@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasRadCounters;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +20,7 @@ public class VexingRadgull extends Card {
                 SequenceEffect.of(
                         new ConditionalEffect(new TargetPlayerHasRadCounters(), new ProliferateEffect()),
                         new ConditionalEffect(new NotCondition(new TargetPlayerHasRadCounters()),
-                                new GiveTargetPlayerRadCountersEffect(2))
+                                new GiveRadCountersEffect(2, Subjects.targetPlayer()))
                 ));
     }
 }

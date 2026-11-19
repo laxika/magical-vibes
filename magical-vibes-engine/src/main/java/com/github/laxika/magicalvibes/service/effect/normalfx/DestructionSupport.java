@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
@@ -911,7 +910,7 @@ public class DestructionSupport {
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof GivePoisonCountersEffect poison
-                    && poison.recipient() == PoisonRecipient.CONTROLLER
+                    && poison.player() instanceof PlayerSubject.You
                     && poison.amount() instanceof Fixed poisonAmount) {
                 // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
                 // entry controller is the player who owes the payment.

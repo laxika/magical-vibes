@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIR", collectorNumber = "114")
@@ -11,6 +11,6 @@ public class CryptCobra extends Card {
 
     public CryptCobra() {
         // Whenever this creature attacks and isn't blocked, defending player gets a poison counter.
-        addTrigger(Triggers.attacksUnblocked(), new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.attacksUnblocked(), new GivePoisonCountersEffect(1, Subjects.targetPlayer()));
     }
 }

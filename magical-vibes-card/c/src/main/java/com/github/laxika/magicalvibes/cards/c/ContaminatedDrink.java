@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveControllerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PIP", collectorNumber = "99")
 @CardRegistration(set = "PIP", collectorNumber = "627")
@@ -13,6 +14,6 @@ public class ContaminatedDrink extends Card {
 
     public ContaminatedDrink() {
         addSpellEffect(new DrawCardEffect(new XValue()));
-        addSpellEffect(new GiveControllerRadCountersEffect(new HalvedRoundedUp(new XValue())));
+        addSpellEffect(new GiveRadCountersEffect(new HalvedRoundedUp(new XValue()), Subjects.you()));
     }
 }

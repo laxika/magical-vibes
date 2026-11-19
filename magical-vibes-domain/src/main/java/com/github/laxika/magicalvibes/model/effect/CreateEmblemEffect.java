@@ -19,7 +19,7 @@ import java.util.List;
  * <p>{@code triggeredAbilities} are the emblem's triggered abilities written as abilities: "whenever you cast a
  * creature or planeswalker spell, target opponent gets two poison counters" is
  * {@code new TriggeredAbility(Triggers.youCastSpell().withFilter(creatureOrPlaneswalker),
- * new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)).withTargetFilter(opponent)}. An emblem has no card
+ * new GivePoisonCountersEffect(2, Subjects.targetPlayer())).withTargetFilter(opponent)}. An emblem has no card
  * that binds its effects to a target group, so a targeted ability names its target filter itself
  * ({@link TriggeredAbility#targetFilter()}). The spell-cast collector reads the cast abilities, the emblem enters, tap,
  * draw, life-gain, creature-death and combat damage readers theirs ("whenever a creature dies", Liliana, Defiant

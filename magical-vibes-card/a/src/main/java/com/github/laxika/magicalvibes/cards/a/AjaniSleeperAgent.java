@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandElseMayBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -65,7 +65,7 @@ public class AjaniSleeperAgent extends Card {
                 -6,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.youCastSpell().withFilter(creatureOrPlaneswalker),
-                                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER))
+                                new GivePoisonCountersEffect(2, Subjects.targetPlayer()))
                                 .withTargetFilter(new PlayerPredicateTargetFilter(
                                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                         "Target must be an opponent")),

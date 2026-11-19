@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -70,7 +71,7 @@ public class VraskaBetrayalsSting extends Card {
         );
         addActivatedAbility(new ActivatedAbility(
                 -9,
-                List.of(new GiveTargetPlayerPoisonCountersEffect(poisonAmount)),
+                List.of(new GivePoisonCountersEffect(poisonAmount, Subjects.targetPlayer())),
                 "-9: If target player has fewer than nine poison counters, they get a number of poison counters equal to the difference.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

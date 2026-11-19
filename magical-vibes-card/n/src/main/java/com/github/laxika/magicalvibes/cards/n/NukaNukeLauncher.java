@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect;
@@ -26,7 +27,7 @@ public class NukaNukeLauncher extends Card {
                 RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect.untilWatchedPlayersNextTurn(
                         new TriggeredAbility(Triggers.playerCastsSpell()
                                 .withStackEntryFilter(new StackEntryControlledByWatchedPlayerPredicate()),
-                                new GiveTargetPlayerRadCountersEffect(2))));
+                                new GiveRadCountersEffect(2, Subjects.targetPlayer()))));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

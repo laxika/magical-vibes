@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -848,7 +847,7 @@ class SpellTriggersTest {
     @DisplayName("A filtered poison trigger asks for its target player as it triggers")
     void filteredPoisonTriggerQueuesItsPlayerTarget() {
         Permanent perm = createPermanent("Hand of the Praetors");
-        CardEffect poison = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
+        CardEffect poison = new GivePoisonCountersEffect(1, Subjects.targetPlayer());
         // "Target player": the ability declares its target, beside the caster its event names.
         CastAbility ability = new CastAbility(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)).filter(),
                 List.of(poison), null, new PlayerPredicateTargetFilter(

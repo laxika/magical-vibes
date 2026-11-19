@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AllWillBeOne;
 import com.github.laxika.magicalvibes.cards.a.AnguishedUnmaking;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FeralGhoul.class, GrizzlyBears.class, Shock.class, AnguishedUnmaking.class})
+@CardUsed({FeralGhoul.class, GrizzlyBears.class, Shock.class, AnguishedUnmaking.class, AllWillBeOne.class})
 class FeralGhoulTest extends BaseCardTest {
 
     @Test
@@ -44,6 +45,23 @@ class FeralGhoulTest extends BaseCardTest {
 
         assertThat(gd.playerRadCounters.get(player1.getId())).isNull();
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Giving each opponent rad counters is putting counters on a player for All Will Be One")
+    void radCountersOnOpponentTriggerAllWillBeOne() {
+        harness.addToBattlefield(player1, new AllWillBeOne());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new FeralGhoul());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, ghoul.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);
+        harness.assertLife(player2, 18);
     }
 
     @Test
