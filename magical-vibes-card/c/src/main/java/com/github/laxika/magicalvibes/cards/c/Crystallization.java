@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +13,6 @@ public class Crystallization extends Card {
 
     public Crystallization() {
         target(TargetFilters.creature()).addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-          .addTrigger(Triggers.becomesTargetOfSpellOrAbility(), new ExileEnchantedCreatureEffect());
+          .addTrigger(Triggers.becomesTargetOfSpellOrAbility(), new ExileTargetPermanentEffect(Subjects.attached()));
     }
 }

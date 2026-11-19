@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
@@ -112,7 +112,6 @@ public class DestructionSupport {
     private final OpponentGainsControlOfSourceCreatureEffectHandler opponentGainsControlOfSourceHandler;
     private final RemoveAllCountersEffectHandler removeAllCountersHandler;
     private final PhasingService phasingService;
-    private final ExileSelfEffectHandler exileSelfEffectHandler;
     private final ExileSourceCardFromGraveyardEffectHandler exileSourceCardFromGraveyardEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
     private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
@@ -128,6 +127,7 @@ public class DestructionSupport {
     private final EnergyCountersEffectHandler energyCountersEffectHandler;
     private final DrawCardEffectHandler drawCardEffectHandler;
     private final ObjectProvider<DamageSupport> damageSupportProvider;
+    private final ObjectProvider<ExileTargetPermanentEffectHandler> exileTargetPermanentEffectHandlerProvider;
     private final ObjectProvider<TapUntapSupport> tapUntapSupportProvider;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
 
@@ -884,9 +884,10 @@ public class DestructionSupport {
                 Permanent grantedTo = entry.getSourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 makeCreatureUnblockableHandler.grantCantBeBlocked(gameData, grantedTo, entry, unblockable.duration());
-            } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
+            } else if (elseEffect instanceof ExileTargetPermanentEffect exileSelf
+                    && exileSelf.subject() instanceof PermanentSubject.Source) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
-                exileSelfEffectHandler.resolve(gameData, entry, exileSelf);
+                exileTargetPermanentEffectHandlerProvider.getObject().resolve(gameData, entry, exileSelf);
             } else if (elseEffect instanceof ExileSourceCardFromGraveyardEffect exileSource) {
                 exileSourceCardFromGraveyardEffectHandler.resolve(gameData, entry, exileSource);
             } else if (elseEffect instanceof PhaseOutEffect phaseOut

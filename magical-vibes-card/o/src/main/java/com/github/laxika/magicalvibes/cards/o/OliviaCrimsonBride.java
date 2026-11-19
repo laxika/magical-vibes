@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -42,7 +43,7 @@ public class OliviaCrimsonBride extends Card {
                                                                 new PermanentAllOfPredicate(List.of(
                                                                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                                                                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)))))),
-                                                new ExileSelfEffect()), GrantScope.TARGET),
+                                                new ExileTargetPermanentEffect(Subjects.source())), GrantScope.TARGET),
                                         GrantScope.TARGET)))
                         .build());
     }

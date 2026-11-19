@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -28,7 +29,7 @@ public class PathToRedemption extends Card {
                 "{5}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new ExileEnchantedCreatureEffect(),
+                        new ExileTargetPermanentEffect(Subjects.attached()),
                         new CreateTokenEffect(
                                 "Ally", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.ALLY), Set.of(), Set.of()

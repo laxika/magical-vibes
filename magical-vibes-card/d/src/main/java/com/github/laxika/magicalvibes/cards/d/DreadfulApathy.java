@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class DreadfulApathy extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(new ExileEnchantedCreatureEffect()),
+                List.of(new ExileTargetPermanentEffect(Subjects.attached())),
                 "{2}{W}: Exile enchanted creature."
         ));
     }

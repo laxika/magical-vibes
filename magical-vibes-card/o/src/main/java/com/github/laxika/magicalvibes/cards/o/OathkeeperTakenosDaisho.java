@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -28,7 +29,7 @@ public class OathkeeperTakenosDaisho extends Card {
                 new ReturnDyingCreatureToBattlefieldEffect(false)));
 
         // When Oathkeeper is put into a graveyard from the battlefield, exile equipped creature.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ExileEquippedCreatureEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ExileTargetPermanentEffect(Subjects.attached()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

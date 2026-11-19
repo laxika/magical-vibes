@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class SigardasImprisonment extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",
-                List.of(new ExileEnchantedCreatureEffect(), CreateTokenEffect.ofBloodToken(1)),
+                List.of(new ExileTargetPermanentEffect(Subjects.attached()), CreateTokenEffect.ofBloodToken(1)),
                 "{4}{W}: Exile enchanted creature. Create a Blood token."
         ));
     }

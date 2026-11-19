@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -35,7 +36,7 @@ public class FrayingLine extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ForcedCostOrElseEffect(
                 new PayManaCost("{2}"),
                 List.of(
-                        new ExileSelfEffect(),
+                        new ExileTargetPermanentEffect(Subjects.source()),
                         new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ROPE))))),

@@ -6,15 +6,23 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link ExileTargetPermanentEffect}. A plain {@code target()} keeps the target path: every chosen target of
+ * the effect's group, its controller and last-known card and power recorded for later steps, and the token for its
+ * controller. "That creature" ({@code triggering()}) takes the same path. Every other subject ("this permanent",
+ * "enchanted creature") is found by {@link SubjectResolutionService}; a permanent that already left is not exiled.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -24,6 +32,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,14 +42,21 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exile = (ExileTargetPermanentEffect) effect;
+        PermanentSubject subject = exile.subject();
+        if (!(subject instanceof PermanentSubject.Triggering)
+                && !(subject instanceof PermanentSubject.Target target && target.group() == null)) {
+            exileSubject(gameData, entry, exile);
+            return;
+        }
         // Multi-target / optional group: exile each chosen target for this effect's group
         // (targetsForEffect). An empty group ("any number" / "up to N" with none chosen) exiles
         // nothing — do not fall back to List.of(null) when targetId is unset.
-        // "Exile that creature" (ofTriggeringPermanent): the triggering permanent, if it is still on the battlefield.
-        List<UUID> targetIds = exile.triggeringPermanent()
+        // "Exile that creature" (triggering()): the triggering permanent, if it is still on the battlefield.
+        boolean triggering = subject instanceof PermanentSubject.Triggering;
+        List<UUID> targetIds = triggering
                 ? java.util.Collections.singletonList(entry.getTriggeringPermanentId())
                 : entry.targetsForEffect(effect);
-        if (exile.triggeringPermanent()) {
+        if (triggering) {
             targetIds = targetIds.get(0) == null ? List.of() : targetIds;
         } else if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
@@ -83,5 +99,24 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
                     entry.getCard().getName(), entry.getCard().getSetCode());
         }
+    }
+
+    private void exileSubject(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile) {
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, exile, exile.subject())) {
+            if (exile.outsideGame()) {
+                if (!permanentRemovalService.removePermanentToOutsideGame(gameData, permanent)) {
+                    continue;
+                }
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is removed from the game."));
+            } else {
+                if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+                    continue;
+                }
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+            }
+            log.info("Game {} - {} is exiled by {}",
+                    gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

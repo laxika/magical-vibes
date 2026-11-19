@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -387,7 +387,7 @@ only in subject, replace the verb's scope enum if it has one.
 | Run | Verb | Old enum | Known siblings (not exhaustive) | Status |
 |---|---|---|---|---|
 | 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | done |
-| 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | open |
+| 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | done |
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | open |
 | 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | open |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | open |
@@ -1744,6 +1744,48 @@ classes): 1,524 test cases, all pass.
   for step 10 / a `controlledBy` run.
 - `PermanentSubject.Source` is the forced-cost else-branch marker now; 5j (`SacrificeSelfEffect`) should match the same
   way.
+
+### Step 5, run 5b (2026-11-19)
+
+**Survivor.** `ExileTargetPermanentEffect`'s `boolean triggeringPermanent` became `PermanentSubject subject` and it
+gained `boolean outsideGame`: `(tokenForController, targetFilter, subject, outsideGame)`, every old constructor kept,
+null subject normalises to `target()`; a non-target subject rejects the token rider and a target filter, `outsideGame`
+rejects a target subject. New `(PermanentSubject)`, `sourceOutsideGame()`; `ofTriggeringPermanent()` is now
+`(Subjects.triggering())`. `targetSpec()` is the old harmful permanent spec iff the subject declares a target.
+`removalKind()` is `EXILE` for `target()` and `triggering()` (both old values), `null` otherwise (the absorbed records
+were no `RemovalEffect`s), so the AI sees what it saw. `resolvesAgainstAttachedPermanent()` is true for `attached()`
+(what `ExileEnchantedCreatureEffect` declared, so an Aura's activation still captures the host before a sacrifice
+cost). The handler keeps the target / triggering path untouched (targetsForEffect fallbacks, `removedPermanentControllers`,
+last-known card and power, the token rider); every other subject is resolved by `SubjectResolutionService` and each
+permanent goes through `removePermanentToExile` (or `removePermanentToOutsideGame`), so The Master, Multiplied's
+creature-token check and the owner-exile handling in `PermanentRemovalService` are unchanged. The manafx
+`ExileSelfManaAbilityEffectHandler` became `ExileTargetPermanentManaAbilityEffectHandler` (a mana ability has no target,
+CR 605.1a; it throws for any subject but `source()`). `DestructionSupport`'s forced-cost else-branch matches
+`ExileTargetPermanentEffect` with `PermanentSubject.Source` (through an `ObjectProvider`: the exile handler depends on
+`DestructionSupport`); `ActivatedAbilityExecutionService`'s no-op snapshot branch for the Aura record is gone.
+
+**Deleted** (3 records, 3 normalfx handlers; ratchet 4,912 / 4,145): `ExileSelfEffect` → `(Subjects.source())`
+(`ExileSelfEffect(true)` → `sourceOutsideGame()`, Blacker Lotus), `ExileEnchantedCreatureEffect` and
+`ExileEquippedCreatureEffect` → `(Subjects.attached())`. 34 card files rewritten by a deleted scratch script (Pit
+Spawn and Sword of Kaldra keep `ofTriggeringPermanent()`), 3 engine, 2 domain, 2 test files.
+
+**Behaviour differences** (none changes a tested outcome): "exile enchanted creature" logs "X is exiled." instead of
+"X is exiled (Aura)."; the self and equipped paths no longer log an exile that `removePermanentToExile` refused. The
+lookups are the old ones: `attached()` reads the live Aura, else the source snapshot (the old Aura handler's order), and
+for Oathkeeper's dies trigger the departed Equipment's snapshot (the old handler read the triggering-permanent
+snapshot, the same Equipment). New test: `DreadfulApathyTest.exilesEnchantedCreatureWithShroud`.
+
+**Tests**: 85 classes (every rewritten card's test, Pit Spawn, Sword of Kaldra, a 30-per-class sample of
+`ExileTargetPermanentEffect`, `ExileTargetPermanentEffectHandlerTest`, `TriggeredAbilityStackServiceTest`,
+`SubjectResolutionServiceTest`, the two ratchet tests, `AiTargetSelectorTest`): 754 test cases, all pass.
+
+**For later runs.**
+
+- The Exile family has no other exile-a-permanent subject siblings: the `ExileTriggering*` records mostly exile the
+  dying creature's *card* from a graveyard (not a permanent); "exile until / return" records are 5k; `ExileSelfThenEffect`
+  is fused (step 8); `ExileSelfAtEndStepEffect` waits for the delayed-mechanism unification noted in 5a. All in the ledger.
+- A self-removal rider in a mana ability needs a manafx handler keyed on the survivor's class (registry is by class);
+  5j (`SacrificeSelfEffect`) should check for one the same way.
 
 ## Prompt
 

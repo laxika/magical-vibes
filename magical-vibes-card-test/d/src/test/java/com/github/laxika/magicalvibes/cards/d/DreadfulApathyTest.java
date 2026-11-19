@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,6 +63,21 @@ class DreadfulApathyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchanted);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(enchanted.getCard());
         harness.assertInGraveyard(player1, "Dreadful Apathy");
+    }
+
+    @Test
+    @DisplayName("Exiling the enchanted creature does not target it, so shroud does not stop it")
+    void exilesEnchantedCreatureWithShroud() {
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = attachAura(player1, enchanted);
+        PermanentGrants.keywordUntilEndOfTurn(gd, enchanted, Keyword.SHROUD);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(enchanted.getCard());
     }
 
     @Test

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +32,7 @@ public class HeatShimmer extends Card {
                         List.of(), Set.of(), null, null, Map.of(),
                         false, false, false, false,
                         false, false, null, Set.of(Keyword.HASTE),
-                        false, List.of(new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), new ExileSelfEffect())),
+                        false, List.of(new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), new ExileTargetPermanentEffect(Subjects.source()))),
                         List.of(), false, false,
                         new Fixed(1), false, Set.of()));
     }

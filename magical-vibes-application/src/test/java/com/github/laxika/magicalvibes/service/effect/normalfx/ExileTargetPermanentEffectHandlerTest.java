@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -52,6 +53,7 @@ class ExileTargetPermanentEffectHandlerTest {
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
     @Mock private DestructionSupport destructionSupport;
+    @Mock private SubjectResolutionService subjectResolutionService;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -79,7 +81,8 @@ class ExileTargetPermanentEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameLogService, permanentRemovalService, destructionSupport);
+        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameLogService, permanentRemovalService, destructionSupport,
+                subjectResolutionService);
 
     }
 

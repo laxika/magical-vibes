@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
@@ -26,7 +27,7 @@ public class Candletrap extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(new SacrificeSelfCost(), new ExileEnchantedCreatureEffect()),
+                List.of(new SacrificeSelfCost(), new ExileTargetPermanentEffect(Subjects.attached())),
                 "Coven — {2}{W}, Sacrifice this Aura: Exile enchanted creature. Activate only if you control "
                         + "three or more creatures with different powers.",
                 ActivationTimingRestriction.COVEN

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleControllerHandAndGraveyardIntoLibraryEffect;
@@ -47,6 +48,6 @@ public class MidnightClock extends Card {
                 SequenceEffect.of(
                         new ShuffleControllerHandAndGraveyardIntoLibraryEffect(),
                         new DrawCardEffect(7),
-                        new ExileSelfEffect()));
+                        new ExileTargetPermanentEffect(Subjects.source())));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromControllerGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -22,7 +22,7 @@ public class StillnessInMotion extends Card {
                 new ConditionalEffect(
                         new NotCondition(new CardsInLibraryAtLeast(1)),
                         SequenceEffect.of(
-                                new ExileSelfEffect(),
+                                new ExileTargetPermanentEffect(Subjects.source()),
                                 new PutCardsFromControllerGraveyardOnTopOfLibraryEffect(5)
                         ))));
     }

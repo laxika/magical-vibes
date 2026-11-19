@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +22,7 @@ public class DemonlordOfAshmouth extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ForcedCostOrElseEffect(
                         new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "Sacrifice another creature"),
-                        List.of(new ExileSelfEffect()),
+                        List.of(new ExileTargetPermanentEffect(Subjects.source())),
                         true));
     }
 }

@@ -64,7 +64,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithM
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -1402,8 +1401,6 @@ public class ActivatedAbilityExecutionService {
                 // the ability's source, but the Equipment is the permanent that returns to hand.
                 snapshotEffects.add(ReturnToHandEffect.grantingEquipmentSnapshot(
                         ability.getGrantSourcePermanentId()));
-            } else if (effect instanceof ExileEnchantedCreatureEffect) {
-                snapshotEffects.add(effect);
             } else if (effect instanceof SacrificeGrantingPermanentAndControllerDrawsEffect sacrifice) {
                 UUID grantSourceId = ability.getGrantSourcePermanentId();
                 snapshotEffects.add(new SacrificeGrantingPermanentAndControllerDrawsEffect(

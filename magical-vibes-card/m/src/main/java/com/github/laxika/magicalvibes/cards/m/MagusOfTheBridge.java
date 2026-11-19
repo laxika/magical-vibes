@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,6 +29,6 @@ public class MagusOfTheBridge extends Card {
         // When a creature is put into an opponent's graveyard from the battlefield, exile this
         // creature.
         addTrigger(Triggers.dies(new PermanentIsCreaturePredicate(), ObjectRelation.OPPONENT_OWNS),
-                new ExileSelfEffect());
+                new ExileTargetPermanentEffect(Subjects.source()));
     }
 }

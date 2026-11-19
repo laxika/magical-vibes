@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
@@ -24,7 +25,7 @@ public class IvoryGargoyle extends Card {
                 new SkipNextEffect(SkipKind.DRAW_STEP)));
 
         addActivatedAbility(new ActivatedAbility(false, "{4}{W}",
-                List.of(new ExileSelfEffect()),
+                List.of(new ExileTargetPermanentEffect(Subjects.source())),
                 "{4}{W}: Exile this creature."));
     }
 }

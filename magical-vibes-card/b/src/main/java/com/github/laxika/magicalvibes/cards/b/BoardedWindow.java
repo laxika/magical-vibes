@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
@@ -26,6 +27,6 @@ public class BoardedWindow extends Card {
         // exile this artifact.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerDealtDamageThisTurn(4)),
-                new ExileSelfEffect());
+                new ExileTargetPermanentEffect(Subjects.source()));
     }
 }

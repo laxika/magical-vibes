@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
@@ -59,7 +60,7 @@ public class GideonTheOathsworn extends Card {
                         new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))),
-                        new ExileSelfEffect()),
+                        new ExileTargetPermanentEffect(Subjects.source())),
                 "-9: Exile Gideon, the Oathsworn and each creature your opponents control."));
     }
 }

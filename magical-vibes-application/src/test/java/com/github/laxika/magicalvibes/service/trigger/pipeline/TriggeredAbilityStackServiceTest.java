@@ -47,7 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersO
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -553,7 +553,7 @@ class TriggeredAbilityStackServiceTest {
         Permanent perm = new Permanent(equipment);
         UUID equippedId = UUID.randomUUID();
         perm.setAttachedTo(equippedId);
-        var effect = new ExileEquippedCreatureEffect();
+        var effect = new ExileTargetPermanentEffect(Subjects.attached());
         var ctx = dies(equipment, PLAYER1_ID, perm);
 
         trigger(ctx, effect);
@@ -568,7 +568,7 @@ class TriggeredAbilityStackServiceTest {
     void unattachedStillTriggers() {
         Card equipment = createEquipment("Oathkeeper");
         Permanent perm = new Permanent(equipment);
-        var effect = new ExileEquippedCreatureEffect();
+        var effect = new ExileTargetPermanentEffect(Subjects.attached());
         var ctx = dies(equipment, PLAYER1_ID, perm);
 
         trigger(ctx, effect);

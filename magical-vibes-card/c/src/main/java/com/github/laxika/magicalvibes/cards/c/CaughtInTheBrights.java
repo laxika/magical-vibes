@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +19,6 @@ public class CaughtInTheBrights extends Card {
 
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
-                new ExileEnchantedCreatureEffect());
+                new ExileTargetPermanentEffect(Subjects.attached()));
     }
 }

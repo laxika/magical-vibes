@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class HeavenSent extends Card {
                 new ConditionalEffect(opponentAtZero, new DrawCardEffect(7)),
                 new ConditionalEffect(new NotCondition(opponentAtZero),
                         SequenceEffect.of(
-                                new ExileSelfEffect(),
+                                new ExileTargetPermanentEffect(Subjects.source()),
                                 AllowCastSourceCardFromExileEffect.thisTurn())));
     }
 }

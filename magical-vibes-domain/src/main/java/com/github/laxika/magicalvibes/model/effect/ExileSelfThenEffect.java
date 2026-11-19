@@ -10,7 +10,7 @@ public record ExileSelfThenEffect(CardEffect thenEffect) implements CardEffect {
 
     public ExileSelfThenEffect {
         if (thenEffect == null) {
-            throw new IllegalArgumentException("ExileSelfThenEffect requires a payload; use ExileSelfEffect for a bare exile");
+            throw new IllegalArgumentException("ExileSelfThenEffect requires a payload; use ExileTargetPermanentEffect(Subjects.source()) for a bare exile");
         }
     }
 

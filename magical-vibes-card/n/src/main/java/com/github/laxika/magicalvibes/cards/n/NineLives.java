@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerAndPutCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +21,7 @@ public class NineLives extends Card {
         addStaticEffect(new PreventDamageToControllerAndPutCounterOnSelfEffect(CounterType.INCARNATION));
         addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) ->
                         sourcePermanent.getCounterCount(CounterType.INCARNATION) >= 9),
-                new ExileSelfEffect());
+                new ExileTargetPermanentEffect(Subjects.source()));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameEffect());
     }
 }

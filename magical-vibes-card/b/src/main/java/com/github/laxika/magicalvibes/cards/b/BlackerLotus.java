@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class BlackerLotus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new ExileSelfEffect(true), new AwardAnyColorManaEffect(4)),
+                List.of(ExileTargetPermanentEffect.sourceOutsideGame(), new AwardAnyColorManaEffect(4)),
                 "{T}: Tear this artifact into pieces. Add four mana of any one color. Remove the pieces from the game."
         ));
     }

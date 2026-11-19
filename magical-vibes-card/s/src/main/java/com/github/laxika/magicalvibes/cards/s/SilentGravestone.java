@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 
@@ -21,7 +22,7 @@ public class SilentGravestone extends Card {
                 true,
                 "{4}",
                 List.of(
-                        new ExileSelfEffect(),
+                        new ExileTargetPermanentEffect(Subjects.source()),
                         new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS),
                         new DrawCardEffect()
                 ),
