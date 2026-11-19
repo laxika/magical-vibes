@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithPlotEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -28,6 +29,6 @@ public class LilahUndefeatedSlickshot extends Card {
                                         new CardTypePredicate(CardType.INSTANT),
                                         new CardTypePredicate(CardType.SORCERY))))))
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
-                new ExileTriggeringSpellWithPlotEffect());
+                new ExileTriggeringSpellEffect(TriggeringSpellExile.PLOTTED, true));
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CastAllCardsExiledWithSourceWithoutPayingEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -39,7 +40,7 @@ public class ForgersFoundry extends Card {
         ));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorceryManaValueThreeOrLess).paidWithManaFromThis(),
-                new MayEffect(new ExileTriggeringSpellEffect(), "Exile that spell instead of putting it into its owner's graveyard as it resolves?"));
+                new MayEffect(new ExileTriggeringSpellEffect(TriggeringSpellExile.TRACKED_BY_SOURCE, false), "Exile that spell instead of putting it into its owner's graveyard as it resolves?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

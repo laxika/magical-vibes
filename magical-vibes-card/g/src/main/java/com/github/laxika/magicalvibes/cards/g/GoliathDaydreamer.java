@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithDreamCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardsWithDreamCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,7 +23,7 @@ public class GoliathDaydreamer extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY))))
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
-                new ExileTriggeringSpellWithDreamCounterEffect());
+                new ExileTriggeringSpellEffect(TriggeringSpellExile.DREAM_COUNTER, true));
         addTrigger(Triggers.attacks(), new MayCastExiledCardsWithDreamCounterEffect());
     }
 }

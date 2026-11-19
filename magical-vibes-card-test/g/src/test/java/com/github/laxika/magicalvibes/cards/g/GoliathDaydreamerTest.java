@@ -152,4 +152,22 @@ class GoliathDaydreamerTest extends BaseCardTest {
                 || gd.findExiledCard(target.getCard().getId()) != null;
         assertThat(castCompleted && daydreamer.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) == 0).isFalse();
     }
+
+    @Test
+    @DisplayName("Does not exile a hand-cast spell owned by another player, which goes to its owner's graveyard")
+    void doesNotExileSpellOwnedByAnotherPlayer() {
+        harness.addToBattlefield(player1, new GoliathDaydreamer());
+        DarkRitual ritual = new DarkRitual();
+        ritual.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(ritual));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(ritual.getId())).isNull();
+        assertThat(gd.exiledCardDreamCounters).doesNotContainKey(ritual.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(ritual.getId()));
+    }
 }

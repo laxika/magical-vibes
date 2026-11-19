@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellAndReturnToHandAtNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,6 +28,6 @@ public class FeatherTheRedeemed extends Card {
                         .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate())))),
-                new ExileTriggeringSpellAndReturnToHandAtNextEndStepEffect());
+                new ExileTriggeringSpellEffect(TriggeringSpellExile.RETURN_TO_HAND_AT_NEXT_END_STEP, true));
     }
 }

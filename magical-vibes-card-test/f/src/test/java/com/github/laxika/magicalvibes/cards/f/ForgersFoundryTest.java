@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.BlueSunsZenith;
 import com.github.laxika.magicalvibes.cards.h.HighTide;
 import com.github.laxika.magicalvibes.cards.i.IntoTheRoil;
+import com.github.laxika.magicalvibes.cards.r.RodOfAbsorption;
 import com.github.laxika.magicalvibes.cards.s.StrokeOfGenius;
 import com.github.laxika.magicalvibes.cards.t.Tidings;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,13 +11,15 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ForgersFoundry.class, HighTide.class, Tidings.class, IntoTheRoil.class, StrokeOfGenius.class, BlueSunsZenith.class})
+@CardUsed({ForgersFoundry.class, HighTide.class, Tidings.class, IntoTheRoil.class, StrokeOfGenius.class, BlueSunsZenith.class,
+        RodOfAbsorption.class})
 class ForgersFoundryTest extends BaseCardTest {
 
     @Test
@@ -178,5 +181,34 @@ class ForgersFoundryTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).contains(zenith);
         assertThat(gd.getCardsExiledByPermanent(foundry.getId())).doesNotContain(zenith);
         harness.assertNotInGraveyard(player1, "Blue Sun's Zenith");
+    }
+
+    @Test
+    @DisplayName("With a Rod of Absorption also exiling the spell, its controller chooses which artifact exiles it")
+    void competingRodLetsSpellControllerChooseFoundry() {
+        Permanent foundry = harness.addToBattlefieldAndReturn(player1, new ForgersFoundry());
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfAbsorption());
+        HighTide highTide = new HighTide();
+        harness.setHand(player1, List.of(highTide));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castInstant(player1, 0);
+        for (int i = 0; i < 3 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+                harness.handleMayAbilityChosen(player1, true);
+            }
+        }
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactlyInAnyOrder(foundry.getId().toString(), rod.getId().toString());
+
+        harness.handleListChoice(player1, foundry.getId().toString());
+
+        assertThat(gd.getCardsExiledByPermanent(foundry.getId())).contains(highTide);
+        assertThat(gd.getCardsExiledByPermanent(rod.getId())).doesNotContain(highTide);
+        harness.assertNotInGraveyard(player1, "High Tide");
     }
 }
