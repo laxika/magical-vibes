@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
@@ -942,7 +941,7 @@ public class DestructionSupport {
                 // exiles all cards from their library" (Thought Lash).
                 libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileLibrary.faceDown());
             } else if (elseEffect instanceof RemoveAllCountersEffect removeCounters
-                    && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
+                    && removeCounters.subject() instanceof PermanentSubject.Source) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
                 removeAllCountersHandler.resolve(gameData, entry, removeCounters);
             } else if (elseEffect instanceof RegisterDelayedBlockOrBecomesBlockedTriggerEffect delayed) {

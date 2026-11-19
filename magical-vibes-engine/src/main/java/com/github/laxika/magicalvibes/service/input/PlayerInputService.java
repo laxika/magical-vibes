@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -1120,6 +1121,7 @@ public class PlayerInputService {
                 .filter(option -> optionLabels.contains(option.label()))
                 .filter(option -> option.effects().stream().anyMatch(
                         e -> e instanceof RemoveCounterFromSourceEffect removal
+                                && removal.subject() instanceof PermanentSubject.Source
                                 && !canRemoveCountersFromSource(gameData, sourcePermanentId, removal)))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();

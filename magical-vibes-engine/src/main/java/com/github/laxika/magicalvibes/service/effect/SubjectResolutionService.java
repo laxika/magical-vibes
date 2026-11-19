@@ -153,6 +153,7 @@ public class SubjectResolutionService {
             case PermanentSubject.Returned ignored -> listOf(returnedPermanentId(ctx));
             case PermanentSubject.Granter granter -> listOf(granter.boundPermanentId() != null
                     ? granter.boundPermanentId() : ctx.entry().getGrantingPermanentId());
+            case PermanentSubject.Named named -> listOf(named.permanentId());
             case PermanentSubject.ControlledBy controlledBy -> controlledBy(ctx, controlledBy).stream()
                     .map(Permanent::getId)
                     .toList();

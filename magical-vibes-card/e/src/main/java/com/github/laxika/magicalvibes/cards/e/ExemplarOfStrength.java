@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,6 +21,6 @@ public class ExemplarOfStrength extends Card {
 
         // "Whenever this creature attacks, remove a -1/-1 counter from it. If you do, you gain 1 life."
         addTrigger(Triggers.attacks(),
-                new RemoveCounterAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, CounterRemovalSubject.SOURCE));
+                new RemoveCounterAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, Subjects.source()));
     }
 }

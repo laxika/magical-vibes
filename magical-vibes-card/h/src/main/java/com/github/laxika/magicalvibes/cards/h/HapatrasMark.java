@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -27,6 +27,6 @@ public class HapatrasMark extends Card {
                 )),
                 "Target must be a creature you control"))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
-                .addSpellEffect(new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, CounterRemovalSubject.TARGET));
+                .addSpellEffect(new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, Subjects.target()));
     }
 }

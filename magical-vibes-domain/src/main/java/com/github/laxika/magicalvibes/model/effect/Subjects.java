@@ -115,6 +115,11 @@ public final class Subjects {
         return new PermanentSubject.Granter(grantingPermanentId);
     }
 
+    /** "That creature" bound by the effect that created a delayed ability: the permanent {@code permanentId}. */
+    public static PermanentSubject named(UUID permanentId) {
+        return new PermanentSubject.Named(permanentId);
+    }
+
     /** Every permanent matching {@code filter} that {@code players} control. */
     public static PermanentSubject controlledBy(PlayerSubject players, PermanentPredicate filter) {
         return new PermanentSubject.ControlledBy(players, filter);

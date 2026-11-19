@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
@@ -362,7 +361,7 @@ public class TargetPolarityClassifier {
         // Removing counters inverts the sign: stripping -1/-1 counters helps the target,
         // stripping +1/+1 counters hurts it.
         if (effect instanceof RemoveAllCountersEffect removeAll
-                && removeAll.subject() == CounterRemovalSubject.TARGET) {
+                && removeAll.subject().declaresTarget()) {
             if (removeAll.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.BENEFICIAL;
             }

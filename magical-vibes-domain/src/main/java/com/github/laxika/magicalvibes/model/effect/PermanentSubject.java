@@ -18,7 +18,7 @@ import java.util.UUID;
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target, PermanentSubject.AllTargets,
         PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringCard,
-        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.Granter,
+        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.Granter, PermanentSubject.Named,
         PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf, PermanentSubject.AllOf {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
@@ -171,6 +171,24 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * itself.
      */
     record Granter(UUID boundPermanentId) implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That creature" in a delayed triggered ability a resolving ability created about another permanent than its own
+     * trigger event ("when this leaves the battlefield or becomes untapped, remove all -1/-1 counters from that
+     * creature", Giant Oyster): the permanent {@code permanentId} the creating effect bound as it resolved. A permanent
+     * that left the battlefield and came back is a new object with a new id, so it is not named (CR 603.7c).
+     */
+    record Named(UUID permanentId) implements PermanentSubject {
+
+        public Named {
+            Objects.requireNonNull(permanentId, "permanentId");
+        }
 
         @Override
         public boolean needsStackEntry() {

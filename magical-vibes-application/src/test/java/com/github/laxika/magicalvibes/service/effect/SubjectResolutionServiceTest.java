@@ -53,6 +53,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.playersDealtD
 import static com.github.laxika.magicalvibes.model.effect.Subjects.subgameWinners;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.enchantedPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.matching;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.named;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.ownerOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
@@ -316,6 +317,25 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(permanents(entry, triggering())).isEmpty();
             assertThat(subjects.permanentIds(gd, entry, EFFECT, triggering())).containsExactly(bears.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("named(id)")
+    class Named {
+
+        @Test
+        @DisplayName("Is the bound permanent, whatever the entry's source and target, and nothing once it left")
+        void boundPermanent() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry entry = entry(player1, giant.getId(), giant.getId());
+
+            assertThat(permanents(entry, named(bears.getId()))).containsExactly(bears);
+
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, named(bears.getId()))).isEmpty();
         }
     }
 

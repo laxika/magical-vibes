@@ -5,22 +5,22 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link RemoveCounterFromSourceEffect}: removes up to the fixed or dynamically evaluated
- * amount of counters of the given type from the source permanent, clamped at zero.
+ * amount of counters of the given type from each permanent its subject names, clamped at zero, and
+ * reports the removal by the ability's controller ("when you remove the last ... counter").
  */
 @Component
 @RequiredArgsConstructor
 public class RemoveCounterFromSourceEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -32,18 +32,15 @@ public class RemoveCounterFromSourceEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveCounterFromSourceEffect) effect;
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
-        if (self == null) {
-            return;
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
+            int amount = e.dynamicAmount() != null
+                    ? amountEvaluationService.evaluate(gameData, e.dynamicAmount(),
+                    AmountContext.forStackEntry(entry, permanent))
+                    : e.amount();
+            int before = permanent.getCounterCount(e.counterType());
+            permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, e.counterType(), amount);
+            permanentCounterSupport.notifyLastCounterRemoved(gameData, permanent, e.counterType(),
+                    before - permanent.getCounterCount(e.counterType()), entry.getControllerId());
         }
-
-        int amount = e.dynamicAmount() != null
-                ? amountEvaluationService.evaluate(gameData, e.dynamicAmount(), AmountContext.forStackEntry(entry, self))
-                : e.amount();
-        int before = self.getCounterCount(e.counterType());
-        permanentCounterSupport.removeCounterFromPermanent(gameData, self, e.counterType(), amount);
-        permanentCounterSupport.notifyLastCounterRemoved(gameData, self, e.counterType(),
-                before - self.getCounterCount(e.counterType()), entry.getControllerId());
     }
 }

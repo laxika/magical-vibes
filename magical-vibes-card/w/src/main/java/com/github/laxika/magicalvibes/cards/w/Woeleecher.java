@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class Woeleecher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}",
-                List.of(new RemoveCounterAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 2, CounterRemovalSubject.TARGET)),
+                List.of(new RemoveCounterAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 2, Subjects.target())),
                 "{W}, {T}: Remove a -1/-1 counter from target creature. If you do, you gain 2 life.",
                 TargetFilters.creature()
         ));

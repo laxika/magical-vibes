@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -55,7 +55,7 @@ public class GiveTake extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Take — Remove all +1/+1 counters from target creature you control, then draw that many cards",
                         List.<CardEffect>of(
-                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, CounterRemovalSubject.TARGET),
+                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.target()),
                                 new DrawCardEffect(new EventValue())),
                         List.of(controlledCreature)
                 ).withManaCost("{2}{U}"),
@@ -63,7 +63,7 @@ public class GiveTake extends Card {
                         "Fuse — Give and then Take",
                         List.<CardEffect>of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
-                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, CounterRemovalSubject.TARGET),
+                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.target()),
                                 new DrawCardEffect(new EventValue())),
                         List.of(creature, controlledCreature)
                 ).withManaCost("{4}{G}{U}")

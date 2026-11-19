@@ -89,7 +89,6 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
@@ -1369,9 +1368,11 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DestroyGrantingPermanentIfNoCountersEffect destroy) {
                 snapshotEffects.add(new DestroyGrantingPermanentIfNoCountersEffect(
                         destroy.counterType(), ability.getGrantSourcePermanentId()));
-            } else if (effect instanceof RemoveCounterFromGrantingPermanentEffect remove) {
-                snapshotEffects.add(new RemoveCounterFromGrantingPermanentEffect(
-                        remove.counterType(), remove.count(), ability.getGrantSourcePermanentId()));
+            } else if (effect instanceof RemoveCounterFromSourceEffect remove
+                    && remove.subject() instanceof PermanentSubject.Granter) {
+                // Bind the granting Aura now (Heliod's Punishment): the enchanted creature is the
+                // ability's source, and the Aura may be unattached in response.
+                snapshotEffects.add(remove.withSubject(Subjects.granter(ability.getGrantSourcePermanentId())));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof SourcePermanentControllerLosesLifeEffect lifeLoss) {
@@ -1587,6 +1588,11 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
             } else if (effect instanceof RemoveCounterFromSourceEffect remove) {
+                if (!(remove.subject() instanceof PermanentSubject.Source)) {
+                    // A mana ability doesn't go on the stack (CR 605.3b), so it has no entry to name another permanent.
+                    throw new IllegalStateException("A mana ability removes counters from its source only: "
+                            + remove.subject());
+                }
                 int amount = remove.dynamicAmount() != null
                         ? amountEvaluationService.evaluate(gameData, remove.dynamicAmount(),
                                 AmountContext.forManaAbility(permanent, playerId, xValue))

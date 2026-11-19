@@ -6,11 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final GameLogService gameLogService;
 
@@ -35,11 +33,7 @@ public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveAllCountersEffect) effect;
-        UUID subjectId = e.subject() == CounterRemovalSubject.NAMED ? e.permanentId()
-                : e.subject() == CounterRemovalSubject.SOURCE && entry.getSourcePermanentId() != null
-                ? entry.getSourcePermanentId()
-                : targetOf(entry, effect);
-        Permanent subject = gameQueryService.findPermanentById(gameData, subjectId);
+        Permanent subject = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
         if (subject == null) {
             entry.setEventValue(0);
             return;
@@ -56,15 +50,5 @@ public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
             String counterName = permanentCounterSupport.counterTypeName(e.counterType());
             gameLogService.append(gameData, GameLog.builder().card(subject.getCard()).text(" removes all its " + counterName + " counters (" + removed + ").").build());
         }
-    }
-
-    /**
-     * The targeted subject: this effect's own target group when it is bound to one (Give // Take's
-     * fuse mode chooses two creatures, so the flat list position matters), otherwise the entry's
-     * lone target.
-     */
-    private static UUID targetOf(StackEntry entry, CardEffect effect) {
-        var groupTargets = entry.targetsForEffect(effect);
-        return groupTargets.isEmpty() ? entry.getTargetId() : groupTargets.getFirst();
     }
 }

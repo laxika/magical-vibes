@@ -5,11 +5,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RemoveCounterAndGainLifeEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final LifeSupport lifeSupport;
@@ -37,10 +35,7 @@ public class RemoveCounterAndGainLifeEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveCounterAndGainLifeEffect) effect;
-        UUID subjectId = e.subject() == CounterRemovalSubject.SOURCE && entry.getSourcePermanentId() != null
-                ? entry.getSourcePermanentId()
-                : entry.getTargetId();
-        Permanent subject = gameQueryService.findPermanentById(gameData, subjectId);
+        Permanent subject = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
         if (subject == null) {
             return;
         }

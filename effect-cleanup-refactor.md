@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -391,7 +391,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | done |
 | 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`) |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | done |
-| 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | open |
+| 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | done |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | open |
 | 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | open |
 | 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | open |
@@ -2000,6 +2000,66 @@ activation-snapshot fix: all pass.
   `PutCountersOnChosenPermanentEffect` need step-7 subjects; the `...Then...` records are fused (step 8).
 - 5f (`RemoveCounterFromReferencedPermanentEffect`) and 5i should check the same activation-cost case; the snapshot
   restore now covers every `attached()` reader.
+
+### Step 5, run 5f (2026-11-20)
+
+**Survivors.** `RemoveCounterFromSourceEffect` gained a last component `PermanentSubject subject` (every old
+constructor kept; null normalises to `source()`). New `(PermanentSubject, CounterType[, int])` constructors and
+`withSubject`. A target subject is rejected (`RemoveCounterFromTargetPermanentEffect` owns it until step 10), and
+`targetsPlayer` needs `source()`. `targetSpec()`: the player spec for `targetsPlayer`, the self-targeting marker for
+`source()`, else `NONE`; `resolvesAgainstAttachedPermanent()` is true for `attached()`. The handler resolves the subject
+through `SubjectResolutionService` and, per permanent, evaluates the amount against it, removes through
+`PermanentCounterSupport.removeCounterFromPermanent` (vanishing's last-time-counter check, oil record, log) and emits
+`notifyLastCounterRemoved`. `RemoveAllCountersEffect` and `RemoveCounterAndGainLifeEffect` replaced `CounterRemovalSubject`
+with `PermanentSubject` (`source()` default): `target()` keeps the benign creature spec, `source()` the self-targeting
+marker; both handlers lost their private lookups.
+
+**Resolver.** New `PermanentSubject.Named(UUID)` / `Subjects.named(id)`: a permanent a resolving effect bound for the
+delayed ability it creates (CR 603.7c; a permanent that came back is a new object). The step-3 table's plan for NAMED
+(`triggering()` once the delayed ability records it) does not fit: Giant Oyster's untaps-or-leaves ability is about the
+Oyster (`TemporaryGlobalTriggeredAbility.about(..., oyster, oyster)`), so its triggering permanent is the Oyster, and
+event-trigger collectors don't apply `DelayedReferents`. `RemoveAllCountersEffect.aimedAt(id)` builds `named(id)`.
+
+**Deleted** (`CounterRemovalSubject`; 2 records, 2 handlers; ratchet 4,903 / 4,136):
+`RemoveCounterFromReferencedPermanentEffect` → `RemoveCounterFromSourceEffect(Subjects.attachedAtTrigger(), SLEEP)`
+(Venarian Gold, its only user); `RemoveCounterFromGrantingPermanentEffect` → `(Subjects.granter(), TASK)` (Heliod's
+Punishment), bound at activation by `ActivatedAbilityExecutionService.snapshotEffects` like the 5c/5e granter effects.
+Constants: SOURCE `source()` (the fallback to `targetId` dropped, step 3), TARGET `target()`, NAMED `named(id)`.
+10 card files rewritten by a deleted scratch script. Readers converted: `DestructionSupport`'s forced-cost else-branch
+(`subject() instanceof Source`), `TargetPolarityClassifier` (`declaresTarget()`), `PlayerInputService`'s mode greying
+(only a `source()` removal greys a mode), the mana-ability path in `ActivatedAbilityExecutionService` (throws for a
+non-`source()` subject: a mana ability has no stack entry, CR 605.3b). `PermanentReference` stays (Boost 5i,
+RemoveFromCombat 5k, `DoesntUntapWithCounterEffect`, the fused destroy record).
+
+**The `source()` fallback.** With a temporary probe that threw when a `source()` removal resolved on an entry with no
+source permanent and a target, the test classes of every card using `RemoveCounterFromSourceEffect`,
+`RemoveAllCountersEffect`, `RemoveCounterAndGainLifeEffect` and `RemoveCounterFromSourceAtEndOfCombatEffect` passed;
+the end-of-combat payload's delayed entry records the source (`atNextStep(..., sourcePermanentId, ...)`).
+
+**Behaviour differences** (none changes a tested outcome): the referenced and granter removals now emit the "you
+removed the last counter" event as the source removal did; only Divine Intervention listens for it (on itself), so no
+card changes. `RemoveCounterAndGainLife`'s target reads the effect's target group before the entry's `targetId` (the
+resolver's order; the cards have one target). Test added: `RemoveCounterFromSourceEffectTest` (an Aura with "sacrifice
+this Aura: remove a +1/+1 counter from enchanted creature" removes it from the host it had before the cost, the 5e
+activation-cost case), `SubjectResolutionServiceTest$Named`. Venarian Gold's "Aura moved in response" case passes.
+
+**Kept exactly.** Counter-removal costs (`RemoveCounterFrom*Cost`, `RemoveAllCountersAsCostEffect`), the "one or more
+counters removed" triggers (`drainCountersRemovedSinceTriggerCheck`), time / suspend / lore counter paths.
+
+**Tests**: 140 suites, 1,189 test cases, all pass (every card test class of the four records above, Venarian Gold,
+Heliod's Punishment, Giant Oyster, `RemoveCounterFromSourceEffectTest`, `SubjectResolutionServiceTest`,
+`ActivatedAbilityExecutionServiceTest`, `DestructionSupportFallbackTest`, the two ratchets, `TargetPolarityGuardTest`).
+
+**For later runs.**
+
+- Kept (ledger): `RemoveCounterFromTargetPermanentEffect` (9 cards; own removal path with the defense-counter battle
+  check, kind choice and up-to prompt, and no vanishing check) is step 10's to merge with the source record;
+  `RemoveCounterFromEachControlledPermanentEffect` / `RemoveCounterFromEachMatchingPermanentEffect` are `controlledBy`
+  sets; the `...Then...`, `...OrSacrifice...` and gain-life records are fused (step 8).
+- Not done here (5m): the `RemoveAllCountersFrom{TargetPermanent,TargetCreature,EnchantedCreature}Effect` siblings
+  (every counter kind). Only the target-permanent handler runs the vanishing last-time-counter check and the battle
+  defense check; folding the other two into it fixes that for them.
+- `named(id)` is the subject for any other effect a resolving effect binds to one permanent for a delayed ability.
 
 ## Prompt
 
