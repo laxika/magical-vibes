@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,7 @@ public class Mortuary extends Card {
         // Whenever a creature is put into your graveyard from the battlefield, put that card on
         // top of your library.
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_OWN),
-                new PutTriggeringCardFromGraveyardOnTopOfLibraryEffect());
+                new PutTriggeringCardFromGraveyardIntoLibraryEffect(
+                        PutTriggeringCardFromGraveyardIntoLibraryEffect.Destination.TOP));
     }
 }

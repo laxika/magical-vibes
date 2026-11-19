@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.DeathlyRide;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,8 @@ public class FellHorseman extends Card {
     public FellHorseman() {
         setBackFaceCard(new DeathlyRide());
         addCastingOption(new AdventureCast("{1}{B}"));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutTriggeringCardFromGraveyardIntoLibraryEffect(
+                PutTriggeringCardFromGraveyardIntoLibraryEffect.Destination.BOTTOM));
     }
 
     @Override

@@ -49,6 +49,24 @@ class TheCauldronOfEternityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Leaves a creature card that left the graveyard and returned before the trigger resolves")
+    void doesNotMoveCardThatLeftAndReturnedToGraveyard() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.addToBattlefield(player1, new TheCauldronOfEternity());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        gd.playerGraveyards.get(player1.getId()).remove(creature.getCard());
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        gd.markGraveyardEntry(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
     @DisplayName("Puts a controlled creature on the opponent owner's library bottom")
     void putsStolenCreatureOnItsOwnersLibraryBottom() {
         Card forest = new Forest();

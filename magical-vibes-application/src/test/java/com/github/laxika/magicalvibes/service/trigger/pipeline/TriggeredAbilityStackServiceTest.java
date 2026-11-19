@@ -60,7 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -461,7 +461,8 @@ class TriggeredAbilityStackServiceTest {
         Permanent permanent = new Permanent(front);
         permanent.setCard(back);
         permanent.setTransformed(true);
-        var effect = new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect();
+        var effect = new PutTriggeringCardFromGraveyardIntoLibraryEffect(
+                PutTriggeringCardFromGraveyardIntoLibraryEffect.Destination.BOTTOM);
         var context = dies(back, PLAYER1_ID, permanent);
 
         trigger(context, effect);

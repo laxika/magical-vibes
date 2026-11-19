@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ChaosTheEndless extends Card {
 
     public ChaosTheEndless() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutTriggeringCardFromGraveyardIntoLibraryEffect(
+                PutTriggeringCardFromGraveyardIntoLibraryEffect.Destination.BOTTOM));
     }
 }
