@@ -30,8 +30,7 @@ public class CoramTheUndertaker extends Card {
                 new Fixed(0), GrantScope.SELF));
 
         addTrigger(Triggers.attacks(),
-                new MillEffect(1, Subjects.you()),
-                new MillEffect(1, Subjects.eachOpponent()));
+                new MillEffect(1, Subjects.eachPlayer()));
 
         addStaticEffect(new PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect());
     }

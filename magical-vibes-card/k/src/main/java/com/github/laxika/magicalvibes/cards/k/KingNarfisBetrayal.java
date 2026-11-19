@@ -28,8 +28,7 @@ public class KingNarfisBetrayal extends Card {
 
     public KingNarfisBetrayal() {
         addTrigger(Triggers.chapter(1),
-                new MillEffect(4, Subjects.you()),
-                new MillEffect(4, Subjects.eachOpponent()),
+                new MillEffect(4, Subjects.eachPlayer()),
                 new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

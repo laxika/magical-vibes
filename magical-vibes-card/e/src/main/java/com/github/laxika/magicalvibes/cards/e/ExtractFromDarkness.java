@@ -19,8 +19,7 @@ public class ExtractFromDarkness extends Card {
 
     public ExtractFromDarkness() {
         // Each player mills two cards.
-        addSpellEffect(new MillEffect(2, Subjects.you()));
-        addSpellEffect(new MillEffect(2, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(2, Subjects.eachPlayer()));
         // Then put a creature card from a graveyard onto the battlefield under your control.
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

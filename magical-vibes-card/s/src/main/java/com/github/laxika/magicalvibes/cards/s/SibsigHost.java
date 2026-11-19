@@ -12,7 +12,6 @@ public class SibsigHost extends Card {
 
     public SibsigHost() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillEffect(3, Subjects.you()),
-                new MillEffect(3, Subjects.eachOpponent()));
+                new MillEffect(3, Subjects.eachPlayer()));
     }
 }

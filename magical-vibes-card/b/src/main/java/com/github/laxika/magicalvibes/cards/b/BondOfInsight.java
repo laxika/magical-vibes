@@ -22,8 +22,7 @@ public class BondOfInsight extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addSpellEffect(new MillEffect(4, Subjects.you()));
-        addSpellEffect(new MillEffect(4, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(4, Subjects.eachPlayer()));
         addSpellEffect(new ReturnCardsFromControllerGraveyardToHandEffect(
                 instantOrSorcery, new Fixed(2)));
         addSpellEffect(new ExileSpellEffect());

@@ -20,8 +20,7 @@ import java.util.List;
 public class BreachTheMultiverse extends Card {
 
     public BreachTheMultiverse() {
-        addSpellEffect(new MillEffect(10, Subjects.you()));
-        addSpellEffect(new MillEffect(10, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(10, Subjects.eachPlayer()));
         addSpellEffect(new EachPlayerChoosesCardFromGraveyardToBattlefieldEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

@@ -27,8 +27,7 @@ public class AshiokSculptorOfFears extends Card {
                 +2,
                 List.of(
                         new DrawCardEffect(1),
-                        new MillEffect(2, Subjects.you()),
-                        new MillEffect(2, Subjects.eachOpponent())),
+                        new MillEffect(2, Subjects.eachPlayer())),
                 "+2: Draw a card. Each player mills two cards."));
 
         addActivatedAbility(new ActivatedAbility(

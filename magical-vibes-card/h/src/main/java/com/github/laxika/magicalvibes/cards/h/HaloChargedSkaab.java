@@ -21,8 +21,7 @@ public class HaloChargedSkaab extends Card {
 
     public HaloChargedSkaab() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new MillEffect(2, Subjects.you()),
-                new MillEffect(2, Subjects.eachOpponent()),
+                new MillEffect(2, Subjects.eachPlayer()),
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)

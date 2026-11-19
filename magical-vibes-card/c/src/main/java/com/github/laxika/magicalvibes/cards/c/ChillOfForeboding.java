@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class ChillOfForeboding extends Card {
 
     public ChillOfForeboding() {
-        addSpellEffect(new MillEffect(5, Subjects.you()));
-        addSpellEffect(new MillEffect(5, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(5, Subjects.eachPlayer()));
         addCastingOption(new FlashbackCast("{7}{U}"));
     }
 }

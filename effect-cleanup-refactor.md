@@ -1439,6 +1439,14 @@ like the target-player half mill.
   (Ghoulcaller's Bell, Chill of Foreboding, ...): two events where the rules make one. `MillEffect(N, eachPlayer())` is
   the rules-correct form; converting them changes "one or more cards are milled" batching, so it needs its own run with
   tests.
+- Done (follow-up to 4f): the 26 "each player mills" cards now use one `MillEffect(N, eachPlayer())` (CR 101.4,
+  CR 608.2e): Ashiok, Sculptor of Fears; Bond of Insight; Breach the Multiverse; Chill of Foreboding; Coram, the
+  Undertaker; Disturbing Conversion; Extract from Darkness; Eye Collector; Fascination; Flitting Guerrilla; Ghoulcaller's
+  Bell; Halo-Charged Skaab; Invasion of Amonkhet; King Narfi's Betrayal; Koma's Faithful; Mindwrack Harpy; Nezumi
+  Freewheeler; Path of the Schemer; Returned Reveler; Sibsig Host; Syr Konrad, the Grim; The Binding of the Titans;
+  Unseal the Necropolis; Vantress Gargoyle; Whetstone; Winds of Rebuke (five single-step `SequenceEffect` wrappers
+  dropped). Flotsam // Jetsam keeps its two mills (different halves). Tests: `bothPlayersMillInOneEvent` in `GhoulcallersBellTest` and
+  `ChillOfForebodingTest` (The Wise Mothman triggers once, not twice).
 - `MillHalfLibraryEffect` could become `MillEffect` with a `Halved(DynamicAmount, roundUp)` amount over the milling
   player's library (`EFFECT_MERGE_PLAN.md`'s blocked row), evaluated per player like the target-player mill.
 - The rest of the family (ledger) is fused mill + an instruction on "the cards milled this way": step 7 gives

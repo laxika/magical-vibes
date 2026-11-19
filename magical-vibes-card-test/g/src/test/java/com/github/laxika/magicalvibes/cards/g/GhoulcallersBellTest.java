@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TheWiseMothman;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhoulcallersBell.class, Swamp.class})
+@CardUsed({GhoulcallersBell.class, Swamp.class, GrizzlyBears.class, TheWiseMothman.class})
 class GhoulcallersBellTest extends BaseCardTest {
 
     @Test
@@ -165,6 +167,28 @@ class GhoulcallersBellTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(controllerTop);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentTop);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both players mill in one event, so a one-or-more-cards-milled trigger fires once for both cards")
+    void bothPlayersMillInOneEvent() {
+        Permanent mothman = addCreatureReady(player1, new TheWiseMothman());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addReadyBell(player1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 2, null, null);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, mothman.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(mothman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent addReadyBell(Player player) {

@@ -21,8 +21,7 @@ public class Fascination extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player mills X cards.",
                         List.of(
-                                new MillEffect(new XValue(), Subjects.you()),
-                                new MillEffect(new XValue(), Subjects.eachOpponent())))
+                                new MillEffect(new XValue(), Subjects.eachPlayer())))
         )));
     }
 }

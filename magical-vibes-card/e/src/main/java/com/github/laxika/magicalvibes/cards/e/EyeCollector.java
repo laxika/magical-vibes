@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,8 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class EyeCollector extends Card {
 
     public EyeCollector() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                new MillEffect(1, Subjects.you()),
-                new MillEffect(1, Subjects.eachOpponent())));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(1, Subjects.eachPlayer()));
     }
 }

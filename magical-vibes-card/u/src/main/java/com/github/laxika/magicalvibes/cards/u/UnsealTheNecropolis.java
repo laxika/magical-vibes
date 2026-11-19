@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class UnsealTheNecropolis extends Card {
 
     public UnsealTheNecropolis() {
-        addSpellEffect(new MillEffect(3, Subjects.you()));
-        addSpellEffect(new MillEffect(3, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(3, Subjects.eachPlayer()));
         addSpellEffect(new ReturnCardsFromControllerGraveyardToHandEffect(
                 new CardTypePredicate(CardType.CREATURE), new Fixed(2)));
     }

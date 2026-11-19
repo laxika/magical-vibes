@@ -20,7 +20,6 @@ public class WindsOfRebuke extends Card {
                 "Target must be a nonland permanent"
         )).addSpellEffect(ReturnToHandEffect.target());
         // Each player mills two cards.
-        addSpellEffect(new MillEffect(2, Subjects.you()));
-        addSpellEffect(new MillEffect(2, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(2, Subjects.eachPlayer()));
     }
 }

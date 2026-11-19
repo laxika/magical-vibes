@@ -33,8 +33,7 @@ public class SyrKonradTheGrim extends Card {
                 false,
                 "{1}{B}",
                 List.of(
-                        new MillEffect(1, Subjects.you()),
-                        new MillEffect(1, Subjects.eachOpponent())),
+                        new MillEffect(1, Subjects.eachPlayer())),
                 "{1}{B}: Each player mills a card."
         ));
     }

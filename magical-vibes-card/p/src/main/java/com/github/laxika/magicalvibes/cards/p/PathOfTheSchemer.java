@@ -21,8 +21,7 @@ public class PathOfTheSchemer extends Card {
 
     public PathOfTheSchemer() {
         // Each player mills two cards.
-        addSpellEffect(new MillEffect(2, Subjects.you()));
-        addSpellEffect(new MillEffect(2, Subjects.eachOpponent()));
+        addSpellEffect(new MillEffect(2, Subjects.eachPlayer()));
         // Then put a creature card from a graveyard onto the battlefield under your control (not optional).
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

@@ -12,7 +12,6 @@ public class MindwrackHarpy extends Card {
 
     public MindwrackHarpy() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new MillEffect(3, Subjects.you()),
-                new MillEffect(3, Subjects.eachOpponent()));
+                new MillEffect(3, Subjects.eachPlayer()));
     }
 }

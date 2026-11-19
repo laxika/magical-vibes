@@ -22,8 +22,7 @@ public class FlittingGuerrilla extends Card {
 
     public FlittingGuerrilla() {
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new MillEffect(2, Subjects.you()),
-                new MillEffect(2, Subjects.eachOpponent()),
+                new MillEffect(2, Subjects.eachPlayer()),
                 new MayEffect(
                         new ExileSourceCardFromGraveyardThenEffect(
                                 ReturnCardFromGraveyardEffect.builder()

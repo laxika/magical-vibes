@@ -16,8 +16,7 @@ public class Whetstone extends Card {
                 false,
                 "{3}",
                 List.of(
-                        new MillEffect(2, Subjects.you()),
-                        new MillEffect(2, Subjects.eachOpponent())
+                        new MillEffect(2, Subjects.eachPlayer())
                 ),
                 "{3}: Each player mills two cards."
         ));

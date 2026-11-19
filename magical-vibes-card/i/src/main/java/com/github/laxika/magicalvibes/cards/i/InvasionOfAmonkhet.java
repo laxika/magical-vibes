@@ -17,8 +17,7 @@ public class InvasionOfAmonkhet extends Card {
         setBackFaceCard(new LazotepConvert());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillEffect(3, Subjects.you()),
-                new MillEffect(3, Subjects.eachOpponent()),
+                new MillEffect(3, Subjects.eachPlayer()),
                 new DiscardEffect(1, Subjects.eachOpponent()),
                 new DrawCardEffect(1));
     }

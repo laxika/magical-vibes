@@ -27,8 +27,7 @@ public class VantressGargoyle extends Card {
                 true,
                 null,
                 List.of(
-                        new MillEffect(1, Subjects.you()),
-                        new MillEffect(1, Subjects.eachOpponent())),
+                        new MillEffect(1, Subjects.eachPlayer())),
                 "{T}: Each player mills a card."));
     }
 }

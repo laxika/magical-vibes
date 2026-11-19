@@ -14,7 +14,7 @@ public class GhoulcallersBell extends Card {
     public GhoulcallersBell() {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new MillEffect(1, Subjects.you()), new MillEffect(1, Subjects.eachOpponent())),
+                List.of(new MillEffect(1, Subjects.eachPlayer())),
                 "{T}: Each player mills a card."
         ));
     }

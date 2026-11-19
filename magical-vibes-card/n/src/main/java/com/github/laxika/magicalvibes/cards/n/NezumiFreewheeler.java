@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,9 +19,7 @@ public class NezumiFreewheeler extends Card {
     public NezumiFreewheeler() {
         setBackFaceCard(new HideousFleshwheeler());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new MillEffect(3, Subjects.you()),
-                new MillEffect(3, Subjects.eachOpponent())));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, Subjects.eachPlayer()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
