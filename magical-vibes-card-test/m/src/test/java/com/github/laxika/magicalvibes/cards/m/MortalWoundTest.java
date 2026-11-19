@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.cards.h.HopeCharm;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.cards.r.RiverBoa;
 import com.github.laxika.magicalvibes.cards.t.Tremor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +72,24 @@ class MortalWoundTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Panther Warriors");
         harness.assertNotOnBattlefield(player1, "Mortal Wound");
+    }
+
+    @Test
+    @DisplayName("Destroys the enchanted creature even if it has shroud, since \"destroy it\" does not target")
+    void destroysEnchantedCreatureWithShroud() {
+        Permanent creature = addCreatureReady(player2, new PantherWarriors());
+        harness.setHand(player1, List.of(new MortalWound()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
+
+        harness.setHand(player1, List.of(new Tremor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Panther Warriors");
     }
 
     @Test

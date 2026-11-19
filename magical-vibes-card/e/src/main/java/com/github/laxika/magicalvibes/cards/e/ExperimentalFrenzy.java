@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GRN", collectorNumber = "99")
 public class ExperimentalFrenzy extends Card {
@@ -35,7 +35,7 @@ public class ExperimentalFrenzy extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",
-                List.of(new DestroyReferencedPermanentEffect(PermanentReference.SOURCE)),
+                List.of(new DestroyTargetPermanentEffect(Subjects.source())),
                 "{3}{R}: Destroy Experimental Frenzy."
         ));
     }

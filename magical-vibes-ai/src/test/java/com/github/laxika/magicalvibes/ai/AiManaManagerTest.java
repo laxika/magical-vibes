@@ -29,9 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -2100,7 +2099,7 @@ class AiManaManagerTest {
             auraCard.setName("Blight");
             auraCard.setType(CardType.ENCHANTMENT);
             auraCard.addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                    new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                    new DestroyTargetPermanentEffect(Subjects.attached()));
             Permanent aura = new Permanent(auraCard);
             aura.setAttachedTo(plains.getId());
             gd.playerBattlefields.get(player2Id).add(aura);

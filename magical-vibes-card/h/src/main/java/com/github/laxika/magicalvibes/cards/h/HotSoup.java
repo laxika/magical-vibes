@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M15", collectorNumber = "219")
@@ -16,7 +16,7 @@ public class HotSoup extends Card {
         addStaticEffect(new CantBeBlockedEffect());
         // Whenever equipped creature is dealt damage, destroy it.
         addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+                new DestroyTargetPermanentEffect(Subjects.triggering()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

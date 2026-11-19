@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveReferencedPermanentFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
@@ -28,7 +29,7 @@ public class Imprison extends Card {
                 "{1}",
                 new CounterSpellEffect(),
                 "Pay {1} to counter that ability?",
-                new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
+                new DestroyTargetPermanentEffect(Subjects.source()));
         addTrigger(Triggers.youActivateNonManaAbility()
                         .withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST)
                         .withSource(new PermanentIsHostOfSourceAuraPredicate()),
@@ -44,7 +45,7 @@ public class Imprison extends Card {
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED),
                         new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING, true)),
                 "Pay {1} to tap and remove the creature from combat?",
-                new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
+                new DestroyTargetPermanentEffect(Subjects.source()));
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, combatTrigger);
     }
 }

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroySourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -31,7 +32,7 @@ public class ChaosOrb extends Card {
                         new SourceIsOnBattlefield(),
                         new DestroyAllPermanentsEffect(
                                 nontokenPermanentsOtherThanSource,
-                                new DestroySourceEffect()))),
+                                new DestroyTargetPermanentEffect(Subjects.source())))),
                 "{1}, {T}: Destroy all nontoken permanents this artifact touches. Then destroy this artifact."
         ));
     }

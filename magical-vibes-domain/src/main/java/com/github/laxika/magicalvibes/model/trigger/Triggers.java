@@ -2268,7 +2268,7 @@ public final class Triggers {
 
     /**
      * "Whenever this Equipment becomes unattached from a permanent": "that permanent" is the stack entry's triggering
-     * permanent ({@code DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING)},
+     * permanent ({@code DestroyTargetPermanentEffect(Subjects.triggering())},
      * {@code SacrificeSelfEffect.ofTriggeringPermanent()}).
      */
     public static AttachTrigger becomesUnattachedFromPermanent() {

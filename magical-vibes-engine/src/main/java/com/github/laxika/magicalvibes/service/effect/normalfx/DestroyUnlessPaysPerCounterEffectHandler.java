@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class DestroyUnlessPaysPerCounterEffectHandler implements NormalEffectHan
 
         int counters = self.getCounterCount(e.counterType());
         String totalCost = counters <= 0 ? "{0}" : e.costPerCounter().repeat(counters);
-        CardEffect elseEffect = e.sacrifice() ? new SacrificeSelfEffect() : new DestroyReferencedPermanentEffect(PermanentReference.SOURCE);
+        CardEffect elseEffect = e.sacrifice() ? new SacrificeSelfEffect() : new DestroyTargetPermanentEffect(Subjects.source());
         ForcedCostOrElseEffect payOrDestroy = new ForcedCostOrElseEffect(
                 new PayManaCost(totalCost),
                 List.of(elseEffect),

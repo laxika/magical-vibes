@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -32,6 +32,6 @@ public class OrcishMine extends Card {
         // that land's controller. A state trigger, so it fires however the last counter was removed.
         addTrigger(Triggers.sourceState(new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ORE))),
                 new DealDamageToEnchantedPermanentControllerEffect(2),
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyTargetPermanentEffect(Subjects.attached()));
     }
 }

@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -386,7 +386,7 @@ only in subject, replace the verb's scope enum if it has one.
 
 | Run | Verb | Old enum | Known siblings (not exhaustive) | Status |
 |---|---|---|---|---|
-| 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | open |
+| 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | done |
 | 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | open |
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | open |
 | 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | open |
@@ -1687,6 +1687,63 @@ class (Rogue Class covers The Omenkeel's collector, Petty Larceny Expensive Tast
 
 **Step 4 is done.** What stays open is in the ledger (`blocked-*` rows); `LibraryOwner` waits for subjects in
 conditions.
+
+### Step 5, run 5a (2026-11-19)
+
+**Survivors.** `DestroyTargetPermanentEffect` gained a last component `PermanentSubject subject` (every old constructor
+kept; null normalises to `target()`, or `target(targetGroup)` when a group is given, and a `target(g)` subject sets
+`targetGroup`; a non-target subject rejects a group, a token rider and the active-player choice, and a target filter
+unless the subject has a target part). New constructors `(PermanentSubject)`, `(PermanentSubject, boolean
+cannotBeRegenerated)`, `(PermanentSubject, PermanentPredicate targetFilter)`. `targetSpec()` is the old harmful permanent
+spec iff `subject.declaresTarget()`, else `NONE`; `removalKind()` is `DESTROY` iff it declares (the absorbed non-target
+records were not `RemovalEffect`s, or only nested where no AI reader looks). The handler keeps the old target path
+untouched (`tryDestroyAndLog`, the multi-group simultaneous batch, the token rider, LKI bookkeeping); every other subject
+is resolved by `SubjectResolutionService` and destroyed as one `DestructionSupport.destroyBatch` (the old
+`DestroyReferenced` path), with LKI bookkeeping only for the target part of an `allOf` and the "controller as it was
+destroyed" write for `triggering()`. `DestroyTargetPermanentAtEndOfCombatEffect`'s `triggeringPermanent` flag became
+`PermanentSubject subject` (`target()` default, `triggering()` via `ofTriggeringPermanent()`, `source()`); its handler
+schedules each named permanent through `DelayedPermanentActions` as both old handlers did; `removalKind()` stays `DESTROY`
+except for `source()` (the old self record was no `RemovalEffect`), `targetSpec()` is harmful creature only for `target()`.
+
+**Deleted** (5 records, 5 handlers; ratchet 4,915 / 4,148): `DestroyReferencedPermanentEffect` →
+`DestroyTargetPermanentEffect(Subjects.x()[, b])` (54 cards plus the two engine-built payloads in
+`DestroyTargetIfDidNotAttackAtEndStepEffectHandler` / `DestroyUnlessPaysPerCounterEffectHandler`; `DestructionSupport`'s
+forced-cost else-branch and `ForcedCostOrElseEffectHandler.killsBeforeChangingAnything` match `subject() instanceof
+PermanentSubject.Source`); `DestroySourceEffect` → `source()` (Chaos Orb); `DestroySourceAndTargetPermanentEffect(f)` →
+`(allOf(source(), target()), f)` (Wall of Vipers); `DestroyEnchantedCreatureOnLeaveEffect()` → `(attached(), true)`
+(Parallax Dementia: the resolver reads the departed Aura's snapshot `attachedTo`, the old lookup);
+`DestroySelfAtEndOfCombatEffect` → `DestroyTargetPermanentAtEndOfCombatEffect(source())` (Cinder Wall, Ceremonial Guard,
+Arrogant Bloodlord, Vebulid, Goblin Sappers). 62 card files rewritten by a deleted scratch script, 4 engine, 2 domain
+Javadoc, 3 test files. `PermanentReference` stays (Boost, PutCounter, RemoveCounter, RemoveFromCombat, ... are runs 5e,
+5i, 5k).
+
+**AI parity.** `DestroyTargetPermanentEffect` with a non-target subject reports `removalKind() == null`, so
+`SpellEvaluator`, `HardAiDecisionEngine`, `BoardEvaluator`, `InstantCategoryClassifier`, `ConditionEvaluationService` and
+`TargetPolarityClassifier` see what they saw for the old non-`RemovalEffect` records. `SizeGatedRemovalPump` counts any
+`RemovalEffect` instance; the new instances are on the converted cards' activated abilities, none of which has a
+power/toughness target filter, so no size gate changes.
+
+**Behaviour differences** (none changes a tested outcome): Chaos Orb's and Parallax Dementia's destruction no longer
+puts Auras left attached to nothing into the graveyard inside the resolution; the state-based action right after does
+(CR 704.5m), as for every old `DestroyReferenced` card; Wall of Vipers and the end-of-combat target read the effect's
+bound targets before the entry's `targetId`. New test: `MortalWoundTest.destroysEnchantedCreatureWithShroud` (a
+non-target subject is not stopped by shroud).
+
+**Tests**: 116 classes (every rewritten card's test, a 40-per-class sample of `DestroyTargetPermanentEffect`, all
+`DestroyTargetPermanentAtEndOfCombatEffect` cards, `DestroyTargetPermanentEffectHandlerTest`,
+`TriggeredAbilityStackServiceTest`, `SubjectResolutionServiceTest`, the two ratchet tests, the five AI tests naming the
+classes): 1,524 test cases, all pass.
+
+**For later runs.**
+
+- Kept (ledger, `blocked-other`): `DestroyTargetPermanentAtEndStepEffect` / `DestroySelfAtEndStepEffect` differ in more
+  than the subject (a `TemporaryGlobalTriggeredAbility` with a baked `DestroyTargetPermanentEffect` vs
+  `DelayedPermanentActions`); move the target one onto `DelayedPermanentActions` first. `DestroyUpToOneTargetPermanentEffect`
+  carries the `OptionalTargetEffect` marker. The two `Destroy*AndDamageControllerIfDestroyed` records are fused (step 8).
+  `DestroyEachTargetPermanentEffect` (59 cards) and `DestroyAllPermanentsEffect` (`EachPermanentScope`) are head records
+  for step 10 / a `controlledBy` run.
+- `PermanentSubject.Source` is the forced-cost else-branch marker now; 5j (`SacrificeSelfEffect`) should match the same
+  way.
 
 ## Prompt
 

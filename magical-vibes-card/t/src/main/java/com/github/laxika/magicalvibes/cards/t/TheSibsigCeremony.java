@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
@@ -37,7 +37,7 @@ public class TheSibsigCeremony extends Card {
                                 new PermanentCastBySourceControllerThisTurnPredicate())),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING),
+                        new DestroyTargetPermanentEffect(Subjects.triggering()),
                         new CreateTokenEffect("Zombie Druid", 2, 2, CardColor.BLACK,
                                 List.of(CardSubtype.ZOMBIE, CardSubtype.DRUID), Set.of(), Set.of())));
     }

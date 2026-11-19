@@ -7,11 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -36,7 +35,7 @@ public class CruelDeceiver extends Card {
                                 new TopCardOfLibraryType(CardType.LAND),
                                 new GrantEffectToSourceUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dealsDamageToCreature(),
-                                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING))))),
+                                        new DestroyTargetPermanentEffect(Subjects.triggering()))))),
                 "{2}: Reveal the top card of your library. If it's a land card, this creature gains "
                         + "\"Whenever this creature deals damage to a creature, destroy that creature\" "
                         + "until end of turn. Activate only once each turn.",

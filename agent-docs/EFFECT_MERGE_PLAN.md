@@ -583,6 +583,8 @@ misread, and the Ring tests already pin the `condition` branch both ways.
 
 ### Step 9 — Destroy-referenced-permanent — **DONE**
 
+Later folded into `DestroyTargetPermanentEffect(PermanentSubject)` (effect-cleanup-refactor.md, step 5, run 5a); the record below is gone.
+
 **Shipped**
 ```java
 public record DestroyReferencedPermanentEffect(PermanentReference reference,

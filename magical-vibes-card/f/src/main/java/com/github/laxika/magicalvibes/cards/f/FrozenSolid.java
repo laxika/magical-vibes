@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class FrozenSolid extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(DoesntUntapEffect.enchanted())
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+                        new DestroyTargetPermanentEffect(Subjects.triggering()));
     }
 }

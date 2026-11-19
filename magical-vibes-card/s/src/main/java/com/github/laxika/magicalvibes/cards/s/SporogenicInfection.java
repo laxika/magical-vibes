@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,6 +36,6 @@ public class SporogenicInfection extends Card {
                 Subjects.targetPlayer()));
 
         addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+                new DestroyTargetPermanentEffect(Subjects.triggering()));
     }
 }

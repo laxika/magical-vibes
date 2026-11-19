@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "5ED", collectorNumber = "70")
 @CardRegistration(set = "HML", collectorNumber = "21")
@@ -25,7 +25,7 @@ public class AetherStorm extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new PayLifeCost(4), new DestroyReferencedPermanentEffect(PermanentReference.SOURCE, true)),
+                List.of(new PayLifeCost(4), new DestroyTargetPermanentEffect(Subjects.source(), true)),
                 "Pay 4 life: Destroy Aether Storm. It can't be regenerated. Any player may activate this ability."
         ).withActivatableByAnyPlayer());
     }

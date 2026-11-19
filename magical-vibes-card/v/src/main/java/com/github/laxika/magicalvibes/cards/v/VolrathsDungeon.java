@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +23,7 @@ public class VolrathsDungeon extends Card {
                 false,
                 null,
                 List.of(new PayLifeCost(5),
-                        new DestroyReferencedPermanentEffect(PermanentReference.SOURCE)),
+                        new DestroyTargetPermanentEffect(Subjects.source())),
                 "Pay 5 life: Destroy this enchantment. Any player may activate this ability but only during their turn.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
         ).withActivatableByAnyPlayer());

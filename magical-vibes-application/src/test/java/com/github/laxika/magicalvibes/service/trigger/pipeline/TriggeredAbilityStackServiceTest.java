@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
@@ -623,12 +623,12 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
-    @DisplayName("DestroyEnchantedCreatureOnLeaveEffect goes on the stack as written, the Aura as it last existed its source")
+    @DisplayName("A destroy-enchanted-creature leaves trigger goes on the stack as written, the Aura as it last existed its source")
     void destroyEnchantedCreatureKeepsTheAuraAsItLastExisted() {
         Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
         Permanent creature = new Permanent(createCreature("Enchanted Creature", 2, 2));
         aura.setAttachedTo(creature.getId());
-        var effect = new DestroyEnchantedCreatureOnLeaveEffect();
+        var effect = new DestroyTargetPermanentEffect(Subjects.attached(), true);
         var ctx = leaves(aura, PLAYER1_ID);
 
         trigger(ctx, effect);

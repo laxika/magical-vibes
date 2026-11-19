@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
@@ -30,9 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomO
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -1061,8 +1061,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         return elseEffect instanceof SacrificeSelfEffect sacrifice && sacrifice.sacrificesSource()
                 || elseEffect instanceof SacrificeEnchantedCreatureEffect
                 || elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect
-                || elseEffect instanceof DestroyReferencedPermanentEffect destroy
-                && destroy.reference() == PermanentReference.SOURCE;
+                || elseEffect instanceof DestroyTargetPermanentEffect destroy
+                && destroy.subject() instanceof PermanentSubject.Source;
     }
 
     private UUID resolvePayer(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {

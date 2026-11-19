@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -26,6 +26,6 @@ public class Paroxysm extends Card {
                         new ConditionalReplacementEffect(
                                 new TopCardOfLibraryType(CardType.LAND, LibraryOwner.ENCHANTED_PERMANENT_CONTROLLER),
                                 new BoostReferencedPermanentEffect(PermanentReference.ATTACHED_AT_TRIGGER, 3, 3),
-                                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED_AT_TRIGGER))));
+                                new DestroyTargetPermanentEffect(Subjects.attachedAtTrigger()))));
     }
 }

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,6 +27,6 @@ public class ArachnusWeb extends Card {
                 // destroy this Aura.
                 .addTrigger(Triggers.endStep(ActivePlayer.ANY),
                         TriggerOptions.DEFAULT.withInterveningIf(new EnchantedCreaturePowerAtLeast(4)),
-                        new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
+                        new DestroyTargetPermanentEffect(Subjects.source()));
     }
 }

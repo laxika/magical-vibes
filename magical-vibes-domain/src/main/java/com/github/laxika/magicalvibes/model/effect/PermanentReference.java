@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Names a permanent an effect acts on without targeting it. Used by
- * {@link PutCounterOnReferencedPermanentEffect}, {@link DestroyReferencedPermanentEffect}, and
+ * {@link PutCounterOnReferencedPermanentEffect}, {@link BoostReferencedPermanentEffect}, and
  * {@link RemoveReferencedPermanentFromCombatEffect}.
  *
  * <ul>
- *   <li>{@link #SOURCE} — the permanent the ability came from ("destroy this Aura", "destroy this
- *       enchantment"). Read from {@code StackEntry.sourcePermanentId}. Not every family accepts
+ *   <li>{@link #SOURCE} — the permanent the ability came from ("remove it from combat", "shuffle this
+ *       permanent into its owner's library"). Read from {@code StackEntry.sourcePermanentId}. Not every family accepts
  *       this value: counter placement on the source is owned by {@code PutCountersOnSourceEffect},
  *       so {@link PutCounterOnReferencedPermanentEffect} rejects it in its constructor.</li>
  *   <li>{@link #ATTACHED} — the permanent the source Aura or Equipment is attached to ("enchanted

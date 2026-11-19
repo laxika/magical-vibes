@@ -88,7 +88,8 @@ class DestroyTargetPermanentEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        destroyTargetPermanentHandler = new DestroyTargetPermanentEffectHandler(destructionSupport, gameQueryService);
+        destroyTargetPermanentHandler = new DestroyTargetPermanentEffectHandler(destructionSupport, gameQueryService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class));
 
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
         lenient().when(permanentControlSupportProvider.getObject()).thenReturn(permanentControlSupport);

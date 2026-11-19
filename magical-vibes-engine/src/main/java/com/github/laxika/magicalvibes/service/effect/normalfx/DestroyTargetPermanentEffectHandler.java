@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,12 +19,20 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link DestroyTargetPermanentEffect}. A {@code target()} subject destroys the effect's target (every bound
+ * target group at once when the effect is bound to several) and may create a token for its controller; any other
+ * subject is found by {@link SubjectResolutionService} and its permanents are destroyed as one batch through
+ * {@link DestructionSupport#destroyBatch}, which owns indestructible, regeneration and the death replacements. A
+ * permanent a non-target subject names that is gone at resolution is simply not destroyed.
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,6 +42,10 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyTargetPermanentEffect) effect;
+        if (!(destroy.subject() instanceof PermanentSubject.Target)) {
+            destroyNamedPermanents(gameData, entry, destroy);
+            return;
+        }
         if (destroy.tokenForController() == null && destroyEveryBoundGroupSimultaneously(gameData, entry, destroy)) {
             return;
         }
@@ -39,28 +54,65 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 ? entry.targetsForGroup(destroy.targetGroup()).stream().findFirst().orElse(null)
                 : effectTargets.isEmpty() ? entry.getTargetId() : effectTargets.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target == null) {
-                    return;
-                }
+        if (target == null) {
+            return;
+        }
 
-                // Capture the controller before destruction (needed for token creation)
-                UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-                if (controllerId != null) {
-                    entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
-                }
+        // Capture the controller before destruction (needed for token creation)
+        UUID controllerId = rememberTarget(gameData, entry, target);
+        destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
 
-                entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
-                entry.getLastKnownPermanentPowers().put(target.getId(),
-                        gameQueryService.getEffectivePower(gameData, target));
-                destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
+        // Create token for the target's controller if specified
+        if (destroy.tokenForController() != null && controllerId != null
+                && (!destroy.tokenOnlyForSourceController()
+                || controllerId.equals(entry.getControllerId()))) {
+            destructionSupport.createTokenForPlayer(gameData, controllerId, destroy.tokenForController(),
+                    destroy.tokenCount(), entry.getCard().getName(), entry.getCard().getSetCode());
+        }
+    }
 
-                // Create token for the target's controller if specified
-                if (destroy.tokenForController() != null && controllerId != null
-                        && (!destroy.tokenOnlyForSourceController()
-                        || controllerId.equals(entry.getControllerId()))) {
-                    destructionSupport.createTokenForPlayer(gameData, controllerId, destroy.tokenForController(),
-                            destroy.tokenCount(), entry.getCard().getName(), entry.getCard().getSetCode());
+    /**
+     * Destroys every permanent a subject other than a plain target names, as one event. The targeted part of an
+     * {@code allOf} subject keeps the target's last-known controller and power for later instructions; for a
+     * triggering subject, "that permanent's controller" later reads the controller it had as it was destroyed.
+     */
+    private void destroyNamedPermanents(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
+        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, destroy, destroy.subject());
+        if (named.isEmpty()) {
+            return;
+        }
+        Set<UUID> targeted = new HashSet<>();
+        if (destroy.subject() instanceof PermanentSubject.AllOf allOf) {
+            for (PermanentSubject part : allOf.subjects()) {
+                if (part.declaresTarget()) {
+                    targeted.addAll(subjectResolutionService.permanentIds(gameData, entry, destroy, part));
                 }
+            }
+        }
+        for (Permanent permanent : named) {
+            if (targeted.contains(permanent.getId())) {
+                rememberTarget(gameData, entry, permanent);
+            }
+        }
+        if (destroy.subject() instanceof PermanentSubject.Triggering) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, named.getFirst().getId());
+            if (controllerId != null) {
+                entry.setTriggeringPermanentControllerId(controllerId);
+            }
+        }
+        destructionSupport.destroyBatch(gameData, named, entry.getCard().getName(), destroy.cannotBeRegenerated());
+    }
+
+    /** Records {@code target}'s controller, card and power as it is destroyed; returns that controller. */
+    private UUID rememberTarget(GameData gameData, StackEntry entry, Permanent target) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId != null) {
+            entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
+        }
+        entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
+        entry.getLastKnownPermanentPowers().put(target.getId(),
+                gameQueryService.getEffectivePower(gameData, target));
+        return controllerId;
     }
 
     /**
@@ -92,13 +144,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
             if (target == null) {
                 continue;
             }
-            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            if (controllerId != null) {
-                entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
-            }
-            entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
-            entry.getLastKnownPermanentPowers().put(target.getId(),
-                    gameQueryService.getEffectivePower(gameData, target));
+            rememberTarget(gameData, entry, target);
             toDestroy.add(target);
         }
         destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(),

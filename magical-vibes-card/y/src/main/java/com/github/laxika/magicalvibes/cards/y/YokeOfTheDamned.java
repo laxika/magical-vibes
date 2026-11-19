@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class YokeOfTheDamned extends Card {
         target(TargetFilters.creature());
         // When a creature dies, destroy enchanted creature.
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyTargetPermanentEffect(Subjects.attached()));
     }
 }

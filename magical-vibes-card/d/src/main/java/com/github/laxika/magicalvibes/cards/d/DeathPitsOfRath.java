@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMP", collectorNumber = "127")
@@ -16,6 +16,6 @@ public class DeathPitsOfRath extends Card {
         // Whenever a creature is dealt damage, destroy it. It can't be regenerated.
         // "It" is the damaged creature, the ability's triggering permanent (no target).
         addTrigger(Triggers.creatureDealtDamage(),
-                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true));
+                new DestroyTargetPermanentEffect(Subjects.triggering(), true));
     }
 }
