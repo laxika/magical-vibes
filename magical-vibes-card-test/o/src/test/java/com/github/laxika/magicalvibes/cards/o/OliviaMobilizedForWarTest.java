@@ -37,6 +37,19 @@ class OliviaMobilizedForWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Logs that the entering creature becomes a Vampire in addition to its other types")
+    void logsVampireGrant() {
+        Permanent fox = triggerOliviaWithHand(new Forest());
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .contains("Devilthorn Fox becomes a Vampire in addition to its other types.");
+        assertThat(PermanentGrants.subtypesOf(gd, fox)).containsExactly(CardSubtype.VAMPIRE);
+    }
+
+    @Test
     @DisplayName("Declining the discard leaves the entering creature unchanged")
     void decliningDiscardLeavesEnteringCreatureUnchanged() {
         Permanent fox = triggerOliviaWithHand(new Forest());

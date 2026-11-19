@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -31,7 +31,7 @@ public class OliviaMobilizedForWar extends Card {
                                         new PutCounterOnReferencedPermanentEffect(
                                                 PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE),
                                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT),
-                                        new GrantSubtypeToTriggeringPermanentEffect(CardSubtype.VAMPIRE)),
+                                        new GrantSubtypeEffect(CardSubtype.VAMPIRE, GrantScope.TRIGGERING_PERMANENT)),
                                 "a card"),
                         "Discard a card to put a +1/+1 counter on that creature, give it haste, and make it a Vampire?"));
     }

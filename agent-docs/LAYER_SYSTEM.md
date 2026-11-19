@@ -472,7 +472,7 @@ newest (maximum life, fixed land colour), the strictest (a spell limit), a sum (
 duration, "it becomes an artifact in addition to its other types", "it enters with haste" (CR 614.1c) and "target land
 becomes snow" are floating effects on the permanent with `Duration.PERMANENT` (CR 611.2a), stamped as they are made
 (CR 613.7b) and applied in their layer in timestamp order: `GrantSubtypeEffect`, `GrantColorEffect`, `GrantKeywordEffect`,
-`GrantCardTypeEffect` (all `GrantScope.TARGET`) and the resolving `SetTargetPermanentSupertypeEffect` itself. A site
+`GrantCardTypeEffect` (mostly `GrantScope.TARGET`; a floating payload applies to the permanent it is on, whatever its `GrantScope`) and the resolving `SetTargetPermanentSupertypeEffect` itself. A site
 with no resolving entry at hand (a replacement as the permanent enters, a choice's continuation) uses
 `GameData.addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId, effect, permanentId, duration)`. The
 `Permanent` keeps none of them: an earlier "loses all abilities" (Humility) no longer removes a later grant, as it did
