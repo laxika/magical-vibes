@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
@@ -22,8 +24,9 @@ public class ThundercloudElemental extends Card {
                 false,
                 "{3}{U}",
                 List.of(new TapPermanentsEffect(
-                        TapUntapScope.ALL_CREATURES,
-                        new PermanentToughnessAtMostPredicate(2))),
+                        Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentToughnessAtMostPredicate(2)))))),
                 "{3}{U}: Tap all creatures with toughness 2 or less."
         ));
         addActivatedAbility(new ActivatedAbility(

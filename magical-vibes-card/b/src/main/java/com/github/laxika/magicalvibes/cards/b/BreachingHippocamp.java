@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -28,6 +28,6 @@ public class BreachingHippocamp extends Card {
                 )),
                 "Target must be another creature you control"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new UntapPermanentsEffect(TapUntapScope.TARGET));
+                new UntapPermanentsEffect(Subjects.target()));
     }
 }

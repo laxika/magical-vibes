@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class Opposition extends Card {
                 false, null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate()),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        new TapPermanentsEffect(Subjects.target())),
                 "Tap an untapped creature you control: Tap target artifact, creature, or land.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

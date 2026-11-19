@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class StallOut extends Card {
 
         target(new PermanentPredicateTargetFilter(creatureOrVehicle,
                 "Target must be a creature or Vehicle"))
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN, 3));
 
         addCycling("{2}");

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThi
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -25,7 +25,7 @@ public class MotivatedPony extends Card {
                 new ConditionalEffect(
                         new AnotherPermanentEnteredThisTurn(new CardSubtypePredicate(CardSubtype.FOOD)),
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, attacking),
+                                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), attacking)),
                                 new BoostAllOwnCreaturesEffect(2, 2, attacking)))));
     }
 }

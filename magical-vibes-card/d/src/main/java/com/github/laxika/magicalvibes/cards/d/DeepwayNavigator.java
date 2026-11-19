@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSub
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,10 +24,9 @@ public class DeepwayNavigator extends Card {
 
     public DeepwayNavigator() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED,
-                new PermanentAllOfPredicate(List.of(
+                Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))));
 
         addStaticEffect(new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(3, CardSubtype.MERFOLK),

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,11 +21,11 @@ public class ElvenRaftSteerer extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Tap target creature an opponent controls.",
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new TapPermanentsEffect(Subjects.target()),
                                 TargetFilters.creatureAnOpponentControls()),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Untap target creature you control.",
-                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new UntapPermanentsEffect(Subjects.target()),
                                 TargetFilters.creatureYouControl())
                 ))));
     }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentDrawAndUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -68,8 +67,9 @@ public class ChooseOpponentDrawAndUntapEffectHandler implements NormalEffectHand
         if (untapChoice) {
             var nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
             entry.insertEffectsToResolve(insertionIndex, List.of(
-                    new UntapPermanentsEffect(TapUntapScope.CONTROLLED, nonland),
-                    new UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland)));
+                    new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), nonland)),
+                    new UntapPermanentsEffect(
+                            Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(), nonland))));
         } else {
             // The draws happen at the same time (CR 101.4); they are logged in APNAP order.
             CardEffect ownDraw = new DrawCardEffect(3);

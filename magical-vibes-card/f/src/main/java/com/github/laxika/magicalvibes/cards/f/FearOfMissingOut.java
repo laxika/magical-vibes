@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,6 +25,6 @@ public class FearOfMissingOut extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new Delirium())
                         .withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
-                SequenceEffect.of(new UntapPermanentsEffect(TapUntapScope.TARGET), new AdditionalCombatPhaseEffect(1)));
+                SequenceEffect.of(new UntapPermanentsEffect(Subjects.target()), new AdditionalCombatPhaseEffect(1)));
     }
 }

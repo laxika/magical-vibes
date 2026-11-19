@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,8 +20,9 @@ public class TorrentElemental extends Card {
 
     public TorrentElemental() {
         addTrigger(Triggers.attacks(), new TapPermanentsEffect(
-                TapUntapScope.ALL_CREATURES,
-                new PermanentControlledByDefendingPlayerPredicate()));
+                Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentControlledByDefendingPlayerPredicate())))));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B/G}{B/G}",

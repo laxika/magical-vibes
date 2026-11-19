@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -46,7 +46,7 @@ public class NissaWorldwaker extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), "Target must be a Forest");
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
+                List.of(new UntapPermanentsEffect(Subjects.allTargets())),
                 "+1: Untap up to four target Forests.",
                 null, +1, null, null,
                 List.<TargetFilter>of(forest, forest, forest, forest),

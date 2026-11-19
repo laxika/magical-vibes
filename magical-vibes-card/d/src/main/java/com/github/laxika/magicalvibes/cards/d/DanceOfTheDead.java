@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -44,7 +44,7 @@ public class DanceOfTheDead extends Card {
         // "At the beginning of the upkeep of enchanted creature's controller, that player may
         // pay {1}{B}. If the player does, untap that creature."
         addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                new MayPayManaEffect("{1}{B}", new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
+                new MayPayManaEffect("{1}{B}", new UntapPermanentsEffect(Subjects.attached()),
                         "pay {1}{B} to untap the creature", MayPayPayer.ENCHANTED_CONTROLLER));
     }
 }

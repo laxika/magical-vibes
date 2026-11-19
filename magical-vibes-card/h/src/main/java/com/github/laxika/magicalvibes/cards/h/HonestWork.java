@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class HonestWork extends Card {
     public HonestWork() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new TapPermanentsEffect(Subjects.attached()),
                         new RemoveAllCountersFromEnchantedCreatureEffect())
                 .addStaticEffect(new SetNameEffect("Humble Merchant", GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))

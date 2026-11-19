@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class SHIELDSpyKit extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                SequenceEffect.of(new UntapPermanentsEffect(TapUntapScope.TRIGGERING), new ScryEffect(1)));
+                SequenceEffect.of(new UntapPermanentsEffect(Subjects.triggering()), new ScryEffect(1)));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class StaffOfDomination extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new UntapPermanentsEffect(Subjects.source())),
                 "{1}: Untap this artifact."
         ));
         addActivatedAbility(new ActivatedAbility(
@@ -33,14 +33,14 @@ public class StaffOfDomination extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, TargetFilters.creature().predicate())),
+                List.of(new UntapPermanentsEffect(Subjects.target(), TargetFilters.creature().predicate())),
                 "{3}, {T}: Untap target creature.",
                 TargetFilters.creature()
         ));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET, TargetFilters.creature().predicate())),
+                List.of(new TapPermanentsEffect(Subjects.target(), TargetFilters.creature().predicate())),
                 "{4}, {T}: Tap target creature.",
                 TargetFilters.creature()
         ));

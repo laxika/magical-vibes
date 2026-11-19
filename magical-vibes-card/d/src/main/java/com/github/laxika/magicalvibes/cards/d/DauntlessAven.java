@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,6 +24,6 @@ public class DauntlessAven extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a creature you control"
-        )).addTrigger(Triggers.attacks(), new UntapPermanentsEffect(TapUntapScope.TARGET));
+        )).addTrigger(Triggers.attacks(), new UntapPermanentsEffect(Subjects.target()));
     }
 }

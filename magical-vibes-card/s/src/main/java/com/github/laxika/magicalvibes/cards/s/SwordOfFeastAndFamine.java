@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -36,7 +35,7 @@ public class SwordOfFeastAndFamine extends Card {
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player discards a card and you untap all lands you control
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, Subjects.targetPlayer()),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate())));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

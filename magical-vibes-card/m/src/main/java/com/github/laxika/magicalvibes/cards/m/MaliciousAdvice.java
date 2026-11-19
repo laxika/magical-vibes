@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +25,7 @@ public class MaliciousAdvice extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Targets must be artifacts, creatures, or lands"
-        ), 1000).addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        ), 1000).addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
         addSpellEffect(new LoseLifeEffect(new XValue(), Subjects.you()));
     }

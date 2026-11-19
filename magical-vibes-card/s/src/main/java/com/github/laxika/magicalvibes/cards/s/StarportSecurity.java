@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,7 +38,7 @@ public class StarportSecurity extends Card {
                 List.of(
                         new ReduceActivationCostEffect(new FixedIfCondition(
                                 new ControlsPermanent(creatureWithPlusOneCounter), 2, 0)),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        new TapPermanentsEffect(Subjects.target())),
                 "{3}{W}, {T}: Tap another target creature. This ability costs {2} less to activate if you control a creature with a +1/+1 counter on it.",
                 new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature")
         ));

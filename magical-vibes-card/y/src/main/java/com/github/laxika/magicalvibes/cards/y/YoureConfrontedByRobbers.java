@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class YoureConfrontedByRobbers extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Stall for Time — Tap up to three target creatures",
-                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        List.of(new TapPermanentsEffect(Subjects.target())),
                         TargetFilters.creature(), null, 0, 3, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Call for Aid — Create three 1/1 white Soldier creature tokens",

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,8 @@ public class CurseOfMaritLage extends Card {
         PermanentPredicate island = new PermanentHasSubtypePredicate(CardSubtype.ISLAND);
 
         // When this enchantment enters, tap all Islands.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, island));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                island)));
 
         // Islands don't untap during their controllers' untap steps.
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(island));

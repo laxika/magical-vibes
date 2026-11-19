@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -36,6 +36,6 @@ public class EliteScaleguard extends Card {
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.creatureYouControlAttacks()
                                 .withFilter(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
-                        new TapPermanentsEffect(TapUntapScope.TARGET));
+                        new TapPermanentsEffect(Subjects.target()));
     }
 }

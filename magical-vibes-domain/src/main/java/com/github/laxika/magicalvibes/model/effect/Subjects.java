@@ -16,6 +16,7 @@ public final class Subjects {
 
     private static final PermanentSubject SOURCE = new PermanentSubject.Source();
     private static final PermanentSubject TARGET = new PermanentSubject.Target(null);
+    private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
@@ -56,6 +57,11 @@ public final class Subjects {
     /** The targets chosen for target group {@code group}. */
     public static PermanentSubject target(int group) {
         return new PermanentSubject.Target(group);
+    }
+
+    /** Every permanent target of the stack entry, across all its target groups ("untap up to four target permanents"). */
+    public static PermanentSubject allTargets() {
+        return ALL_TARGETS;
     }
 
     /** "Enchanted creature", "equipped creature". */

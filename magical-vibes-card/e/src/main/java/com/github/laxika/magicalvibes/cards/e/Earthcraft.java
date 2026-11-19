@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -24,7 +24,7 @@ public class Earthcraft extends Card {
                 false, null,
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate()),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                        new UntapPermanentsEffect(Subjects.target())),
                 "Tap an untapped creature you control: Untap target basic land.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

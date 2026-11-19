@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -25,7 +25,7 @@ public class DelugeVirtuoso extends Card {
     public DelugeVirtuoso() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new TapPermanentsEffect(Subjects.target()),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1));
 
         // Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn.

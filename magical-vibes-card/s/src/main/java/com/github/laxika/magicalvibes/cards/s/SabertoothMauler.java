@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,7 +21,7 @@ public class SabertoothMauler extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
                 SequenceEffect.of(
                                 new PutCountersOnSourceEffect(1, 1, 1),
-                                new UntapPermanentsEffect(TapUntapScope.SELF)
+                                new UntapPermanentsEffect(Subjects.source())
                         ));
     }
 }

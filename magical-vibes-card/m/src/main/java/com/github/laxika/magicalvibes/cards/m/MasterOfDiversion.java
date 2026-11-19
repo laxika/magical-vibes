@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class MasterOfDiversion extends Card {
         // The defending player is the opponent being attacked, matched by the
         // opponent-controlled creature filter (Sidar Jabari).
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.attacks(), new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.attacks(), new TapPermanentsEffect(Subjects.target()));
     }
 }

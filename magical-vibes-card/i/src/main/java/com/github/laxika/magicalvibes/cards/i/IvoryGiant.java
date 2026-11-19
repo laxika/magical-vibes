@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,9 +25,9 @@ public class IvoryGiant extends Card {
 
     public IvoryGiant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(
-                TapUntapScope.ALL_CREATURES,
-                new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))
-        ));
+                Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE))))))));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{W}",

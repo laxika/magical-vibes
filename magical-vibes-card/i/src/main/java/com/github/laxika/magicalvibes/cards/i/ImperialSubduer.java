@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,6 +21,6 @@ public class ImperialSubduer extends Card {
                 .addTrigger(Triggers.creatureYouControlAttacks()
                                 .withFilter(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAMURAI, CardSubtype.WARRIOR))),
                         TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                        new TapPermanentsEffect(TapUntapScope.TARGET));
+                        new TapPermanentsEffect(Subjects.target()));
     }
 }

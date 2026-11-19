@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class LochMare extends Card {
                 "{2}{U}",
                 List.of(
                         new RemoveCounterFromSourceCost(2, CounterType.ANY),
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new TapPermanentsEffect(Subjects.target()),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN)
                 ),
                 "{2}{U}, Remove two counters from this creature: Tap target creature. Put a stun counter on it.",

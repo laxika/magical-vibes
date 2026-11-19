@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,7 +33,7 @@ public class ImmersturmPredator extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "Sacrifice another creature"),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
-                        new TapPermanentsEffect(TapUntapScope.SELF)),
+                        new TapPermanentsEffect(Subjects.source())),
                 "Sacrifice another creature: This creature gains indestructible until end of turn. Tap it."));
     }
 }

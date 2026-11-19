@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -38,7 +37,7 @@ public class MindSpiral extends Card {
 
         targetWhenGiftPromised(TargetFilters.creatureAnOpponentControls(), 0, 1, 1)
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)))
+                        new TapPermanentsEffect(Subjects.target())))
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN)));
     }

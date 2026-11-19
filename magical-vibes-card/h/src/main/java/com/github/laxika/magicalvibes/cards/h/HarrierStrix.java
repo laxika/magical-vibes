@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +19,7 @@ public class HarrierStrix extends Card {
     public HarrierStrix() {
         target(TargetFilters.permanent())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET));
+                        new TapPermanentsEffect(Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

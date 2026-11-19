@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class MomosHeist extends Card {
     public MomosHeist() {
         target(TargetFilters.artifact())
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT))
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, Duration.PERMANENT))
                 .addSpellEffect(new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -46,7 +45,7 @@ public class CovetedJewel extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(3, Subjects.triggeringPlayer()),
                         TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(),
-                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)
+                        new UntapPermanentsEffect(Subjects.source())
                 ));
     }
 }

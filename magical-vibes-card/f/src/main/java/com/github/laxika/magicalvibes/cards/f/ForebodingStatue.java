@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -36,7 +36,7 @@ public class ForebodingStatue extends Card {
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(3, CounterType.OMEN)),
-                SequenceEffect.of(new UntapPermanentsEffect(TapUntapScope.SELF), new TransformSelfEffect()));
+                SequenceEffect.of(new UntapPermanentsEffect(Subjects.source()), new TransformSelfEffect()));
     }
 
     @Override

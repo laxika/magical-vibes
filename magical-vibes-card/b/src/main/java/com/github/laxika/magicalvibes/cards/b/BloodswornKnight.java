@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class BloodswornKnight extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
-                        new TapPermanentsEffect(TapUntapScope.SELF)
+                        new TapPermanentsEffect(Subjects.source())
                 ),
                 "{1}{B}, Discard a card: This creature gains indestructible until end of turn. Tap it."
         ));

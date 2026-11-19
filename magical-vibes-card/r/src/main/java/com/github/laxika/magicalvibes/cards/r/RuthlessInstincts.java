@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -27,7 +27,7 @@ public class RuthlessInstincts extends Card {
                         "Target nonattacking creature gains reach and deathtouch until end of turn. Untap it",
                         List.of(
                                 new GrantKeywordEffect(Set.of(Keyword.REACH, Keyword.DEATHTOUCH), GrantScope.TARGET),
-                                new UntapPermanentsEffect(TapUntapScope.TARGET)
+                                new UntapPermanentsEffect(Subjects.target())
                         ),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAllOfPredicate(List.of(

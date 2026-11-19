@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class DeadlockTrap extends Card {
                 null,
                 List.of(
                         new PayEnergyCost(1),
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new TapPermanentsEffect(Subjects.target()),
                         new LockTargetPermanentEffect(false, false, true,
                                 Duration.UNTIL_END_OF_TURN, TargetPredicates.creatureOrPlaneswalker())
                 ),

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOS", collectorNumber = "64")
@@ -15,7 +15,7 @@ public class Procrastinate extends Card {
 
     public Procrastinate() {
         target(TargetFilters.creature())
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(
                         CounterType.STUN,
                         new Scaled(new XValue(), 2)

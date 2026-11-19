@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +18,7 @@ public class CripplingChill extends Card {
         // Tap target creature. It doesn't untap during its controller's next untap step.
         // Draw a card.
         target(TargetFilters.creature())
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new DrawCardEffect(1));
     }

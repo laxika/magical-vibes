@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesPermanentToSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -39,7 +39,7 @@ public class DemonicHordes extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new PayManaCost("{B}{B}{B}"),
                 List.of(
-                        new TapPermanentsEffect(TapUntapScope.SELF),
+                        new TapPermanentsEffect(Subjects.source()),
                         new OpponentChoosesPermanentToSacrificeEffect(new PermanentIsLandPredicate())
                 ),
                 true));

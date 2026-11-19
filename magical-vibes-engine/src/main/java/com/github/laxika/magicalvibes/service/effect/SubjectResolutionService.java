@@ -140,6 +140,9 @@ public class SubjectResolutionService {
             case PermanentSubject.Target target -> targetIds(ctx, target.group()).stream()
                     .filter(id -> !ctx.gameData().playerIds.contains(id))
                     .toList();
+            case PermanentSubject.AllTargets ignored -> allTargetIds(ctx.entry()).stream()
+                    .filter(id -> !ctx.gameData().playerIds.contains(id))
+                    .toList();
             case PermanentSubject.Attached ignored -> listOf(attachedId(ctx));
             case PermanentSubject.AttachedAtTrigger ignored -> listOf(ctx.entry().getAttachedPermanentSnapshot() == null
                     ? null : ctx.entry().getAttachedPermanentSnapshot().getId());
@@ -176,6 +179,11 @@ public class SubjectResolutionService {
         }
         List<UUID> targets = entry.targetsForEffect(ctx.effect());
         return targets.isEmpty() ? listOf(entry.getTargetId()) : targets;
+    }
+
+    /** Every target of the entry, whichever group it was chosen for; a lone target the entry stores apart. */
+    private static List<UUID> allTargetIds(StackEntry entry) {
+        return entry.getTargetIds().isEmpty() ? listOf(entry.getTargetId()) : entry.getTargetIds();
     }
 
     /**
@@ -314,9 +322,12 @@ public class SubjectResolutionService {
 
     /**
      * What a set's filter knows about the resolving spell or ability: its source card, source permanent (live id and
-     * last-known snapshot), controller and X.
+     * last-known snapshot), controller and X, and what its trigger was about: the defending player (as the entry
+     * recorded it when the ability went on the stack, else the player or the protector of the attacked permanent), the
+     * triggering player and the triggering permanent ("tap all lands that player controls", "untap all creatures
+     * defending player controls").
      */
-    private static FilterContext filterContext(Context ctx) {
+    private FilterContext filterContext(Context ctx) {
         FilterContext filterContext = FilterContext.of(ctx.gameData())
                 .withSourceCardId(ctx.sourceCardId())
                 .withSourceControllerId(ctx.controllerId())
@@ -325,8 +336,14 @@ public class SubjectResolutionService {
         if (sourceSnapshot != null) {
             filterContext = filterContext.withSourcePermanentSnapshot(sourceSnapshot);
         }
-        if (ctx.entry() != null) {
-            filterContext = filterContext.withXValue(ctx.entry().getXValue());
+        StackEntry entry = ctx.entry();
+        if (entry != null) {
+            filterContext = filterContext.withXValue(entry.getXValue())
+                    .withDefendingPlayerId(entry.getDefendingPlayerId() != null ? entry.getDefendingPlayerId()
+                            : gameQueryService.defendingPlayerOfAttackTarget(ctx.gameData(), entry.getAttackedTargetId()))
+                    .withTriggeringPlayerId(entry.getTriggeringPlayerId())
+                    .withTriggeringPermanentId(entry.getTriggeringPermanentId())
+                    .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot());
         }
         return filterContext;
     }

@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "126")
 @CardRegistration(set = "C18", collectorNumber = "180")
@@ -30,7 +34,9 @@ public class FinestHour extends Card {
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone())
                         .withInterveningIf(new FirstCombatPhase()),
-                new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES),
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentAttackedThisTurnPredicate())))),
                 new AdditionalCombatPhaseEffect(1));
     }
 }

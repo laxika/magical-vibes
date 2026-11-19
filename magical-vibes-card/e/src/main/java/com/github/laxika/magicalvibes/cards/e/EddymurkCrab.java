@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,6 +31,6 @@ public class EddymurkCrab extends Card {
 
         target(TargetFilters.creature(), 0, 2)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET));
+                        new TapPermanentsEffect(Subjects.target()));
     }
 }

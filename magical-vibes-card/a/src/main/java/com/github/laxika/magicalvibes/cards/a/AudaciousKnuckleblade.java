@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
@@ -37,7 +37,7 @@ public class AudaciousKnuckleblade extends Card {
                 "{1}{U}",
                 List.of(SurveilThenEffect.direct(
                         2,
-                        new UntapPermanentsEffect(TapUntapScope.SELF))),
+                        new UntapPermanentsEffect(Subjects.source()))),
                 "Exhaust — {1}{U}: Surveil 2, then untap this creature."
                         + " (Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust());

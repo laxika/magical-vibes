@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +29,7 @@ public class RakdosTheMuscle extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
-                        new TapPermanentsEffect(TapUntapScope.SELF)
+                        new TapPermanentsEffect(Subjects.source())
                 ),
                 "Sacrifice another creature: Rakdos gains indestructible until end of turn. Tap it. Activate only once each turn.",
                 1

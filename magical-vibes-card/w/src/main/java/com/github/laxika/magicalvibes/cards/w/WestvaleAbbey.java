@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -51,7 +51,7 @@ public class WestvaleAbbey extends Card {
                 List.of(
                         new SacrificeMultiplePermanentsCost(5, new PermanentIsCreaturePredicate()),
                         new TransformSelfEffect(),
-                        new UntapPermanentsEffect(TapUntapScope.SELF)
+                        new UntapPermanentsEffect(Subjects.source())
                 ),
                 "{5}, {T}, Sacrifice five creatures: Transform this land, then untap it."
         ));

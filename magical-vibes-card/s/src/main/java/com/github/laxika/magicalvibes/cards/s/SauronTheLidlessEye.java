@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +26,7 @@ public class SauronTheLidlessEye extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(

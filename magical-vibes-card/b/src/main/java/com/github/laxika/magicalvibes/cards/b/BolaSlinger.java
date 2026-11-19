@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -42,11 +42,11 @@ public class BolaSlinger extends Card {
                 )),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        CardEffect attackTrigger = new TapPermanentsEffect(TapUntapScope.TARGET, opponentArtifactOrCreature);
+        CardEffect attackTrigger = new TapPermanentsEffect(Subjects.target(), opponentArtifactOrCreature);
         target(new PermanentPredicateTargetFilter(opponentArtifactOrCreature,
                 "Target must be an artifact or creature an opponent controls"))
                 .addTrigger(Triggers.attacks(),
-                        new TapPermanentsEffect(TapUntapScope.TARGET, opponentArtifactOrCreature));
+                        new TapPermanentsEffect(Subjects.target(), opponentArtifactOrCreature));
 
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),

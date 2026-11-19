@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -20,7 +20,8 @@ public class WoodlandGuidance extends Card {
 
         // Clash with an opponent. If you win, untap all Forests you control.
         addSpellEffect(new ClashEffect(
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentHasSubtypePredicate(CardSubtype.FOREST))));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                        new PermanentHasSubtypePredicate(CardSubtype.FOREST)))));
 
         // Exile Woodland Guidance.
         addSpellEffect(new ExileSpellEffect());

@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class DeposeDeploy extends Card {
 
     public DeposeDeploy() {
         TargetFilter creature = TargetFilters.creature();
-        CardEffect depose = new TapPermanentsEffect(TapUntapScope.TARGET);
+        CardEffect depose = new TapPermanentsEffect(Subjects.target());
         CardEffect createThopters = new CreateTokenEffect(
                 2, "Thopter", 1, 1, null,
                 List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT));

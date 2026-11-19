@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -20,7 +20,7 @@ public class UnbenderTine extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new UntapPermanentsEffect(Subjects.target())),
                 "{T}: Untap another target permanent.",
                 new PermanentPredicateTargetFilter(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),

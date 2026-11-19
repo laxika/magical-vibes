@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -49,7 +50,7 @@ public class TamiyoCompleatedSage extends Card {
                 ARTIFACT_OR_CREATURE, "Target must be an artifact or creature");
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET),
+                List.of(new TapPermanentsEffect(Subjects.target()),
                         new SkipNextUntapEffect(TapUntapScope.TARGET)),
                 "+1: Tap up to one target artifact or creature. It doesn't untap during its controller's next untap step.",
                 null, +1, null, null,

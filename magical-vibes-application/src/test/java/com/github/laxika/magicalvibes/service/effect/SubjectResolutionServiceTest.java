@@ -17,7 +17,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostLandsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -34,6 +38,7 @@ import java.util.UUID;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.acceptedPlayers;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.activePlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.allOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.allTargets;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attached;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedAtTrigger;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.chosenPlayer;
@@ -170,6 +175,32 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(targetPlayer().declaresTarget()).isTrue();
             assertThat(controllerOf(target()).declaresTarget()).isFalse();
             assertThat(attached().declaresTarget()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("allTargets()")
+    class AllTargets {
+
+        @Test
+        @DisplayName("Is every permanent target of the entry, whichever group, and no player target")
+        void everyPermanentTarget() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), player1.getId(), "Test ability",
+                    List.of(EFFECT), null, List.of(bears.getId(), player2.getId(), giant.getId()));
+            gd.stack.add(entry);
+
+            assertThat(permanents(entry, allTargets())).containsExactly(bears, giant);
+            assertThat(allTargets().declaresTarget()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Is the entry's lone target when it records no target list")
+        void loneTarget() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+            assertThat(permanents(entry(player1, bears.getId(), null), allTargets())).containsExactly(bears);
         }
     }
 
@@ -320,6 +351,33 @@ class SubjectResolutionServiceTest extends BaseCardTest {
                     .containsExactly(giant);
             assertThat(permanents(entry, controlledBy(eachPlayer(), new PermanentIsCreaturePredicate())))
                     .containsExactlyInAnyOrder(bears, giant);
+        }
+
+        @Test
+        @DisplayName("A set's filter knows the triggering player (\"all lands that player controls\")")
+        void filterReadsTriggeringPlayer() {
+            Permanent ownForest = addCreatureReady(player1, new Forest());
+            Permanent theirForest = addCreatureReady(player2, new Forest());
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringPlayerId(player2.getId());
+
+            assertThat(permanents(entry, controlledBy(eachPlayer(), new PermanentAllOfPredicate(List.of(
+                    new PermanentIsLandPredicate(), new PermanentControlledByTriggeringPlayerPredicate())))))
+                    .containsExactly(theirForest)
+                    .doesNotContain(ownForest);
+        }
+
+        @Test
+        @DisplayName("A set's filter knows the defending player of the attack")
+        void filterReadsDefendingPlayer() {
+            addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            StackEntry entry = entry(player1, null, null);
+            entry.setAttackedTargetId(player2.getId());
+
+            assertThat(permanents(entry, controlledBy(eachPlayer(), new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(), new PermanentControlledByDefendingPlayerPredicate())))))
+                    .containsExactly(giant);
         }
 
         @Test

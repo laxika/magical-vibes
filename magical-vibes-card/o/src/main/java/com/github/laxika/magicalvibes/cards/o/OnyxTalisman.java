@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,6 +17,6 @@ public class OnyxTalisman extends Card {
         // Whenever a player casts a black spell, you may pay {3}. If you do, untap target permanent.
         target(TargetFilters.permanent()).addTrigger(Triggers.playerCastsSpell()
                         .withFilter(new CardColorPredicate(CardColor.BLACK)),
-                new MayPayManaEffect("{3}", new UntapPermanentsEffect(TapUntapScope.TARGET), "Pay {3}?"));
+                new MayPayManaEffect("{3}", new UntapPermanentsEffect(Subjects.target()), "Pay {3}?"));
     }
 }

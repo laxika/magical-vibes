@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,7 +29,7 @@ public class BringerOfTheRedDawn extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 SequenceEffect.of(new MayEffect(
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new UntapPermanentsEffect(Subjects.target()),
                                 new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN)
                         ),
                         "Untap target creature and gain control of it until end of turn?"

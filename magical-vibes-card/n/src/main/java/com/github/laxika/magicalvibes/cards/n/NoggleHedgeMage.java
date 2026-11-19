@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class NoggleHedgeMage extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
-                        new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap two target permanents?"));
+                        new MayEffect(new TapPermanentsEffect(Subjects.target()), "Tap two target permanents?"));
 
         // When this creature enters, if you control two or more Mountains, you may have this creature
         // deal 2 damage to target player or planeswalker. Independent intervening-if gate; targets a

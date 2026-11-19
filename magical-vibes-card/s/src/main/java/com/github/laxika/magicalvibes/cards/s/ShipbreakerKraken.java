@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class ShipbreakerKraken extends Card {
         ));
 
         target(TargetFilters.creature(), 0, 4)
-                .addTrigger(Triggers.becomesMonstrous(), new TapPermanentsEffect(TapUntapScope.TARGET),
+                .addTrigger(Triggers.becomesMonstrous(), new TapPermanentsEffect(Subjects.target()),
                         DoesntUntapEffect.targetWhileSourceControlled());
     }
 }

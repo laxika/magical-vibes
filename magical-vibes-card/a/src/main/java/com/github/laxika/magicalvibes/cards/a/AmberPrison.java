@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -30,7 +30,7 @@ public class AmberPrison extends Card {
                 true,
                 "{4}",
                 List.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new TapPermanentsEffect(Subjects.target()),
                         DoesntUntapEffect.targetWhileSourceTapped()
                 ),
                 "{4}, {T}: Tap target artifact, creature, or land. That permanent doesn't untap during its controller's untap step for as long as Amber Prison remains tapped.",

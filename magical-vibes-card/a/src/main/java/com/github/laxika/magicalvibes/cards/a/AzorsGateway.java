@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
@@ -34,7 +34,7 @@ public class AzorsGateway extends Card {
                                 new SourceExiledDifferentManaValuesThreshold(5),
                                 SequenceEffect.of(
                                         new GainLifeEffect(5),
-                                        new UntapPermanentsEffect(TapUntapScope.SELF),
+                                        new UntapPermanentsEffect(Subjects.source()),
                                         new TransformSelfEffect()
                                 )
                         )

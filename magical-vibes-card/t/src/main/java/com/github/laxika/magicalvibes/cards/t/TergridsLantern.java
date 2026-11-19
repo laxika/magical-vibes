@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -29,7 +28,7 @@ public class TergridsLantern extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new UntapPermanentsEffect(Subjects.source())),
                 "{3}{B}: Untap Tergrid's Lantern."
         ));
     }

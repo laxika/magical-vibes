@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class ConformerShuriken extends Card {
     public ConformerShuriken() {
         addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
                 SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET,
+                        new TapPermanentsEffect(Subjects.target(),
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                         new PermanentControlledByDefendingPlayerPredicate()))),
                         new PutCountersOnSelfEffect(

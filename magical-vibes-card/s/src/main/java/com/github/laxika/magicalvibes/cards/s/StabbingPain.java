@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,6 +12,6 @@ public class StabbingPain extends Card {
 
     public StabbingPain() {
         addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
-        addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        addSpellEffect(new TapPermanentsEffect(Subjects.target()));
     }
 }

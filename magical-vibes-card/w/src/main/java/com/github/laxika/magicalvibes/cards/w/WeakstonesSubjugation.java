@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class WeakstonesSubjugation extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new MayPayManaEffect("{3}",
-                                new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                                new TapPermanentsEffect(Subjects.attached()),
                                 "Pay {3} to tap enchanted permanent?"))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -33,7 +33,7 @@ public class BespokeBattlewagon extends Card {
                 true,
                 null,
                 List.of(new PayEnergyCost(2), new TapPermanentsEffect(
-                        TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                        Subjects.target(), new PermanentIsCreaturePredicate())),
                 "{T}, Pay {E}{E}: Tap target creature.",
                 TargetFilters.creature()
         ).withActivationCondition(new ControllerEnergyAtLeast(2),

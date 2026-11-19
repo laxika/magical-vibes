@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +27,7 @@ public class JetsBrainwashing extends Card {
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN)))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET)))
+                        new UntapPermanentsEffect(Subjects.target())))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
         addSpellEffect(CreateTokenEffect.ofClueToken(1).withInvestigate(false));

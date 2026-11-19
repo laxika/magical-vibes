@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class GenjiGlove extends Card {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new UntapPermanentsEffect(Subjects.attached()),
                         new AdditionalCombatPhaseEffect(1)));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

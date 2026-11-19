@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenTapIfColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -56,7 +56,7 @@ public class DealDamageToTargetCreatureThenTapIfColorlessEffectHandler implement
         int actualDamage = damageSupport.dealCreatureDamage(gameData, entry, target, damage);
         if (actualDamage > 0 && targetIsColorless) {
             tapPermanentsEffectHandler.resolve(gameData, entry,
-                    new TapPermanentsEffect(TapUntapScope.TARGET));
+                    new TapPermanentsEffect(Subjects.target()));
         }
     }
 }

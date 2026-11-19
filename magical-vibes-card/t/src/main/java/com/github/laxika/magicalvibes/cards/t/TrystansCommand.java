@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -62,8 +62,8 @@ public class TrystansCommand extends Card {
                         List.of(
                                 new BoostAllCreaturesEffect(3, 3, EachPermanentScope.TARGET_PLAYER),
                                 new UntapPermanentsEffect(
-                                        TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                        new PermanentIsCreaturePredicate())),
+                                        Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
+                                                new PermanentIsCreaturePredicate()))),
                         anyPlayer)
         ), 2));
     }

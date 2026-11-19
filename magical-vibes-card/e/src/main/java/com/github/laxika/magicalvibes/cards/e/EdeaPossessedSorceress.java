@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
@@ -26,7 +26,7 @@ public class EdeaPossessedSorceress extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
 
         addTrigger(Triggers.creatureDies(

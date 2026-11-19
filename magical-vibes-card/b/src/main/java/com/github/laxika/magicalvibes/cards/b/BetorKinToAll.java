@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesFractionOfLifeRoundedUpEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,8 +24,8 @@ public class BetorKinToAll extends Card {
                         new DrawCardEffect(1),
                         new ConditionalEffect(
                                 new ControlledCreaturesTotalToughnessAtLeast(20),
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                        new PermanentIsCreaturePredicate())),
+                                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentIsCreaturePredicate()))),
                         new ConditionalEffect(
                                 new ControlledCreaturesTotalToughnessAtLeast(40),
                                 EachPlayerLosesFractionOfLifeRoundedUpEffect.opponentsOnly(2))));

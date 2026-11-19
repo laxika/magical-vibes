@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -27,7 +27,7 @@ public class PortentTracker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new UntapPermanentsEffect(Subjects.target())),
                 "{T}: Untap target land.",
                 TargetFilters.land()));
 

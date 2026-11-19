@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -26,7 +26,7 @@ public class Goatnapper extends Card {
                 "Target must be a Goat"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }

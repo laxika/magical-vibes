@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -30,7 +30,7 @@ public class TumbleMagnet extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)
+                        new TapPermanentsEffect(Subjects.target())
                 ),
                 "{T}, Remove a charge counter from Tumble Magnet: Tap target artifact or creature.",
                 new PermanentPredicateTargetFilter(

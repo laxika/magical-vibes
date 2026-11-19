@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -23,7 +23,7 @@ public class TeferiTimebender extends Card {
         // +2: Untap up to one target artifact or creature.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new UntapPermanentsEffect(Subjects.target())),
                 "+2: Untap up to one target artifact or creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

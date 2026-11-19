@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentUntilPlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class TheDoctorsChildhoodBarn extends Card {
         addStaticEffect(new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE)));
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 1)
                 .addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new PhaseOutTargetPermanentUntilPlaneswalkEffect()));
     }
 }

@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -48,7 +48,7 @@ public class ProsperityTycoon extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsTokenPredicate(), "Sacrifice a token", false),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
-                        new TapPermanentsEffect(TapUntapScope.SELF)
+                        new TapPermanentsEffect(Subjects.source())
                 ),
                 "{2}, Sacrifice a token: This creature gains indestructible until end of turn. Tap it."
         ));

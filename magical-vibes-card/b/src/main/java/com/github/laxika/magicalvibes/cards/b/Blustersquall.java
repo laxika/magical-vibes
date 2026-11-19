@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -29,9 +31,10 @@ public class Blustersquall extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
-                new TapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
+                new TapPermanentsEffect(Subjects.target()),
+                new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))))));
         target(TargetFilters.creatureAnOpponentControls());
     }
 }

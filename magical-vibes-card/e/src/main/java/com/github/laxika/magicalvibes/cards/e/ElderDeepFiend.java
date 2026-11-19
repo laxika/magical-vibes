@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,6 +31,6 @@ public class ElderDeepFiend extends Card {
 
         // When you cast this spell, tap up to four target permanents.
         target(TargetFilters.permanent(), 0, 4)
-                .addTrigger(Triggers.youCastThisSpell(), new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.youCastThisSpell(), new TapPermanentsEffect(Subjects.target()));
     }
 }

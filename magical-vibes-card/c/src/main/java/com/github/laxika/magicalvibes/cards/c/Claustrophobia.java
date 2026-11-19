@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -23,7 +23,7 @@ public class Claustrophobia extends Card {
     public Claustrophobia() {
         target(TargetFilters.creature())
                 // When this Aura enters, tap enchanted creature.
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(Subjects.attached()))
                 // Enchanted creature doesn't untap during its controller's untap step.
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

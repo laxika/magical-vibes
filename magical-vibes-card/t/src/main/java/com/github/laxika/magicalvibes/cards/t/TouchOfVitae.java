@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class TouchOfVitae extends Card {
     public TouchOfVitae() {
         // "{0}: Untap this creature. Activate only once." — granted until end of turn.
         ActivatedAbility grantedAbility = new ActivatedAbility(false, "{0}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new UntapPermanentsEffect(Subjects.source())),
                 "{0}: Untap this creature. Activate only once.")
                 .withMaxActivationsPerGame(1);
 

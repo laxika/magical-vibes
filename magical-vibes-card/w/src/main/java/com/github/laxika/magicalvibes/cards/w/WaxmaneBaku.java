@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -34,7 +34,7 @@ public class WaxmaneBaku extends Card {
         // the tap handler fans over the whole chosen target group.
         addActivatedAbility(new ActivatedAbility(false, "{1}",
                 List.of(new RemoveXCountersFromSourceCost(CounterType.KI),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        new TapPermanentsEffect(Subjects.target())),
                 "{1}, Remove X ki counters from this creature: Tap X target creatures.",
                 TargetFilters.creature(),
                 null, null, null, List.of(), 0, 100)

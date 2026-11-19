@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -62,7 +63,7 @@ public class RowanFearlessSparkmage extends Card {
                 -9,
                 List.of(
                         new GainControlOfAllPermanentsMatchingEffect(creature, Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creature),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), creature)),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)
                 ),
                 "\u22129: Gain control of all creatures until end of turn. Untap them. They gain haste until end of turn."

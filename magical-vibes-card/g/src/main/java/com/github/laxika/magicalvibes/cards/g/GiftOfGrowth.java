@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +21,7 @@ public class GiftOfGrowth extends Card {
         // Untap target creature.
         // It gets +2/+2 until end of turn.
         // If this spell was kicked, that creature gets +4/+4 until end of turn instead.
-        target(TargetFilters.creature()).addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+        target(TargetFilters.creature()).addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                         new BoostTargetCreatureEffect(2, 2),
                         new BoostTargetCreatureEffect(4, 4)

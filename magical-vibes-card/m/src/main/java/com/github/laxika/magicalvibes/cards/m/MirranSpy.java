@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,6 +17,6 @@ public class MirranSpy extends Card {
     public MirranSpy() {
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.TARGET), "Untap target creature?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.target()), "Untap target creature?"));
     }
 }

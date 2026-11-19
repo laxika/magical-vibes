@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class UnquenchableThirst extends Card {
                                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
                                 ))),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED));
+                        new TapPermanentsEffect(Subjects.attached()));
 
         // Enchanted creature doesn't untap during its controller's untap step.
         addStaticEffect(DoesntUntapEffect.enchanted());

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOK", collectorNumber = "155")
@@ -15,7 +14,7 @@ public class NekoTe extends Card {
 
     public NekoTe() {
         addTrigger(Triggers.equippedCreatureDealsDamageToCreature(),
-                new TapPermanentsEffect(TapUntapScope.TRIGGERING),
+                new TapPermanentsEffect(Subjects.triggering()),
                 DoesntUntapEffect.triggeringWhileSourceOnBattlefield());
         addTrigger(Triggers.dealsDamageToPlayer(),
                 new LoseLifeEffect(1, Subjects.targetPlayer()));

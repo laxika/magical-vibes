@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +22,7 @@ public class RooftopNuisance extends Card {
                 new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(1));
         target(TargetFilters.creature())
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
         addSpellEffect(new DrawCardEffect(1));
     }

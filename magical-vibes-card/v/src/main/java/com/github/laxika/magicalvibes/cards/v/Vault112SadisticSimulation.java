@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyThenExileTopCardsAndMayPlayOneWithoutPayingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,14 +20,14 @@ public class Vault112SadisticSimulation extends Card {
 
     public Vault112SadisticSimulation() {
         addTrigger(Triggers.chapter(1),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1),
                 new EnergyCountersEffect(2));
         setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 
         addTrigger(Triggers.chapter(2),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1),
                 new EnergyCountersEffect(2));
         setSagaChapterTargetGroups(2,

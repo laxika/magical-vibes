@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -26,11 +26,10 @@ public class ShivaWardenOfIce extends Card {
 
         addTrigger(Triggers.chapter(3),
                 new TapPermanentsEffect(
-                        TapUntapScope.ALL_PERMANENTS,
-                        new PermanentAllOfPredicate(List.of(
+                        Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
-                        ))),
+                        )))),
                 new ExileSelfAndReturnTransformedEffect());
     }
 }

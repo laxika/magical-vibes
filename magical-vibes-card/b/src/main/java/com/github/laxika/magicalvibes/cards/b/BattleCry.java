@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -23,10 +23,9 @@ public class BattleCry extends Card {
     public BattleCry() {
         // Untap all white creatures you control.
         addSpellEffect(new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED,
-                new PermanentAllOfPredicate(List.of(
+                Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.WHITE))))));
+                        new PermanentColorInPredicate(Set.of(CardColor.WHITE)))))));
 
         // Whenever a creature blocks this turn, it gets +0/+1 until end of turn.
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(

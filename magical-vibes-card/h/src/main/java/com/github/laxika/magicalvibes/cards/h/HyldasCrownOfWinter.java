@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -29,7 +29,7 @@ public class HyldasCrownOfWinter extends Card {
                 "{1}",
                 List.of(
                         new ReduceActivationCostEffect(new DuringControllerTurn(new Fixed(1))),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)
+                        new TapPermanentsEffect(Subjects.target())
                 ),
                 "{1}, {T}: Tap target creature. This ability costs {1} less to activate during your turn.",
                 TargetFilters.creature()

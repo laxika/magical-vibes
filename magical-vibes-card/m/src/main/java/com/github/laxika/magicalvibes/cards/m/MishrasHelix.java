@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -15,7 +15,7 @@ public class MishrasHelix extends Card {
 
     public MishrasHelix() {
         addActivatedAbility(new ActivatedAbility(true, "{X}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{X}, {T}: Tap X target lands.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsLandPredicate(),

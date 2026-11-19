@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -17,7 +17,7 @@ public class AkroanJailer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{W}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{2}{W}, {T}: Tap target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

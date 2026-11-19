@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -13,6 +13,7 @@ public class RallyingRoar extends Card {
 
     public RallyingRoar() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                new PermanentIsCreaturePredicate())));
     }
 }

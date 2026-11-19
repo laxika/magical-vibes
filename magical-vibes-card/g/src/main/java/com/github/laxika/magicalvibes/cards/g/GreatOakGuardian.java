@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class GreatOakGuardian extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostAllCreaturesEffect(2, 2, EachPermanentScope.TARGET_PLAYER),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate()));
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
+                                new PermanentIsCreaturePredicate())));
     }
 }

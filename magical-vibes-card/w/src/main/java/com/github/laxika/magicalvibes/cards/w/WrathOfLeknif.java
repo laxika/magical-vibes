@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -17,6 +17,7 @@ public class WrathOfLeknif extends Card {
         addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentIsCreaturePredicate(), true));
         // Untap up to four lands you control.
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 4));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                new PermanentIsLandPredicate()), null, 4));
     }
 }

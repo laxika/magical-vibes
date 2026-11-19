@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -40,8 +40,8 @@ public class GreatTrainHeist extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all creatures you control. If it's your combat phase, there is an additional combat phase after this phase.",
                         List.of(
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                        new PermanentIsCreaturePredicate()),
+                                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentIsCreaturePredicate())),
                                 new ConditionalEffect(
                                         new AllConditions(List.of(new DuringCombat(), new ControllerTurn())),
                                         new AdditionalCombatPhaseEffect(1)))),

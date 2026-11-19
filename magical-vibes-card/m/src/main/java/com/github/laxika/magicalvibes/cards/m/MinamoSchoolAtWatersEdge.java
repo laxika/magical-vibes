@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -32,7 +32,7 @@ public class MinamoSchoolAtWatersEdge extends Card {
                 true,
                 "{U}",
                 List.of(new UntapPermanentsEffect(
-                        TapUntapScope.TARGET, new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                        Subjects.target(), new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                 "{U}, {T}: Untap target legendary permanent.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),

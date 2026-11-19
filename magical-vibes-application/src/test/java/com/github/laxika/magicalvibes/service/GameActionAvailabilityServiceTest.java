@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
@@ -29,7 +30,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -278,7 +278,7 @@ class GameActionAvailabilityServiceTest {
             card.setManaCost("{X}{U}{B}");
             card.targetExactlyX(new PermanentPredicateTargetFilter(
                     new PermanentTruePredicate(), "Target must be a permanent"), 100)
-                    .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+                    .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
             ManaPool pool = new ManaPool();
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLUE);

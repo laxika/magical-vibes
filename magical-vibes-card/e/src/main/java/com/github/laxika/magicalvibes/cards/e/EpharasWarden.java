@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -19,7 +19,7 @@ public class EpharasWarden extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{T}: Tap target creature with power 3 or less.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

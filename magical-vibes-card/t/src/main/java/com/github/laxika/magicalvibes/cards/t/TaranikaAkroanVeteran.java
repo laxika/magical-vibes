@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -35,7 +35,7 @@ public class TaranikaAkroanVeteran extends Card {
                 "Target must be another creature you control"
         ))
                 .addTrigger(Triggers.attacks(),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, anotherCreatureYouControl),
+                        new UntapPermanentsEffect(Subjects.target(), anotherCreatureYouControl),
                         new SetBasePowerToughnessEffect(4, 4),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }

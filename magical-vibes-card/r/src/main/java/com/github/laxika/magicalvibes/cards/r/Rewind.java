@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -19,6 +19,7 @@ public class Rewind extends Card {
 
     public Rewind() {
         addSpellEffect(new CounterSpellEffect());
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 4));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentIsLandPredicate()), null, 4));
     }
 }

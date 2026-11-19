@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -35,7 +35,7 @@ public class NissaVitalForce extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new AnimatePermanentsEffect(
                                 5, 5, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
                                 Set.of(), GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN)

@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "131")
 @CardRegistration(set = "MM2", collectorNumber = "118")
@@ -22,8 +25,9 @@ public class HellkiteCharger extends Card {
     public HellkiteCharger() {
         addTrigger(Triggers.attacks(), new MayPayManaEffect("{5}{R}{R}",
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                                new PermanentIsAttackingPredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentIsAttackingPredicate())))),
                         new AdditionalCombatPhaseEffect(1)),
                 "Pay {5}{R}{R} to untap all attacking creatures and get an additional combat phase?"));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class GoblinSharpshooter extends Card {
 
     public GoblinSharpshooter() {
         addStaticEffect(DoesntUntapEffect.self());
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new UntapPermanentsEffect(TapUntapScope.SELF));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new UntapPermanentsEffect(Subjects.source()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

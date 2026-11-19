@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -37,7 +37,9 @@ public class MonstrosityOfTheLake extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayManaEffect(
                 "{5}",
                 SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, opponentCreature),
+                        new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        opponentCreature)))),
                         new PutCounterOnEachMatchingPermanentEffect(
                                 CounterType.STUN, 1, opponentCreature, EachPermanentScope.ALL_PLAYERS)),
                 "Pay {5} to tap and stun your opponents' creatures?"));

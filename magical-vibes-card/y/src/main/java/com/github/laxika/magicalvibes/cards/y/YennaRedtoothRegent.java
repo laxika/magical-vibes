@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -47,7 +47,7 @@ public class YennaRedtoothRegent extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.AURA),
                                         new PermanentNotPredicate(new PermanentIsBestowedPredicate())))),
                                 SequenceEffect.of(
-                                        new UntapPermanentsEffect(TapUntapScope.SELF),
+                                        new UntapPermanentsEffect(Subjects.source()),
                                         new ScryEffect(2)))
                 ),
                 "{2}, {T}: Create a token that's a copy of target enchantment you control that doesn't have the same name as another permanent you control, except it isn't legendary. If the token is an Aura, untap Yenna, then scry 2. Activate only as a sorcery.",

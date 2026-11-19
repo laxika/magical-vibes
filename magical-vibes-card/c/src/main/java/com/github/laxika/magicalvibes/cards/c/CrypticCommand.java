@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
@@ -35,8 +37,9 @@ public class CrypticCommand extends Card {
                         ReturnToHandEffect.target()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap all creatures your opponents control",
-                        new TapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                        new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw a card",
                         new DrawCardEffect())

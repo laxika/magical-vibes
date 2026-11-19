@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -19,7 +19,7 @@ public class FloodwaterDam extends Card {
         // ManaCost's X symbol count), while the paid X bounds the target count via
         // withExactXTargets; the tap handler fans over the whole chosen target group.
         addActivatedAbility(new ActivatedAbility(true, "{X}{X}{1}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{X}{X}{1}, {T}: Tap X target lands.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsLandPredicate(),

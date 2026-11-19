@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -33,7 +33,7 @@ public class TimeOfIce extends Card {
         // Chapter I: Tap target creature an opponent controls.
         // It doesn't untap during its controller's untap step for as long as you control this Saga.
         addTrigger(Triggers.chapter(1),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 DoesntUntapEffect.targetWhileSourceControlled());
         setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
@@ -47,7 +47,7 @@ public class TimeOfIce extends Card {
 
         // Chapter II: Same as chapter I
         addTrigger(Triggers.chapter(2),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 DoesntUntapEffect.targetWhileSourceControlled());
         setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(

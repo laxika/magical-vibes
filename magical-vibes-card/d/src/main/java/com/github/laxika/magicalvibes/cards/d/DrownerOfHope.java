@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -66,7 +66,7 @@ public class DrownerOfHope extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.SCION)
                                 )),
                                 "an Eldrazi Scion"),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)
+                        new TapPermanentsEffect(Subjects.target())
                 ),
                 "Sacrifice an Eldrazi Scion: Tap target creature.",
                 TargetFilters.creature()

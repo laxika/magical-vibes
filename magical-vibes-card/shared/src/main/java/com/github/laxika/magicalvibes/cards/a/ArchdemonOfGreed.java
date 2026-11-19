@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -33,6 +32,6 @@ public class ArchdemonOfGreed extends Card {
                                 "Sacrifice a Human",
                                 false
                         ),
-                        List.of(new TapPermanentsEffect(TapUntapScope.SELF), new DealDamageToPlayersEffect(9, Subjects.you()))));
+                        List.of(new TapPermanentsEffect(Subjects.source()), new DealDamageToPlayersEffect(9, Subjects.you()))));
     }
 }

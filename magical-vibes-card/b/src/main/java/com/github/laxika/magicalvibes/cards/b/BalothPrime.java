@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -34,7 +34,7 @@ public class BalothPrime extends Card {
                 SequenceEffect.of(
                         new CreateTokenEffect(1, "Beast", 4, 4, CardColor.GREEN,
                                 List.of(CardSubtype.BEAST), Set.of(), Set.of(), true),
-                        new UntapPermanentsEffect(TapUntapScope.SELF)));
+                        new UntapPermanentsEffect(Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

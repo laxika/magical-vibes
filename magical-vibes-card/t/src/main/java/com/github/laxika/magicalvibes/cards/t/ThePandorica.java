@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceKeepsPermanentPhased
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseInLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentWhileSourceTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -39,7 +39,7 @@ public class ThePandorica extends Card {
                 true,
                 "{1}{W}",
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, ANOTHER_NONLAND_PERMANENT),
+                        new UntapPermanentsEffect(Subjects.target(), ANOTHER_NONLAND_PERMANENT),
                         new PhaseOutTargetPermanentWhileSourceTappedEffect(ANOTHER_NONLAND_PERMANENT)
                 ),
                 "{1}{W}, {T}: Untap another target nonland permanent, then it phases out. It can't phase in for as long as The Pandorica remains tapped. When The Pandorica becomes untapped or leaves the battlefield, that permanent phases in. Activate only as a sorcery.",

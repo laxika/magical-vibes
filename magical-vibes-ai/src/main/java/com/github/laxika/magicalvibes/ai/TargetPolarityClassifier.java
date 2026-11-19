@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Card;
@@ -271,9 +272,9 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL_DAMAGE;
         }
 
-        // Tap/untap family: scope decides whether a permanent is targeted at all.
+        // Tap/untap family: the scope or subject decides whether a permanent is targeted at all.
         if (effect instanceof TapPermanentsEffect tap) {
-            return tap.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
+            return tap.subject() instanceof PermanentSubject.Target ? TargetPolarity.HARMFUL : null;
         }
         if (effect instanceof SkipNextUntapEffect skip) {
             return skip.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
@@ -292,7 +293,7 @@ public class TargetPolarityClassifier {
                     : null;
         }
         if (effect instanceof UntapPermanentsEffect untap) {
-            return untap.scope() == TapUntapScope.TARGET || untap.scope() == TapUntapScope.ALL_TARGETS
+            return untap.subject() instanceof PermanentSubject.Target || untap.subject() instanceof PermanentSubject.AllTargets
                     ? TargetPolarity.BENEFICIAL
                     : null;
         }

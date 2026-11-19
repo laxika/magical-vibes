@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +17,7 @@ public class MagewrightsStone extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET,
+                List.of(new UntapPermanentsEffect(Subjects.target(),
                         new PermanentHasTapActivatedAbilityPredicate())),
                 "{1}, {T}: Untap target creature that has an activated ability with {T} in its cost.",
                 TargetFilters.creature()

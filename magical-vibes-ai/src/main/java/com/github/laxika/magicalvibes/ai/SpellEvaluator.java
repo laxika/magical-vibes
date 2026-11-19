@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,6 +38,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
@@ -55,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -289,7 +292,7 @@ public class SpellEvaluator {
                     AmountContext.forEstimation(aiPlayerId)) * 3.5;
         }
         // Tap target permanent
-        if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {
+        if (effect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Target) {
             return evaluateTargetTapValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         }
         // Fall through to the standard effect evaluation
@@ -672,7 +675,7 @@ public class SpellEvaluator {
             return removalScore(gameData, card, RemovalKind.DESTROY, oppBattlefield, opponentId, aiPlayerId);
         }
 
-        if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {
+        if (effect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Target) {
             return evaluateTargetTapValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         }
 
@@ -1120,6 +1123,18 @@ public class SpellEvaluator {
                 || gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE);
     }
 
+    /** Whether an untap names the creatures that attacked this turn ("untap all creatures that attacked this turn"). */
+    private static boolean untapsAttackedCreatures(UntapPermanentsEffect untap) {
+        return untap.subject() instanceof PermanentSubject.ControlledBy controlledBy
+                && matchesAttackedThisTurn(controlledBy.filter());
+    }
+
+    private static boolean matchesAttackedThisTurn(PermanentPredicate filter) {
+        return filter instanceof PermanentAttackedThisTurnPredicate
+                || filter instanceof PermanentAllOfPredicate allOf
+                && allOf.predicates().stream().anyMatch(SpellEvaluator::matchesAttackedThisTurn);
+    }
+
     /**
      * Estimates the attack damage an extra-combat card (Relentless Assault) adds this
      * turn. Creatures that already attacked count when the card untaps attackers (or
@@ -1131,7 +1146,7 @@ public class SpellEvaluator {
     public double extraCombatDamageGain(GameData gameData, Card card, UUID aiPlayerId) {
         boolean untapsAttackers = card != null && card.getSpellEffects().stream()
                 .anyMatch(e -> e instanceof UntapPermanentsEffect untap
-                        && untap.scope() == TapUntapScope.ATTACKED_CREATURES);
+                        && untapsAttackedCreatures(untap));
         boolean afterCombat = gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
 
         double gain = 0;

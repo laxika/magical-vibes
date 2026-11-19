@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,6 +25,6 @@ public class AvatarKyoshiEarthbender extends Card {
         target(TargetFilters.landYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new EarthbendTargetLandEffect(8),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET));
+                        new UntapPermanentsEffect(Subjects.target()));
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -31,7 +32,7 @@ public class SaidDone extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Done — Tap up to two target creatures. Those creatures don't untap during their controller's next untap step",
                         List.of(
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new TapPermanentsEffect(Subjects.target()),
                                 new SkipNextUntapEffect(TapUntapScope.TARGET)),
                         TargetFilters.creature(), null, 0, 2, false, null).withManaCost("{3}{U}")
         )));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -19,8 +19,8 @@ public class LlanowarDruid extends Card {
                 true,
                 null,
                 List.of(new SacrificeSelfCost(),
-                        new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS,
-                                new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentHasSubtypePredicate(CardSubtype.FOREST)))),
                 "{T}, Sacrifice Llanowar Druid: Untap all Forests."
         ));
     }

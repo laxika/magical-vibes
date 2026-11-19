@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,6 +23,6 @@ public class KorEntanglers extends Card {
                                         Triggers.CREATURE,
                                         new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                                 ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                        new TapPermanentsEffect(TapUntapScope.TARGET));
+                        new TapPermanentsEffect(Subjects.target()));
     }
 }

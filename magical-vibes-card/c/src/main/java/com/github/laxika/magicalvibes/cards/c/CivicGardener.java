@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +21,6 @@ public class CivicGardener extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate())),
                 "Target must be a creature or land"))
-                .addTrigger(Triggers.attacks(), new UntapPermanentsEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.attacks(), new UntapPermanentsEffect(Subjects.target()));
     }
 }

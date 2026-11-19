@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class DeepSlumberTitan extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever this creature is dealt damage, untap it.
-        addTrigger(Triggers.dealtDamage(), new UntapPermanentsEffect(TapUntapScope.SELF));
+        addTrigger(Triggers.dealtDamage(), new UntapPermanentsEffect(Subjects.source()));
     }
 }

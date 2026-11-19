@@ -7,9 +7,14 @@ import com.github.laxika.magicalvibes.model.condition.SourceExertedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "125")
 @CardRegistration(set = "AKR", collectorNumber = "148")
@@ -20,7 +25,9 @@ public class CombatCelebrant extends Card {
     public CombatCelebrant() {
         addStaticEffect(new ExertAsItAttacksEffect(new NotCondition(new SourceExertedThisTurn())));
         addTrigger(Triggers.exertedAsItAttacks(), SequenceEffect.of(
-                new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES),
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))),
                 new AdditionalCombatPhaseEffect(1)));
     }
 }

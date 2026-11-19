@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -29,8 +29,7 @@ public class FinaleOfRevelation extends Card {
                         new ShuffleGraveyardIntoLibraryEffect(false),
                         new DrawCardEffect(new XValue()),
                         new UntapPermanentsEffect(
-                                TapUntapScope.ALL_PERMANENTS,
-                                new PermanentIsLandPredicate(),
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsLandPredicate()), null,
                                 5),
                         new GrantNoMaximumHandSizeEffect(Duration.PERMANENT)
                 )

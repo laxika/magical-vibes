@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -34,7 +34,7 @@ public class PrestonGarveyMinuteman extends Card {
                         new CreateTokenAttachedToTargetEffect(settlementToken(), new PermanentIsLandPredicate()));
 
         addTrigger(Triggers.attacks(), new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED, new PermanentIsEnchantedPredicate()));
+                Subjects.controlledBy(Subjects.you(), new PermanentIsEnchantedPredicate())));
     }
 
     private static CreateTokenEffect settlementToken() {

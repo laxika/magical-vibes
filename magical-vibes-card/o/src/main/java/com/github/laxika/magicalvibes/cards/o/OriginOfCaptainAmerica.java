@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -43,7 +43,7 @@ public class OriginOfCaptainAmerica extends Card {
 
         // Chapter III: Tap up to one target creature and put a stun counter on it.
         addTrigger(Triggers.chapter(3),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));

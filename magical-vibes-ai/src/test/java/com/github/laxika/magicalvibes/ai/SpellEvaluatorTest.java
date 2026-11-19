@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -56,7 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -456,7 +456,7 @@ class SpellEvaluatorTest {
     void tapTargetPermanentScoring() {
         // No opponent creatures: value should be 0
         double noCreatures = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
+                gd, List.of(new TapPermanentsEffect(Subjects.target())), player1.getId());
         assertThat(noCreatures).isEqualTo(0.0);
 
         // Add opponent creature
@@ -465,7 +465,7 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player2.getId()).add(angel);
 
         double withCreature = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
+                gd, List.of(new TapPermanentsEffect(Subjects.target())), player1.getId());
         assertThat(withCreature).isGreaterThan(0.0);
     }
 
@@ -542,13 +542,13 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         double value = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
+                gd, List.of(new TapPermanentsEffect(Subjects.target())), player1.getId());
 
         // Value should be based on the untapped 2/2, not the tapped 4/4
         // Remove the tapped creature and check only the untapped one gives the same result
         gd.playerBattlefields.get(player2.getId()).remove(tapped);
         double untappedOnly = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
+                gd, List.of(new TapPermanentsEffect(Subjects.target())), player1.getId());
 
         // The bigger creature is tapped, so the value should be based on the small untapped one
         assertThat(value).isEqualTo(untappedOnly);

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -29,10 +29,10 @@ public class MyrGalvanizer extends Card {
         // {1}, {T}: Untap each other Myr you control.
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
+                List.of(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MYR)),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))),
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))))),
                 "{1}, {T}: Untap each other Myr you control."
         ));
     }

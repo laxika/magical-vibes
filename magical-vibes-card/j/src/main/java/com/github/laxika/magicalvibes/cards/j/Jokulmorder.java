@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,6 +31,6 @@ public class Jokulmorder extends Card {
                 true));
 
         addTrigger(Triggers.youPlayLand().withFilter(new CardSubtypePredicate(CardSubtype.ISLAND)),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Jokulmorder?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Jokulmorder?"));
     }
 }

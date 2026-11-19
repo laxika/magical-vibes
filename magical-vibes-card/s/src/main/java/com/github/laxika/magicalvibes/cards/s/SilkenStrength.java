@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,7 @@ public class SilkenStrength extends Card {
 
         target(new PermanentPredicateTargetFilter(creatureOrVehicle, "Target must be a creature or Vehicle"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED))
+                        new UntapPermanentsEffect(Subjects.attached()))
                 .addStaticEffect(new StaticBoostEffect(1, 2, Set.of(Keyword.REACH), GrantScope.ENCHANTED_PERMANENT));
     }
 }

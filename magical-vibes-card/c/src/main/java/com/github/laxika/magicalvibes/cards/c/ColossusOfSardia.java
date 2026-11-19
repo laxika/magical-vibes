@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -25,7 +25,7 @@ public class ColossusOfSardia extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{9}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new UntapPermanentsEffect(Subjects.source())),
                 "{9}: Untap Colossus of Sardia. Activate only during your upkeep.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
         ));

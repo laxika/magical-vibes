@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -15,6 +15,6 @@ public class ZealousDisplay extends Card {
     public ZealousDisplay() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
         addSpellEffect(new ConditionalEffect(new NotControllerTurn(),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate())));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate()))));
     }
 }

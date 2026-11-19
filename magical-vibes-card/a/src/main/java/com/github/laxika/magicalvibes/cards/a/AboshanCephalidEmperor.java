@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +26,7 @@ public class AboshanCephalidEmperor extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.OCTOPUS)),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        new TapPermanentsEffect(Subjects.target())),
                 "Tap an untapped Octopus you control: Tap target permanent.",
                 TargetFilters.permanent()));
 
@@ -32,8 +34,9 @@ public class AboshanCephalidEmperor extends Card {
                 false,
                 "{U}{U}{U}",
                 List.of(new TapPermanentsEffect(
-                        TapUntapScope.ALL_CREATURES,
-                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),
+                        Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))))))),
                 "{U}{U}{U}: Tap all creatures without flying."));
     }
 }

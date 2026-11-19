@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -28,6 +27,6 @@ public class LightningRigCrew extends Card {
 
         // Whenever you cast a Pirate spell, untap Lightning-Rig Crew.
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.PIRATE)),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(Subjects.source()));
     }
 }

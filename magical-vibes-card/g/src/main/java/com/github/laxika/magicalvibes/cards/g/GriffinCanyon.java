@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class GriffinCanyon extends Card {
                 true,
                 null,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, griffin),
+                        new UntapPermanentsEffect(Subjects.target(), griffin),
                         new ConditionalEffect(new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                                 new BoostTargetPermanentEffect(1, 1, griffin))
                 ),

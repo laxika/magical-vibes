@@ -15,7 +15,7 @@ public class GlacialGrasp extends Card {
 
     public GlacialGrasp() {
         target(TargetFilters.creature())
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new MillEffect(2, Subjects.controllerOf(Subjects.target())))
                 .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new DrawCardEffect());

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,9 +37,9 @@ public class GodoBanditWarlord extends Card {
         // Godo is not a Samurai, so untapping itself is a separate SELF scope from the Samurai sweep.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
-                new UntapPermanentsEffect(TapUntapScope.SELF),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                        new PermanentHasSubtypePredicate(CardSubtype.SAMURAI)),
+                new UntapPermanentsEffect(Subjects.source()),
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                        new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))),
                 new AdditionalCombatPhaseEffect(1));
     }
 }

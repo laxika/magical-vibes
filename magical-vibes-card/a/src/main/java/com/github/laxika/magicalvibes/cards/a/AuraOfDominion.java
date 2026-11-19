@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +22,7 @@ public class AuraOfDominion extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{1}",
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentIsCreaturePredicate()),
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED)),
+                        new UntapPermanentsEffect(Subjects.attached())),
                 "{1}, Tap an untapped creature you control: Untap enchanted creature."));
     }
 }

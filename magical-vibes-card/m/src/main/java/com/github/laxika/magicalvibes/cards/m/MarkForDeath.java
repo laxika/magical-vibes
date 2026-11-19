@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +18,7 @@ public class MarkForDeath extends Card {
         // Other creatures that player controls can't block this turn.
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK))
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET_CONTROLLERS_OTHER_CREATURES));
     }
 }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +25,7 @@ public class UltrosObnoxiousOctopus extends Card {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
                         .withFilter(noncreatureSpell),
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(4)),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),

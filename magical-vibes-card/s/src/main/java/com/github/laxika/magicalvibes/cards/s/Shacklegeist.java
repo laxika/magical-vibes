@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,7 +31,7 @@ public class Shacklegeist extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)
+                        new TapPermanentsEffect(Subjects.target())
                 ),
                 "Tap two untapped Spirits you control: Tap target creature you don't control.",
                 TargetFilters.creatureAnOpponentControls()

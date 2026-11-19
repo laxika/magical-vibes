@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -49,7 +49,7 @@ public class NissaStewardOfElements extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
+                        new UntapPermanentsEffect(Subjects.allTargets()),
                         new AnimatePermanentsEffect(
                                 5, 5, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.FLYING, Keyword.HASTE), null, Set.of(),

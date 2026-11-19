@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -19,7 +19,7 @@ public class DrudgeSentinel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new TapPermanentsEffect(TapUntapScope.SELF), new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)),
+                List.of(new TapPermanentsEffect(Subjects.source()), new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)),
                 "{3}: Tap Drudge Sentinel. It gains indestructible until end of turn."
         ));
     }

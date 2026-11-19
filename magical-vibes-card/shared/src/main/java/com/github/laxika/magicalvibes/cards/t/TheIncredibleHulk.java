@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class TheIncredibleHulk extends Card {
                 new ConditionalEffect(
                         new SourceIsAttacking(),
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.SELF),
+                                new UntapPermanentsEffect(Subjects.source()),
                                 new AdditionalCombatPhaseEffect(1)))));
     }
 }

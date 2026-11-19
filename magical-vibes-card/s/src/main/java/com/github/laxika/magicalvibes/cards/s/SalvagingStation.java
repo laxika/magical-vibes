@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -38,6 +38,6 @@ public class SalvagingStation extends Card {
         ));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Salvaging Station?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Salvaging Station?"));
     }
 }

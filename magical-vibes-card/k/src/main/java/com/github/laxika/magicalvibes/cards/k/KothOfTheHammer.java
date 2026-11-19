@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -34,7 +34,7 @@ public class KothOfTheHammer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ELEMENTAL), Set.of(),
                                 CardColor.RED, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)
                 ),

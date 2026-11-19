@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Soliton extends Card {
 
     public Soliton() {
-        addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(new UntapPermanentsEffect(TapUntapScope.SELF)), "{U}: Untap Soliton."));
+        addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(new UntapPermanentsEffect(Subjects.source())), "{U}: Untap Soliton."));
     }
 }

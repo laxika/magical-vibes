@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -55,7 +54,7 @@ public class AddCounterThenPayCountersOrTapAndDamageEffectHandler implements Nor
         // "You may pay {X}; if you don't, tap this creature and it deals X damage to you."
         ForcedCostOrElseEffect punish = new ForcedCostOrElseEffect(
                 new PayManaCost("{" + Math.max(0, x) + "}"),
-                List.of(new TapPermanentsEffect(TapUntapScope.SELF),
+                List.of(new TapPermanentsEffect(Subjects.source()),
                         new DealDamageToPlayersEffect(Math.max(0, x), Subjects.you())),
                 true);
         forcedCostOrElseEffectHandler.resolve(gameData, entry, punish);

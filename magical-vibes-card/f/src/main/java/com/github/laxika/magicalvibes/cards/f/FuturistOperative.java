@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 
@@ -30,7 +30,7 @@ public class FuturistOperative extends Card {
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(false, "{2}{U}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new UntapPermanentsEffect(Subjects.source())),
                 "{2}{U}: Untap this creature."));
     }
 }

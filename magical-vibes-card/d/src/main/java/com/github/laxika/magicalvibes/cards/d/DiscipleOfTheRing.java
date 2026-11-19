@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -60,7 +60,7 @@ public class DiscipleOfTheRing extends Card {
                 false,
                 COST,
                 List.of(exileInstantOrSorceryCost(),
-                        new TapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                        new TapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())),
                 "{1}, Exile an instant or sorcery card from your graveyard: Tap target creature."
         ));
 
@@ -69,7 +69,7 @@ public class DiscipleOfTheRing extends Card {
                 false,
                 COST,
                 List.of(exileInstantOrSorceryCost(),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                        new UntapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())),
                 "{1}, Exile an instant or sorcery card from your graveyard: Untap target creature."
         ));
     }

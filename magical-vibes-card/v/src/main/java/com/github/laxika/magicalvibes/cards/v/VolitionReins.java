@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +18,7 @@ public class VolitionReins extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new EnchantedPermanentMatches(new PermanentIsTappedPredicate(), "enchanted permanent is tapped")),
-                new UntapPermanentsEffect(TapUntapScope.ENCHANTED));
+                new UntapPermanentsEffect(Subjects.attached()));
         addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,6 +26,7 @@ public class FranticSearch extends Card {
     public FranticSearch() {
         addSpellEffect(new DrawCardEffect(2));
         addSpellEffect(new DiscardEffect(2, Subjects.you()));
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 3));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentIsLandPredicate()), null, 3));
     }
 }

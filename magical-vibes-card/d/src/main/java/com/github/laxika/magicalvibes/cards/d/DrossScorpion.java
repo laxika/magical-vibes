@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -19,7 +19,7 @@ public class DrossScorpion extends Card {
 
     public DrossScorpion() {
         var untapTargetArtifact = new MayEffect(
-                new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsArtifactPredicate()),
+                new UntapPermanentsEffect(Subjects.target(), new PermanentIsArtifactPredicate()),
                 "Untap target artifact?");
 
         // Whenever another artifact creature dies, you may untap target artifact.

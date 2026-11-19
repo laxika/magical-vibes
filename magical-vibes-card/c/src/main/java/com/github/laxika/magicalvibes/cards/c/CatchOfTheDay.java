@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -61,7 +61,7 @@ public class CatchOfTheDay extends Card {
                 new GoadTargetCreatureUntilNextTurnEffect(opponentCreature.predicate()))
                 .addTrigger(Triggers.attacks(),
                         TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(TAP)),
-                        new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature.predicate()));
+                        new TapPermanentsEffect(Subjects.target(), opponentCreature.predicate()));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(SIX_TWO),
                 new SetBasePowerToughnessEffect(6, 2, GrantScope.SELF)));

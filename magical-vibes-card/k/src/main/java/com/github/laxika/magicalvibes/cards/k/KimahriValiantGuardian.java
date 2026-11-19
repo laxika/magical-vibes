@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePer
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -36,7 +36,7 @@ public class KimahriValiantGuardian extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature),
+                        new TapPermanentsEffect(Subjects.target(), opponentCreature),
                         new MayEffect(new BecomeCopyOfTargetCreaturePermanentlyEffect(
                                 "Kimahri, Valiant Guardian",
                                 Triggers.beginningOfCombat(ActivePlayer.YOU),

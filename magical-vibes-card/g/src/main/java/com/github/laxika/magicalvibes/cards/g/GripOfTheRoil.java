@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -22,7 +23,7 @@ public class GripOfTheRoil extends Card {
                 List.of(new ManaCastingCost("{1}{U}")),
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()), false));
         target(TargetFilters.creature())
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new DrawCardEffect(1));
     }

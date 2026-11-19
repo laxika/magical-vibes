@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -389,7 +389,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | done |
 | 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | done |
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | done |
-| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | open |
+| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`) |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | open |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | open |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | open |
@@ -1851,6 +1851,88 @@ naming the class): 1,776 test cases, all pass.
   other "granting permanent" effects (`PutCountersOnGrantingEquipment`, `DestroyGrantingPermanentIfNoCounters`, ...).
 - `PermanentSubject.declaresTarget()` stays false for `controlledBy` / `ownedBy` / `attachmentsOf` even when they read
   a target; an effect's `targetSpec()` inspects those shapes itself (as `ReturnToHandEffect` does).
+
+### Step 5, run 5d (2026-11-20, partly done)
+
+**Done: the tap and untap verbs.** `TapPermanentsEffect` and `UntapPermanentsEffect` replaced `TapUntapScope scope`
+with `PermanentSubject subject`: `(subject, filter, chosenCount)` plus `(subject)` and `(subject, filter)`. `filter` is
+now only the target restriction of a `target()` (and, for tap, `allTargets()`) subject; a set's filter lives in the
+subject; `chosenCount > 0` needs a set subject (both rejected in the compact constructor). `targetSpec()` is the old
+spec per old constant: benign permanent (+ filter) for `target()`, untap's `allTargets()` keeps the no-op
+`playerOrPermanent()` spec of the multi-target path, benign player for `controlledBy(targetPlayer(), ...)` (tap's old
+TARGET_PLAYERS_PERMANENTS), the self-targeting marker for `source()`, else `NONE`. Both handlers lost every private
+lookup: `SubjectResolutionService` names the permanents; a named subject is tapped one by one ("taps itself." for
+`source()`), a set is tapped together (an explicit tapping player only for `controlledBy(you(), ...)`, as before), and a
+set with `chosenCount` prompts the controller as before (untap offers only the tapped ones). Readers converted:
+`DestructionSupport` forced-cost else-branch (`subject() instanceof Source / Attached`), `MayEffectHandler`
+(`Triggering`), 13 engine-built payloads, `SpellEvaluator` (target tap; `untapsAttackedCreatures` looks for
+`PermanentAttackedThisTurnPredicate` in the set's filter), `TargetPolarityClassifier` (Tap: `Target` harmful; Untap:
+`Target` / `AllTargets` beneficial; the AI sees what it saw).
+
+Constants mapped: TARGET `target()`; ALL_TARGETS **new** `allTargets()` (every permanent target of the entry, any
+group: `getTargetIds()` else `getTargetId()`, the old read; `target()` would read only the effect's group, which
+differs for Kiora / Nissa, Genesis Mage style multi-slot abilities); SELF and SOURCE_PERMANENT `source()`; TRIGGERING
+`triggering()`; ENCHANTED `attached()`; CONTROLLED `controlledBy(you(), f)`; OTHER_CONTROLLED_CREATURES
+`controlledBy(you(), AllOf(creature, Not(IsSourcePermanent), f))`; TARGET_PLAYERS_PERMANENTS `controlledBy(targetPlayer(),
+f)` for tap (it declared the player) and `controlledBy(targetPlayerDeclaredElsewhere(), f)` for untap (it declared
+nothing: Reins of Power, Twist Allegiance, Curse of Bounty, Great Oak Guardian, Early Harvest, Rustler Rampage,
+Trystan's Command, the Choose-Opponent-Draw-And-Untap payload); ALL_CREATURES `controlledBy(eachPlayer(), AllOf(creature,
+f))`; ALL_PERMANENTS `controlledBy(eachPlayer(), f)`; ATTACKED_CREATURES `controlledBy(eachPlayer(), AllOf(creature,
+PermanentAttackedThisTurnPredicate))`. `TapUntapScope` lost ALL_TARGETS, SOURCE_PERMANENT, OTHER_CONTROLLED_CREATURES,
+ATTACKED_CREATURES and ALL_PERMANENTS (no other reader). 1,231 card files rewritten by a deleted scratch script (no call
+site needed a hand edit), 15 engine files, 2 AI files, 10 test files, 13 agent-docs files. No record deleted: ratchet
+unchanged (4,910 / 4,143).
+
+**Resolver.** New `PermanentSubject.AllTargets` / `Subjects.allTargets()` (declares a target) and
+`PermanentSubject.isSet()` (true for `controlledBy`, `ownedBy`, `attachmentsOf`). A set's `FilterContext` now also
+carries the defending player (recorded, else `defendingPlayerOfAttackTarget`), the triggering player and the triggering
+permanent id and snapshot: the old ALL_CREATURES / ALL_PERMANENTS contexts (War's Toll's "lands that player controls",
+"creatures defending player controls"). Other `controlledBy` users gain that context; a filter that read one of them
+previously saw nothing.
+
+**The `source()` fallback.** No entry relied on SELF's fallback to the entry's target: with a temporary probe that threw
+when a `source()` tap or untap resolved on an entry with no source permanent and a target, all 470 test classes of
+non-target tap/untap cards (plus the sample) passed. Statically, every user is a permanent's activated or triggered
+ability or an engine payload inserted into such an entry (`ChooseRandomOpponentMustAttackThisCombat`,
+`AddCounterThenPayCountersOrTapAndDamage`), which all record the source. So the fallback is gone with no card change.
+
+**Behaviour differences** (none changes a tested outcome): `attached()` falls back to the entry's
+`attachedPermanentSnapshot` when the source left and recorded no snapshot (the old lookup did nothing); sets are
+tapped and untapped in APNAP order instead of seat order (simultaneous; log and "becomes tapped" trigger collection
+order only); untap's "up to N" set choice gets the full filter context (it had none); the set log lines say
+"taps/untaps N permanent(s)." for every set; untap's TARGET_PLAYERS read `targetsForEffect` before `getTargetId()`
+(the resolver's order; the cards have one player target).
+
+**Tests**: 767 suites, 8,626 test cases, all pass: every test class of a card whose tap/untap is not `target()` (470),
+every sixth of the 737 target-only cards (123), the AI tests naming the classes, `SubjectResolutionServiceTest` (new
+`$AllTargets`, and `$Sets` cases for a set's triggering-player and defending-player filter), the resolver-backed handler
+tests, the application tests naming `TapUntapScope`, the two ratchets. Ask for a full card-test run (1,231 card files).
+
+**Left for the rest of 5d.** `TapUntapScope` stays for `SkipNextUntapEffect` (about 145 cards), `CantBlockThisTurnEffect`
+(about 130), `CantAttackThisTurnEffect` (7, plus the dungeon room payload in `VentureIntoDungeonEffectHandler`),
+`DoesntUntapEffect` (factories; static `self()` / `enchanted()` read by `UntapStepService` / `UntapPreventionSupport`),
+`DoesntUntapWithCounterEffect` (static, with a `PermanentReference counterBearer`) and
+`UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` (static, `UntapStepService`). Their remaining constants:
+TARGET, SELF, TRIGGERING, ENCHANTED, CONTROLLED, TARGET_PLAYERS_PERMANENTS, TARGET_CONTROLLERS_OTHER_CREATURES,
+ALL_CREATURES, OPPONENTS_PERMANENTS. Notes for that run: CantBlock/CantAttack TARGET_PLAYERS_PERMANENTS,
+TARGET_CONTROLLERS_OTHER_CREATURES and SkipNextUntap `matchAtUntap` install player-scoped floating rules (later arrivals
+included), so their handlers keep a rule over the subject's players rather than a resolved set; the static ones need
+the resolver's static entry point; `SkipNextUntapEffect`'s TARGET on a blocks trigger reads the collector's
+non-targeting target; `ActivatedAbilityExecutionService`, `UntapPreventionSupport`, `TargetPolarityClassifier` and
+`UntapStepService` match on the scope.
+
+**For later runs.**
+
+- Not-the-source predicate (for step 6): `PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())` matches by
+  permanent id (the set's `FilterContext` carries the source permanent id), the form OTHER_CONTROLLED_CREATURES now
+  uses (12 tap/untap cards wrote it themselves); 32 tap/untap cards use the card-id form
+  `PermanentNotPredicate(new PermanentIsSourceCardPredicate())`, which matches by the source card's id; check a card
+  before swapping one form for the other.
+- Kept (ledger): the costs (`Tap*Cost`, `UntapMultiplePermanentsCost`: a cost is not the tap effect); the fused
+  `Tap*Then*`, `TapAnyNumber*`, `Tap...AndPutCounters` records (steps 7/8); `UntapSearchedPermanent(s)` (step-7
+  result subject); `UntapTargetAndSharingCreatures` (step 6's shares-a-colour predicate); the rest unique.
+- "Becomes tapped" / "becomes untapped" triggers, "doesn't untap" restrictions, mana-ability taps, tapped-and-attacking
+  tokens and `{T}` costs were not touched.
 
 ## Prompt
 

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -21,7 +21,7 @@ public class KiorasFollower extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new UntapPermanentsEffect(Subjects.target())),
                 "{T}: Untap another target permanent.",
                 new PermanentPredicateTargetFilter(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),

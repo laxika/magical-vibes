@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterEachTargetSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,6 +32,6 @@ public class KatarasReversal extends Card {
         target(spellOrAbility, 0, 4)
                 .addSpellEffect(new CounterEachTargetSpellEffect());
         target(artifactOrCreature, 0, 4)
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.target()));
     }
 }

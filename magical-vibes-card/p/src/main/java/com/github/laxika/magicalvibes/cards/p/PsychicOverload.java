@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +23,7 @@ public class PsychicOverload extends Card {
 
     public PsychicOverload() {
         target(TargetFilters.permanent())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(Subjects.attached()))
                 .addStaticEffect(DoesntUntapEffect.enchanted())
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
@@ -31,7 +31,7 @@ public class PsychicOverload extends Card {
                                 null,
                                 List.of(
                                         new DiscardCardTypeCost(new CardTypePredicate(CardType.ARTIFACT), "artifact", 2),
-                                        new UntapPermanentsEffect(TapUntapScope.SELF)
+                                        new UntapPermanentsEffect(Subjects.source())
                                 ),
                                 "Discard two artifact cards: Untap this permanent."
                         ),

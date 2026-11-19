@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -33,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
@@ -270,10 +270,10 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         Card card = spellCard(ownerId, "Choking Tethers", CardType.INSTANT, "{3}{U}",
                 "Tap up to four target creatures. Cycling {1}{U}");
         card.target(TargetFilters.creature(), 0, 4)
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
         card.addCycling("{1}{U}");
         card.addTrigger(Triggers.youCycleThisCard(), new MayEffect(
-                new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target creature?"));
+                new TapPermanentsEffect(Subjects.target()), "Tap target creature?"));
         return freeze(card);
     }
 

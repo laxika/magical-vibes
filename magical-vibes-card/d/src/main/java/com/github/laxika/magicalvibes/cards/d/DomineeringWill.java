@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetGroupMarkerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -37,7 +37,7 @@ public class DomineeringWill extends Card {
                 "Target must be a nonattacking creature"
         ), 0, 3)
                 .addSpellEffect(new TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1))
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.allTargets()))
                 .addSpellEffect(new SetCombatRequirementThisTurnEffect(
                                 CombatRequirement.MUST_BLOCK, GrantScope.TARGETS));
     }

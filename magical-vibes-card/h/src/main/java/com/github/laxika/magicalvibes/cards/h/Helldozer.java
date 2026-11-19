@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -25,7 +25,7 @@ public class Helldozer extends Card {
                 "{B}{B}{B}",
                 List.of(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
-                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
+                        new UntapPermanentsEffect(Subjects.source()),
                         ThenEffectRecipient.CONTROLLER,
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC)))),
                 "{B}{B}{B}, {T}: Destroy target land. If that land was nonbasic, untap this creature.",

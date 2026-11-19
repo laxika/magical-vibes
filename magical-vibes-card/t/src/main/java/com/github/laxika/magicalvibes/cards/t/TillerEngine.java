@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -26,10 +26,10 @@ public class TillerEngine extends Card {
                 new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Untap that land.",
-                                        new UntapPermanentsEffect(TapUntapScope.TRIGGERING)),
+                                        new UntapPermanentsEffect(Subjects.triggering())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Tap target nonland permanent an opponent controls.",
-                                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                                        new TapPermanentsEffect(Subjects.target()),
                                         TargetFilters.nonlandPermanentAnOpponentControls())
                         ))));
     }

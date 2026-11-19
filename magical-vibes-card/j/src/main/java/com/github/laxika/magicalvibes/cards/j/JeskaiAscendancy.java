@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +24,7 @@ public class JeskaiAscendancy extends Card {
 
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
                 new BoostAllOwnCreaturesEffect(1, 1),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())));
 
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
                 new MayEffect(SequenceEffect.of(

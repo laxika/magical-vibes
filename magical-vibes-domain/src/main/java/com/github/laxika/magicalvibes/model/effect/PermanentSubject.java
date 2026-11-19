@@ -11,12 +11,12 @@ import java.util.UUID;
  * through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}, which owns every lookup
  * (current information, else last-known information, and nothing done to an object that left the battlefield).
  *
- * <p>Only {@link Target} declares a target ({@link #declaresTarget()}). A subject that reads a stack entry
- * ({@link #needsStackEntry()}) cannot be used by a static ability.
+ * <p>Only {@link Target} and {@link AllTargets} declare a target ({@link #declaresTarget()}). A subject that reads a
+ * stack entry ({@link #needsStackEntry()}) cannot be used by a static ability.
  *
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
-public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target,
+public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target, PermanentSubject.AllTargets,
         PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringCard,
         PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.Granter,
         PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf, PermanentSubject.AllOf {
@@ -28,6 +28,14 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
     /** Whether resolving this subject reads a stack entry, so a static ability can't use it. */
     default boolean needsStackEntry() {
+        return false;
+    }
+
+    /**
+     * Whether this subject is a set found as the effect is applied ("all creatures you control"), rather than
+     * permanents it names one by one.
+     */
+    default boolean isSet() {
         return false;
     }
 
@@ -46,6 +54,24 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
                 throw new IllegalArgumentException("A target group is not negative: " + group);
             }
         }
+
+        @Override
+        public boolean declaresTarget() {
+            return true;
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Up to four target permanents" chosen across several target groups: every permanent target of the stack entry,
+     * whichever group or effect it was chosen for (an ability whose targets are declared by its target filter or by
+     * several slots, not bound to one group).
+     */
+    record AllTargets() implements PermanentSubject {
 
         @Override
         public boolean declaresTarget() {
@@ -167,6 +193,11 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         public boolean needsStackEntry() {
             return players.needsStackEntry();
         }
+
+        @Override
+        public boolean isSet() {
+            return true;
+        }
     }
 
     /**
@@ -183,6 +214,11 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return players.needsStackEntry();
+        }
+
+        @Override
+        public boolean isSet() {
+            return true;
         }
     }
 
@@ -201,6 +237,11 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return permanents.needsStackEntry();
+        }
+
+        @Override
+        public boolean isSet() {
+            return true;
         }
     }
 

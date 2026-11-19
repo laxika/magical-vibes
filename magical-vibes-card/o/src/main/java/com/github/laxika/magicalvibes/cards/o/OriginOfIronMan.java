@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class OriginOfIronMan extends Card {
         // Chapter I: Tap up to one target creature. It doesn't untap during its controller's
         // untap step for as long as this Saga remains on the battlefield.
         addTrigger(Triggers.chapter(1),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 DoesntUntapEffect.targetWhileSourceOnBattlefield());
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));

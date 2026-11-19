@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -22,7 +22,7 @@ public class MutinousMassacre extends Card {
         addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(
                 new PermanentIsCreaturePredicate(), Duration.UNTIL_END_OF_TURN));
         addSpellEffect(new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
+                Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())));
         addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
     }
 }

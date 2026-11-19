@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,7 +22,7 @@ public class CompanionOfTheTrials extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                List.of(new UntapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())),
                 "{1}{W}: Untap target creature. Activate only if you control a Gideon planeswalker.",
                 TargetFilters.creature()
         ).withRequiredControlledPermanents(

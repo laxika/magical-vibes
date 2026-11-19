@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class MagmaOpus extends Card {
 
         target(1, 4).addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(4));
         target(TargetFilters.permanent(), 2, 2)
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
         addSpellEffect(new CreateTokenEffect(
                 1, "Elemental", 4, 4, CardColor.BLUE,
                 Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)));

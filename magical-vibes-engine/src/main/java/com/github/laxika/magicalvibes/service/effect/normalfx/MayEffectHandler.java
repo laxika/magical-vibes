@@ -131,7 +131,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect tap
-                && tap.scope() == com.github.laxika.magicalvibes.model.effect.TapUntapScope.TRIGGERING) {
+                && tap.subject() instanceof com.github.laxika.magicalvibes.model.effect.PermanentSubject.Triggering) {
             var permanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
             if (permanent == null || permanent.isTapped()) {
                 insertElseEffect(entry, e);

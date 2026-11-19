@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -32,7 +32,7 @@ public class AltarGolem extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(5, new PermanentIsCreaturePredicate()),
-                        new UntapPermanentsEffect(TapUntapScope.SELF)
+                        new UntapPermanentsEffect(Subjects.source())
                 ),
                 "Tap five untapped creatures you control: Untap this creature."
         ));

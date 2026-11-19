@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughne
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class GauntletsOfLight extends Card {
                         new ActivatedAbility(
                                 false,
                                 "{2}{W}",
-                                List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
+                                List.of(new UntapPermanentsEffect(Subjects.source())),
                                 "{2}{W}: Untap this creature."
                         ),
                         GrantScope.ENCHANTED_CREATURE

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,7 +25,7 @@ public class VoltaicConstruct extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, artifactCreature)),
+                List.of(new UntapPermanentsEffect(Subjects.target(), artifactCreature)),
                 "{2}: Untap target artifact creature.",
                 new PermanentPredicateTargetFilter(artifactCreature, "Target must be an artifact creature")
         ));

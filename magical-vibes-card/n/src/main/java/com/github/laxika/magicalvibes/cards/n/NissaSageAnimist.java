@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToBattlefieldElseToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -51,7 +51,7 @@ public class NissaSageAnimist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
+                        new UntapPermanentsEffect(Subjects.allTargets()),
                         new AnimatePermanentsEffect(6, 6, List.of(CardSubtype.ELEMENTAL),
                                 Set.<Keyword>of(), null, Set.of(),
                                 GrantScope.TARGET, Duration.PERMANENT)),

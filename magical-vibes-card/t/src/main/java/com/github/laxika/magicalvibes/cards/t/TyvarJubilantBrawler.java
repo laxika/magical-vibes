@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -31,7 +30,7 @@ public class TyvarJubilantBrawler extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                List.of(new UntapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())),
                 "+1: Untap up to one target creature.",
                 TargetFilters.creature(), +1, null, null,
                 List.of(), 0, 1));

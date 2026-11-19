@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,6 +22,7 @@ public class IntruderAlarm extends Card {
 
         // Whenever a creature enters, untap all creatures.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY),
-                new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentIsCreaturePredicate())));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,7 +17,7 @@ public class InitiatesCompanion extends Card {
     public InitiatesCompanion() {
         // Whenever this creature deals combat damage to a player, untap target creature or land.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentAnyOfPredicate(
+                new UntapPermanentsEffect(Subjects.target(), new PermanentAnyOfPredicate(
                         List.of(new PermanentIsCreaturePredicate(), new PermanentIsLandPredicate()))));
     }
 }

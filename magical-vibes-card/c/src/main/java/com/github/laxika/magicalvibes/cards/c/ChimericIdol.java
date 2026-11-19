@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class ChimericIdol extends Card {
                 false,
                 "{0}",
                 List.of(
-                        new TapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()),
+                        new TapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate())),
                         new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.TURTLE), Set.of(), null,
                                 Set.of(CardType.ARTIFACT))
                 ),

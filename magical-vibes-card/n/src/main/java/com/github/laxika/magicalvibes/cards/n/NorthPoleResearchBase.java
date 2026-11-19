@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -51,7 +50,7 @@ public class NorthPoleResearchBase extends Card {
         addTrigger(Triggers.chaosEnsues(), new CreateTokenThenEffect(
                 alien,
                 SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET, nontokenCreatureOpponent),
+                        new TapPermanentsEffect(Subjects.target(), nontokenCreatureOpponent),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN))));
     }
 }

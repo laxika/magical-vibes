@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -24,6 +24,6 @@ public class KapshoKitefins extends Card {
                                 new TriggerCondition(Triggers.enters(Triggers.CREATURE,
                                         ObjectRelation.ANOTHER_YOU_CONTROL))),
                         TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                                new TapPermanentsEffect(TapUntapScope.TARGET)))));
+                                new TapPermanentsEffect(Subjects.target())))));
     }
 }

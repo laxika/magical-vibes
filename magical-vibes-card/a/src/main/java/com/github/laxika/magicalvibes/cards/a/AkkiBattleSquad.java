@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class AkkiBattleSquad extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(modifiedCreature)).withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, modifiedCreature),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), modifiedCreature)),
                         new AdditionalCombatPhaseEffect(1)));
     }
 }

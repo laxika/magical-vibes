@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -48,7 +47,7 @@ public class AnaBattlemage extends Card {
                 )), "Target must be an untapped creature"), 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{1}{B}")),
-                        SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
+                        SequenceEffect.of(new TapPermanentsEffect(Subjects.target()),
                                 new TargetCreatureDealsPowerDamageToControllerEffect()));
     }
 }

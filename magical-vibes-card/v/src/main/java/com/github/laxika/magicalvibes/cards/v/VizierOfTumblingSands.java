@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -27,7 +27,7 @@ public class VizierOfTumblingSands extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new UntapPermanentsEffect(Subjects.target())),
                 "{T}: Untap another target permanent.",
                 new PermanentPredicateTargetFilter(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
@@ -43,6 +43,6 @@ public class VizierOfTumblingSands extends Card {
                 List.of(new DrawCardEffect(1)),
                 "Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.)",
                 TargetFilters.permanent(), null, null, null, List.of(), 0, 1).withCyclingTriggerTargets());
-        addTrigger(Triggers.youCycleThisCard(), new UntapPermanentsEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.youCycleThisCard(), new UntapPermanentsEffect(Subjects.target()));
     }
 }

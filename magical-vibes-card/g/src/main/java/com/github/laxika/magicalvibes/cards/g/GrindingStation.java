@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -33,6 +32,6 @@ public class GrindingStation extends Card {
 
         // Whenever an artifact enters, you may untap Grinding Station.
         addTrigger(Triggers.enters(new PermanentIsArtifactPredicate(), ObjectRelation.ANY),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Grinding Station?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Grinding Station?"));
     }
 }

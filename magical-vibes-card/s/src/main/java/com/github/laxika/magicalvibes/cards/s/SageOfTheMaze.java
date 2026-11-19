@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -58,7 +58,7 @@ public class SageOfTheMaze extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.GATE)),
-                        new UntapPermanentsEffect(TapUntapScope.SELF)),
+                        new UntapPermanentsEffect(Subjects.source())),
                 "Tap an untapped Gate you control: Untap this creature."
         ));
     }

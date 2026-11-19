@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -15,6 +15,6 @@ public class Reset extends Card {
     public Reset() {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.OPPONENTS_TURN_AFTER_UPKEEP);
         addSpellEffect(new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
+                Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate())));
     }
 }

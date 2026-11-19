@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class KangDynasty extends Card {
     public KangDynasty() {
         for (int chapter : List.of(1, 2)) {
             addTrigger(Triggers.chapter(chapter),
-                    new TapPermanentsEffect(TapUntapScope.TARGET),
+                    new TapPermanentsEffect(Subjects.target()),
                     new GoadTargetCreatureUntilNextTurnEffect(),
                     new RegisterDelayedWatchedCreaturesCombatDamageEffect(
                             List.of(new DrawCardEffect()), true));

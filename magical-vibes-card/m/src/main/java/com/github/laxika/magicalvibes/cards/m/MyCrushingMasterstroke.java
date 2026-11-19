@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMat
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentMustAttackItsOwnerThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -29,7 +29,7 @@ public class MyCrushingMasterstroke extends Card {
         addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(
                 opponentNonlandPermanent,
                 Duration.UNTIL_END_OF_TURN,
-                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                new UntapPermanentsEffect(Subjects.target()),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                 new PermanentMustAttackItsOwnerThisTurnEffect()));
     }

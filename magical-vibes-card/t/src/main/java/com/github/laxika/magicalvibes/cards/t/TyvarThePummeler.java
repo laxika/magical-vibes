@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class TyvarThePummeler extends Card {
                 List.of(
                         new TapCreatureCost(new PermanentIsCreaturePredicate(), true, false),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
-                        new TapPermanentsEffect(TapUntapScope.SELF)),
+                        new TapPermanentsEffect(Subjects.source())),
                 "Tap another untapped creature you control: Tyvar, the Pummeler gains indestructible until end of turn. Tap it."));
 
         addActivatedAbility(new ActivatedAbility(

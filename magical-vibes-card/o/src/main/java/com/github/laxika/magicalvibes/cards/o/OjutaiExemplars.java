@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,7 +29,7 @@ public class OjutaiExemplars extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Tap target creature",
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new TapPermanentsEffect(Subjects.target()),
                                 TargetFilters.creature()),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Ojutai Exemplars gains first strike and lifelink until end of turn",

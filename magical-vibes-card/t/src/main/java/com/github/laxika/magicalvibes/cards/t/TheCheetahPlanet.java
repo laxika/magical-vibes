@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -51,7 +51,7 @@ public class TheCheetahPlanet extends Card {
                                 new TriggeredAbility(Triggers.attacks(),
                                 new MayEffect(
                                         SequenceEffect.of(
-                                                new UntapPermanentsEffect(TapUntapScope.TARGET,
+                                                new UntapPermanentsEffect(Subjects.target(),
                                                         new PermanentControlledByDefendingPlayerPredicate()),
                                                 new MustBlockSourceEffect(
                                                         null,

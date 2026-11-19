@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -21,6 +21,6 @@ public class NanoformSentinel extends Card {
         target(new PermanentPredicateTargetFilter(another, "Target must be another permanent"))
                 .addTrigger(Triggers.becomesTapped(),
                         TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, another));
+                        new UntapPermanentsEffect(Subjects.target(), another));
     }
 }

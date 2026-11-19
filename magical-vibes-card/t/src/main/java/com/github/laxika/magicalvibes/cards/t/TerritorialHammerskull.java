@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -25,6 +25,6 @@ public class TerritorialHammerskull extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target creature an opponent controls"
-        )).addTrigger(Triggers.attacks(), new TapPermanentsEffect(TapUntapScope.TARGET));
+        )).addTrigger(Triggers.attacks(), new TapPermanentsEffect(Subjects.target()));
     }
 }

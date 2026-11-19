@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
@@ -43,7 +43,7 @@ public class CitadelSiege extends Card {
                                 new PermanentControlledBySourceControllerPredicate()))));
         target.addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DRAGONS)),
-                new TapPermanentsEffect(TapUntapScope.TARGET,
+                new TapPermanentsEffect(Subjects.target(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledByActivePlayerPredicate()))));

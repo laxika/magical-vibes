@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,6 +21,6 @@ public class GadwickTheWizened extends Card {
 
         target(TargetFilters.nonlandPermanentAnOpponentControls()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardColorPredicate(CardColor.BLUE)),
-                new TapPermanentsEffect(TapUntapScope.TARGET));
+                new TapPermanentsEffect(Subjects.target()));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,6 +17,6 @@ public class BoonOfBoseiju extends Card {
                 .addSpellEffect(new BoostTargetCreatureEffect(
                         new GreatestManaValueAmongControlled(new PermanentTruePredicate()),
                         new GreatestManaValueAmongControlled(new PermanentTruePredicate())))
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.target()));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -23,7 +23,7 @@ public class LeoninBola extends Card {
                         null,
                         List.of(
                                 new UnattachSourceEquipmentCost(),
-                                new TapPermanentsEffect(TapUntapScope.TARGET)
+                                new TapPermanentsEffect(Subjects.target())
                         ),
                         "{T}, Unattach Leonin Bola: Tap target creature.",
                         TargetFilters.creature()

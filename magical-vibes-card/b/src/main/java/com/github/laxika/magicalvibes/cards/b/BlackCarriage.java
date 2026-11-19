@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class BlackCarriage extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(),
-                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)
+                        new UntapPermanentsEffect(Subjects.source())
                 ),
                 "Sacrifice a creature: Untap this creature. Activate only during your upkeep.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP

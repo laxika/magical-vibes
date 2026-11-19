@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -844,9 +843,9 @@ public class DestructionSupport {
      */
     public void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         for (var elseEffect : effect.elseEffects()) {
-            if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
+            if (elseEffect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Source) {
                 tapSourcePermanent(gameData, entry);
-            } else if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.ENCHANTED) {
+            } else if (elseEffect instanceof TapPermanentsEffect tap && tap.subject() instanceof PermanentSubject.Attached) {
                 // Mind Whip: "you tap that creature" — tap the permanent the source Aura enchants.
                 tapEnchantedPermanent(gameData, entry);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage

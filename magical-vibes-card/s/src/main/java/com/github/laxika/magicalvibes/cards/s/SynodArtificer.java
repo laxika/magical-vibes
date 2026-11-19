@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,7 +29,7 @@ public class SynodArtificer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{X}, {T}: Tap X target noncreature artifacts.",
                 noncreatureArtifactFilter,
                 null,
@@ -43,7 +43,7 @@ public class SynodArtificer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
+                List.of(new UntapPermanentsEffect(Subjects.allTargets())),
                 "{X}, {T}: Untap X target noncreature artifacts.",
                 noncreatureArtifactFilter,
                 null,

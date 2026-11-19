@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,7 +31,7 @@ public class SagesNouliths extends Card {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
-                new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsAttackingPredicate())),
+                new UntapPermanentsEffect(Subjects.target(), new PermanentIsAttackingPredicate())),
                 GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLERIC, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

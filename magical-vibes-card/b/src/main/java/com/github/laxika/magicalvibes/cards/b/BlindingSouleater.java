@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +19,7 @@ public class BlindingSouleater extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W/P}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{W/P}, {T}: Tap target creature.",
                 TargetFilters.creature()
         ));

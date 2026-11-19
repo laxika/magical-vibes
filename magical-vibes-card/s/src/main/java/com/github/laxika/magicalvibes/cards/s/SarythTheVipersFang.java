@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -45,7 +45,7 @@ public class SarythTheVipersFang extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, targetCreatureOrLandYouControl)),
+                List.of(new UntapPermanentsEffect(Subjects.target(), targetCreatureOrLandYouControl)),
                 "{1}, {T}: Untap another target creature or land you control.",
                 new PermanentPredicateTargetFilter(
                         targetCreatureOrLandYouControl,

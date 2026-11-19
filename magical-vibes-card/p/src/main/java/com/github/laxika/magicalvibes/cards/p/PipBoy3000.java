@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -38,7 +37,7 @@ public class PipBoy3000 extends Card {
                                 CounterType.PLUS_ONE_PLUS_ONE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Check Map — Untap up to two target lands",
-                        List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
+                        List.of(new UntapPermanentsEffect(Subjects.allTargets())),
                         TargetFilters.land(), null, 0, 2, false, null)
         )));
         addTrigger(Triggers.attacks(), attackChoice);

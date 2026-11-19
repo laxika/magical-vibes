@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -39,7 +38,7 @@ public class EstridTheMasked extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(new UntapPermanentsEffect(
-                        TapUntapScope.CONTROLLED, new PermanentIsEnchantedPredicate())),
+                        Subjects.controlledBy(Subjects.you(), new PermanentIsEnchantedPredicate()))),
                 "+2: Untap each enchanted permanent you control."
         ));
 

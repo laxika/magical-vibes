@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -26,7 +27,8 @@ public class GideonMartialParagon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsCreaturePredicate())),
                         new BoostAllOwnCreaturesEffect(1, 1)
                 ),
                 "+2: Untap all creatures you control. Those creatures get +1/+1 until end of turn."
@@ -49,8 +51,9 @@ public class GideonMartialParagon extends Card {
                 -10,
                 List.of(
                         new BoostAllOwnCreaturesEffect(2, 2),
-                        new TapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))
+                        new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))))
                 ),
                 "\u221210: Creatures you control get +2/+2 until end of turn. Tap all creatures your opponents control."
         ));

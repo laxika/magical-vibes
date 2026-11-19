@@ -85,7 +85,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpel
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -771,7 +770,7 @@ class SpellTriggersTest {
         @DisplayName("a \"you may pay\" targeting trigger queues the target choice with the payment as written")
         void targetingTriggerWithManaCostKeepsItsMayPayMana() {
             Permanent perm = createPermanent("Malachite Talisman");
-            var innerEffect = new UntapPermanentsEffect(TapUntapScope.TARGET);
+            var innerEffect = new UntapPermanentsEffect(Subjects.target());
             var pay = new MayPayManaEffect("{3}", innerEffect, "Pay {3}?");
             var ability = new CastAbility(SpellFilter.ANY, List.of(pay), null, TargetFilters.permanent());
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);

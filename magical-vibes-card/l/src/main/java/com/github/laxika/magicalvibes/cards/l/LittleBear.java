@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -38,7 +38,7 @@ public class LittleBear extends Card {
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new UntapPermanentsEffect(TapUntapScope.TARGET, anotherCreatureYouControl),
+                new UntapPermanentsEffect(Subjects.target(), anotherCreatureYouControl),
                 new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.BEAR)),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)

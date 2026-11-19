@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,6 +14,6 @@ public class MidnightGuard extends Card {
 
     public MidnightGuard() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(Subjects.source()));
     }
 }

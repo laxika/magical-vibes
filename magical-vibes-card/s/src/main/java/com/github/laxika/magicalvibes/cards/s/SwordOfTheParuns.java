@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -40,10 +40,10 @@ public class SwordOfTheParuns extends Card {
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Tap equipped creature",
-                                        new TapPermanentsEffect(TapUntapScope.ENCHANTED)),
+                                        new TapPermanentsEffect(Subjects.attached())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Untap equipped creature",
-                                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED))
+                                        new UntapPermanentsEffect(Subjects.attached()))
                         )),
                         "Tap or untap equipped creature?"
                 )),

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,7 +31,7 @@ public class DominusOfFealty extends Card {
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentControlledBySourceControllerPredicate()),
                                 SequenceEffect.of(
-                                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                        new UntapPermanentsEffect(Subjects.target()),
                                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
                 ),
                 "Gain control of target permanent until end of turn?"

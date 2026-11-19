@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +17,7 @@ public class OrochiRanger extends Card {
         // untap during its controller's next untap step. The damaged creature is baked as targetId by
         // Triggers.dealsCombatDamageToCreature() (non-targeting), so both halves act on it.
         addTrigger(Triggers.dealsCombatDamageToCreature(), SequenceEffect.of(
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }
 }

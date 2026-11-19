@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class GoblinWarWagon extends Card {
         addStaticEffect(DoesntUntapEffect.self());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
                 "{2}",
-                new UntapPermanentsEffect(TapUntapScope.SELF),
+                new UntapPermanentsEffect(Subjects.source()),
                 "Pay {2} to untap Goblin War Wagon?"));
     }
 }

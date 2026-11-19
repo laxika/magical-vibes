@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,7 +32,7 @@ public class StormElemental extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new ExileTopCardOfLibraryCost(1), new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new ExileTopCardOfLibraryCost(1), new TapPermanentsEffect(Subjects.target())),
                 "{U}, Exile the top card of your library: Tap target creature with flying.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

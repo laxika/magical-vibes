@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -40,7 +40,7 @@ public class CharismaticConqueror extends Card {
                                 new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
                         ObjectRelation.ANY),
                 new MayEffect(
-                        new TapPermanentsEffect(TapUntapScope.TRIGGERING),
+                        new TapPermanentsEffect(Subjects.triggering()),
                         "Tap that permanent?",
                         vampireToken,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));

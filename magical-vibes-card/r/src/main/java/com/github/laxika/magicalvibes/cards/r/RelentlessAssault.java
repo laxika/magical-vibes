@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "225")
 @CardRegistration(set = "S99", collectorNumber = "115")
@@ -24,7 +28,9 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffe
 public class RelentlessAssault extends Card {
 
     public RelentlessAssault() {
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentAttackedThisTurnPredicate())))));
         addSpellEffect(new AdditionalCombatMainPhaseEffect(1, null, true));
     }
 }

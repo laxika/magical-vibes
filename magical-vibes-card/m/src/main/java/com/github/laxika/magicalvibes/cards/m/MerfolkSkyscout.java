@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -13,9 +13,9 @@ public class MerfolkSkyscout extends Card {
 
     public MerfolkSkyscout() {
         target(TargetFilters.permanent())
-                .addTrigger(Triggers.attacks(), new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addTrigger(Triggers.attacks(), new UntapPermanentsEffect(Subjects.target()))
                 .addTrigger(Triggers.blocks(),
                         TriggerOptions.ONE_OR_MORE,
-                        new UntapPermanentsEffect(TapUntapScope.TARGET));
+                        new UntapPermanentsEffect(Subjects.target()));
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,7 +40,7 @@ public class Leviathan extends Card {
                         new SacrificePermanentsEffect(2, islands, Subjects.you())
                                 .withRecordedSacrificeCount(),
                         new ConditionalEffect(new EventValueAtLeast(2),
-                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT))))),
+                                new UntapPermanentsEffect(Subjects.source()))))),
                 "You may sacrifice two Islands. If you do, untap this creature."
         ));
 

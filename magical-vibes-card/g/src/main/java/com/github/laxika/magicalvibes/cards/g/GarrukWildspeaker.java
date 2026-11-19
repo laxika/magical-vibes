@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -33,7 +33,7 @@ public class GarrukWildspeaker extends Card {
         // +1: Untap two target lands.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
+                List.of(new UntapPermanentsEffect(Subjects.allTargets())),
                 "+1: Untap two target lands.",
                 null, 1, null, null,
                 List.of(

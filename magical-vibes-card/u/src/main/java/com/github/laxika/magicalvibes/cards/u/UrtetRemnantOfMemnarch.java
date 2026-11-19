@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,7 +35,7 @@ public class UrtetRemnantOfMemnarch extends Card {
 
         // At the beginning of combat on your turn, untap each Myr you control.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, MYR_PERMANENT));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), MYR_PERMANENT)));
 
         // {W}{U}{B}{R}{G}, {T}: Put three +1/+1 counters on each Myr you control.
         addActivatedAbility(new ActivatedAbility(

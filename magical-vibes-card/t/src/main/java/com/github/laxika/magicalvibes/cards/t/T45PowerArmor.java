@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -42,7 +42,7 @@ public class T45PowerArmor extends Card {
                 List.of(),
                 true,
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new UntapPermanentsEffect(Subjects.attached()),
                         chooseKeywordCounter())));
 
         // Equip {3}

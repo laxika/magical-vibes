@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,6 +23,6 @@ public class GalvanicJuggernaut extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever another creature dies, untap this creature.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new UntapPermanentsEffect(TapUntapScope.SELF));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new UntapPermanentsEffect(Subjects.source()));
     }
 }

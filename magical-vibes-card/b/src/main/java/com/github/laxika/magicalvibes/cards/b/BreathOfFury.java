@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,8 +33,8 @@ public class BreathOfFury extends Card {
                                         new EnchantedPermanentMatches(new PermanentIsCreaturePredicate(),
                                                 "Breath of Fury is attached to a creature"))),
                                 SequenceEffect.of(
-                                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                                new PermanentIsCreaturePredicate()),
+                                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                                new PermanentIsCreaturePredicate())),
                                         new AdditionalCombatPhaseEffect(1)))));
     }
 }

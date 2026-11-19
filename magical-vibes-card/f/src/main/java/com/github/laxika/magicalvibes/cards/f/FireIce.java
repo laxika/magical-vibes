@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class FireIce extends Card {
                 ).withManaCost("{1}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Ice — Tap target permanent. Draw a card",
-                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET), new DrawCardEffect(1)),
+                        List.of(new TapPermanentsEffect(Subjects.target()), new DrawCardEffect(1)),
                         TargetFilters.permanent()
                 ).withManaCost("{1}{U}")
         )));

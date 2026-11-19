@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,8 @@ public class ArenaOfTheAncients extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, legendaryCreature));
+                new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), legendaryCreature)))));
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(legendaryCreature));
     }
 }

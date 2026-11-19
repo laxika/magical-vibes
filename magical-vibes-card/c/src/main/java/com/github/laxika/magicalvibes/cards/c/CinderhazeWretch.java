@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -26,7 +25,7 @@ public class CinderhazeWretch extends Card {
 
         // Put a -1/-1 counter on this creature: Untap this creature.
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(Subjects.source())),
                 "Put a -1/-1 counter on this creature: Untap this creature."));
     }
 }

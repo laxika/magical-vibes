@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class NyssaOfTraken extends Card {
                                 new EventValueAtLeast(1),
                                 new QueueReflexiveAbilityEffect(
                                         SequenceEffect.of(
-                                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                                new TapPermanentsEffect(Subjects.target()),
                                                 new DrawCardEffect(new EventValue()))))));
     }
 }

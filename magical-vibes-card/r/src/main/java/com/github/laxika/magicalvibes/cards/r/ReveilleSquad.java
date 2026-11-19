@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -17,7 +17,8 @@ public class ReveilleSquad extends Card {
         addTrigger(Triggers.creaturesAttackYou(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
                 new MayEffect(
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsCreaturePredicate())),
                         "Untap all creatures you control?"));
     }
 }

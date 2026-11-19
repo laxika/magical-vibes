@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -19,7 +20,7 @@ public class ManaSkimmer extends Card {
     public ManaSkimmer() {
         addTrigger(Triggers.dealsDamageToPlayer(),
                 SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET, new PermanentAllOfPredicate(List.of(
+                        new TapPermanentsEffect(Subjects.target(), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentControlledByTriggeringPlayerPredicate()))),
                         new SkipNextUntapEffect(TapUntapScope.TARGET)));

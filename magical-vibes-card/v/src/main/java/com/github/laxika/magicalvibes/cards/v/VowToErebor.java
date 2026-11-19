@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmen
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class VowToErebor extends Card {
 
     public VowToErebor() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.DWARF)),

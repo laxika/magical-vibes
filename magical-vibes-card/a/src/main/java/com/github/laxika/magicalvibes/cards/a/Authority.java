@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
@@ -22,7 +22,7 @@ public class Authority extends Card {
     public Authority() {
         // Tap up to two target creatures your opponents control.
         target(TargetFilters.creatureAnOpponentControls(), 0, 2)
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
         // Creatures you control gain vigilance until end of turn.
         addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));

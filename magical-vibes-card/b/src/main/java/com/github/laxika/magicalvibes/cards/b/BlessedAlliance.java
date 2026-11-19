@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -47,7 +46,7 @@ public class BlessedAlliance extends Card {
                         anyPlayerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap up to two target creatures",
-                        List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
+                        List.of(new UntapPermanentsEffect(Subjects.allTargets())),
                         creatureFilter, null, 0, 2, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices an attacking creature of their choice",

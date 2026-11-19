@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetC
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsRevealTwoTypesToHandThenRestEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,7 +31,7 @@ public class KioraMasterOfTheDepths extends Card {
     public KioraMasterOfTheDepths() {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
+                List.of(new UntapPermanentsEffect(Subjects.allTargets())),
                 "+1: Untap up to one target creature and up to one target land.",
                 null, +1, null, null,
                 List.of(TargetFilters.creature(), TargetFilters.land()), 0, 2

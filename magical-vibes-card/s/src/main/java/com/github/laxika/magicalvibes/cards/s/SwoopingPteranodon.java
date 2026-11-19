@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetLandDealsDamageToTriggeringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -38,7 +38,7 @@ public class SwoopingPteranodon extends Card {
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.TARGET),
                         new RegisterDelayedEndStepTriggerEffect(
                                 List.of(new DelayedTargetGroup(TargetFilters.land(), 1, 1)),

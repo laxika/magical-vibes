@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerExilesR
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +23,7 @@ public class RonaHeraldOfInvasion extends Card {
         setBackFaceCard(new RonaTolarianObliterator());
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSupertypePredicate(CardSupertype.LEGENDARY)),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(Subjects.source()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

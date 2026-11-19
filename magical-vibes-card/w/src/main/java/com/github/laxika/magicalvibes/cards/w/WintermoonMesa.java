@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class WintermoonMesa extends Card {
                 "{2}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)
+                        new TapPermanentsEffect(Subjects.target())
                 ),
                 "{2}, {T}, Sacrifice this land: Tap two target lands.",
                 List.of(TargetFilters.land(), TargetFilters.land()),

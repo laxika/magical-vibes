@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +20,7 @@ public class InspiredSprite extends Card {
     public InspiredSprite() {
         // Whenever you cast a Wizard spell, you may untap this creature.
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.WIZARD)),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Inspired Sprite?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Inspired Sprite?"));
 
         // {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(

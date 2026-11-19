@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEachCombatThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -32,7 +36,9 @@ public class UntapAttackedCreaturesEachCombatThisTurnEffectHandler implements No
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.thisTurn(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                        new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentAttackedThisTurnPredicate()))))),
                 entry.getSourcePermanentId()));
         log.info("Game {} - {} will untap attacked creatures at the beginning of each combat this turn",
                 gameData.id, entry.getCard().getName());

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,6 +23,6 @@ public class Narcolepsy extends Card {
                                 new EnchantedPermanentMatches(
                                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),
                                         "enchanted creature is untapped")),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED));
+                        new TapPermanentsEffect(Subjects.attached()));
     }
 }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class ForensicResearcher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, anotherPermanent)),
+                List.of(new UntapPermanentsEffect(Subjects.target(), anotherPermanent)),
                 "{T}: Untap another target permanent you control.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
@@ -39,7 +39,7 @@ public class ForensicResearcher extends Card {
                 null,
                 List.of(
                         new CollectEvidenceCost(3),
-                        new TapPermanentsEffect(TapUntapScope.TARGET,
+                        new TapPermanentsEffect(Subjects.target(),
                                 TargetFilters.creatureAnOpponentControls().predicate())
                 ),
                 "{T}, Collect evidence 3: Tap target creature you don't control.",

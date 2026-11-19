@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,7 +12,7 @@ public class JoinForces extends Card {
 
     public JoinForces() {
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.allTargets()))
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2));
     }
 }

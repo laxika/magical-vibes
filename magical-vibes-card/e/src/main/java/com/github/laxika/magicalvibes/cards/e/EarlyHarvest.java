@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -26,11 +26,9 @@ public class EarlyHarvest extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new UntapPermanentsEffect(
-                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                new PermanentAllOfPredicate(List.of(
+                Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(), new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)
-                ))
-        ));
+                )))));
     }
 }

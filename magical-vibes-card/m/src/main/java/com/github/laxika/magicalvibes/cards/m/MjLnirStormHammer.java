@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -46,7 +46,7 @@ public class MjLnirStormHammer extends Card {
                 "Target must be a creature defending player controls");
 
         target(defendingCreature).addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN),
                 new DealDamageToEachOpponentEqualToControlledPermanentCountEffect(tappedCreature)));
 

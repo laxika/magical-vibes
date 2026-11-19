@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -29,7 +29,7 @@ public class NaturesChosen extends Card {
 
         // {0}: Untap enchanted creature. Activate only during your turn and only once each turn.
         addActivatedAbility(new ActivatedAbility(false, "{0}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.ENCHANTED)),
+                List.of(new UntapPermanentsEffect(Subjects.attached())),
                 "{0}: Untap enchanted creature. Activate only during your turn and only once each turn.",
                 null, null, 1, ActivationTimingRestriction.ONLY_DURING_YOUR_TURN));
 
@@ -37,7 +37,7 @@ public class NaturesChosen extends Card {
         // enchanted creature is white and untapped and only once each turn. The tap cost cannot be
         // paid by an already-tapped creature, which covers the printed "untapped" clause.
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new TapEnchantedPermanentCost(), new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapEnchantedPermanentCost(), new UntapPermanentsEffect(Subjects.target())),
                 "Tap enchanted creature: Untap target artifact, creature, or land. Activate only if "
                         + "enchanted creature is white and untapped and only once each turn.",
                 new PermanentPredicateTargetFilter(new PermanentAnyOfPredicate(List.of(

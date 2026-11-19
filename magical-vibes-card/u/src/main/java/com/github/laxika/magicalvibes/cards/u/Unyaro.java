@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.PlaneswalkedToPlaneThisTur
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutCreaturesUntilPlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +26,8 @@ public class Unyaro extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new PlaneswalkedToPlaneThisTurn("Unyaro")),
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentIsCreaturePredicate())),
                         new PhaseOutCreaturesUntilPlaneswalkEffect()));
         addTrigger(Triggers.chaosEnsues(), new CreateTokenEffect(
                 2, "Knight", 2, 2, null,

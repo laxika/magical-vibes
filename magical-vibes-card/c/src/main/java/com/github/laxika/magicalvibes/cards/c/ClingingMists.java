@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,6 +12,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "109")
 public class ClingingMists extends Card {
@@ -20,7 +24,9 @@ public class ClingingMists extends Card {
 
         // Fateful hour — If you have 5 or less life, tap all attacking creatures.
         // Those creatures don't untap during their controller's next untap step.
-        addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())));
+        addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentIsAttackingPredicate()))))));
         addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new SkipNextUntapEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())));
     }
 }

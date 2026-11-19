@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -23,6 +22,6 @@ public class LobberCrew extends Card {
 
         // Whenever you cast a multicolored spell, untap this creature.
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(Subjects.source()));
     }
 }

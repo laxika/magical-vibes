@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -34,7 +34,7 @@ public class AssaultSuit extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new MayEffect(
                 SequenceEffect.of(
                         new TargetPlayerGainsControlOfEnchantedPermanentEffect(Duration.UNTIL_END_OF_TURN, false),
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED)),
+                        new UntapPermanentsEffect(Subjects.attached())),
                 "Have that player gain control of equipped creature until end of turn?"));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

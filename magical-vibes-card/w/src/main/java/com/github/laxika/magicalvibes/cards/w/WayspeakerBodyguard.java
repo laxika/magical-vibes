@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -33,6 +33,6 @@ public class WayspeakerBodyguard extends Card {
                 .build());
 
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell().nthThisTurn(2),
-                new TapPermanentsEffect(TapUntapScope.TARGET));
+                new TapPermanentsEffect(Subjects.target()));
     }
 }

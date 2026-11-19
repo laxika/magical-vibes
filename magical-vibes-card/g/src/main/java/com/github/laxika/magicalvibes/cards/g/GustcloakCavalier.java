@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSelfFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,13 +16,13 @@ public class GustcloakCavalier extends Card {
 
     public GustcloakCavalier() {
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new MayEffect(
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 "Tap target creature?"
         ));
 
         addTrigger(Triggers.becomesBlocked(), new MayEffect(
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.SELF),
+                        new UntapPermanentsEffect(Subjects.source()),
                         new RemoveSelfFromCombatEffect()
                 ),
                 "Untap Gustcloak Cavalier and remove it from combat?"

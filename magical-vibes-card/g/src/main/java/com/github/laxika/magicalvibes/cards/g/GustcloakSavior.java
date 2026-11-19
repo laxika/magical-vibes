@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveReferencedPermanentFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class GustcloakSavior extends Card {
     public GustcloakSavior() {
         addTrigger(Triggers.creatureYouControlBecomesBlocked(), new MayEffect(
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.TRIGGERING),
+                        new UntapPermanentsEffect(Subjects.triggering()),
                         new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING)
                 ),
                 "Untap that creature and remove it from combat?"

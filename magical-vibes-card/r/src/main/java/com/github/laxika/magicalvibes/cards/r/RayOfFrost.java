@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +29,7 @@ public class RayOfFrost extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new EnchantedPermanentMatches(red, "enchanted creature is red")),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED))
+                        new TapPermanentsEffect(Subjects.attached()))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         red,
                         new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE),

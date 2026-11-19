@@ -31,7 +31,7 @@ public class DovinArchitectOfLaw extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new TapPermanentsEffect(Subjects.target()),
                         new SkipNextUntapEffect(TapUntapScope.TARGET)
                 ),
                 "−1: Tap target creature. It doesn't untap during its controller's next untap step.",
@@ -41,7 +41,7 @@ public class DovinArchitectOfLaw extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS),
+                        new TapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayer())),
                         new SkipNextEffect(SkipKind.UNTAP_STEP, Subjects.targetPlayer())
                 ),
                 "−9: Tap all permanents target opponent controls. That player skips their next untap step.",

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMat
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetOfTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
@@ -24,7 +24,7 @@ public class LokiGodOfLies extends Card {
                 new GainControlOfAllPermanentsMatchingEffect(new PermanentIsTargetOfTriggeringSpellPredicate(),
                         Duration.UNTIL_END_OF_TURN,
                         new ConditionalEffect(new ControllerTurn(), SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new UntapPermanentsEffect(Subjects.target()),
                                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))));
     }
 }

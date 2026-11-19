@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class ChandraFireOfKaladesh extends Card {
 
         // Whenever you cast a red spell, untap Chandra, Fire of Kaladesh.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(Subjects.source()));
 
         // {T}: Chandra deals 1 damage to target player or planeswalker. If Chandra has dealt 3 or more
         // damage this turn, exile her, then return her to the battlefield transformed under her owner's

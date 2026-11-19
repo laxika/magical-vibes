@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -16,7 +16,7 @@ public class ParadoxEngine extends Card {
     public ParadoxEngine() {
         addTrigger(Triggers.youCastSpell().anySpell(),
                 new UntapPermanentsEffect(
-                        TapUntapScope.CONTROLLED,
-                        new PermanentNotPredicate(new PermanentIsLandPredicate())));
+                        Subjects.controlledBy(Subjects.you(),
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()))));
     }
 }

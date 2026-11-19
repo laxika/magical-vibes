@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,7 @@ public class MistbindClique extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChampionCreatureEffect(CardSubtype.FAERIE));
         // When a Faerie is championed with this creature, tap all lands target player controls.
         addTrigger(Triggers.championsCreature(),
-                new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsLandPredicate()));
+                new TapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayer(),
+                        new PermanentIsLandPredicate())));
     }
 }

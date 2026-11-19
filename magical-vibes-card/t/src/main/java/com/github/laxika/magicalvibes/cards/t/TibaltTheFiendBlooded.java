@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -45,7 +44,8 @@ public class TibaltTheFiendBlooded extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new GainControlOfAllPermanentsMatchingEffect(new PermanentIsCreaturePredicate(), Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsCreaturePredicate())),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
                 "−6: Gain control of all creatures until end of turn. Untap them. They gain haste until end of turn."
         ));

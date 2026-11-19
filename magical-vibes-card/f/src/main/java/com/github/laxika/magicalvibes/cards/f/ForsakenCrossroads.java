@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class ForsakenCrossroads extends Card {
                 new ControllerIsStartingPlayer(), new ScryEffect(1)),
                 new ConditionalEffect(
                 new NotCondition(new ControllerIsStartingPlayer()),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()),
                         "Untap Forsaken Crossroads instead?", new ScryEffect(1))));
 
         // {T}: Add one mana of the chosen color.

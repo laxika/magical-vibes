@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +68,7 @@ public class TapTargetCreatureUnlessControllerPaysLifeEffectHandler implements N
 
     /** Tap the creature {@code targetPermanentId}, attributing the tap to {@code sourceCard}. */
     public void tapTargetCreature(GameData gameData, Card sourceCard, UUID abilityControllerId, UUID targetPermanentId) {
-        TapPermanentsEffect tap = new TapPermanentsEffect(TapUntapScope.TARGET);
+        TapPermanentsEffect tap = new TapPermanentsEffect(Subjects.target());
         StackEntry syntheticEntry = StackEntry.carrier(sourceCard, abilityControllerId,
                 sourceCard.getName() + " - tap target creature",
                 List.of(tap), targetPermanentId, (UUID) null);

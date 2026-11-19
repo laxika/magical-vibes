@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -38,7 +38,7 @@ public class Marjhan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}{U}",
-                List.of(new SacrificeCreatureCost(), new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new SacrificeCreatureCost(), new UntapPermanentsEffect(Subjects.source())),
                 "{U}{U}, Sacrifice a creature: Untap this creature. Activate only during your upkeep.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
 

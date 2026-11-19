@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +23,7 @@ public class LorthosTheTidemaker extends Card {
         target(TargetFilters.permanent(), 0, 8)
                 .addTrigger(Triggers.attacks(), new MayPayManaEffect("{8}",
                         SequenceEffect.of(
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new TapPermanentsEffect(Subjects.target()),
                                 new SkipNextUntapEffect(TapUntapScope.TARGET)),
                         "Pay {8} to tap up to eight target permanents?"));
     }

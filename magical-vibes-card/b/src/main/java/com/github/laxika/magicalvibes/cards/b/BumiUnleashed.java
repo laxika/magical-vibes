@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class BumiUnleashed extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(4));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()),
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate())),
                 new AdditionalCombatPhaseEffect(1, new OnlyLandCreaturesCanAttackThisCombatEffect()));
     }
 }

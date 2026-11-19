@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class ChillingChronicle extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET), new TransformSelfEffect()),
+                List.of(new TapPermanentsEffect(Subjects.target()), new TransformSelfEffect()),
                 "{1}, {T}: Tap target nonland permanent. Transform this artifact.",
                 TargetFilters.nonlandPermanent()
         ));

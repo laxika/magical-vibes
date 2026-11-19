@@ -479,7 +479,7 @@ Pinned by three card tests confirmed to fail against a restored copy of the old 
 `ArcTrailTest` (a planeswalker is enumerated *and* castable; a land is rejected with the new
 predicate-derived message) and `BlessingsOfNatureTest` (enumeration offers creatures only, no
 planeswalker, no player) — plus `TargetLegalityServiceTest`, which now also covers the legacy
-creature-only default explicitly (a slot whose only effect is `UntapPermanentsEffect(ALL_TARGETS)`).
+creature-only default explicitly (a slot whose only effect is `UntapPermanentsEffect(Subjects.allTargets())`).
 
 ### Two things a later step should know
 

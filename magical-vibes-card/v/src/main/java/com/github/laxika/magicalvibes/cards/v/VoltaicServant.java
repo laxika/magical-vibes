@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,6 +15,6 @@ public class VoltaicServant extends Card {
     public VoltaicServant() {
         // At the beginning of your end step, untap target artifact.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsArtifactPredicate()));
+                new UntapPermanentsEffect(Subjects.target(), new PermanentIsArtifactPredicate()));
     }
 }

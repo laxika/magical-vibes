@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,8 +20,8 @@ public class DragonTurtle extends Card {
         // They don't untap during their controllers' next untap steps.
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.SELF),
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new TapPermanentsEffect(Subjects.source()),
+                        new TapPermanentsEffect(Subjects.target()),
                         new SkipNextUntapEffect(TapUntapScope.SELF),
                         new SkipNextUntapEffect(TapUntapScope.TARGET));
     }

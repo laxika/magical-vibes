@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +22,8 @@ public class KarrthusTyrantOfJund extends Card {
         // When Karrthus enters, gain control of all Dragons, then untap all Dragons.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GainControlOfAllPermanentsMatchingEffect(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentHasSubtypePredicate(CardSubtype.DRAGON))));
 
         // Other Dragon creatures you control have haste.
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,

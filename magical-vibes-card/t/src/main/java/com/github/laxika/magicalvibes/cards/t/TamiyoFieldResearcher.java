@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -39,7 +40,7 @@ public class TamiyoFieldResearcher extends Card {
         // next untap step.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET), new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target()), new SkipNextUntapEffect(TapUntapScope.TARGET)),
                 "−2: Tap up to two target nonland permanents. They don't untap during their controller's "
                         + "next untap step.",
                 null, -2, null, null,

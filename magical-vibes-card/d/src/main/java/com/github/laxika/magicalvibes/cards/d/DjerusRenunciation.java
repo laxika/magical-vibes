@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
@@ -13,7 +13,7 @@ public class DjerusRenunciation extends Card {
     public DjerusRenunciation() {
         // Tap up to two target creatures.
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
         // Cycling {W} ({W}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{W}");

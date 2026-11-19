@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "213")
 @CardRegistration(set = "HOP", collectorNumber = "57")
@@ -24,7 +26,8 @@ public class Insurrection extends Card {
         PermanentIsCreaturePredicate creature = new PermanentIsCreaturePredicate();
 
         // Untap all creatures and gain control of them until end of turn.
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES, creature));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), creature)))));
         addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(creature, Duration.UNTIL_END_OF_TURN));
 
         // They gain haste until end of turn.

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +33,7 @@ public class TamiyoTheMoonSage extends Card {
         // No target filter: any permanent is legal, so the tap effect's PERMANENT spec governs.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET), new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target()), new SkipNextUntapEffect(TapUntapScope.TARGET)),
                 "+1: Tap target permanent. It doesn't untap during its controller's next untap step."
         ));
 

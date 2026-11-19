@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -26,7 +26,7 @@ public class Infuse extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        )).addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET));
+        )).addSpellEffect(new UntapPermanentsEffect(Subjects.target()));
 
         // "Draw a card at the beginning of the next turn's upkeep."
         addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());

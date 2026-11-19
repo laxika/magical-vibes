@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class GoldmeadowLookout extends Card {
                                 List.of(new ActivatedAbility(
                                         true,
                                         "{W}",
-                                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                                        List.of(new TapPermanentsEffect(Subjects.target())),
                                         "{W}, {T}: Tap target creature.",
                                         TargetFilters.creature()
                                 )),

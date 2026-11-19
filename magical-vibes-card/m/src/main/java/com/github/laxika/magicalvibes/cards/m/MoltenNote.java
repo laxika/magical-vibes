@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +17,8 @@ public class MoltenNote extends Card {
     public MoltenNote() {
         target(TargetFilters.creature())
                 .addSpellEffect(new DealDamageToTargetCreatureEffect(new ManaSpentToCast()))
-                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
+                .addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                        new PermanentIsCreaturePredicate())));
         addCastingOption(new FlashbackCast("{6}{R}{W}"));
     }
 }

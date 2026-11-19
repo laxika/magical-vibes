@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,6 +29,6 @@ public class BlastingStation extends Card {
         ));
 
         addTrigger(Triggers.enters(new PermanentIsCreaturePredicate(), ObjectRelation.ANY),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Blasting Station?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Blasting Station?"));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +21,6 @@ public class NettleSentinel extends Card {
 
         // Whenever you cast a green spell, you may untap this creature.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap this creature?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap this creature?"));
     }
 }

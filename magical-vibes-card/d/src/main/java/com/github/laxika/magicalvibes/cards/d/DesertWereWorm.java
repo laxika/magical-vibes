@@ -11,13 +11,16 @@ import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPow
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "92")
 public class DesertWereWorm extends Card {
@@ -34,8 +37,9 @@ public class DesertWereWorm extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new AttackingCreaturesTotalPowerAtLeast(12))
                         .withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                                new PermanentIsAttackingPredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentIsAttackingPredicate())))),
                         new AdditionalCombatPhaseEffect(1)));
     }
 }

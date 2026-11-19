@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -28,7 +28,8 @@ public class JaceIngeniousMindMage extends Card {
         // +1: Untap all creatures you control.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate())),
+                List.of(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                        new PermanentIsCreaturePredicate()))),
                 "+1: Untap all creatures you control."
         ));
 

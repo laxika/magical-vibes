@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class SummonShiva extends Card {
         ));
 
         addTrigger(Triggers.chapter(1),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(opponentCreature, "Must target a creature an opponent controls")
@@ -39,7 +39,7 @@ public class SummonShiva extends Card {
         setSagaChapterTargetRequired(1);
 
         addTrigger(Triggers.chapter(2),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(opponentCreature, "Must target a creature an opponent controls")

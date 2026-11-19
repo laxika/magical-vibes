@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +21,7 @@ public class OboroBreezecaller extends Card {
                 "{2}",
                 List.of(
                         new ReturnMultiplePermanentsToHandCost(1, new PermanentIsLandPredicate()),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsLandPredicate())),
+                        new UntapPermanentsEffect(Subjects.target(), new PermanentIsLandPredicate())),
                 "{2}, Return a land you control to its owner's hand: Untap target land.",
                 TargetFilters.land()));
     }

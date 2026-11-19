@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class GitaxianAnatomist extends Card {
                 new ConditionalEffect(
                         new AllOf(List.of(new SourceIsOnBattlefield(), new SourceUntapped())),
                         SequenceEffect.of(
-                                new TapPermanentsEffect(TapUntapScope.SELF),
+                                new TapPermanentsEffect(Subjects.source()),
                                 new ProliferateEffect())),
                 "Tap Gitaxian Anatomist and proliferate?"));
     }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -18,7 +18,7 @@ public class BurdenOfGuilt extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new TapPermanentsEffect(TapUntapScope.ENCHANTED)),
+                List.of(new TapPermanentsEffect(Subjects.attached())),
                 "{1}: Tap enchanted creature."
         ));
     }

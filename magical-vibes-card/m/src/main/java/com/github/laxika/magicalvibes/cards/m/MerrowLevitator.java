@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,6 +31,6 @@ public class MerrowLevitator extends Card {
 
         // Whenever you cast a blue spell, you may untap this creature.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Merrow Levitator?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Merrow Levitator?"));
     }
 }

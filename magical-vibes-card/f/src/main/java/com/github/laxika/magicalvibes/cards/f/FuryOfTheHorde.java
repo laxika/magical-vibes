@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "81")
@@ -21,7 +24,9 @@ public class FuryOfTheHorde extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.RED), "red", 2))));
 
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentAttackedThisTurnPredicate())))));
         addSpellEffect(new AdditionalCombatMainPhaseEffect(1, null, true));
     }
 }

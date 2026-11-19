@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -35,7 +36,7 @@ public class KioraBestsTheSeaGod extends Card {
 
         PermanentPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         addTrigger(Triggers.chapter(2),
-                new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland),
+                new TapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayer(), nonland)),
                 new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland));
         setSagaChapterTargetFilter(2, Set.of(
                 new PlayerPredicateTargetFilter(
@@ -46,7 +47,7 @@ public class KioraBestsTheSeaGod extends Card {
                 new PermanentControlledBySourceControllerPredicate());
         addTrigger(Triggers.chapter(3),
                 new GainControlOfTargetEffect(Duration.PERMANENT),
-                new UntapPermanentsEffect(TapUntapScope.TARGET));
+                new UntapPermanentsEffect(Subjects.target()));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(
                         opponentPermanent, "Must target a permanent an opponent controls")));

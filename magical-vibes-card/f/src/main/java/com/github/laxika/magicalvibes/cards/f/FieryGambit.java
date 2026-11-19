@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +26,8 @@ public class FieryGambit extends Card {
                 new DealDamageToPlayersEffect(6, Subjects.eachOpponent()),
                 SequenceEffect.of(
                         new DrawCardEffect(9),
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()))
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsLandPredicate())))
         )));
     }
 }

@@ -68,7 +68,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1634,7 +1633,7 @@ class TargetLegalityServiceTest {
             // UntapPermanentsEffect(ALL_TARGETS) declares "a player or any permanent" — a spec that
             // restricts nothing — so the legacy creature-only default is what governs the slot.
             spell.target(null, 1, 2)
-                    .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
+                    .addSpellEffect(new UntapPermanentsEffect(Subjects.allTargets()));
             Permanent target = addPermanent(player2Id, createArtifact());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,

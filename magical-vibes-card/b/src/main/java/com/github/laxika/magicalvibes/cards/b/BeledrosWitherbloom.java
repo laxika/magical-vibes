@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -33,7 +33,7 @@ public class BeledrosWitherbloom extends Card {
                 null,
                 List.of(
                         new PayLifeCost(10),
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate())
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate()))
                 ),
                 "Pay 10 life: Untap all lands you control. Activate only once each turn.",
                 1

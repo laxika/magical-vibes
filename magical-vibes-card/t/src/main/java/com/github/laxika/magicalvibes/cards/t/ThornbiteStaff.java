@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,7 +41,7 @@ public class ThornbiteStaff extends Card {
         // belongs to the equipped creature, so its controller controls it and it untaps that creature.
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
-                new UntapPermanentsEffect(TapUntapScope.SELF)),
+                new UntapPermanentsEffect(Subjects.source())),
                 GrantScope.EQUIPPED_CREATURE
         ));
 

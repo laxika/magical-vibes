@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeSkanosEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -68,7 +68,7 @@ public class SkanosDragonVassal extends Card {
             case RED -> SequenceEffect.of(
                     new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET), boost);
             case GREEN -> SequenceEffect.of(
-                    new UntapPermanentsEffect(TapUntapScope.TARGET), boost);
+                    new UntapPermanentsEffect(Subjects.target()), boost);
         };
     }
 

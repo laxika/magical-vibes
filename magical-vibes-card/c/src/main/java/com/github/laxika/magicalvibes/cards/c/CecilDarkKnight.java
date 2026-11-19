@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -27,7 +26,7 @@ public class CecilDarkKnight extends Card {
                 new ConditionalEffect(
                         ControllerLifeAtMost.atHalfStartingLife(),
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.SELF),
+                                new UntapPermanentsEffect(Subjects.source()),
                                 new TransformToBackFaceEffect()))));
     }
 

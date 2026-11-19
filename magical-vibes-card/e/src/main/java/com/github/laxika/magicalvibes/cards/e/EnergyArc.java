@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -19,7 +19,7 @@ public class EnergyArc extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 0, Integer.MAX_VALUE).addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
+        ), 0, Integer.MAX_VALUE).addSpellEffect(new UntapPermanentsEffect(Subjects.allTargets()))
                 .addSpellEffect(PreventDamageEffect.allCombatToTargetCreatures())
                 .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures());
     }

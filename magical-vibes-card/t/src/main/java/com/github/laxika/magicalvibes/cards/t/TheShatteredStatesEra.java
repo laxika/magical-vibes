@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformed
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class TheShatteredStatesEra extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.chapter(1),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         addTrigger(Triggers.chapter(2), new BoostAllOwnCreaturesEffect(1, 0));
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));

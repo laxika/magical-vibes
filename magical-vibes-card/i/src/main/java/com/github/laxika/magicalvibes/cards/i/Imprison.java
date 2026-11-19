@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveReferencedPermanentFrom
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
@@ -42,7 +41,7 @@ public class Imprison extends Card {
         CardEffect combatTrigger = new MayPayManaEffect(
                 "{1}",
                 SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new TapPermanentsEffect(Subjects.attached()),
                         new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING, true)),
                 "Pay {1} to tap and remove the creature from combat?",
                 new DestroyTargetPermanentEffect(Subjects.source()));

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -30,8 +29,7 @@ public class AssassinGauntlet extends Card {
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .bindEffect(attachSourceEquipmentToTargetCreature);
         var tapPermanents = new TapPermanentsEffect(
-                                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate());
+                                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))

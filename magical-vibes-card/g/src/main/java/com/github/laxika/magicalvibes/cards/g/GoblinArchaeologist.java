@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -23,7 +23,7 @@ public class GoblinArchaeologist extends Card {
                 List.of(new FlipCoinWinEffect(
                         SequenceEffect.of(
                                 new DestroyTargetPermanentEffect(),
-                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)),
+                                new UntapPermanentsEffect(Subjects.source())),
                         new SacrificeSelfEffect())),
                 "{R}, {T}: Flip a coin. If you win the flip, destroy target artifact and untap this creature. "
                         + "If you lose the flip, sacrifice this creature.",

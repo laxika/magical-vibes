@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfAllCreaturesWithTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,9 +25,10 @@ public class ReinsOfPower extends Card {
                 "Target must be an opponent"
         ))
                 .addSpellEffect(new UntapPermanentsEffect(
-                        TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()))
+                        Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())))
                 .addSpellEffect(new UntapPermanentsEffect(
-                        TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsCreaturePredicate()))
+                        Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
+                                new PermanentIsCreaturePredicate())))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES))
                 .addSpellEffect(new ExchangeControlOfAllCreaturesWithTargetPlayerEffect());

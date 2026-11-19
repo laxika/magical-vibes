@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -33,8 +33,8 @@ public class SavageBeating extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all creatures you control. After this phase, there is an additional combat phase",
                         List.of(
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                        new PermanentIsCreaturePredicate()),
+                                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentIsCreaturePredicate())),
                                 new AdditionalCombatPhaseEffect(1))
                 )
         )));

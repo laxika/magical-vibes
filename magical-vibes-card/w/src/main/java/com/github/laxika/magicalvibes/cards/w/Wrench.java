@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -28,7 +28,7 @@ public class Wrench extends Card {
                 new ActivatedAbility(
                         true,
                         "{3}",
-                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                        List.of(new TapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())),
                         "{3}, {T}: Tap target creature.",
                         TargetFilters.creature()
                 ),

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,11 +23,11 @@ public class GiantSizedFlyingAnt extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap target nonland permanent.",
-                        new TapPermanentsEffect(TapUntapScope.TARGET, nonlandPermanentPredicate),
+                        new TapPermanentsEffect(Subjects.target(), nonlandPermanentPredicate),
                         nonlandPermanentTarget),
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap target nonland permanent.",
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, nonlandPermanentPredicate),
+                        new UntapPermanentsEffect(Subjects.target(), nonlandPermanentPredicate),
                         nonlandPermanentTarget)
         ))));
     }

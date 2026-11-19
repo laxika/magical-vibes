@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,10 +28,11 @@ public class LitaMechanicalEngineer extends Card {
     public LitaMechanicalEngineer() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new UntapPermanentsEffect(
-                        TapUntapScope.OTHER_CONTROLLED_CREATURES,
-                        new PermanentAllOfPredicate(List.of(
+                        Subjects.controlledBy(Subjects.you(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
-                                new PermanentIsCreaturePredicate()))));
+                                new PermanentIsCreaturePredicate())))))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

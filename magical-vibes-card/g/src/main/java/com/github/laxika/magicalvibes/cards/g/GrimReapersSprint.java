@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,7 +29,8 @@ public class GrimReapersSprint extends Card {
         addStaticEffect(new ConditionalEffect(
                 new Morbid(), new ReduceOwnCastCostEffect(new Fixed(3))));
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                        new PermanentIsCreaturePredicate())),
                         new ConditionalEffect(
                         new ControllerMainPhase(), new AdditionalCombatPhaseEffect(1)))
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))

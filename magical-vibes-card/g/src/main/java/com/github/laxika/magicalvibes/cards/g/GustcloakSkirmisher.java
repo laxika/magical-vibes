@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSelfFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class GustcloakSkirmisher extends Card {
     public GustcloakSkirmisher() {
         addTrigger(Triggers.becomesBlocked(), new MayEffect(
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.SELF),
+                        new UntapPermanentsEffect(Subjects.source()),
                         new RemoveSelfFromCombatEffect()
                 ),
                 "Untap Gustcloak Skirmisher and remove it from combat?"

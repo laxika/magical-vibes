@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -61,7 +61,7 @@ public class ZarielArchdukeOfAvernus extends Card {
                                 TriggerOptions.DEFAULT.withEventCondition(
                                         new AllOf(List.of(new ControllerTurn(), new FirstCombatPhase()))),
                                 new UntapPermanentsEffect(
-                                        TapUntapScope.TARGET,
+                                        Subjects.target(),
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),
                                                 new PermanentControlledBySourceControllerPredicate()))),

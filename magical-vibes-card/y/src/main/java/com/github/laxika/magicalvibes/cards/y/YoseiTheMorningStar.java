@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -32,7 +31,7 @@ public class YoseiTheMorningStar extends Card {
     public YoseiTheMorningStar() {
         SequenceEffect trigger = SequenceEffect.of(
                 new SkipNextEffect(SkipKind.UNTAP_STEP, Subjects.targetPlayer(0)),
-                new TapPermanentsEffect(TapUntapScope.TARGET));
+                new TapPermanentsEffect(Subjects.target()));
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"));
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),

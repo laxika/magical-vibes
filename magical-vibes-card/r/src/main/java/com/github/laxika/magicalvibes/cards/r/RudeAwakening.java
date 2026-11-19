@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -25,7 +25,8 @@ public class RudeAwakening extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all lands you control",
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate())),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsLandPredicate()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, lands you control become 2/2 creatures that are still lands",
                         new AnimatePermanentsEffect(

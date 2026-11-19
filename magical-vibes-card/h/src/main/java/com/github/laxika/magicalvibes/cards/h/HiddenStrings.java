@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -30,8 +30,8 @@ public class HiddenStrings extends Card {
     private static CardEffect tapOrUntapTarget(String prompt) {
         return new MayEffect(new ChooseOneForTargetPermanentEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Tap",
-                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET))),
+                        List.of(new TapPermanentsEffect(Subjects.target()))),
                 new ChooseOneEffect.ChooseOneOption("Untap",
-                        List.of(new UntapPermanentsEffect(TapUntapScope.TARGET))))), prompt);
+                        List.of(new UntapPermanentsEffect(Subjects.target()))))), prompt);
     }
 }

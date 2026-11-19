@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,6 +25,6 @@ public class ShackleSlinger extends Card {
         // controls. If it's tapped, put a stun counter on it. Otherwise, tap it.
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell().nthThisTurn(2),
                 new ConditionalEffect(tappedTarget, new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
-                new ConditionalEffect(untappedTarget, new TapPermanentsEffect(TapUntapScope.TARGET)));
+                new ConditionalEffect(untappedTarget, new TapPermanentsEffect(Subjects.target())));
     }
 }

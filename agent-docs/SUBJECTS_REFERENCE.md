@@ -11,6 +11,7 @@ resolver's static entry point rejects the others).
 |---|---|---|---|
 | `source()` | "this creature", "this permanent" (the entry's source permanent only, never its target) | no | yes |
 | `target()`, `target(group)` | "target creature", "target permanent" | yes | no |
+| `allTargets()` | "untap up to four target permanents" whose targets the ability's target filter or several slots declare (every permanent target of the entry, whichever group it was chosen for) | yes | no |
 | `attached()` | "enchanted creature", "equipped creature" (now while the source is on the battlefield, else as it last was) | no | yes |
 | `attachedAtTrigger()` | "that creature" after "at the beginning of the upkeep of enchanted creature's controller" (the host the stack entry recorded when the ability triggered or was activated, not the current one; Paroxysm, Venarian Gold) | no | no |
 | `triggering()` | "it", "that creature" (the permanent the trigger event was about) | no | no |
@@ -19,7 +20,7 @@ resolver's static entry point rejects the others).
 | `triggeringSpell()` | "that spell or ability", only inside `controllerOf`: the spell or ability the trigger event was about, as it is on the stack or last was ("that spell or ability's controller sacrifices a land", Lava Runner) | no | no |
 | `returned()` | "that creature" after "return target card ... to the battlefield" (step result) | no | no |
 | `granter()` | "return this Equipment to its owner's hand" in an ability the Equipment grants (the granting permanent: bound at activation as `granter(id)`, else the granted trigger's recorded granter) | no | no |
-| `controlledBy(players, filter)` | "each creature you control", "all creatures", "each land target player controls" | only if `players` targets | if `players` may |
+| `controlledBy(players, filter)` | "each creature you control", "all creatures", "each land target player controls" (the filter knows the source, X, the defending player, the triggering player and permanent: "tap all lands that player controls") | only if `players` targets | if `players` may |
 | `ownedBy(players, filter)` | "all artifacts target player owns" (each matching permanent whose card's owner is one of `players`, whoever controls it; the effect declares a player target) | no | if `players` may |
 | `attachmentsOf(permanents, filter)` | "all Auras attached to target permanent" (each matching permanent attached to one of the named permanents still on the battlefield; the attachments are not targeted) | no | if `permanents` may |
 | `allOf(subjects...)` | "this creature and target creature" | if one part targets | if every part may |

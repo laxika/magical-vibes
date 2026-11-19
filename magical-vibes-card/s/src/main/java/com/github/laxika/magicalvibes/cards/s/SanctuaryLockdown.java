@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -27,7 +27,7 @@ public class SanctuaryLockdown extends Card {
                 "{2}",
                 List.of(
                         new TapMultiplePermanentsCost(2, humanFilter),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        new TapPermanentsEffect(Subjects.target())),
                 "{2}, Tap two untapped Humans you control: Tap target creature an opponent controls.",
                 TargetFilters.creatureAnOpponentControls()
         ));

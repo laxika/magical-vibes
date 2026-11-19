@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class HunterSliver extends Card {
                 new TriggeredAbility(Triggers.attacks(),
                 new MayEffect(
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.TARGET,
+                                new UntapPermanentsEffect(Subjects.target(),
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),
                                                 new PermanentControlledByDefendingPlayerPredicate()))),

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class HomaridShaman extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET, greenCreature)),
+                List.of(new TapPermanentsEffect(Subjects.target(), greenCreature)),
                 "{U}: Tap target green creature.",
                 new PermanentPredicateTargetFilter(greenCreature, "Target must be a green creature")
         ));

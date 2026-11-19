@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,7 +23,7 @@ public class CrashingWave extends Card {
         addCastingCost(new ChooseXValueCost(0, Integer.MAX_VALUE));
         addCastingCost(WaterbendCost.x());
         targetX(TargetFilters.creature(), 100)
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
         addSpellEffect(new DistributeCountersAmongControlledCreaturesEffect(
                 CounterType.STUN, 3,
                 new PermanentAllOfPredicate(List.of(

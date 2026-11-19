@@ -349,7 +349,7 @@ class AiTargetSelectorTest {
         Card tapSpell = new Card();
         tapSpell.setName("Test Tap");
         tapSpell.setType(CardType.INSTANT);
-        tapSpell.addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        tapSpell.addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
         UUID target = targetSelector.chooseTarget(gd, tapSpell, aiPlayer.getId());
 
@@ -365,7 +365,7 @@ class AiTargetSelectorTest {
         Card tapSpell = new Card();
         tapSpell.setName("Test Tap");
         tapSpell.setType(CardType.INSTANT);
-        tapSpell.addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        tapSpell.addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
         UUID target = targetSelector.chooseTarget(gd, tapSpell, aiPlayer.getId());
 
@@ -1863,7 +1863,7 @@ class AiTargetSelectorTest {
 
             ActivatedAbility ability = new ActivatedAbility(true, "{W}{W}",
                     List.of(PreventDamageEffect.nextToTarget(4),
-                            new TapPermanentsEffect(TapUntapScope.TARGET),
+                            new TapPermanentsEffect(Subjects.target()),
                             new SkipNextUntapEffect(TapUntapScope.TARGET)),
                     "{W}{W}, {T}: Prevent the next 4 damage that would be dealt this turn to target "
                             + "creature you control. Tap that creature.",

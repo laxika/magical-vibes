@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,7 +23,7 @@ public class Reconnaissance extends Card {
     public Reconnaissance() {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new RemoveTargetFromCombatEffect(), new UntapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new RemoveTargetFromCombatEffect(), new UntapPermanentsEffect(Subjects.target())),
                 "{0}: Remove target attacking creature you control from combat and untap it.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

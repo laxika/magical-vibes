@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class IcingdeathFrostTongue extends Card {
                 defendingCreature,
                 "Target must be a creature defending player controls"
         )).addTrigger(Triggers.attacks(),
-                new TapPermanentsEffect(TapUntapScope.TARGET, defendingCreature));
+                new TapPermanentsEffect(Subjects.target(), defendingCreature));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class ValorsReach extends Card {
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.DECLARED_ATTACKERS));
         // One ability: "untap up to two target creatures your team controls. If it's a main phase, there is an
         // additional combat phase after this phase, followed by an additional main phase."
-        CardEffect untap = new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS);
+        CardEffect untap = new UntapPermanentsEffect(Subjects.allTargets());
         addTrigger(Triggers.chaosEnsues(),
                 untap,
                 new ConditionalEffect(

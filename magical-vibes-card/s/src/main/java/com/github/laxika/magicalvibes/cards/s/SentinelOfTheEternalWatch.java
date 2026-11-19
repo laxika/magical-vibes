@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,6 +27,6 @@ public class SentinelOfTheEternalWatch extends Card {
                 )),
                 "Target must be a creature controlled by the player whose turn it is"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
-                new TapPermanentsEffect(TapUntapScope.TARGET));
+                new TapPermanentsEffect(Subjects.target()));
     }
 }

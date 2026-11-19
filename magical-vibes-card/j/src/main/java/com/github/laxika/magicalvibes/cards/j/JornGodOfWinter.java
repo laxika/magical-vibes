@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.k.KaldringTheRimestaff;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,8 +21,7 @@ public class JornGodOfWinter extends Card {
         setModalDoubleFaced(true);
 
         addTrigger(Triggers.attacks(), new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED,
-                new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
+                Subjects.controlledBy(Subjects.you(), new PermanentHasSupertypePredicate(CardSupertype.SNOW))));
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Jorn, God of Winter", List.of())

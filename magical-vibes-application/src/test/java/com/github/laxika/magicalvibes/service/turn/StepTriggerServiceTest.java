@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -1896,7 +1895,7 @@ class StepTriggerServiceTest {
         @DisplayName("Controller end-step multi-target effect queues multi-target selection")
         void controllerEndStepMultiTargetEffectQueuesMultiTargetSelection() {
             Card card = createCardWithName("Multi-Target End Step Card");
-            UntapPermanentsEffect effect = new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS);
+            UntapPermanentsEffect effect = new UntapPermanentsEffect(Subjects.allTargets());
             card.target(null, 0, 4)
                     .addTrigger(Triggers.endStep(ActivePlayer.YOU), effect);
             Permanent permanent = new Permanent(card);

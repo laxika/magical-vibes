@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class HauntedHellride extends Card {
                 .addTrigger(Triggers.youAttack(),
                         new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET));
+                        new UntapPermanentsEffect(Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

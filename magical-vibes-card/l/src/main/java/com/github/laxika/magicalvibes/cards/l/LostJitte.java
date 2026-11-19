@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -29,7 +30,7 @@ public class LostJitte extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsLandPredicate())
+                        new UntapPermanentsEffect(Subjects.target(), new PermanentIsLandPredicate())
                 ),
                 "Remove a charge counter from Lost Jitte: Untap target land.",
                 TargetFilters.land()

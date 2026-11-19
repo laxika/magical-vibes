@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -23,7 +23,7 @@ public class UrzasRebuff extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap up to two target creatures",
                         List.<CardEffect>of(new TapPermanentsEffect(
-                                TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                                Subjects.target(), new PermanentIsCreaturePredicate())),
                         TargetFilters.creature(), null, 0, 2, false, null)
         )));
     }

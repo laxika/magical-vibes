@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
@@ -42,8 +44,9 @@ public class NajeelaTheBladeBlossom extends Card {
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(
-                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                                new PermanentIsAttackingPredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentIsAttackingPredicate())))),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.LIFELINK, Keyword.HASTE),
                                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                                 new PermanentIsAttackingPredicate()),

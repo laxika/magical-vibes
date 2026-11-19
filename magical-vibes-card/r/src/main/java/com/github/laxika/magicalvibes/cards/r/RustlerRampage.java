@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -33,8 +33,8 @@ public class RustlerRampage extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all creatures target player controls",
-                        new UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate()),
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(),
+                                new PermanentIsCreaturePredicate())),
                         playerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains double strike until end of turn",

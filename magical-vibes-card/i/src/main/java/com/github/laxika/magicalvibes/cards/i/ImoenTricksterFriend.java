@@ -86,7 +86,7 @@ public class ImoenTricksterFriend extends Card {
             case BLUE -> {
                 PermanentPredicate opponentCreature = TargetFilters.creatureAnOpponentControls().predicate();
                 yield new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature),
+                        new TapPermanentsEffect(Subjects.target(), opponentCreature),
                         new SkipNextUntapEffect(TapUntapScope.TARGET, opponentCreature)));
             }
             case BLACK -> CreateTokenEffect.blackZombie(1);

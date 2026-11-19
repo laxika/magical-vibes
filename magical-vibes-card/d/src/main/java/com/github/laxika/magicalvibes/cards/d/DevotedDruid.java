@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class DevotedDruid extends Card {
 
     public DevotedDruid() {
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(Subjects.source())),
                 "Put a -1/-1 counter on this creature: Untap this creature."));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }

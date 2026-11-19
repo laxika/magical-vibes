@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +17,7 @@ public class NiblisOfTheMist extends Card {
         // Flying is loaded from Scryfall.
         // When this creature enters, you may tap target creature.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 "Tap target creature?"
         ));
     }

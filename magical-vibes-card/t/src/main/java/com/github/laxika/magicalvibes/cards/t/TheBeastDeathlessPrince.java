@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,14 +28,14 @@ public class TheBeastDeathlessPrince extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.youCastThisSpell(),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new UntapPermanentsEffect(Subjects.target()),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         addStaticEffect(new EntersTappedEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
         addTrigger(Triggers.creatureDealsCombatDamageToItsOwner(), SequenceEffect.of(
-                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
+                new UntapPermanentsEffect(Subjects.source()),
                 new DrawCardEffect(1)));
     }
 }

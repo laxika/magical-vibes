@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -35,7 +35,7 @@ public class Benthicore extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
-                        new UntapPermanentsEffect(TapUntapScope.SELF),
+                        new UntapPermanentsEffect(Subjects.source()),
                         new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF)
                 ),
                 "Tap two untapped Merfolk you control: Untap this creature. It gains shroud until end of turn."

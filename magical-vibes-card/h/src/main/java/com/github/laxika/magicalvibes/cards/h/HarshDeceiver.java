@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
@@ -34,7 +33,7 @@ public class HarshDeceiver extends Card {
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.LAND),
                                 SequenceEffect.of(
-                                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
+                                        new UntapPermanentsEffect(Subjects.source()),
                                         new BoostSelfEffect(1, 1)))),
                 "{2}: Reveal the top card of your library. If it's a land card, untap this creature "
                         + "and it gets +1/+1 until end of turn. Activate only once each turn.",

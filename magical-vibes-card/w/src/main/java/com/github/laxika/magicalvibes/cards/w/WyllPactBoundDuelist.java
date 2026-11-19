@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeWyllEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -107,7 +107,7 @@ public class WyllPactBoundDuelist extends Card {
                             new CardTypePredicate(CardType.SORCERY))));
             case BLACK -> new DrawCardsUnlessTargetPaysLifeEffect(3, 5);
             case RED -> SequenceEffect.of(
-                    new UntapPermanentsEffect(TapUntapScope.SELF),
+                    new UntapPermanentsEffect(Subjects.source()),
                     new AdditionalCombatMainPhaseEffect(1));
             case GREEN -> SequenceEffect.of(
                     new PerpetuallyBoostSourceEffect(3, 3),

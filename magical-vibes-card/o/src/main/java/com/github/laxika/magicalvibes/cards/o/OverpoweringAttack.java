@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.Freerunning;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
@@ -23,10 +23,9 @@ public class OverpoweringAttack extends Card {
         addCastingOption(new AlternateHandCast(
                 List.of(new ManaCastingCost("{2}{R}")), new Freerunning(), false));
         addSpellEffect(new UntapPermanentsEffect(
-                TapUntapScope.CONTROLLED,
-                new PermanentAllOfPredicate(List.of(
+                Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentAttackedThisTurnPredicate()))));
+                        new PermanentAttackedThisTurnPredicate())))));
         addSpellEffect(new ConditionalEffect(new ControllerMainPhase(),
                 new AdditionalCombatMainPhaseEffect(1)));
     }

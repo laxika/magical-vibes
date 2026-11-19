@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class KitsuneAce extends Card {
                                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TRIGGERING_PERMANENT)),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Untap this creature",
-                                        new UntapPermanentsEffect(TapUntapScope.SELF)
+                                        new UntapPermanentsEffect(Subjects.source())
                         )))));
     }
 }

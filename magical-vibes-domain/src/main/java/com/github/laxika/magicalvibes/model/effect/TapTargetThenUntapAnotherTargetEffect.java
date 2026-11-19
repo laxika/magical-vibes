@@ -20,7 +20,7 @@ public record TapTargetThenUntapAnotherTargetEffect() implements CardEffect {
     @Override
     public TargetSpec targetSpec() {
         // The targets ride entry.getTargetIds() and are validated on the multi-target path, so the
-        // spec stays a permissive permanent spec (mirrors UntapPermanentsEffect's ALL_TARGETS).
+        // spec stays a permissive permanent spec (mirrors UntapPermanentsEffect's allTargets()).
         return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

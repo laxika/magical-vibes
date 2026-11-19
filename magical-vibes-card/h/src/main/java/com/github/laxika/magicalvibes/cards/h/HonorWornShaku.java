@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
@@ -24,7 +24,7 @@ public class HonorWornShaku extends Card {
                 false,
                 null,
                 List.of(new TapMultiplePermanentsCost(1, new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
-                        new UntapPermanentsEffect(TapUntapScope.SELF)),
+                        new UntapPermanentsEffect(Subjects.source())),
                 "Tap an untapped legendary permanent you control: Untap Honor-Worn Shaku."
         ));
         // {T}: Add {C}.

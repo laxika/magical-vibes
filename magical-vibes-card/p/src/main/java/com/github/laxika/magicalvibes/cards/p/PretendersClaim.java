@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -21,9 +21,8 @@ public class PretendersClaim extends Card {
 
         // Whenever enchanted creature becomes blocked, tap all lands defending player controls.
         addTrigger(Triggers.becomesBlocked(), new TapPermanentsEffect(
-                TapUntapScope.ALL_PERMANENTS,
-                new PermanentAllOfPredicate(List.of(
+                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
-                        new PermanentControlledByDefendingPlayerPredicate()))));
+                        new PermanentControlledByDefendingPlayerPredicate())))));
     }
 }

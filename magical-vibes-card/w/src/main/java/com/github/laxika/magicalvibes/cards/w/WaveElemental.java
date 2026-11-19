@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class WaveElemental extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 true, "{U}",
-                List.of(new SacrificeSelfCost(), new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new SacrificeSelfCost(), new TapPermanentsEffect(Subjects.target())),
                 "{U}, {T}, Sacrifice this creature: Tap up to three target creatures without flying.",
                 List.of(creatureWithoutFlying, creatureWithoutFlying, creatureWithoutFlying),
                 0,

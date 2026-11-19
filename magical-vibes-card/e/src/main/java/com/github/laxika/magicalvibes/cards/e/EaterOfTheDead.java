@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +29,7 @@ public class EaterOfTheDead extends Card {
                         SequenceEffect.of(
                                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
                                         new CardTypePredicate(CardType.CREATURE)),
-                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)))),
+                                new UntapPermanentsEffect(Subjects.source())))),
                 "{0}: If this creature is tapped, exile target creature card from a graveyard and untap this creature."
         ));
     }

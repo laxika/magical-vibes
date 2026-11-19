@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -43,8 +43,8 @@ public class NayaCharm extends Card {
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap all creatures target player controls",
-                        new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate()))
+                        new TapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayer(),
+                                new PermanentIsCreaturePredicate())))
         )));
     }
 }

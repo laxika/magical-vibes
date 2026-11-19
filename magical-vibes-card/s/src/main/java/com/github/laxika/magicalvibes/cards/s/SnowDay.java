@@ -15,7 +15,7 @@ public class SnowDay extends Card {
 
     public SnowDay() {
         target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
         addSpellEffect(new DrawCardEffect(2));
         addSpellEffect(new DiscardEffect(1, Subjects.you()));

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -36,7 +36,7 @@ public class DeathbringerLiege extends Card {
         // Whenever you cast a white spell, you may tap target creature.
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardColorPredicate(CardColor.WHITE)),
-                new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target creature?"));
+                new MayEffect(new TapPermanentsEffect(Subjects.target()), "Tap target creature?"));
 
         // Whenever you cast a black spell, you may destroy target creature if it's tapped.
         // Targets any creature; the tapped check happens at resolution (Gatherer ruling).

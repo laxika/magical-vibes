@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -177,7 +176,7 @@ class EtbTriggerServiceTest {
         creature.target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayPayManaEffect("{2}",
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new TapPermanentsEffect(Subjects.target()),
                                 new PutCounterOnTargetPermanentEffect(CounterType.STUN))),
                         "Pay {2} to tap and stun a creature?"));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));

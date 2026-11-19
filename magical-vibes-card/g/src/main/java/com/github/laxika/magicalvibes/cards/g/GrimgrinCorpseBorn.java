@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -42,7 +42,7 @@ public class GrimgrinCorpseBorn extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new UntapPermanentsEffect(TapUntapScope.SELF),
+                        new UntapPermanentsEffect(Subjects.source()),
                         new PutCountersOnSourceEffect(1, 1, 1)
                 ),
                 "Sacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it."

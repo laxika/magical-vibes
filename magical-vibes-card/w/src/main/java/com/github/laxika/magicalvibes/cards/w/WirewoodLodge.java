@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class WirewoodLodge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{G}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, elf)),
+                List.of(new UntapPermanentsEffect(Subjects.target(), elf)),
                 "{G}, {T}: Untap target Elf.",
                 new PermanentPredicateTargetFilter(elf, "Target must be an Elf")
         ));

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,6 +19,6 @@ public class Snap extends Card {
     public Snap() {
         target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
         addSpellEffect(new UntapPermanentsEffect(
-                TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 2));
+                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsLandPredicate()), null, 2));
     }
 }

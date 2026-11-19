@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -107,7 +107,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
                         entry.getControllerId(), entry.getCard(),
                         new TriggeredAbility(Triggers.youLoseControlOfThis(),
-                                new TapPermanentsEffect(TapUntapScope.TRIGGERING)),
+                                new TapPermanentsEffect(Subjects.triggering())),
                         target.getId(), entry.getSourcePermanentId(), false));
             }
         }

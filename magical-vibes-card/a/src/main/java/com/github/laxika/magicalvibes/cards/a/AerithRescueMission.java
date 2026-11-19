@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOneTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,7 @@ public class AerithRescueMission extends Card {
                         new CreateTokenEffect(3, "Hero", 1, 1, null, List.of(CardSubtype.HERO), Set.of(), Set.of())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Take 59 Flights of Stairs",
-                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        List.of(new TapPermanentsEffect(Subjects.target())),
                         TargetFilters.creature(), null, 0, 3, false, null)
         )));
         addSpellEffect(new PutCounterOnOneTargetEffect(CounterType.STUN));

@@ -4,15 +4,21 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "148")
 @CardRegistration(set = "PZA", collectorNumber = "13")
 public class WavesOfAggression extends Card {
 
     public WavesOfAggression() {
-        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
+        addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentAttackedThisTurnPredicate())))));
         addSpellEffect(new AdditionalCombatMainPhaseEffect(1, null, true));
         addCastingOption(new Retrace());
     }

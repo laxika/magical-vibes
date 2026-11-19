@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -36,7 +36,7 @@ public class SonicScrewdriver extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, anotherArtifact)),
+                List.of(new UntapPermanentsEffect(Subjects.target(), anotherArtifact)),
                 "{1}, {T}: Untap another target artifact.",
                 new PermanentPredicateTargetFilter(anotherArtifact, "Target must be another artifact")
         ));

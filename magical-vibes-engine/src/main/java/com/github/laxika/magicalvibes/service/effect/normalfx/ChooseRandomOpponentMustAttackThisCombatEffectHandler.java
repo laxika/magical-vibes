@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomOpponentMustAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class ChooseRandomOpponentMustAttackThisCombatEffectHandler implements No
         if (opponents.isEmpty()) {
             if (randomOpponentEffect.tapIfNoOpponent()) {
                 tapPermanentsEffectHandler.resolve(gameData, entry,
-                        new TapPermanentsEffect(TapUntapScope.SELF));
+                        new TapPermanentsEffect(Subjects.source()));
             }
             return;
         }

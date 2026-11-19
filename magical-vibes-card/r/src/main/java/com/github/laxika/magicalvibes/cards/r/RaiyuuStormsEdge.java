@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class RaiyuuStormsEdge extends Card {
 
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(samuraiOrWarrior),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new UntapPermanentsEffect(TapUntapScope.TRIGGERING),
+                new UntapPermanentsEffect(Subjects.triggering()),
                 new ConditionalEffect(new FirstCombatPhase(), new AdditionalCombatPhaseEffect(1)));
     }
 }

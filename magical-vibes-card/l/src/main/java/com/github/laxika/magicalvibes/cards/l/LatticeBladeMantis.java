@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class LatticeBladeMantis extends Card {
                         new SourceCounterThreshold(1, CounterType.OIL),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 1),
-                                new UntapPermanentsEffect(TapUntapScope.SELF),
+                                new UntapPermanentsEffect(Subjects.source()),
                                 new BoostSelfEffect(1, 1))),
                 "Remove an oil counter from Lattice-Blade Mantis?"));
     }

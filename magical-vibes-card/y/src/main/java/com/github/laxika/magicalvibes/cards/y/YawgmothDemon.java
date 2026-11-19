@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,7 +24,7 @@ public class YawgmothDemon extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "Sacrifice an artifact", false),
-                        List.of(new TapPermanentsEffect(TapUntapScope.SELF),
+                        List.of(new TapPermanentsEffect(Subjects.source()),
                                 new DealDamageToPlayersEffect(2, Subjects.you())),
                         true));
     }

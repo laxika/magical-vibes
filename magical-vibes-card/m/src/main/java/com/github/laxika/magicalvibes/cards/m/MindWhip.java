@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -26,6 +25,6 @@ public class MindWhip extends Card {
                         new PayManaCost("{3}"),
                         List.of(
                                 new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()),
-                                new TapPermanentsEffect(TapUntapScope.ENCHANTED))));
+                                new TapPermanentsEffect(Subjects.attached()))));
     }
 }

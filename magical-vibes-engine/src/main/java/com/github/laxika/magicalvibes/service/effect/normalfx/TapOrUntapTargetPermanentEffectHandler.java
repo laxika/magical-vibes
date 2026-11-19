@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -40,8 +40,8 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
         if (((TapOrUntapTargetPermanentEffect) effect).chooseAction()) {
             playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
                     new ChooseOneEffect(List.of(
-                            new ChooseOneEffect.ChooseOneOption("Tap", new TapPermanentsEffect(TapUntapScope.TARGET)),
-                            new ChooseOneEffect.ChooseOneOption("Untap", new UntapPermanentsEffect(TapUntapScope.TARGET)))),
+                            new ChooseOneEffect.ChooseOneOption("Tap", new TapPermanentsEffect(Subjects.target())),
+                            new ChooseOneEffect.ChooseOneOption("Untap", new UntapPermanentsEffect(Subjects.target())))),
                     entry.getSourcePermanentId());
             return;
         }

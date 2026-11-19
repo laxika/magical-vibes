@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,6 +32,6 @@ public class DeepchannelDuelist extends Card {
         target(new PermanentPredicateTargetFilter(controlledMerfolk,
                 "Target must be a Merfolk you control"))
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, merfolk));
+                        new UntapPermanentsEffect(Subjects.target(), merfolk));
     }
 }

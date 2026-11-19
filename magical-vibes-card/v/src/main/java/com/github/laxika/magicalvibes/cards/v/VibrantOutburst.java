@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -39,6 +39,6 @@ public class VibrantOutburst extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Second target must be a creature"
-        ), 0, 1).addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        ), 0, 1).addSpellEffect(new TapPermanentsEffect(Subjects.target()));
     }
 }

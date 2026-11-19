@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -36,7 +36,7 @@ public class TradeCaravan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(new RemoveCounterFromSourceCost(2, CounterType.CURRENCY),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, basicLand)),
+                        new UntapPermanentsEffect(Subjects.target(), basicLand)),
                 "Remove two currency counters from this creature: Untap target basic land. "
                         + "Activate only during an opponent's upkeep.",
                 new PermanentPredicateTargetFilter(basicLand, "basic land"),

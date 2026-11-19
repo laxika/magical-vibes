@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,7 +31,7 @@ public class IslandFishJasconius extends Card {
         // "At the beginning of your upkeep, you may pay {U}{U}{U}. If you do, untap this creature."
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
                 "{U}{U}{U}",
-                new UntapPermanentsEffect(TapUntapScope.SELF),
+                new UntapPermanentsEffect(Subjects.source()),
                 "Pay {U}{U}{U} to untap Island Fish Jasconius?"));
 
         // "This creature can't attack unless defending player controls an Island."

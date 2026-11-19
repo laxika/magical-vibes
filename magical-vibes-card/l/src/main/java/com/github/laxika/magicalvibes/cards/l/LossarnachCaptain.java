@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -37,7 +37,7 @@ public class LossarnachCaptain extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN))),
                                         ObjectRelation.ANOTHER_YOU_CONTROL))),
                         TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                                new TapPermanentsEffect(TapUntapScope.TARGET)))));
+                                new TapPermanentsEffect(Subjects.target())))));
 
         // At the beginning of your upkeep, create a 1/1 white Human Soldier creature token.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(

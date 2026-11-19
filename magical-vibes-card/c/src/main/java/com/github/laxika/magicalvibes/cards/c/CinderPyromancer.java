@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +28,6 @@ public class CinderPyromancer extends Card {
 
         // Whenever you cast a red spell, you may untap this creature.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Cinder Pyromancer?"));
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()), "Untap Cinder Pyromancer?"));
     }
 }

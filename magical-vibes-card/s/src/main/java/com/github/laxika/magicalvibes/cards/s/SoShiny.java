@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +22,7 @@ public class SoShiny extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new ControlsPermanent(new PermanentIsTokenPredicate())),
-                        SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.ENCHANTED), new ScryEffect(2)))
+                        SequenceEffect.of(new TapPermanentsEffect(Subjects.attached()), new ScryEffect(2)))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

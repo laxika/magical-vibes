@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,7 +38,7 @@ public class FrostwalkBastion extends Card {
         // Whenever this land deals combat damage to a creature, tap that creature and it doesn't untap during
         // its controller's next untap step.
         addTrigger(Triggers.dealsCombatDamageToCreature(), SequenceEffect.of(
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }
 }

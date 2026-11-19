@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +28,7 @@ public class InfernalDenizen extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new SacrificeMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                 List.of(
-                        new TapPermanentsEffect(TapUntapScope.SELF),
+                        new TapPermanentsEffect(Subjects.source()),
                         new OpponentMayGainControlOfCreatureYouControlEffect(
                                 Duration.WHILE_SOURCE_REMAINS))));
 

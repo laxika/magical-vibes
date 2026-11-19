@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -40,7 +40,7 @@ public class VigeanGraftmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET, creatureWithCounter)),
+                List.of(new UntapPermanentsEffect(Subjects.target(), creatureWithCounter)),
                 "{1}{U}: Untap target creature with a +1/+1 counter on it.",
                 new PermanentPredicateTargetFilter(creatureWithCounter,
                         "Target must be a creature with a +1/+1 counter")));

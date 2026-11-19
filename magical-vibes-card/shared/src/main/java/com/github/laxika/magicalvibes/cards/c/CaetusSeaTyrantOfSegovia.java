@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,6 +19,6 @@ public class CaetusSeaTyrantOfSegovia extends Card {
                 Keyword.CONVOKE, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
         target(TargetFilters.creature(), 0, 4)
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
+                        new UntapPermanentsEffect(Subjects.allTargets()));
     }
 }

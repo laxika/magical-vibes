@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,6 +18,6 @@ public class MilitiaRallier extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate()));
+                        new UntapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate()));
     }
 }

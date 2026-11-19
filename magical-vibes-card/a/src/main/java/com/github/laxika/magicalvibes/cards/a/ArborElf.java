@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class ArborElf extends Card {
                 true,
                 null,
                 List.of(new UntapPermanentsEffect(
-                        TapUntapScope.TARGET,
+                        Subjects.target(),
                         new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
                 "{T}: Untap target Forest.",
                 new PermanentPredicateTargetFilter(

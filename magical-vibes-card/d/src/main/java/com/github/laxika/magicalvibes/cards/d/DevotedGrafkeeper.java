@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +25,7 @@ public class DevotedGrafkeeper extends Card {
         // Whenever you cast a spell from your graveyard, tap target creature you don't control.
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)),
-                new TapPermanentsEffect(TapUntapScope.TARGET));
+                new TapPermanentsEffect(Subjects.target()));
 
         // Disturb {1}{W}{U}
         addCastingOption(new DisturbCast("{1}{W}{U}"));

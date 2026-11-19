@@ -74,9 +74,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -2313,8 +2313,9 @@ class TriggerRouteRecordTest extends BaseCardTest {
     /** The helper's ability, controlled by player1, taps a Goblin of player2. */
     private void youTapAnOpponentCreature(List<Card> cards) {
         addCreatureReady(player2, card("Victim", CardType.CREATURE, CardSubtype.GOBLIN));
-        helperAbilityResolves(cards, new TapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
+        helperAbilityResolves(cards, new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN)))))));
     }
 
     private void changeControl(Permanent permanent, Player newController) {

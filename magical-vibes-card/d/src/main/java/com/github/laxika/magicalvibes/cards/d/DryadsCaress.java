@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -21,7 +21,6 @@ public class DryadsCaress extends Card {
 
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.WHITE),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                        new PermanentIsCreaturePredicate())));
+                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate()))));
     }
 }

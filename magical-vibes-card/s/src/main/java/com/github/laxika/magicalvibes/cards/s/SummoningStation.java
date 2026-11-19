@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class SummoningStation extends Card {
         ));
 
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
+                new MayEffect(new UntapPermanentsEffect(Subjects.source()),
                         "Untap Summoning Station?"));
     }
 }

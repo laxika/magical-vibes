@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
@@ -25,10 +26,10 @@ public class FrostTitan extends Card {
         // Whenever Frost Titan enters the battlefield or attacks,
         // tap target permanent. It doesn't untap during its controller's next untap step.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new SkipNextUntapEffect(TapUntapScope.TARGET));
         addTrigger(Triggers.attacks(),
-                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new TapPermanentsEffect(Subjects.target()),
                 new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

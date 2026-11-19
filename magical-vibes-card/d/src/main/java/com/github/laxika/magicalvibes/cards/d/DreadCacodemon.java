@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -31,7 +32,9 @@ public class DreadCacodemon extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                                 ))),
-                                new TapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES)
+                                new TapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))))
                         ));
     }
 }

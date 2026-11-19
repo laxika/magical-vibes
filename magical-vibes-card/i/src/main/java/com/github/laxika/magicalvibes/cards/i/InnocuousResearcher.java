@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ParleyEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,8 +25,8 @@ public class InnocuousResearcher extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                        new PermanentIsLandPredicate()),
+                                new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentIsLandPredicate())),
                                 new GrantStaticEffectToPlayerUntilNextTurnEffect(
                                         new PlayerCantCastSpellsEffect())),
                         "Untap all lands you control?"));

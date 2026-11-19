@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhasesAfterMainEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByAttackCountEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +22,7 @@ public class MoraugFuryOfAkoum extends Card {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerMainPhase()),
                 new AdditionalCombatPhasesAfterMainEffect(1,
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                new PermanentIsCreaturePredicate())));
+                        new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsCreaturePredicate()))));
     }
 }

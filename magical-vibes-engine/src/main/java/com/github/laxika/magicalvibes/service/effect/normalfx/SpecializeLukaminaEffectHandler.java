@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.l.LukaminaMoonDruid;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnspecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -62,7 +62,7 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
                 // Hawk Form has only its printed keywords.
             }
             case BLUE -> {
-                CardEffect tapEffect = new TapPermanentsEffect(TapUntapScope.TARGET);
+                CardEffect tapEffect = new TapPermanentsEffect(Subjects.target());
                 CardEffect lockEffect = DoesntUntapEffect.targetWhileSourceControlled();
                 specialized.target(TargetFilters.nonlandPermanentAnOpponentControls())
                         .bindEffect(tapEffect)

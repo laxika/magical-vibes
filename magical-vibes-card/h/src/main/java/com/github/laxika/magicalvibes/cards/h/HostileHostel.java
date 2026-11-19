@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public class HostileHostel extends Card {
                                 SequenceEffect.of(
                                         new RemoveAllCountersEffect(CounterType.SOUL),
                                         new TransformSelfEffect(),
-                                        new UntapPermanentsEffect(TapUntapScope.SELF)
+                                        new UntapPermanentsEffect(Subjects.source())
                                 ))
                 ),
                 "{1}, {T}, Sacrifice a creature: Put a soul counter on Hostile Hostel. Then if there are three or more soul counters on it, remove those counters, transform it, then untap it. Activate only as a sorcery.",

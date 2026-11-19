@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -24,7 +24,7 @@ public class RaphaelTagTeamTough extends Card {
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(
-                                TapUntapScope.CONTROLLED, new PermanentIsAttackingPredicate()),
+                                Subjects.controlledBy(Subjects.you(), new PermanentIsAttackingPredicate())),
                         new AdditionalCombatPhaseEffect(1)));
     }
 }

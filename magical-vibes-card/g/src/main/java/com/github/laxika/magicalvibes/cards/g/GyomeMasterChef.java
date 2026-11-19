@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -42,7 +42,7 @@ public class GyomeMasterChef extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                                 "Sacrifice a Food"),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET),
-                        new TapPermanentsEffect(TapUntapScope.TARGET)),
+                        new TapPermanentsEffect(Subjects.target())),
                 "{1}, Sacrifice a Food: Target creature gains indestructible until end of turn. Tap it.",
                 TargetFilters.creature()));
     }

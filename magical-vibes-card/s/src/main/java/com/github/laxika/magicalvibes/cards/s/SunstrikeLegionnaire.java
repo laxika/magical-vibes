@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class SunstrikeLegionnaire extends Card {
     public SunstrikeLegionnaire() {
         addStaticEffect(DoesntUntapEffect.self());
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(Subjects.source()));
 
         var targetCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -31,7 +31,7 @@ public class SunstrikeLegionnaire extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
+                List.of(new TapPermanentsEffect(Subjects.target())),
                 "{T}: Tap target creature with mana value 3 or less.",
                 new PermanentPredicateTargetFilter(
                         targetCreature,

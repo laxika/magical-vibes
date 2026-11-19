@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class SupernaturalRescue extends Card {
 
         // When you cast this spell, tap up to two target creatures you don't control.
         target(TargetFilters.creatureAnOpponentControls(), 0, 2)
-                .addTrigger(Triggers.youCastThisSpell(), new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.youCastThisSpell(), new TapPermanentsEffect(Subjects.target()));
     }
 }

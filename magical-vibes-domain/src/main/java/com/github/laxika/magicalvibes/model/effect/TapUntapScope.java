@@ -1,35 +1,24 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Which permanent(s) a {@link TapPermanentsEffect} / {@link UntapPermanentsEffect} affects,
- * relative to the resolving effect. The effect's optional {@code PermanentPredicate} narrows the
- * scanned scopes further (creature, attacking, not-the-source, …).
+ * Which permanent(s) an untap restriction or a "this turn" combat restriction affects, relative to the resolving
+ * effect: {@link SkipNextUntapEffect}, {@link DoesntUntapEffect}, {@link DoesntUntapWithCounterEffect},
+ * {@link UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect}, {@link CantAttackThisTurnEffect} and
+ * {@link CantBlockThisTurnEffect}. The tap and untap verbs ({@link TapPermanentsEffect},
+ * {@link UntapPermanentsEffect}) take a {@link PermanentSubject} instead. The effect's optional
+ * {@code PermanentPredicate} narrows the scanned scopes further (creature, attacking, not-the-source, …).
  */
 public enum TapUntapScope {
-    /**
-     * The effect's chosen target permanent. For untap the effect's predicate acts as a targeting
-     * restriction (carried on the effect's {@code targetSpec()} predicate); tap chooses its target freely.
-     */
+    /** The effect's chosen target permanent. */
     TARGET,
-    /** Every permanent in {@code entry.getTargetIds()} (multi-target). */
-    ALL_TARGETS,
     /** The source permanent itself. */
     SELF,
-    /**
-     * The source permanent itself, read strictly from {@code entry.getSourcePermanentId()}.
-     * Unlike {@link #SELF} it never falls back to the entry's target, so it is the scope to use
-     * when the same stack entry also has a real target ("untap target creature an opponent
-     * controls. If you do, untap this creature." — Soldevi Golem).
-     */
-    SOURCE_PERMANENT,
     /** The permanent whose event caused the triggered ability. */
     TRIGGERING,
     /** The permanent the source aura is attached to. */
     ENCHANTED,
     /** Every permanent the controller controls that matches the predicate. */
     CONTROLLED,
-    /** Every creature the controller controls except the source, matching the predicate. */
-    OTHER_CONTROLLED_CREATURES,
     /** Every permanent the target player controls that matches the predicate. */
     TARGET_PLAYERS_PERMANENTS,
     /**
@@ -39,10 +28,6 @@ public enum TapUntapScope {
     TARGET_CONTROLLERS_OTHER_CREATURES,
     /** Every creature on every battlefield that matches the predicate. */
     ALL_CREATURES,
-    /** Every permanent on every battlefield that matches the predicate (Curse of Marit Lage). */
-    ALL_PERMANENTS,
-    /** Every creature on every battlefield that attacked this turn. */
-    ATTACKED_CREATURES,
     /** Every permanent controlled by an opponent of the controller that matches the predicate. */
     OPPONENTS_PERMANENTS
 }

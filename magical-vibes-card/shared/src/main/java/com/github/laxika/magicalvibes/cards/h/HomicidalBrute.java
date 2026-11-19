@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,6 +23,6 @@ public class HomicidalBrute extends Card {
         // tap it, then transform it.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new DidntAttack()),
-                SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.SELF), new TransformSelfEffect()));
+                SequenceEffect.of(new TapPermanentsEffect(Subjects.source()), new TransformSelfEffect()));
     }
 }

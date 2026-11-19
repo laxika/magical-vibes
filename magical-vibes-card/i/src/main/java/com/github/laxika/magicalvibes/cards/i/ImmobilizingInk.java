@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,7 +25,7 @@ public class ImmobilizingInk extends Card {
                                 "{1}",
                                 List.of(
                                         new DiscardCardTypeCost(null, null),
-                                        new UntapPermanentsEffect(TapUntapScope.SELF)
+                                        new UntapPermanentsEffect(Subjects.source())
                                 ),
                                 "{1}, Discard a card: Untap this creature."
                         ),

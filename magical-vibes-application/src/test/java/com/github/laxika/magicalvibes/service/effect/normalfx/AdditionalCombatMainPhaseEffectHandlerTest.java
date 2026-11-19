@@ -11,8 +11,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -218,8 +221,10 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
             @DisplayName("The combat added last comes first (CR 500.8)")
             void laterAddedCombatComesBeforeEarlierOne() {
                 Card card = createCard("World at War", CardType.SORCERY);
-                UntapPermanentsEffect first = new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES);
-                UntapPermanentsEffect second = new UntapPermanentsEffect(TapUntapScope.CONTROLLED);
+                UntapPermanentsEffect first = new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentAttackedThisTurnPredicate()))));
+                UntapPermanentsEffect second = new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you()));
                 AdditionalCombatMainPhaseEffect firstEffect = new AdditionalCombatMainPhaseEffect(1, first);
                 AdditionalCombatMainPhaseEffect secondEffect = new AdditionalCombatMainPhaseEffect(1, second);
 
@@ -239,7 +244,9 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
             @Test
             void queuesBeginningEffectForEachAdditionalCombat() {
                 Card card = createCard("World at War", CardType.SORCERY);
-                UntapPermanentsEffect beginningEffect = new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES);
+                UntapPermanentsEffect beginningEffect = new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentAttackedThisTurnPredicate()))));
                 AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(2, beginningEffect);
                 StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 

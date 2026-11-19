@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -41,7 +41,7 @@ public class VentifactBottle extends Card {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.CHARGE)),
                 SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.SELF),
+                        new TapPermanentsEffect(Subjects.source()),
                         new RemoveAllCountersEffect(CounterType.CHARGE),
                         new AwardManaEffect(ManaColor.COLORLESS, new EventValue())));
     }

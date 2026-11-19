@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,6 +18,6 @@ public class CastawaysDespair extends Card {
                 // Enchanted creature doesn't untap during its controller's untap step.
                 .addStaticEffect(DoesntUntapEffect.enchanted());
         // When this Aura enters, tap enchanted creature (the trigger doesn't target).
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(Subjects.attached()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,7 +25,7 @@ public class SinkingFeeling extends Card {
                         new ActivatedAbility(
                                 false,
                                 "{1}",
-                                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(TapUntapScope.SELF)),
+                                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(Subjects.source())),
                                 "{1}, Put a -1/-1 counter on this creature: Untap this creature."
                         ),
                         GrantScope.ENCHANTED_CREATURE

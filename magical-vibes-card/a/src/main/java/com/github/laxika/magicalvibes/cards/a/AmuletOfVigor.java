@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,6 +17,6 @@ public class AmuletOfVigor extends Card {
         // Whenever a permanent you control enters tapped, untap it: "enters tapped" is the permanent as it entered,
         // the trigger's filter; "it" is the stack entry's triggering permanent.
         addTrigger(Triggers.enters(new PermanentIsTappedPredicate(), ObjectRelation.YOU_CONTROL),
-                new UntapPermanentsEffect(TapUntapScope.TRIGGERING));
+                new UntapPermanentsEffect(Subjects.triggering()));
     }
 }

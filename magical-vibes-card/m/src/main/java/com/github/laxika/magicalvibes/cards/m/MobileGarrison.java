@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +37,7 @@ public class MobileGarrison extends Card {
                 targetFilter,
                 "Target must be another artifact or creature you control"
         )).addTrigger(Triggers.attacks(),
-                new UntapPermanentsEffect(TapUntapScope.TARGET, targetFilter));
+                new UntapPermanentsEffect(Subjects.target(), targetFilter));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

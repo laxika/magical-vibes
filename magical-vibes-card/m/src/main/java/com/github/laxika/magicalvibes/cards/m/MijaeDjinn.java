@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSourceFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SUM", collectorNumber = "166")
@@ -19,6 +19,6 @@ public class MijaeDjinn extends Card {
         addTrigger(Triggers.attacks(), new FlipCoinWinEffect(null,
                 SequenceEffect.of(
                         new RemoveSourceFromCombatEffect(),
-                        new TapPermanentsEffect(TapUntapScope.SELF))));
+                        new TapPermanentsEffect(Subjects.source()))));
     }
 }

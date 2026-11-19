@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class ThreeBowlsOfPorridge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 COST,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())),
+                List.of(new TapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())),
                 "{2}, {T}: Tap target creature."
         ).withMaxActivationsPerGame(1));
 

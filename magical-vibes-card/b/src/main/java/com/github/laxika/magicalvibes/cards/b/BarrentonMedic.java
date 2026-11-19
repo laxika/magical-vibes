@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class BarrentonMedic extends Card {
                 List.of(PreventDamageEffect.nextToTarget(1)),
                 "{T}: Prevent the next 1 damage that would be dealt to any target this turn."));
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(TapUntapScope.SELF)),
+                List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(Subjects.source())),
                 "Put a -1/-1 counter on this creature: Untap this creature."));
     }
 }

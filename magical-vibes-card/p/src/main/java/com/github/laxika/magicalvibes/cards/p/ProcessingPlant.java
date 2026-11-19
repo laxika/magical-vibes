@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -59,7 +59,7 @@ public class ProcessingPlant extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutOpponentOwnedExiledCardIntoGraveyardEffect(),
                 new ConditionalEffect(new EventValueAtLeast(1),
-                        new UntapPermanentsEffect(TapUntapScope.SELF)),
+                        new UntapPermanentsEffect(Subjects.source())),
                 new ConditionalEffect(new NotCondition(new EventValueAtLeast(1)),
                         new ExileTopCardsOfEachOpponentEffect(1))));
 
