@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandler
+public class RevealTopCardAndCounterTriggeringSpellIfMatchesEffectHandler
         implements NormalEffectHandlerBean {
 
     private final CounterSupport counterSupport;
@@ -31,11 +31,12 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect.class;
+        return RevealTopCardAndCounterTriggeringSpellIfMatchesEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var reveal = (RevealTopCardAndCounterTriggeringSpellIfMatchesEffect) effect;
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());
         if (library == null || library.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
@@ -60,13 +61,7 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
         StackEntry liveSpell = counterSupport.findCounterTargetIgnoringCounterability(
                 gameData, triggeringCardId, entry);
         StackEntry triggeringSpell = liveSpell != null ? liveSpell : entry.getTriggeringSpellSnapshot();
-        if (triggeringSpell == null) {
-            return;
-        }
-
-        Set<CardType> triggeringSpellTypes = EnumSet.of(triggeringSpell.getCard().getType());
-        triggeringSpellTypes.addAll(triggeringSpell.getCard().getAdditionalTypes());
-        if (!counterSupport.sharesCardType(topCard, triggeringSpellTypes)) {
+        if (triggeringSpell == null || !matches(reveal, topCard, triggeringSpell)) {
             return;
         }
 
@@ -76,7 +71,7 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
             counterSupport.counterSpell(gameData, entry, counterTarget);
         }
 
-        if (!topCard.hasType(CardType.LAND)) {
+        if (reveal.spellControllerMayCastFree() && !topCard.hasType(CardType.LAND)) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     topCard,
                     triggeringSpell.getControllerId(),
@@ -87,5 +82,23 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
                     gameData.id, gameData.playerIdToName.get(triggeringSpell.getControllerId()),
                     topCard.getName());
         }
+    }
+
+    private boolean matches(RevealTopCardAndCounterTriggeringSpellIfMatchesEffect reveal, Card topCard,
+                            StackEntry triggeringSpell) {
+        Card spellCard = triggeringSpell.getCard();
+        return switch (reveal.match()) {
+            case SAME_MANA_VALUE -> {
+                int spellManaValue = triggeringSpell.isCastFaceDown() ? 0 : spellCard.getManaValue()
+                        + triggeringSpell.getXValue() * (spellCard.getParsedManaCost() == null
+                        ? 0 : spellCard.getParsedManaCost().getXSymbolCount());
+                yield topCard.getManaValue() == spellManaValue;
+            }
+            case SHARES_CARD_TYPE -> {
+                Set<CardType> spellTypes = EnumSet.of(spellCard.getType());
+                spellTypes.addAll(spellCard.getAdditionalTypes());
+                yield counterSupport.sharesCardType(topCard, spellTypes);
+            }
+        };
     }
 }
