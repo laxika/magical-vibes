@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -58,7 +59,7 @@ class MishrasResearchDeskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent desk = findPermanent(player1, "Mishra's Research Desk");
-        assertThat(desk.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, desk, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
