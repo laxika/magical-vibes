@@ -1,1 +1,48 @@
 class,verdict,step,note
+AlmsCollectorDrawReplacementEffect,dead,2,no card or code used it; it had no handler
+AnyPlayerMayTakeDamageOrDrawTargetPlayerEffect,dead,2,no card; its normalfx and mayfx handlers named only each other (Browbeat uses AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect)
+CanAttackPlayersWhoAttackedControllerLastTurnEffect,dead,2,no card or code used it; it had no handler
+CantAttackOwnerEffect,dead,2,no card or code used it; it had no handler
+ChooseVoidCounterCardMayPlayEffect,dead,2,no card or code used it; record and handler deleted
+CreateTokenCopyOfSelectedPermanentEffect,dead,2,no card or code used it; record and handler deleted
+CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect,dead,2,no card or code used it; record and handler deleted
+CreateTokenThenMillAndRepeatIfMilledEffect,dead,2,no card or code used it; record and handler deleted
+CreateTokensForEachOpposingCreatureThenFightEffect,dead,2,no card or code used it; record and handler deleted
+DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect,dead,2,no card; its normalfx and mayfx handlers named only each other (Quenchable Fire uses RegisterDamageAtNextUpkeepUnlessPaysEffect)
+DestroyAllCreaturesExceptChosenTypeEffect,dead,2,no card or code used it; record and handler deleted
+DoubleControllerDamageToOpponentsEffect,dead,2,no card; its GameQueryServiceTest case removed
+DoubleXValueForPermanentSpellEffect,dead,2,no card or code used it; it had no handler
+DrawCardForDamagedPlayerEffect,dead,2,no card; handler and its handler test deleted
+EmblemActivatedAbilityEffect,dead,2,no card or code used it; it had no handler
+EmblemGrantsRetraceEffect,dead,2,no card or code used it; it had no handler
+ExileUntilCardPredicateMayCastWithoutPayingManaEffect,dead,2,no card or code used it; record and handler deleted
+ExileUntilCardWithManaValueLessThanMayCastWithoutPayingEffect,dead,2,no card or code used it; record and handler deleted
+GrantEffectToSourceUntilNextUpkeepEffect,dead,2,no card or code used it; record and handler deleted
+GrantGraveyardAbilityToSliverCreatureCardsEffect,dead,2,no card or code used it; it had no handler
+MakeCreatureBlockableOnlyByFilterEffect,dead,2,no card or code used it; record and handler deleted
+MillEachPlayerExileUpToTwoCreaturesCreateTokenEffect,dead,2,no card or code used it; record and handler deleted
+OpponentChoosesCreatureToDestroyEffect,dead,2,no card or code used it; record and handler deleted
+PayXLifeDrawXCardsEffect,dead,2,no card or code used it; record and handler deleted
+PlaneswalkIfPlanarSourceHasCountersEffect,dead,2,no card or code used it; record and handler deleted
+PutKeywordCountersOnSelfForDiscardedCardsEffect,dead,2,no card or code used it; record and handler deleted
+RadCounterEffect,dead,2,no card or code used it; record and handler deleted
+RedirectAllDamageToCreaturesToControllerEffect,dead,2,no card or code used it; record and handler deleted
+RegisterDelayedReturnSourceAuraToCreatureEffect,dead,2,no card or code used it; record and handler deleted
+RemoveCounterOrSacrificeSelfThenEffect,dead,2,no card or code used it; record and handler deleted
+ReturnAllCreaturesExceptChosenTypeEffect,dead,2,no card or code used it; record and handler deleted
+ReturnEnchantedCreatureToOwnerHandThenMayPayEffect,dead,2,no card or code used it; record and handler deleted
+ReturnTargetCreatureFromGraveyardAndAttachSourceEquipmentEffect,dead,2,no card or code used it; record and handler deleted
+RevealSourceChosenSubtypeEffect,dead,2,no card or code used it; record and handler deleted
+SacrificeCreatureCreateSizedTokenEqualToPowerEffect,dead,2,no card or code used it; record and handler deleted
+SacrificePermanentsToUntapSelfEffect,dead,2,no card or code used it; record and handler deleted
+SetSelfBaseToughnessFromTargetCreatureIndefinitelyEffect,dead,2,no card or code used it; record and handler deleted
+ShuffleCardFromControllerGraveyardIntoLibraryEffect,dead,2,no card or code used it; record and handler deleted
+SkipExtraTurnReplacementEffect,dead,2,"no card; same as OpponentExtraTurnSkipReplacementEffect, which TurnProgressionServiceTest now uses"
+ChooseAttackTargetsForCreatedTokensEffect,blocked-other,2,"built at runtime by its handler's createdTokensAttack, called by CreateTokenEffectHandler, CreateTokenForTriggeringPlayerEffectHandler, CreateTokensAttackingEffectHandler, PayXManaCreateXTokensEffectHandler, PermanentChoiceTriggerHandlerService"
+EachPlayerChoosesCreatureThenSacrificesRestEffect,blocked-other,2,"handler's completeChoice called by MultiPermanentChoiceHandlerService; the whole flow (choice context, completion) looks dead"
+EachPlayerReturnsPermanentToHandEffect,blocked-other,2,"record unused but its handler's beginReplacement/completeChoice serve Words of Wind via DrawService, MultiPermanentChoiceHandlerService"
+OpponentChoosesCreatureTheyControlTokenCopyEffect,blocked-other,2,"handler's completeChoice called by PermanentChoiceBattlefieldHandlerService; the whole flow (choice context, completion) looks dead"
+PutExiledCardsIntoOwnersGraveyardEffect,blocked-other,2,"built at runtime by its handler's atNextEndStep, called by ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler, ExileRandomCardFromHandMayPlayThisTurnEffectHandler"
+PutStillExiledCardsIntoGraveyardAndCreateTokensEffect,blocked-other,2,"built at runtime by its handler's atNextEndStep, called by ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledEffectHandler, ExileTopCardsMayPlayThisTurnAndCreateTokensForStillExiledEffectHandler"
+ReboundCastFromExileEffect,blocked-other,2,"built at runtime by its handler's reboundAbility, called by StackResolutionService, ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHandler"
+TargetPlayerChoosesCardsFromHandThenMayCastOneEffect,blocked-other,2,"handler's handleCardSelection called by TargetPlayerChoosesCardsFromHandChoiceInteractionHandler; the whole flow (pending interaction, AI strategy, projection) looks dead"

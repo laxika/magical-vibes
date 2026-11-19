@@ -62,7 +62,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostControllerNoncombatDamag
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
@@ -2823,17 +2822,6 @@ class GameQueryServiceTest {
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id, player1Id)).isEqualTo(1);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player2Id)).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("source-and-player multiplier excludes opponent permanents")
-        void sourceAndPlayerMultiplierExcludesOpponentPermanents() {
-            addPermanent(player1Id, createEnchantmentWithStaticEffect(
-                    "Goblin Goliath", new DoubleControllerDamageToOpponentsEffect()));
-
-            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
-            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id,
-                    UUID.randomUUID())).isEqualTo(1);
         }
 
         @Test

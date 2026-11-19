@@ -1660,7 +1660,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 | `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`, `PayXManaCreateXTokensEffect` | 1 + 1 |
 | `TargetPlayerChoosesCreatureEffect(boolean exile)` | `TargetPlayerChoosesCreatureDestroyEffect`, `TargetPlayerChoosesCreatureExileEffect` | 2 + 1 |
 | `TargetPlayerCantThisTurnEffect(TurnRestriction)` | `TargetPlayerCantPlayLandsThisTurnEffect`, `TargetPlayerCantCastCreatureSpellsThisTurnEffect` | 2 + 1 |
-| `SacrificeCreatureForTokenEffect(CreateTokenEffect, PermanentPredicate, SacrificedStat, TokenScaling)` | `SacrificeCreatureCreateSizedTokenEqualToPowerEffect`, `SacrificeCreatureToCreateTokensEqualToToughnessEffect` | 1 + 1 |
+| `SacrificeCreatureForTokenEffect(CreateTokenEffect, PermanentPredicate, SacrificedStat, TokenScaling)` | **Moot**: `SacrificeCreatureCreateSizedTokenEqualToPowerEffect` had no card left and was deleted (`effect-cleanup-refactor.md` step 2); `SacrificeCreatureToCreateTokensEqualToToughnessEffect` stays alone | 0 + 1 |
 | `SacrificeAllYouControlCost(PermanentPredicate, boolean trackTotalPower)` | `SacrificeAllCreaturesYouControlCost`, `SacrificeAllPermanentsYouControlCost` | 1 + 1 |
 | `MillEffect` + `MillRecipient.DEFENDING_PLAYER` | `MillDefendingPlayerEffect` | 1 |
 | `GainLifeEffect` — replace `boolean targetsPlayer` with `TargetPredicate declaredTarget` | `GainLifeEqualToTargetCreatureStatEffect` | 2 |

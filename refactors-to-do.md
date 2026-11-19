@@ -328,7 +328,7 @@ mentions exists. Javadoc only. Don't commit until I say so.
 (`LoseLifeRecipient`, `DiscardRecipient`, `MillRecipient`, ...). Drawing does not: `DrawCardEffect` always draws for
 the controller, and each other player has its own effect and handler — `DrawCardForOwnerEffect` (2 cards),
 `DrawCardForTargetPlayerEffect` (~150 cards, ~12 engine readers), `DrawCardForDefendingPlayerEffect` (1 card),
-`DrawCardForDamagedPlayerEffect` (no card uses it; check before deleting), `DrawCardForTriggeringPlayerEffect` (12 cards),
+`DrawCardForTriggeringPlayerEffect` (12 cards),
 `DrawCardsForEachOpponentOfTriggeringPlayerEffect` (2 cards) and `EachOpponentOfTriggeringPlayerMayDrawCardEffect`
 (1 card), plus `DrawCardForPlayerEffect`, which only the engine builds. Each handler repeats the amount evaluation
 and resolves its player its own way.
@@ -339,7 +339,7 @@ triggering-player draw read the recorded one, so Selvala, Heart of the Wilds ask
 after a control change.
 
 **Proposed direction.** A `DrawRecipient` enum on `DrawCardEffect` (`CONTROLLER` default, `OWNER`, `TARGET_PLAYER`,
-`DEFENDING_PLAYER`, `DAMAGED_PLAYER`, `TRIGGERING_PLAYER`, `EACH_OPPONENT_OF_TRIGGERING_PLAYER`), resolved in one place
+`DEFENDING_PLAYER`, `TRIGGERING_PLAYER`, `EACH_OPPONENT_OF_TRIGGERING_PLAYER`), resolved in one place
 the way `LoseLifeEffectHandler` resolves its recipients, using `GameQueryService.findTriggeringPermanentController` for
 the triggering player. The "each opponent may draw" one stays a `MayEffect` wrapper around it if the may-choice can be
 asked per opponent; otherwise it keeps its class. `DrawCardForTargetPlayerEffect` is a player target, so its
@@ -351,7 +351,7 @@ checking for overlap.
 
 ```
 Do refactors-to-do.md entry 14: give DrawCardEffect a recipient enum and fold DrawCardForOwnerEffect,
-DrawCardForTargetPlayerEffect, DrawCardForDefendingPlayerEffect, DrawCardForDamagedPlayerEffect,
+DrawCardForTargetPlayerEffect, DrawCardForDefendingPlayerEffect,
 DrawCardForTriggeringPlayerEffect, DrawCardsForEachOpponentOfTriggeringPlayerEffect and (if the may-choice allows)
 EachOpponentOfTriggeringPlayerMayDrawCardEffect into it. Read AGENTS.md and agent-docs/ARCHITECTURE.md first; model
 the recipient resolution on LoseLifeEffectHandler. Grep every reader of each class (engine, AI, networking, tests,

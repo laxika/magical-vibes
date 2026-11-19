@@ -14,7 +14,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | Step | Title | Status |
 |---|---|---|
 | 1 | Inventory script, audit ledger and count ratchet | done |
-| 2 | Delete the effects nothing uses | open |
+| 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | open |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | open |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open |
@@ -615,6 +615,41 @@ For later steps:
   `<Effect>HandlerTest` under `:magical-vibes-application:test`, then one task per card-test letter module with
   its `--tests` filters. Cards without a `<Card>Test` class are listed on stderr (57 of `DrawCardEffect`'s 2,772).
 - **Ledger.** `scripts/effect-audit-ledger.csv` has its header only: step 1 audits no class.
+
+### Step 2 (2026-11-19)
+
+Deleted 39 records (9 named by nothing, 30 named only by their own handler) and their 32 handlers (30 in
+`normalfx`; the dead pairs `AnyPlayerMayTakeDamageOrDrawTargetPlayer*` and `DamageTargetPlayerOrPlaneswalkerUnlessPays*`
+also had a `mayfx` handler). Ratchet: 4,940 records, 4,173 handler classes. Every deleted name was grepped across all
+tracked files (engine, AI, networking, webservice, frontend, cards, tests, docs); no reflection, registry list or
+Jackson subtype list names effects by string. Tests: `DrawCardForDamagedPlayerEffectHandlerTest` deleted;
+`GameQueryServiceTest`'s Goblin Goliath case (the only user of `DoubleControllerDamageToOpponentsEffect`) deleted;
+`TurnProgressionServiceTest` now uses `OpponentExtraTurnSkipReplacementEffect`, which is identical to the deleted
+`SkipExtraTurnReplacementEffect`. Many agent-docs rows still described cards with the deleted classes although the
+cards had moved to other effects; those rows now name what the card uses.
+
+Kept as `blocked-other` (8), all listed by `--dead`:
+
+- Built at runtime, so not dead: `ChooseAttackTargetsForCreatedTokensEffect`, `PutExiledCardsIntoOwnersGraveyardEffect`,
+  `PutStillExiledCardsIntoGraveyardAndCreateTokensEffect`, `ReboundCastFromExileEffect`. Their handler builds the
+  record in a public method other handlers call. `--dead` cannot see this; it should not list a record its own handler
+  constructs outside `resolve`.
+- Record unused, handler used as a service: `EachPlayerReturnsPermanentToHandEffect` (Words of Wind's draw
+  replacement calls `beginReplacement` / `completeChoice` from `DrawService` and `MultiPermanentChoiceHandlerService`).
+- Whole flow dead, but more than a handler: `EachPlayerChoosesCreatureThenSacrificesRestEffect`,
+  `OpponentChoosesCreatureTheyControlTokenCopyEffect`, `TargetPlayerChoosesCardsFromHandThenMayCastOneEffect`. Only
+  their own `resolve` creates the choice context / pending interaction that their completion handles, so the
+  completion branch in the input service, the context record and (for the last) the `PendingInteraction` variant,
+  AI strategy and prompt projection are dead too. Deleting them is a multi-file removal for step 9 or 11.
+
+For later steps:
+
+- Interfaces left with no implementer (out of scope here): `CastTimeXValueModifierEffect` (read by
+  `SpellCastingService` and `ValidTargetService`); `ControllerRecipientDamageMultiplyingEffect.appliesToOpponentPermanents()`
+  has no overrider, so its `false` branch in `GameQueryService.getDamageToRecipientMultiplier` is unreachable.
+  `AttackerTargetRestrictionEffect` is down to `CantAttackControllerEffect`. Step 11 should sweep interfaces and enums
+  with no implementer or reader.
+- `EFFECT_MERGE_PLAN.md` step 20's `SacrificeCreatureForTokenEffect` row is marked moot (one of its two classes was dead).
 
 ## Prompt
 

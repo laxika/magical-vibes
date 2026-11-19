@@ -643,7 +643,7 @@ Steps add notes here for later steps, under their number.
     orphan sweep, or to attach inside it.
   - `DestructionSupport.sacrificeSource`: `departAsStep(gd, entry, null, …)` (always `departNow`), since the
     forced-cost fallback effects run in one synchronous loop, also from choice completions with synthetic entries.
-- Nested dispatches (`RemoveCounterOrSacrificeSelfThenEffectHandler`, `SacrificeSelfThenDealDamageToEnteringCreatureEffectHandler`,
+- Nested dispatches (`SacrificeSelfThenDealDamageToEnteringCreatureEffectHandler`,
   `DestructionSupport` calling `SacrificeEnchantedCreatureEffectHandler` for Soul Tithe) are not the step, so they
   never pend: `departNow` asks and reruns inside a marked handler's window, otherwise the old fallback applies.
 - Rules fixes along the way: Furnace Scamp and Whispering Specter now deal damage / force discards only if the
@@ -2171,7 +2171,7 @@ Steps add notes here for later steps, under their number.
   - No official ruling covers the Mastery (it is a playtest card).
 - **Done:**
   - **The loss as a step of its own** (`PlayersLoseLifeEffect` or `LoseLifeEffect` inserted after the handler, followed by `GainLifeEffect`, `DrawCardEffect` or a `ResolveRiderForPlayerEffect` draw where the card says so):
-    - Creeping Dread; Pain's Reward; the rad trigger (and the unused `RadCounterEffectHandler`).
+    - Creeping Dread; Pain's Reward; the rad trigger.
     - `ExileCardsFromGraveyard`'s conditional opponents' loss. This also corrects the order: the opponents now lose before you gain, per Oracle.
     - `ExileGraveyardCardWithConditionalBonus`'s graveyard-owner loss (no card uses it); Suffer the Past; `GraveyardReturnSupport`'s Reanimate loss.
     - Stroke of Luck (both branches); Pact Weapon; `TargetPlayerDrawsAndLosesLifePerChosenType`'s multi-target losses (one step after every draw).
