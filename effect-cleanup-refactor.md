@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 17 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 18 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -536,6 +536,7 @@ cause under Findings.
 | 15 | the Return family (fused names or a nested `CardEffect`; Exile left for the card-subject decision): the chosen return records a RETURN step, then its "then" records, the target-return "then" records, the attached bounce | done (6 split, 1 absorbed, 4 survivors, 1 unique, 9 blocked-other; 23 card files rewritten; `choosingOneOf`, `ReturnToHandEffect.targetCreatureAndAttached`, `toA(RETURN)`; Paradoxical Outcome kept on its record; the batch bounce now looks back, CR 603.10a) |
 | 16 | the Destroy family: the mana-value conditional (Perilous Voyage pattern), the same-name / same-mana-value / shared-colour sets (`otherCreaturesSharing` widened to any permanent), the block-trigger `allOf` pairs, the rider splits | done (3 split, 6 absorbed, 1 survivor, 1 blocked-player-loop, 10 blocked-other; 23 card files rewritten, 16 of them by hand; `otherPermanentsSharing(permanent, quality, filter)`, `SharedQuality.MANA_VALUE`; a permanent with all card names now shares every name; `DestroyAllPermanentsEffect`'s rider not started) |
 | 17 | `DestroyAllPermanentsEffect`'s rider: the wipe records a DESTROY step, the plain-count, count-scope and per-controller riders become later steps; Voodoo Doll if budget remains | done (1 split, 1 absorbed, 5 survivors, 2 blocked-player-loop, 3 blocked-other; 27 of the 30 rider cards split, 33 card files rewritten; `AmountThisWay.died` / `matching` / `controlledByYou`; the rider stays for From the Ashes, Seeds of Innocence, Stench of Evil; Voodoo Doll tried and kept) |
+| 18 | run 17's next: `DestroyEachTargetPermanentEffect` records a DESTROY step and its 9 rider cards split; then the draw-then-put-from-hand family (first half `DrawCardEffect`) | done (3 split, 1 absorbed, 1 amount absorbed, 4 survivors, 1 unique, 1 blocked-player-loop, 3 blocked-other; 27 card files rewritten; `AmountThisWay.destroyedManaValue()` / `.includingUnremoved()`, `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect` takes a placement and a `PlayerSubject`; three stamped `StackEntry` fields deleted; Seeds of Innocence not split) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4754,6 +4755,89 @@ testFixtures and every touched card and card-test module compile.
 - **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
   `OrElse` name): 133 (1,264 card uses), unchanged (this run's classes had no such names); by first word Exile 22, Search 10, Sacrifice 10,
   Reveal 9, Counter 8, Prevent 7, Each 6, Draw 6, Choose 5, Cant 5, Put 4, Destroy 3.
+
+### Step 8, run 18 (2026-11-20)
+
+Run 17's "Next run": `DestroyEachTargetPermanentEffect` records a DESTROY step and its 9 rider cards split; then, as the next fused
+family by multi-card use whose first half records a step, the draw-then-put-from-hand records (first half `DrawCardEffect`). Verdicts
+(ledger, step `8`): **split 3** (`CreateTokenForEachDestroyedPermanentControllerEffect`, `DealDamageToEachDestroyedPermanentControllerEffect`,
+`DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect`), **absorbed 1** (`PutControllerCardFromHandOnTopOfLibraryEffect`), **amount absorbed 1**
+(`TotalManaValueOfDestroyedPermanents`, `model/amount`), with their handlers; **survivor 4** (`DestroyEachTargetPermanentEffect`, `AmountThisWay`,
+`DestroyTargetPermanentsWithinTotalManaValueEffect`, `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect`), **unique 1**
+(`RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect`, Indomitable Creativity), **blocked-player-loop 1**
+(`EachPlayerPutsCardFromHandOnTopOfLibraryEffect`), **blocked-other 3** (Seeds of Innocence's rider, re-audited;
+`MayPutCardFromHandOnBottomOfLibraryThenDrawEffect`, `PutHandOnBottomOfLibraryAndDrawEffect`). Ratchet 4,743 / 3,976 → 4,739 / 3,972. 27 card
+files rewritten: the 9 rider cards by hand, the 17 draw-then-put / put-a-card cards by a deleted scratch script (read back by eye), Widespread
+Panic by hand. Oracle text of every one checked with `get_card`; rulings of Soul of Emancipation, Volcanic Eruption, The Elderspell, The Curse of
+Fenric (none), Terastodon, Indomitable Creativity, Descent of the Dragons, Convert to Slime, Builder's Bane (none), Dream Cache (none) and Widespread
+Panic with `get_rulings`. CR 700.4, 608.2h, 608.2b, 120.8 and 708.2 checked with `get_rule` (2026-11-20).
+
+- **The targeted destroy is a step.** `DestroyEachTargetPermanentEffectHandler` records `recordDestroyDepartures` as run 17's wipe does: NONE as
+  it begins, then the departure of every target it was told to destroy (legal, still on the battlefield, matching its filter), those that stayed
+  included. Its stamping (`eventValue`, `eventPlayerIds`, `eventNontokenPlayerIds`, `eventDestroyedPlayerIds`, `eventTargetedPlayerIds`,
+  `eventManaValues`) and the `countsOnlyDeaths` component (`countingPermanentsPutIntoAGraveyard()`) are gone. `DestroyTargetPermanentsWithinTotalManaValueEffect`
+  (Rampaging Yao Guai) records the same way instead of stamping three fields nothing read. `StackEntry.eventNontokenPlayerIds`,
+  `eventDestroyedPlayerIds` and `eventTargetedPlayerIds` had no writer left and are deleted; `eventPlayerIds` / `eventManaValues` stay for
+  `DestroyAllPermanentsEffect`'s three remaining riders.
+- **`AmountThisWay`** accepts POWER / TOUGHNESS / MANA_VALUE for DESTROY (`destroyedManaValue()`: the departures' last-known mana value, the
+  Convert to Slime ruling's "as they last existed on the battlefield"), and gained `includesUnremoved` (`.includingUnremoved()`, DESTROY only, not
+  with DIED): every departure of the destroy step, those not destroyed included, "for each of those permanents". It reads nothing unless the
+  departures are that step's (the destroyed ones among them are exactly the DESTROY outcome's objects), since `DestroyTargetPermanentEffect`
+  records an outcome without departures. A permanent that stayed is judged as it is now for a filter.
+- **Split cards.** Volcanic Eruption `MassDamageEffect(AmountThisWay.died(DESTROY), true)`; The Elderspell `Scaled(AmountThisWay(DESTROY), 2)`;
+  Descent of the Dragons and The Curse of Fenric (chapter I) `EachPlayerCreatesTokenEffect(token.withAmount(AmountThisWay(DESTROY).controlledByYou()))`;
+  Terastodon the same with `died` inside its `MayEffect(SequenceEffect.of(...))`; Soul of Emancipation with `.includingUnremoved().controlledByYou()`
+  (its rulings: a shield-countered target still gives an Angel, an illegal one doesn't); Convert to Slime `AmountThisWay.destroyedManaValue()`;
+  Builder's Bane `DealDamageToPlayersEffect(AmountThisWay.died(DESTROY).controlledByYou(), eachPlayer())` (amount per player; 0 deals no damage,
+  CR 120.8). Indomitable Creativity keeps its record, whose handler now reads `playersThisWay(DESTROY)` and `AmountThisWay(DESTROY).controlledByYou()`
+  per player. Target specs are unchanged: the destroy step is the only one that declares a target.
+- **Hand to library.** `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect` gained `HandToLibraryPlacement placement` and `PlayerSubject player`
+  (`(count)` keeps target player, TOP; `yours(count, placement)`; one player only, `each(...)` refused), resolved through `SubjectResolutionService`;
+  harmful player target only when the subject declares one. "Draw N, then put M cards from your hand on …" is `DrawCardEffect(N)` then
+  `yours(M, placement)`: flat spell effects (Brainstorm, Dream Cache, Aquatic Subtlety, Amass the Components), trigger effects (Riverwise Augur,
+  Cavalier of Gales, Hidetsugu and Kairi, Sawtooth Loon), ability lists (Jace, the Mind Sculptor, Mordenkainen, Brainstone); the put alone for
+  Seek New Knowledge and Errand-Rider of Gondor (draw count 0). The four `PutControllerCardFromHandOnTopOfLibraryEffect` cards (Enter the Infinite,
+  Conch Horn, Survivor of the Unseen, Aminatou) take `yours(1, TOP)` (the same min = max = 1 choice). The draw never prompts (step 7's list) and the
+  put pauses at its end, so the split is safe; the old handler inserted the put after drawing, the same order.
+- **Behaviour changes.** Convert to Slime's X is the departures' last-known mana value (`getPermanentManaValue`: a face-down creature 0, CR 708.2;
+  a transformed permanent its front face's) instead of the printed card's. Widespread Panic's "that player" is `triggeringPlayer()` (the shuffling
+  player the trigger bakes as a non-targeting id): the record no longer declares a player target on it. Token order across players in Descent, Fenric,
+  Terastodon and Soul of Emancipation is seat order (`EachPlayerCreatesTokenEffect`); Indomitable Creativity reveals in APNAP order. The
+  survivors' log lines win.
+- **AI.** No AI class named a deleted record. Builder's Bane's rider is still a `DamageDealingEffect` (`DealDamageToPlayersEffect`); the split cards'
+  target steps are unchanged (`DestroyEachTargetPermanentEffect` HARMFUL_REMOVAL by name entry).
+- **Blocked, by cause.** Seeds of Innocence: `AmountThisWay(DESTROY, MANA_VALUE).includingUnremoved().controlledByYou()` names the set now, but the
+  record gains life once per artifact (one life-gain event each, which "whenever you gain life" counts) and a departure that stayed without a
+  snapshot (indestructible) records no mana value. The two hand-to-library "then draw" records: the put from hand records no step (no `StepKind`
+  for hand to library). `EachPlayerPutsCardFromHandOnTopOfLibraryEffect` keeps its own APNAP loop.
+
+**Tests**: one Gradle run, one `--tests` list per task: the tests of every rewritten card and of every other card test that
+constructs one or a card naming `AmountThisWay` (Circle of Protection: Blue among them), `--tests-for DestroyEachTargetPermanentEffect
+--max-per-class 30`, `--tests-for TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect EachPlayerCreatesTokenEffect DrawCardEffect DealDamageToPlayersEffect
+MassDamageEffect DestroyTargetPermanentsWithinTotalManaValueEffect --max-per-class 8` (207 card-test classes); application (`ResolutionScratchpadAmountTest`
++4: a destroy step's mana value, including what wasn't destroyed per controller, nothing read from an older step's departures, refused kinds;
+`StepResultsTest`, `EffectResolutionServiceTest`, `SubjectResolutionServiceTest`, `SpellCastingServiceTest`, `DestroyAllPermanentsEffectHandlerTest`,
+`EffectCountRatchetTest`, `CardImmutabilityArchTest`) and AI (`TargetPolarityGuardTest`, `GameDataDeepCopyTest`, `SpellEvaluatorTest`,
+`PutCardsFromHandOnLibraryAiStrategyTest`): 219 top-level classes (283 result files with the `@Nested` suites), 2,255 test cases, all pass, no card
+test needed a change. Application, AI, engine testFixtures and card-test `a b c d e h i j m r s t v w` test sources compile.
+
+**For later runs.**
+
+- "For each [permanent] destroyed / put into a graveyard this way, its controller …" after `DestroyEachTargetPermanentEffect` is the same as after
+  `DestroyAllPermanentsEffect` (run 17); "for each of those permanents" is `.includingUnremoved()`; "the total mana value of permanents destroyed
+  this way" is `AmountThisWay.destroyedManaValue()`. "Draw N, then put M cards from your hand on top / the bottom of your library" is
+  `DrawCardEffect(N)` + `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(M, placement)`.
+- **Next run.** By multi-card use, the fused records whose first half records a step: `SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect`
+  (5 cards; Reprocess, Pitiless Carnage, Malevolent Witchkite, God-Eternal Bontu, Sephiroth) with its sibling
+  `SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect`: give `SacrificePermanentsEffect` an "any number" choice that records the
+  SACRIFICE step, then `DrawCardEffect(AmountThisWay(SACRIFICE))`; `SacrificePermanentOrDiscardCardThenDrawAndBoostSelfEffect` (4) after reading
+  its choice; `ManifestTopCardAndPutCountersEffect` (3) once manifest records a step. The "And" sets with no step are step-5m work:
+  `BoostTargetCreatureAndAllWithSameNameEffect` (Echoing Decay / Courage, Bile Blight) and `BoostEnchantedAndSharingCreaturesUntilEndOfTurnEffect`
+  (the three Crowns) need a target-declaring boost with an `allOf(target(), otherCreaturesSharing(...))` subject, minding the AI polarity of a
+  positive pump. Seeds of Innocence needs the per-artifact life-gain decision above.
+- **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse` name): 130
+  (1,244 card uses); by first word Exile 22, Search 10, Sacrifice 10, Reveal 9, Counter 8, Prevent 7, Each 6, Draw 5, Choose 5, Cant 5, Put 3,
+  Destroy 3, Creatures 3, Create 3. About a third are not two instructions, so roughly 85 split-able families remain.
 
 ## Prompt
 

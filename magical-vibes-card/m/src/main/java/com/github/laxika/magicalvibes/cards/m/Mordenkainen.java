@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExchangeHandAndLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
@@ -28,8 +29,8 @@ public class Mordenkainen extends Card {
     public Mordenkainen() {
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(
-                        2, 1, HandToLibraryPlacement.BOTTOM)),
+                List.of(new DrawCardEffect(2),
+                        TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(1, HandToLibraryPlacement.BOTTOM)),
                 "+2: Draw two cards, then put a card from your hand on the bottom of your library."
         ));
 

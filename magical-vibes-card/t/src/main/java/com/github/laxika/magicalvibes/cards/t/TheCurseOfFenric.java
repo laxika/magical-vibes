@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -9,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
@@ -51,10 +53,10 @@ public class TheCurseOfFenric extends Card {
     public TheCurseOfFenric() {
         addTrigger(Triggers.chapter(1),
                 new DestroyEachTargetPermanentEffect(),
-                new CreateTokenForEachDestroyedPermanentControllerEffect(
-                        new CreateTokenEffect("Mutant", 3, 3, CardColor.GREEN,
-                                List.of(CardSubtype.MUTANT),
-                                Set.of(com.github.laxika.magicalvibes.model.Keyword.DEATHTOUCH), Set.of())));
+                new EachPlayerCreatesTokenEffect(new CreateTokenEffect("Mutant", 3, 3, CardColor.GREEN,
+                        List.of(CardSubtype.MUTANT),
+                        Set.of(com.github.laxika.magicalvibes.model.Keyword.DEATHTOUCH), Set.of())
+                        .withAmount(new AmountThisWay(StepKind.DESTROY).controlledByYou())));
         setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);

@@ -15,12 +15,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Destroys the targets matching the filter, in order, while their combined mana value stays within the limit, as one
+ * event, and records the step's departures on the entry's resolution scratchpad ({@code StepKind.DESTROY}), even when
+ * nothing was destroyed.
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyTargetPermanentsWithinTotalManaValueEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
@@ -38,6 +41,7 @@ public class DestroyTargetPermanentsWithinTotalManaValueEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyTargetPermanentsWithinTotalManaValueEffect) effect;
+        entry.recordDestroyDepartures(List.of());
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -50,7 +54,6 @@ public class DestroyTargetPermanentsWithinTotalManaValueEffectHandler implements
         }
 
         List<Permanent> toDestroy = new ArrayList<>();
-        Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
         HashSet<UUID> seenTargetIds = new HashSet<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
@@ -73,27 +76,10 @@ public class DestroyTargetPermanentsWithinTotalManaValueEffectHandler implements
             }
             selectedManaValue += targetManaValue;
             toDestroy.add(target);
-            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
-            if (controllerId != null) {
-                controllerByPermanentId.put(target.getId(), controllerId);
-            }
         }
 
-        List<Permanent> actuallyDestroyed = destructionSupport.destroyBatchDestroyed(
+        DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(
                 gameData, toDestroy, entry.getCard().getName(), false);
-        List<UUID> destroyedControllerIds = new ArrayList<>();
-        List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
-        for (Permanent permanent : actuallyDestroyed) {
-            UUID controllerId = controllerByPermanentId.get(permanent.getId());
-            if (controllerId != null) {
-                destroyedControllerIds.add(controllerId);
-                if (!permanent.getCard().isToken()) {
-                    destroyedNontokenControllerIds.add(controllerId);
-                }
-            }
-        }
-        entry.setEventValue(actuallyDestroyed.size());
-        entry.setEventPlayerIds(destroyedControllerIds);
-        entry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
+        entry.recordDestroyDepartures(outcome.results());
     }
 }

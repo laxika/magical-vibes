@@ -10,14 +10,19 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Destroys every target of the entry still on the battlefield and matching the effect's filter as one event (a single
+ * spell or ability destroys its targets simultaneously, so they see each other die), and records the step on the
+ * entry's resolution scratchpad: the departure of every permanent it was told to destroy, those that stayed included,
+ * so {@code StepKind.DESTROY}'s outcome is what was destroyed (wherever a replacement put it) with the controllers as
+ * they were destroyed (CR 608.2h). It records even when nothing was destroyed.
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
@@ -34,23 +39,14 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyEachTargetPermanentEffect) effect;
+        entry.recordDestroyDepartures(List.of());
 
         List<UUID> targets = entry.getTargetIds();
         if (targets.isEmpty() && entry.getTargetId() != null) {
             targets = List.of(entry.getTargetId());
         }
 
-        // Count the permanents actually destroyed this way (indestructible/regenerated targets don't count;
-        // one a replacement such as Rest in Peace exiled instead does, per the Fumigate, Noxious Gearhulk and
-        // Break the Spell rulings, unless the card counts only those "put into a graveyard this way") and
-        // snapshot it onto the entry as its event value, so a later effect on the same entry can reference
-        // "that many" via an EventValue amount (The Elderspell, Volcanic Eruption).
-        // A single spell or ability destroys all of its targets simultaneously, so route the whole
-        // batch through DestructionSupport rather than destroying one at a time — otherwise the
-        // creatures don't see each other die and "whenever a creature dies" triggers under-count.
         List<Permanent> toDestroy = new ArrayList<>();
-        Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
-        Map<UUID, Integer> manaValueByPermanentId = new HashMap<>();
         HashSet<UUID> seenTargetIds = new HashSet<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
@@ -68,42 +64,10 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
                 continue;
             }
             toDestroy.add(target);
-            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
-            if (controllerId != null) {
-                controllerByPermanentId.put(target.getId(), controllerId);
-            }
-            manaValueByPermanentId.put(target.getId(), target.getCard().getManaValue());
         }
 
         DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(
                 gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated());
-        List<Permanent> counted = destroy.countsOnlyDeaths() ? outcome.died() : outcome.destroyed();
-
-        // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
-        List<UUID> destroyedControllerIds = new ArrayList<>();
-        List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
-        for (Permanent perm : counted) {
-            UUID controllerId = controllerByPermanentId.get(perm.getId());
-            if (controllerId != null) {
-                destroyedControllerIds.add(controllerId);
-                if (!perm.getCard().isToken()) {
-                    destroyedNontokenControllerIds.add(controllerId);
-                }
-            }
-        }
-        entry.setEventValue(counted.size());
-        entry.setEventManaValues(counted.stream()
-                .map(permanent -> manaValueByPermanentId.getOrDefault(permanent.getId(), 0))
-                .toList());
-        // Per-permanent controller tally for riders that need "the number of permanents THEY
-        // controlled that were destroyed this way" (Indomitable Creativity), which the single
-        // event value can't express. Duplicates are meaningful: three artifacts lost = three entries.
-        entry.setEventDestroyedPlayerIds(destroyedControllerIds);
-        entry.setEventTargetedPlayerIds(toDestroy.stream()
-                .map(permanent -> controllerByPermanentId.get(permanent.getId()))
-                .filter(java.util.Objects::nonNull)
-                .toList());
-        entry.setEventPlayerIds(destroyedControllerIds);
-        entry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
+        entry.recordDestroyDepartures(outcome.results());
     }
 }

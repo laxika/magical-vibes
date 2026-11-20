@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -25,7 +26,7 @@ public class TheElderspell extends Card {
 
         addSpellEffect(new PutCounterOnTargetPermanentEffect(
                 CounterType.LOYALTY,
-                new Scaled(new EventValue(), 2),
+                new Scaled(new AmountThisWay(StepKind.DESTROY), 2),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentControlledBySourceControllerPredicate()

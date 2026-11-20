@@ -6,14 +6,21 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +33,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/** Resolves the per-controller library replacement rider used by Indomitable Creativity. */
+/**
+ * Resolves the per-controller library replacement rider used by Indomitable Creativity: "for each permanent destroyed
+ * this way, its controller reveals …". The players are those the preceding destroy step recorded as the controllers of
+ * what it destroyed ({@code playersThisWay(DESTROY)}), each revealing until they find as many matching cards as
+ * permanents they controlled that were destroyed ({@code AmountThisWay(DESTROY).controlledByYou()}, evaluated with
+ * that player as the controller).
+ */
 @Component
 @RequiredArgsConstructor
 public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffectHandler
@@ -37,6 +50,12 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final LegendRuleService legendRuleService;
+    private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
+
+    private static final PlayerSubject DESTROYED_PERMANENT_CONTROLLERS = Subjects.playersThisWay(StepKind.DESTROY);
+    private static final AmountThisWay THEIR_DESTROYED_PERMANENTS =
+            new AmountThisWay(StepKind.DESTROY).controlledByYou();
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,8 +66,14 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var reveal = (RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect) effect;
         Map<UUID, Integer> requiredByController = new LinkedHashMap<>();
-        for (UUID controllerId : entry.getEventDestroyedPlayerIds()) {
-            requiredByController.merge(controllerId, 1, Integer::sum);
+        AmountContext context = AmountContext.forStackEntry(entry, null);
+        for (UUID controllerId : subjectResolutionService.players(gameData, entry, effect,
+                DESTROYED_PERMANENT_CONTROLLERS)) {
+            int count = amountEvaluationService.evaluate(gameData, THEIR_DESTROYED_PERMANENTS,
+                    context.withControllerId(controllerId));
+            if (count > 0) {
+                requiredByController.put(controllerId, count);
+            }
         }
 
         if (requiredByController.isEmpty()) {

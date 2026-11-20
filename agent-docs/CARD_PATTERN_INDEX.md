@@ -270,7 +270,7 @@
 | perpetual cost reduction grant to instant and sorcery cards in hand | `c/ChargedConjuration.java` + `PerpetuallyReduceInstantAndSorceryCastCostInHandEffect` |
 | perpetual cost reduction grant to creature cards in hand | `f/FountainportCharmer.java` + `PerpetuallyReduceCreatureCastCostInHandEffect` |
 | Vivid Seek of color-sharing cards with a perpetual generic cost reduction for each controlled color | `c/CircadianStruggle.java` + `SeekLibraryAndPerpetuallyReduceSoughtCardsEffect` + `CardSharesColorWithControlledPermanentPredicate` |
-| draw two, bottom two, then perpetually grant Evoke to blue creature cards left in hand | `a/AquaticSubtlety.java` + `DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(2, 2, BOTTOM)` + `PerpetuallyGrantEvokeToMatchingHandCardsEffect` |
+| draw two, bottom two, then perpetually grant Evoke to blue creature cards left in hand | `a/AquaticSubtlety.java` + `DrawCardEffect(2)` + `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(2, BOTTOM)` + `PerpetuallyGrantEvokeToMatchingHandCardsEffect` |
 | ETB perpetually grants a tap-for-mana ability to matching Forest and Treefolk cards in hand | `t/TopsoilTurner.java` + `PerpetuallyGrantActivatedAbilityToMatchingHandCardsEffect` |
 | ETB perpetually turns matching Forest cards in hand and library into 3/4 Treefolk creatures with reach and haste, then death seeks two Forests to the battlefield | `w/WildgroveSummoner.java` + `PerpetuallyMakeMatchingHandAndLibraryCardsCreatureEffect` + `SeekLibraryEffect` |
 | perpetual +1/+1 grant to creature cards in your library | `b/BramblearmorBrawler.java` + `PerpetuallyBoostCreatureCardsInLibraryEffect` |

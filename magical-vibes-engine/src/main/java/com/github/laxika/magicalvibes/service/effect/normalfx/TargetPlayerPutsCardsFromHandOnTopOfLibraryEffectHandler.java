@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -15,9 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Asks the targeted player to choose cards from their hand to put on top of their library in any
- * order, reusing the {@link PendingInteraction.PutCardsFromHandOnLibraryCardChoice} top-only flow.
- * Stunted Growth.
+ * Asks the player the effect names to choose cards from their hand to put on their library, through the
+ * {@link PendingInteraction.PutCardsFromHandOnLibraryCardChoice} flow; the entry resumes once they have answered, so the
+ * step pauses at its end. Stunted Growth ("target player"), Brainstorm ("you", after its draw step).
  */
 @Slf4j
 @Component
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerPutsCardsFromHandOnTopOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,25 +34,25 @@ public class TargetPlayerPutsCardsFromHandOnTopOfLibraryEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null) {
+        var put = (TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect) effect;
+        UUID playerId = subjectResolutionService.player(gameData, entry, put, put.player());
+        if (playerId == null || !gameData.playerIds.contains(playerId)) {
             return;
         }
 
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             return;
         }
 
-        int maxCount = Math.min(((TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect) effect).count(), hand.size());
+        int maxCount = Math.min(put.count(), hand.size());
         List<Card> handSnapshot = List.copyOf(hand);
         List<UUID> validCardIds = handSnapshot.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice
-                .putExactlyOnLibrary(targetPlayerId, validCardIds, handSnapshot, maxCount,
-                        HandToLibraryPlacement.TOP));
+                .putExactlyOnLibrary(playerId, validCardIds, handSnapshot, maxCount, put.placement()));
 
-        log.info("Game {} - {} choosing {} card(s) from hand to put on top of library",
-                gameData.id, gameData.playerIdToName.get(targetPlayerId), maxCount);
+        log.info("Game {} - {} choosing {} card(s) from hand to put on library ({})",
+                gameData.id, gameData.playerIdToName.get(playerId), maxCount, put.placement());
     }
 }

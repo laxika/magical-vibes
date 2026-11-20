@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect.Direction;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
-import com.github.laxika.magicalvibes.model.effect.PutControllerCardFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -26,7 +27,8 @@ public class AminatouTheFateshifter extends Card {
     public AminatouTheFateshifter() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(1), new PutControllerCardFromHandOnTopOfLibraryEffect()),
+                List.of(new DrawCardEffect(1),
+                        TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(1, HandToLibraryPlacement.TOP)),
                 "+1: Draw a card, then put a card from your hand on top of your library."
         ));
 

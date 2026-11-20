@@ -11,10 +11,12 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #DRAW}, {@link #DISCARD}, {@link #MILL}: the number of cards, those cards, the players they belonged to;</li>
  *   <li>{@link #EXILE}, {@link #DESTROY}, {@link #SACRIFICE}: the number of permanents, the permanents by their id as
  *       the step acted on them (a sacrifice made outside a departure, as by {@code MakeAnExampleEffect}: the card's
- *       id), their controllers as the step acted on them (CR 608.2h); a sacrifice step's and a destroy-all's
- *       ({@code DestroyAllPermanentsEffect}) {@code DepartureResult}s keep each one's last-known controller, power,
- *       toughness and mana value and where it went (whether it died); an {@link #EXILE} step that exiles cards from a
- *       graveyard, a library or a hand records those cards and their owners;</li>
+ *       id), their controllers as the step acted on them (CR 608.2h); a sacrifice step's and a batch destroy's
+ *       ({@code DestroyAllPermanentsEffect}, {@code DestroyEachTargetPermanentEffect},
+ *       {@code DestroyTargetPermanentsWithinTotalManaValueEffect}) {@code DepartureResult}s, those that stayed included,
+ *       keep each one's last-known controller, power, toughness and mana value and where it went (whether it died); an
+ *       {@link #EXILE} step that exiles cards from a graveyard, a library or a hand records those cards and their
+ *       owners;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
  *       acted on them; to the battlefield: the permanent each card became) or cards, their owners;</li>
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>

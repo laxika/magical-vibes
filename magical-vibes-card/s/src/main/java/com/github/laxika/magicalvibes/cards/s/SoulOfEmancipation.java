@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,8 +33,8 @@ public class SoulOfEmancipation extends Card {
                 "Target must be another nonland permanent"), 0, 3);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DestroyEachTargetPermanentEffect(),
-                CreateTokenForEachDestroyedPermanentControllerEffect.forEachTarget(
-                        new CreateTokenEffect("Angel", 3, 3, CardColor.WHITE,
-                                List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())));
+                new EachPlayerCreatesTokenEffect(new CreateTokenEffect("Angel", 3, 3, CardColor.WHITE,
+                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())
+                        .withAmount(new AmountThisWay(StepKind.DESTROY).includingUnremoved().controlledByYou())));
     }
 }

@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,10 +37,10 @@ public class Terastodon extends Card {
                 "Target must be a noncreature permanent"), 0, 3);
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
-                        DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard(),
-                        new CreateTokenForEachDestroyedPermanentControllerEffect(
-                                new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
-                                        List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()))),
+                        new DestroyEachTargetPermanentEffect(),
+                        new EachPlayerCreatesTokenEffect(new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
+                                List.of(CardSubtype.ELEPHANT), Set.of(), Set.of())
+                                .withAmount(AmountThisWay.died(StepKind.DESTROY).controlledByYou()))),
                 "Destroy the targeted noncreature permanents?"));
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -93,7 +94,7 @@ class ResolutionScratchpadAmountTest {
     }
 
     @Test
-    @DisplayName("Only a sacrifice step's last-known stats can be read")
+    @DisplayName("Only a sacrifice, destroy or exile step's last-known stats can be read")
     void statOfAnotherKindIsRefused() {
         assertThatThrownBy(() -> new AmountThisWay(StepKind.DRAW, AmountThisWay.Stat.POWER))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -129,6 +130,52 @@ class ResolutionScratchpadAmountTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new AmountThisWay(StepKind.EXILE).controlledByYou())
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("A destroy step's mana value is the total last-known mana value of what it destroyed")
+    void destroyedManaValueIsTheTotalOfWhatWasDestroyed() {
+        entry.recordDestroyDepartures(List.of(destroyed(Zone.GRAVEYARD, controllerId),
+                destroyed(Zone.EXILE, controllerId), stayed(controllerId)));
+
+        assertThat(evaluate(AmountThisWay.destroyedManaValue())).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Including what wasn't destroyed counts every permanent the destroy step applied to, by its controller")
+    void includingUnremovedCountsWhatStayedToo() {
+        UUID opponentId = UUID.randomUUID();
+        entry.recordDestroyDepartures(List.of(destroyed(Zone.GRAVEYARD, controllerId), stayed(opponentId),
+                destroyed(Zone.EXILE, opponentId)));
+        AmountThisWay applied = new AmountThisWay(StepKind.DESTROY).includingUnremoved();
+
+        assertThat(evaluate(applied)).isEqualTo(3);
+        assertThat(evaluate(new AmountThisWay(StepKind.DESTROY))).isEqualTo(2);
+        assertThat(amountEvaluationService.evaluate(gd, applied.controlledByYou(),
+                AmountContext.forStackEntry(entry, null).withControllerId(opponentId))).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Including what wasn't destroyed reads nothing when a later destroy step recorded no departures")
+    void includingUnremovedIgnoresAnOlderStepsDepartures() {
+        entry.recordDestroyDepartures(List.of(stayed(controllerId)));
+        entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(UUID.randomUUID()), List.of(controllerId)));
+
+        assertThat(evaluate(new AmountThisWay(StepKind.DESTROY).includingUnremoved())).isZero();
+    }
+
+    @Test
+    @DisplayName("Only a destroy step's count covers what it didn't remove, and not as deaths")
+    void includingUnremovedOfAnotherKindIsRefused() {
+        assertThatThrownBy(() -> new AmountThisWay(StepKind.SACRIFICE).includingUnremoved())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AmountThisWay.died(StepKind.DESTROY).includingUnremoved())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private DepartureResult stayed(UUID controller) {
+        return new DepartureResult(UUID.randomUUID(), Zone.BATTLEFIELD, null, null, 2, 2, false, false, controller,
+                Set.of(), Set.of(), 2);
     }
 
     private DepartureResult destroyed(Zone destination, UUID lastKnownControllerId) {

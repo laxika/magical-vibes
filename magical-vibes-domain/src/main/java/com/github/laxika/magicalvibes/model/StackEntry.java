@@ -573,15 +573,6 @@ public class StackEntry {
      * Duplicates are meaningful: a player who lost three lands appears three times.
      */
     @Setter private List<UUID> eventPlayerIds = List.of();
-    /** Controllers of the nontoken permanents actually destroyed by the event, positionally aligned
-     * with the nontoken subset of {@link #eventPlayerIds}. */
-    @Setter private List<UUID> eventNontokenPlayerIds = List.of();
-    /** Controllers of every permanent a destroy instruction was applied to, whether or not it was
-     * actually destroyed ("for each of those permanents"), one entry per permanent. */
-    @Setter private List<UUID> eventTargetedPlayerIds = List.of();
-    /** Controllers of the permanents destroyed by the event wherever they ended up (a destroyed
-     * permanent exiled instead of dying still counts as destroyed), one entry per permanent. */
-    @Setter private List<UUID> eventDestroyedPlayerIds = List.of();
     /** Card ids of the permanents actually destroyed by the event that produced this entry. */
     @Setter private List<UUID> eventCardIds = List.of();
     private final Map<UUID, Long> eventCardGraveyardEntryVersions = new HashMap<>();
@@ -1574,12 +1565,6 @@ public class StackEntry {
         this.linkedExiledCardId = source.linkedExiledCardId;
         this.triggeringPermanentLastKnownCard = source.triggeringPermanentLastKnownCard;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
-        this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
-        this.eventTargetedPlayerIds = source.eventTargetedPlayerIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.eventTargetedPlayerIds);
-        this.eventDestroyedPlayerIds = source.eventDestroyedPlayerIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.eventDestroyedPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventCardGraveyardEntryVersions.clear();
         this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);

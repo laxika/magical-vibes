@@ -265,7 +265,6 @@ import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
-import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfDestroyedPermanents;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfOtherSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersAmongPlayersAndPermanents;
 import com.github.laxika.magicalvibes.model.amount.TotalRadCountersAmongPlayers;
@@ -471,9 +470,6 @@ public class AmountEvaluationService {
                     ctx.eventValue();
             case CardsLookedAtWhileScrying ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getCardsLookedAtWhileScrying();
-            case TotalManaValueOfDestroyedPermanents ignored ->
-                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventManaValues().stream()
-                            .mapToInt(Integer::intValue).sum();
             case ConvokeCreatureCount ignored ->
                     ctx.convokeCreatureCount();
             case RepeatedAdditionalCostCount a ->
@@ -1122,15 +1118,18 @@ public class AmountEvaluationService {
     }
 
     /**
-     * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice
-     * or exile step removed (CR 608.2h), each counted as at least 0. A count of only those that died, match a filter or
-     * were the amount's controller's reads the removal step's departures, judging each permanent as it last existed on
-     * the battlefield and by the controller it had as it left.
+     * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice,
+     * destroy or exile step removed (CR 608.2h), each counted as at least 0. A count of only those that died, match a
+     * filter or were the amount's controller's reads the removal step's departures, judging each permanent as it last
+     * existed on the battlefield and by the controller it had as it left. One that includes what a destroy step didn't
+     * destroy reads every departure of that step, a permanent still on the battlefield as it is now; it reads nothing
+     * unless the departures are that step's (the permanents among them that were destroyed are its outcome's).
      */
     private int amountThisWay(GameData gameData, AmountContext ctx, AmountThisWay thisWay) {
         StackEntry entry = ctx.stackEntry();
         ResolutionResults results = entry.getResolutionResults();
-        if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()) {
+        if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()
+                && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();
         }
         if (thisWay.kind() == StepKind.EXILE) {
@@ -1138,12 +1137,19 @@ public class AmountEvaluationService {
         }
         boolean sacrifice = thisWay.kind() == StepKind.SACRIFICE;
         Set<UUID> recorded = new HashSet<>(results.outcome(thisWay.kind()).objectIds());
+        if (thisWay.includesUnremoved() && !recorded.equals(results.departures().stream()
+                .filter(DepartureResult::destroyed).map(DepartureResult::permanentId).collect(Collectors.toSet()))) {
+            return 0;
+        }
         FilterContext filterContext = thisWay.filter() == null ? null : FilterContext.of(gameData)
                 .withSourceControllerId(ctx.controllerId())
                 .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId());
         int total = 0;
         for (DepartureResult result : results.departures()) {
-            if (!(sacrifice ? result.sacrificed() : result.destroyed()) || !recorded.contains(result.permanentId())) {
+            boolean counted = thisWay.includesUnremoved()
+                    ? !result.sacrificed()
+                    : (sacrifice ? result.sacrificed() : result.destroyed()) && recorded.contains(result.permanentId());
+            if (!counted) {
                 continue;
             }
             if (thisWay.yours() && (ctx.controllerId() == null
@@ -1151,7 +1157,7 @@ public class AmountEvaluationService {
                 continue;
             }
             Permanent lastKnown = thisWay.filter() != null || thisWay.stat() == AmountThisWay.Stat.DIED
-                    ? ConditionEvaluationService.lastKnownPermanent(gameData, result.permanentId()) : null;
+                    ? lastKnownOrLive(gameData, result) : null;
             if (thisWay.filter() != null && (lastKnown == null
                     || !predicateEvaluationService.matchesPermanentPredicate(lastKnown, thisWay.filter(), filterContext))) {
                 continue;
@@ -1166,6 +1172,15 @@ public class AmountEvaluationService {
             total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
         }
         return total;
+    }
+
+    /** A departed permanent as it last existed on the battlefield, or one that stayed there as it is now. */
+    private Permanent lastKnownOrLive(GameData gameData, DepartureResult result) {
+        Permanent lastKnown = ConditionEvaluationService.lastKnownPermanent(gameData, result.permanentId());
+        if (lastKnown == null && !result.left()) {
+            return gameQueryService.findPermanentById(gameData, result.permanentId());
+        }
+        return lastKnown;
     }
 
     /**

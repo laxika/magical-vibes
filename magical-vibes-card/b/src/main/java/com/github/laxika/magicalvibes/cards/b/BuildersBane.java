@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachDestroyedPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -11,15 +14,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BuildersBane extends Card {
 
     public BuildersBane() {
-        // Destroy X target artifacts. ~ deals damage to each player equal to the number of artifacts
-        // they controlled that were put into a graveyard this way. The destroy effect stamps the
-        // controller of every artifact actually destroyed onto the entry's per-player tally, which
-        // the damage rider reads to give each player their own amount.
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
-        ), Integer.MAX_VALUE).addSpellEffect(DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard());
+        ), Integer.MAX_VALUE).addSpellEffect(new DestroyEachTargetPermanentEffect());
 
-        addSpellEffect(new DealDamageToEachDestroyedPermanentControllerEffect());
+        addSpellEffect(new DealDamageToPlayersEffect(AmountThisWay.died(StepKind.DESTROY).controlledByYou(),
+                Subjects.eachPlayer()));
     }
 }

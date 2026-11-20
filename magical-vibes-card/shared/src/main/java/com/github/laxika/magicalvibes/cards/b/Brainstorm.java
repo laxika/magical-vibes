@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
-import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "76")
 @CardRegistration(set = "ICE", collectorNumber = "61")
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTop
 public class Brainstorm extends Card {
 
     public Brainstorm() {
-        addSpellEffect(new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(3, 2, HandToLibraryPlacement.TOP));
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(2, HandToLibraryPlacement.TOP));
     }
 }

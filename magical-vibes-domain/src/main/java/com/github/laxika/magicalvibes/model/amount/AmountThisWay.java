@@ -23,20 +23,30 @@ import java.util.Objects;
  * permanent as it last existed on the battlefield.
  *
  * <p>{@link Stat#DIED}, {@code filter} and {@code yours} count only some of what a removal step that records its
- * departures removed (a sacrifice step, or the destroy step of {@code DestroyAllPermanentsEffect}): "for each creature
- * that died this way" counts those put into a graveyard (CR 700.4: one a replacement exiled instead was destroyed but
- * didn't die), "for each nontoken creature destroyed this way" those that, as they last existed on the battlefield,
- * match {@code filter}, and "the number of creatures you controlled that were destroyed this way" those the amount's
- * controller controlled as they left (CR 608.2h). The amount's controller is the effect's controller, or the player an
- * effect evaluates its amount for ("each player loses life equal to the number of creatures they controlled that were
- * destroyed this way", Deadly Tempest; "for each creature destroyed this way, its controller creates a token").
+ * departures removed (a sacrifice step, or the destroy step of {@code DestroyAllPermanentsEffect} or
+ * {@code DestroyEachTargetPermanentEffect}): "for each creature that died this way" counts those put into a graveyard
+ * (CR 700.4: one a replacement exiled instead was destroyed but didn't die), "for each nontoken creature destroyed this
+ * way" those that, as they last existed on the battlefield, match {@code filter}, and "the number of creatures you
+ * controlled that were destroyed this way" those the amount's controller controlled as they left (CR 608.2h). The
+ * amount's controller is the effect's controller, or the player an effect evaluates its amount for ("each player loses
+ * life equal to the number of creatures they controlled that were destroyed this way", Deadly Tempest; "for each
+ * creature destroyed this way, its controller creates a token"). Such a destroy step also records the last-known
+ * power, toughness and mana value of what it destroyed ("the total mana value of permanents destroyed this way",
+ * Convert to Slime).
  *
- * @param kind   the kind of step read
- * @param stat   what is read from it
- * @param filter only the removed permanents that match it count; {@code null} for all of them
- * @param yours  only the removed permanents the amount's controller controlled count
+ * <p>{@code includesUnremoved} ({@link #includingUnremoved()}) widens a count over a destroy step that records its
+ * departures to every permanent its instruction applied to, those that weren't destroyed (indestructible, regenerated,
+ * a shield counter) included: "for each of those permanents, its controller creates …" (Soul of Emancipation). A target
+ * that was illegal as the step resolved was never applied to and doesn't count.
+ *
+ * @param kind               the kind of step read
+ * @param stat               what is read from it
+ * @param filter             only the removed permanents that match it count; {@code null} for all of them
+ * @param yours              only the removed permanents the amount's controller controlled count
+ * @param includesUnremoved  every permanent the destroy step applied to counts, not only those it destroyed
  */
-public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours)
+public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
+                            boolean includesUnremoved)
         implements DynamicAmount {
 
     /** What {@link AmountThisWay} reads from the step. */
@@ -45,11 +55,11 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         AMOUNT,
         /** How many of the permanents the step removed died: were put into a graveyard from the battlefield. */
         DIED,
-        /** The last-known power of what the step sacrificed or exiled. */
+        /** The last-known power of what the step sacrificed, destroyed or exiled. */
         POWER,
-        /** The last-known toughness of what the step sacrificed or exiled. */
+        /** The last-known toughness of what the step sacrificed, destroyed or exiled. */
         TOUGHNESS,
-        /** The last-known mana value of what the step sacrificed or exiled. */
+        /** The last-known mana value of what the step sacrificed, destroyed or exiled. */
         MANA_VALUE
     }
 
@@ -58,14 +68,23 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         Objects.requireNonNull(stat, "stat");
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
-                && kind != StepKind.SACRIFICE && kind != StepKind.EXILE) {
+                && !removal && kind != StepKind.EXILE) {
             throw new IllegalArgumentException(
-                    "Only a sacrifice or exile step records last-known " + stat + ": " + kind);
+                    "Only a sacrifice, destroy or exile step records last-known " + stat + ": " + kind);
         }
         if ((stat == Stat.DIED || filter != null || yours) && !removal) {
             throw new IllegalArgumentException(
                     "Only a sacrifice or destroy step records whether and whose what it removed died: " + kind);
         }
+        if (includesUnremoved && (kind != StepKind.DESTROY || stat == Stat.DIED)) {
+            throw new IllegalArgumentException(
+                    "Only a destroy step's count or stat covers what it didn't destroy: " + kind + " " + stat);
+        }
+    }
+
+    /** The amount over only the removed permanents matching {@code filter}, or those the amount's controller controlled. */
+    public AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours) {
+        this(kind, stat, filter, yours, false);
     }
 
     /** The {@code stat} of everything the most recent {@code kind} step recorded. */
@@ -85,7 +104,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
 
     /** "For each nontoken creature destroyed this way": this amount over only the removed permanents matching it. */
     public AmountThisWay matching(PermanentPredicate filter) {
-        return new AmountThisWay(kind, stat, Objects.requireNonNull(filter, "filter"), yours);
+        return new AmountThisWay(kind, stat, Objects.requireNonNull(filter, "filter"), yours, includesUnremoved);
     }
 
     /**
@@ -93,7 +112,20 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
      * permanents the amount's controller controlled.
      */
     public AmountThisWay controlledByYou() {
-        return new AmountThisWay(kind, stat, filter, true);
+        return new AmountThisWay(kind, stat, filter, true, includesUnremoved);
+    }
+
+    /**
+     * "For each of those permanents" after a destroy step: this amount over every permanent the step's instruction
+     * applied to, those it didn't destroy included.
+     */
+    public AmountThisWay includingUnremoved() {
+        return new AmountThisWay(kind, stat, filter, yours, true);
+    }
+
+    /** "The total mana value of permanents destroyed this way": the last-known mana value of what a destroy step destroyed. */
+    public static AmountThisWay destroyedManaValue() {
+        return new AmountThisWay(StepKind.DESTROY, Stat.MANA_VALUE);
     }
 
     /** "The sacrificed creature's power": the last-known power of what the most recent sacrifice step sacrificed. */

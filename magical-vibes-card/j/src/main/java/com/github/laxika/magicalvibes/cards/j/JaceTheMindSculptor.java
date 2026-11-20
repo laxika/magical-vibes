@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
-import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -38,8 +39,8 @@ public class JaceTheMindSculptor extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(
-                        3, 2, HandToLibraryPlacement.TOP)),
+                List.of(new DrawCardEffect(3),
+                        TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(2, HandToLibraryPlacement.TOP)),
                 "0: Draw three cards, then put two cards from your hand on top of your library in any order."
         ));
 

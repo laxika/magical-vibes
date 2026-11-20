@@ -257,7 +257,6 @@ public sealed interface DynamicAmount permits
         TotalManaValueOfCardsExiledWithSource,
         TotalManaValueOfCardsInGraveyard,
         TotalManaValueOfCardsOwnedInExile,
-        TotalManaValueOfDestroyedPermanents,
         TotalManaValueOfOtherSpellsCastThisTurn,
         TotalPowerOfCardsExiledWithSource,
         TotalPowerOfControlledCreatures,

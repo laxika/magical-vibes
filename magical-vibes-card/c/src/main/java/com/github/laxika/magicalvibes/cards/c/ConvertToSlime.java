@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfDestroyedPermanents;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,8 +26,8 @@ public class ConvertToSlime extends Card {
         addSpellEffect(new DestroyEachTargetPermanentEffect());
         addSpellEffect(new ConditionalEffect(
                         new Delirium(),
-                        new CreateTokenEffect("Ooze", new TotalManaValueOfDestroyedPermanents(),
-                                new TotalManaValueOfDestroyedPermanents(), CardColor.GREEN,
+                        new CreateTokenEffect("Ooze", AmountThisWay.destroyedManaValue(),
+                                AmountThisWay.destroyedManaValue(), CardColor.GREEN,
                                 List.of(CardSubtype.OOZE), Set.of(), Set.of())));
     }
 }

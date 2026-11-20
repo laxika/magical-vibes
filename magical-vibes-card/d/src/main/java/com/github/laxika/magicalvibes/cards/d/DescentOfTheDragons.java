@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -22,8 +24,8 @@ public class DescentOfTheDragons extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 0, Integer.MAX_VALUE).addSpellEffect(new DestroyEachTargetPermanentEffect());
-        addSpellEffect(new CreateTokenForEachDestroyedPermanentControllerEffect(
-                        new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,
-                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())));
+        addSpellEffect(new EachPlayerCreatesTokenEffect(new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,
+                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())
+                .withAmount(new AmountThisWay(StepKind.DESTROY).controlledByYou())));
     }
 }

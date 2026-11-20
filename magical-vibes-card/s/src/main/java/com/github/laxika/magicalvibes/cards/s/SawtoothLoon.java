@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
-import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -29,6 +30,7 @@ public class SawtoothLoon extends Card {
                 "white or blue creature"
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(2, 2, HandToLibraryPlacement.BOTTOM));
+                new DrawCardEffect(2),
+                        TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect.yours(2, HandToLibraryPlacement.BOTTOM));
     }
 }
