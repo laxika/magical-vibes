@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open |
+| 9 | Sweep the single-card tail (repeatable) | open (run 1 done: Exile, 40 audited) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -602,6 +602,10 @@ Guard rails:
 
 Each run ends with the family's row in Findings: audited, absorbed, split, blocked (by cause), unique,
 left unaudited. The step is done when `--unaudited` lists no record used by fewer than three cards.
+
+| Run | Family | Status |
+|---|---|---|
+| 1 | Exile: the five `step-9` hand-offs and the records used by one or two cards (the two-card ones, then their one-card siblings) | done (40 audited: 5 absorbed, 4 split, 5 survivors (one new step record), 9 unique, 17 blocked-other; 21 card files rewritten; `ExileTargetPlayerHandEffect` takes a `PlayerSubject`, `ExileUpToOneCardFromGraveyardEffect.withSource()`, `PutTimeCountersAndGainSuspendEffect`; two `step-9` rows left for run 2) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -5958,6 +5962,93 @@ combinators beside `MayEffect`: `ForcedCostOrElseEffect`, `MayPayManaEffect`, `M
 restriction merges: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` / `CantAttackOrBlockUnlessEffect` and the three
 `…CantAttack…UnlessPredicateEffect` records. (4) The boost head: `BoostSelfEffect`, `BoostTargetCreatureEffect` (now with a subject),
 `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesEffect`.
+
+### Step 9, run 1 (2026-11-20)
+
+Family Exile: the five `step-9` Exile hand-offs of step 8 run 29, then the unaudited records used by one or two cards (every
+two-card one, and the one-card siblings that share their shape). Ratchet 4,700 / 3,929 → 4,692 / 3,921 records / handlers
+(10 records and handlers deleted, 1 added). 21 card files rewritten by hand (diffs read back by eye, imports sorted). Oracle text
+checked with `get_card` for every card whose handler did something its name didn't say (the six face-down exiles, Urborg
+Scavengers, Doom's Time Platform, Alaundo, The Wedding of River Song); rulings with `get_rulings` (Rotfeaster Maggot, Morbid Bloom,
+Scour the Desert, Ritual of the Returned, Urborg Scavengers, Patchwork Crawler, Sinister Concierge, Epochrasite). CR 400.3, 400.7,
+607.2a, 608.2b, 608.2h, 609.3, 610.3, 614.1c, 702.62a and 702.62b checked with `get_rule` (2026-11-20).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Exile | 40 (39 existing + 1 new step record) | 5 | 4 | 5 | 17 blocked-other: 5 no exile-until step, 4 no random-exile step / timed permission step, 3 graveyard last-known P/T, 2 no hand-choice exile step, 1 permission step for Nita, 1 source link on the triggering-card exile, 1 graveyard-owner subject | 9 | 274 records (238 used by fewer than three cards); `step-9` rows: `ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect`, `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect` |
+
+- **Hands are a player subject.** `ExileTargetPlayerHandEffect(PlayerSubject players, boolean trackWithSource)` (old constructors keep
+  `targetPlayer()`, the only subject that declares its harmful target; `handsOf(players)` / `handsOfWithSource(players)`) absorbed
+  `ExileAllHandsEffect` (Worldfire, Decree of Annihilation: `eachPlayer()`), `ExileAllOpponentsHandsEffect` (Ashiok, Nightmare Weaver:
+  `eachOpponent()`, tracked) and `ExileControllerHandWithSourceEffect` (Wormfang Behemoth: `you()`, tracked). Players in APNAP order
+  (the all-hands handler used seat order); each card is filed in its owner's exile, as Wormfang's handler did (its tests hand a player
+  a card another player owns). Log: the survivor's "P's hand is exiled (N cards)." per player, plus "P's hand is already empty." for an
+  empty hand (the all-hands records said nothing); Wormfang's "P exiles N cards from their hand." is gone. No test asserted either.
+- **The face-down damaged-player exile is the library-exile primitive.** `ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect`
+  (6 cards) = `new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(triggeringPlayer()).exiledFaceDown().withAnyManaType().until(PERMANENT)`;
+  Edward Kenway without `withAnyManaType()`; Gonti, Night Minister ("its controller looks at … They may play") with
+  `.playableBy(controllerOf(triggering()))`; every other card says "you" (Klaw, Gonti Canny Acquisitor, Predators' Hour's granted
+  trigger, Edward Kenway, Dream-Thief's Bandana: `forSourceController()` is gone). Two differences, neither in the Oracle text: the
+  face-down card is no longer linked to the source permanent (nothing reads that link; the look permission is the exiler id), and any-type
+  mana goes only to a nonland card (a land isn't cast). The source-link assertions of the Gonti, Gonti Canny Acquisitor, Dream-Thief's
+  Bandana and Predators' Hour tests were dropped, and Bandana's any-type-mana case now exiles a creature card instead of an Island. Log
+  lines are the survivor's per-card "P exiles a card face down from the top of their library (…)." line.
+- **The Cemetery cycle.** `ExileAnyGraveyardCardAndImprintOnSourceEffect` = `new ExileUpToOneCardFromGraveyardEffect(true).withSource()`
+  (new `trackWithSource` component, set by four cards). Its imprint was never read: `CardSharesCardTypeWithImprintedCardPredicate(true)`
+  and `ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect` read the cards exiled with the source's id, which the stack entry
+  keeps after the source left. New `CemeteryGatekeeperTest` case: a matching spell still deals damage when Gatekeeper left before its
+  ability resolved. The three tests that asserted the imprint now assert the source-tracked exile. Prompt and log are the survivor's.
+- **A suspend step.** New `PutTimeCountersAndGainSuspendEffect(CardSubject cards, int timeCounters)` (`onCardsExiledThisWay(n)` over
+  `cardsThisWay(EXILE)`): each named card in exile, not a token, gets the counters and is suspended (CR 702.62b). It split
+  `ExileSourceCardWithSuspendCountersEffect` (Epochrasite, Sinister Concierge: after `ExileSourceCardFromGraveyardEffect`, which also
+  leaves a card that left its graveyard and came back, CR 400.7; the old handler had no such guard), `ExileTargetCreatureWithSuspendEffect`
+  (Suspend, Sinister Concierge: after `ExileTargetPermanentEffect`) and `ExileTargetNonlandCardFromGraveyardWithSuspendEffect` (Doom's
+  Time Platform: after `ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(nonland)`). Sinister Concierge =
+  `SequenceEffect.of(MayEffect(exile source), suspend, ConditionalEffect(SourceCardSuspended, SequenceEffect.of(exile target, suspend)))`;
+  a declined "may" leaves no EXILE step, so the first suspend names nothing. Log: the exile step's line, then "X gets N time counters and
+  gains suspend.".
+- **Graveyard exile, then a counter on this.** `ExileTargetCardFromGraveyardPutCounterOnSourceEffect` (Urborg Scavengers) and Inherited Fiend's
+  use of `ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect` split into `ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, filter,
+  track)` + `PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE)`: an illegal sole target fizzles the whole ability, so no counter (Urborg Scavengers'
+  ruling). Patchwork Crawler stays on the record: its handler tags the exile with an ability link so an "exiled with" ability Crawler gains
+  from an exiled card (Valki) does not read Crawler's own exiles (CR 607.2a; `PatchworkCrawlerTest`'s Valki case fails without it). An
+  ability link on `ExileGraveyardCardsEffect` would be a parameter only one card sets.
+- **Rory Williams.** `ExileTriggeringSpellWithSuspendCountersEffect` lost its `followUp` component: the Clue is the ability's second effect,
+  which resolves whether or not the spell was still on the stack, as before.
+- **Graveyard last-known P/T (a finding beyond the run).** `AmountThisWay.exiledPower()` / `exiledToughness()` read a card exiled from a
+  graveyard as it is now, in exile. The rulings of Morbid Bloom ("the toughness of the targeted creature card as it last existed in the
+  graveyard"), Scour the Desert ("checks the exiled card's toughness in the graveyard, not what it is in exile") and Ritual of the Returned
+  say otherwise (CR 608.2h: the card left the zone the effect expected it in). The three exile-then-token / life records stay on their
+  handlers, which read the stats before the exile. Cards already on the amount from a graveyard exile (Soul Separator, The Aesir Escape
+  Valhalla, …) differ only for a characteristic-defining P/T that changes as the card leaves the graveyard; worth fixing when the graveyard
+  exile steps record last-known stats.
+
+**Tests** (one Gradle run, one `--tests` list per task, then the changed test classes again): the 21 rewritten cards and every card test
+constructing one of them (the helper sweep: All of History, All at Once; Amy Pond; Martha Jones; Summoner's Grimoire; Tymaret, the Murder King;
+Yixlid Jailer; Heirloom Mirror, whose back face is Inherited Fiend), Patchwork Crawler, Identity Crisis, Hypnox, Taigam, Entrails Feaster,
+`--tests-for` `ExileUpToOneCardFromGraveyardEffect`, `ExileTriggeringSpellWithSuspendCountersEffect`, `ExileTargetPlayerHandEffect`,
+`PutTimeCountersAndGainSuspendEffect` (all), `ExileTopCardMayPlayThisTurnEffect` and `ExileGraveyardCardsEffect` (`--max-per-class 10`),
+`ExileTargetPermanentEffect` and `ExileSourceCardFromGraveyardEffect` (`--max-per-class 6`); application (`EffectCountRatchetTest`,
+`TargetSpecRatchetTest`, `CardEffectTargetingConsistencyTest`, `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest`, `StepResultsTest`,
+`SubjectResolutionServiceTest`, `ExileGraveyardCardsEffectHandlerTest`, `ExileTargetPermanentEffectHandlerTest`) and AI (`GameDataDeepCopyTest`,
+`TargetPolarityGuardTest`): 66 card test classes, 9 application and 2 AI classes; the first run's 11 failures (the source-link, imprint and
+Crawler cases above, and Wormfang's owner cases) fixed, then all pass. Application, AI, engine testFixtures and card-test `a c d e g h k p r s
+u w` test sources compile.
+
+**For the next run (Exile, run 2).**
+
+- The until-source-leaves subfamily with its `step-9` row: give `ExileTargetPermanentUntilSourceLeavesEffect` (101 cards) a `PermanentSubject`
+  and fold `ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect` (`allOf(target(), otherPermanentsSharing(target(), NAME, filter))`,
+  Detention Sphere, Deputy of Detention), `ExileTargetCreaturesUntilSourceLeavesEffect`, `ExileTargetCreatureAndAurasUntilSourceLeavesEffect`,
+  `ExileTriggeringCreatureUntilSourceLeavesEffect`, `ExileOwnNontokenCreaturesUntilSourceLeavesEffect` and `ExileAllPermanentsUntilSourceLeavesEffect`
+  where their handlers agree (read each to the end: the source-already-left branch, CR 610.3, the return-on-leave-trigger flag, tokens).
+- The cheapest prerequisites the blocked rows name: a timed play-permission step over a `CardSubject` (duration, any-type mana, free, exile
+  instead) generalising `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect` (Nita, Dire Fleet Daredevil, the graveyard may-play records
+  `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect` / `…WhileExiledEffect` / `ExileDiscardedCardFromGraveyardMayPlayUntilNextTurnEffect`);
+  then a random-card exile step (the four random records); then an exile-until step recording the hit card (the five exile-until-nonland
+  records); graveyard exile steps recording last-known P/T (the three stat records, and Soul Separator's reads).
+- `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect` (`step-9`) still needs "cast the copy if able" and the random single copy on
+  `CopyImprintedCardAndMayCastCopyEffect`.
 
 ## Prompt
 

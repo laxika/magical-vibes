@@ -40,9 +40,8 @@ class PredatorsHourTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        Card exiledCard = gd.getCardsExiledByPermanent(attacker.getId()).getFirst();
-        ExiledCardEntry exiled = gd.findExiledCard(exiledCard.getId());
-        assertThat(exiledCard).isSameAs(topCard);
+        ExiledCardEntry exiled = gd.findExiledCard(topCard.getId());
+        assertThat(exiled).isNotNull();
         assertThat(exiled.faceDown()).isTrue();
 
         assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());

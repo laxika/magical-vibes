@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -59,8 +60,9 @@ class GontiCannyAcquisitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage by several creatures exiles one card face down, playable with any type of mana")
     void combatDamageExilesOnlyOneCardFaceDownWithPersistentAnyManaPermission() {
-        Permanent gonti = harness.addToBattlefieldAndReturn(player1, new GontiCannyAcquisitor());
+        harness.addToBattlefield(player1, new GontiCannyAcquisitor());
         addAttacker(new GrizzlyBears());
         addAttacker(new GrizzlyBears());
         Card topCard = new Divination();
@@ -72,7 +74,6 @@ class GontiCannyAcquisitorTest extends BaseCardTest {
         ExiledCardEntry entry = gd.findExiledCard(topCard.getId());
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
-        assertThat(entry.sourcePermanentId()).isEqualTo(gonti.getId());
         assertThat(entry.exilerId()).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());

@@ -40,7 +40,7 @@ class GontiNightMinisterTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage to an opponent exiles the top card face down with indefinite play permission")
     void combatDamageExilesFaceDownAndGrantsIndefinitePermission() {
-        Permanent gonti = harness.addToBattlefieldAndReturn(player1, new GontiNightMinister());
+        harness.addToBattlefield(player1, new GontiNightMinister());
         addAttackingCreature(player1, new GrizzlyBears());
         Card topCard = new Divination();
         harness.setLibrary(player2, List.of(topCard, new Island()));
@@ -51,7 +51,6 @@ class GontiNightMinisterTest extends BaseCardTest {
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
-        assertThat(entry.sourcePermanentId()).isEqualTo(gonti.getId());
         assertThat(entry.exilerId()).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());

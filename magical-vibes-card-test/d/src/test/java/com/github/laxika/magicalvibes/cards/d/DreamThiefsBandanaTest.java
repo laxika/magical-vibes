@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -33,12 +34,13 @@ class DreamThiefsBandanaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage exiles the top card face down, playable while exiled with any type of mana")
     void combatDamageExilesDamagedPlayersTopCardFaceDownWithPersistentAnyManaPermission() {
         Permanent bandana = addReadyBandana();
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         bandana.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        Card topCard = new Island();
+        Card topCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombat();
@@ -48,7 +50,6 @@ class DreamThiefsBandanaTest extends BaseCardTest {
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
-        assertThat(entry.sourcePermanentId()).isEqualTo(bandana.getId());
         assertThat(entry.exilerId()).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());

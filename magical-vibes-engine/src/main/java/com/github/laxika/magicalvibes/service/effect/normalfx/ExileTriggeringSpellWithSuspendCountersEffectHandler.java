@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspe
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,9 +44,6 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
                 .findFirst()
                 .orElse(null);
         if (spell == null) {
-            // The spell already left the stack (e.g. countered): there is nothing to exile, but a
-            // follow-up such as Rory Williams' "Then investigate" still resolves.
-            insertFollowUp(entry, effect, suspendEffect);
             return;
         }
 
@@ -63,17 +59,5 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
                 " is exiled with " + suspendEffect.counters() + " time counters and gains suspend."));
         log.info("Game {} - {} exiled with {} suspend counters", gameData.id,
                 card.getName(), suspendEffect.counters());
-
-        insertFollowUp(entry, effect, suspendEffect);
-    }
-
-    private void insertFollowUp(StackEntry entry, CardEffect effect,
-                                ExileTriggeringSpellWithSuspendCountersEffect suspendEffect) {
-        if (suspendEffect.followUp() != null) {
-            int effectIndex = entry.getEffectsToResolve().indexOf(effect);
-            if (effectIndex >= 0) {
-                entry.insertEffectsToResolve(effectIndex + 1, List.of(suspendEffect.followUp()));
-            }
-        }
     }
 }

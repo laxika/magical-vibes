@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class CemeteryProtector extends Card {
 
     public CemeteryProtector() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileAnyGraveyardCardAndImprintOnSourceEffect());
+                new ExileUpToOneCardFromGraveyardEffect(true).withSource());
 
         CardSharesCardTypeWithImprintedCardPredicate sharedType =
                 new CardSharesCardTypeWithImprintedCardPredicate(true);

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CemeteryProwler extends Card {
 
     public CemeteryProwler() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileAnyGraveyardCardAndImprintOnSourceEffect());
-        addTrigger(Triggers.attacks(), new ExileAnyGraveyardCardAndImprintOnSourceEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileUpToOneCardFromGraveyardEffect(true).withSource());
+        addTrigger(Triggers.attacks(), new ExileUpToOneCardFromGraveyardEffect(true).withSource());
         addStaticEffect(new ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect());
     }
 }

@@ -25,8 +25,8 @@ import java.util.UUID;
  * controller to choose up to one (exactly one when mandatory). The answer is recorded by
  * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} through
  * {@code graveyardTargetOperation.resolutionTimeExileThenEffectResume}, and this handler resolves again with it before
- * anything changed: it exiles the chosen card and records the EXILE step (NONE when nothing was exiled), so a later
- * step of the same resolution can read it.
+ * anything changed: it exiles the chosen card (tracked with the source permanent when the effect says so) and records
+ * the EXILE step (NONE when nothing was exiled), so a later step of the same resolution can read it.
  */
 @Component
 @RequiredArgsConstructor
@@ -66,7 +66,8 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
                     .orElse(null);
             UUID ownerId = chosen == null ? null : gameQueryService.findGraveyardOwnerById(gameData, chosenCardId);
             if (chosen == null || ownerId == null
-                    || !graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, chosenCardId, chosen)) {
+                    || !graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, chosenCardId, chosen,
+                    exileEffect.trackWithSource() ? entry.getSourcePermanentId() : null)) {
                 return;
             }
             entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(chosenCardId), List.of(ownerId)));

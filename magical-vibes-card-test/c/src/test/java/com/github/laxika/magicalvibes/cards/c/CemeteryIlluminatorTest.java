@@ -29,7 +29,7 @@ class CemeteryIlluminatorTest extends BaseCardTest {
         Permanent illuminator = enterIlluminatorWith(exiled);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
-        assertThat(gd.getImprintedCard(illuminator.getCard())).isSameAs(exiled);
+        assertThat(gd.getCardsExiledByPermanent(illuminator.getId())).contains(exiled);
     }
 
     @Test
@@ -48,7 +48,7 @@ class CemeteryIlluminatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstExiled, secondExiled);
-        assertThat(gd.getImprintedCard(illuminator.getCard())).isSameAs(secondExiled);
+        assertThat(gd.getCardsExiledByPermanent(illuminator.getId())).contains(secondExiled);
     }
 
     @Test

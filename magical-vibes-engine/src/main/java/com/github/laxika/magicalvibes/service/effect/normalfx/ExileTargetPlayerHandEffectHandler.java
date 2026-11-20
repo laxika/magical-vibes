@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link ExileTargetPlayerHandEffect}: every card in the targeted player's hand is exiled.
- * There is no player choice and no play permission; exiling from hand is not a discard, so no discard
- * triggers fire. Mirrors the graveyard-exile log strings.
+ * Resolves {@link ExileTargetPlayerHandEffect}: every card in the hand of each player its subject names (APNAP order)
+ * is exiled. There is no player choice and no play permission; exiling from hand is not a discard, so no discard
+ * triggers fire. Mirrors the graveyard-exile log strings, one line per player.
  */
 @Slf4j
 @Component
@@ -28,6 +29,7 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
 
     private final GameLogService gameLogService;
     private final ExileService exileService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,13 +39,17 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileTargetPlayerHandEffect exileEffect = (ExileTargetPlayerHandEffect) effect;
-        UUID targetPlayerId = entry.getTargetId();
         UUID sourcePermanentId = exileEffect.trackWithSource()
                 ? resolveSourcePermanentId(gameData, entry)
                 : null;
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, exileEffect.players())) {
+            exileHand(gameData, playerId, sourcePermanentId);
+        }
+    }
 
+    private void exileHand(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        String playerName = gameData.playerIdToName.get(playerId);
+        List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + "'s hand is already empty."));
             return;
@@ -53,16 +59,17 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
         List<Card> toExile = new ArrayList<>(hand);
         hand.clear();
         for (Card card : toExile) {
+            // Exiled cards are kept per owner.
+            UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : playerId;
             if (sourcePermanentId == null) {
-                exileService.exileCard(gameData, targetPlayerId, card);
+                exileService.exileCard(gameData, ownerId, card);
             } else {
-                exileService.exileCard(gameData, targetPlayerId, card, sourcePermanentId);
+                exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
             }
         }
 
         String logEntry = playerName + "'s hand is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
         gameLogService.append(gameData, GameLog.text(logEntry));
-
         log.info("Game {} - {}'s hand ({} cards) exiled", gameData.id, playerName, count);
     }
 
@@ -73,7 +80,6 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
         if (entry.getSourcePermanentSnapshot() != null) {
             return entry.getSourcePermanentSnapshot().getId();
         }
-
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) {
             return null;

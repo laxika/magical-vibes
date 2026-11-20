@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -44,7 +44,7 @@ public class AshiokNightmareWeaver extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -10,
-                List.of(new ExileAllOpponentsHandsEffect(),
+                List.of(ExileTargetPlayerHandEffect.handsOfWithSource(Subjects.eachOpponent()),
                         ExileGraveyardCardsEffect.allOpponentsWithSource()),
                 "\u221210: Exile all cards from all opponents' hands and graveyards."
         ));

@@ -27,7 +27,7 @@ class CemeteryProtectorTest extends BaseCardTest {
         Permanent protector = enterProtectorWith(card);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
-        assertThat(gd.getImprintedCard(protector.getCard())).isSameAs(card);
+        assertThat(gd.getCardsExiledByPermanent(protector.getId())).contains(card);
     }
 
     @Test

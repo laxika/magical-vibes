@@ -47,6 +47,6 @@ public class RoryWilliams extends Card {
         // "When you cast this spell from anywhere other than exile" is the trigger's event condition (CR 603.2).
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new CastFromZone(Zone.EXILE))),
-                new ExileTriggeringSpellWithSuspendCountersEffect(3, CreateTokenEffect.ofClueToken(1)));
+                new ExileTriggeringSpellWithSuspendCountersEffect(3), CreateTokenEffect.ofClueToken(1));
     }
 }

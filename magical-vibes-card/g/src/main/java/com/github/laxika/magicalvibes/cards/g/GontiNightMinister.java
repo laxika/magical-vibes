@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +17,8 @@ public class GontiNightMinister extends Card {
         addTrigger(Triggers.playerCastsSpell().withFilter(new CardControllerDoesNotOwnPredicate()),
                 new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)));
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect());
+                new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer())
+                        .exiledFaceDown().withAnyManaType().until(Duration.PERMANENT)
+                        .playableBy(Subjects.controllerOf(Subjects.triggering())));
     }
 }

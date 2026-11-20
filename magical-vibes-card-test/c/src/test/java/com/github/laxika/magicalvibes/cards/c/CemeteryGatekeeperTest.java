@@ -27,7 +27,7 @@ class CemeteryGatekeeperTest extends BaseCardTest {
         Permanent gatekeeper = enterGatekeeperWith(exiled);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
-        assertThat(gd.getImprintedCard(gatekeeper.getCard())).isSameAs(exiled);
+        assertThat(gd.getCardsExiledByPermanent(gatekeeper.getId())).contains(exiled);
     }
 
     @Test
@@ -38,6 +38,21 @@ class CemeteryGatekeeperTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("A matching spell still deals damage when Gatekeeper leaves before its ability resolves")
+    void matchingSpellDamagesCasterAfterGatekeeperLeft() {
+        Permanent gatekeeper = enterGatekeeperWith(new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, gatekeeper));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);

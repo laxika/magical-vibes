@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileAllHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,7 +17,7 @@ public class Worldfire extends Card {
         // Exile all permanents. Exile all cards from all hands and graveyards.
         // Each player's life total becomes 1.
         addSpellEffect(new ExileAllPermanentsEffect(new PermanentTruePredicate()));
-        addSpellEffect(new ExileAllHandsEffect());
+        addSpellEffect(ExileTargetPlayerHandEffect.handsOf(Subjects.eachPlayer()));
         addSpellEffect(new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
         addSpellEffect(new SetLifeTotalEffect(1, Subjects.eachPlayer()));
     }

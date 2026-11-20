@@ -28,7 +28,7 @@ All paths relative to `cards/`.
 
 | Sacrifice white creature + per-attacking-red-creature payment | `h/Heroism.java` | SacrificePermanentCost(creature + WHITE, "Sacrifice a white creature") + PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect(attacking creature + RED, "{2}{R}") - each matching attacker controller independently pays or that creature deals no combat damage this turn |
 
-| Planeswalker with source-tracked exile, filtered X return, and opponent hand/graveyard exile | `a/AshiokNightmareWeaver.java` | `ExileTopCardsToSourceEffect(... TARGET_OPPONENT, true)` + `ReturnCardExiledWithSourceToBattlefieldEffect(CardTypePredicate(CREATURE), true, NIGHTMARE)` + `ExileAllOpponentsHandsEffect` + `ExileGraveyardCardsEffect(ALL_OPPONENTS)` |
+| Planeswalker with source-tracked exile, filtered X return, and opponent hand/graveyard exile | `a/AshiokNightmareWeaver.java` | `ExileTopCardsToSourceEffect(... TARGET_OPPONENT, true)` + `ReturnCardExiledWithSourceToBattlefieldEffect(CardTypePredicate(CREATURE), true, NIGHTMARE)` + `ExileTargetPlayerHandEffect.handsOfWithSource(eachOpponent())` + `ExileGraveyardCardsEffect(ALL_OPPONENTS)` |
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
