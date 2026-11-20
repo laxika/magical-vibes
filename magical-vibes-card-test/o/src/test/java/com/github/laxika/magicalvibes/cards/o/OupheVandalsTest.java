@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.e.EngineeredExplosives;
 import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.cards.p.ParadiseMantle;
 import com.github.laxika.magicalvibes.cards.r.RelicBarrier;
+import com.github.laxika.magicalvibes.cards.s.SpiderPunk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OupheVandals.class, RelicBarrier.class, CompositeGolem.class, FurnaceWhelp.class,
-        EngineeredExplosives.class, ParadiseMantle.class})
+        EngineeredExplosives.class, ParadiseMantle.class, SpiderPunk.class})
 class OupheVandalsTest extends BaseCardTest {
 
     @Test
@@ -37,6 +38,28 @@ class OupheVandalsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Paradise Mantle");
         harness.assertOnBattlefield(player1, "Composite Golem");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroys the artifact even when its ability can't be countered")
+    void destroysTheArtifactWhenTheAbilityCantBeCountered() {
+        harness.addToBattlefield(player1, new OupheVandals());
+        harness.addToBattlefield(player1, new SpiderPunk());
+        RelicBarrier relicBarrier = new RelicBarrier();
+        harness.addToBattlefield(player2, relicBarrier);
+        var targetArtifact = harness.addToBattlefieldAndReturn(player2, new CompositeGolem());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, targetArtifact.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, relicBarrier.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Relic Barrier");
+        harness.passBothPriorities();
+        assertThat(targetArtifact.isTapped()).isTrue();
     }
 
     @Test

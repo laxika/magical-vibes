@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -568,6 +569,7 @@ public class SubjectResolutionService {
                     ? ctx.entry().getTriggeringPermanentId() : ctx.sourceId());
             case PermanentSubject.TriggeringCard ignored -> listOf(triggeringCardPermanentId(ctx));
             case PermanentSubject.TargetSpell ignored -> List.of();
+            case PermanentSubject.TargetAbilitySource abilitySource -> targetAbilitySourceIds(ctx, abilitySource);
             case PermanentSubject.TriggeringSpell ignored -> List.of();
             case PermanentSubject.Returned ignored -> listOf(returnedPermanentId(ctx));
             case PermanentSubject.ReturnedThisResolution ignored -> List.copyOf(ctx.entry().getReturnedPermanentIds());
@@ -607,6 +609,34 @@ public class SubjectResolutionService {
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
             case PermanentSubject.OtherPermanentsSharing sharing -> otherPermanentsSharingIds(ctx, sharing);
         };
+    }
+
+    /**
+     * {@link PermanentSubject.TargetAbilitySource}: the source permanent of the ability the entry targets while it is on
+     * the stack, else the one the counter step recorded; only while it is on the battlefield and matches the filter now.
+     */
+    private List<UUID> targetAbilitySourceIds(Context ctx, PermanentSubject.TargetAbilitySource abilitySource) {
+        StackEntry entry = ctx.entry();
+        UUID targetId = entry.getTargetId();
+        UUID sourceId = entry.getCounteredAbilitySourceId();
+        if (targetId != null) {
+            for (StackEntry onStack : ctx.gameData().stack) {
+                if (targetId.equals(onStack.getTargetableId())) {
+                    sourceId = StackEntryType.ABILITIES.contains(onStack.getEntryType())
+                            ? onStack.getSourcePermanentId() : null;
+                    break;
+                }
+            }
+        }
+        if (sourceId == null) {
+            return List.of();
+        }
+        Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), sourceId);
+        if (permanent == null || abilitySource.filter() != null && !predicateEvaluationService
+                .matchesPermanentPredicate(permanent, abilitySource.filter(), filterContext(ctx))) {
+            return List.of();
+        }
+        return List.of(sourceId);
     }
 
     /**

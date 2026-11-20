@@ -46,6 +46,7 @@ public class ExileReducedCastSupport {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final CastingCostService castingCostService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     public ExileReducedCastSupport(GameLogService gameLogService,
                                    @Lazy PlayerInputService playerInputService,
@@ -55,7 +56,8 @@ public class ExileReducedCastSupport {
                                    @Lazy SplitCardCastSupport splitCardCastSupport,
                                    @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
                                    @Lazy PotentialManaService potentialManaService,
-                                   @Lazy CastingCostService castingCostService) {
+                                   @Lazy CastingCostService castingCostService,
+                                   @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
@@ -65,6 +67,7 @@ public class ExileReducedCastSupport {
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.potentialManaService = potentialManaService;
         this.castingCostService = castingCostService;
+        this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
     }
 
     public void castFromExileWithCostReduction(GameData gameData, Player player, UUID exileCardId,
@@ -102,6 +105,11 @@ public class ExileReducedCastSupport {
 
         Card card = exiledEntry.card();
         UUID playerId = player.getId();
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, playerId, card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast right now and stays exiled."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         installCostReduction(gameData, exileCardId, playerId, genericCostReduction);
         if (SplitCardCastSupport.isSplitCard(card)) {
             SplitCardCast.ExileCast exileCast = SplitCardCast.ExileCast.ofCard()

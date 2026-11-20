@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellOrAbilityAndDestroySourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -24,7 +26,8 @@ public class OupheVandals extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new SacrificeSelfCost(), new CounterSpellOrAbilityAndDestroySourceEffect()),
+                List.of(new SacrificeSelfCost(), new CounterSpellEffect(),
+                        new DestroyTargetPermanentEffect(Subjects.targetAbilitySource())),
                 "{G}, Sacrifice Ouphe Vandals: Counter target activated ability from an artifact source and destroy that artifact if it's on the battlefield.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(

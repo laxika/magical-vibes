@@ -2,8 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellOrAbilityAndDestroySourceEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -29,7 +33,10 @@ public class TeferisResponse extends Card {
                                 new PermanentControlledBySourceControllerPredicate())))
                 )),
                 "Target must be an opponent-controlled spell or ability that targets a land you control."
-        )).addSpellEffect(new CounterSpellOrAbilityAndDestroySourceEffect());
+        )).addSpellEffect(new CounterSpellEffect());
+        // If a permanent's ability is countered this way, destroy that permanent.
+        addSpellEffect(new ConditionalEffect(HappenedThisWay.countered(),
+                new DestroyTargetPermanentEffect(Subjects.targetAbilitySource())));
         addSpellEffect(new DrawCardEffect(2));
     }
 }

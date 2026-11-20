@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DreamThrush;
 import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SpiderPunk;
 import com.github.laxika.magicalvibes.cards.w.WingsOfHope;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TeferisResponse.class, FertileGround.class, Island.class, DreamThrush.class, WingsOfHope.class})
+@CardUsed({TeferisResponse.class, FertileGround.class, Island.class, DreamThrush.class, WingsOfHope.class,
+        SpiderPunk.class})
 class TeferisResponseTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,26 @@ class TeferisResponseTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Island");
         harness.assertInGraveyard(player2, "Dream Thrush");
+    }
+
+    @Test
+    @DisplayName("Doesn't destroy the ability's source when the ability can't be countered")
+    void doesNotDestroySourceWhenTheAbilityIsNotCountered() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new SpiderPunk());
+        Permanent dreamThrush = addCreatureReady(player2, new DreamThrush());
+        harness.setHand(player1, List.of(new TeferisResponse()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.forceActivePlayer(player2);
+        int sourceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(dreamThrush);
+        harness.activateAbility(player2, sourceIndex, null, island.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, dreamThrush.getCard().getId());
+
+        harness.assertOnBattlefield(player2, "Dream Thrush");
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

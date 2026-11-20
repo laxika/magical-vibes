@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GorillaWarCry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraTorchOfDefiance.class, GrizzlyBears.class, Plains.class, Shock.class, PaladinEnVec.class})
+@CardUsed({ChandraTorchOfDefiance.class, GorillaWarCry.class, GrizzlyBears.class, Plains.class, Shock.class, PaladinEnVec.class})
 class ChandraTorchOfDefianceTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,25 @@ class ChandraTorchOfDefianceTest extends BaseCardTest {
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("First +1 can't cast an exiled spell outside its own cast-only-during window and deals damage")
+    void firstPlusOneHonoursExiledSpellsTimingRestriction() {
+        addReadyChandra(player1, 4);
+        Card warCry = new GorillaWarCry();
+        harness.setLibrary(player1, List.of(warCry));
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(warCry);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
     }
 
     @Test

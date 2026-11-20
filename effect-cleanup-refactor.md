@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 25 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 26 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -563,6 +563,7 @@ cause under Findings.
 | 23 | the card subject (human decision 2026-11-20): `CardSubject`, `cardsThisWay(kind)` and the records blocked on it (token copy of an exiled card, destroy-then-return, Hidetsugu and Kairi, the discarded-card riders) | done (3 split, 1 absorbed, 7 survivors, 3 blocked-other; 20 card files rewritten; `CardSubject.cardsThisWay` / `targetCard`, `StepOutcome.movedCards`, `PermanentSubject.Except`, `CardPutIntoGraveyardThisTurnPredicate`; Mordor on the March and Sorin fixed by Oracle text, Gyrus by a ruling; the may-cast-a-copy record not split) |
 | 24 | run 23's next: the trigger's event value in the graveyard exile's target filter, the may-cast-a-copy step and `ExileTargetCardFromGraveyardAndMayCastCopyEffect`'s 14 cards; an exile step and a seek filter over a card subject (Leonardo da Vinci, Anguished Recollection) | done (2 split, 1 absorbed, 3 survivors; 16 card files rewritten; `CopyImprintedCardAndMayCastCopyEffect.of(cards)` with `payingItsCosts` / `losingLifeOnCast` / `ifCastThen`, `ExileGraveyardCardsEffect.cards` / `oneTargetFromOpponentGraveyard`, `CardSharesCardTypeWithCardsPredicate`; no marker record kept; Hour of Eternity, The Ruinous Powers and the threshold transform not reached) |
 | 25 | run 24's next: the subject-path cast-copy restriction check (a rules bug), the X-target graveyard exile (Hour of Eternity, Midnight Ritual, Foggy Swamp Visions, Necromancer's Covenant), the threshold transform, The Ruinous Powers | done (2 split, 4 survivors, 1 blocked-other; 11 card files rewritten; `ExileFreeCastQueueSupport.castableFromExile` for both copy accept paths, `ExileCardsFromGraveyardEffect.exactlyXFromOwnGraveyard` / `exactlyXFromGraveyards` recording EXILE, `GraveyardCardChoosingEffect.choosesFromControllersGraveyardOnly`; Mizzix's Mastery fixed by a ruling, the threshold transforms made transform events; The Ruinous Powers kept; item 4 audited, not started) |
+| 26 | run 25's next: non-copy resolution casts from exile honour the card's own timing restriction, AnimationSupport's CR citation, Primal Amulet's departed-source question; the Counter family (a countered-ability-source subject, `LockTargetPermanentEffect` with a subject, the "and" records, the "unless" records); the next fused family | done (4 split, 3 survivors, 8 blocked-other, 1 blocked-step-model, 5 unique; 6 card files rewritten; `Subjects.targetAbilitySource([filter])`, `StackEntry.counteredAbilitySourceId`, `LockTargetPermanentEffect.activatedAbilitiesOf`; Chandra, Torch of Defiance's +1 and the other resolution casts from exile fixed by a ruling, Interdict and Ouphe Vandals by Oracle text; Primal Amulet kept by Treasure Map's ruling; the "unless" counters ledgered; no further fused family split) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5534,6 +5535,103 @@ New tests: Mizzix's Mastery (fails on the old code), Ludevic's Test Subject, the
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
   name): 110 (1,150 card uses), unchanged (this run's two classes had ledger rows); by first word Exile 19, Search 10, Reveal 9, Prevent 7,
   Counter 7, Each 6, Choose 5, Cant 5, Put 3, Draw 3, Destroy 3, Creatures 3, Boost 3, Shuffle 2, Grant 2, Create 2.
+
+### Step 8, run 26 (2026-11-20)
+
+Run 25's "Next run" items (2), the two noted fixes, then (1) and (3); item (4) (Search, Reveal, Prevent) audited, none split.
+Verdicts (ledger, step `8`): **split 4** (`CounterSpellOrAbilityAndDestroySourceEffect`, `CounterAbilityAndLockSourceEffect`,
+`CounterAbilityAndRemoveSourceAbilitiesEffect`, `CounterSpellAndCreateTreasureTokensEffect`, with their handlers), **survivor 3**
+(`LockTargetPermanentEffect`, `CounterSpellEffect`, `LosesAllAbilitiesEffect`), **blocked-other 8**, **blocked-step-model 1**, **unique 5**.
+Ratchet 4,710 / 3,939 → 4,706 / 3,935. 6 card files rewritten by hand (Teferi's Response, Ouphe Vandals, Interdict, Trickbind, Tishana's
+Tidebinder, Spell Swindle; read back by eye, imports sorted). Oracle text of every rewritten card checked with `get_card`, rulings with
+`get_rulings` (and Chandra, Torch of Defiance, Gorilla War Cry, Spider-Punk, Primal Amulet, Treasure Map). CR 113.7a, 121.6c, 400.7, 601.3,
+608.2c, 608.2g, 608.2h, 701.27d, 701.27e, 701.50a and 707.2 checked with `get_rule` (2026-11-20).
+
+- **Resolution casts from exile keep the card's own timing restriction (fixed).** Run 25 made the copy paths check "cast this spell only
+  during …"; the non-copy resolution casts from exile did not. Chandra, Torch of Defiance's ruling: "Timing permissions based on the card's
+  type are ignored, but other restrictions (such as "Cast [this card] only during combat") are not" (CR 601.3, 608.2g).
+  `ExileFreeCastQueueSupport.castableFromExile(gameData, playerId, card)` (the `asCopy` parameter is gone) now checks the restriction for
+  every card, and is asked before they begin by the free-cast queue's non-copy cards (discover with an additional cost, Improvisation
+  Capstone, Brilliant Ultimatum, the exiled-card may-play choice), `ChandraTorchExileCastSupport` and `VaanExileCastSupport` (a card that
+  fails takes the "if you don't" branch: the damage, the Treasure), `ExileReducedCastSupport` (stays exiled) and `ExileNormalCostCopySupport`
+  (the copy ceases to exist). `LibraryChoiceHandlerService.canCastWithoutPaying` (its library searches and reveals that cast for free, discover, Sunbird's
+  Invocation, Wild Evocation's hand card) checks it too. `ExileFreeCastSupport` (Hidetsugu and Kairi's free cast, Guile, Spell Queller) already
+  did. `ChandraTorchOfDefianceTest.firstPlusOneHonoursExiledSpellsTimingRestriction` (Gorilla War Cry in a main phase) fails on the old code
+  (it was cast). Not changed: `OutsideGameNormalCostCastSupport` (sideboard casts) and `PermanentChoiceSpellHandlerService`'s target
+  completions, which call `playCardFromExileAsResolutionCast` after the castability was judged by their callers; a central guard in
+  `playCardFromExileInternalOnce` would throw mid-prompt.
+- **`AnimationSupport`'s citation** is CR 701.27e now (both comments).
+- **Primal Amulet kept.** Its "you may" is asked when it left with four or more counters (nothing then happens). The threshold reads the
+  source's last-known counters, which Treasure Map's ruling requires ("if it somehow already had three landmark counters on it before it
+  left the battlefield, you'll get three Treasures"), so reading nothing for a departed source would be wrong for Treasure Map; the
+  question is harmless.
+- **The countered ability's source.** `Subjects.targetAbilitySource()` / `targetAbilitySource(filter)` (`PermanentSubject.TargetAbilitySource`,
+  SUBJECTS_REFERENCE row): the permanent the targeted ability came from, read from the stack while the ability is there, else from the new
+  `StackEntry.counteredAbilitySourceId`, which `CounterSpellEffectHandler` records beside `counteredSpellControllerId` when its target is an
+  activated or triggered ability (copied by the `StackEntry` copy; a UUID). Nothing for a spell target, a sourceless ability or a permanent
+  that left; the filter is judged as the reading effect applies (Tishana's Tidebinder's ruling: "checks … as it resolves").
+  `SubjectResolutionServiceTest.targetAbilitySourceVariant`.
+- **`LockTargetPermanentEffect` takes a subject** (sixth component, default `target()`; the 4- and 5-argument constructors keep the target;
+  a non-target subject declares no target and skips the `declaredTarget` check). `activatedAbilitiesOf(subject, duration)`.
+  `LosesAllAbilitiesEffectHandler`'s one-permanent path accepts the new subject.
+- **The splits.** Teferi's Response = `CounterSpellEffect` + `ConditionalEffect(HappenedThisWay.countered(), DestroyTargetPermanentEffect(targetAbilitySource()))`;
+  Ouphe Vandals the same without the gate; Interdict = `CounterSpellEffect` + `LockTargetPermanentEffect.activatedAbilitiesOf(targetAbilitySource(),
+  UNTIL_END_OF_TURN)`; Trickbind the same, gated; Tishana's Tidebinder = `SequenceEffect.of(CounterSpellEffect, ConditionalEffect(countered(),
+  LosesAllAbilitiesEffect(targetAbilitySource(artifact | creature | planeswalker), WHILE_SOURCE_REMAINS)))`; Spell Swindle = `CounterSpellEffect` +
+  `CreateTokenEffect.ofTreasureToken(TargetSpellManaValue)` (Mystic Genesis's shape; the counter step records the mana value).
+- **Behaviour changes (Oracle text).** Interdict ("That permanent's activated abilities can't be activated this turn") and Ouphe Vandals
+  ("and destroy that artifact if it's on the battlefield") have no "countered this way": the old handlers did nothing when the ability
+  couldn't be countered (Spider-Punk); now the lock and the destroy happen (`InterdictTest.locksSourceWhenTheAbilityCantBeCountered`,
+  `OupheVandalsTest.destroysTheArtifactWhenTheAbilityCantBeCountered`, both fail on the old cards by their handlers' early return). Teferi's
+  Response and Trickbind stay gated (`TeferisResponseTest.doesNotDestroySourceWhenTheAbilityIsNotCountered`). Log lines are the survivors'
+  (the lock's "can't have its activated abilities activated", the loss's "for as long as its source remains on the battlefield"); no test
+  asserted the old ones. Spell Swindle now carries `CounterSpellEffect`, so the AI sees a counterspell (it saw a plain effect).
+- **Not split, and why.** The "unless" counters (`CounterUnlessDiscardsEffect` 14, `CounterUnlessPaysLifeEffect` 14, `CounterUnlessSacrificesEffect` 9)
+  are blocked-other: `MayEffect` has a `TARGET_SPELL_CONTROLLER` chooser and an else-branch, but the records implement `CounterUnlessEffect`,
+  whose ransom kind and magnitude the AI and ward read; the split needs that capability on the `MayEffect` (or on a marker), plus the
+  can't-pay-life check in `MayEffectHandler`. `CounterSpellAndExileThenGrantFreeCastPermissionEffect` (4) and Delay's record need COUNTER_SPELL
+  in `cardsThisWay` and a permission / suspend step over a `CardSubject`. Dovescape's record counters the triggering spell (with the caster
+  baked as the target), which `CounterSpellEffect` can't name. Desertion's is a destination replacement (unique). Counterpoint, Teferi's
+  Contingency and Minamo's Meddling have no primitive second half (unique). Item 4: no Search, Reveal or Prevent fused record has a first half
+  that records a step (no `StepKind` for search, reveal or prevention); of the other families, `DrawDiscardAndConniveEffect` (44) is the
+  connive keyword action (unique, CR 701.50a), the two dying-creature exile records need a triggering-card `CardSubject` (and Unscythe's /
+  Timothar's token link, Nightmare Shepherd's copy of the creature as it last existed, CR 707.2), and Sindbad's draw-reveal-discard reruns
+  after a draw replacement (blocked-step-model, CR 121.6c).
+
+**Tests** (one Gradle run of card tests, one `--tests` list per task, after per-card runs while converting): the six rewritten cards, Chandra,
+Torch of Defiance, and every card test constructing one of them, Gorilla War Cry or Spider-Punk (the helper sweep: Spider-Verse, Subterranean
+Shambler, Mogg War Marshal, Mizzix's Mastery, Glen Elendra's Answer, Furious Reprisal, Fireforger's Puzzleknot, Fateful Showdown, Dynavolt
+Tower, Draconic Intervention, Deadlock Trap, Aethertorch Renegade, Abuna's Chant), `--tests-for LockTargetPermanentEffect LockMatchingPermanentsEffect`
+(all), `LosesAllAbilitiesEffect BrilliantUltimatumEffect DiscoverEffect ExileTopCardMayCastOrDealDamageEffect
+ExileTopCardOfDamagedPlayerLibraryMayCastOrCreateTreasureEffect ImprovisationCapstoneEffect MayCastCopyWithManaCostEffect
+MayCastCopyWithNormalCostEffect MayCastExiledCardWithCostReductionEffect MayCastExiledCardWithNormalCostEffect SunbirdsInvocationRevealAndCastEffect
+TeachCastCopyEffect CascadeEffect CopyImprintedCardAndMayCastCopyEffect --max-per-class 12`, `CounterSpellEffect DestroyTargetPermanentEffect
+ConditionalEffect --max-per-class 6`: 124 classes (124 result files), 1,191 test cases, all pass. Application (`SubjectResolutionServiceTest` +1,
+`EffectCountRatchetTest`, `CardImmutabilityArchTest`, `TargetSpecRatchetTest`, `CardEffectTargetingConsistencyTest`, `StepResultsTest`,
+`SimulationCopyCompletenessTest`, `EffectResolutionServiceTest`, `StackResolutionServiceTest`, `MayAbilityHandlerServiceTest`,
+`LibraryChoiceHandlerServiceTest`, `SpellCastingServiceTest`, `LoneMayAbilityRecordTest`, `CollectorRouteRecordTest`, `MayCastHandlerServiceTest`
+and every application test naming a touched class: `CounterSpellEffectHandlerTest`, `CreatureControlServiceTest`, `GameQueryServiceTest`, the
+handler tests that wire `SubjectResolutionService`) and AI (`TargetPolarityGuardTest`, `GameDataDeepCopyTest`, `AiDecisionEngineTest`,
+`SpellEvaluatorTest`, `AiTargetSelectorTest`): 300 result files, 2,067 test cases, all pass. Application, AI, engine testFixtures and card-test
+`c i o s t` test sources compile.
+
+**For later runs.**
+
+- "Counter target activated or triggered ability. [If a permanent's ability is countered this way,] [verb] that permanent" is
+  `CounterSpellEffect` + [`ConditionalEffect(HappenedThisWay.countered(), …)`] + the verb over `Subjects.targetAbilitySource([filter])`; "that
+  permanent's activated abilities can't be activated" is `LockTargetPermanentEffect.activatedAbilitiesOf(subject, duration)`. A resolution
+  cast from exile asks `ExileFreeCastQueueSupport.castableFromExile` before it begins.
+- **Next run.** (1) The "unless" counters: give the `CounterUnlessEffect` capability (ransom kind, magnitude) a home that survives the split
+  (a `MayEffect` with `TARGET_SPELL_CONTROLLER` whose else-branch is `CounterSpellEffect`, the AI and ward reading the ransom from it), move the
+  can't-pay-life check beside the can't-sacrifice / can't-discard checks in `MayEffectHandler`, then `CounterUnlessPaysLifeEffect` (14),
+  `CounterUnlessDiscardsEffect` (14), `CounterUnlessSacrificesEffect` (9); ask the human first if that changes how ward is modelled.
+  (2) COUNTER_SPELL in `cardsThisWay` (the countered card where its destination put it), then
+  `CounterSpellAndExileThenGrantFreeCastPermissionEffect` (4) with a cast-permission step over a `CardSubject`. (3) A triggering-card `CardSubject`
+  ("exile that card" of a dies trigger) for the two dying-creature exile records. (4) `ExileTargetPermanentAndTrackWithSourceEffect` (24) and
+  `ExileSelfAndReturnTransformedEffect` (54) are the largest unaudited "And" names; audit whether they are fused at all.
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
+  name): 100 (1,055 card uses); by first word Exile 17, Search 10, Reveal 9, Prevent 7, Each 6, Choose 5, Cant 5, Put 3, Destroy 3,
+  Creatures 3, Boost 3, Shuffle 2, Grant 2, Create 2, and 23 first words with one each (Counter 1: `CounterUnlessPaysEffect`).
 
 ## Prompt
 

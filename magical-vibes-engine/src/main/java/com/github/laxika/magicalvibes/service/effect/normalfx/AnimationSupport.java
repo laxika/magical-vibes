@@ -788,7 +788,7 @@ public class AnimationSupport {
             log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
             return false;
         }
-        // CR 701.27d: nothing happens when the face to transform into is an instant or sorcery face.
+        // CR 701.27e: nothing happens when the face to transform into is an instant or sorcery face.
         if (backFace.hasType(com.github.laxika.magicalvibes.model.CardType.INSTANT)
                 || backFace.hasType(com.github.laxika.magicalvibes.model.CardType.SORCERY)) {
             return false;
@@ -846,7 +846,7 @@ public class AnimationSupport {
         }
 
         Card originalCard = self.getOriginalCard();
-        // CR 701.27d: nothing happens when the face to transform into is an instant or sorcery face.
+        // CR 701.27e: nothing happens when the face to transform into is an instant or sorcery face.
         if (originalCard.hasType(com.github.laxika.magicalvibes.model.CardType.INSTANT)
                 || originalCard.hasType(com.github.laxika.magicalvibes.model.CardType.SORCERY)) {
             return false;

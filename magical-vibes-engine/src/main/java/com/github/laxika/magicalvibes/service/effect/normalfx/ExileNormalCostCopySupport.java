@@ -45,6 +45,7 @@ public class ExileNormalCostCopySupport {
     private final PotentialManaService potentialManaService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final SplitCardCastSupport splitCardCastSupport;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     public ExileNormalCostCopySupport(GameLogService gameLogService,
                                       @Lazy PlayerInputService playerInputService,
@@ -54,8 +55,10 @@ public class ExileNormalCostCopySupport {
                                       @Lazy CastingCostService castingCostService,
                                       @Lazy PotentialManaService potentialManaService,
                                       @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
-                                      @Lazy SplitCardCastSupport splitCardCastSupport) {
+                                      @Lazy SplitCardCastSupport splitCardCastSupport,
+                                      @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport) {
         this.splitCardCastSupport = splitCardCastSupport;
+        this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.castingCostService = castingCostService;
         this.potentialManaService = potentialManaService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
@@ -82,6 +85,12 @@ public class ExileNormalCostCopySupport {
     public void offerCast(GameData gameData, Player player, Card copy, String manaCostOverride,
                           PendingMayAbility ability) {
         if (gameData.findExiledCard(copy.getId()) == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), copy)) {
+            gameData.removeFromExile(copy.getId());
+            gameLogService.append(gameData, GameLog.cardThen(copy, " cannot be cast from exile."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

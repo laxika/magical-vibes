@@ -33,19 +33,22 @@ public class ChandraTorchExileCastSupport {
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final SpellCastingService spellCastingService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     public ChandraTorchExileCastSupport(ExileCastTargetSupport exileCastTargetSupport,
                                         GameLogService gameLogService,
                                         DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler,
                                         @Lazy PlayerInputService playerInputService,
                                         @Lazy InputCompletionService inputCompletionService,
-                                        @Lazy SpellCastingService spellCastingService) {
+                                        @Lazy SpellCastingService spellCastingService,
+                                        @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport) {
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.gameLogService = gameLogService;
         this.dealDamageToPlayersEffectHandler = dealDamageToPlayersEffectHandler;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
         this.spellCastingService = spellCastingService;
+        this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
     }
 
     public void beginCast(GameData gameData, Player player, Card sourceCard, UUID exileCardId, int damage) {
@@ -56,6 +59,11 @@ public class ChandraTorchExileCastSupport {
         }
 
         Card card = exiledEntry.card();
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast right now."));
+            dealDamage(gameData, player.getId(), sourceCard, damage);
+            return;
+        }
         if (EffectResolution.needsTarget(card)) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, player.getId());
             boolean hasLegalTargets = card.getMaxTargets() > 1

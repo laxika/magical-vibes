@@ -62,7 +62,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (!(subject instanceof PermanentSubject.Source) && !(subject instanceof PermanentSubject.Target)) {
+        if (!(subject instanceof PermanentSubject.Source) && !(subject instanceof PermanentSubject.Target)
+                && !(subject instanceof PermanentSubject.TargetAbilitySource)) {
             return;
         }
 

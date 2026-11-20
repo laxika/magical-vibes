@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
@@ -56,6 +57,7 @@ import java.util.UUID;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.acceptedPlayers;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.activePlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.allOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.targetAbilitySource;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.allTargets;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attached;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedOrSource;
@@ -1070,6 +1072,32 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(players(entry, controllerOf(targetSpell()))).isEmpty();
             entry.setCounteredSpellControllerId(player2.getId());
             assertThat(players(entry, controllerOf(targetSpell()))).containsExactly(player2.getId());
+        }
+
+        @Test
+        @DisplayName("\"That permanent\" of a target ability is its source, from the stack or as it was countered")
+        void targetAbilitySourceVariant() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            StackEntry ability = new StackEntry(StackEntryType.ACTIVATED_ABILITY, bears.getCard(), player2.getId(),
+                    "ability", List.of(), null, bears.getId());
+            gd.stack.add(ability);
+            StackEntry entry = entry(player1, ability.getTargetableId(), null);
+
+            assertThat(subjects.permanents(gd, entry, EFFECT, targetAbilitySource())).containsExactly(bears);
+            assertThat(subjects.permanents(gd, entry, EFFECT,
+                    targetAbilitySource(new PermanentIsArtifactPredicate()))).isEmpty();
+
+            gd.stack.remove(ability);
+            assertThat(subjects.permanents(gd, entry, EFFECT, targetAbilitySource())).isEmpty();
+            entry.setCounteredAbilitySourceId(bears.getId());
+            assertThat(subjects.permanents(gd, entry, EFFECT, targetAbilitySource())).containsExactly(bears);
+
+            Card spellCard = new HillGiant();
+            StackEntry spell = new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2.getId(),
+                    spellCard.getName(), List.of());
+            gd.stack.add(spell);
+            assertThat(subjects.permanents(gd, entry(player1, spell.getTargetableId(), null), EFFECT,
+                    targetAbilitySource())).isEmpty();
         }
 
         @Test

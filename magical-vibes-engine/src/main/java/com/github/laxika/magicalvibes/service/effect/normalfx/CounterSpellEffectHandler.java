@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -44,6 +45,8 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
                 .orElse(null);
         if (targetOnStack != null) {
             entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
+            entry.setCounteredAbilitySourceId(StackEntryType.ABILITIES.contains(targetOnStack.getEntryType())
+                    ? targetOnStack.getSourcePermanentId() : null);
             entry.rememberLastKnownPermanentCard(counterTargetId, targetOnStack.getCard());
             Card targetingCard = targetOnStack.getTargetingCard();
             if (targetingCard == null) {

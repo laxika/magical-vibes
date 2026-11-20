@@ -21,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpellSwindle.class, GrizzlyBears.class, SerraAngel.class, HangarbackWalker.class, CarnageTyrant.class})
+@CardUsed({SpellSwindle.class, GrizzlyBears.class, SerraAngel.class, HangarbackWalker.class, CarnageTyrant.class,
+        SpiderPunk.class})
 class SpellSwindleTest extends BaseCardTest {
 
     @Test
@@ -67,6 +68,25 @@ class SpellSwindleTest extends BaseCardTest {
         // 2 Treasure tokens created for the counter spell's controller
         List<Permanent> treasures = findPermanents(player2, "Treasure");
         assertThat(treasures).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Creates Treasures for the spell's mana value even when it can't be countered")
+    void createsTreasuresWhenTheSpellCantBeCountered() {
+        harness.addToBattlefield(player2, new SpiderPunk());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new SpellSwindle()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

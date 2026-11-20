@@ -5822,7 +5822,8 @@ public class LibraryChoiceHandlerService {
 
     /**
      * Whether {@code card}, revealed from {@code controllerId}'s hand, can be cast without paying its
-     * mana cost (CR 601.2): the cast must be permitted (e.g. not silenced), every mandatory additional
+     * mana cost (CR 601.2): the cast must be permitted (e.g. not silenced) and its own "cast this spell only
+     * during ..." restriction must hold (CR 601.3; only the timing of its card type is ignored), every mandatory additional
      * cost must be payable, and a required target must be legal. Used by Wild Evocation.
      */
     public boolean canCastRevealedFromHandWithoutPaying(GameData gameData, UUID controllerId, Card card) {
@@ -5833,6 +5834,7 @@ public class LibraryChoiceHandlerService {
                                          Zone sourceZone) {
         if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;
         if (!castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) return false;
+        if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, card)) return false;
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {
             return false;
         }

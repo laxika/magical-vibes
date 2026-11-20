@@ -96,7 +96,7 @@ public class CopyImprintedCardAndMayCastCopyHandler implements MayEffectHandlerB
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), copy, true)) {
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), copy)) {
             gameData.removeFromExile(copy.getId());
             gameLogService.append(gameData, GameLog.cardThen(copy, " cannot be cast from exile."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

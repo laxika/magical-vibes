@@ -220,15 +220,16 @@ public class ExileFreeCastQueueSupport {
 
 
     /**
-     * Whether a card in exile may begin to be cast now as a resolution cast (CR 601.3): no casting prohibition applies
-     * and, for a copy, its own "cast this spell only during ..." restriction holds. A copy is still cast, so that
-     * restriction applies even though the effect ignores the timing of the copy's card type (the Elite Arcanist and
-     * Mizzix's Mastery rulings). Both accept paths of {@code CopyImprintedCardAndMayCastCopyEffect} ask this.
+     * Whether a card, or a copy of one, in exile may begin to be cast now as a resolution cast (CR 601.3, CR 608.2g):
+     * no casting prohibition applies and its own "cast this spell only during ..." restriction holds. The effect
+     * ignores the timing of the card's type, not that restriction (the Chandra, Torch of Defiance, Elite Arcanist and
+     * Mizzix's Mastery rulings). The free-cast queue, the may-cast-a-copy accept paths and the other resolution casts
+     * from exile ask this before they begin.
      */
-    public boolean castableFromExile(GameData gameData, UUID playerId, Card card, boolean asCopy) {
+    public boolean castableFromExile(GameData gameData, UUID playerId, Card card) {
         return !card.isCastOnlyFromGraveyard()
                 && castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)
-                && (!asCopy || castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card));
+                && castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card);
     }
 
     /**
@@ -263,7 +264,7 @@ public class ExileFreeCastQueueSupport {
             if (!gameData.interaction.isAwaitingInput()) castNextFromQueue(gameData, playerId);
             return;
         }
-        if (!castableFromExile(gameData, playerId, card, asCopy)) {
+        if (!castableFromExile(gameData, playerId, card)) {
             if (asCopy) {
                 gameData.removeFromExile(cardId);
             }

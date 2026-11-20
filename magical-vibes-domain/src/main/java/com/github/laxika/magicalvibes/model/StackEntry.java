@@ -565,6 +565,12 @@ public class StackEntry {
     /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
     @Setter private UUID counteredSpellControllerId;
     /**
+     * The permanent the ability targeted by a counter effect came from, recorded as the counter effect resolves and
+     * retained after that ability leaves the stack ("destroy that permanent"); {@code null} for a spell target or an
+     * ability with no source permanent.
+     */
+    @Setter private UUID counteredAbilitySourceId;
+    /**
      * The per-permanent player payload behind this entry — one entry per permanent involved in the
      * event, holding that permanent's controller. Stamped by
      * {@code DestroyAllPermanentsEffectHandler} onto a rider entry with the controller of every
@@ -1457,6 +1463,7 @@ public class StackEntry {
         this.acceptedPlayerIds = source.acceptedPlayerIds;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
+        this.counteredAbilitySourceId = source.counteredAbilitySourceId;
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;
         this.resolutionResults = source.resolutionResults;
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;

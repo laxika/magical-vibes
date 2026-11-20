@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FeveredConvulsions;
 import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.g.GhostTown;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.s.SpiderPunk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Interdict.class, DarkRitual.class, EssenceBottle.class, FeveredConvulsions.class,
-        Fireslinger.class, GhostTown.class, MoggFanatic.class})
+        Fireslinger.class, GhostTown.class, MoggFanatic.class, SpiderPunk.class})
 class InterdictTest extends BaseCardTest {
 
     private void addReadyInterdict() {
@@ -76,6 +77,28 @@ class InterdictTest extends BaseCardTest {
         resolveInterdict(bottle);
 
         // Untap the Bottle so only the Interdict lock — not its tap cost — can stop the activation.
+        bottle.untap();
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Locks the ability's source even when the ability can't be countered")
+    void locksSourceWhenTheAbilityCantBeCountered() {
+        addReadyInterdict();
+        harness.addToBattlefield(player1, new SpiderPunk());
+        Permanent bottle = addEssenceBottle();
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passPriority(player2);
+
+        resolveInterdict(bottle);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isEqualTo(1);
+
         bottle.untap();
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))

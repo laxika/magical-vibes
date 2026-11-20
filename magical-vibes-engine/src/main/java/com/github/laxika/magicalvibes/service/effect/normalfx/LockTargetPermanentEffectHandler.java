@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link LockTargetPermanentEffect} by stamping a {@link FloatingContinuousEffect} onto
- * the target creature. The floating effect carries the lock facts (read via
+ * the target creature, or onto each permanent a non-target subject names. The floating effect carries the lock facts (read via
  * {@code PermanentLockEffect} by the combat and ability-activation services) and expires through
  * the standard duration machinery ({@code UNTIL_END_OF_TURN} at cleanup, {@code UNTIL_YOUR_NEXT_TURN}
  * at the ability controller's next turn start).
@@ -34,6 +35,7 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,16 +45,23 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LockTargetPermanentEffect lock = (LockTargetPermanentEffect) effect;
+        if (!lock.subject().declaresTarget()) {
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, lock, lock.subject())) {
+                lockOne(gameData, entry, lock, permanent.getId(), false);
+            }
+            return;
+        }
         if (entry.getDeclaredTargetIds().isEmpty()) {
-            lockOne(gameData, entry, lock, entry.getTargetId());
+            lockOne(gameData, entry, lock, entry.getTargetId(), true);
             return;
         }
         for (UUID targetId : entry.targetsForEffect(lock)) {
-            lockOne(gameData, entry, lock, targetId);
+            lockOne(gameData, entry, lock, targetId, true);
         }
     }
 
-    private void lockOne(GameData gameData, StackEntry entry, LockTargetPermanentEffect lock, UUID targetId) {
+    private void lockOne(GameData gameData, StackEntry entry, LockTargetPermanentEffect lock, UUID targetId,
+                         boolean judgeDeclaredTarget) {
         if (targetId == null) {
             return;
         }
@@ -92,7 +101,8 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        if (!targetPredicateEvaluationService.matchesPermanent(declaredTarget, target, targetContext)) {
+        if (judgeDeclaredTarget
+                && !targetPredicateEvaluationService.matchesPermanent(declaredTarget, target, targetContext)) {
             return;
         }
 

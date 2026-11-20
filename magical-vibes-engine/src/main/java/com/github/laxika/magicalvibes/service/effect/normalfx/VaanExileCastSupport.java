@@ -32,19 +32,22 @@ public class VaanExileCastSupport {
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final SpellCastingService spellCastingService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     public VaanExileCastSupport(ExileCastTargetSupport exileCastTargetSupport,
                                 CreateTokenEffectHandler createTokenEffectHandler,
                                 GameLogService gameLogService,
                                 @Lazy PlayerInputService playerInputService,
                                 @Lazy InputCompletionService inputCompletionService,
-                                @Lazy SpellCastingService spellCastingService) {
+                                @Lazy SpellCastingService spellCastingService,
+                                @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport) {
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.createTokenEffectHandler = createTokenEffectHandler;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
         this.spellCastingService = spellCastingService;
+        this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
     }
 
     public void beginCast(GameData gameData, Player player, Card sourceCard, UUID exileCardId,
@@ -56,6 +59,11 @@ public class VaanExileCastSupport {
         }
 
         Card card = exiledEntry.card();
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast right now."));
+            createTreasureDuringResolution(gameData, player.getId(), sourceCard, sourcePermanentId);
+            return;
+        }
         if (EffectResolution.needsTarget(card)) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, player.getId());
             boolean hasLegalTargets = card.getMaxTargets() > 1

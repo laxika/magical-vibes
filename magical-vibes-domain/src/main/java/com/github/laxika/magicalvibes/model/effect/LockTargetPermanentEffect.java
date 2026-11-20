@@ -22,14 +22,41 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param duration                how long the lock lasts
  * @param declaredTarget          what the ability targets ({@link TargetPredicates#creature()} for
  *                                classic Detain / Edifice; {@link TargetPredicates#permanent()}
- *                                when the card targets any nonland permanent)
+ *                                when the card targets any nonland permanent); read only for a
+ *                                {@code target()} subject
+ * @param subject                 which permanents are locked: {@link Subjects#target()} (the
+ *                                default), or a subject that declares no target ("that
+ *                                permanent's activated abilities can't be activated this turn"
+ *                                after a counter step, {@link Subjects#targetAbilitySource()})
  */
 public record LockTargetPermanentEffect(
         boolean locksAttacking,
         boolean locksBlocking,
         boolean locksActivatedAbilities,
         Duration duration,
-        TargetPredicate declaredTarget) implements CardEffect, PermanentLockEffect {
+        TargetPredicate declaredTarget,
+        PermanentSubject subject) implements CardEffect, PermanentLockEffect {
+
+    public LockTargetPermanentEffect {
+        if (subject == null) {
+            subject = Subjects.target();
+        }
+    }
+
+    /** A lock of the target matching {@code declaredTarget}. */
+    public LockTargetPermanentEffect(
+            boolean locksAttacking,
+            boolean locksBlocking,
+            boolean locksActivatedAbilities,
+            Duration duration,
+            TargetPredicate declaredTarget) {
+        this(locksAttacking, locksBlocking, locksActivatedAbilities, duration, declaredTarget, Subjects.target());
+    }
+
+    /** "[Subject]'s activated abilities can't be activated [for the duration]" (Interdict, Trickbind). */
+    public static LockTargetPermanentEffect activatedAbilitiesOf(PermanentSubject subject, Duration duration) {
+        return new LockTargetPermanentEffect(false, false, true, duration, TargetPredicates.permanent(), subject);
+    }
 
     /** Creature-targeting lock (Edifice of Authority, classic Detain). */
     public LockTargetPermanentEffect(
@@ -47,6 +74,9 @@ public record LockTargetPermanentEffect(
 
     @Override
     public TargetSpec targetSpec() {
+        if (!subject.declaresTarget()) {
+            return TargetSpec.NONE;
+        }
         return TargetSpec.harmful(declaredTarget != null ? declaredTarget : TargetPredicates.creature());
     }
 }

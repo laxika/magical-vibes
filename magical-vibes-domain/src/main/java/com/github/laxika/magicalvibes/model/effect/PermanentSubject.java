@@ -19,7 +19,7 @@ import java.util.UUID;
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target, PermanentSubject.AllTargets,
         PermanentSubject.Attached, PermanentSubject.AttachedOrSource, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringAll, PermanentSubject.TriggeringOrSource, PermanentSubject.TriggeringCard,
-        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
+        PermanentSubject.TargetSpell, PermanentSubject.TargetAbilitySource, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
         PermanentSubject.ReturnedThisResolution, PermanentSubject.ExiledThisResolution, PermanentSubject.Granter,
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
         PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
@@ -188,6 +188,22 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * not declare the target; the effect that reads it does.
      */
     record TargetSpell() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That permanent" after "counter target activated or triggered ability": the permanent the ability the stack entry
+     * targets came from, read from the stack while that ability is there, else as the counter step recorded it as it
+     * countered it. Nothing for a spell target, an ability with no source permanent, or a permanent no longer on the
+     * battlefield as the same object (CR 400.7). {@code filter} narrows it to a permanent matching it as the reading
+     * effect is applied ("if an ability of an artifact, creature, or planeswalker is countered this way"); {@code null}
+     * names it whatever it is. It does not declare the target; the counter effect beside it does.
+     */
+    record TargetAbilitySource(PermanentPredicate filter) implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

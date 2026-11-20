@@ -36,6 +36,7 @@ public final class Subjects {
     private static final PermanentSubject TRIGGERING_OR_SOURCE = new PermanentSubject.TriggeringOrSource();
     private static final PermanentSubject TRIGGERING_CARD = new PermanentSubject.TriggeringCard();
     private static final PermanentSubject TARGET_SPELL = new PermanentSubject.TargetSpell();
+    private static final PermanentSubject TARGET_ABILITY_SOURCE = new PermanentSubject.TargetAbilitySource(null);
     private static final PermanentSubject TRIGGERING_SPELL = new PermanentSubject.TriggeringSpell();
     private static final PermanentSubject RETURNED = new PermanentSubject.Returned();
     private static final PermanentSubject GRANTER = new PermanentSubject.Granter(null);
@@ -176,6 +177,19 @@ public final class Subjects {
     /** "Target spell", for {@link #controllerOf}: "that spell's controller". Declares nothing by itself. */
     public static PermanentSubject targetSpell() {
         return TARGET_SPELL;
+    }
+
+    /**
+     * "That permanent" after "counter target activated or triggered ability": the permanent the targeted ability came
+     * from, on the stack or as the counter step recorded it. Declares nothing by itself.
+     */
+    public static PermanentSubject targetAbilitySource() {
+        return TARGET_ABILITY_SOURCE;
+    }
+
+    /** {@link #targetAbilitySource()} while that permanent matches {@code filter} as the reading effect is applied. */
+    public static PermanentSubject targetAbilitySource(PermanentPredicate filter) {
+        return new PermanentSubject.TargetAbilitySource(filter);
     }
 
     /** "That spell or ability", for {@link #controllerOf}: the spell or ability the trigger event was about. */

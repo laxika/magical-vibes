@@ -1990,6 +1990,9 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   turn", Edifice of Authority). `UNTIL_END_OF_TURN` expires at cleanup, `UNTIL_YOUR_NEXT_TURN` at the
   ability controller's next turn start. Source-linked durations such as `WHILE_SOURCE_REMAINS` keep
   the lock active only while the source permanent remains on the battlefield.
+  `LockTargetPermanentEffect.activatedAbilitiesOf(subject, duration)` locks a permanent a non-target subject
+  names ("that permanent's activated abilities can't be activated this turn" after `CounterSpellEffect`:
+  `Subjects.targetAbilitySource()`, Interdict, Trickbind).
 - `LockMatchingPermanentsEffect(predicate, locksAttacking, locksBlocking, locksActivatedAbilities, duration)` —
   non-targeted mass lock; stamps the floating `LockTargetPermanentEffect` on every matching permanent
   (Lavinia of the Tenth's ETB mass Detain).
@@ -3346,9 +3349,6 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CounterUnlessExilesGraveyardEffect()` — counter target spell unless its controller exiles all cards from their graveyard; the spell controller may choose this even when their graveyard is empty (Grip of Amnesia)
 - `RegisterDelayedManaEqualToTargetSpellManaSpentEffect(ManaColor)` — schedule mandatory mana of the given color at the controller's next main phase equal to the actual mana spent to cast the targeted spell; list before `CounterSpellEffect` when paired with a counter
 - `MagesContestEffect()` — resolution-time life-bid auction between the caster and the targeted spell's controller; the high bidder loses the bid and the caster counters the spell only when they win (Mages' Contest)
-- `CounterAbilityAndLockSourceEffect(Duration)` — counter the targeted ability and lock its source permanent's activated abilities for the duration (Interdict)
-- `CounterAbilityAndRemoveSourceAbilitiesEffect()` — counter the targeted activated or triggered ability; if its source is currently an artifact, creature, or planeswalker, it loses all abilities for as long as the effect's source permanent remains on the battlefield (Tishana's Tidebinder)
-- `CounterSpellOrAbilityAndDestroySourceEffect()` — counter the targeted spell or ability; if it is a permanent's ability, destroy that ability's source permanent (Teferi's Response)
 - `CounterSpellEffect(CounteredSpellDestination.EXILE)` — counter + exile instead of graveyard (Dissipate, Faerie Trickery)
 - `CounterSpellAndExileWithSuspendCountersEffect(int counters)` — counter target spell and exile it
   under its owner's identity with the specified number of time counters, registering it for suspend
@@ -3365,7 +3365,6 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP)` — counter + put on top of owner's library instead of graveyard (Memory Lapse)
 - `CounterEachTargetSpellEffect()` — "counter up to N target spells" (Double Negative). Bind to one `target(filter, 0, N)` spell-on-stack group; counters every spell chosen for the group. `null` filter = any spell. Non-modal multi-spell-target path (see `SpellCastingService.multipleSpellTargets`)
 - `CounterSpellAndDiscardSplicedNamesEffect()` — counter target spell, then its controller reveals their hand and discards each card with the same name as a card spliced onto that spell (Minamo's Meddling). Spliced names are recorded at cast time in `GameData.spellCastSplicedNames`; with nothing spliced it is a plain counterspell and no hand is revealed
-- `CounterSpellAndCreateTreasureTokensEffect()` — counter + treasures
 - `CounterTriggeringSpellAndCreateTokensEffect(CreateTokenEffect token)` — counter the spell that caused a spell-cast trigger, then create the supplied tokens for its caster; unlike a target-spell companion, it still creates tokens if the spell cannot be countered or has left the stack (Dovescape, `DIS`)
 - `CounterSpellAndExileAllWithSameNameEffect()` — counter + exile all same-name cards from controller's graveyard/hand/library, then shuffle (Counterbore)
 - `CounterSpellIfNameFoundElsewhereEffect()` — Triggers.playerCastsSpell(): counter the triggering spell if a card with the same name is in a graveyard or a nontoken permanent with the same name is on the battlefield (Bazaar of Wonders)
