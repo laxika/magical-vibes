@@ -175,6 +175,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import org.junit.jupiter.api.BeforeEach;
@@ -228,6 +229,9 @@ class PredicateEvaluationServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
+        SubjectResolutionService subjectResolutionService = new SubjectResolutionService(gqs, evaluator, null);
+        ReflectionTestUtils.setField(layerSystemService, "subjectResolutionService", subjectResolutionService);
+        ReflectionTestUtils.setField(gqs, "subjectResolutionService", subjectResolutionService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

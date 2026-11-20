@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -86,7 +86,7 @@ public final class TokenCreationReplacementSupport {
         return tokenCard.hasType(CardType.CREATURE)
                 && tokenCard.getStaticEffects().stream()
                 .noneMatch(effect -> effect instanceof SetCardTypesEffect set
-                        && set.scope() == GrantScope.SELF
+                        && set.scope().subject() instanceof PermanentSubject.Source
                         && !set.cardTypes().contains(CardType.CREATURE));
     }
 

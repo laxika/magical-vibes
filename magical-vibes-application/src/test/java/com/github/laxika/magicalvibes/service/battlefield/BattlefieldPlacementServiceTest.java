@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -451,6 +452,10 @@ class BattlefieldPlacementServiceTest {
             ReflectionTestUtils.setField(lookaheadLayerSystem, "staticEffectRegistry", realRegistry);
             ReflectionTestUtils.setField(lookaheadLayerSystem, "gameQueryService", lookaheadGqs);
             ReflectionTestUtils.setField(lookaheadGqs, "layerSystemService", lookaheadLayerSystem);
+            SubjectResolutionService lookaheadSubjects =
+                    new SubjectResolutionService(lookaheadGqs, lookaheadEvaluator, null);
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "subjectResolutionService", lookaheadSubjects);
+            ReflectionTestUtils.setField(lookaheadGqs, "subjectResolutionService", lookaheadSubjects);
 
             ConditionEvaluationService lookaheadConditions =
                     new ConditionEvaluationService(lookaheadGqs, lookaheadEvaluator);

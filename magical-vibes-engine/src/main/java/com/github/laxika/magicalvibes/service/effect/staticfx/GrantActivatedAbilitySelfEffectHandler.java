@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * Self pass for {@link GrantActivatedAbilityEffect}: grants the ability to the source permanent
  * itself when the effect's subject names it, filter permitting ("this creature", "creatures you control" while it
- * is a creature, "lands you control" while it is a land). "Permanents you control" reaches the source through the
- * non-self handler instead ({@link StaticEffectSupport#withOwnPermanentsAsOthers}). The non-self
+ * is a creature, "lands you control" while it is a land, "permanents you control"). The non-self
  * {@link GrantActivatedAbilityEffectHandler} is never invoked with source == target, so a lord
  * that also grants to itself — Manaweft Sliver giving every Sliver you control, itself included,
  * "{T}: Add one mana of any color." — needs this pass.
@@ -35,8 +34,7 @@ public class GrantActivatedAbilitySelfEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityEffect) effect;
-        boolean applies = support.names(context,
-                StaticEffectSupport.withOwnPermanentsAsOthers(grant.scope()), grant.filter());
+        boolean applies = support.names(context, grant.scope().subject(), grant.filter());
         if (applies) {
             accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
         }

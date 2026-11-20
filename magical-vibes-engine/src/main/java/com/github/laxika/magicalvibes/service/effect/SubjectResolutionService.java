@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -131,7 +132,7 @@ public class SubjectResolutionService {
                          StaticReads reads) {
         requireStatic(subject.needsStackEntry(), subject);
         return namesUnfiltered(context.gameData(), context.source(), context.sourceId(), context.sourceControllerId(),
-                context.targetOnSameBattlefield(), context.target(), subject, reads)
+                context.targetOnSameBattlefield(), null, context.target(), subject, reads)
                 && (filter == null || reads.matchesFilter(context, context.target(), filter));
     }
 
@@ -145,6 +146,21 @@ public class SubjectResolutionService {
                          StaticReads reads) {
         requireStatic(subject.needsStackEntry(), subject);
         return namesUnfiltered(gameData, source, source.getId(), sourceControllerId, targetOnSourcesBattlefield,
+                null, target, subject, reads);
+    }
+
+    /**
+     * {@link #names(GameData, Permanent, UUID, boolean, Permanent, PermanentSubject, StaticReads)} for a scan that knows
+     * whose battlefield {@code target} is on, or will enter ({@code targetControllerId}), which also judges an
+     * enchanted player's set without searching the battlefields. {@code source} may be {@code null} for a static
+     * ability with no source permanent (an emblem's, a plane's): {@code source()} and {@code attached()} then name
+     * nothing, and {@code sourceControllerId} is the ability's controller.
+     */
+    public boolean names(GameData gameData, Permanent source, UUID sourceControllerId, UUID targetControllerId,
+                         Permanent target, PermanentSubject subject, StaticReads reads) {
+        requireStatic(subject.needsStackEntry(), subject);
+        return namesUnfiltered(gameData, source, source == null ? null : source.getId(), sourceControllerId,
+                targetControllerId != null && targetControllerId.equals(sourceControllerId), targetControllerId,
                 target, subject, reads);
     }
 
@@ -162,11 +178,46 @@ public class SubjectResolutionService {
 
         /** Whether {@code permanent} matches an effect's own filter, judged for the context's source. */
         boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter);
+
+        /**
+         * Reads for a permanent the caller has already found to be a creature (a creature entering, an attacking
+         * creature): a set's creature part holds, any other characteristic part does not, and no filter is read.
+         */
+        static StaticReads knownCreature() {
+            return KnownCharacteristic.CREATURE;
+        }
+
+        /** As {@link #knownCreature()}, for a permanent the caller has already found to be a land. */
+        static StaticReads knownLand() {
+            return KnownCharacteristic.LAND;
+        }
     }
 
+    /** The characteristic a caller already judged; see {@link StaticReads#knownCreature()}. */
+    private enum KnownCharacteristic implements StaticReads {
+        CREATURE,
+        LAND;
+
+        @Override
+        public boolean isCreature(GameData gameData, Permanent permanent) {
+            return this == CREATURE;
+        }
+
+        @Override
+        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+            return this == LAND && leaf instanceof PermanentIsLandPredicate;
+        }
+
+        @Override
+        public boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter) {
+            throw new UnsupportedOperationException("A known characteristic reads no filter");
+        }
+    }
+
+    /** {@code targetControllerId} is whose battlefield the target is on when the caller knows it, else {@code null}. */
     private boolean namesUnfiltered(GameData gameData, Permanent source, UUID sourceId, UUID controllerId,
-                                    boolean onSourcesBattlefield, Permanent target, PermanentSubject subject,
-                                    StaticReads reads) {
+                                    boolean onSourcesBattlefield, UUID targetControllerId, Permanent target,
+                                    PermanentSubject subject, StaticReads reads) {
         return switch (subject) {
             case PermanentSubject.Source ignored -> target.getId().equals(sourceId);
             case PermanentSubject.Attached ignored -> source != null
@@ -180,13 +231,13 @@ public class SubjectResolutionService {
             }
             case PermanentSubject.Named named -> target.getId().equals(named.permanentId());
             case PermanentSubject.ControlledBy controlledBy ->
-                    controlledByIncludes(gameData, source, controllerId, onSourcesBattlefield, target,
-                            controlledBy.players())
+                    controlledByIncludes(gameData, source, controllerId, onSourcesBattlefield, targetControllerId,
+                            target, controlledBy.players())
                             && setFilterMatches(gameData, source, sourceId, target, controlledBy.filter(), reads);
             case PermanentSubject.AllOf allOf -> {
                 for (PermanentSubject part : allOf.subjects()) {
-                    if (namesUnfiltered(gameData, source, sourceId, controllerId, onSourcesBattlefield, target, part,
-                            reads)) {
+                    if (namesUnfiltered(gameData, source, sourceId, controllerId, onSourcesBattlefield,
+                            targetControllerId, target, part, reads)) {
                         yield true;
                     }
                 }
@@ -199,13 +250,19 @@ public class SubjectResolutionService {
 
     /** Whether {@code target} is on the battlefield of one of the players a static set names. */
     private boolean controlledByIncludes(GameData gameData, Permanent source, UUID controllerId,
-                                         boolean onSourcesBattlefield, Permanent target, PlayerSubject players) {
+                                         boolean onSourcesBattlefield, UUID targetControllerId, Permanent target,
+                                         PlayerSubject players) {
         return switch (players) {
             case PlayerSubject.You ignored -> onSourcesBattlefield;
             case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.ALL || !onSourcesBattlefield;
             case PlayerSubject.EnchantedPlayer ignored -> {
-                List<Permanent> battlefield = source == null || source.getAttachedTo() == null
-                        ? null : gameData.playerBattlefields.get(source.getAttachedTo());
+                if (source == null || source.getAttachedTo() == null) {
+                    yield false;
+                }
+                if (targetControllerId != null) {
+                    yield targetControllerId.equals(source.getAttachedTo());
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(source.getAttachedTo());
                 yield battlefield != null && battlefield.contains(target);
             }
             default -> {
@@ -213,6 +270,12 @@ public class SubjectResolutionService {
                     throw new UnsupportedOperationException("No static form without a source for " + players);
                 }
                 for (UUID playerId : players(new Context(gameData, null, null, source, controllerId), players)) {
+                    if (targetControllerId != null) {
+                        if (playerId.equals(targetControllerId)) {
+                            yield true;
+                        }
+                        continue;
+                    }
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                     if (battlefield != null && battlefield.contains(target)) {
                         yield true;

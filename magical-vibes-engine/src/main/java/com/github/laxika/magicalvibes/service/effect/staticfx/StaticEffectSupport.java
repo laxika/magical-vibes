@@ -120,10 +120,8 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
     }
 
     /**
-     * The subject of {@code scope} for the static keyword and activated-ability grants, whose
-     * {@link GrantScope#OWN_PERMANENTS} means "other permanents you control": the keyword grant never reaches its
-     * source, and the activated-ability grant reaches it through the non-self handler, which the assembly hands the
-     * source for that constant. Every other constant is its own subject.
+     * The subject of {@code scope} for the static keyword grants, whose {@link GrantScope#OWN_PERMANENTS} means "other
+     * permanents you control": the keyword grant never reaches its source. Every other constant is its own subject.
      */
     public static PermanentSubject withOwnPermanentsAsOthers(GrantScope scope) {
         return scope == GrantScope.OWN_PERMANENTS ? OTHER_PERMANENTS_YOU_CONTROL : scope.subject();

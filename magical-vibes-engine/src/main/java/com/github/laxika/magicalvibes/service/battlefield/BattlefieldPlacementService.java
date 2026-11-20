@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalC
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
@@ -95,6 +96,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -1013,11 +1015,16 @@ public class BattlefieldPlacementService {
                 .filter(active -> !active.source().getId().equals(permanent.getId()))
                 .filter(active -> simultaneouslyEntered.stream()
                         .noneMatch(batchMember -> batchMember.getId().equals(active.source().getId())))
+                .filter(active -> {
+                    GrantKeywordEffect grant = active.effect();
+                    return grant.keywords().contains(Keyword.RIOT)
+                            && grant.scope().subject() instanceof PermanentSubject.ControlledBy
+                            && gameQueryService.staticSubjectNames(gameData, active.source(), controllerId,
+                            controllerId, permanent, grant.scope().subject(),
+                            SubjectResolutionService.StaticReads.knownCreature());
+                })
                 .map(GameQueryService.ActiveStaticEffect::effect)
-                .filter(grant -> grant.keywords().contains(Keyword.RIOT)
-                        && (grant.scope() == GrantScope.OWN_CREATURES
-                        || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                        && (grant.filter() == null
+                .filter(grant -> (grant.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, permanent, grant.filter()))).count() : 0;
         int choices = ownRiot + (grantedRiot ? 1 : 0) + battlefieldRiot + filteredBattlefieldRiot;
@@ -1748,7 +1755,7 @@ public class BattlefieldPlacementService {
      * which have none today.
      */
     private void applySacrificeOtherPermanentsWithSameName(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (losesNonManaAbilitiesAsLandEnters(gameData, permanent)) {
+        if (losesNonManaAbilitiesAsLandEnters(gameData, controllerId, permanent)) {
             return;
         }
         boolean present = permanent.getCard().getStaticEffects().stream()
@@ -1774,20 +1781,22 @@ public class BattlefieldPlacementService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
-    private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, Permanent permanent) {
+    private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, UUID controllerId, Permanent permanent) {
         if (!permanent.getCard().hasType(CardType.LAND)) {
             return false;
         }
         boolean[] losesAbilities = {false};
-        gameData.forEachPermanent((ignored, source) -> {
+        gameData.forEachPermanent((sourceControllerId, source) -> {
             if (losesAbilities[0] || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 return;
             }
             losesAbilities[0] = source.getCard().getStaticEffects().stream()
                     .filter(LosesAllNonManaAbilitiesEffect.class::isInstance)
                     .map(LosesAllNonManaAbilitiesEffect.class::cast)
-                    .anyMatch(effect -> effect.scope() == GrantScope.ALL_LANDS
-                            || effect.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF)
+                    .anyMatch(effect -> effect.scope().subject() instanceof PermanentSubject.ControlledBy
+                            && gameQueryService.staticSubjectNames(gameData, source, sourceControllerId,
+                            controllerId, permanent, effect.scope().subject(),
+                            SubjectResolutionService.StaticReads.knownLand()))
                     || (!permanent.getCard().getSupertypes().contains(CardSupertype.BASIC)
                     && source.getCard().getStaticEffects().stream()
                     .anyMatch(NonbasicLandsBecomeTypeEffect.class::isInstance));
@@ -1805,7 +1814,7 @@ public class BattlefieldPlacementService {
      * {@link #completeSacrificePermanentsToEnter}.
      */
     private boolean applyEntryCostReplacement(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (gameData.losesAllAbilitiesByEffect(permanent.getId()) || losesNonManaAbilitiesAsLandEnters(gameData, permanent)) {
+        if (gameData.losesAllAbilitiesByEffect(permanent.getId()) || losesNonManaAbilitiesAsLandEnters(gameData, controllerId, permanent)) {
             return true;
         }
         if (permanent.isEntryCostPaid()) {

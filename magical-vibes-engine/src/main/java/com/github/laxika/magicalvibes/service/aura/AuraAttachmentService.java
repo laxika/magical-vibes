@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
@@ -687,18 +687,21 @@ public class AuraAttachmentService {
         return attachment.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> {
                     if (effect instanceof ProtectionFromChosenColorEffect chosenProtection) {
-                        return chosenProtection.scope() == GrantScope.ENCHANTED_CREATURE;
+                        return chosenProtection.scope() != null
+                                && chosenProtection.scope().subject() instanceof PermanentSubject.Attached;
                     }
                     if (effect instanceof ProtectionFromColorsEffect fixedProtection) {
-                        return fixedProtection.scope() == GrantScope.ENCHANTED_CREATURE;
+                        return fixedProtection.scope() != null
+                                && fixedProtection.scope().subject() instanceof PermanentSubject.Attached;
                     }
                     if (effect instanceof GrantEffectEffect grant
-                            && grant.scope() == GrantScope.ENCHANTED_CREATURE
+                            && grant.scope().subject() instanceof PermanentSubject.Attached
                             && grant.effect() instanceof ProtectionFromCardTypesEffect cardTypeProtection) {
                         return cardTypeProtection.cardTypes().contains(CardType.ENCHANTMENT);
                     }
                     if (effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect dynamicProtection) {
-                        return dynamicProtection.scope() == GrantScope.ENCHANTED_CREATURE;
+                        return dynamicProtection.scope() != null
+                                && dynamicProtection.scope().subject() instanceof PermanentSubject.Attached;
                     }
                     return false;
                 });

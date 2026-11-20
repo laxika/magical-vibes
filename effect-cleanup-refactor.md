@@ -18,7 +18,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5c, 5e–5l done; 5d partly done: its restriction readers move to step 6; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a, 6.2b done (6.2b: `GrantScope` part; the static `TapUntapScope` readers moved to 6.2e) |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a, 6.2b, 6.2c done (6.2b: `GrantScope` part; the static `TapUntapScope` readers moved to 6.2e) |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -448,7 +448,7 @@ Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run th
 | 6.1 | the inventory | done |
 | 6.2a | the one-shot `normalfx` readers | done |
 | 6.2b | `staticfx` + `StaticEffectSupport`, the static `TapUntapScope` readers | done for `GrantScope`; the static `TapUntapScope` readers moved to 6.2e |
-| 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | open |
+| 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | done |
 | 6.2d | the AI | open |
 | 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | open |
 | 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` / `TapUntapScope` deleted | open |
@@ -2842,6 +2842,60 @@ class of the cards of every scoped static record with at most 112 test classes, 
 SetBasePowerToughness, ProtectionFromColors), and the cards above. Application, AI and testFixtures test sources and the
 touched card-test modules compile. Ratchet unchanged (no record or handler deleted; no ledger rows: nothing folded).
 Ask for the full card-test run the plan asks for after sub-step 2 (6.2b is part of it).
+
+### Step 6, run 6.2c (2026-11-20)
+
+**Done.** `LayerSystemService` (LSS), `GameQueryService` (GQS) and the "other" classifiers read `scope.subject()`, not
+constants. Three entry forms:
+- *Membership of one permanent*: the resolver's static `names(...)`, with a new overload
+  `names(GameData, source, sourceControllerId, targetControllerId, target, subject, StaticReads)`: it takes whose
+  battlefield the target is on or is entering (an entering creature, an enchanted player's set judged by controller,
+  no battlefield search), and a `null` source for an emblem (`source()` / `attached()` name nothing). Reads:
+  LSS `TypeLayerReads` (creature / land from the states of the board this thread's pass is building, incl. trial
+  boards; layer 3/4 counts awakened lands, the 7b emblem setter does not, as before), GQS `assemblyReads` (emblems in
+  the assembly, the finished board), GQS `layeredQueryReads` behind the new public `GameQueryService.staticSubjectNames`
+  (continuous queries: counter locks, lethal-damage, toughness-assignment, mana-colour permissions), and
+  `StaticReads.knownCreature()` / `knownLand()` for a caller that already judged the type (riot on an entering
+  creature, Blood Sun on an entering land, attack requirements, `matchesAnimateLand`). All singletons: nothing is
+  allocated per call beyond `scopeTargets`' existing result list.
+- *"Is it the source itself"*: `subject() instanceof Source` (SELF checks in LSS, `LayerClassifier`, GQS,
+  `TriggerIndex`, `PermanentCopierService`, `TokenCreationReplacementSupport`, the EachOpponent token-copy handler);
+  floating payload markers test `Target` / `Source`; "attached" tests `Attached` (`PredicateEvaluationService`,
+  `AuraAttachmentService`, which now also exempts an `ENCHANTED_PERMANENT` / `EQUIPPED_CREATURE` protection form: no
+  card has one on an Aura).
+- *Shape only*: AnimatePermanents' "set" branch is `instanceof ControlledBy` (LSS L4 and 7b, `LayerClassifier`); the
+  global combat-damage assignment (Doran) is "every player's set" (`namesEveryPlayersPermanents`), since that rule
+  reaches its own source.
+
+`scopeTargets` takes a `PermanentSubject`: `source()` / `attached()` judge their one candidate, a set walks the slots;
+the effect's own filter is still `matchesL4Filter`'s, memoized per filter instance (CR 613.6), never keyed on a
+subject's shared set predicate. The fingerprint is unchanged (nothing new is read). CR 613 placement, dependency
+order and timestamps are untouched.
+
+**Dispatch exception moved.** GrantActivatedAbility OWN_PERMANENTS no longer hands the source to the non-self
+handler (LSS `applyStaticInstanceViaHandlers`, GQS assembly); `GrantActivatedAbilitySelfEffectHandler` reads the plain
+subject (`controlledBy(you())` names the source), so `withOwnPermanentsAsOthers` is GrantKeyword's alone.
+
+**Constant reads left** (6.3 must give them a subject form): GQS `hasAttachmentRestriction`'s creature check
+(`ENCHANTED_PERMANENT` vs the creature forms, as 6.1 planned); the attack requirements and the emblem / counter-lock
+readers restrict to a `ControlledBy` with a players kind (`You`, `EnchantedPlayer`) where the old code took only those
+constants. GQS reads none of the four no-variant constants. A floating payload's `scope().subject()` is now asked in
+L4 (changeling) and L6 (GrantEffect / GrantNonAbility markers); no card makes such a payload with a no-variant
+constant (checked by grep), but 6.3 must keep it so.
+
+**Behaviour**: identical. A temporary probe compared old and new per call at every converted site (and that the
+reads' board is the scope's board) over the tests below, never fired, and was removed.
+
+**Tests** (after the probe was removed): application `layers` package, `GameQueryServiceTest`,
+`SubjectResolutionServiceTest` (new `StaticMembershipByBattlefield`: entering creature, enchanted player by
+controller, no source, known characteristics), `LayerClassifierTest`, `PredicateEvaluationServiceTest`,
+`BattlefieldPlacementServiceTest`, `UntapStepServiceTest`, `AuraAttachmentServiceTest`, `AttackLegalityServiceTest`,
+`EffectCountRatchetTest`; every card test of the small L3/L4 and query records, a 40-per-class sample of
+AnimatePermanents, SetBasePowerToughness, GrantActivatedAbility, MustAttack, ProtectionFromColors,
+GrantTriggeredAbility, StaticBoost, DynamicStaticBoost, GrantKeyword, plus every card with a static
+GrantActivatedAbility OWN_PERMANENTS, an emblem, a static AnimatePermanents set, riot, a scoped MustAttack, a changeling
+grant, SELF_AND_PAIRED, ENCHANTED_PLAYER_CREATURES or OWN_(UN)TAPPED_CREATURES: 1,065 suites, 9,161 test cases (1 skipped), all pass. Hand-built test wiring sets
+the resolver on LSS and GQS. Ratchet unchanged; no ledger rows (nothing folded).
 
 ## Prompt
 

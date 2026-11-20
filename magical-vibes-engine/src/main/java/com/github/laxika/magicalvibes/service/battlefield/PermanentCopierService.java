@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
 
@@ -102,7 +102,7 @@ public class PermanentCopierService {
                 && permanent.getChosenModeLabels().contains(chosenMode.mode()))) {
             return null;
         }
-        if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set && set.scope() == GrantScope.SELF) {
+        if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set && set.scope().subject() instanceof PermanentSubject.Source) {
             copy.setPower(set.power());
             copy.setToughness(set.toughness());
             return null;

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -162,9 +162,9 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
         copy.addCastingCostsAndSpellEffectsFrom(original, effect -> true);
         copy.addStaticAbilitiesFrom(original, effect -> {
             boolean definesColor = effect instanceof GrantColorEffect grant
-                    && grant.scope() == GrantScope.SELF && grant.filter() == null;
+                    && grant.scope().subject() instanceof PermanentSubject.Source && grant.filter() == null;
             boolean definesTypes = effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                    && grant.scope() == GrantScope.SELF && grant.filter() == null;
+                    && grant.scope().subject() instanceof PermanentSubject.Source && grant.filter() == null;
             return !definesColor && !definesTypes;
         });
         original.getTriggeredAbilities().forEach(copy::addTriggeredAbility);

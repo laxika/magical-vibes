@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -559,9 +559,7 @@ public class PredicateEvaluationService {
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof GrantKeywordEffect grant
                             && grant.keywords().contains(keyword)
-                            && (grant.scope() == GrantScope.ENCHANTED_CREATURE
-                            || grant.scope() == GrantScope.ENCHANTED_PERMANENT
-                            || grant.scope() == GrantScope.EQUIPPED_CREATURE)) {
+                            && grant.scope().subject() instanceof PermanentSubject.Attached) {
                         return true;
                     }
                 }

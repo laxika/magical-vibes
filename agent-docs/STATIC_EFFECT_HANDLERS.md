@@ -102,8 +102,9 @@ generic handlers — do NOT add per-condition handlers:
   permanent, `SubjectResolutionService.names`); a handler passes `scope.subject()` and never compares `GrantScope`
   constants. `namesBeyondSource` is the same for a non-self handler: a `source()` subject is the self handler's.
   `withAllPermanentsIncludingSource` / `withOwnPermanentsAsOthers` are the two per-verb readings of a constant
-  (colour, type, animation and granted-ability verbs read `ALL_PERMANENTS` including the source; keyword and
-  activated-ability grants read `OWN_PERMANENTS` as "other permanents you control").
+  (colour, type, animation and granted-ability verbs read `ALL_PERMANENTS` including the source; keyword grants
+  read `OWN_PERMANENTS` as "other permanents you control"; an activated-ability grant to "permanents you control"
+  reaches its source through its self handler, like every other self-including set).
 - `boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts)`
 - `boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts)`
 - `boolean hasAnimateArtifactEffect(GameData gameData)`

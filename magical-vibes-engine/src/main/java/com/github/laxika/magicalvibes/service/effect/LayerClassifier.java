@@ -109,7 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEff
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofToChosenPlaneswalkerTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
@@ -313,7 +313,8 @@ public final class LayerClassifier {
         // "[This] is every creature type" is a characteristic-defining ability (CR 604.3).
         map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, new Entry(Set.of(Layer.L4_TYPE),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L4_TYPE),
-                        ((GrantAllCreatureTypesToOwnCreaturesEffect) effect).scope() == GrantScope.SELF, false)));
+                        ((GrantAllCreatureTypesToOwnCreaturesEffect) effect).scope().subject()
+                                instanceof PermanentSubject.Source, false)));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnCardsEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
@@ -369,14 +370,13 @@ public final class LayerClassifier {
                 new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L6_ABILITIES, Layer.L7B_SET_PT),
                         (effect, fromOwnStaticSlot) -> {
                             AnimatePermanentsEffect animate = (AnimatePermanentsEffect) effect;
-                            if (animate.scope() == GrantScope.SELF && animate.power() instanceof Fixed
+                            if (animate.scope().subject() instanceof PermanentSubject.Source && animate.power() instanceof Fixed
                                     && animate.toughness() instanceof Fixed) {
                                 // A static self-animation's fixed P/T is a 7b setter at the source's
                                 // timestamp, so a later base P/T effect overrides it (Gideon Blackblade).
                                 return new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT), false, false);
                             }
-                            if (animate.scope() != GrantScope.ALL_PERMANENTS
-                                    && animate.scope() != GrantScope.OWN_PERMANENTS) {
+                            if (!(animate.scope().subject() instanceof PermanentSubject.ControlledBy)) {
                                 return new LayerClassification(Set.of(Layer.L4_TYPE), false, false);
                             }
                             EnumSet<Layer> layers = EnumSet.of(Layer.L4_TYPE, Layer.L7B_SET_PT);

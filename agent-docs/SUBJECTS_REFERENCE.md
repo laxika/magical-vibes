@@ -69,3 +69,12 @@ target. It judges `source()`, `attached()`, `attachedOrSource()`, `named()`, `al
 `you()`, `eachPlayer()`, `eachOpponent()`, `enchantedPlayer()` read off the context, other players through the list
 form) without looking anything up; creature, land and the effect's filter are answered by the static pass's
 recursion-safe reads. `ownedBy` and `attachmentsOf` have no one-permanent form yet.
+
+The same check is asked outside the static handlers. `names(GameData, source, sourceControllerId, targetControllerId,
+target, subject, StaticReads)` takes whose battlefield the target is on, or is entering, instead of searching for it
+(a creature still entering, an enchanted player's creatures), and accepts a `null` source for an ability with no source
+permanent (an emblem's: `source()` and `attached()` then name nothing). The layered pass answers creature and land from
+the states of the board it is building (`LayerSystemService.scopeTargets`; an effect's own filter is judged and
+memoized apart, per filter instance, CR 613.6); a continuous query outside the pass asks
+`GameQueryService.staticSubjectNames`, which answers them with the layered queries; a caller that already judged the
+permanent's type passes `StaticReads.knownCreature()` or `knownLand()` (that part of a set holds, any other does not).

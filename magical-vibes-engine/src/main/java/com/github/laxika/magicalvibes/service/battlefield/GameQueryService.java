@@ -240,6 +240,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSplitSecondToControllerSpellsUsingArtifactManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -372,6 +374,7 @@ import com.github.laxika.magicalvibes.service.effect.LoyaltyDamageReplacementHan
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
@@ -530,6 +533,64 @@ public class GameQueryService {
     @Autowired
     @Lazy
     private PredicateEvaluationService predicateEvaluationService;
+
+    /**
+     * Judges whether a static ability's subject names a permanent (the resolver's static membership check). Injected
+     * lazily because the resolver queries game state through this service.
+     */
+    @Autowired
+    @Lazy
+    private SubjectResolutionService subjectResolutionService;
+
+    /**
+     * The static membership check's reads for a continuous query outside the layered pass: the fully layered
+     * creature query.
+     */
+    private final SubjectResolutionService.StaticReads layeredQueryReads = new SubjectResolutionService.StaticReads() {
+        @Override
+        public boolean isCreature(GameData gameData, Permanent permanent) {
+            return GameQueryService.this.isCreature(gameData, permanent);
+        }
+
+        /** A set's other characteristic part (a land), read from the permanent's printed and granted types. */
+        @Override
+        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+            return predicateEvaluationService.matchesPermanentPredicate(null, permanent, leaf);
+        }
+
+        @Override
+        public boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter) {
+            throw new UnsupportedOperationException("A continuous query judges an effect's filter itself");
+        }
+    };
+
+    /**
+     * The static membership check's reads inside a static-bonus assembly: creature and land from the finished board of
+     * the pass that runs it, which never re-enters the assembly.
+     */
+    private final SubjectResolutionService.StaticReads assemblyReads = new SubjectResolutionService.StaticReads() {
+        @Override
+        public boolean isCreature(GameData gameData, Permanent permanent) {
+            CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+            return (state != null ? state.hasCardType(CardType.CREATURE) : hasCardType(permanent, CardType.CREATURE))
+                    || permanent.getCounterCount(CounterType.AWAKENING) > 0;
+        }
+
+        @Override
+        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+            if (!(leaf instanceof PermanentIsLandPredicate)) {
+                throw new UnsupportedOperationException("No assembly read for " + leaf);
+            }
+            CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+            return state != null ? state.hasCardType(CardType.LAND) : hasCardType(permanent, CardType.LAND);
+        }
+
+        @Override
+        public boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter) {
+            throw new UnsupportedOperationException("The assembly judges an effect's filter itself");
+        }
+    };
+
 
     /**
      * Aggregated static bonuses from other permanents, auras, emblems, and self-referencing
@@ -1662,7 +1723,7 @@ public class GameQueryService {
     private boolean hasSelfAllCreatureTypesEffect(Card card) {
         return card.getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                        && grant.scope() == GrantScope.SELF);
+                        && grant.scope().subject() instanceof PermanentSubject.Source);
     }
 
     private List<CardSubtype> selfAllZoneGrantedSubtypes(Card card) {
@@ -1765,7 +1826,7 @@ public class GameQueryService {
                         result.add(chosen);
                     }
                 } else if (effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                        && grant.scope() != GrantScope.SELF
+                        && !(grant.scope().subject() instanceof PermanentSubject.Source)
                         && grant.filter() == null) {
                     for (CardSubtype subtype : CardSubtype.values()) {
                         if (isCreatureSubtype(subtype) && !result.contains(subtype)) {
@@ -3079,7 +3140,7 @@ public class GameQueryService {
                 && source.getCard().getStaticEffects().stream()
                 .filter(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance)
                 .map(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::cast)
-                .anyMatch(effect -> effect.scope() == GrantScope.SELF)) {
+                .anyMatch(effect -> effect.scope().subject() instanceof PermanentSubject.Source)) {
             boolean borrowsOpponentAbilities = source.getCard().getStaticEffects().stream()
                     .anyMatch(com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class::isInstance);
             if (!borrowsOpponentAbilities || ability == null || isBorrowedOpponentAbility(gameData, controllerId, ability)) {
@@ -3102,7 +3163,9 @@ public class GameQueryService {
                 .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
                         .filter(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance)
                         .map(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::cast)
-                        .anyMatch(effect -> effect.scope() == GrantScope.ALL_OWN_CREATURES));
+                        .anyMatch(effect -> !(effect.scope().subject() instanceof PermanentSubject.Source)
+                                && staticSubjectNames(gameData, permanent, controllerId, controllerId, source,
+                                effect.scope().subject())));
     }
 
     /**
@@ -3666,7 +3729,7 @@ public class GameQueryService {
         for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof AnimatePermanentsEffect animate
-                    && animate.scope() == GrantScope.SELF) {
+                    && animate.scope().subject() instanceof PermanentSubject.Source) {
                 UUID controllerId = findPermanentController(gameData, permanent.getId());
                 if (controllerId == null) controllerId = enteringControllerId;
                 if (controllerId == null) continue;
@@ -4718,7 +4781,7 @@ public class GameQueryService {
         if (!hasLostPrintedAbilities(gameData, permanent)
                 && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof CantBecomeUntappedEffect restriction
-                        && restriction.scope() == GrantScope.SELF)) {
+                        && restriction.scope().subject() instanceof PermanentSubject.Source)) {
             return true;
         }
         return hasAttachmentRestriction(gameData, permanent, CantBecomeUntappedEffect.class)
@@ -4775,7 +4838,7 @@ public class GameQueryService {
         if (!hasLostPrintedAbilities(gameData, permanent)
                 && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof CantHaveCountersEffect restriction
-                        && restriction.scope() == GrantScope.SELF)) {
+                        && restriction.scope().subject() instanceof PermanentSubject.Source)) {
             return true;
         }
         if (hasAttachmentRestriction(gameData, permanent, CantHaveCountersEffect.class)) return true;
@@ -4804,8 +4867,10 @@ public class GameQueryService {
                     GrantScope scope = effect instanceof CantHaveCountersEffect restriction ? restriction.scope()
                             : effect instanceof CantBecomeUntappedEffect restriction ? restriction.scope() : null;
                     if (restrictionType.isInstance(effect)
-                            && (scope == GrantScope.ENCHANTED_PERMANENT
-                            || scope == GrantScope.ENCHANTED_CREATURE && isCreature(gameData, permanent))) return true;
+                            && staticSubjectNames(gameData, source, null, null, permanent, scope.subject())
+                            && (scope == GrantScope.ENCHANTED_PERMANENT || isCreature(gameData, permanent))) {
+                        return true;
+                    }
                 }
             }
         }
@@ -5172,9 +5237,9 @@ public class GameQueryService {
                     : activeStaticEffects(gameData, recipientController, GrantEffectEffect.class)) {
                 GrantEffectEffect grant = active.effect();
                 if (grant.effect() instanceof CantHaveMinusOneMinusOneCountersEffect
-                        && (grant.scope() == GrantScope.ALL_OWN_CREATURES
-                        || grant.scope() == GrantScope.OWN_CREATURES
-                        && !active.source().getId().equals(permanent.getId()))) {
+                        && grant.scope().subject() instanceof PermanentSubject.ControlledBy
+                        && staticSubjectNames(gameData, active.source(), active.controllerId(),
+                        recipientController, permanent, grant.scope().subject())) {
                     return true;
                 }
             }
@@ -5206,15 +5271,16 @@ public class GameQueryService {
         }
         if (getActiveStaticEffects(gameData, permanent).stream()
                 .anyMatch(effect -> effect instanceof CantHavePlusOnePlusOneCountersEffect restriction
-                        && restriction.scope() == GrantScope.SELF)) {
+                        && restriction.scope().subject() instanceof PermanentSubject.Source)) {
             return true;
         }
         UUID recipientController = controllerId != null ? controllerId
                 : findPermanentController(gameData, permanent.getId());
         if (recipientController != null && isCreature(gameData, permanent)) {
             if (activeStaticEffects(gameData, CantHavePlusOnePlusOneCountersEffect.class).stream()
-                    .anyMatch(active -> !active.controllerId().equals(recipientController)
-                            && active.effect().scope() == GrantScope.OPPONENT_CREATURES)) {
+                    .anyMatch(active -> active.effect().scope().subject() instanceof PermanentSubject.ControlledBy
+                            && staticSubjectNames(gameData, active.source(), active.controllerId(),
+                            recipientController, permanent, active.effect().scope().subject()))) {
                 return true;
             }
         }
@@ -6656,7 +6722,7 @@ public class GameQueryService {
         effects.addAll(computeStaticBonus(gameData, creature).grantedEffects());
         return effects.stream().anyMatch(effect ->
                 effect instanceof AssignCombatDamageWithToughnessEffect assign
-                        && assign.scope() == GrantScope.SELF
+                        && assign.scope().subject() instanceof PermanentSubject.Source
                         && (assign.affectedPredicate() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
                         gameData, creature, assign.affectedPredicate())));
@@ -6706,11 +6772,15 @@ public class GameQueryService {
             return false;
         }
         return activeStaticEffects(gameData, controllerId, GrantEffectEffect.class).stream()
-                .map(ActiveStaticEffect::effect)
-                .anyMatch(grant -> grant.scope() == GrantScope.ALL_OWN_CREATURES
-                        && grant.filter() == null
-                        && grant.effect() instanceof LethalDamageModifierEffect modifier
-                        && modifier.usesPowerForLethalDamage());
+                .anyMatch(active -> {
+                    GrantEffectEffect grant = active.effect();
+                    return grant.filter() == null
+                            && grant.effect() instanceof LethalDamageModifierEffect modifier
+                            && modifier.usesPowerForLethalDamage()
+                            && grant.scope().subject() instanceof PermanentSubject.ControlledBy
+                            && staticSubjectNames(gameData, active.source(), controllerId, controllerId, creature,
+                            grant.scope().subject());
+                });
     }
 
     /**
@@ -6741,7 +6811,7 @@ public class GameQueryService {
                 for (CardEffect effect : activeEffects) {
                     if (effect instanceof CombatDamageAssignmentEffect assignment
                             && assignment.assignmentMode() == assignmentMode
-                            && assignment.scope() == GrantScope.ALL_CREATURES) {
+                            && namesEveryPlayersPermanents(assignment.scope())) {
                         return true;
                     }
                 }
@@ -6752,7 +6822,7 @@ public class GameQueryService {
                 for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CombatDamageAssignmentEffect assignment
                             && assignment.assignmentMode() == assignmentMode
-                            && assignment.scope() == GrantScope.ALL_CREATURES) {
+                            && namesEveryPlayersPermanents(assignment.scope())) {
                         return true;
                     }
                 }
@@ -6770,7 +6840,9 @@ public class GameQueryService {
         for (CardEffect effect : gameData.floatingPlayerEffects(controllerId,
                 AssignCombatDamageWithToughnessEffect.class)) {
             if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
-                    && acdt.scope() == GrantScope.ALL_OWN_CREATURES
+                    && acdt.scope().subject() instanceof PermanentSubject.ControlledBy
+                    && staticSubjectNames(gameData, null, controllerId, controllerId, creature,
+                    acdt.scope().subject())
                     && (acdt.affectedPredicate() == null
                     || predicateEvaluationService.matchesPermanentPredicate(
                             creature,
@@ -6787,17 +6859,14 @@ public class GameQueryService {
             if (p.isFaceDown() || hasLostPrintedAbilities(gameData, p)) continue;
             for (CardEffect effect : p.getCard().getStaticEffects()) {
                 if (effect instanceof AssignCombatDamageWithToughnessEffect acdt) {
-                    GrantScope scope = acdt.scope();
+                    PermanentSubject subject = acdt.scope().subject();
                     boolean matchesPredicate = acdt.affectedPredicate() == null
                             || predicateEvaluationService.matchesPermanentPredicate(
                                     creature,
                                     acdt.affectedPredicate(),
                                     FilterContext.of(gameData).withSourceControllerId(controllerId));
-                    if (matchesPredicate && scope == GrantScope.ALL_OWN_CREATURES) {
-                        return true;
-                    }
-                    if (matchesPredicate && scope == GrantScope.OWN_CREATURES
-                            && !p.getId().equals(creature.getId())) {
+                    if (matchesPredicate && subject instanceof PermanentSubject.ControlledBy
+                            && staticSubjectNames(gameData, p, controllerId, controllerId, creature, subject)) {
                         return true;
                     }
                 }
@@ -7292,9 +7361,7 @@ public class GameQueryService {
                 if (layerSystemService.isExcludedProtectionGrant(gameData, source.getId(), effect)) {
                     continue;
                 }
-                if (source == target && !(effect instanceof GrantActivatedAbilityEffect grant
-                        && grant.scope() == GrantScope.OWN_PERMANENTS)
-                        && !appliesToItsOwnSourceInStaticPass(board, source, effect)) {
+                if (source == target && !appliesToItsOwnSourceInStaticPass(board, source, effect)) {
                     continue;
                 }
                 if (sourceSlot.fromGraveyard() != (effect instanceof GraveyardStaticEffect)
@@ -7391,15 +7458,13 @@ public class GameQueryService {
             AccumulatorSnapshot beforeEmblem = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof GrantActivatedAbilityEffect grant
-                        && grant.scope() == GrantScope.OWN_PERMANENTS
+                        && emblemNames(gameData, emblem, target, grant.scope())
                         // null GameData: type predicates read printed/granted types without
                         // re-entering computeStaticBonus (same as GrantKeywordEffect below).
                         && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
                     accumulator.addActivatedAbility(grant.ability());
                 } else if (effect instanceof DynamicStaticBoostEffect boost
-                        && (boost.scope() == GrantScope.OWN_CREATURES
-                                || boost.scope() == GrantScope.ALL_OWN_CREATURES)
-                        && isCreatureInStaticPass(board, target)
+                        && emblemNames(gameData, emblem, target, boost.scope())
                         && (boost.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(null, target, boost.filter()))) {
                     AmountContext amountContext = boost.amountsFromTarget()
@@ -7408,12 +7473,11 @@ public class GameQueryService {
                     accumulator.addPower(amountEvaluationService.evaluate(gameData, boost.powerBoost(), amountContext));
                     accumulator.addToughness(amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), amountContext));
                 } else if (effect instanceof StaticBoostEffect boost
-                        && (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES)
                         // Recursion-safe: isCreature(gameData, target) re-enters computeStaticBonus for
                         // this same target (this method IS the assembly), so an emblem's "creatures you
-                        // control get +1/+0" (Sorin, Lord of Innistrad) would recurse forever. Read the
-                        // layer-4 board state already computed for this pass instead.
-                        && isCreatureInStaticPass(board, target)
+                        // control get +1/+0" (Sorin, Lord of Innistrad) is judged on the board the pass
+                        // already computed (emblemNames).
+                        && emblemNames(gameData, emblem, target, boost.scope())
                         // The static-filter path reads the layer-4 state of this pass, so types
                         // granted by continuous effects (Encroaching Mycosynth) are visible.
                         && (boost.filter() == null || predicateEvaluationService.matchesStaticFilter(
@@ -7423,27 +7487,19 @@ public class GameQueryService {
                     accumulator.addToughness(boost.toughnessBoost());
                     accumulator.addKeywords(boost.grantedKeywords());
                 } else if (effect instanceof GrantKeywordEffect grant
-                        && (grant.scope() == GrantScope.OWN_PERMANENTS
-                        || grant.scope() == GrantScope.OWN_LANDS && isLandInStaticPass(board, target)
-                        || (grant.scope() == GrantScope.OWN_CREATURES
-                        || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                        && isCreatureInStaticPass(board, target))
+                        && emblemNames(gameData, emblem, target, grant.scope())
                         // Evaluate the filter with a null GameData so type predicates read the
                         // permanent's printed/granted types directly instead of re-entering
                         // computeStaticBonus for this same target (which would recurse forever).
                         && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
                     accumulator.addKeywords(grant.keywords());
                 } else if (effect instanceof SetBasePowerToughnessEffect setPT
-                        && (setPT.scope() == GrantScope.OWN_CREATURES
-                                || setPT.scope() == GrantScope.ALL_OWN_CREATURES)
-                        && isCreatureInStaticPass(board, target)
+                        && emblemNames(gameData, emblem, target, setPT.scope())
                         && (setPT.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(null, target, setPT.filter()))) {
                     accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
                 } else if (effect instanceof GrantTriggeredAbilityEffect grant
-                        && (grant.scope() == GrantScope.OWN_CREATURES
-                                || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                        && isCreatureInStaticPass(board, target)
+                        && emblemNames(gameData, emblem, target, grant.scope())
                         && (grant.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
                     accumulator.addGrantedEffect(grant);
@@ -11150,13 +11206,56 @@ public class GameQueryService {
                         .filter(AllLandsAreCreaturesEffect.class::isInstance)
                         .map(e -> TextChangeTransformer.transform(e, gameData.textReplacements(source.getId())))
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
-                                && (animateLands.scope() == GrantScope.ALL_LANDS
-                                        || (animateLands.scope() == GrantScope.OWN_LANDS
-                                                && sourceControlsPermanent(gameData, source, permanent))
-                                        || (animateLands.scope() == GrantScope.OPPONENT_LANDS
-                                                && !sourceControlsPermanent(gameData, source, permanent)))
+                                && subjectResolutionService.names(gameData, source, null,
+                                        sourceControlsPermanent(gameData, source, permanent), permanent,
+                                        animateLands.scope().subject(),
+                                        SubjectResolutionService.StaticReads.knownLand())
                                 && (animateLands.requiredSubtype() == null
                                         || hasEffectiveSubtype(gameData, permanent, animateLands.requiredSubtype()))));
+    }
+
+    /**
+     * Whether an emblem's static ability names {@code target}, a permanent of the emblem's controller: an emblem has
+     * no source permanent, so its sets are the ones it names of its controller's.
+     */
+    private boolean emblemNames(GameData gameData, Emblem emblem, Permanent target, GrantScope scope) {
+        PermanentSubject subject = scope.subject();
+        return subject instanceof PermanentSubject.ControlledBy
+                && subjectResolutionService.names(gameData, null, emblem.controllerId(), emblem.controllerId(),
+                target, subject, assemblyReads);
+    }
+
+    /**
+     * Whether a static ability of {@code source} ({@code null} for one with no source permanent) names {@code target},
+     * a permanent on, or entering, the battlefield of {@code targetControllerId}: the resolver's static membership
+     * check, its creature part answered by the fully layered query. For a continuous query outside the layered pass.
+     */
+    public boolean staticSubjectNames(GameData gameData, Permanent source, UUID sourceControllerId,
+                                      UUID targetControllerId, Permanent target, PermanentSubject subject) {
+        return subjectResolutionService.names(gameData, source, sourceControllerId, targetControllerId, target,
+                subject, layeredQueryReads);
+    }
+
+    /**
+     * {@link #staticSubjectNames(GameData, Permanent, UUID, UUID, Permanent, PermanentSubject)} with the
+     * characteristic reads the caller chooses (for a permanent whose type it already judged,
+     * {@link SubjectResolutionService.StaticReads#knownCreature()}).
+     */
+    public boolean staticSubjectNames(GameData gameData, Permanent source, UUID sourceControllerId,
+                                      UUID targetControllerId, Permanent target, PermanentSubject subject,
+                                      SubjectResolutionService.StaticReads reads) {
+        return subjectResolutionService.names(gameData, source, sourceControllerId, targetControllerId, target,
+                subject, reads);
+    }
+
+    /**
+     * Whether a static ability's set names every player's permanents its predicate allows ("each creature"), for a
+     * rule that applies to each of them whatever permanent asks (Doran, the Siege Tower's own toughness included).
+     */
+    private static boolean namesEveryPlayersPermanents(GrantScope scope) {
+        return scope.subject() instanceof PermanentSubject.ControlledBy set
+                && set.players() instanceof PlayerSubject.Each each
+                && each.relation() == PlayerSubject.Relation.ALL;
     }
 
     private boolean sourceControlsPermanent(GameData gameData, Permanent source, Permanent permanent) {

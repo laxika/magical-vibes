@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -364,7 +364,7 @@ public class TriggerIndex {
             if (!(staticEffect instanceof ConditionalEffect conditional)
                     || !(conditional.condition() instanceof ControlsPermanent controls)
                     || !(conditional.wrapped() instanceof GrantTriggeredAbilityEffect grant)
-                    || grant.scope() != GrantScope.SELF
+                    || !(grant.scope().subject() instanceof PermanentSubject.Source)
                     || !(grant.grantedAbility() instanceof TriggeredAbility ability)
                     || granted.contains(ability)
                     || ability.conditions().stream().noneMatch(c -> c.trigger() instanceof ZoneChangeTrigger)) {

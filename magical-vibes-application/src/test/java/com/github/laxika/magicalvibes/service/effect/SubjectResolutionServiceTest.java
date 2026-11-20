@@ -987,4 +987,79 @@ class SubjectResolutionServiceTest extends BaseCardTest {
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
+
+    @Nested
+    @DisplayName("The static entry point told whose battlefield the permanent is on")
+    class StaticMembershipByBattlefield {
+
+        private StaticEffectSupport reads;
+
+        @BeforeEach
+        void setUpReads() {
+            reads = GameTestEngineContext.get().getBean(StaticEffectSupport.class);
+        }
+
+        @Test
+        @DisplayName("Names a creature still entering by the battlefield it is entering")
+        void enteringCreature() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent entering = new Permanent(new HillGiant());
+            PermanentSubject creaturesYouControl = controlledBy(you(), new PermanentIsCreaturePredicate());
+
+            assertThat(subjects.names(gd, bears, player1.getId(), player1.getId(), entering, creaturesYouControl,
+                    reads)).isTrue();
+            assertThat(subjects.names(gd, bears, player1.getId(), player2.getId(), entering, creaturesYouControl,
+                    reads)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Names the creatures of the enchanted player by their controller")
+        void enchantedPlayersCreatures() {
+            Permanent curse = addCreatureReady(player1, new CurseOfStalkedPrey());
+            curse.setAttachedTo(player2.getId());
+            Permanent entering = new Permanent(new GrizzlyBears());
+            PermanentSubject enchantedPlayersCreatures = controlledBy(enchantedPlayer(),
+                    new PermanentIsCreaturePredicate());
+
+            assertThat(subjects.names(gd, curse, player1.getId(), player2.getId(), entering,
+                    enchantedPlayersCreatures, reads)).isTrue();
+            assertThat(subjects.names(gd, curse, player1.getId(), player1.getId(), entering,
+                    enchantedPlayersCreatures, reads)).isFalse();
+        }
+
+        @Test
+        @DisplayName("With no source permanent, names its controller's set and never a source or attachment")
+        void noSourcePermanent() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+            PermanentSubject otherCreaturesYouControl = GrantScope.OWN_CREATURES.subject();
+
+            assertThat(subjects.names(gd, null, player1.getId(), player1.getId(), bears, otherCreaturesYouControl,
+                    reads)).isTrue();
+            assertThat(subjects.names(gd, null, player1.getId(), player2.getId(), opposingBears,
+                    otherCreaturesYouControl, reads)).isFalse();
+            assertThat(subjects.names(gd, null, player1.getId(), player1.getId(), bears, source(), reads))
+                    .isFalse();
+            assertThat(subjects.names(gd, null, player1.getId(), player1.getId(), bears, attached(), reads))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("A known creature or land answers only that part of a set")
+        void knownCharacteristic() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent entering = new Permanent(new HillGiant());
+            PermanentSubject creaturesYouControl = controlledBy(you(), new PermanentIsCreaturePredicate());
+            PermanentSubject landsYouControl = controlledBy(you(), new PermanentIsLandPredicate());
+
+            assertThat(subjects.names(gd, bears, player1.getId(), player1.getId(), entering, creaturesYouControl,
+                    SubjectResolutionService.StaticReads.knownCreature())).isTrue();
+            assertThat(subjects.names(gd, bears, player1.getId(), player1.getId(), entering, landsYouControl,
+                    SubjectResolutionService.StaticReads.knownCreature())).isFalse();
+            assertThat(subjects.names(gd, bears, player1.getId(), player1.getId(), entering, landsYouControl,
+                    SubjectResolutionService.StaticReads.knownLand())).isTrue();
+            assertThat(subjects.names(gd, bears, player1.getId(), player1.getId(), entering, creaturesYouControl,
+                    SubjectResolutionService.StaticReads.knownLand())).isFalse();
+        }
+    }
 }

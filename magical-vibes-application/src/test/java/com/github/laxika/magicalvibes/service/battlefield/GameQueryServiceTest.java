@@ -118,6 +118,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDoesNotCauseLifeLossEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -278,6 +279,9 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
+        SubjectResolutionService subjectResolutionService = new SubjectResolutionService(gqs, evaluator, null);
+        ReflectionTestUtils.setField(layerSystemService, "subjectResolutionService", subjectResolutionService);
+        ReflectionTestUtils.setField(gqs, "subjectResolutionService", subjectResolutionService);
         ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
         ReflectionTestUtils.setField(gqs, "staticEffectConditionResolver",
                 new StaticEffectConditionResolver(
