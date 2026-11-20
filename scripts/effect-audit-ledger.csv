@@ -403,7 +403,7 @@ UntapChosenPermanentEffect,unique,5d,"untap a permanent chosen at resolution, no
 UntapPermanentsForAmountEffect,unique,5d,"untap up to a dynamic amount chosen by the affected player"
 UntapSearchedPermanentEffect,blocked-other,5d,"needs a step-7 'searched permanent' subject"
 UntapSearchedPermanentsEffect,blocked-other,5d,"needs a step-7 'searched permanents' subject"
-UntapTargetAndSharingCreaturesEffect,blocked-other,5d,"needs the new shares-a-colour-with-target predicate (step 6 table)"
+UntapTargetAndSharingCreaturesEffect,absorbed,6.4,"UntapPermanentsEffect(Subjects.withCreaturesSharingAColor(Subjects.target())); untaps and logs like a set"
 UntapAllCreaturesOfChosenTypeEffect,unique,5d,"creature type chosen at resolution (Riptide Chronologist)"
 UntapAttackedCreaturesEachCombatThisTurnEffect,unique,5d,"registers a per-combat delayed untap; builds the attacked-creatures untap"
 UntapControlledTapOpponentTargetsEffect,unique,5d,"per-target tap or untap by controller (Teferi, Who Slows the Sunset)"

@@ -327,6 +327,7 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof UntapPermanentsEffect untap) {
             return untap.subject() instanceof PermanentSubject.Target || untap.subject() instanceof PermanentSubject.AllTargets
+                    || untap.subject() instanceof PermanentSubject.WithCreaturesSharingAColor sharing && sharing.declaresTarget()
                     ? TargetPolarity.BENEFICIAL
                     : null;
         }
@@ -712,7 +713,6 @@ public class TargetPolarityClassifier {
             entry("RedirectAllDamageToChosenCreatureUntilNextTurnEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectTargetCreatureDamageFromChosenSourceToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("UntapTargetAndSharingCreaturesEffect", TargetPolarity.BENEFICIAL),
 
             // Pack Hunt searches for cards named after the opposing creature it targets.
             entry("SearchLibraryForCardsWithTargetCreatureNameEffect", TargetPolarity.HARMFUL),

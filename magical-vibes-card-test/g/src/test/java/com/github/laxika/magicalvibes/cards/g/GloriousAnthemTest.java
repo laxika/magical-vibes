@@ -55,6 +55,16 @@ class GloriousAnthemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature entering after Glorious Anthem also gets +1/+1")
+    void buffsCreatureEnteringLater() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Does not buff opponent's creatures")
     void doesNotBuffOpponentCreatures() {
         harness.addToBattlefield(player1, new GloriousAnthem());

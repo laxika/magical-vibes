@@ -202,7 +202,7 @@ class Inventory:
                 card = None if is_test else CARD_CLASS.search(posix)
                 tokens = set(IDENTIFIER.findall(read(path)))
                 found = tokens & names
-                for watched in ("GrantScope", "PermanentReference"):
+                for watched in ("PermanentSubject", "PlayerSubject", "Subjects", "PermanentReference"):
                     if watched in tokens:
                         if card:
                             self.card_files_naming[watched] += 1
@@ -291,10 +291,9 @@ def summary(inv):
         ("Records with a nested CardEffect component", f"{len(nested)} ({len(nested_list)} more hold a "
                                                        f"List<CardEffect>)"),
         ("Effect names containing Then / And", f"{len(with_then)} / {len(with_and)}"),
-        ("Effects with a GrantScope component",
-         f"{len(with_component('GrantScope'))} ({len(naming('GrantScope'))} effect types name it; "
-         f"{inv.card_files_naming['GrantScope']} card files name GrantScope; "
-         f"{inv.engine_files_naming['GrantScope']} engine files read it)"),
+        ("Effects with a PermanentSubject / PlayerSubject component",
+         f"{len(with_component('PermanentSubject'))} / {len(with_component('PlayerSubject'))} "
+         f"({inv.card_files_naming['Subjects']} card files name Subjects)"),
         ("Effects with a PermanentReference component",
          f"{len(with_component('PermanentReference'))} ({inv.card_files_naming['PermanentReference']} card files)"),
         ("Handlers that switch on a recipient / scope / reference component", str(len(inv.subject_switch_handlers))),

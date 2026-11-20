@@ -35,7 +35,7 @@ resolver's static entry point rejects the others).
 | `triggeringSpellTargets()` | "those creatures" naming the targets of the spell a trigger was about (Storm Windrider): that spell's targets as it is on the stack, else as the entry recorded them; with no triggering spell, the effect's own targets, which the card's target filter declares (Myojin of Towering Might) | no | no |
 | `createdThisResolution()` | "those tokens" after an earlier step of the same resolution created them (every permanent the entry recorded as created, still on the battlefield; step result; Gilt-Leaf Ambush, Tend to the Kiln) | no | no |
 | `bandmatesOf(permanent)` | "each other creature banded with it" (CR 702.22): the other attacking creatures in the band of the permanent `permanent` names, `source()` as it is or last was; nothing outside a band (Icatian Skirmishers) | no | no |
-| `withCreaturesSharingAColor(permanent)` | "target creature and each other creature that shares a color with it": the named creature and every creature sharing a color with it as the effect resolves; nothing once the named permanent is gone or no longer a creature (Surge of Zeal) | if `permanent` targets | no |
+| `withCreaturesSharingAColor(permanent)` | "target creature and each other creature that shares a color with it": the named creature and every creature sharing a color with it as the effect resolves; nothing once the named permanent is gone or no longer a creature (Surge of Zeal; Rally the Righteous untaps them) | if `permanent` targets | no |
 
 Named sets, one shared instance each (a static ability's set is judged per permanent, so a card should use these rather
 than build its own): `creaturesYouControl()` / `otherCreaturesYouControl()`, `otherTappedCreaturesYouControl()`,

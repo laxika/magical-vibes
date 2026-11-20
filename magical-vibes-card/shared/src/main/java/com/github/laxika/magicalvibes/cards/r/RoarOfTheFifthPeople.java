@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -27,7 +27,7 @@ public class RoarOfTheFifthPeople extends Card {
                 2, "Dinosaur", 3, 3, CardColor.GREEN,
                 List.of(CardSubtype.DINOSAUR), Set.of(), Set.of()));
 
-        addTrigger(Triggers.chapter(2), new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(2), new GrantStaticEffectToSourceEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
@@ -35,17 +35,15 @@ public class RoarOfTheFifthPeople extends Card {
                                 ManaColor.RED, ManaColor.GREEN, ManaColor.WHITE))),
                         "{T}: Add {R}, {G}, or {W}."
                 ),
-                Subjects.otherCreaturesYouControl(),
-                null,
-                Duration.WHILE_SOURCE_REMAINS
-        ));
+                Subjects.creaturesYouControl()
+        )));
 
         addTrigger(Triggers.chapter(3),
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)));
 
         addTrigger(Triggers.chapter(4), new GrantKeywordEffect(
                 Set.of(Keyword.DOUBLE_STRIKE, Keyword.TRAMPLE),
-                Subjects.otherCreaturesYouControl(),
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)
         ));
     }

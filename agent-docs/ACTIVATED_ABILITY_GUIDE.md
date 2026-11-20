@@ -4,7 +4,7 @@
 
 Quick reference for building `ActivatedAbility` instances. Covers all constructor overloads, all parameters, and when to use each variant.
 
-`Triggers.sourceYouControlDealsNoncombatDamageToOpponent()` scans the damaging source controller's battlefield and fires only from the noncombat player-damage path. Chandra's Pyreling uses it with `SequenceEffect.of(BoostSelfEffect(1, 0), GrantKeywordEffect(DOUBLE_STRIKE, SELF))`.
+`Triggers.sourceYouControlDealsNoncombatDamageToOpponent()` scans the damaging source controller's battlefield and fires only from the noncombat player-damage path. Chandra's Pyreling uses it with `SequenceEffect.of(BoostSelfEffect(1, 0), GrantKeywordEffect(DOUBLE_STRIKE, Subjects.source()))`.
 
 ## Fields reference
 

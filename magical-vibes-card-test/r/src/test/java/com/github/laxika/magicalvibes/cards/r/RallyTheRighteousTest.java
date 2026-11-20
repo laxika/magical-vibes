@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.cards.d.DimirInfiltrator;
 import com.github.laxika.magicalvibes.cards.j.Junktroller;
 import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.v.ViashinoSlasher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,9 +20,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RallyTheRighteous.class, BorosRecruit.class, DimirInfiltrator.class,
-        ViashinoSlasher.class, Junktroller.class, CourierHawk.class, LastGasp.class})
+        ViashinoSlasher.class, Junktroller.class, CourierHawk.class, LastGasp.class, Plains.class})
 class RallyTheRighteousTest extends BaseCardTest {
 
     @Test
@@ -146,6 +148,19 @@ class RallyTheRighteousTest extends BaseCardTest {
         assertThat(matchingCreature.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, matchingCreature)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Rally the Righteous");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreature() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new RallyTheRighteous()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castRally(Permanent target) {

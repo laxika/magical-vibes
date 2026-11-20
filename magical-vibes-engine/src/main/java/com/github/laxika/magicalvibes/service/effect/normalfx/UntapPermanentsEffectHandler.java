@@ -43,7 +43,8 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         var e = (UntapPermanentsEffect) effect;
         PermanentSubject subject = e.subject();
         List<Permanent> permanents = subjectResolutionService.permanents(gameData, entry, effect, subject);
-        if (!subject.isSet()) {
+        // The Radiance subject names a group, so it untaps and logs like a set.
+        if (!subject.isSet() && !(subject instanceof PermanentSubject.WithCreaturesSharingAColor)) {
             for (Permanent permanent : permanents) {
                 untapNamed(gameData, entry, subject, permanent);
             }

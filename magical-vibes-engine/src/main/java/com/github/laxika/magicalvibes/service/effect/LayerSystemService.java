@@ -3359,8 +3359,9 @@ public class LayerSystemService {
 
     /**
      * Drops each resolved "gains [static ability]" grant (Tenth District Hero's "Other creatures you
-     * control have indestructible") whose source is later made to lose all abilities by a floating
-     * layer-6 effect with a later timestamp: the ability was gained, then removed (CR 613.7), so it
+     * control have indestructible") whose source is later made to lose all abilities by a floating or
+     * static layer-6 effect with a later timestamp (an Aura attached afterwards, Minimus Containment):
+     * the ability was gained, then removed (CR 613.7), so it
      * no longer affects anything. Name-setting grants are not abilities and are classified outside
      * layer 6, so they never reach this pass.
      */
@@ -3374,11 +3375,8 @@ public class LayerSystemService {
                 continue;
             }
             UUID sourceId = grant.source().permanent().getId();
-            boolean lost = instances.stream().anyMatch(later -> later.floating() != null
-                    && later.timestamp() > grant.timestamp()
-                    && (later.effect() instanceof LosesAllAbilitiesEffect
-                    || later.effect() instanceof LosesAllNonManaAbilitiesEffect)
-                    && floatingTargets(gameData, later, slots, slotsById, board).stream()
+            boolean lost = instances.stream().anyMatch(later -> later.timestamp() > grant.timestamp()
+                    && abilityLossTargets(gameData, later, slots, slotsById, board).stream()
                     .anyMatch(target -> target.permanent().getId().equals(sourceId)));
             if (lost) {
                 if (result == null) {
@@ -3388,6 +3386,22 @@ public class LayerSystemService {
             }
         }
         return result == null ? instances : result;
+    }
+
+    /**
+     * The permanents a "loses all abilities" / "loses all non-mana abilities" instance strips: a floating effect's, or
+     * the ones a static ability's subject names (Minimus Containment's enchanted permanent). Any other instance strips
+     * nothing.
+     */
+    private List<PermanentSlot> abilityLossTargets(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
+                                                   Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        return switch (instance.effect()) {
+            case LosesAllAbilitiesEffect loss -> scopeTargets(gameData, instance, loss.subject(), loss.filter(),
+                    slots, slotsById, board);
+            case LosesAllNonManaAbilitiesEffect loss -> scopeTargets(gameData, instance, loss.subject(), loss.filter(),
+                    slots, slotsById, board);
+            default -> List.of();
+        };
     }
 
     /**
@@ -4037,7 +4051,7 @@ public class LayerSystemService {
                         Permanent permanent = target.permanent();
                         if (board.marchAnimatedIds().contains(permanent.getId())
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
-                            int manaValue = permanent.getCard().getManaValue();
+                            int manaValue = gameQueryService.getPermanentManaValue(permanent);
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
                                     instance.timestamp(), instance.position(),
                                     provenanceSourceName(instance)));
@@ -4052,7 +4066,7 @@ public class LayerSystemService {
                         Permanent permanent = target.permanent();
                         if (board.starfieldAnimatedIds().contains(permanent.getId())
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
-                            int manaValue = permanent.getCard().getManaValue();
+                            int manaValue = gameQueryService.getPermanentManaValue(permanent);
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
                                     instance.timestamp(), instance.position(),
                                     provenanceSourceName(instance)));
@@ -4065,7 +4079,7 @@ public class LayerSystemService {
                         Permanent permanent = target.permanent();
                         if (board.opalescenceAnimatedIds().contains(permanent.getId())
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
-                            int manaValue = permanent.getCard().getManaValue();
+                            int manaValue = gameQueryService.getPermanentManaValue(permanent);
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
                                     instance.timestamp(), instance.position(),
                                     provenanceSourceName(instance)));

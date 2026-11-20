@@ -10,12 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -24,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -45,43 +38,6 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantActivatedAbilityEffect) effect;
         PermanentSubject subject = e.subject();
-        if (Subjects.otherCreaturesYouControl().equals(subject)
-                && Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
-                && entry.getSourcePermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source == null) {
-                return;
-            }
-            PermanentPredicate scope = new PermanentAllOfPredicate(List.of(
-                    new PermanentIsCreaturePredicate(),
-                    new PermanentControlledBySourceControllerPredicate(),
-                    new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-            ));
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(),
-                    entry.getCard().getName(),
-                    entry.getSourcePermanentId(),
-                    entry.getControllerId(),
-                    new GrantActivatedAbilityEffect(
-                            grantedAbility(e.ability(), entry).withGrantSource(entry.getSourcePermanentId()),
-                            Subjects.target(),
-                            e.filter(),
-                            e.duration()),
-                    null,
-                    null,
-                    scope,
-                    e.duration(),
-                    0
-            ));
-            gameLogService.append(gameData, GameLog.builder()
-                    .card(entry.getCard())
-                    .text(" grants \"" + e.ability().getDescription()
-                            + "\" to creatures you control for as long as it remains on the battlefield.")
-                    .build());
-            log.info("Game {} - {} grants activated ability to creatures you control while it remains",
-                    gameData.id, entry.getCard().getName());
-            return;
-        }
         int count = 0;
         if (subject instanceof PermanentSubject.Source) {
             Permanent source = subjectResolutionService.permanent(gameData, entry, effect, subject);

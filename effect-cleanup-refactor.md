@@ -18,7 +18,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1–6.3 done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3); 6.4 open |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -452,7 +452,7 @@ Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run th
 | 6.2d | the AI | done (the AI `TapUntapScope` reads go with 6.2e) |
 | 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | done (the six records take a `PermanentSubject`, cards rewritten, `TapUntapScope` deleted) |
 | 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` deleted (`TapUntapScope` went in 6.2e) | done (every record converted, the four no-variant constants got variants, `GrantScope` deleted) |
-| 6.4 | the rule-4 tests | open |
+| 6.4 | the rule-4 tests | done (tests added where missing; Roar of the Fifth People's chapter II is a static ability the Saga gains; `UntapTargetAndSharingCreatures` folded) |
 
 ### 7. Step results: one way for a step to tell the next what happened
 
@@ -3147,6 +3147,43 @@ every card module compiles. **Ask for a full card-test run** (5,582 card files r
 above. `scripts/effect-inventory.py` still prints a `GrantScope` row (now 0). `UntapTargetAndSharingCreatures` (5d,
 kept) could fold onto `withCreaturesSharingAColor(target())`; `TemporaryCreatureTypes`' no-argument constructor still
 means "other creatures you control" (static Maskwood Nexus).
+
+### Step 6, run 6.4 (2026-11-20)
+
+**Rule-4 tests** (CR 611.2c / 611.3a, checked with `get_rule`). Already covered, nothing added: one-shot Boost
+(`WarriorsHonorTest.affectsOnlyCreaturesPresentAtResolution`, `OverrunTest.onlyCreaturesPresentAtResolutionAreAffected`),
+one-shot GrantKeyword (the same Overrun test's trample; Huatli chapter IV's later Dinosaur), one-shot Animate
+(`NaturalAffinityTest.doesNotAnimateLandEnteringAfterResolution` / `doesNotAnimateLandsEnteringAfterResolution`), static
+GrantKeyword (`LevitationTest.laterCreaturesGainFlying`), static Animate (`LivingPlaneTest.animatesLandsEnteringLater`,
+`NaturesRevoltTest`, `KormusBellTest`). Added: static Boost `GloriousAnthemTest.buffsCreatureEnteringLater`.
+
+**The GrantActivatedAbility live scope is gone.** Its only user was Roar of the Fifth People (LCI 189 back face), chapter II:
+"This Saga gains 'Creatures you control have ...'" (ruling: no duration, applies while the Saga remains). That is a static
+ability the Saga gains, so it rightly reaches later creatures, but it was encoded as a one-shot grant special-cased in
+`GrantActivatedAbilityEffectHandler` (OWN_CREATURES + WHILE_SOURCE_REMAINS, excluding the Saga). It is now
+`GrantStaticEffectToSourceEffect(new GrantActivatedAbilityEffect(ability, creaturesYouControl()))` and the special path is
+deleted: every resolving set grant now locks its set. Chapter IV's "Dinosaurs you control" became `creaturesYouControl()`.
+Two engine fixes the conversion exposed: (1) `LayerSystemService.withoutStaticGrantsLostToLaterAbilityLoss` now also drops a
+gained static ability when a *static* lose-all-abilities effect with a later timestamp names its source (Minimus
+Containment attached afterwards, CR 613.7; it only checked floating ones); (2) the March of the Machines / Starfield of Nyx /
+Opalescence base P/T read `getCard().getManaValue()`, so a transformed back face was 0/0; it now uses
+`GameQueryService.getPermanentManaValue` (front face's mana value, CR 712.6d). Test:
+`HuatliPoetOfUnityTest.chapterIIManaAbilityReachesTheSagaWhileItIsACreature` (the Saga is a 3/3 under Opalescence and has the
+mana ability; fails on the old code twice over). The class's ten test methods without `@DisplayName` got one.
+
+**Fold.** `UntapTargetAndSharingCreaturesEffect` (+ handler) absorbed: Rally the Righteous is
+`UntapPermanentsEffect(withCreaturesSharingAColor(target()))`. Same lookup (the resolver's was copied from GrantKeyword's,
+which matched the old handler: target must be a creature, colorless target names only itself); `targetSpec()` gives the old
+`benign(creature)`; the handler untaps and logs it like a set; the AI polarity entry became a shape check (BENEFICIAL).
+Test: `RallyTheRighteousTest.cannotTargetNoncreature`. Ratchet 4858 / 4091.
+
+**Leftovers closed.** Doc prose in agent-docs and `.claude/skills` no longer names `GrantScope` / `TapUntapScope` constants
+(a deleted scratch script mapped each to its subject, picking "other"/"all" from the referenced card's own code, else the
+Oracle words on the line; ~570 lines in 14 files, the plan files `EFFECT_MERGE_PLAN.md` / `TARGET_PREDICATE_PLAN.md` and the
+audit ledger left as history). `scripts/effect-inventory.py` prints a PermanentSubject / PlayerSubject row instead.
+
+**For later runs.** `BoostTargetAndSharingCreaturesUntilEndOfTurnEffect` (Rally's second half) could fold the same way onto
+a boost survivor. Ask for a full card-test run (6.3's 5,582 rewritten card files are still unconfirmed by one).
 
 ## Prompt
 

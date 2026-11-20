@@ -56,6 +56,9 @@ public record UntapPermanentsEffect(PermanentSubject subject, PermanentPredicate
             // on the multi-target path, so the spec stays a no-op (PLAYER_OR_PERMANENT) to keep that path's null
             // tolerance.
             case PermanentSubject.AllTargets ignored -> TargetSpec.benign(TargetPredicates.playerOrPermanent());
+            // Radiance: "untap target creature and each other creature that shares a color with it" (Rally the Righteous).
+            case PermanentSubject.WithCreaturesSharingAColor sharing when sharing.declaresTarget() ->
+                    TargetSpec.benign(TargetPredicates.creature());
             case PermanentSubject.ControlledBy controlledBy when controlledBy.players().declaresTarget() ->
                     TargetSpec.benign(TargetPredicates.player());
             case PermanentSubject.Source ignored -> new TargetSpec(null, false, null, true, 1);

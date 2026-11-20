@@ -53,7 +53,7 @@ controller ("you"/"you control", CR 109.5), not the enchanted/equipped creature'
 NOT add per-derivation `BoostCreaturePer*` handlers.
 
 `ShrinkEnchantedCreatureEffect(DynamicAmount)` / `ShrinkEnchantedCreatureEffectHandler` is the one
-deliberate exception to that "source is the attachment" rule: it gates on `ENCHANTED_CREATURE` the
+deliberate exception to that "source is the attachment" rule: it gates on `Subjects.attachedCreature()` the
 same way, but evaluates the amount with the **enchanted creature** as the amount source and its
 controller as the amount controller, because the wordings that need it say "its controller" and
 switch on whether *that creature* is attacking (Snowblind). It also floors the toughness reduction
@@ -80,8 +80,8 @@ generic handlers — do NOT add per-condition handlers:
 - `ConditionalStaticSelfEffectHandler` — `handledEffect()=ConditionalEffect.class`, `selfOnly()=true`.
   Evaluates the condition via `ConditionEvaluationService`, then applies the wrapped effect to the
   source itself via `StaticEffectSupport.applySelfOnlyConditionalStaticEffect` (scope-aware:
-  `SELF`/`ALL_OWN_CREATURES`/`ALL_CREATURES_INCLUDING_SELF` cover the source, `OWN_CREATURES` and
-  `ALL_CREATURES` mean "other creatures").
+  `Subjects.source()`/`Subjects.creaturesYouControl()`/`Subjects.allCreatures()` cover the source, `Subjects.otherCreaturesYouControl()` and
+  `Subjects.otherCreatures()` mean "other creatures").
 - `ConditionalStaticEffectHandler` — `handledEffect()=ConditionalEffect.class`, `selfOnly()=false`.
   Evaluates the condition, then delegates to the wrapped effect's own registered handler.
 

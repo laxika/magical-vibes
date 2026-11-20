@@ -808,7 +808,7 @@ grant source when the ability is activated.
 Face-up schemes in the command zone (`GameData.faceUpSchemes`) are static sources the same way
 (CR 314.4): the layered pass and the static-bonus assembly in `GameQueryService` wrap each one in
 a synthetic source owned and controlled by the scheme's owner, so an ordinary `STATIC` effect such as
-`StaticBoostEffect(..., ALL_OWN_CREATURES)` applies from the command zone. A face-down scheme
+`StaticBoostEffect(..., Subjects.creaturesYouControl())` applies from the command zone. A face-down scheme
 (`faceDownCommandZoneCards`, i.e. in the scheme deck) contributes nothing; the board fingerprint
 hashes that face-down flag so abandoning a scheme invalidates the cached board.
 

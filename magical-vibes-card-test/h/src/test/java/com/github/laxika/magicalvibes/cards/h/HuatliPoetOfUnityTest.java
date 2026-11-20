@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MineshaftSpider;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HuatliPoetOfUnity.class, Forest.class, MineshaftSpider.class, ArmoredKincaller.class, MinimusContainment.class})
+@CardUsed({HuatliPoetOfUnity.class, Forest.class, MineshaftSpider.class, ArmoredKincaller.class, MinimusContainment.class, Opalescence.class})
 class HuatliPoetOfUnityTest extends BaseCardTest {
 
     @Test
@@ -96,6 +97,26 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II's granted ability also reaches the Saga itself while Opalescence makes it a 3/3 creature")
+    void chapterIIManaAbilityReachesTheSagaWhileItIsACreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent saga = addSaga(1);
+        saga.setSummoningSick(false);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, saga)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, saga)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, saga)).isEqualTo(3);
+        harness.activateAbility(player1, indexOf(saga), null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(saga.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Chapter III searches for a Dinosaur card")
     void chapterIIISearchesForDinosaur() {
         Permanent saga = addSaga(2);
@@ -125,6 +146,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Transform accepts a mixed red and white hybrid payment")
     void transformAcceptsMixedHybridPayment() {
         Permanent huatli = addFrontFace();
         harness.addMana(player1, ManaColor.RED, 1);
@@ -142,6 +164,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot transform outside a main phase")
     void cannotTransformOutsideMainPhase() {
         Permanent huatli = addFrontFace();
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -154,6 +177,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Transform returns Huatli to her owner rather than the ability's controller")
     void transformReturnsToOwnerInsteadOfAbilityController() {
         HuatliPoetOfUnity card = new HuatliPoetOfUnity();
         card.setOwnerId(player2.getId());
@@ -171,6 +195,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II's mana ability stops when the Saga loses all abilities")
     void chapterIIManaAbilityStopsWhenSagaLosesAbilities() {
         Permanent saga = addSaga(1);
         Permanent creature = addCreatureReady(new MineshaftSpider());
@@ -190,6 +215,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II's mana ability follows the Saga's controller")
     void chapterIIManaAbilityFollowsSagaController() {
         Permanent saga = addSaga(1);
         Permanent oldControllersCreature = addCreatureReady(new MineshaftSpider());
@@ -211,6 +237,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II's mana ability ends when the Saga leaves the battlefield")
     void chapterIIManaAbilityEndsWhenSagaLeaves() {
         Permanent saga = addSaga(1);
         Permanent creature = addCreatureReady(new MineshaftSpider());
@@ -225,6 +252,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II's mana ability cannot be activated by a summoning-sick creature")
     void chapterIIManaAbilityCannotBypassSummoningSickness() {
         addSaga(1);
         advanceToNextChapter();
@@ -238,6 +266,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III cannot find a non-Dinosaur card")
     void chapterIIICannotFindNonDinosaur() {
         addSaga(2);
         Card creature = new MineshaftSpider();
@@ -252,6 +281,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter IV affects only the Dinosaurs you control as it resolves and ends at cleanup")
     void chapterIVOnlyAffectsCurrentControlledDinosaursAndExpiresAtCleanup() {
         Permanent saga = addSaga(3);
         Permanent dinosaur = addCreatureReady(new ArmoredKincaller());
@@ -278,6 +308,7 @@ class HuatliPoetOfUnityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Huatli enters normally with no basic land in the library")
     void entersWithNoBasicLandAvailable() {
         Card creature = new MineshaftSpider();
         harness.setHand(player1, List.of(new HuatliPoetOfUnity()));
