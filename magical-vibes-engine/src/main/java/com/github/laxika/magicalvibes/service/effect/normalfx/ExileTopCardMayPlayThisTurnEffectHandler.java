@@ -28,8 +28,9 @@ import org.springframework.stereotype.Component;
  * Oracle's Vault: exile the top card of the controller's library; until end of turn the controller
  * may play that card (any type). The free variant additionally lets it be cast without paying its
  * mana cost. Another library ("that player exiles the top card of their library", Fallen Shinobi): each player the
- * effect's {@code library} names exiles from their own, in APNAP order, and the controller may play the cards for the
- * effect's duration (face down, the controller may look at them).
+ * effect's {@code library} names exiles from their own, in APNAP order, and the controller (or the player the effect's
+ * {@code player} names, as the effect resolves) may play the cards for the effect's duration, whose "your" is that
+ * player's (face down, that player may look at them); with no such player, nothing is exiled.
  * Records the {@link StepKind#EXILE} step: the cards exiled and their owners.
  */
 @Slf4j
@@ -63,15 +64,18 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         if (count <= 0) {
             return;
         }
+        UUID holderId = subjectResolutionService.player(gameData, entry, effect, exileEffect.player());
+        if (holderId == null) {
+            return;
+        }
         for (UUID libraryOwnerId : subjectResolutionService.players(gameData, entry, effect, exileEffect.library())) {
-            exileFrom(gameData, entry, exileEffect, source, count, libraryOwnerId);
+            exileFrom(gameData, exileEffect, entry, source, count, libraryOwnerId, holderId);
         }
     }
 
-    private void exileFrom(GameData gameData, StackEntry entry, ExileTopCardMayPlayThisTurnEffect exileEffect,
-                           Permanent source, int count, UUID libraryOwnerId) {
+    private void exileFrom(GameData gameData, ExileTopCardMayPlayThisTurnEffect exileEffect, StackEntry entry,
+                           Permanent source, int count, UUID libraryOwnerId, UUID holderId) {
         boolean withoutPaying = exileEffect.withoutPayingManaCost();
-        UUID controllerId = entry.getControllerId();
         Duration duration = exileEffect.duration();
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         String ownerName = gameData.playerIdToName.get(libraryOwnerId);
@@ -83,15 +87,15 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         }
 
         String verb = exileEffect.castOnly() ? "cast" : "play";
-        String player = libraryOwnerId.equals(controllerId) ? "" : gameData.playerIdToName.get(controllerId) + " ";
+        String player = libraryOwnerId.equals(holderId) ? "" : gameData.playerIdToName.get(holderId) + " ";
         String playNote = " (" + player + "may " + verb + " it"
                 + (withoutPaying ? " without paying its mana cost" : "")
-                + durationText(gameData, controllerId, duration) + ")";
+                + durationText(gameData, holderId, duration) + ")";
 
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             if (exileEffect.faceDown()) {
-                exileService.exileCardFaceDown(gameData, libraryOwnerId, topCard, null, controllerId);
+                exileService.exileCardFaceDown(gameData, libraryOwnerId, topCard, null, holderId);
             } else {
                 exileService.exileCard(gameData, libraryOwnerId, topCard);
             }
@@ -100,9 +104,13 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             boolean permitted = !exileEffect.castOnly() || !topCard.hasType(CardType.LAND);
             if (permitted) {
                 // Play permission for the effect's duration ("you may cast": not for a land card).
-                gameData.grantExilePlayPermission(topCard.getId(), controllerId, duration);
+                gameData.grantExilePlayPermission(topCard.getId(), holderId, duration);
                 if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
-                    gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), controllerId);
+                    gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), holderId);
+                }
+                if (exileEffect.permissionCondition() != null) {
+                    gameData.updateExilePlayPermission(topCard.getId(),
+                            granted -> granted.withCondition(exileEffect.permissionCondition()));
                 }
                 if (exileEffect.forLife()) {
                     gameData.updateExilePlayPermission(topCard.getId(),
@@ -114,7 +122,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                 if (freeCast) {
                     gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
                 } else if (exileEffect.anyManaType() && !topCard.hasType(CardType.LAND)) {
-                    gameData.grantExileAnyManaType(topCard.getId(), controllerId, duration);
+                    gameData.grantExileAnyManaType(topCard.getId(), holderId, duration);
                 }
             }
 
@@ -131,7 +139,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         }
     }
 
-    /** How long the permission lasts, as the log says it; "your" is the controller's. */
+    /** How long the permission lasts, as the log says it; "your" is the permission holder's. */
     private static String durationText(GameData gameData, UUID controllerId, Duration duration) {
         String controllerName = gameData.playerIdToName.get(controllerId);
         if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
@@ -140,6 +148,8 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             return " until " + controllerName + "'s next end step";
         } else if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
             return " until the end of " + controllerName + "'s next turn";
+        } else if (Duration.DURING_YOUR_NEXT_TURN.equals(duration)) {
+            return " during " + controllerName + "'s next turn";
         } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)) {
             return " until " + controllerName + "'s next upkeep";
         } else if (Duration.PERMANENT.equals(duration)) {

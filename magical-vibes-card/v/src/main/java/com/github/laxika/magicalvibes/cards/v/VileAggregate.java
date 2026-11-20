@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlayerLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +26,6 @@ public class VileAggregate extends Card {
                 CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(colorlessCreaturesYouControl, new Fixed(5)));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.triggeringPlayer()));
     }
 }

@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 11 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 12 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -530,6 +530,7 @@ cause under Findings.
 | 9 | run 8's prerequisite: graveyard and library exiles record an EXILE step; the fused Exile records that unblocks (graveyard target, source card, top of library) and the Swords family's one-target cards | done (11 split, 1 amount absorbed, 7 survivors, 2 blocked-other, 4 blocked-step-model, 1 unique; 37 cards rewritten; `HappenedThisWay.toACard` and `AmountThisWay.exiled*`) |
 | 10 | run 9's next prerequisites: a count-honouring controller-graveyard target (Quintorius, Loremaster; Nyla), a `PlayerSubject` for whose library the two library-exile primitives take, and the "that player / target opponent exiles the top card, you may play it" records that unblocks | done (5 split, 5 absorbed, 3 survivors, 1 blocked-other, item 3 not started; 16 cards rewritten; `fromLibraryOf`, `mayOnlyCast`, `withAnyManaType`) |
 | 11 | run 10's leftovers: permission durations on the library-exile primitive and the records they absorb; the recording choose-a-card graveyard exile and the "you may exile a card from your graveyard. If you do" records | done (4 split, 12 absorbed, 1 amount absorbed, 4 survivors; 39 card files rewritten; `until(Duration)`, `exiledFaceDown`, `payingLifeEqualToManaValue`, a count on `ExileTopCardOfOwnLibraryEffect`, `fromOwnGraveyard`) |
+| 12 | run 11's leftovers: `ExileTopCardsMayPlayUntilNextTurnEffect` and Curse of Hospitality's record (a who-may-play subject), `ExileTopCardsOfDefendingPlayerLibraryEffect`, `ExileTopCardMayPlayWhileExiledEffect`, `ExileNCardsFromGraveyardThenEffect` ("exactly N or none") | done (4 absorbed, 1 split, 1 unique, 2 survivors; 72 card files rewritten; `playableBy(PlayerSubject)`, `playableOnlyIf(Condition)`; Blightwing Bandit and Skywarp Skaab fixed by Oracle text) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4211,6 +4212,95 @@ Brainstealer Dragon (none) with `get_rulings`. No CR number is cited below.
   and the new step would exile them all, so add an "exactly N or none" guard (a `MayEffectHandler` check like the one for no matching card)
   first; `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect` (the `afterExileEffects` continuation of `beginGraveyardExileChoice`).
   Hand exiles still record nothing (every hand-exile primitive chooses at a prompt). Luminate Primordial still needs a per-object amount.
+
+### Step 8, run 12 (2026-11-20)
+
+Run 11's "For later runs", library and graveyard exiles. Verdicts (ledger, step `8`): **absorbed 4**
+(`ExileTopCardsMayPlayUntilNextTurnEffect`, `ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect`,
+`ExileTopCardsOfDefendingPlayerLibraryEffect`, `ExileTopCardMayPlayWhileExiledEffect`), **split 1** (`ExileNCardsFromGraveyardThenEffect`),
+with their handlers; **unique 1** (`CreateTokenThenMayExileCardsAndRepeatEffect`, Insatiable Frugivore; its loop rebuilt from the steps);
+**survivor 2** (`ExileTopCardMayPlayThisTurnEffect`, `ExileTopCardOfOwnLibraryEffect`). Ratchet 4,775 / 4,008 → 4,770 / 4,003. 72 card files
+rewritten (a deleted scratch script for the 51 plain until-next-turn cards and the 10 ingest / Ulamog cards, the rest by hand); Oracle text of every
+rewritten card checked with `get_card` (Oddric's MB2 315 printing is not in Scryfall; it grants ingest), rulings of Expedited Inheritance, Ignite
+the Future, Galvanic Relay, Curse of Hospitality, Blightwing Bandit, Neyali, Monk Class, Ulamog, Mist Intruder, Young Necromancer, Kroxa and
+Kunoros, Skywarp Skaab (none) and Calim (none) with `get_rulings`. CR 508.5, 702.115a, 603.12 and 608.2c checked with `get_rule` (2026-11-20).
+
+- **Survivor.** `ExileTopCardMayPlayThisTurnEffect` gained `PlayerSubject player` (`playableBy(...)`, default `you()`, never a target: who may play
+  the cards, resolved once as the effect resolves; nobody named, nothing is exiled) and `Condition permissionCondition` (`playableOnlyIf(...)`, put
+  on the `ExilePlayPermissionEffect` as the old while-exiled record did). The permission, a face-down card's look, the lore-counter renewal and the
+  any-mana rider all go to that player, and the duration's "your" is theirs (`grantExilePlayPermission(card, holder, duration)` already took the
+  holder as the duration player). The log names `DURING_YOUR_NEXT_TURN` ("during <player>'s next turn"). Readers moved:
+  `DealDamageToTargetCreatureEffectHandler.referencesExcessDamage`, `EffectResolution.hasConvergeEffect` (no existing survivor card pairs an
+  `EventValue` count with that damage, so nothing else starts tracking excess) and `FatefulTempestEffectHandler`.
+- **Until your next turn.** 50 cards and Fateful Tempest: `new ExileTopCardMayPlayThisTurnEffect(n, false).until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)`
+  (the old handler's `grantPlayUntilOwnersNextTurn` was that same grant); Galvanic Relay `until(DURING_YOUR_NEXT_TURN)`. Expedited Inheritance
+  ("its controller may exile that many cards from the top of their library. They may play those cards until the end of their next turn"):
+  `fromLibraryOf(controllerOf(triggering())).playableBy(controllerOf(triggering()))`; the old raw `getTriggeringPermanentControllerId()` is what
+  `MayEffectHandler` writes as the choosing player (live controller, else as it left), which `controllerOf(triggering())` reads after the live and
+  last-known controller, so the same player. Ignite the Future needs no flag: `ConditionalReplacementEffect(new CastFromZone(Zone.GRAVEYARD),
+  normal, free)`; `CastFromZone` also refuses a copy, which was not cast ("If this spell was cast from a graveyard"; the old `getSourceZone()` read
+  did not check). The log is now one line per card.
+- **Curse of Hospitality.** `fromLibraryOf(triggeringPlayer()).playableBy(controllerOf(triggering())).withAnyManaType()`: the combat-damage entry
+  records the damaged player as `targetId` / `triggeringPlayerId` and the creature as the triggering permanent; "that creature's controller" is its
+  controller as the trigger resolves (live, else last-known), as the old handler read it. The old fallback to the Curse's controller when nothing
+  was recorded is gone (no entry lacks it). The any-mana rider now names the holder; the end-of-turn rider ignores it.
+- **Defending player.** `defendingPlayer()` is right for Ulamog only (`of(defendingPlayer(), 20)`: the attack trigger records `defendingPlayerId`,
+  the CR 508.5 player, which the old handler also read first; the resolver's fallback `defendingPlayerOfAttackTarget` also knows a battle's
+  protector). The 9 ingest cards (8 BFZ creatures and Oddric's granted ingest) are "that player" of CR 702.115a, the damaged player:
+  `of(triggeringPlayer())`. Combat-damage entries record no `defendingPlayerId` or attacked target, so `defendingPlayer()` would have named nobody
+  there; the old handler fell through to the baked `targetId`, which `triggeringPlayer()` reads (`triggeringPlayerId`, else that `targetId`). An empty
+  library now logs a line (the old handler returned silently); one log line per card.
+- **While exiled.** Rassilon `until(PERMANENT)`; Neyali `until(PERMANENT).playableOnlyIf(new AttackedWithTokenThisTurn())`; Monk Class
+  `mayOnlyCast().until(PERMANENT).playableOnlyIf(ControllerCastSpellThisTurn)` ("You may cast this card", so a land gets no permission instead of
+  a permission whose spell filter refused it; test added); Blightwing Bandit below.
+- **Graveyard "exactly N".** `MayEffectHandler`'s run-11 guard now offers no choice when the controller's graveyard has fewer matching cards than
+  the leading `OWN` exile's count (count 1 unchanged; Emeritus of Ideation and Aegis Sculptor are gated on the same threshold before the may), so
+  nothing is exiled and the rider never happens, as the old record did. Young Necromancer, Kroxa and Kunoros, Calim: `MayEffect(SequenceEffect.of(
+  fromOwnGraveyard(N, filter), ConditionalEffect(HappenedThisWay.atLeast(EXILE, N), QueueReflexiveAbilityEffect(...))))`. Insatiable Frugivore's
+  loop inserts the same shape around its next iteration. The old record's `GraveyardTargetOperationState` fields and their
+  `GraveyardChoiceHandlerService` branch are deleted. Prompt shape: with more matching cards than N, one `GraveyardChoice` per card (the survivor's
+  one-at-a-time choice inside one graveyard-leave batch) instead of one `MultiGraveyardChoice`; with too few, no may prompt at all.
+- **Behaviour changes, by Oracle text.** Blightwing Bandit (WOC 13, "look at the top card of that player's library, then exile it face down")
+  exiled its controller's own top card; now `fromLibraryOf(activePlayer())` (the opponent whose turn it is, live while the trigger resolves in
+  that turn), face down with the controller as exiler, any mana, `PERMANENT` (`BlightwingBanditTest` rewritten: its fixtures used player 1's
+  library; the first case fails on the old card). Skywarp Skaab (VOW 78, "If you do, draw a card") put a reflexive ability on the stack, which is
+  CR 603.12's "when you do"; the draw is now a `ConditionalEffect` step of the same ability (`SkywarpSkaabTest.drawsAsPartOfTheSameAbility`,
+  fails on the old card). Insatiable Frugivore's "If you do, repeat this process" likewise repeats inside the resolution instead of as a reflexive
+  ability. The survivor's log lines win (no test asserted the old ones).
+- **AI.** No AI class named a deleted record; `TargetPolarityGuardTest` and `AiTargetSelectorTest` pass.
+- **Tests.** One Gradle run (one `--tests` list per task): the tests of the 71 rewritten cards that have one (Compleated Conjurer through
+  `CaptiveWeirdTest`) and of the other card tests that construct one, Insatiable Frugivore, Fateful Tempest, Emeritus, Aegis Sculptor, Kishla
+  Trawlers, Ichorid, Ultimecia, `--tests-for ExileTopCardMayPlayThisTurnEffect ExileTopCardOfOwnLibraryEffect ExileGraveyardCardsEffect
+  --max-per-class 10`: 129 card test classes; application `EffectCountRatchetTest`, `CardImmutabilityArchTest`, `ReflexiveRouteRecordTest` (its
+  `EXILE_GRAVEYARD_CARDS` continuation rebuilt from the steps, two cards), `GraveyardChoiceInteractionHandlersTest`, `MayAbilityHandlerServiceTest`,
+  `StepResultsTest`, `SubjectResolutionServiceTest`, `EffectResolutionServiceTest`, `GraveyardTargetingServiceTest`, `MayEffectHandlerTest`,
+  `ExileGraveyardCardsEffectHandlerTest`; AI `TargetPolarityGuardTest`, `AiTargetSelectorTest`. About 1,580 test cases. Seven card cases failed
+  first, all prompt-shape changes (a may that is no longer offered with too few cards, a `MultiGraveyardChoice` that is now one `GraveyardChoice`
+  per card); the four test classes were updated and pass on a rerun. `@DisplayName`s were added to `ExpeditedInheritanceTest`,
+  `IgniteTheFutureTest` and `MonkClassTest` (Monk Class gained the land case), Young Necromancer and Kroxa gained a choice-shape case. Application,
+  AI, engine testFixtures and card-test `a b c d e f g h i k l m n o p r s t u v w y z` test sources compile.
+
+**For later runs.**
+
+- "[Another player] may play those cards" is `.playableBy(subject)`; "during any turn …, you may play that card" / "you may cast it as long as …"
+  is `.playableOnlyIf(condition)`; "during your next turn" is `.until(DURING_YOUR_NEXT_TURN)`; "if this spell was cast from a graveyard, … without
+  paying" is a `ConditionalReplacementEffect(CastFromZone(GRAVEYARD))` over the free form. "You may exile N cards from your graveyard. If / When you
+  do" is `MayEffect(SequenceEffect.of(fromOwnGraveyard(N, filter), ConditionalEffect(HappenedThisWay.atLeast(EXILE, N), …)))`.
+- Next for Exile (read each handler first): the library records run 11 named and this run did not reach: `ExileTopCardsChooseOne*`,
+  `ExileTopCardsMayCastMatching*` (a cast filter: `freeCastFilter` already exists for the free half; a play filter may be `mayOnlyCast` plus a
+  `CardPredicate`), `ExileTopCardOfRandomOpponent…` (random opponent: no subject), `ExileTopCardsMayPlayThisTurnAndCreateTokens*`, Hidetsugu and
+  Kairi; then the graveyard "and" records, the largest unaudited multi-card ones: `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect` (15
+  cards), `ExileTargetCardFromGraveyardAndMayCastCopyEffect` (14), `ExileTargetCardFromGraveyardAndImprintOnSourceEffect` (10), and
+  `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect` (the `afterExileEffects` continuation). `ExileTargetPermanentAndTrackWithSourceEffect`
+  (24) is a tracking variant, not a fused one.
+- Raven Guild Master and Sire of Stagnation still declare a harmful player target for "that player" (run 11).
+
+**How much of step 8 is left (estimate).** `effect-inventory.py --unaudited`: 774 unaudited records whose name has `Then` / `And` / `IfYouDo` /
+`Unless`, 143 of them used by two or more cards (1,165 card uses; by first word Exile 25, Search 10, Sacrifice 9, Reveal 9, Counter 8, Prevent 7,
+Return 7, Destroy 7, Draw 6, Each 6). Roughly a third are not two instructions (the `CantAttack/BlockUnless` and `CounterUnless*` restrictions and
+taxes, the "and/or graveyard" searches, `DrawDiscardAndConnive`), so about 90 to 100 fused multi-card families remain: some six or seven runs at this
+run's size, the Exile family two of them. Counting nested-`CardEffect` records too gives 236 multi-card records, but most of the extra are wrappers
+(`ConditionalEffect`, `MayEffect`, `SequenceEffect`, `MayPayManaEffect`).
 
 ## Prompt
 

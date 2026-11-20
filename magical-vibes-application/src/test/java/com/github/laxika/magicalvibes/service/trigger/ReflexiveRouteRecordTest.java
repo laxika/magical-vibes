@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -35,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
@@ -114,7 +114,8 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
     enum Continuation {
         QUEUE_REFLEXIVE(QueueReflexiveAbilityEffect::new),
         REMOVE_COUNTER(effect -> new RemoveCounterFromSourceThenEffect(CounterType.PLUS_ONE_PLUS_ONE, effect)),
-        EXILE_GRAVEYARD_CARDS(effect -> new ExileNCardsFromGraveyardThenEffect(1, effect)),
+        EXILE_GRAVEYARD_CARDS(effect -> SequenceEffect.of(ExileGraveyardCardsEffect.fromOwnGraveyard(2, null),
+                new ConditionalEffect(HappenedThisWay.atLeast(StepKind.EXILE, 2), new QueueReflexiveAbilityEffect(effect)))),
         DRAW_THEN(effect -> SequenceEffect.of(new DrawCardEffect(1),
                 new ConditionalEffect(HappenedThisWay.drew(), new QueueReflexiveAbilityEffect(effect)))),
         DISCARD_THEN(effect -> new DiscardCardThenEffect(

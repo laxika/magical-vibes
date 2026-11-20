@@ -29,10 +29,11 @@ class KroxaAndKunorosTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
-        harness.handleMultipleCardsChosen(player1, cardsToExile.stream().map(Card::getId).toList());
+        assertThat(choice.validIndices()).hasSize(6);
+        exileFromGraveyard(cardsToExile);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
@@ -53,7 +54,7 @@ class KroxaAndKunorosTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, cardsToExile.stream().map(Card::getId).toList());
+        exileFromGraveyard(cardsToExile);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
@@ -62,7 +63,7 @@ class KroxaAndKunorosTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fewer than five cards cannot pay the optional exile")
+    @DisplayName("With fewer than five cards in the graveyard no exile is offered")
     void fewerThanFiveCardsDoNotCreateFollowUp() {
         Card target = new AlabasterHostSanctifier();
         Card first = new Island();
@@ -73,7 +74,6 @@ class KroxaAndKunorosTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -132,7 +132,7 @@ class KroxaAndKunorosTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, cardsToExile.stream().map(Card::getId).toList());
+        exileFromGraveyard(cardsToExile);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
 
         harness.assertNotOnBattlefield(player1, "Alabaster Host Sanctifier");
@@ -147,5 +147,11 @@ class KroxaAndKunorosTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(cardsToExile);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    private void exileFromGraveyard(List<Card> cards) {
+        for (Card card : cards) {
+            harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(card));
+        }
     }
 }

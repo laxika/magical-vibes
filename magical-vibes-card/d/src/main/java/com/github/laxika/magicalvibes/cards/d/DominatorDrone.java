@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlayerLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,6 +27,6 @@ public class DominatorDrone extends Card {
                                 new PermanentIsCreaturePredicate())))),
                 new LoseLifeEffect(2, Subjects.eachOpponent()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.triggeringPlayer()));
     }
 }

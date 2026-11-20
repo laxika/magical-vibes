@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileExiledEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOC", collectorNumber = "13")
@@ -14,6 +16,10 @@ public class BlightwingBandit extends Card {
         // that player's library, then exile it face down. You may play that card for as long as
         // it remains exiled, and mana of any type can be spent to cast it.
         addTrigger(Triggers.youCastSpell().duringOpponentsTurn().nthThisTurn(1),
-                new ExileTopCardMayPlayWhileExiledEffect(true, true));
+                new ExileTopCardMayPlayThisTurnEffect(1, false)
+                        .fromLibraryOf(Subjects.activePlayer())
+                        .exiledFaceDown()
+                        .withAnyManaType()
+                        .until(Duration.PERMANENT));
     }
 }

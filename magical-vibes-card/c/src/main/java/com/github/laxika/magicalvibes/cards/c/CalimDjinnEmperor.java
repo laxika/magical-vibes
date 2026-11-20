@@ -4,11 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoLibraryAtPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -35,10 +40,11 @@ public class CalimDjinnEmperor extends Card {
                         new TapPermanentsEffect(Subjects.target()),
                         new DrawCardEffect(1),
                         new MayEffect(
-                                new ExileNCardsFromGraveyardThenEffect(
-                                        2,
-                                        otherCalim,
-                                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)),
+                                SequenceEffect.of(
+                                        ExileGraveyardCardsEffect.fromOwnGraveyard(2, otherCalim),
+                                        new ConditionalEffect(HappenedThisWay.atLeast(StepKind.EXILE, 2),
+                                                new QueueReflexiveAbilityEffect(
+                                                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)))),
                                 "Exile two other cards named Calim, Djinn Emperor from your graveyard?")),
                 "Calim's Breath — {1}{U}, Discard Calim: Tap up to one target nonland permanent. "
                         + "Draw a card. Then you may exile two other cards named Calim, Djinn Emperor "

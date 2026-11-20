@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class CoriMountainMonastery extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{R}",
-                List.of(new ExileTopCardsMayPlayUntilNextTurnEffect(1)),
+                List.of(new ExileTopCardMayPlayThisTurnEffect(1, false).until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)),
                 "{3}{R}, {T}: Exile the top card of your library. Until the end of your next turn, "
                         + "you may play that card."));
     }

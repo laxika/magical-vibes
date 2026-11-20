@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +29,7 @@ public class ElementalMascot extends Card {
                                 new CardTypePredicate(CardType.SORCERY)
                         ))),
                 new BoostSelfEffect(1, 0),
-                new ConditionalEffect(new SpellManaSpentAtLeast(5), new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
+                new ConditionalEffect(new SpellManaSpentAtLeast(5), new ExileTopCardMayPlayThisTurnEffect(1, false)
+                        .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)));
     }
 }

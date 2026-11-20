@@ -135,8 +135,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         if (leadingEffect instanceof ExileGraveyardCardsEffect ownExile
                 && ownExile.scope() == GraveyardExileScope.OWN
-                && !hasOwnGraveyardCardToExile(gameData, entry, ownExile)) {
-            // "You may exile a [card] from your graveyard": with no such card there is no choice to offer.
+                && !hasOwnGraveyardCardsToExile(gameData, entry, ownExile)) {
+            // "You may exile [N] cards from your graveyard": with fewer such cards there is no choice to offer, so
+            // nothing is exiled and its "if you do" / "when you do" never happens.
             insertElseEffect(entry, e);
             return;
         }
@@ -355,11 +356,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 .withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
     }
 
-    private boolean hasOwnGraveyardCardToExile(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect exile) {
+    private boolean hasOwnGraveyardCardsToExile(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect exile) {
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
         return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
-                .anyMatch(card -> exile.filter() == null || predicateEvaluationService.matchesCardPredicate(
-                        card, exile.filter(), sourceCardId, gameData, entry.getControllerId()));
+                .filter(card -> exile.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, exile.filter(), sourceCardId, gameData, entry.getControllerId()))
+                .count() >= Math.max(1, exile.count());
     }
 
     /**

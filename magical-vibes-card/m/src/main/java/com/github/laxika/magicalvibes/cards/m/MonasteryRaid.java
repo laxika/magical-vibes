@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Freerunning;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 
 import java.util.List;
 
@@ -23,8 +24,10 @@ public class MonasteryRaid extends Card {
         // This card's only alternate cost is freerunning, so CastForAlternateCost identifies
         // whether its freerunning cost was paid at resolution.
         addSpellEffect(new ConditionalEffect(
-                new CastForAlternateCost(), new ExileTopCardsMayPlayUntilNextTurnEffect(new XValue())));
+                new CastForAlternateCost(), new ExileTopCardMayPlayThisTurnEffect(new XValue(), false)
+                        .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)));
         addSpellEffect(new ConditionalEffect(
-                new NotCondition(new CastForAlternateCost()), new ExileTopCardsMayPlayUntilNextTurnEffect(2)));
+                new NotCondition(new CastForAlternateCost()), new ExileTopCardMayPlayThisTurnEffect(2, false)
+                        .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)));
     }
 }

@@ -481,7 +481,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | cast trigger reveals each player's top card and sets entry counters | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
-| first spell during each opponent's turn, face-down top-card exile with indefinite play permission | `b/BlightwingBandit.java` + `Triggers.youCastSpell().duringOpponentsTurn().nthThisTurn(1)` + `ExileTopCardMayPlayWhileExiledEffect(true, true)` |
+| first spell during each opponent's turn, face-down top-card exile with indefinite play permission | `b/BlightwingBandit.java` + `Triggers.youCastSpell().duringOpponentsTurn().nthThisTurn(1)` + `new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.activePlayer()).exiledFaceDown().withAnyManaType().until(Duration.PERMANENT)` |
 | secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `TruthOrConsequencesEffect` |
 | controller draw, per-opponent may-draw choices, and one random-target damage trigger per card drawn | `e/ExplosionOfRiches.java` + `ExplosionOfRichesEffect` |
 | exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` (`Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer()` + event condition) |
@@ -547,8 +547,8 @@ This index has been split into smaller files for faster lookup. Each file is und
 | Aura turns a creature into a planeswalker whose toughness is its loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | Saga searches until a legendary card, then grants source-duration normal-cost play permission | `t/TheDayOfTheDoctor.java` + `ExileUntilCardPredicateMayPlayWhileSourceControlledEffect` |
-| upkeep life loss, exile top card, and indefinite play permission | `r/RassilonTheWarPresident.java` + `ExileTopCardMayPlayWhileExiledEffect` |
-| attacking tokens gain double strike and exile a top card with a turn-condition play permission | `n/NeyaliSunsVanguard.java` + `GrantKeywordEffect` + `Triggers.youAttackPlayer()` + `withEventCondition(new HasAttacker(token))`, `ExileTopCardMayPlayWhileExiledEffect(AttackedWithTokenThisTurn)` |
+| upkeep life loss, exile top card, and indefinite play permission | `r/RassilonTheWarPresident.java` + `new ExileTopCardMayPlayThisTurnEffect(1, false).until(Duration.PERMANENT)` |
+| attacking tokens gain double strike and exile a top card with a turn-condition play permission | `n/NeyaliSunsVanguard.java` + `GrantKeywordEffect` + `Triggers.youAttackPlayer()` + `withEventCondition(new HasAttacker(token))`, `new ExileTopCardMayPlayThisTurnEffect(1, false).until(Duration.PERMANENT).playableOnlyIf(new AttackedWithTokenThisTurn())` |
 | targeted opponent upkeep exile, mana-value life loss, and face-down indefinite play permission | `y/ThoughtStringAnalyst.java` + `ExileTopCardMayPlayThisTurnEffect(...).fromLibraryOf(targetPlayer()).exiledFaceDown().withAnyManaType().until(Duration.PERMANENT)` + `LoseLifeEffect(AmountThisWay.exiledManaValue())` |
 | Saga chooses matching creatures, then optionally exiles the rest and deals damage | `t/TheDayOfTheDoctor.java` + `ChooseUpToNMatchingCreaturesThenMayExileRestEffect` |
 | Saga reveal of up to five nonland hand cards, grouped by mana value into Treasure tokens | `v/Vault21HouseGambit.java` + `RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffect` |

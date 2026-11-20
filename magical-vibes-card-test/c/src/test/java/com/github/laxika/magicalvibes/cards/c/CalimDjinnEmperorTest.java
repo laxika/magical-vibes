@@ -31,8 +31,7 @@ class CalimDjinnEmperorTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, target.getId());
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, false);
-        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(target.isTapped()).isTrue();
         harness.assertInHand(player1, "Grizzly Bears");
@@ -164,8 +163,7 @@ class CalimDjinnEmperorTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, target.getId());
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, false);
-        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)

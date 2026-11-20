@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -231,7 +231,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
             return conditional.condition() instanceof EventValueAtLeast
                     || referencesExcessDamage(conditional.wrapped());
         }
-        if (effect instanceof ExileTopCardsMayPlayUntilNextTurnEffect exile) {
+        if (effect instanceof ExileTopCardMayPlayThisTurnEffect exile) {
             return amountEvaluationService.referencesEventValue(exile.count());
         }
         if (effect instanceof BoostAllOwnCreaturesEffect boost) {

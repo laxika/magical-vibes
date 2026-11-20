@@ -1261,14 +1261,6 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        if (gameData.graveyardTargetOperation.resolutionTimeExileNCardsThenEffectResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeExileNCardsThenEffectChosenCardIds =
-                    List.copyOf(cardIds);
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
-
         if (gameData.graveyardTargetOperation.milledCreatureReturn != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.milledCreatureReturn =

@@ -153,8 +153,6 @@ public class GraveyardTargetOperationState {
      * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
      */
     public boolean resolutionTimeExileCreateZombieTokenCopyResume;
-    public boolean resolutionTimeExileNCardsThenEffectResume;
-    public List<UUID> resolutionTimeExileNCardsThenEffectChosenCardIds;
     public boolean resolutionTimeDragonApproachResume;
     /** Resolution-time choice for Chandra, Heart of Fire's graveyard-and-library exile. */
     public ExileMatchingCardsFromGraveyardAndLibraryContext resolutionTimeExileMatchingCardsResume;

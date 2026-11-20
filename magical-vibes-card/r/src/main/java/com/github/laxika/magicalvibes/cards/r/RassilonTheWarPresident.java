@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileExiledEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +25,7 @@ public class RassilonTheWarPresident extends Card {
         // At the beginning of your upkeep, you lose 2 life and exile the top card of your library.
         // You may play that card for as long as it remains exiled.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new LoseLifeEffect(2), new ExileTopCardMayPlayWhileExiledEffect()));
+                new LoseLifeEffect(2), new ExileTopCardMayPlayThisTurnEffect(1, false).until(Duration.PERMANENT)));
 
         // Each noncreature spell you cast from exile has conspire.
         addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.fromZone(

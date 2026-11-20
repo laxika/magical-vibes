@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MonkClassTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The second spell each turn costs {1} less")
     void secondSpellEachTurnCostsOneLess() {
         harness.addToBattlefield(player1, new MonkClass());
         harness.setHand(player1, List.of(new GnollHunter(), new GnollHunter()));
@@ -36,6 +38,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reaching level 2 returns up to one target nonland permanent")
     void levelTwoReturnsUpToOneTargetNonlandPermanent() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnollHunter());
@@ -54,6 +57,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At level 3, the upkeep exile may be cast once another spell was cast this turn")
     void levelThreeExilesTopCardAndAllowsCastingItAfterAnotherSpell() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         GnollHunter exiledCard = new GnollHunter();
@@ -87,6 +91,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting Monk Class first discounts the next spell")
     void castingMonkClassFirstDiscountsTheNextSpell() {
         harness.setHand(player1, List.of(new MonkClass(), new GnollHunter()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -102,6 +107,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reaching level 2 may return nothing")
     void levelTwoCanDeclineToReturnAnyPermanent() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         harness.addToBattlefield(player2, new GnollHunter());
@@ -117,6 +123,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The third spell gets no discount")
     void thirdSpellDoesNotReceiveTheDiscount() {
         harness.addToBattlefield(player1, new MonkClass());
         harness.setHand(player1, List.of(new GnollHunter(), new GnollHunter(), new GnollHunter()));
@@ -138,6 +145,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's second spell gets no discount")
     void opponentsSecondSpellDoesNotReceiveTheDiscount() {
         harness.addToBattlefield(player1, new MonkClass());
         harness.forceActivePlayer(player2);
@@ -158,6 +166,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Level 3 can't skip level 2 and levelling is sorcery speed")
     void cannotSkipLevelTwoOrLevelUpAtInstantSpeed() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         prepareForSorcery();
@@ -174,6 +183,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At level 2 nothing is exiled at upkeep")
     void levelTwoDoesNotExileCardsAtUpkeep() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         levelUpToTwo(monkClass);
@@ -190,6 +200,7 @@ class MonkClassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The exiled card stays castable after Monk Class leaves")
     void exiledCardRemainsCastableAfterMonkClassLeaves() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         levelUpToThree(monkClass);
@@ -215,6 +226,29 @@ class MonkClassTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(exiledCard);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard() instanceof GnollHunter).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A land card exiled at level 3 can't be played: the card has \"you may cast this card\"")
+    void exiledLandCardCannotBePlayed() {
+        Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
+        levelUpToThree(monkClass);
+        Forest exiledLand = new Forest();
+        harness.setLibrary(player1, List.of(exiledLand));
+        harness.forceStep(TurnStep.UNTAP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledLand);
+
+        prepareForSorcery();
+        harness.setHand(player1, List.of(new GnollHunter()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledLand);
     }
 
     private void levelUpToTwo(Permanent monkClass) {

@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellModeCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsModalSpellPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +27,7 @@ public class RikuOfManyPaths extends Card {
     public RikuOfManyPaths() {
         List<ChooseOneOption> options = List.of(
                 new ChooseOneOption("Exile the top card of your library. Until the end of your next turn, you may play it",
-                        new ExileTopCardsMayPlayUntilNextTurnEffect(1)),
+                        new ExileTopCardMayPlayThisTurnEffect(1, false).until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)),
                 new ChooseOneOption("Put a +1/+1 counter on Riku of Many Paths. It gains trample until end of turn",
                         List.of(new PutCountersOnSourceEffect(1, 1, 1),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()))),

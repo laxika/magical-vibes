@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ExpeditedInheritanceTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The damaged creature's controller may exile that many cards from their library and play them")
     void damagedCreatureControllerMayExileThatManyCards() {
         Forest first = new Forest();
         Forest second = new Forest();
@@ -46,6 +48,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining exiles nothing")
     void decliningDoesNotExileCards() {
         Forest top = new Forest();
         harness.setLibrary(player2, List.of(top));
@@ -63,6 +66,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature that died of the damage still names its last controller")
     void damagedCreatureControllerIsCapturedBeforeLethalDamageRemovesCreature() {
         Forest top = new Forest();
         harness.setLibrary(player2, List.of(top));
@@ -81,6 +85,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("After a control change, the creature's current controller exiles from their own library")
     void acceptingAfterControlChangesExilesFromCurrentControllersLibrary() {
         Forest first = new Forest();
         Forest second = new Forest();
@@ -107,6 +112,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An exiled instant is cast by the creature's controller at its normal cost")
     void exiledInstantRequiresManaAndCanBeCastByDamagedCreaturesController() {
         Shock top = new Shock();
         harness.setLibrary(player2, List.of(top));
@@ -130,6 +136,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An exiled land can be played during its holder's main phase")
     void exiledLandCanBePlayedDuringControllersMainPhase() {
         Forest top = new Forest();
         harness.setLibrary(player1, List.of(top));
@@ -148,6 +155,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's permission lasts until the end of that opponent's next turn")
     void permissionExpiresAfterOpponentsNextTurn() {
         Forest top = new Forest();
         harness.setLibrary(player2, List.of(top, new Forest(), new Forest()));
@@ -169,6 +177,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The permission survives the current turn and ends after its holder's next turn")
     void permissionSurvivesCurrentTurnAndExpiresAfterControllersNextTurn() {
         Forest top = new Forest();
         harness.setLibrary(player1, List.of(top, new Forest(), new Forest()));
@@ -192,6 +201,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage to a player does not trigger it")
     void damageToPlayerDoesNotTriggerInheritance() {
         Forest top = new Forest();
         harness.setLibrary(player2, List.of(top));

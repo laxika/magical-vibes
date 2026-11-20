@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.FatefulTempestEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDamageOpponentsByManaValueEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -69,7 +70,8 @@ public class FatefulTempestEffectHandler implements NormalEffectHandlerBean {
                 results.add(new MillControllerAndDamageOpponentsByManaValueEffect(pastVotes));
             }
             if (presentVotes > 0) {
-                results.add(new ExileTopCardsMayPlayUntilNextTurnEffect(presentVotes));
+                results.add(new ExileTopCardMayPlayThisTurnEffect(presentVotes, false)
+                        .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN));
             }
             if (!results.isEmpty()) {
                 pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, results);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IgniteTheFutureTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cast from hand, the three exiled cards are played at their normal costs")
     void exilesTopThreeCardsWithNormalPlayPermission() {
         Card first = new SakuraTribeElder();
         Card second = new Forest();
@@ -43,6 +45,7 @@ class IgniteTheFutureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cast from the graveyard, the exiled cards may be played without paying their mana costs")
     void flashbackAllowsPlayingExiledCardsWithoutPayingManaCosts() {
         Card first = new SakuraTribeElder();
         Card second = new Forest();
@@ -67,6 +70,7 @@ class IgniteTheFutureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An exiled land may be played, within the land limit")
     void canPlayExiledLandButCannotExceedLandLimit() {
         Card first = new Forest();
         Card second = new Forest();
@@ -87,6 +91,7 @@ class IgniteTheFutureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A free play still follows timing rules and only its controller may use it")
     void freePlayStillRequiresCreatureTimingAndControllersPermission() {
         Card creature = new SakuraTribeElder();
         harness.setLibrary(player1, List.of(creature));
@@ -108,6 +113,7 @@ class IgniteTheFutureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The permission lasts through the next turn, then unused cards stay exiled")
     void permissionLastsThroughNextTurnThenExpiresLeavingUnusedCardsInExile() {
         Card creature = new SakuraTribeElder();
         Card unused = new SakuraTribeElder();
@@ -138,6 +144,7 @@ class IgniteTheFutureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library still lets the spell resolve")
     void emptyLibraryDoesNotPreventNormalResolution() {
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new IgniteTheFuture()));
@@ -152,6 +159,7 @@ class IgniteTheFutureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A card cast without paying its mana cost must choose 0 for X")
     void castingWithoutPayingManaCostCannotChooseNonzeroX() {
         Card hydra = new HoodedHydra();
         harness.setLibrary(player1, List.of(hydra));

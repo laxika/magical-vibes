@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
@@ -29,7 +30,8 @@ public class StellaLeeWildCard extends Card {
 
         // Whenever you cast your second spell each turn, exile the top card of your library. Until
         // the end of your next turn, you may play that card.
-        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new ExileTopCardsMayPlayUntilNextTurnEffect(1));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new ExileTopCardMayPlayThisTurnEffect(1, false)
+                .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN));
 
         // {T}: Copy target instant or sorcery spell you control. You may choose new targets for the
         // copy. Activate only if you've cast three or more spells this turn.

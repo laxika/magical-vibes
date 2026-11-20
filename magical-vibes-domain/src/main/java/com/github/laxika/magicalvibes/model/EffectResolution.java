@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -531,8 +531,8 @@ public final class EffectResolution {
                 .map(DealDamageToTargetCreatureEffect.class::cast)
                 .anyMatch(effect -> effect.damage() instanceof XValue);
         boolean usesExcessDamage = effects.stream()
-                .filter(ExileTopCardsMayPlayUntilNextTurnEffect.class::isInstance)
-                .map(ExileTopCardsMayPlayUntilNextTurnEffect.class::cast)
+                .filter(ExileTopCardMayPlayThisTurnEffect.class::isInstance)
+                .map(ExileTopCardMayPlayThisTurnEffect.class::cast)
                 .anyMatch(effect -> effect.count() instanceof EventValue);
         return dealsConvergeDamage && usesExcessDamage;
     }

@@ -41,6 +41,22 @@ class SkywarpSkaabTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"If you do, draw a card\" is part of the same ability, not a separate trigger")
+    void drawsAsPartOfTheSameAbility() {
+        Card first = new RepositorySkaab();
+        Card second = new RepositorySkaab();
+        Card draw = new Plains();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(draw));
+
+        castSkywarpSkaab();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Declining the ETB ability does not exile or draw")
     void decliningDoesNothing() {
         Card first = new RepositorySkaab();
@@ -71,12 +87,13 @@ class SkywarpSkaabTest extends BaseCardTest {
         castSkywarpSkaab();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId(), third.getId());
+        assertThat(choice.validIndices()).containsExactly(0, 1, 2);
 
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(second));
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -88,7 +105,7 @@ class SkywarpSkaabTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fewer than two creature cards cannot pay the optional exile")
+    @DisplayName("With fewer than two creature cards in the graveyard no exile is offered")
     void fewerThanTwoCreaturesDoNothing() {
         Card creature = new RepositorySkaab();
         Card noncreature = new ChillOfTheGrave();
@@ -97,7 +114,6 @@ class SkywarpSkaabTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(draw));
 
         castSkywarpSkaab();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -106,7 +122,7 @@ class SkywarpSkaabTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Creatures in the opponent's graveyard cannot pay the optional exile")
+    @DisplayName("Creature cards in the opponent's graveyard don't count, so no exile is offered")
     void opponentsGraveyardCannotPay() {
         Card first = new RepositorySkaab();
         Card second = new RepositorySkaab();
@@ -116,7 +132,6 @@ class SkywarpSkaabTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(draw));
 
         castSkywarpSkaab();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();

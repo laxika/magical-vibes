@@ -28,7 +28,7 @@ class YoungNecromancerTest extends BaseCardTest {
 
         castYoungNecromancer();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        exileFromGraveyard(first, second);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
@@ -56,13 +56,12 @@ class YoungNecromancerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fewer than two cards cannot pay the optional exile")
+    @DisplayName("With fewer than two cards in the graveyard no exile is offered")
     void fewerThanTwoCardsDoNothing() {
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
 
         castYoungNecromancer();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -98,7 +97,7 @@ class YoungNecromancerTest extends BaseCardTest {
 
         castYoungNecromancer();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        exileFromGraveyard(first, second);
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -130,7 +129,7 @@ class YoungNecromancerTest extends BaseCardTest {
 
         castYoungNecromancer();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        exileFromGraveyard(first, second);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.setGraveyard(player1, List.of(otherCreature));
         harness.setExile(player1, List.of(target));
@@ -144,16 +143,41 @@ class YoungNecromancerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty graveyard cannot pay the optional exile")
+    @DisplayName("With an empty graveyard no exile is offered")
     void emptyGraveyardDoesNothing() {
         harness.setGraveyard(player1, List.of());
 
         castYoungNecromancer();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With more than two cards, the player chooses which two to exile, one at a time")
+    void choosesWhichTwoCardsToExile() {
+        Card target = new GrizzlyBears();
+        Card first = new Island();
+        Card second = new Island();
+        harness.setGraveyard(player1, List.of(target, first, second));
+
+        castYoungNecromancer();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0, 1, 2);
+        harness.handleGraveyardCardChosen(player1, 1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
+    }
+
+    private void exileFromGraveyard(Card... cards) {
+        for (Card card : cards) {
+            harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(card));
+        }
     }
 
     private void castYoungNecromancer() {

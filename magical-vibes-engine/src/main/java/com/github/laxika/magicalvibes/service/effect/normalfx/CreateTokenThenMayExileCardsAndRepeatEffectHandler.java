@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenMayExileCardsAndRepeatEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -47,9 +51,13 @@ public class CreateTokenThenMayExileCardsAndRepeatEffectHandler implements Norma
 
         CardEffect nextIteration = new CreateTokenThenMayExileCardsAndRepeatEffect(
                 repeat.tokenEffect(), repeat.exileCount(), repeat.exileFilter());
+        // "Then you may exile N cards from your graveyard. If you do, repeat this process": the repeat is a later step
+        // of the same resolution, gated on the exile step having exiled all N.
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(new MayEffect(
-                new ExileNCardsFromGraveyardThenEffect(
-                        repeat.exileCount(), repeat.exileFilter(), nextIteration),
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.fromOwnGraveyard(repeat.exileCount(), repeat.exileFilter()),
+                        new ConditionalEffect(HappenedThisWay.atLeast(StepKind.EXILE, repeat.exileCount()),
+                                nextIteration)),
                 "Exile " + repeat.exileCount()
                         + " cards from your graveyard to repeat this process?")));
     }
