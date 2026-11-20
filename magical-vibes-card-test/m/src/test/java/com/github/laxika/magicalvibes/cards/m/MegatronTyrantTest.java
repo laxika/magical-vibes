@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MegatronTyrantTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting it for More Than Meets the Eye puts it onto the battlefield converted, a creature on your turn through living metal")
     void moreThanMeetsTheEyeCastsMegatronConvertedWithLivingMetal() {
         Permanent megatron = castMegatronConverted();
 
@@ -34,6 +36,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At your postcombat main phase it may convert and add {C} for each 1 life your opponents lost this turn")
     void postcombatMainMayConvertsAndAddsColorlessManaForOpponentsLifeLost() {
         Permanent megatron = harness.addToBattlefieldAndReturn(player1, new MegatronTyrant());
         harness.setLife(player2, 20);
@@ -53,6 +56,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking, it may sacrifice another artifact to deal that artifact's mana value in damage to target creature, the excess to its controller")
     void attackMaySacrificeArtifactToDamageTargetCreature() {
         Permanent megatron = castMegatronConverted();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
@@ -61,7 +65,6 @@ class MegatronTyrantTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(megatron)));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
@@ -72,6 +75,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its controller can cast spells during combat")
     void controllerCanCastDuringCombat() {
         harness.addToBattlefield(player1, new MegatronTyrant());
         harness.setHand(player1, List.of(new Shock()));
@@ -84,6 +88,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents can't cast spells during combat")
     void opponentCannotCastDuringCombat() {
         harness.addToBattlefield(player1, new MegatronTyrant());
         harness.setHand(player2, List.of(new Shock()));
@@ -97,6 +102,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Living metal doesn't make Megatron a creature during an opponent's turn")
     void livingMetalDoesNotMakeMegatronACreatureDuringOpponentsTurn() {
         Permanent megatron = castMegatronConverted();
         harness.forceActivePlayer(player2);
@@ -105,6 +111,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the postcombat conversion adds no mana")
     void decliningPostcombatConversionAddsNoMana() {
         Permanent megatron = harness.addToBattlefieldAndReturn(player1, new MegatronTyrant());
         harness.setHand(player1, List.of(new Shock()));
@@ -121,6 +128,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Leaving before the postcombat trigger resolves adds no mana")
     void leavingBeforePostcombatTriggerResolvesDoesNotAwardMana() {
         Permanent megatron = harness.addToBattlefieldAndReturn(player1, new MegatronTyrant());
         harness.setHand(player1, List.of(new Shock(), new Unsummon()));
@@ -141,6 +149,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With deathtouch, 1 damage is lethal when working out the excess")
     void deathtouchMakesOneDamageLethalForDeterminingExcess() {
         Permanent megatron = castMegatronConverted();
         Permanent collar = harness.addToBattlefieldAndReturn(player1, new BasiliskCollar());
@@ -151,7 +160,7 @@ class MegatronTyrantTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(megatron)));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.handlePermanentChosen(player1, target.getId());
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
@@ -161,14 +170,14 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage without excess neither converts Megatron nor damages the controller")
     void damageWithoutExcessDoesNotConvertOrDamageController() {
         Permanent megatron = castMegatronConverted();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        harness.addToBattlefield(player1, new WornPowerstone());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(megatron)));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.handlePermanentChosen(player1, megatron.getId());
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
@@ -178,6 +187,7 @@ class MegatronTyrantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the attack sacrifice keeps the artifact and the converted face")
     void decliningAttackSacrificeKeepsArtifactAndConvertedFace() {
         Permanent megatron = castMegatronConverted();
         harness.addToBattlefield(player1, new WornPowerstone());
