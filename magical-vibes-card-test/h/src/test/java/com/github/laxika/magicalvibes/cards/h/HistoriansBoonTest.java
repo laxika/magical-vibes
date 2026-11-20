@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HistoriansBoonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Creates a Soldier when it enters and when another nontoken enchantment enters under your control")
     void createsSoldiersForItsOwnAndAnotherNontokenEnchantmentEntry() {
         harness.castFromHand(player1, new HistoriansBoon(), "{3}{W}");
         resolveAllTriggers();
@@ -33,6 +35,7 @@ class HistoriansBoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An enchantment token entering creates no Soldier")
     void doesNotTriggerForAnEnchantmentToken() {
         harness.addToBattlefield(player1, new HistoriansBoon());
         harness.castFromHand(player1, new CelestineCaveWitch(), "{3}{B}");
@@ -44,7 +47,7 @@ class HistoriansBoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         Permanent insect = findPermanents(player1, "Insect").get(0);
-        harness.handlePermanentChosen(player1, insect.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(insect.getId()));
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Curse")).hasSize(1);
@@ -52,6 +55,7 @@ class HistoriansBoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates a 4/4 flying, vigilance Angel when a Saga you control triggers its final chapter")
     void createsAnAngelWhenAControlledSagaFinalChapterResolves() {
         harness.addToBattlefield(player1, new HistoriansBoon());
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new HistoryOfBenalia());
@@ -73,6 +77,7 @@ class HistoriansBoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Angel trigger resolves before the final chapter ability")
     void angelTriggerResolvesBeforeTheFinalChapterAbility() {
         harness.addToBattlefield(player1, new HistoriansBoon());
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new HistoryOfBenalia());
@@ -94,6 +99,7 @@ class HistoriansBoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's enchantment entering creates no Soldier")
     void doesNotTriggerForAnOpponentsEnchantment() {
         harness.addToBattlefield(player1, new HistoriansBoon());
         harness.forceActivePlayer(player2);
@@ -105,6 +111,7 @@ class HistoriansBoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A chapter that isn't the final one creates no Angel")
     void doesNotCreateAnAngelForANonfinalChapter() {
         harness.addToBattlefield(player1, new HistoriansBoon());
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new HistoryOfBenalia());
@@ -121,6 +128,7 @@ class HistoriansBoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Saga reaching its final chapter creates no Angel")
     void doesNotCreateAnAngelForAnOpponentsFinalChapter() {
         harness.addToBattlefield(player1, new HistoriansBoon());
         Permanent saga = harness.addToBattlefieldAndReturn(player2, new HistoryOfBenalia());

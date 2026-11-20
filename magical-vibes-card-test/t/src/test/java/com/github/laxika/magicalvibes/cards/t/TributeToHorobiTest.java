@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.e.EchoOfDeathsWail;
 import com.github.laxika.magicalvibes.cards.m.MukotaiAmbusher;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TributeToHorobiTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Chapters I and II create a Rat Rogue token for each opponent")
     void chaptersOneAndTwoCreateRatRogueTokensForEachOpponent() {
         addSagaWithLore(0);
         advanceToNextChapter(player1);
@@ -36,6 +37,7 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III exiles the Saga and returns it transformed")
     void chapterThreeTransformsIntoEchoOfDeathsWail() {
         addSagaWithLore(2);
         advanceToNextChapter(player1);
@@ -47,6 +49,7 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo of Death's Wail gains control of all Rat tokens when it enters")
     void echoGainsControlOfAllRatTokensWhenItEnters() {
         addSagaWithLore(0);
         advanceToNextChapter(player1);
@@ -62,20 +65,16 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo of Death's Wail may sacrifice another creature when it attacks to draw a card")
     void echoMaySacrificeAnotherCreatureToDraw() {
         Permanent echo = harness.addToBattlefieldAndReturn(player1, new EchoOfDeathsWail());
         echo.setSummoningSick(false);
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MukotaiAmbusher());
+        harness.addToBattlefield(player1, new MukotaiAmbusher());
         harness.setLibrary(player1, List.of(new MukotaiAmbusher()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(creature.getId());
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Mukotai Ambusher");
@@ -85,9 +84,10 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice and draw happen while the attack ability resolves")
     void sacrificeDrawsDuringTheAttackAbilityResolution() {
         harness.addToBattlefield(player1, new EchoOfDeathsWail());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MukotaiAmbusher());
+        harness.addToBattlefield(player1, new MukotaiAmbusher());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new MukotaiAmbusher()));
 
@@ -95,7 +95,6 @@ class TributeToHorobiTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, creature.getId());
             harness.passBothPriorities();
 
             harness.assertInGraveyard(player1, "Mukotai Ambusher");
@@ -105,6 +104,7 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice keeps the creature and draws nothing")
     void decliningSacrificeDoesNotDrawOrRemoveTheCreature() {
         harness.addToBattlefield(player1, new EchoOfDeathsWail());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new MukotaiAmbusher());
@@ -123,6 +123,7 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo of Death's Wail can't sacrifice itself or an opponent's creature")
     void echoCannotSacrificeItselfOrAnOpponentsCreature() {
         harness.addToBattlefield(player1, new EchoOfDeathsWail());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new MukotaiAmbusher());
@@ -145,6 +146,7 @@ class TributeToHorobiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The transformed Saga captures both Rat tokens and can attack right away")
     void transformingSagaCapturesBothRatTokensAndCanAttackImmediately() {
         addSagaWithLore(0);
         advanceToNextChapter(player1);
