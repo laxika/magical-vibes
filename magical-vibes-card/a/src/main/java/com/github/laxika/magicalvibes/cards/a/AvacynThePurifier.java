@@ -14,7 +14,7 @@ public class AvacynThePurifier extends Card {
     public AvacynThePurifier() {
         // When this creature transforms into Avacyn, the Purifier, it deals 3 damage to each other
         // creature and each opponent.
-        addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
+        addSimultaneousTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
                 new MassDamageEffect(3, false, false,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
                 new DealDamageToPlayersEffect(3, Subjects.eachOpponent()));

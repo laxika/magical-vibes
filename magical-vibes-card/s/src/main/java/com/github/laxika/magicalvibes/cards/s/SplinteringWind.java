@@ -35,7 +35,7 @@ public class SplinteringWind extends Card {
         // even if the token has changed controllers.
         List<Ability> splinterEffects = List.of(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                 new CumulativeUpkeepEffect("{G}")));
-        CardEffect splinterLeaves = SequenceEffect.of(
+        CardEffect splinterLeaves = SequenceEffect.simultaneous(
                 new DealDamageToPlayersEffect(1, Subjects.you()),
                 new MassDamageEffect(1, false, false, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

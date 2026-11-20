@@ -33,7 +33,7 @@ public class VolatileArsonist extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be a planeswalker"
         ), 0, 1).bindEffect(dealDamageToTargetPlayerOrPlaneswalker2);
-        addTrigger(Triggers.attacks(),
+        addSimultaneousTrigger(Triggers.attacks(),
                 dealDamageToTargetCreature,
                 dealDamageToTargetPlayerOrPlaneswalker,
                 dealDamageToTargetPlayerOrPlaneswalker2);

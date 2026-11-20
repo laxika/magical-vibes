@@ -3707,6 +3707,12 @@ ratchets) and AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`): 163 suites, 
   `PerpetuallyBoostTargetCreatureEffect` / `PerpetuallyGrantStaticEffectToTargetCreatureEffect` unlocks them.
 - Other cards that add "N damage to each opponent and each creature they control" with `addTrigger` (two events) may exist outside
   this family; grep `addTrigger(` with two damage effects.
+- **Follow-up sweep (done 2026-11-20).** One-sentence "damage to players and permanents" now one event (`addSimultaneous*` /
+  `SequenceEffect.simultaneous`, Oracle text checked with `get_card`): Wildfire Cerberus, Warmonger, Volcano Hellion, Volatile
+  Arsonist, The Elder Dragon War, Soul Immolation, Sorrow's Path, Splintering Wind (Splinter's leave trigger), Friendly Fire,
+  Sarkhan, Dragonsoul (+2), Rockcaster Platoon, Rakdos Firewheeler, Omnath, Locus of Creation, Kumano Faces Kakkazan (I), Joyful
+  Stormsculptor, Invasion of Regatha, Chandra, Bold Pyromancer (−7), Carnival // Carnage (Carnival), Avacyn, the Purifier, Claws
+  of Wirewood; next-damage-shield tests on Warmonger, Rockcaster Platoon, Sarkhan, Dragonsoul and Claws of Wirewood.
 
 ## Prompt
 

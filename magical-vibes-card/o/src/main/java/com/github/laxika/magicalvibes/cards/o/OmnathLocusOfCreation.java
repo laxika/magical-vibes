@@ -38,7 +38,7 @@ public class OmnathLocusOfCreation extends Card {
                         new AwardManaEffect(ManaColor.WHITE),
                         new AwardManaEffect(ManaColor.BLUE))),
                 new ConditionalEffect(
-                new NthAbilityResolutionThisTurn(3), SequenceEffect.of(
+                new NthAbilityResolutionThisTurn(3), SequenceEffect.simultaneous(
                         new DealDamageToPlayersEffect(4, Subjects.eachOpponent()),
                         new DealDamageToEachMatchingPermanentEffect(4,
                                 new PermanentAllOfPredicate(List.of(

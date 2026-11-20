@@ -28,7 +28,7 @@ public class TheElderDragonWar extends Card {
     public TheElderDragonWar() {
         addStaticEffect(new ReadAheadEffect(false));
 
-        addTrigger(Triggers.chapter(1),
+        addSimultaneousTrigger(Triggers.chapter(1),
                 new DealDamageToEachMatchingPermanentEffect(
                         2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS),
                 new DealDamageToPlayersEffect(

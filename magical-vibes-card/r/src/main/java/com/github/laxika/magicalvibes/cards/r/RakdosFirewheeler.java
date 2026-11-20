@@ -36,6 +36,6 @@ public class RakdosFirewheeler extends Card {
                 )),
                 "Target must be a creature or planeswalker"
         ), 0, 1).bindEffect(dealDamageToTargetCreatureOrPlaneswalker);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToPlayers, dealDamageToTargetCreatureOrPlaneswalker);
+        addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToPlayers, dealDamageToTargetCreatureOrPlaneswalker);
     }
 }

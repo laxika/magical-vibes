@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.j.JeweledTorque;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -126,5 +127,25 @@ class WarmongerTest extends BaseCardTest {
         assertThat(flyingCreature.getMarkedDamage()).isZero();
         harness.assertLife(player1, 16);
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("The damage to the creatures and the players is one event: a next-damage shield on it prevents all of it")
+    void damageIsOneEventForANextDamageShield() {
+        Permanent warmonger = harness.addToBattlefieldAndReturn(player1, new Warmonger());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        gd.addShield(new SourceNextDamageToAnyTargetShield(warmonger.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(warmonger.getMarkedDamage()).isZero();
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 }

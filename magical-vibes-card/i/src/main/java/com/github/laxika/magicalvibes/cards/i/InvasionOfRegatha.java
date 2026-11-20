@@ -37,7 +37,7 @@ public class InvasionOfRegatha extends Card {
         var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(1);
         target(TargetFilters.creature(), 0, 1)
                 .bindEffect(dealDamageToTargetCreature);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToAnyTarget, dealDamageToTargetCreature);
+        addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToAnyTarget, dealDamageToTargetCreature);
     }
 
     @Override

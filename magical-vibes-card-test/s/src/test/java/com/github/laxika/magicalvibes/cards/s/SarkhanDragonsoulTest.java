@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -172,5 +173,21 @@ class SarkhanDragonsoulTest extends BaseCardTest {
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("+2's damage to the opponent and their creatures is one event: a next-damage shield on it prevents all of it")
+    void plusTwoDamageIsOneEventForANextDamageShield() {
+        Permanent sarkhan = addReadySarkhan(player1, 5);
+        Permanent opponentCreature = addCreature(player2);
+        harness.setLife(player2, 20);
+        gd.addShield(new SourceNextDamageToAnyTargetShield(sarkhan.getId()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(opponentCreature.getMarkedDamage()).isZero();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 }

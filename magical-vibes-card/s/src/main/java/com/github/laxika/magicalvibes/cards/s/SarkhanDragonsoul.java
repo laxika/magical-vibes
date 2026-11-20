@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -31,14 +32,14 @@ public class SarkhanDragonsoul extends Card {
     public SarkhanDragonsoul() {
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(
+                List.of(SequenceEffect.simultaneous(
                         new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                         new DealDamageToEachMatchingPermanentEffect(
                                 1,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                                EachPermanentScope.ALL_PLAYERS)),
+                                EachPermanentScope.ALL_PLAYERS))),
                 "+2: Sarkhan, Dragonsoul deals 1 damage to each opponent and each creature your opponents control."
         ));
 

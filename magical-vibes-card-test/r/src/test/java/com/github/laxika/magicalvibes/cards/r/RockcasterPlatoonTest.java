@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -117,5 +118,22 @@ class RockcasterPlatoonTest extends BaseCardTest {
         assertThat(findPermanent(player2, "Angel of Mercy").getMarkedDamage()).isEqualTo(2);
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The damage to the flyers and the players is one event: a next-damage shield on it prevents all of it")
+    void damageIsOneEventForANextDamageShield() {
+        Permanent platoon = harness.addToBattlefieldAndReturn(player1, new RockcasterPlatoon());
+        harness.addToBattlefield(player2, new AngelOfMercy());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        gd.addShield(new SourceNextDamageToAnyTargetShield(platoon.getId()));
+
+        activate();
+
+        assertThat(findPermanent(player2, "Angel of Mercy").getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 }

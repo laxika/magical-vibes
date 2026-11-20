@@ -49,7 +49,7 @@ public class SorrowsPath extends Card {
         ).withMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET));
 
         addTrigger(Triggers.becomesTapped(),
-                SequenceEffect.of(
+                SequenceEffect.simultaneous(
                         new DealDamageToPlayersEffect(2, Subjects.you()),
                         new DealDamageToEachMatchingPermanentEffect(2,
                                 new PermanentAllOfPredicate(List.of(

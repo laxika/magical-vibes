@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DragonMage;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -114,5 +115,23 @@ class ClawsOfWirewoodTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 17);
         harness.assertInGraveyard(player1, "Claws of Wirewood");
+    }
+
+    @Test
+    @DisplayName("The damage to the flyers and the players is one event: a next-damage shield on the spell prevents all of it")
+    void damageIsOneEventForANextDamageShield() {
+        Permanent dragonMage = harness.addToBattlefieldAndReturn(player2, new DragonMage());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        ClawsOfWirewood claws = new ClawsOfWirewood();
+
+        harness.castFromHand(player1, claws, "{3}{G}");
+        gd.addShield(new SourceNextDamageToAnyTargetShield(claws.getId()));
+        harness.passBothPriorities();
+
+        assertThat(dragonMage.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 }

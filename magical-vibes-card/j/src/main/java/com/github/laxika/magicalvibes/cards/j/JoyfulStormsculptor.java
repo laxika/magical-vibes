@@ -28,7 +28,7 @@ public class JoyfulStormsculptor extends Card {
                 new CreateTokenEffect(2, "Elemental", 1, 1, null,
                         Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)));
 
-        addTrigger(Triggers.youCastSpell().withFilter(new CardKeywordPredicate(Keyword.CONVOKE)),
+        addSimultaneousTrigger(Triggers.youCastSpell().withFilter(new CardKeywordPredicate(Keyword.CONVOKE)),
                 new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 new DealDamageToEachMatchingPermanentEffect(1,
                         new PermanentAllOfPredicate(List.of(

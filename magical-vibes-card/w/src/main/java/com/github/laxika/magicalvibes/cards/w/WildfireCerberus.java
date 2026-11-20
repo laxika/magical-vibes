@@ -27,7 +27,7 @@ public class WildfireCerberus extends Card {
                 "{5}{R}{R}: Monstrosity 1."
         ));
 
-        addTrigger(Triggers.becomesMonstrous(),
+        addSimultaneousTrigger(Triggers.becomesMonstrous(),
                 new DealDamageToPlayersEffect(2, Subjects.eachOpponent()),
                 new DealDamageToEachMatchingPermanentEffect(
                         2,

@@ -27,7 +27,7 @@ public class KumanoFacesKakkazan extends Card {
     public KumanoFacesKakkazan() {
         setBackFaceCard(new EtchingOfKumano());
 
-        addTrigger(Triggers.chapter(1),
+        addSimultaneousTrigger(Triggers.chapter(1),
                 new DealDamageToPlayersEffect(1, Subjects.eachOpponent()),
                 new DealDamageToEachMatchingPermanentEffect(
                         1,

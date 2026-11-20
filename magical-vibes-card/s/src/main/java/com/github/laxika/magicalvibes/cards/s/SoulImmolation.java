@@ -29,8 +29,8 @@ public class SoulImmolation extends Card {
     public SoulImmolation() {
         setXValueCap(new GreatestToughnessAmongControlled());
         addCastingCost(new BlightCost());
-        addSpellEffect(new DealDamageToPlayersEffect(new XValue(), Subjects.eachOpponent()));
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                new XValue(), OPPONENT_CREATURE, EachPermanentScope.ALL_PLAYERS));
+        addSimultaneousSpellEffects(new DealDamageToPlayersEffect(new XValue(), Subjects.eachOpponent()),
+                new DealDamageToEachMatchingPermanentEffect(
+                        new XValue(), OPPONENT_CREATURE, EachPermanentScope.ALL_PLAYERS));
     }
 }

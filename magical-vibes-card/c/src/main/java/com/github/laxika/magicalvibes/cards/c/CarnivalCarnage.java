@@ -44,7 +44,7 @@ public class CarnivalCarnage extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Carnival — Carnival deals 1 damage to target creature or planeswalker and 1 damage to that permanent's controller",
-                        List.of(SequenceEffect.of(carnivalDamage, carnivalControllerDamage)),
+                        List.of(SequenceEffect.simultaneous(carnivalDamage, carnivalControllerDamage)),
                         List.of(creatureOrPlaneswalkerTarget)
                 ).withManaCost("{B/R}"),
                 new ChooseOneEffect.ChooseOneOption(

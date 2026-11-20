@@ -13,9 +13,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FriendlyFire extends Card {
 
     public FriendlyFire() {
+        var reveal = new RevealRandomCardFromTargetPermanentControllerHandRecordManaValueEffect();
+        var creatureDamage = new DealDamageToTargetCreatureEffect(new EventValue());
+        var controllerDamage = new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.target()));
         target(TargetFilters.creature())
-                .addSpellEffect(new RevealRandomCardFromTargetPermanentControllerHandRecordManaValueEffect())
-                .addSpellEffect(new DealDamageToTargetCreatureEffect(new EventValue()))
-                .addSpellEffect(new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.target())));
+                .bindEffect(reveal)
+                .bindEffect(creatureDamage)
+                .bindEffect(controllerDamage);
+        addSpellEffect(reveal);
+        addSimultaneousSpellEffects(creatureDamage, controllerDamage);
     }
 }

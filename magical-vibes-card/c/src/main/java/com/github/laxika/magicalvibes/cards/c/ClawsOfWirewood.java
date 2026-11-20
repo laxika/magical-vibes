@@ -18,13 +18,13 @@ import java.util.List;
 public class ClawsOfWirewood extends Card {
 
     public ClawsOfWirewood() {
-        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
-                3,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasKeywordPredicate(Keyword.FLYING))),
-                EachPermanentScope.ALL_PLAYERS));
-        addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.eachPlayer()));
+        addSimultaneousSpellEffects(new DealDamageToEachMatchingPermanentEffect(
+                        3,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                        EachPermanentScope.ALL_PLAYERS),
+                new DealDamageToPlayersEffect(3, Subjects.eachPlayer()));
         addCycling("{2}");
     }
 }
