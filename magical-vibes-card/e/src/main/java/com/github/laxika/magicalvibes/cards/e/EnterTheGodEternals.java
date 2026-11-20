@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -17,7 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class EnterTheGodEternals extends Card {
 
     public EnterTheGodEternals() {
-        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureThenGainLifeEffect(4));
+        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(new GainLifeEffect(new AmountThisWay(StepKind.DEAL_DAMAGE), Subjects.you()));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
                 .addSpellEffect(new MillEffect(4, Subjects.targetPlayer()));

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
 
@@ -18,16 +19,35 @@ import java.util.Objects;
  * four cards this way" ({@link #atLeast}): a step that did less than it was told, a library running out, did not do
  * the written action (The Royal Scions' ruling: fewer than four cards drawn don't trigger its "when you do").
  *
+ * <p>{@code filter} is "if a [Dinosaur | nonred permanent] is dealt damage this way" ({@link #toA}): one of the
+ * permanents the step recorded, as it is on the battlefield now, matches it ({@code minimum} is then 1).
+ *
  * @param kind    the kind of step read
  * @param minimum the least amount the step must have recorded; at least 1
+ * @param filter  a permanent the step recorded must match it; {@code null} for any outcome
  */
-public record HappenedThisWay(StepKind kind, int minimum) implements Condition {
+public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate filter) implements Condition {
 
     public HappenedThisWay {
         Objects.requireNonNull(kind, "kind");
         if (minimum < 1) {
             throw new IllegalArgumentException("A step happened if it did at least 1: " + minimum);
         }
+        if (filter != null && minimum != 1) {
+            throw new IllegalArgumentException("A filtered step result counts no minimum: " + minimum);
+        }
+    }
+
+    public HappenedThisWay(StepKind kind, int minimum) {
+        this(kind, minimum, null);
+    }
+
+    /**
+     * "If a Dinosaur is dealt damage this way": the most recent {@code kind} step recorded a permanent that, on the
+     * battlefield now, matches {@code filter}.
+     */
+    public static HappenedThisWay toA(StepKind kind, PermanentPredicate filter) {
+        return new HappenedThisWay(kind, 1, Objects.requireNonNull(filter, "filter"));
     }
 
     /** "If you do": the most recent {@code kind} step did anything. */

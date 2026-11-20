@@ -455,11 +455,32 @@ public class SubjectResolutionService {
                     .toList();
             case PermanentSubject.TriggeringSpellTargets ignored -> triggeringSpellTargetIds(ctx);
             case PermanentSubject.CreatedThisResolution ignored -> List.copyOf(ctx.entry().getCreatedPermanentIds());
-            case PermanentSubject.ThisWay thisWay -> ctx.entry().getResolutionResults().outcome(thisWay.kind()).objectIds()
-                    .stream().distinct().toList();
+            case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
         };
+    }
+
+    /**
+     * {@link PermanentSubject.ThisWay}: the permanents the step recorded, those on the battlefield matching the filter
+     * now (with no filter, every recorded id; a gone one names nothing when the permanents are looked up).
+     */
+    private List<UUID> thisWayIds(Context ctx, PermanentSubject.ThisWay thisWay) {
+        List<UUID> recorded = ctx.entry().getResolutionResults().outcome(thisWay.kind()).objectIds()
+                .stream().distinct().toList();
+        if (thisWay.filter() == null) {
+            return recorded;
+        }
+        FilterContext filterContext = filterContext(ctx);
+        List<UUID> matching = new ArrayList<>();
+        for (UUID id : recorded) {
+            Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), id);
+            if (permanent != null
+                    && predicateEvaluationService.matchesPermanentPredicate(permanent, thisWay.filter(), filterContext)) {
+                matching.add(id);
+            }
+        }
+        return matching;
     }
 
     /**

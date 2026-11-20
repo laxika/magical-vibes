@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +41,18 @@ class SmiteTheDeathlessTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Darksteel Myr");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Darksteel Myr"));
+    }
+
+    @Test
+    @DisplayName("Prevented damage still makes the creature lose indestructible and be exiled if it would die")
+    void preventedDamageStillRemovesIndestructibleAndExiles() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
+        castSmite(target);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
     }
 
     @Test

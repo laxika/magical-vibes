@@ -438,8 +438,15 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * ({@link StepKind#PUT_COUNTERS}, {@link StepKind#REMOVE_COUNTERS}, {@link StepKind#DEAL_DAMAGE}); tokens created
      * this way are {@link CreatedThisResolution} and permanents returned this way {@link ReturnedThisResolution}. A step
      * result.
+     *
+     * <p>{@code filter} narrows them to those matching it as the reading effect is applied ("if a Dragon is dealt damage
+     * this way, destroy it", "a creature dealt damage this way can't block"); {@code null} names every one.
      */
-    record ThisWay(StepKind kind) implements PermanentSubject {
+    record ThisWay(StepKind kind, PermanentPredicate filter) implements PermanentSubject {
+
+        public ThisWay(StepKind kind) {
+            this(kind, null);
+        }
 
         public ThisWay {
             Objects.requireNonNull(kind, "kind");

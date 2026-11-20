@@ -10,7 +10,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Forms: {@code target()} (target creature, multi-target-group), {@code attached()} (enchanted creature),
  * {@code controlledBy(targetPlayer())} ("creatures target player controls"), {@code controlledBy(eachPlayer(), filter)}
  * ("creatures without flying can't block this turn"), {@code controlledBy(controllerOf(target()), creature ∧
- * ¬PermanentIsTargetCardPredicate)} ("other creatures that player controls", Mark for Death).
+ * ¬PermanentIsTargetCardPredicate)} ("other creatures that player controls", Mark for Death),
+ * {@code thisWay(DEAL_DAMAGE, creature)} ("a creature dealt damage this way can't block this turn", Ballista Wielder).
  *
  * <p>Not to be confused with a static {@code CantBlockEffect} ("this creature can't block", an ability) or
  * {@code CantBlockSourceEffect} ("can't block the source permanent"), which remain separate.
@@ -21,7 +22,7 @@ public record CantBlockThisTurnEffect(PermanentSubject subject) implements CardE
 
     public CantBlockThisTurnEffect {
         if (!(subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Attached
-                || subject instanceof PermanentSubject.ControlledBy)) {
+                || subject instanceof PermanentSubject.ControlledBy || subject instanceof PermanentSubject.ThisWay)) {
             throw new IllegalArgumentException("Unsupported can't-block subject: " + subject);
         }
     }

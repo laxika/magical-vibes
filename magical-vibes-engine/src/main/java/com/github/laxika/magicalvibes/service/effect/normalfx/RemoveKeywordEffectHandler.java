@@ -37,10 +37,12 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
 
         // Mass one-shot removal floats a per-permanent layer-6 removal. Invert the Skies =
         // opponents; Hour of Devastation = all creatures; Spectacular Pileup = all permanents
-        // narrowed to creatures and Vehicles.
+        // narrowed to creatures and Vehicles. A step result names what an earlier step acted on (Burn from Within's
+        // "if a creature is dealt damage this way, it loses indestructible").
         PermanentSubject named = remove.subject();
         PermanentSubject subject = named.isSet() ? Subjects.narrowed(named, remove.filter())
-                : named instanceof PermanentSubject.Source || named instanceof PermanentSubject.Target ? named : null;
+                : named instanceof PermanentSubject.Source || named instanceof PermanentSubject.Target
+                || named instanceof PermanentSubject.ThisWay ? named : null;
         if (subject == null) {
             return;
         }

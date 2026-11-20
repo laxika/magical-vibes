@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -36,6 +38,8 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
         var e = (DealDamageToTargetCreatureOrPlaneswalkerEffect) effect;
 
         Permanent source = entry.getSourcePermanentId() != null

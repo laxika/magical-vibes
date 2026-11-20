@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Farewell;
 import com.github.laxika.magicalvibes.cards.g.GallifreyFallsNoMore;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceMirrorMage;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.p.PsychicPaper;
 import com.github.laxika.magicalvibes.cards.s.SlipOutTheBack;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheWarDoctor.class, GrizzlyBears.class, SlipOutTheBack.class,
         SpikefieldHazard.class, SpikefieldCave.class, Farewell.class, Murder.class, PsychicPaper.class,
-        GallifreyFallsNoMore.class})
+        GallifreyFallsNoMore.class, JaceMirrorMage.class})
 class TheWarDoctorTest extends BaseCardTest {
 
     @Test
@@ -69,6 +71,23 @@ class TheWarDoctorTest extends BaseCardTest {
 
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(target.getCard().getId()));
         assertThat(doctor.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A planeswalker it destroys with damage goes to the graveyard: only a creature is exiled instead")
+    void planeswalkerDealtLethalDamageIsNotExiled() {
+        Permanent doctor = addCreatureReady(player1, new TheWarDoctor());
+        doctor.setCounterCount(CounterType.TIME, 2);
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceMirrorMage());
+        jace.setCounterCount(CounterType.LOYALTY, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, jace.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(jace.getCard());
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(jace.getCard().getId()));
     }
 
     @Test

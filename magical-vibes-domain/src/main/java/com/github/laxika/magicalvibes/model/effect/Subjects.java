@@ -223,6 +223,14 @@ public final class Subjects {
         return new PermanentSubject.ThisWay(kind);
     }
 
+    /**
+     * "If a Dragon is dealt damage this way, destroy it": the permanents {@link #thisWay(StepKind)} names that match
+     * {@code filter} as the reading effect is applied.
+     */
+    public static PermanentSubject thisWay(StepKind kind, PermanentPredicate filter) {
+        return new PermanentSubject.ThisWay(kind, filter);
+    }
+
     /** "Each other creature banded with it": the other attacking creatures in {@code permanent}'s band. */
     public static PermanentSubject bandmatesOf(PermanentSubject permanent) {
         return new PermanentSubject.BandmatesOf(permanent);

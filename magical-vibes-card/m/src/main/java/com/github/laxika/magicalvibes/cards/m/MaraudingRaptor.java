@@ -4,9 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +26,10 @@ public class MaraudingRaptor extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.SELF));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect(
-                        2, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, 0));
+                SequenceEffect.of(
+                        new DealDamageToTargetCreatureEffect(Subjects.triggering(), 2),
+                        new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
+                                new BoostSelfEffect(2, 0))));
     }
 }

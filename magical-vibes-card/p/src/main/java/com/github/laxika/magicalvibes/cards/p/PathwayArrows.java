@@ -4,9 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenTapIfColorlessEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +24,10 @@ public class PathwayArrows extends Card {
                 new ActivatedAbility(
                         true,
                         "{2}",
-                        List.of(new DealDamageToTargetCreatureThenTapIfColorlessEffect(1)),
+                        List.of(new DealDamageToTargetCreatureEffect(1),
+                                new TapPermanentsEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
+                                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                                new PermanentIsColorlessPredicate()))))),
                         "{2}, {T}: This creature deals 1 damage to target creature. If a colorless creature is dealt damage this way, tap it.",
                         TargetFilters.creature()
                 ),

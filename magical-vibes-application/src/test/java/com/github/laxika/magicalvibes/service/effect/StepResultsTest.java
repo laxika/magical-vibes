@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -354,6 +355,55 @@ class StepResultsTest extends BaseCardTest {
 
             assertThat(gd.getLife(player2.getId())).isEqualTo(17);
             assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("The Black Arrow: \"if a Dragon is dealt damage this way, destroy it\" spares a creature of another type")
+        void filteredSubjectNamesOnlyMatchingPermanents() {
+            Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+            resolve(player1, giant.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+                    new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
+                            new PermanentHasSubtypePredicate(CardSubtype.DRAGON))));
+
+            harness.assertOnBattlefield(player2, "Hill Giant");
+        }
+
+        @Test
+        @DisplayName("A filtered step result names the matching permanent dealt damage: a Giant dealt damage this way is destroyed")
+        void filteredSubjectNamesTheMatchingPermanent() {
+            Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+            resolve(player1, giant.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+                    new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.DEAL_DAMAGE,
+                            new PermanentHasSubtypePredicate(CardSubtype.GIANT))));
+
+            harness.assertNotOnBattlefield(player2, "Hill Giant");
+        }
+
+        @Test
+        @DisplayName("Marauding Raptor: \"if a Dinosaur is dealt damage this way\" holds only for a matching permanent")
+        void happenedToAMatchingPermanent() {
+            Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+            resolve(player1, giant.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+                    new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
+                            new PermanentHasSubtypePredicate(CardSubtype.GIANT)), new GainLifeEffect(2)),
+                    new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
+                            new PermanentHasSubtypePredicate(CardSubtype.DRAGON)), new GainLifeEffect(5)));
+
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        }
+
+        @Test
+        @DisplayName("Damage to a player is no permanent dealt damage this way: a filtered condition fails")
+        void playerDamageFailsAFilteredCondition() {
+            resolve(player1, player2.getId(), null, new DealDamageToAnyTargetEffect(new Fixed(1), false, false),
+                    new ConditionalEffect(HappenedThisWay.toA(StepKind.DEAL_DAMAGE,
+                            new PermanentIsCreaturePredicate()), new GainLifeEffect(2)));
+
+            assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         }
     }
 

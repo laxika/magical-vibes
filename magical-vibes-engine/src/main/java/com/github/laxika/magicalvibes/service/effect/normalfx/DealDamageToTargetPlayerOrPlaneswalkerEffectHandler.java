@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -29,6 +31,8 @@ public class DealDamageToTargetPlayerOrPlaneswalkerEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
         var e = (DealDamageToTargetPlayerOrPlaneswalkerEffect) effect;
 
         UUID targetId = entry.getTargetId();

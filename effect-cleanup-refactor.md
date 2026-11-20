@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1, 2 and 3 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 4 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -522,6 +522,7 @@ cause under Findings.
 | 1 | the `thenEffect` wrappers of one named permanent (sacrifice / exile / return this, the granting Equipment), mill and draw "then", the library-move and tap wrappers | done (6 split, 8 blocked-step-model, 1 unique; mill "when you do" gated, Necrite and Search the City gated; the Destroy / Exile / Return target wrappers and `DiscardCardThenEffect` need rider subjects first) |
 | 2 | the target "then" wrappers: `DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`, `ReturnTargetPermanentToHandThenEffect`, `DiscardCardThenEffect` | done (78 cards split: Destroy 54 of 89, Exile 15 of 25, Return 9 of 12; no wrapper emptied, all three kept as blocked-other; `DiscardCardThenEffect` audited, blocked-step-model; `ThenEffectRecipient` stays) |
 | 3 | the groups run 2 left on the target wrappers: "its controller may search" (`LibrarySearchPlayer` → `PlayerSubject`), "its controller creates a token" (`CreateTokenEffect` token controller), the layer-sensitive "if it was a …" checks | done (28 cards split: 15 search, 5 token, 8 layered; `LibrarySearchPlayer` deleted; `TargetPermanentMatches` reads a departed target's layered last-known card; no wrapper emptied: Destroy 14, Exile 5, Return 1 left; `ThenEffectRecipient` stays) |
+| 4 | `--unaudited --family Deal`, the damage-then families ("deals N damage … If a [creature] is dealt damage this way, …") | done (12 split, 4 blocked-other, 0 blocked-step-model, 0 unique; `thisWay(kind, filter)` and `HappenedThisWay.toA`; Smite the Deathless and The War Doctor fixed by Oracle text) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3558,6 +3559,80 @@ all pass. Application, AI, engine testFixtures and the touched card-test modules
   and the three blocked library records.
 - A rider whose verb has a player subject now splits with no wrapper; `forController` / `searchedBy` are the patterns for a verb
   whose actor is a component. `TargetPermanentMatches` on a departed target is layer-correct, so "if it was a <type>" splits.
+
+### Step 8, run 4 (2026-11-20)
+
+The general fused families, by `--unaudited --family Deal` restricted to `Then` / `And` / `IfYouDo` / `Unless` names: of
+the 33 such Deal records, 16 are "damage, then a rider on what was dealt damage", and every first half is a damage
+primitive on step 7's earlier-step list (they never prompt but for a replacement-order rerun, which replays permanent
+damage). Verdicts (ledger, step `8`): **split 12**, **blocked-other 4**, blocked-step-model 0, blocked-player-loop 0,
+unique 0. Ratchet 4,852 / 4,085 → 4,840 / 4,073 (12 records, 12 handlers deleted). The other 17 Deal names (the "And"
+simultaneous sets such as `DealDamageToTargetAndTheirCreaturesEffect`, the "Unless" pay-or-take ones, Trial of Agony,
+Chaos Balor) are left unaudited.
+
+- **Split** (card text checked with `get_card`; flat effects on spells and activated abilities, `SequenceEffect.of` on
+  the two trigger slots): Provoke the Trolls (`BoostSelfEffect(thisWay(DEAL_DAMAGE, creature))`), Ballista Wielder
+  (`CantBlockThisTurnEffect(thisWay(DEAL_DAMAGE, creature))`), The Black Arrow and Silver Bolt
+  (`DestroyTargetPermanentEffect(thisWay(DEAL_DAMAGE, Dragon | Werewolf))`), Pathway Arrows
+  (`TapPermanentsEffect(thisWay(DEAL_DAMAGE, colorless creature))`), Burn from Within (damage with `exileInsteadOfDie` +
+  `RemoveKeywordEffect(thisWay(DEAL_DAMAGE, creature))`), Spikefield Hazard (damage +
+  `MarkTargetCreatureExileInsteadOfDieThisTurnEffect(thisWay(DEAL_DAMAGE))`), The War Doctor (damage with
+  `exileInsteadOfDie`), Enter the God-Eternals and Rite of Consumption (`GainLifeEffect(AmountThisWay(DEAL_DAMAGE))`),
+  Marauding Raptor and Redcap Melee (`ConditionalEffect(HappenedThisWay.toA(DEAL_DAMAGE, Dinosaur | nonred), …)`),
+  Acorn Catapult (`CreateTokenEffect.forController(allOf(controllerOf(target()), targetPlayerDeclaredElsewhere()))`). The
+  damage step's recorded permanents are the ones actually dealt damage, redirected damage included, which is what the
+  fused handlers read from their before/after damage maps. Target specs are unchanged: the damage step is the only one
+  that declares a target (the riders read a step result), and its spec is the fused record's.
+- **Survivor changes.** `PermanentSubject.ThisWay` gained a `filter` (`Subjects.thisWay(kind, filter)`; the resolver keeps
+  the recorded permanents on the battlefield that match it now). `HappenedThisWay` gained a `filter` component
+  (`HappenedThisWay.toA(kind, filter)`: a recorded permanent matches now). `CantBlockThisTurnEffect` and
+  `RemoveKeywordEffect`'s handler accept a `ThisWay` subject. `MarkTargetCreatureExileInsteadOfDieThisTurnEffect` takes a
+  `PermanentSubject` (`target()` or a `ThisWay` step result; the old constructors kept). `DealDamageToTargetCreatureOrPlaneswalkerEffect`
+  and `DealDamageToTargetPlayerOrPlaneswalkerEffect` now begin a DEAL_DAMAGE step (`recordStep(DEAL_DAMAGE, NONE)`), as
+  step 7 asks of a damage primitive; no card read a DEAL_DAMAGE result before this run.
+- **Behaviour changes (Oracle text, rulings).** Smite the Deathless (HOC 202): "That creature loses indestructible … If
+  that creature would die this turn, exile it instead" has no "if dealt damage", and its ruling says both still apply when
+  the damage is prevented; the fused record applied them only after damage
+  (`SmiteTheDeathlessTest.preventedDamageStillRemovesIndestructibleAndExiles`). The War Doctor (WHO 167): "If a creature
+  dealt damage this way would die"; the fused record marked any permanent, so a planeswalker it killed was exiled
+  (`TheWarDoctorTest.planeswalkerDealtLethalDamageIsNotExiled`). Spikefield Hazard's "a permanent" keeps marking
+  planeswalkers. Rite of Consumption gains the damage dealt as the damage step records it, not the life the target lost
+  (the same number in every case its tests reach).
+- **AI.** Target polarity is unchanged: in every split card the damage step (HARMFUL_DAMAGE) is the strongest step, and the
+  riders declare no target (`TargetPolarityGuardTest` passes). `SpellEvaluator` sums a card's steps, so the riders are now
+  scored where the fused record was scored only as damage (its damage branch came first): the life gain of Enter the
+  God-Eternals and Rite of Consumption, Provoke the Trolls' boost (`CreatureBoostEffect`), and Acorn Catapult's Squirrel is
+  no longer counted as the caster's token (`tokenController()` is not `you()`).
+- **Blocked, by cause** (none is the step model: each needs a reader or a subject that doesn't exist): Vikya (excess damage
+  to any creature dealt damage this way; the damage primitives' excess read is the target's, planeswalkers and battles
+  too), Screaming Nemesis (the "can't gain life for the rest of the game" records take no `PlayerSubject`: fold
+  `PlayersCantGainLifeRestOfGameEffect` / `TargetPlayerCantGainLifeRestOfGameEffect` first, then
+  `playersThisWay(DEAL_DAMAGE)`), Shellshock (a `DynamicAmount` counting the permanents a step result names, and a
+  multi-group damage primitive), Minion of Leshrac (an else-effect `DestructionSupport` runs synchronously, not dispatched).
+
+**Tests**: card tests of the 14 rewritten cards (Ballista Wielder through `BallistaWatcherTest`) with the two new tests:
+14 suites, 128 test cases, all pass. Samples: every card naming `MarkTargetCreatureExileInsteadOfDieThisTurnEffect`, and 12
+per class of `DealDamageToTargetCreatureOrPlaneswalkerEffect`, `DealDamageToTargetPlayerOrPlaneswalkerEffect`,
+`RemoveKeywordEffect`, `CantBlockThisTurnEffect`, `DealDamageToAnyTargetEffect`, `DealDamageToTargetCreatureEffect`,
+`DestroyTargetPermanentEffect`, `TapPermanentsEffect`, `BoostSelfEffect`, `ConditionalEffect` (with their handler tests):
+127 suites, 1,086 test cases, all pass. Application (`StepResultsTest` +4 for the filtered subject and condition, every
+test naming the touched records, `ConditionEvaluationService` or `SubjectResolutionService`, `EffectCountRatchetTest`,
+`TargetSpecRatchetTest`): 322 suites, 4,254 test cases, all pass; AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`, the
+Easy and Medium decision-engine tests): 305, all pass. Application, AI, engine testFixtures and card-test `a`, `b`, `e`, `m`,
+`p`, `r`, `s`, `t` test sources compile.
+
+**For later runs.**
+
+- "If a [kind of permanent] is dealt damage this way" is `HappenedThisWay.toA(DEAL_DAMAGE, filter)`; "it" / "that
+  creature" after it is `thisWay(DEAL_DAMAGE, filter)`. A verb that should read one needs to accept `ThisWay` (most take any
+  subject through the resolver; `CantBlockThisTurnEffect`, `RemoveKeywordEffect` and the exile mark had a whitelist).
+- "A creature dealt damage this way would die … exile it instead" is the damage effect's `exileInsteadOfDie` flag (creatures
+  only); "a permanent" is the mark with `thisWay(DEAL_DAMAGE)`.
+- Next Deal candidates: the "And" simultaneous sets (`DealDamageToTargetAndTheirCreaturesEffect` 8 cards,
+  `…AndUpToCreaturesThatPlayerControls`, `…AndSharingCreatures`, `…AndAllWithSameName`): one damage event, so
+  `SequenceEffect.simultaneous` with a set damage subject, after checking which mass-damage record takes a
+  `controlledBy(targetPlayer())` subject. The same reading likely unlocks the `DealDamageToAnyTargetThenPerpetually…`
+  pair once `Perpetually*` grants accept a step-result subject.
 
 ## Prompt
 

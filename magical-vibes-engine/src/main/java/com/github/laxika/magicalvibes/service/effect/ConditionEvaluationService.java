@@ -1413,7 +1413,11 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
-            case HappenedThisWay c -> ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum();
+            case HappenedThisWay c -> c.filter() == null
+                    ? ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum()
+                    : ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
+                    .map(id -> gameQueryService.findPermanentById(gameData, id))
+                    .anyMatch(permanent -> permanent != null && matchesPermanent(gameData, permanent, c.filter(), ctx));
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.
             // "If it has a single target": the spell or ability the event was about, as the ability triggers (CR 603.4),
             // judged from the ability's controller and source.
