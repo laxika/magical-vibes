@@ -2,8 +2,14 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardAndBoostSelfEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +23,9 @@ public class FurybladeVampire extends Card {
         // gets +3/+0 until end of turn.
         // (Trample is loaded from Scryfall keywords.)
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                new DiscardCardAndBoostSelfEffect(3, 0),
+                SequenceEffect.of(
+                        new DiscardEffect(1, Subjects.you()),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.DISCARD), new BoostSelfEffect(3, 0))),
                 "Discard a card to give this creature +3/+0 until end of turn?"
         ));
     }

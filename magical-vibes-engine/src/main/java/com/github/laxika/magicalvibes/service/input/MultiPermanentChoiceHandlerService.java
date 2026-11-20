@@ -2137,9 +2137,7 @@ public class MultiPermanentChoiceHandlerService {
      * {@link MultiPermanentChoiceContext.DestroyCreaturesOpponentControls} and
      * {@link MultiPermanentChoiceContext.ForcedDestroy} destroy, and
      * {@link MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped},
-     * {@link MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed},
      * {@link MultiPermanentChoiceContext.SacrificePermanentsThen},
-     * {@link MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed},
      * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} and
      * {@link MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource} sacrifice, with their
      * search, draws, "if you do" effect, mana or recorded count only after.
@@ -2189,9 +2187,7 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped
-                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed
                 || context instanceof MultiPermanentChoiceContext.SacrificePermanentsThen
-                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
                 || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice
@@ -2400,17 +2396,9 @@ public class MultiPermanentChoiceHandlerService {
                 handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
                 return;
             }
-            case MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed ignored -> {
-                handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
-                return;
-            }
             case MultiPermanentChoiceContext.SacrificePermanentsThen ctx -> {
                 sacrificePermanentsThenEffectHandler.resolveAfterChoice(gameData, permanentIds, ctx);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-                return;
-            }
-            case MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed ctx -> {
-                handleSacrificePermanentsAddManaPerSacrificed(gameData, playerId, permanentIds, ctx);
                 return;
             }
             case MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx -> {
@@ -2624,25 +2612,6 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleSacrificePermanentsDrawPerSacrificed(GameData gameData, UUID playerId,
-                                                            List<UUID> permanentIds) {
-        int sacrificed = (int) permanentIds.stream()
-                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
-                .filter(java.util.Objects::nonNull)
-                .count();
-        destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        if (sacrificed > 0) {
-            playerInteractionSupport.applyDrawCards(gameData, playerId, sacrificed);
-        } else {
-            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " sacrifices no permanents."));
-        }
-
-        // Standard completion: SBA → may abilities → resume effects
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
     private void handleSacrificeAnyNumberAndRecordCount(
             GameData gameData, UUID playerId, List<UUID> permanentIds,
             MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount context) {
@@ -2664,29 +2633,6 @@ public class MultiPermanentChoiceHandlerService {
         if (sacrificed == 0) {
             gameLogService.append(gameData,
                     GameLog.text(gameData.playerIdToName.get(playerId) + " sacrifices no permanents."));
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    /**
-     * Mana Seism: the chosen permanents are sacrificed, then the controller adds one mana of the
-     * context's color for each permanent actually sacrificed.
-     */
-    private void handleSacrificePermanentsAddManaPerSacrificed(
-            GameData gameData, UUID playerId, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed context) {
-        int sacrificed = sacrificeTogetherCounting(gameData, playerId, permanentIds);
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        if (sacrificed > 0) {
-            gameData.playerManaPools.get(playerId).add(context.color(), sacrificed);
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " adds " + sacrificed + " " + context.color().getCode() + "."));
-            log.info("Game {} - {} adds {} {}", gameData.id, playerName, sacrificed, context.color());
-        } else {
-            gameLogService.append(gameData, GameLog.text(playerName + " sacrifices no permanents."));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

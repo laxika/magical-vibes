@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.AsTransformsIntoThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -21,9 +26,10 @@ public class SephirothOneWingedAngel extends Card {
                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), SephirothFabledSoldier.DRAIN)
                         .withTargetFilter(SephirothFabledSoldier.OPPONENT_TARGET),
                 "Whenever a creature dies, target opponent loses 1 life and you gain 1 life.")));
-        addTrigger(Triggers.attacks(), new SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect(
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
+                SacrificePermanentsEffect.anyNumber(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))), Subjects.you()),
+                new DrawCardEffect(new AmountThisWay(StepKind.SACRIFICE))));
     }
 }

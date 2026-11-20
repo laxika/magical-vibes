@@ -203,6 +203,25 @@ class ReprocessTest extends BaseCardTest {
         harness.assertLife(player2, 19);
     }
 
+    @Test
+    @DisplayName("A lone eligible permanent is still offered, and keeping it draws nothing")
+    void loneEligiblePermanentIsStillOffered() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        setupLibrary();
+        castReprocess();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
     }

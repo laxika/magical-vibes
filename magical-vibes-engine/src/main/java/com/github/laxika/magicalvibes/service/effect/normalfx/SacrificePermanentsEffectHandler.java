@@ -65,6 +65,15 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 && !e.simultaneousChoices();
 
         List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.player());
+        if (e.upToCount()) {
+            if (players.size() > 1) {
+                throw new IllegalStateException("An up-to-count sacrifice names one player: " + e.player());
+            }
+            if (!players.isEmpty()) {
+                resolveUpToCount(gameData, entry, e, players.getFirst());
+            }
+            return;
+        }
         if (e.player() instanceof PlayerSubject.Each || e.player() instanceof PlayerSubject.Matching
                 || players.size() > 1) {
             resolveSelectedPlayers(gameData, entry, e, players, creatureSingleSac);
@@ -102,7 +111,41 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p, effect.filter()))
                 .filter(p -> !gameQueryService.isCreatureTokenProtectedFromResolvingTriggeredAbility(gameData, p))
                 .count();
-        return matchingCount >= count;
+        return effect.upToCount() ? matchingCount > 0 : matchingCount >= count;
+    }
+
+    /**
+     * "Sacrifice any number of …": the player chooses how many of their matching permanents to sacrifice, none
+     * included, so the choice is asked even with one candidate. Its completion sacrifices the chosen ones together
+     * through {@code DestructionSupport.sacrificeTogether}, which adds them to this SACRIFICE step.
+     */
+    private void resolveUpToCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e, UUID playerId) {
+        if (isSacrificeProtected(gameData, entry, playerId)) {
+            return;
+        }
+        int count = evaluateCount(gameData, entry, e, playerId);
+        if (count <= 0) {
+            return;
+        }
+        FilterContext filterContext = filterContextFor(gameData, entry);
+        List<UUID> matchingIds = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
+                .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p, e.filter()))
+                .filter(p -> !gameQueryService.isCreatureTokenProtectedFromResolvingTriggeredAbility(gameData, p))
+                .map(Permanent::getId)
+                .toList();
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (matchingIds.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " has no matching permanents to sacrifice."));
+            log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
+            return;
+        }
+        int maximum = Math.min(count, matchingIds.size());
+        playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, maximum,
+                new MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount(entry),
+                count == Integer.MAX_VALUE
+                        ? "Choose any number of permanents to sacrifice."
+                        : "Choose up to " + maximum + " permanents to sacrifice.");
     }
 
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -277,6 +279,66 @@ class SacrificePermanentsEffectHandlerTest {
 
             verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("The controller sacrifices any number of matching permanents")
+    class AnyNumber {
+
+        private SacrificePermanentsEffect anyNumberOfLands() {
+            return SacrificePermanentsEffect.anyNumber(new PermanentIsLandPredicate(), Subjects.you());
+        }
+
+        @Test
+        @DisplayName("A lone matching permanent is offered, not sacrificed automatically, with none allowed")
+        void loneMatchIsStillAsked() {
+            Permanent forest = addPermanent(player1Id, "Forest", CardType.LAND);
+            stubCount(Integer.MAX_VALUE);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(forest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+            handler.resolve(gd, entry(player1Id, null), anyNumberOfLands());
+
+            verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id), eq(List.of(forest.getId())),
+                    eq(1), any(MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount.class), anyString());
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Offers every matching permanent up to all of them")
+        void offersEveryMatch() {
+            Permanent forest = addPermanent(player1Id, "Forest", CardType.LAND);
+            Permanent island = addPermanent(player1Id, "Island", CardType.LAND);
+            stubCount(Integer.MAX_VALUE);
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+            handler.resolve(gd, entry(player1Id, null), anyNumberOfLands());
+
+            verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id),
+                    eq(List.of(forest.getId(), island.getId())), eq(2),
+                    any(MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount.class), anyString());
+        }
+
+        @Test
+        @DisplayName("With no matching permanent there is no prompt and the step records nothing sacrificed")
+        void noMatchNoPrompt() {
+            addPermanent(player1Id, "Grizzly Bears", CardType.CREATURE);
+            stubCount(Integer.MAX_VALUE);
+            StackEntry resolvingEntry = entry(player1Id, null);
+
+            handler.resolve(gd, resolvingEntry, anyNumberOfLands());
+
+            verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), any());
+            assertThat(resolvingEntry.getResolutionResults().outcome(StepKind.SACRIFICE).happened()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Is one player's choice: an each-player subject is refused")
+        void refusesEachPlayer() {
+            assertThatThrownBy(() -> SacrificePermanentsEffect.anyNumber(new PermanentIsLandPredicate(),
+                    Subjects.eachPlayer())).isInstanceOf(IllegalArgumentException.class);
         }
     }
 

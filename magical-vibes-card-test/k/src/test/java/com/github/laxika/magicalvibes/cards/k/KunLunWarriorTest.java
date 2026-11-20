@@ -30,8 +30,6 @@ class KunLunWarriorTest extends BaseCardTest {
 
         acceptMay();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
@@ -83,7 +81,6 @@ class KunLunWarriorTest extends BaseCardTest {
 
         acceptMay();
         harness.handleListChoice(player1, "Sacrifice an artifact");
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());

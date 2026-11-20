@@ -1007,23 +1007,9 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeLandsSearchLandsToBattlefieldTapped() implements MultiPermanentChoiceContext {
     }
 
-    /**
-     * Sacrifice the chosen permanents, then the controller draws a card for each one actually
-     * sacrificed (Reprocess). The draw count equals the number of permanents sacrificed.
-     */
-    record SacrificePermanentsDrawPerSacrificed() implements MultiPermanentChoiceContext {
-    }
-
     /** Sacrifice exactly the chosen permanents, then resolve the follow-up effect. */
     record SacrificePermanentsThen(UUID controllerId, Card sourceCard, int requiredCount,
                                    CardEffect thenEffect) implements MultiPermanentChoiceContext {
-    }
-
-    /**
-     * Sacrifice the chosen permanents, then add one mana of {@code color} to the controller's pool
-     * for each one actually sacrificed (Mana Seism).
-     */
-    record SacrificePermanentsAddManaPerSacrificed(ManaColor color) implements MultiPermanentChoiceContext {
     }
 
     /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */

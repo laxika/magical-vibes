@@ -2,7 +2,12 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -17,10 +22,11 @@ public class MalevolentWitchkite extends Card {
 
     public MalevolentWitchkite() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect(
-                        new PermanentAnyOfPredicate(List.of(
+                SequenceEffect.of(
+                        SacrificePermanentsEffect.anyNumber(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsEnchantmentPredicate(),
-                                new PermanentIsTokenPredicate()))));
+                                new PermanentIsTokenPredicate())), Subjects.you()),
+                        new DrawCardEffect(new AmountThisWay(StepKind.SACRIFICE))));
     }
 }

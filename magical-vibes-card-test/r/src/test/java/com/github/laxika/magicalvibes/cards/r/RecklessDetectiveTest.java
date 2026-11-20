@@ -28,8 +28,6 @@ class RecklessDetectiveTest extends BaseCardTest {
 
         attackAndAcceptMay();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, detective)).isEqualTo(3);
@@ -126,7 +124,6 @@ class RecklessDetectiveTest extends BaseCardTest {
 
         attackAndAcceptMay();
         harness.handleListChoice(player1, "Sacrifice an artifact");
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact.getCard());

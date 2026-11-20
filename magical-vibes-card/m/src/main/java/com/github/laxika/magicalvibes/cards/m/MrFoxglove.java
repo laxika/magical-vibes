@@ -9,9 +9,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.DrawCardThenIfNoCardsDrawnEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,14 +24,14 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MrFoxglove extends Card {
 
     public MrFoxglove() {
-        addTrigger(Triggers.attacks(), new DrawCardThenIfNoCardsDrawnEffect(
-                new Max(
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
+                new DrawCardEffect(new Max(
                         new Fixed(0),
                         new Sum(
                                 new CardsInHand(CountScope.DEFENDING_PLAYER),
-                                new Scaled(new CardsInHand(CountScope.CONTROLLER), -1))),
-                new MayEffect(
+                                new Scaled(new CardsInHand(CountScope.CONTROLLER), -1)))),
+                new ConditionalEffect(new NotCondition(HappenedThisWay.drew()), new MayEffect(
                         new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"),
-                        "Put a creature card from your hand onto the battlefield?")));
+                        "Put a creature card from your hand onto the battlefield?"))));
     }
 }

@@ -48,8 +48,8 @@ class BebopRocksteadyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Sacrifice a permanent");
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, otherPermanent.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(otherPermanent.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(otherPermanent.getId()));
@@ -89,9 +89,7 @@ class BebopRocksteadyTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, source.getId());
-
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

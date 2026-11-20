@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -699,6 +700,82 @@ class StepResultsTest extends BaseCardTest {
             harness.passBothPriorities();
 
             harness.assertLife(player1, lifeBefore + 3);
+        }
+
+        @Test
+        @DisplayName("Reprocess: \"sacrifice any number of ... Draw a card for each permanent sacrificed this way\" counts the chosen ones")
+        void anyNumberRecordsTheChosenPermanents() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+            harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+            StackEntry entry = resolve(player1, null, null,
+                    SacrificePermanentsEffect.anyNumber(new PermanentIsCreaturePredicate(), Subjects.you()),
+                    new DrawCardEffect(new AmountThisWay(StepKind.SACRIFICE)));
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                    .containsExactlyInAnyOrder(bears.getId(), giant.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), giant.getId()));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.SACRIFICE).objectIds())
+                    .containsExactlyInAnyOrder(bears.getId(), giant.getId());
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("\"Any number\" includes none: a lone candidate is still asked about, and keeping it sacrifices nothing")
+        void anyNumberMayChooseNone() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.setLibrary(player1, List.of(new Forest()));
+
+            StackEntry entry = resolve(player1, null, null,
+                    SacrificePermanentsEffect.anyNumber(new PermanentIsCreaturePredicate(), Subjects.you()),
+                    new DrawCardEffect(new AmountThisWay(StepKind.SACRIFICE)));
+            harness.handleMultiplePermanentsChosen(player1, List.of());
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.SACRIFICE).happened()).isFalse();
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Manifest")
+    class Manifest {
+
+        @Test
+        @DisplayName("Formless Nurturing: \"manifest the top card of your library, then put a +1/+1 counter on it\"")
+        void countersGoOnTheManifestedPermanent() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.setLibrary(player1, List.of(new Forest()));
+
+            StackEntry entry = resolve(player1, null, null,
+                    new ManifestTopCardEffect(),
+                    new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.MANIFEST),
+                            CounterType.PLUS_ONE_PLUS_ONE));
+
+            UUID manifestedId = entry.getResolutionResults().outcome(StepKind.MANIFEST).objectIds().getFirst();
+            Permanent manifested = gqs.findPermanentById(gd, manifestedId);
+            assertThat(manifested.isFaceDown()).isTrue();
+            assertThat(manifested.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(entry.getResolutionResults().outcome(StepKind.MANIFEST).playerIds())
+                    .containsExactly(player1.getId());
+        }
+
+        @Test
+        @DisplayName("With an empty library nothing is manifested this way, so no counter is put on anything")
+        void emptyLibraryManifestsNothing() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.setLibrary(player1, List.of());
+
+            StackEntry entry = resolve(player1, null, null,
+                    new ManifestTopCardEffect(),
+                    new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.MANIFEST),
+                            CounterType.PLUS_ONE_PLUS_ONE));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.MANIFEST).happened()).isFalse();
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         }
     }
 

@@ -23,14 +23,15 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #DEAL_DAMAGE}: the total damage dealt, the permanents dealt damage, the players dealt damage;</li>
  *   <li>{@link #GAIN_LIFE}, {@link #LOSE_LIFE}: the total life gained or lost, nothing, the players;</li>
  *   <li>{@link #PUT_COUNTERS}, {@link #REMOVE_COUNTERS}: the number of counters, the permanents, their controllers;</li>
- *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0.</li>
+ *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0;</li>
+ *   <li>{@link #MANIFEST}: the number of permanents manifested, those permanents, their controllers.</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
  * prompts, pauses by resolving itself again before it changes anything, or pauses at the end of its step with its
  * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
- * chooses at a prompt), exile the top card of a library, destroy, copy, create a token and mill (never prompt, or
+ * chooses at a prompt), exile the top card of a library, destroy, copy, create a token, manifest and mill (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
@@ -55,5 +56,6 @@ public enum StepKind {
     PUT_COUNTERS,
     REMOVE_COUNTERS,
     COUNTER_SPELL,
-    COPY_SPELL
+    COPY_SPELL,
+    MANIFEST
 }

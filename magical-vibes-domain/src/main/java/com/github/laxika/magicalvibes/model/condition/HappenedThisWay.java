@@ -155,6 +155,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case REMOVE_COUNTERS -> "stripped of counters";
             case COUNTER_SPELL -> "countered";
             case COPY_SPELL -> "copied";
+            case MANIFEST -> "manifested";
         };
     }
 }

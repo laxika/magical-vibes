@@ -64,10 +64,6 @@ class CardEffectTargetingConsistencyTest {
             // Marker: declares a target-group position consumed by a sibling effect and never
             // resolves or chooses a target itself.
             "TargetGroupMarkerEffect",
-            // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
-            // Triggers.drawStep(ActivePlayer.ANY) trigger is pushed in StepTriggerService (Maralen of the Mornsong);
-            // it never enters the shared target-collection pipeline.
-            "TargetPlayerLosesLifeAndSearchesLibraryToHandEffect",
             // Piggyback: rides on the spell-level player target declared via the card's
             // target(PlayerPredicateTargetFilter) (Mana Short) — the handler reads the stack
             // entry's targetId and never enters trigger-target collection.

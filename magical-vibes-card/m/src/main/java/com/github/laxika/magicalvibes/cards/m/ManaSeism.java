@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 /**
@@ -13,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class ManaSeism extends Card {
 
     public ManaSeism() {
-        addSpellEffect(new SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect(
-                new PermanentIsLandPredicate(), ManaColor.COLORLESS));
+        addSpellEffect(SacrificePermanentsEffect.anyNumber(new PermanentIsLandPredicate(), Subjects.you()));
+        addSpellEffect(new AwardManaEffect(ManaColor.COLORLESS, new AmountThisWay(StepKind.SACRIFICE)));
     }
 }

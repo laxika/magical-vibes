@@ -40,8 +40,6 @@ class ContractHeroTest extends BaseCardTest {
 
         attackAndAcceptMay();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(3);
@@ -90,6 +88,7 @@ class ContractHeroTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With both options available, sacrificing the lone artifact keeps the hand card")
     void canChooseSacrificeWhenDiscardIsAlsoAvailable() {
         Shock card = new Shock();
         harness.setHand(player1, List.of(card));
@@ -98,7 +97,6 @@ class ContractHeroTest extends BaseCardTest {
 
         attackAndAcceptMay();
         harness.handleListChoice(player1, "Sacrifice an artifact");
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
@@ -106,6 +104,7 @@ class ContractHeroTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With both options available, discarding keeps the artifact")
     void canChooseDiscardWhenSacrificeIsAlsoAvailable() {
         Shock card = new Shock();
         harness.setHand(player1, List.of(card));
@@ -123,6 +122,7 @@ class ContractHeroTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without an artifact or a card does not boost Contract Hero")
     void acceptingWithoutAnArtifactOrCardDoesNotBoostHero() {
         harness.setHand(player1, List.of());
         Permanent hero = addCreatureReady(player1, new ContractHero());
@@ -136,6 +136,7 @@ class ContractHeroTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Treasure created on entering can be sacrificed for the boost")
     void canSacrificeTheTreasureCreatedOnEntering() {
         harness.setHand(player1, List.of(new ContractHero()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -144,10 +145,8 @@ class ContractHeroTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent hero = findPermanent(player1, "Contract Hero");
         hero.setSummoningSick(false);
-        Permanent treasure = findPermanent(player1, "Treasure");
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, treasure.getId());
 
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);

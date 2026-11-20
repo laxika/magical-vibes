@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 18 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 19 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -537,6 +537,7 @@ cause under Findings.
 | 16 | the Destroy family: the mana-value conditional (Perilous Voyage pattern), the same-name / same-mana-value / shared-colour sets (`otherCreaturesSharing` widened to any permanent), the block-trigger `allOf` pairs, the rider splits | done (3 split, 6 absorbed, 1 survivor, 1 blocked-player-loop, 10 blocked-other; 23 card files rewritten, 16 of them by hand; `otherPermanentsSharing(permanent, quality, filter)`, `SharedQuality.MANA_VALUE`; a permanent with all card names now shares every name; `DestroyAllPermanentsEffect`'s rider not started) |
 | 17 | `DestroyAllPermanentsEffect`'s rider: the wipe records a DESTROY step, the plain-count, count-scope and per-controller riders become later steps; Voodoo Doll if budget remains | done (1 split, 1 absorbed, 5 survivors, 2 blocked-player-loop, 3 blocked-other; 27 of the 30 rider cards split, 33 card files rewritten; `AmountThisWay.died` / `matching` / `controlledByYou`; the rider stays for From the Ashes, Seeds of Innocence, Stench of Evil; Voodoo Doll tried and kept) |
 | 18 | run 17's next: `DestroyEachTargetPermanentEffect` records a DESTROY step and its 9 rider cards split; then the draw-then-put-from-hand family (first half `DrawCardEffect`) | done (3 split, 1 absorbed, 1 amount absorbed, 4 survivors, 1 unique, 1 blocked-player-loop, 3 blocked-other; 27 card files rewritten; `AmountThisWay.destroyedManaValue()` / `.includingUnremoved()`, `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect` takes a placement and a `PlayerSubject`; three stamped `StackEntry` fields deleted; Seeds of Innocence not split) |
+| 19 | run 18's next: `SacrificePermanentsEffect` gains an "any number" choice recording the SACRIFICE step and the two any-number records split; the sacrifice-or-discard and manifest-then-counters records; then the next fused families whose first half records a step | done (8 split, 3 survivors, 4 blocked-other; 24 card files rewritten; `SacrificePermanentsEffect.anyNumber`, `StepKind.MANIFEST`, `ChooseOneAtResolutionEffect` drops impossible sacrifice / discard options; `DiscardCardAndBoostSelfEffect` split with Furyblade Vampire) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4838,6 +4839,105 @@ test needed a change. Application, AI, engine testFixtures and card-test `a b c 
 - **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse` name): 130
   (1,244 card uses); by first word Exile 22, Search 10, Sacrifice 10, Reveal 9, Counter 8, Prevent 7, Each 6, Draw 5, Choose 5, Cant 5, Put 3,
   Destroy 3, Creatures 3, Create 3. About a third are not two instructions, so roughly 85 split-able families remain.
+
+### Step 8, run 19 (2026-11-20)
+
+Run 18's "Next run": an "any number" sacrifice that records its step, the two any-number records, the sacrifice-or-discard and
+manifest-then-counters records; then, by multi-card use, the next fused families whose first half records a step (draw, lose life).
+Verdicts (ledger, step `8`): **split 8** (`SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect`,
+`SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect`, `SacrificePermanentOrDiscardCardThenDrawAndBoostSelfEffect`,
+`DiscardCardAndBoostSelfEffect`, `ManifestTopCardAndPutCountersEffect`, `DrawAndLoseLifePerSubtypeEffect`,
+`TargetPlayerLosesLifeAndSearchesLibraryToHandEffect`, `DrawCardThenIfNoCardsDrawnEffect`, with their handlers), **survivor 3**
+(`SacrificePermanentsEffect`, `ManifestTopCardEffect`, `ChooseOneAtResolutionEffect`), **blocked-other 4**
+(`SacrificePermanentsThenEffect`, `CreateTokensAndAttachEquipmentEffect`, `ExileCreaturesFromGraveyardAndCreateTokensEffect`,
+`CounterSpellAndExileAllWithSameNameEffect`), blocked-step-model 0, blocked-player-loop 0, unique 0. Ratchet 4,739 / 3,972 → 4,731 / 3,964.
+24 card files rewritten by deleted scratch scripts (read back by eye, imports sorted). Oracle text of every one checked with `get_card`;
+rulings with `get_rulings` (Reprocess, Pitiless Carnage, Malevolent Witchkite, God-Eternal Bontu and Sephiroth: zero may be sacrificed,
+triggers wait until after the draw; Furyblade Vampire; Maralen: mandatory loss and search; Champion of Dusk: counted as it resolves;
+Mr. Foxglove; Wildcall; none for Mana Seism, Reckless Detective, K'un-Lun Warrior, Contract Hero, Bebop & Rocksteady, Graveborn Muse,
+Trade Route Envoy). CR 608.2c, 608.2d, 608.2h and 701.40e checked with `get_rule` (2026-11-20).
+
+- **Any number.** `SacrificePermanentsEffect` gained `upToCount` and `anyNumber(filter, player)` (count `Fixed(Integer.MAX_VALUE)`; one
+  player only: an `each(...)` subject, simultaneous choices or the recorded-count flags are refused). The handler begins the SACRIFICE step
+  as before and always asks, even with one candidate ("any number" includes none), through the existing
+  `MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount`, whose completion sacrifices through `DestructionSupport.sacrificeTogether`
+  (death replacements asked first), so the step result is the chosen permanents. `hasLegalSacrificeChoice` is true with one candidate.
+  "Draw a card for each permanent sacrificed this way" / "then draw that many" is `DrawCardEffect(new AmountThisWay(StepKind.SACRIFICE))`
+  (Reprocess, Pitiless Carnage: flat spell effects; Malevolent Witchkite, God-Eternal Bontu, Sephiroth One-Winged Angel: one trigger
+  `SequenceEffect`); Mana Seism's "then add that much {C}" is `AwardManaEffect(COLORLESS, AmountThisWay(SACRIFICE))` (a spell effect,
+  as Dark Ritual's). The two `MultiPermanentChoiceContext` records and their completion methods are deleted.
+- **Sacrifice or discard.** `ChooseOneAtResolutionEffectHandler`'s CR 608.2d filter now also drops an option that is only "sacrifice …"
+  (`SacrificePermanentsEffect` of `you()`, judged by `hasLegalSacrificeChoice`) or only "discard …" (`DiscardEffect` of `you()`, empty
+  hand); a choice made only of such options resolves its lone possible option without a prompt and does nothing when none is possible
+  (the counter-removal cards keep their old behaviour). Reckless Detective, K'un-Lun Warrior, Contract Hero:
+  `MayEffect(SequenceEffect.of(ChooseOneAtResolutionEffect(sacrifice | discard), ConditionalEffect(AnyOf(sacrificed(),
+  HappenedThisWay(DISCARD)), draw / boost)))`; Bebop & Rocksteady's "sacrifice a permanent unless you discard a card" is the bare choice.
+  The chosen option is spliced as the next step, so the gate reads it. Furyblade Vampire's `DiscardCardAndBoostSelfEffect` (the
+  record's only card) is `MayEffect(SequenceEffect.of(DiscardEffect(1, you()), ConditionalEffect(HappenedThisWay(DISCARD),
+  BoostSelfEffect(3, 0))))`; `DiscardFollowUp.boost` / `rummageAndBoost` are deleted (the `boost*` components stay, now never set).
+  `SacrificePermanentThenEffect` lost that internal builder (two left: Forage, `MayPayTapAndSacrificePermanent`).
+- **Manifest step.** `StepKind.MANIFEST` (the permanents manifested, their controllers), recorded by `ManifestTopCardEffectHandler`;
+  `Subjects.thisWay(MANIFEST)` is allowed (SUBJECTS_REFERENCE row). Wildcall, Formless Nurturing, Fierce Invocation: `ManifestTopCardEffect()`
+  then `PutCounterOnTargetPermanentEffect(thisWay(MANIFEST), +1/+1, X | 1 | 2)`.
+- **Draw / lose life firsts.** Graveborn Muse, Champion of Dusk: `SequenceEffect.of(DrawCardEffect(PermanentCount(subtype, CONTROLLER)),
+  LoseLifeEffect(same, you()))` (the loss stays its own step for Lich's Duel Mastery). Maralen of the Mornsong, Mornsong Aria:
+  `SequenceEffect.of(LoseLifeEffect(3, triggeringPlayer()), new SearchLibraryEffect().searchedBy(triggeringPlayer()))` (an unrestricted
+  search can't fail to find, as the ruling requires; `CardEffectTargetingConsistencyTest`'s allowlist entry is gone). Trade Route Envoy,
+  Mr. Foxglove: `DrawCardEffect(amount)` + `ConditionalEffect(NotCondition(HappenedThisWay.drew()), …)` (the DRAW step records even a draw
+  of 0 or a prevented one). Target specs are unchanged: none of the rewritten cards' steps declares a target the record didn't.
+- **Behaviour changes.** Furyblade Vampire with an empty hand is not asked (CR 608.2d; before: asked, then nothing;
+  `FurybladeVampireTest` updated). A lone eligible artifact (Reckless Detective, K'un-Lun Warrior, Contract Hero) or Bebop & Rocksteady
+  alone is sacrificed without a permanent prompt, and Bebop with several permanents gets the multi-permanent choice (run 7's
+  `SacrificePermanentsEffect` shapes; their tests updated, `ContractHeroTest`'s missing `@DisplayName`s added). The any-number sacrifices
+  also skip permanents that can't be chosen to be sacrificed and creature tokens protected from a resolving triggered ability, which the
+  old handlers didn't check. Graveborn Muse and Champion of Dusk count every Zombie / Vampire you control, not only creatures ("Zombies you
+  control": a noncreature kindred permanent counts; no test card reaches it), and evaluate X once per step (the same value: the draws
+  change no permanent). The survivors' log lines win (the "controls no Zombies" and "sacrifices no permanents" variants changed; no test
+  asserted them). New tests: `StepResultsTest` +4 (any number counts the chosen ones; none chosen with a lone candidate; Formless
+  Nurturing's counter on the manifested permanent; an empty library manifests nothing), `SacrificePermanentsEffectHandlerTest` +4 (the
+  `AnyNumber` group), `ReprocessTest` +1. Deleted with their handlers: `DiscardCardAndBoostSelfEffectHandlerTest`,
+  `DrawAndLoseLifePerSubtypeEffectHandlerTest` (the cards' tests cover them).
+- **AI.** No AI class named a deleted record. The split cards' steps are scored as the evaluators score other steps (a draw of
+  `AmountThisWay` estimates 0, as for earlier splits).
+- **Blocked, by cause.** `SacrificePermanentsThenEffect` (The Aether Flues, Strefan, Scavenger's Talent: "you may sacrifice N. If you do"):
+  `MayEffectHandler`'s can't-sacrifice check reads only a directly wrapped `SacrificePermanentsEffect`, not a sequence's first step, and
+  doesn't compare with the count, so a player with fewer than N would be offered a partial sacrifice (CR 608.2d); also its riders run on a
+  non-targeting carrier entry today. `CreateTokensAndAttachEquipmentEffect`: no "attach an Equipment you control to each created token"
+  primitive. `ExileCreaturesFromGraveyardAndCreateTokensEffect`: Midnight Ritual's single-graveyard X targets are special-cased by class in
+  `SpellCastingService`, Hour of Eternity / Foggy Swamp Visions copy exiled cards (card subject). `CounterSpellAndExileAllWithSameNameEffect`:
+  no search-and-exile-by-name primitive.
+
+**Tests** (one Gradle run, one `--tests` list per task): every card test constructing a rewritten card (the helper sweep: Claim the Kingdom,
+Dalkovan Encampment, Killmonger, Lich's Duel Mastery, Thinking Cap among them), every `ChooseOneAtResolutionEffect`,
+`SacrificeAnyNumberOfPermanentsEffect`, `ManifestTopCardEffect` and `CloakTopCardOfControllerLibraryEffect` card test, `--tests-for
+SacrificePermanentsEffect --max-per-class 25`, `--tests-for PutCounterOnTargetPermanentEffect DrawCardEffect LoseLifeEffect SearchLibraryEffect
+AwardManaEffect DiscardEffect MayEffect --max-per-class 6`; application (`StepResultsTest`, `SacrificePermanentsEffectHandlerTest`,
+`EffectResolutionServiceTest`, `SubjectResolutionServiceTest`, `ResolutionScratchpadAmountTest`, `MayEffectHandlerTest`,
+`CardEffectTargetingConsistencyTest`, both ratchets, `CardImmutabilityArchTest`, `PlayerInputServiceTest`, the interaction-handler tests and
+the discard handler tests naming `DiscardFollowUp`); AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`, `GameDataDeepCopyTest`): 165 top-level
+classes (255 result files with the `@Nested` suites), 1,670 test cases, all pass. Application, AI, engine testFixtures and card-test
+`b c f g k m p r s t w` test sources compile.
+
+**For later runs.**
+
+- "Sacrifice any number of [filter]. Draw / add / gain that many" is `SacrificePermanentsEffect.anyNumber(filter, you())` + the verb with
+  `AmountThisWay(StepKind.SACRIFICE)` (or `sacrificedPower()` …). "X or Y" between your own sacrifice and discard is a
+  `ChooseOneAtResolutionEffect` of the two lone primitives, gated by `AnyOf` of their `HappenedThisWay`s. "Manifest …, then put counters on
+  it" is `thisWay(StepKind.MANIFEST)`. "If you don't draw a card this way" is `NotCondition(HappenedThisWay.drew())`.
+- **Next run.** (1) `MayEffectHandler`'s can't-sacrifice check: read a `SequenceEffect`'s first `SacrificePermanentsEffect` too and require
+  the count (`hasLegalSacrificeChoice`); this also stops asking run 7's "you may sacrifice a creature. If you do" cards when nothing can be
+  sacrificed (check their tests), then split `SacrificePermanentsThenEffect` (3 cards; gate `HappenedThisWay.atLeast(SACRIFICE, N)`, the
+  riders in the main entry). (2) Absorb `SacrificeAnyNumberOfPermanentsEffect` (12 cards) into `SacrificePermanentsEffect` (an `upTo(n)`
+  factory for Ravenous Rotbelly), moving its `EventValue` / `EventValueAtLeast` / `SacrificedPermanentPower` readers to
+  `AmountThisWay(SACRIFICE)` / `HappenedThisWay.sacrificed()` / `sacrificedPower()`; Swashbuckler Extraordinaire, Nyssa of Traken and
+  Campsite Cuisine size a reflexive ability's target count with `targetUpTo(new EventValue(), …)`, so check that a carried step result
+  reaches that count first. (3) Then the next fused family by multi-card use with a recording first half (Necromancer's Covenant alone in
+  `ExileCreaturesFromGraveyardAndCreateTokensEffect`; `RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect` needs a reveal result).
+- `DiscardFollowUp`'s `boostPermanentId` / `boostPower` / `boostToughness` components and their `CardChoiceHandlerService` reader have no
+  writer left; drop them when the record is next touched.
+- **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse` name):
+  119 (1,206 card uses); by first word Exile 21, Search 10, Reveal 9, Sacrifice 7, Prevent 7, Counter 7, Each 6, Choose 5, Cant 5, Put 3,
+  Draw 3, Destroy 3, Creatures 3, Boost 3. About a third are not two instructions, so roughly 75 split-able families remain.
 
 ## Prompt
 

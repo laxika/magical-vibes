@@ -63,14 +63,15 @@ class FurybladeVampireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting may with empty hand does not boost")
-    void acceptMayEmptyHandNoBoost() {
+    @DisplayName("With an empty hand no discard is offered and there is no boost")
+    void emptyHandOffersNoDiscardAndNoBoost() {
         Permanent vampire = addVampire();
         harness.setHand(player1, List.of());
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
         assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);

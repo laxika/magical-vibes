@@ -38,14 +38,40 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param recordSacrificedCount when {@code true}, the actual number sacrificed by a direct
  *                              single-player resolution is stored on the stack entry for a following
  *                              {@code EventValue} amount
+ * @param upToCount when {@code true}, the one sacrificing player chooses how many of the matching
+ *                  permanents to sacrifice, from none up to {@code count} ("sacrifice any number of
+ *                  artifacts", {@link #anyNumber}); always asked, even with one candidate. The
+ *                  SACRIFICE step result ({@code AmountThisWay(StepKind.SACRIFICE)}) is "that many"
  */
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
         PlayerSubject player, boolean countPerSacrificingPlayer, boolean recordSacrificedCount,
-        boolean recordSacrificedPower, boolean simultaneousChoices)
+        boolean recordSacrificedPower, boolean simultaneousChoices, boolean upToCount)
         implements CardEffect {
 
     public SacrificePermanentsEffect {
         java.util.Objects.requireNonNull(player, "player");
+        if (upToCount && (player instanceof PlayerSubject.Each || simultaneousChoices
+                || recordSacrificedCount || recordSacrificedPower)) {
+            throw new IllegalArgumentException("An up-to-count sacrifice is one player's choice, read through "
+                    + "the SACRIFICE step result");
+        }
+    }
+
+    public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
+            PlayerSubject player, boolean countPerSacrificingPlayer, boolean recordSacrificedCount,
+            boolean recordSacrificedPower, boolean simultaneousChoices) {
+        this(count, filter, player, countPerSacrificingPlayer, recordSacrificedCount,
+                recordSacrificedPower, simultaneousChoices, false);
+    }
+
+    /**
+     * "Sacrifice any number of [filter]": {@code player} chooses any number of the matching permanents they
+     * control, none included, and sacrifices them together. "Draw that many cards" after it reads
+     * {@code AmountThisWay(StepKind.SACRIFICE)}.
+     */
+    public static SacrificePermanentsEffect anyNumber(PermanentPredicate filter, PlayerSubject player) {
+        return new SacrificePermanentsEffect(new Fixed(Integer.MAX_VALUE), filter, player, false, false,
+                false, false, true);
     }
 
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
