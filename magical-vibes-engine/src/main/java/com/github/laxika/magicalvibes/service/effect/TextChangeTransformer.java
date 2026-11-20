@@ -328,7 +328,7 @@ public final class TextChangeTransformer {
                 yield power == boost.powerBoost() && toughness == boost.toughnessBoost()
                         && filter == boost.filter() && castTimeXValue == boost.castTimeXValue() ? boost
                         : new BoostTargetCreatureEffect(power, toughness, filter, boost.duration(),
-                        boost.targetGroup(), castTimeXValue);
+                        boost.targetGroup(), castTimeXValue, boost.subject());
             }
             case com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect protection -> {
                 CardColor color = protection.color() == substitution.fromColor()

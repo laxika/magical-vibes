@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EntrailsFeasterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Exiling a creature card from an opponent's graveyard puts a +1/+1 counter on it")
     void exilesCreatureFromAnyGraveyardAndPutsCounterOnItself() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         Card creatureCard = new ElvishWarrior();
@@ -35,6 +37,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining to exile a card taps it")
     void tapsWhenItDoesNotExileCreatureCard() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         Card creatureCard = new ElvishWarrior();
@@ -53,6 +56,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Taps it when no graveyard holds a creature card")
     void tapsWhenNoCreatureCardIsInAnyGraveyard() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         harness.setGraveyard(player2, List.of(new Shock()));
@@ -65,6 +69,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Offers only creature cards, from its controller's graveyard too")
     void canExileCreatureFromOwnGraveyardWhileIgnoringNoncreatureCards() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         Card creatureCard = new ElvishWarrior();
@@ -86,6 +91,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         Card creatureCard = new ElvishWarrior();
@@ -101,6 +107,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiling a card does not untap an already tapped Entrails Feaster")
     void successfulExileDoesNotUntapAnAlreadyTappedFeaster() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         Card creatureCard = new ElvishWarrior();
@@ -119,6 +126,7 @@ class EntrailsFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Taps it when both graveyards are empty")
     void tapsWhenBothGraveyardsAreEmpty() {
         Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
         harness.setGraveyard(player1, List.of());

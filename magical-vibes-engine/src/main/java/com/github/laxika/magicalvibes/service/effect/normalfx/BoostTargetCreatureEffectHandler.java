@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,7 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,6 +48,16 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
+
+        if (!(boost.subject() instanceof PermanentSubject.Target)) {
+            // The target and the creatures named with it, found once as the effect resolves (CR 611.2c).
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, boost.subject())) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    applyBoost(gameData, entry, permanent, powerBoost, toughnessBoost, boost.duration());
+                }
+            }
+            return;
+        }
 
         // Multi-target: apply boost to each valid target of this effect's target group
         // (the whole flat list when the effect isn't bound to a group).

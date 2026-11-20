@@ -369,8 +369,25 @@ public class CounterSupport {
 
     public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target,
                                         UUID exileOwnerId) {
+        return counterSpellAndExile(gameData, source.getControllerId(), source.getDescription(), target,
+                exileOwnerId);
+    }
+
+    /**
+     * Counters {@code target} and exiles it for a countering spell or ability controlled by
+     * {@code counterControllerId} whose own stack entry is not at hand: a declined "counter unless pays …
+     * If that spell is countered this way, exile it instead" ransom answered at its prompt. Returns false when
+     * nothing was exiled this way (a copy, a flashforward spell, Guile's replacement).
+     */
+    public boolean counterSpellAndExile(GameData gameData, UUID counterControllerId, String counterDescription,
+                                        StackEntry target) {
+        return counterSpellAndExile(gameData, counterControllerId, counterDescription, target, target.getOwnerId());
+    }
+
+    private boolean counterSpellAndExile(GameData gameData, UUID counterControllerId, String counterDescription,
+                                         StackEntry target, UUID exileOwnerId) {
         if (target.isCastWithFlashforward()) {
-            counterSpell(gameData, source, target);
+            counterSpell(gameData, counterControllerId, counterDescription, target);
             return false;
         }
 
@@ -380,16 +397,16 @@ public class CounterSupport {
 
         if (!target.isCopy()) {
             // Guile replaces the whole "counter" event: exile and offer a free play.
-            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+            if (applyControlledCounterExileReplacement(gameData, counterControllerId, target)) {
                 return false;
             }
             exileService.exileCard(gameData, exileOwnerId, target.getPhysicalCard());
         }
 
-        notifyCounteredSpell(gameData, source.getControllerId(), target);
+        notifyCounteredSpell(gameData, counterControllerId, target);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
-        log.info("Game {} - {} countered and exiled {}", gameData.id, source.getDescription(), target.getDescription());
+        log.info("Game {} - {} countered and exiled {}", gameData.id, counterDescription, target.getDescription());
         return !target.isCopy();
     }
 

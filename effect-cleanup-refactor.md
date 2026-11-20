@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 28 done; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
+| 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -307,7 +307,8 @@ count, and the test files that name it. Modes:
 Create `scripts/effect-audit-ledger.csv` with the header `class,verdict,step,note`. Verdicts:
 `absorbed` (folded and deleted; note names the survivor), `survivor`, `unique` (one card, no
 composition expresses it; note says why in a few words), `blocked-step-model`, `blocked-player-loop`,
-`blocked-other` (note says on what), `dead`.
+`blocked-other` (note says on what), `dead`, and `step-9` (added in step 8, run 29: split- or absorb-ready
+single-family work handed to step 9; the note says what to use).
 
 Add `EffectCountRatchetTest` next to `TargetSpecRatchetTest` (application module, `architecture`
 package). It counts the records in `model/effect/` and the handler classes under
@@ -566,6 +567,7 @@ cause under Findings.
 | 26 | run 25's next: non-copy resolution casts from exile honour the card's own timing restriction, AnimationSupport's CR citation, Primal Amulet's departed-source question; the Counter family (a countered-ability-source subject, `LockTargetPermanentEffect` with a subject, the "and" records, the "unless" records); the next fused family | done (4 split, 3 survivors, 8 blocked-other, 1 blocked-step-model, 5 unique; 6 card files rewritten; `Subjects.targetAbilitySource([filter])`, `StackEntry.counteredAbilitySourceId`, `LockTargetPermanentEffect.activatedAbilitiesOf`; Chandra, Torch of Defiance's +1 and the other resolution casts from exile fixed by a ruling, Interdict and Ouphe Vandals by Oracle text; Primal Amulet kept by Treasure Map's ruling; the "unless" counters ledgered; no further fused family split) |
 | 27 | run 26's next: the "counter unless" records (investigate the ransom kind first, ask before changing ward), COUNTER_SPELL in `cardsThisWay` + a cast-permission step, the dying-creature exiles, verdicts for `ExileTargetPermanentAndTrackWithSourceEffect` and `ExileSelfAndReturnTransformedEffect` | done but item 1 (2 split, 4 survivors, 1 new step record, 1 blocked-other kept, 2 unique; 9 card files rewritten; `cardsThisWay(COUNTER_SPELL)`, `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect`, `ExileSelfAndReturnTransformedEffect` records RETURN; the "counter unless" split held for the human: options in Findings) |
 | 28 | the "counter unless" decision (option B: keep the records, fix the declined-ransom counter for Guile), then run 27's named largest unaudited fused names: `ForcedCostOrElseEffect`, the `CantAttack` / `CantBlock` "unless" restrictions, `SearchLibraryAndOrGraveyardForNamedCardToHandEffect`, `TransformSelfThenEffect`, and the next fused families | done (1 split, 1 absorbed, 2 survivors, 7 unique, 5 blocked-other, 1 blocked-step-model, the three counter-unless records re-ledgered; 26 card files rewritten; `StepKind.TRANSFORM`, `HappenedThisWay.transformed()`, `CounterSupport.counterSpell(gameData, counterControllerId, description, target)`; the declined discard / sacrifice / evidence / poison / blight / graveyard-exile / discard-hand ransoms now apply Guile's replacement, flashback's exile and the countered events) |
+| 29 | run 28's next: the ward {N} decline through `CounterSupport`, a set subject on a boost record and the two sharing-boost records, a recording "you may exile a card from a graveyard" choice and `ExileAnyGraveyardCardThenIfMatchesEffect`; close step 8 (a verdict for every remaining fused multi-card record) | done (1 split, 2 absorbed, 2 survivors; 159 records ledgered without splitting: 97 unique, 26 blocked-step-model, 21 blocked-other, 7 blocked-player-loop, 8 `step-9`; 7 card files rewritten; `BoostTargetCreatureEffect` takes a target-declaring subject, `ExileUpToOneCardFromGraveyardEffect.matching` records EXILE; a declined ward payment exiles a flashback spell and fires the countered events) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -573,7 +575,9 @@ Depends on: 7. Gets better after each run of steps 4, 5 and 8.
 
 One run takes one first-word family, largest first (see Measurements): `--unaudited --family Exile`,
 then `Each`, `Return`, `Put`, `Grant`, `Reveal`, `Choose`, `Target`, `Create`, `Prevent`, ... A run
-audits about 40 classes and gives each a verdict, in this order of preference:
+also takes the family's ledger rows whose verdict is `step-9` (step 8's hand-offs: `--unaudited` does not
+list them, grep the ledger). A run audits about 40 classes and gives each a verdict, in this order of
+preference:
 
 1. **absorbed, by parameters**: an existing effect expresses it with a subject, a `DynamicAmount`, a
    predicate, a `Duration`, a `Condition` or a `MayEffect` / `ConditionalEffect` / `ChooseOneEffect`
@@ -5829,6 +5833,131 @@ record tests, `LastCounterRemovedTriggerTest` and three handler tests naming `St
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
   name): 82 (600 card uses, `CounterUnlessPaysEffect`'s 308 included); by first word Exile 13, Reveal 9, Search 8, Prevent 6, Each 6,
   Choose 5, Put 3, Creatures 3, Shuffle 2, Destroy 2, Cant 2, and 18 first words with one each.
+
+### Step 8, run 29 (2026-11-20)
+
+Run 28's "Next run" items (1), (2) and (3), then the close of step 8 (item 4). Verdicts (ledger, step `8`): **split 1**
+(`ExileAnyGraveyardCardThenIfMatchesEffect`), **absorbed 2** (`BoostTargetCreatureAndAllWithSameNameEffect`,
+`BoostTargetAndSharingCreaturesUntilEndOfTurnEffect`), with their handlers; **survivor 2** (`BoostTargetCreatureEffect`,
+`ExileUpToOneCardFromGraveyardEffect`); and 159 fused multi-card records ledgered without splitting (below). Ratchet 4,703 / 3,932 →
+4,700 / 3,929. 7 card files rewritten by hand (Echoing Courage, Echoing Decay, Bile Blight, Wojek Siren, Rally the Righteous, Entrails
+Feaster, Deathbonnet Hulk; read back by eye, imports sorted). Oracle text of every rewritten card checked with `get_card` (Deathbonnet
+Hulk through Deathbonnet Sprout, MID 181), rulings with `get_rulings` (Echoing Courage's and Bile Blight's: only the target is targeted,
+an illegal target means no creature is affected, a face-down creature shares no name; the others have none). CR 118.12, 603.7a, 607.2a,
+608.2b, 608.2h, 611.2c, 701.12a, 702.24a, 702.30a and 702.34a checked with `get_rule` (2026-11-20).
+
+- **The ward {N} / "counter unless pays" decline (fixed).** `MayPenaltyChoiceHandlerService.counterSpell` (the declined, or
+  unpayable-at-the-prompt, pay-mana and waterbend ransoms) kept a private copy of the counter: it applied Guile but put a flashback
+  spell into its graveyard (CR 702.34a: "exile this card instead of putting it anywhere else any time it would leave the stack") and
+  emitted none of `notifyCounteredSpell`'s events ("whenever a spell or ability you control counters a spell", "whenever a spell is
+  countered", the creature-countered-by-an-opponent record), nor the countered spell's mana-value record. It keeps its counterability
+  check, its "cannot be countered" line and the not-paid rider, and now counters through `CounterSupport.counterSpell(gameData,
+  controllerId, description, target)` or, for `exileIfCountered` (Syncopate), the new `CounterSupport.counterSpellAndExile(gameData,
+  controllerId, description, target)` (the `StackEntry` form delegates to it), as the ransom's controller. The service lost its unused
+  `StateTriggerService`. `WaterfallAerialistTest.declinedFlashbackSpellIsExiled` (Firebolt cast with flashback) and
+  `.declinedPaymentTriggersCounteredSpellAbilities` (Lullmage Mentor) fail on the old code. The log is now two lines ("P declines to pay
+  {2}." and the normal path's "X is countered."); `DisruptivePitmageTest`'s "declines to pay {1}" still holds. Not the step-10
+  unification of ransoms and ward.
+- **A set subject on the targeted boost.** `BoostTargetCreatureEffect` gained a seventh component, `PermanentSubject subject` (default
+  `target()`; the six-argument constructor keeps it; a subject that declares no target is refused: that is `BoostSelfEffect`), and the
+  constructor `(PermanentSubject, int, int)`. Any other subject than `target()` boosts every creature the resolver names, found once as
+  the effect resolves; each gets its own floating effect, so the set is locked then (CR 611.2c, "the set of objects it affects is
+  determined when that continuous effect begins"). It keeps `CreatureBoostEffect` (the AI's pump shape and sign-aware polarity, as both
+  absorbed records had). `TextChangeTransformer` carries the subject. Echoing Courage / Echoing Decay / Bile Blight =
+  `BoostTargetCreatureEffect(allOf(target(), otherCreaturesSharing(target(), NAME)), p, t)`; Wojek Siren and Rally the Righteous's boost =
+  `BoostTargetCreatureEffect(withCreaturesSharingAColor(target()), p, t)`. Behaviour as before (the cards' 50-odd tests, entering-after
+  and face-down cases included, pass unchanged); the log is the survivor's per-creature "X gets +N/+N until end of turn." (Wojek Siren's
+  "gives +1/+1 to N creature(s)" line is gone, no test asserted it). The same-name records declared a harmful target spec; the survivor's
+  is benign. For a spell that changes nothing: spell targeting checks protection on its own (`TargetLegalityService`), and the AI reads
+  the boost's sign. The Crowns (`BoostEnchantedAndSharingCreaturesUntilEndOfTurnEffect`, grant twin) stay blocked on a last-known
+  "sharing" read (run 28).
+- **The recording graveyard exile.** `ExileUpToOneCardFromGraveyardEffect` ("you may exile a card from a graveyard", resolution-time,
+  no target; Mechanical Mobster, Kaya, Spirits' Justice) gained a `CardPredicate filter` (`matching(filter)`) and became an EXILE step:
+  its handler records NONE, asks (through the generic `resolutionTimeExileThenEffect*` completion), resolves itself again with the answer
+  before anything changed (an earlier step by the `architecture/resolution.md` rule) and records the exiled card and its graveyard's
+  owner. Its old bespoke completion (the `resolutionTimeExileResume` block, which `ExileMatchingCardFromTargetGraveyardEffect` still
+  uses) is no longer reached from it. Entrails Feaster = `SequenceEffect.of(matching(creature card), ConditionalEffect(HappenedThisWay.exiled(),
+  +1/+1 counter), ConditionalEffect(NotCondition(HappenedThisWay.exiled()), tap this))`; Deathbonnet Hulk = `SequenceEffect.of(new
+  ExileUpToOneCardFromGraveyardEffect(), ConditionalEffect(HappenedThisWay.toACard(EXILE, creature card), +1/+1 counter))`.
+  `StepResultsTest` +1 (the chosen card and owner recorded; declining exiles nothing this way). Prompts read "Choose up to one card from a
+  graveyard to exile." (Mobster and Kaya's said "target card"); the exile line is "P exiles X from a graveyard." for all four cards.
+  `@DisplayName`s added to every Entrails Feaster and Waterfall Aerialist test method.
+- **Closing step 8 (item 4).** Every record from `--unaudited` used by two or more cards with a `Then` / `And` / `Unless` / `IfYouDo` /
+  `OrElse` name or a `CardEffect` / `List<CardEffect>` component (159, 5,691 card uses; run 28 counted only the 82 names) has a ledger row
+  (step `8`, "run 29: …"), none split: **unique 97** (combinators whose nested effect is their payload: the conditionals, reflexive and
+  granted abilities, coin flips and die rolls, delayed-trigger registrations, extra combats; cost combinators whose "if you do / unless"
+  is the choice to pay, CR 118.12: the `MayPay*` family, echo, cumulative upkeep, punishers, static attack costs, ward {N}; one static
+  rule, replacement or shield named with "and": attack restrictions, damage replacements, prevent-and-counter shields, one search over
+  two zones or with two destinations, one exchange, CR 701.12a), **blocked-step-model 26**, **blocked-other 21**, **blocked-player-loop 7**
+  (the `EachPlayer…` / `EachOpponent…` / `AnyPlayer…` records), and **`step-9` 8**: a new verdict for split- or absorb-ready single-family
+  work handed to step 9 (`ExileTriggeringSpellWithSuspendCountersEffect`, `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect`,
+  `ExileAnyGraveyardCardAndImprintOnSourceEffect`, `ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect`,
+  `ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect`, `SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect`,
+  `DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect`, `RevealHandAndDiscardMatchingCardsEffect`; each note says what to
+  use). Step 9's section now says to take them. No unaudited record matches that filter now.
+
+**Tests** (one Gradle run, one `--tests` list per task, 113 classes; then the three edited classes again): the 7 rewritten cards and every card
+test constructing one of them, Mechanical Mobster or Kaya (the helper sweep: Arcbound Hybrid, Darksteel Gargoyle, Lightning Helix, Ornitharch,
+Panoptic Mirror, Pristine Angel, Reap What Is Sown, Sanguimancy, Screams from Within, Servant of Tymaret, Siren of the Fanged Coast, Skullclamp,
+Thought Dissector, Tomik, Unholy Grotto, Vortex Elemental, Whispersilk Cloak), Waterfall Aerialist (+2), The Unagi of Kyoshi Island, Syncopate,
+Power Sink, Disruptive Pitmage, Spell Pierce, Mana Leak, Guile, Lullmage Mentor, Firebolt, Cemetery Desecrator, Surge of Zeal, Homing Lightning,
+`--tests-for CounterUnlessPaysEffect --max-per-class 15`, `BoostTargetCreatureEffect --max-per-class 20`, `ExileUpToOneCardFromGraveyardEffect`
+and `ExileAnyGraveyardCardAndImprintOnSourceEffect` (all); application (`EffectCountRatchetTest`, `CardImmutabilityArchTest`, `TargetSpecRatchetTest`,
+`SimulationCopyCompletenessTest`, `CardEffectTargetingConsistencyTest`, `StepResultsTest` +1, `SubjectResolutionServiceTest`, `TextChangeTransformerTest`,
+the graveyard choice handler tests, the four counter handler tests, `EffectResolutionServiceTest`, `StackResolutionServiceTest`, `SpellTriggersTest`,
+`StepTriggerServiceTest`, `MayAbilityTargetTimingTest`, `StackEntryTargetGroupsTest`, `DurationClockTest`, `FloatingEffectLifecycleTest`, the
+route-record tests, `CombatServiceTest`, the activation tests, `ExileGraveyardCardsEffectHandlerTest`) and AI (`TargetPolarityGuardTest`,
+`SpellEvaluatorTest`, `AiDecisionEngineTest`, `InstantCategoryClassifierTest`, `AiTargetSelectorTest`, `GameDataDeepCopyTest`): 243 result files,
+4,323 test cases, all pass; the rerun of `StepResultsTest`, `EntrailsFeasterTest` and `WaterfallAerialistTest` passes. Application, AI, engine
+testFixtures and card-test `b d e k m r w` test sources compile.
+
+**For later runs.**
+
+- "Target creature and all other creatures with the same name as that creature / each other creature that shares a color with it get
+  +X/+Y" is `BoostTargetCreatureEffect(subject, p, t)` over `allOf(target(), otherCreaturesSharing(target(), NAME))` /
+  `withCreaturesSharingAColor(target())`. "You may exile a [creature] card from a graveyard. If you do / If a creature card was exiled this
+  way" is `ExileUpToOneCardFromGraveyardEffect[.matching(filter)]` + `ConditionalEffect(HappenedThisWay.exiled() / toACard(EXILE, filter), …)`.
+  A ward or ransom decline counters through `CounterSupport`, never by moving the card itself.
+
+### Step 8 closing summary (2026-11-20)
+
+**Totals, runs 1 to 29** (each class's latest step-8 ledger row): 478 classes audited: **split 109**, **absorbed 57**, **survivor 44**,
+**unique 123**, **blocked-other 85**, **blocked-step-model 41**, **blocked-player-loop 11**, **`step-9` 8**. The ratchet went from 4,858 /
+4,091 (before run 1) to 4,700 / 3,929 records / handlers. The largest card rewrites onto `SequenceEffect` steps were
+`SacrificePermanentThenEffect`'s 111 cards (run 7), the target "then" wrappers' 106 (runs 2 and 3), `SacrificeSelfThenEffect`'s 62 (run 1)
+and `DiscardCardThenEffect`'s 41 (run 22), all with the step-result readers `HappenedThisWay`, `AmountThisWay`, `thisWay` / `playersThisWay` and the card subject
+`cardsThisWay` (run 23).
+
+**Why the blocked ones are blocked** (by first word: step-model Reveal 6, Shuffle 4, Put 4, Deal 4, Exile 4, Look 3, Search 3; other Exile 17,
+Destroy 12, Return 10, Deal 10, Sacrifice 8, Counter 5, Choose 5; player loop Each 8):
+
+- *No step kind for the first half.* REVEAL (reveal from hand, reveal the top card, reveal until), SEARCH (search then "if it is a …", then
+  attach / imprint), LOOK (look at the top N and choose), CAST ("if you cast it this way"), GAIN_CONTROL ("if control changes", the gained
+  permanents), shuffle-into-library ("draw that many"), put-from-hand, tap, surveil, behold, collect evidence, forage, SEEK. Each family needs
+  its `StepKind` recorded by its primitive (and that primitive on the earlier-step list) before its fused records can split.
+- *The first half prompts mid-step* (`rerunCurrentEffectAfterInteraction` after a change, or a bespoke continuation): the look-and-choose,
+  hand-choice, put-from-hand and choose-your-own-permanent counter paths, the chosen-permanent exile; Sindbad's draw replacement.
+- *No subject for what the second half names:* a card chosen in hand, the cards exiled with the source, a permanent or color or name chosen
+  at resolution by a choice step, the triggering spell for `CounterSpellEffect`, the host's last-known creature types (the Crowns), the
+  removed target's last-known values for some riders.
+- *No delayed trigger bound to a step result:* "return them at the next end step", "when you cast a spell this way", the per-token links of
+  `CreateTokenAndLinkToSourceEffect`, Timothar's Bat.
+- *No primitive for the second half:* the same-name search of graveyard, hand and library; separate-into-piles over exiled cards.
+- *Player loops:* "each player may …, then …" needs the choose-then-act loop that this plan leaves out.
+
+**What step 9 picks up.** The 8 `step-9` ledger rows (each note names the parts to use), then the family sweeps as planned; the recorded
+step kinds above are the cheapest prerequisites to add when a sweep meets their family (REVEAL and SEARCH unblock the most records). The
+in-resolution `eventValue` writers still move to `AmountThisWay` card by card. The track-with-source / imprint exiles (runs 27, 28, 29) fold
+their link into `ExileTargetPermanentEffect` / `ExileUpToOneCardFromGraveyardEffect` there.
+
+**Left for step 10.** (1) Option C (runs 27 and 28): one `CounterUnlessEffect`-shaped record (the ransom step + the counter) replacing
+`CounterUnlessPaysEffect` (ward {N}, 308 cards, with its X / dynamic / rider forms) and the 37 ransom records at once, the AI and ward
+detection reading the ransom from it; take `DestroyTargetPermanentUnlessControllerTakesDamageEffect` into that design. (2) The cost
+combinators beside `MayEffect`: `ForcedCostOrElseEffect`, `MayPayManaEffect`, `MayPayLifeEffect`, `MayPayTapPermanentsEffect`,
+`PayPerCounterOrElseEffect`, `DestroyUnlessPaysPerCounterEffect` (CR 118.12: their "if you do" is the choice to pay). (3) The static
+restriction merges: `CantAttackUnlessEffect` / `CantBlockUnlessEffect` / `CantAttackOrBlockUnlessEffect` and the three
+`…CantAttack…UnlessPredicateEffect` records. (4) The boost head: `BoostSelfEffect`, `BoostTargetCreatureEffect` (now with a subject),
+`BoostAllOwnCreaturesEffect`, `BoostAllCreaturesEffect`.
 
 ## Prompt
 

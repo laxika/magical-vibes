@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.l.LullmageMentor;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,10 +24,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WaterfallAerialist.class, Shock.class, SpinedKarok.class, ProdigalPyromancer.class})
+@CardUsed({WaterfallAerialist.class, Shock.class, SpinedKarok.class, ProdigalPyromancer.class, Firebolt.class,
+        LullmageMentor.class})
 class WaterfallAerialistTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cannot be blocked by a creature without flying or reach")
     void cannotBeBlockedByCreatureWithoutFlyingOrReach() {
         addReadyAerialist();
         harness.addToBattlefield(player2, new SpinedKarok());
@@ -36,7 +41,8 @@ class WaterfallAerialistTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Ward")
-    @CardUsed({WaterfallAerialist.class, Shock.class, ProdigalPyromancer.class})
+    @CardUsed({WaterfallAerialist.class, Shock.class, ProdigalPyromancer.class, Firebolt.class,
+            LullmageMentor.class})
     class Ward {
 
         @Test
@@ -65,6 +71,47 @@ class WaterfallAerialistTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("exiles a flashback spell whose controller declines to pay {2}")
+        void declinedFlashbackSpellIsExiled() {
+            var aerialist = addReadyAerialist();
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.setGraveyard(player2, List.of(new Firebolt()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 6);
+            harness.castFlashback(player2, 0, aerialist.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player2, false);
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertNotInGraveyard(player2, "Firebolt");
+            assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card instanceof Firebolt);
+            harness.assertOnBattlefield(player1, "Waterfall Aerialist");
+        }
+
+        @Test
+        @DisplayName("a declined payment counts as its controller's ability countering the spell")
+        void declinedPaymentTriggersCounteredSpellAbilities() {
+            var aerialist = addReadyAerialist();
+            harness.addToBattlefield(player1, new LullmageMentor());
+            castShock(aerialist.getId(), 3);
+            harness.passBothPriorities();
+
+            harness.handleMayAbilityChosen(player2, false);
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent ->
+                    permanent.getCard().isToken()
+                            && permanent.getCard().getSubtypes().contains(CardSubtype.MERFOLK));
+        }
+
+        @Test
         @DisplayName("leaves the spell on the stack when its controller pays {2}")
         void spellRemainsWhenOpponentPays() {
             var aerialist = addReadyAerialist();
@@ -90,6 +137,7 @@ class WaterfallAerialistTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("counters the spell at once when its controller cannot pay {2}")
         void countersWhenOpponentCannotAffordPayment() {
             var aerialist = addReadyAerialist();
             castShock(aerialist.getId(), 2);
@@ -102,6 +150,7 @@ class WaterfallAerialistTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("a spell whose controller paid {2} resolves normally")
         void paidSpellResolvesNormally() {
             var aerialist = addReadyAerialist();
             castShock(aerialist.getId(), 3);
@@ -116,6 +165,7 @@ class WaterfallAerialistTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("counters an opponent's activated ability without removing its source")
         void countersOpponentsActivatedAbilityWithoutRemovingItsSource() {
             var aerialist = addReadyAerialist();
             var pyromancer = addCreatureReady(player2, new ProdigalPyromancer());

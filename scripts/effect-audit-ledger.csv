@@ -949,3 +949,167 @@ CreateTokenAndLinkToSourceEffect,blocked-other,8,"run 28: the token step records
 CounterUnlessDiscardsEffect,blocked-other,8,"run 28: option B (orchestrator, pending the human): the ransom records stay; ward and the ransoms unify in step 10 (option C); a declined ransom now counters through CounterSupport.counterSpell (Guile's replacement, flashback exile, countered events)"
 CounterUnlessPaysLifeEffect,blocked-other,8,"run 28: option B: kept, unify in step 10 (option C)"
 CounterUnlessSacrificesEffect,blocked-other,8,"run 28: option B: kept, unify in step 10 (option C); its declined single sacrifice counters through CounterSupport.counterSpell"
+BoostTargetCreatureAndAllWithSameNameEffect,absorbed,8,"run 29: into BoostTargetCreatureEffect(allOf(target(), otherCreaturesSharing(target(), NAME)), p, t); Echoing Courage, Echoing Decay, Bile Blight"
+BoostTargetAndSharingCreaturesUntilEndOfTurnEffect,absorbed,8,"run 29: into BoostTargetCreatureEffect(withCreaturesSharingAColor(target()), p, t); Wojek Siren, Rally the Righteous"
+BoostTargetCreatureEffect,survivor,8,"run 29: a target-declaring PermanentSubject component (default target()); a set subject boosts every creature it names, found once on resolution (CR 611.2c)"
+ExileAnyGraveyardCardThenIfMatchesEffect,split,8,"run 29: ExileUpToOneCardFromGraveyardEffect[.matching(filter)] (records EXILE) + ConditionalEffect(HappenedThisWay.exiled() / toACard(EXILE, creature) / NotCondition); Entrails Feaster, Deathbonnet Hulk"
+ExileUpToOneCardFromGraveyardEffect,survivor,8,"run 29: a card filter (matching), resolves again with the answer before anything changes and records the EXILE step (NONE when nothing was exiled)"
+ConditionalEffect,unique,8,"run 29: not fused: a combinator whose nested effect is its payload (the ""if"" gate steps use)"
+MayPayManaEffect,unique,8,"run 29: not fused: a cost combinator (""you may pay {X}. If you do""); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+ConditionalReplacementEffect,unique,8,"run 29: not fused: a combinator whose nested effect is its payload (an ""instead"" upgrade selector)"
+LookAtTopCardsEffect,blocked-step-model,8,run 29: its no-card / selected-card riders run inside the look-and-choose continuation; no LOOK step kind
+CounterUnlessPaysEffect,unique,8,"run 29: not fused: ward {N} / ""counter unless pays"", kept by option B (run 28); step 10 unifies it with every ""counter unless"" ransom (option C)"
+SetBasePowerToughnessEffect,unique,8,run 29: not fused: one continuous effect whose layer-4 part is applied with it
+QueueReflexiveAbilityEffect,unique,8,"run 29: not fused: a combinator whose nested effect is its payload (the ""when you do"" reflexive ability)"
+GrantEffectEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (grants an ability)
+ChooseCardsFromTargetHandEffect,blocked-step-model,8,run 29: its chosen-card and decline riders run inside the hand-choice continuation; no step kind for a chosen hand card
+CumulativeUpkeepEffect,unique,8,"run 29: not fused: a cost combinator (cumulative upkeep, CR 702.24a); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+CopyPermanentOnEnterEffect,unique,8,"run 29: not fused: an ""enter as a copy"" replacement whose exceptions and reflexive abilities are part of the copy"
+EchoEffect,unique,8,"run 29: not fused: a cost combinator (echo, CR 702.30a); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+EnchantedPermanentConditionalEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (an Aura static selector)
+FlipCoinWinEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a coin-flip branch)
+RegisterDelayedControllerSpellCastTriggerEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+ClassLevelUpEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a Class level and the abilities it gains)
+RollD20Effect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (die-roll branches)
+SpliceEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (the splice keyword and its spliced text)
+AdditionalCombatPhaseEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (the extra combat and its beginning-of-combat ability)
+ClashEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (the clash keyword action and its win payload)
+MayCastAnySpellFromHandWithoutPayingManaCostEffect,blocked-step-model,8,"run 29: its ""if you do / don't"" rider follows a cast prompt; no CAST step kind"
+ResolveEffectOnTargetDeathThisTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+CastTargetInstantOrSorceryFromGraveyardEffect,blocked-step-model,8,run 29: its rider follows a cast prompt; no CAST step kind
+TargetPlayerGainsControlOfSourceCreatureEffect,blocked-other,8,run 29: its follow-up reads a control change; no GAIN_CONTROL step kind
+GainControlOfAllPermanentsMatchingEffect,blocked-other,8,run 29: its follow-ups read the permanents gained; no GAIN_CONTROL step kind
+CreaturesCantAttackControllerUnlessPredicateEffect,unique,8,run 29: not fused: one static attack restriction with an exemption predicate (merging the CantAttack restrictions is step 10)
+RevealTopCardsAndSeparateEffect,unique,8,run 29: not fused: a reveal-and-separate-into-piles action
+IncreaseOwnCastCostUnlessRevealSubtypeEffect,unique,8,"run 29: not fused: a cost combinator (an additional casting cost choice); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+MayPayTapPermanentsEffect,unique,8,"run 29: not fused: a cost combinator (""you may tap N untapped creatures. If you do""); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+LookAtTopCardMayRevealMatchingToHandEffect,blocked-step-model,8,run 29: its rider follows a reveal prompt; no REVEAL step kind
+MayPayLifeEffect,unique,8,"run 29: not fused: a cost combinator (""you may pay N life. If you do""); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+BlightEffect,blocked-step-model,8,"run 29: blight chooses your own creature for -1/-1 counters, the counter path step 7 lists as not an earlier step"
+AdditionalCombatMainPhaseEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (the extra combat and its beginning-of-combat ability)
+ChooseCardNameAndExileFromZonesEffect,blocked-other,8,run 29: no recorded chosen-name step; the hidden-zone search for that name has no primitive
+ExileOpponentCreaturesInsteadOfDyingEffect,unique,8,"run 29: not fused: a static replacement whose rider happens in the replacing event, not at a resolution"
+KinshipEffect,blocked-step-model,8,run 29: its payload follows a look-and-reveal prompt; no REVEAL step kind
+GrantStaticEffectToSourceEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a granted static ability)
+TributeNotPaidEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (an intervening-if on entering)
+GrantPlayerStaticEffectsUntilEndOfTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (player-scoped static abilities)
+SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect,unique,8,run 29: not fused: one search with two destinations
+DelayedEndOfCombatEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+RevealTopCardPutIntoHandAndChangeLifeEffect,blocked-step-model,8,"run 29: ""that card's mana value"" needs a REVEAL step and a card subject for the revealed card"
+ExileTargetPermanentAndAllWithSameNameFromZonesEffect,blocked-other,8,"run 29: the same-name search of graveyard, hand and library has no primitive over a removed target"
+SearchLibraryAndConditionalEffect,blocked-step-model,8,"run 29: ""search ... if it is a ..."" follows the search continuation; no SEARCH step kind"
+SearchLibraryAndOrGraveyardForCardToBattlefieldEffect,unique,8,run 29: not fused: one search over several zones
+CastCardFromGraveyardEffect,blocked-step-model,8,run 29: its rider follows a cast prompt; no CAST step kind
+CreaturesCantAttackUnlessPredicateEffect,unique,8,run 29: not fused: one static attack restriction with an exemption predicate (step 10)
+PerpetuallyGrantStaticEffectToTargetCreatureEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a perpetually granted static ability)
+TargetPlayerGainsControlOfTargetPermanentEffect,blocked-other,8,"run 29: its follow-up runs ""if control changes""; no GAIN_CONTROL step kind"
+AttachedPermanentRestrictionEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (an Aura or Equipment restriction)
+RollD6Effect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (die-roll branches)
+ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect,step-9,8,"run 29: the library-exile primitive has fromLibraryOf, exiledFaceDown and playableBy (runs 10-12): absorb by parameters"
+RegisterDelayedEndStepTriggerEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+BeholdAndExileCost,unique,8,"run 29: not fused: a cost combinator (an additional casting cost); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+CollectEvidenceEffect,blocked-step-model,8,run 29: collect evidence prompts and records nothing; no step kind for it
+RegisterDelayedWatchedCreaturesCombatDamageEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+CreateTokenCopyOfImprintedCardEffect,unique,8,run 29: not fused: one token copy whose extra abilities are copy exceptions
+EachPlayerMayDiscardHandThenDrawEffect,blocked-player-loop,8,"run 29: each player chooses, then the accepted players act"
+GrantStaticEffectToTargetUntilEndOfTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a granted static ability)
+RegisterOpeningHandUpkeepTriggerEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed upkeep ability of an opening-hand card)
+WrappedGraveyardStaticEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a static ability that functions from a graveyard)
+AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect,unique,8,"run 29: not fused: one damage replacement over a set (""opponents and their permanents"")"
+CopyCardsExiledWithSourceAndMayCastCopiesEffect,blocked-other,8,run 29: no CardSubject for the cards exiled with the source
+ForageEffect,blocked-step-model,8,run 29: forage chooses exile-three or sacrifice-a-Food and records nothing; no step kind for it
+GrantEffectsToCounterBearersEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (abilities of counter bearers)
+GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a granted static ability)
+GrantStaticEffectToPlayerUntilEndOfTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a player-scoped static ability)
+PayManaAnyNumberOfTimesPutCountersOnSelfEffect,unique,8,"run 29: not fused: a cost combinator (a repeated payment); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+ShuffleHandIntoLibraryAndDrawEffect,blocked-step-model,8,"run 29: ""draw that many"" needs a shuffle-into-library step kind (none, as run 1 found); the each-player form is also a player loop"
+ControlledCreaturesCantAttackUnlessPredicateEffect,unique,8,run 29: not fused: one static attack restriction with an exemption predicate (step 10)
+GrantStaticEffectToTargetEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a granted static ability)
+ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect,step-9,8,"run 29: the parts exist (ExileGraveyardCardsEffect + CopyImprintedCardAndMayCastCopyEffect.of(cardsThisWay(EXILE))) but ""cast the copy if able"" and the random single copy are not options yet"
+GainControlOfAllPermanentsTargetPlayerControlsEffect,blocked-other,8,run 29: its follow-ups read the permanents gained; no GAIN_CONTROL step kind
+MayPayLifeEqualToAmountEffect,unique,8,"run 29: not fused: a cost combinator (""you may pay life equal to X""); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+PutCardsOntoBattlefieldTogetherEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (choice steps whose cards enter as one event)
+RevealHandAndDiscardMatchingCardsEffect,step-9,8,run 29: DiscardEffect.matching with an every-matching-card count would express it
+SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect,step-9,8,"run 29: SacrificePermanentsEffect records the sacrifice's last-known power (run 7): ""when you do"" = gate + reflexive damage; Ziatora's Treasure and the Giant doubling are riders"
+ChooseCardFromHandAndApplyPerpetualIncorporationEffect,blocked-other,8,run 29: no CardSubject for a card chosen in hand
+ExileAnyGraveyardCardAndImprintOnSourceEffect,step-9,8,run 29: ExileUpToOneCardFromGraveyardEffect records EXILE since run 29; it needs an imprint-on-source option
+MayPayManaAndSacrificePermanentEffect,unique,8,"run 29: not fused: a cost combinator (a pay-and-sacrifice payment before a reflexive ability); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect,blocked-step-model,8,run 29: no REVEAL step kind (reveal-until) and a cast prompt
+ShuffleControllerHandAndGraveyardIntoLibraryEffect,unique,8,run 29: not fused: one shuffle of two zones
+ExileTargetGraveyardCardAndSameNameFromZonesEffect,blocked-other,8,"run 29: the same-name search of graveyard, hand and library has no primitive"
+AsThisBecomesAttachedEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (an as-attached static ability)
+PreventAllCombatDamageToAndByEnchantedCreatureEffect,unique,8,run 29: not fused: one prevention over damage to and by a creature
+RevealSubtypeFromHandEffect,blocked-step-model,8,"run 29: ""reveal a [subtype] card. If you do"": no REVEAL step kind"
+DrawCardUnlessPaysEffect,unique,8,"run 29: not fused: a cost combinator (a punisher draw); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+ExilePermanentYouControlAndTrackWithSourceEffect,blocked-step-model,8,run 29: the chosen-permanent exile prompts mid-step; its rider is reflexive
+LookAtTopCardsMayExileOneAndPlayThisTurnEffect,blocked-step-model,8,run 29: the look-and-choose continuation; no LOOK step kind
+PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect,unique,8,run 29: not fused: one prevent-and-redirect shield
+PreventDamageToOtherCreaturesAndAddPlusCountersEffect,unique,8,run 29: not fused: a static replacement whose counters are its replacing event
+RevealUntilNonlandBottomThenDealManaValueDamageEffect,blocked-step-model,8,run 29: no REVEAL step kind (reveal-until)
+AdditionalCombatPhasesAfterMainEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (the extra combats and their beginning-of-combat ability)
+ChooseCardFromHandAndApplyPerpetualKeywordEffect,blocked-other,8,run 29: no CardSubject for a card chosen in hand
+CreateTokenOfChosenColorAndSubtypeEffect,unique,8,run 29: not fused: one token whose subtype follows its chosen color
+FlipCoinsPerHeadsEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a per-heads payload)
+FlipUntilLoseEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a per-win payload)
+GrantStaticEffectToSourceUntilEndOfTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a granted static ability)
+PayManaUpToNTimesEffect,unique,8,"run 29: not fused: a cost combinator (a repeated payment); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+RegisterDelayedDamagedCreatureDeathTriggerEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+RegisterDelayedTargetPlayerSpellCastTriggerEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a delayed triggered ability)
+ReturnSourceAsAuraEffect,unique,8,run 29: not fused: one return as an Aura with its static ability
+RevealHandChooseCardFromItAndExileAllCopiesEffect,blocked-other,8,"run 29: the same-name search of graveyard, hand and library has no primitive"
+RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect,blocked-step-model,8,"run 29: ""that card's mana value"" needs a REVEAL step and a card subject for the revealed card"
+RollD4Effect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (die-roll branches)
+SearchLibraryForCardToHandAndCardToGraveyardEffect,unique,8,run 29: not fused: one search with two destinations
+SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect,blocked-other,8,run 29: no SEEK step kind and no delayed trigger bound to a card subject
+TargetOpponentChoosesCardFromGraveyardEffect,unique,8,run 29: not fused: one put-onto-the-battlefield whose retained effects are part of it
+CantAttackUnlessSacrificeEffect,unique,8,"run 29: not fused: a cost combinator (a static attack cost); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+CreaturesCantAttackUnlessSacrificeEffect,unique,8,"run 29: not fused: a cost combinator (a static attack cost); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+ExileTargetGraveyardCardsAndSeparateIntoPilesEffect,blocked-other,8,run 29: no separate-into-piles step over cardsThisWay(EXILE)
+ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect,step-9,8,"run 29: an exile linked to the source (CR 607.2a) over allOf(target(), otherPermanentsSharing(target(), NAME)); fold the link into ExileTargetPermanentEffect with the track-with-source exiles"
+GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect,blocked-other,8,"run 29: ""if you do"" after a gain of control; no GAIN_CONTROL step kind"
+AsTransformsIntoThisEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (an as-transforms static ability)
+BeholdEffect,blocked-step-model,8,run 29: behold prompts and records nothing; no BEHOLD step kind
+CantAttackOrBlockUnlessPaysEffect,unique,8,"run 29: not fused: a cost combinator (a static combat cost); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect,step-9,8,"run 29: ""destroy target ... and this creature assigns no combat damage"" = DestroyTargetPermanentEffect + AssignNoCombatDamageEffect"
+DestroyUnlessPaysPerCounterEffect,unique,8,"run 29: not fused: a cost combinator (""destroy this unless you pay for each counter""); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect,blocked-player-loop,8,"run 29: each player chooses in APNAP order, then a per-player restriction"
+ExileCardFromHandAndCreateTokenCopyEffect,blocked-step-model,8,run 29: the hand exile choice records no EXILE step
+ExileEachPlayerHandFaceDownAndReturnAtNextEndStepEffect,blocked-other,8,"run 29: the delayed return needs a delayed trigger bound to cardsThisWay(EXILE) (as The Ruinous Powers, run 25)"
+PreventDamageAndAddPlusCountersEffect,unique,8,run 29: not fused: a static replacement whose counters are its replacing event
+PreventNextDamageToTargetAndAddPlusOnePlusOneCountersEffect,unique,8,"run 29: not fused: a prevention shield whose counters follow each later prevention, not the resolution"
+PreventNextDamageToTargetAndAddToughnessCountersEffect,unique,8,run 29: not fused: a prevention shield whose delayed counters count the damage it prevents later
+RevealTopCardAndCounterTriggeringSpellIfMatchesEffect,blocked-other,8,"run 29: no REVEAL step, and CounterSpellEffect cannot name the triggering spell (as Dovescape, run 26)"
+RollD8Effect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (die-roll branches)
+StealDyingOpponentPermanentUnlessPaysLifeEffect,unique,8,"run 29: not fused: a cost combinator (a punisher steal); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect,blocked-player-loop,8,run 29: each player is offered the exile in turn
+ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect,blocked-other,8,run 29: no CardSubject for a card chosen in hand
+ChooseOpponentCreatureAndPerpetuallyBoostEffect,blocked-other,8,run 29: no subject for a permanent chosen at resolution by a choice step
+DoubleControllerDamageToOpponentsAndTheirPermanentsEffect,unique,8,"run 29: not fused: one damage replacement over a set (""opponents and their permanents"")"
+EachOpponentCreatesTokenUnlessSacrificesCreatureEffect,blocked-player-loop,8,run 29: each opponent chooses a ransom
+EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffect,blocked-player-loop,8,"run 29: each player chooses, then all sacrifice together"
+EachPlayerMayPutLandFromHandThenOpponentsDrawEffect,blocked-player-loop,8,"run 29: each player chooses secretly, then the lands enter together"
+EachPlayerMayShuffleZonesIntoLibraryAndDrawEffect,blocked-player-loop,8,"run 29: each player chooses, then the accepted players act"
+ExchangeControllerAndTargetPlayerLifeTotalsEffect,unique,8,run 29: not fused: one exchange (CR 701.12a)
+ExileCardFromHandAndPlotEffect,unique,8,run 29: not fused: plotting is one keyword action
+ExileHandFaceDownThenReturnCardsExiledWithSourceEffect,blocked-other,8,run 29: no CardSubject for the cards exiled with the source
+ExileHandThenDrawAndMayPlayUntilNextTurnEffect,blocked-other,8,run 29: no hand-exile primitive recording EXILE (then AmountThisWay and a permission over cardsThisWay)
+ExileTriggeringSpellWithSuspendCountersEffect,step-9,8,"run 29: its follow-up is an unconditional ""then"" (Rory Williams's investigate): a SequenceEffect of the exile and the follow-up"
+GrantStaticEffectToPlayerUntilNextTurnEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a player-scoped static ability)
+GrantStaticEffectToPlayerUntilPlaneswalkEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a player-scoped static ability)
+GrantStaticEffectToTargetUntilEndOfCombatEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a granted static ability)
+GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect,blocked-other,8,run 29: no recorded color-choice step for the two grants to read
+PayPerCounterOrElseEffect,unique,8,"run 29: not fused: a cost combinator (""pay for each counter. If you don't""); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect,unique,8,run 29: not fused: one perpetual boost over permanents and cards in two zones
+PerpetuallyGrantStaticEffectToSourceEffect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (a perpetually granted static ability)
+PutAnyNumberCardsFromHandOnBottomOfLibraryThenDrawThatManyPlusOneEffect,blocked-step-model,8,run 29: the hand-to-library choice has no step kind
+PutCardToBattlefieldOrElseEffect,blocked-step-model,8,"run 29: the put-from-hand choice has no step kind (as PutCardToBattlefieldThenEffect, run 1)"
+PutSourceAndBlockingCreaturesOnTopOfLibraryEffect,unique,8,run 29: not fused: one simultaneous move of a set
+RegisterLoseLifeAtNextDrawStepUnlessPaysEffect,unique,8,"run 29: not fused: a cost combinator (a punisher life loss); its ""if you do / unless"" is the choice to pay (CR 118.12), not a step result"
+RevealMatchingCardsFromTargetHandAndKeepEffect,blocked-step-model,8,run 29: its chosen-card rider runs inside the hand-choice continuation; no REVEAL step kind
+RollD10Effect,unique,8,run 29: not fused: a combinator whose nested effect is its payload (die-roll branches)
+SearchLibraryAndGraveyardForNamedCardsToHandEffect,unique,8,run 29: not fused: one search over several zones
+SearchLibraryAndOrGraveyardForCardsEffect,unique,8,run 29: not fused: one search over several zones
+SearchLibraryForCardTypeToExileAndImprintEffect,blocked-step-model,8,run 29: search then imprint; no SEARCH step kind
+SearchLibraryForEquipmentToBattlefieldAndAttachEffect,blocked-step-model,8,run 29: search then attach; no SEARCH step kind
+TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandEffect,unique,8,run 29: not fused: a cross-player reveal whose life loss reads the other player's card
+UseToughnessForCrewAndSaddleEffect,unique,8,run 29: not fused: one crew/saddle rule

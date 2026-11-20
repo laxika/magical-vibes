@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
@@ -85,7 +84,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -112,7 +110,6 @@ public class MayPenaltyChoiceHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final ExileService exileService;
-    private final StateTriggerService stateTriggerService;
     private final DrawService drawService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -327,6 +324,11 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * A declined (or unpayable) ward / "counter unless pays" ransom counters through {@link CounterSupport}, so the
+     * countered card goes where a countered card goes (flashback's exile, Guile's replacement for the ransom's
+     * controller) and the "is countered" events fire; the not-paid rider (Power Sink) follows either way.
+     */
     private void counterSpell(GameData gameData, Player player, Card sourceCard, UUID sourceControllerId,
                               StackEntry targetEntry,
                               String costText, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
@@ -344,33 +346,12 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
-        gameData.stack.remove(targetEntry);
-
-        // CR 603.8 — clean up state-trigger tracking when countered
-        stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
-
-        // Copies cease to exist per rule 707.10a
-        boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
-        if (!targetEntry.isCopy() && !isAbility) {
-            // Guile replaces the countering itself: the spell is exiled by its owner instead.
-            if (!counterSupport.applyControlledCounterExileReplacement(gameData, sourceControllerId, targetEntry)) {
-                counterSupport.emitCounteredCue(gameData, targetEntry);
-                if (exileIfCountered) {
-                    exileService.exileCard(gameData, targetEntry.getOwnerId(), targetEntry.getPhysicalCard());
-                } else {
-                    graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
-                            targetEntry.getPhysicalCard(), targetEntry.getControllerId());
-                }
-            }
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to pay " + costText + "."));
+        if (exileIfCountered) {
+            counterSupport.counterSpellAndExile(gameData, sourceControllerId, sourceCard.getName(), targetEntry);
         } else {
-            counterSupport.emitCounteredCue(gameData, targetEntry);
+            counterSupport.counterSpell(gameData, sourceControllerId, sourceCard.getName(), targetEntry);
         }
-
-        String suffix = exileIfCountered ? " is countered and exiled." : " is countered.";
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " declines to pay " + costText + ". ", targetEntry.getCard(), suffix));
-        log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
 
         // Not paid: resolve any rider against the countered spell's controller (Power Sink).
         counterSupport.resolveNotPaidRider(gameData, sourceCard, sourceControllerId, counteredControllerId,

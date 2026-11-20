@@ -27,15 +27,42 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>On a block trigger whose card declares no target for it ("whenever this creature blocks …,
  * that creature gets +1/+1") the boosted creature is the creature on the other side of the block,
  * which the collector records as the trigger's non-targeting target.
+ *
+ * <p>{@code subject} is {@link Subjects#target()} for the plain pump. A subject that names the target together with
+ * other creatures boosts every creature it names as the effect resolves, the set fixed then (CR 611.2c): "target
+ * creature and all other creatures with the same name as that creature get +2/+2" is
+ * {@code allOf(target(), otherCreaturesSharing(target(), NAME))}, "target creature and each other creature that shares
+ * a color with it" is {@code withCreaturesSharingAColor(target())}. Only the target is targeted.
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                         PermanentPredicate filter,
                                         Duration duration,
                                         int targetGroup,
-                                        DynamicAmount castTimeXValue)
+                                        DynamicAmount castTimeXValue,
+                                        PermanentSubject subject)
         implements CreatureBoostEffect, CastTimeXValueEffect {
 
     private static final int UNBOUND_TARGET_GROUP = -1;
+
+    public BoostTargetCreatureEffect {
+        subject = subject == null ? Subjects.target() : subject;
+        if (!subject.declaresTarget()) {
+            throw new IllegalArgumentException(
+                    "BoostTargetCreatureEffect boosts its target; a non-targeting subject is BoostSelfEffect: " + subject);
+        }
+    }
+
+    public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                     PermanentPredicate filter, Duration duration, int targetGroup,
+                                     DynamicAmount castTimeXValue) {
+        this(powerBoost, toughnessBoost, filter, duration, targetGroup, castTimeXValue, Subjects.target());
+    }
+
+    /** "Target creature and all other creatures with the same name as that creature get +X/+Y until end of turn". */
+    public BoostTargetCreatureEffect(PermanentSubject subject, int powerBoost, int toughnessBoost) {
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, Duration.UNTIL_END_OF_TURN,
+                UNBOUND_TARGET_GROUP, null, subject);
+    }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                      PermanentPredicate filter, Duration duration) {

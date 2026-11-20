@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -488,6 +489,40 @@ class StepResultsTest extends BaseCardTest {
             assertThat(exiled.objectIds()).containsExactly(giant.getId());
             assertThat(exiled.playerIds()).containsExactly(player1.getId());
             assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears, forest);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Entrails Feaster: a card chosen from any graveyard is the step's result; declining exiles nothing this way")
+        void anyGraveyardExileChosenAtResolutionIsTheStepResult() {
+            Card bears = new GrizzlyBears();
+            Card forest = new Forest();
+            harness.setGraveyard(player2, List.of(forest, bears));
+
+            StackEntry entry = resolve(player1, null, null,
+                    ExileUpToOneCardFromGraveyardEffect.matching(creatureCard),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(1)));
+
+            var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+            harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+            StepOutcome exiled = entry.getResolutionResults().outcome(StepKind.EXILE);
+            assertThat(exiled.objectIds()).containsExactly(bears.getId());
+            assertThat(exiled.playerIds()).containsExactly(player2.getId());
+            assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+
+            Card giant = new HillGiant();
+            harness.setGraveyard(player2, List.of(forest, giant));
+            resolve(player1, null, null,
+                    ExileUpToOneCardFromGraveyardEffect.matching(creatureCard),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(1)));
+            harness.handleMultipleCardsChosen(player1, List.of());
+
+            assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(forest, giant);
             assertThat(gd.getLife(player1.getId())).isEqualTo(21);
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
         }
