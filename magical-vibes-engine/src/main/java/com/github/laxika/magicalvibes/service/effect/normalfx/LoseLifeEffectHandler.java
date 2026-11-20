@@ -29,7 +29,8 @@ import org.springframework.stereotype.Component;
  * life and {@code controllerGainsLifeLost} drains the total life lost back to the controller. The amount is evaluated
  * once against the stack entry (source-relative amounts use the live source permanent when present, else the
  * last-known snapshot), with the receiving player as the amount's target for "defending player" and as its
- * controller for "its owner" of the source; several target players each get the amount evaluated against them.
+ * controller for "its owner" of the source; several target players each get the amount evaluated against them, and
+ * for {@code eachPlayer()} each player gets it evaluated with that player as its controller.
  *
  * <p>Every player goes through {@link LifeSupport#applyLifeLosses}, which records the amount lost and fires "loses
  * life" triggers. Life loss is never routed through damage plumbing.
@@ -88,11 +89,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
                 && (target.group() == null ? entry.targetsForEffect(e) : entry.targetsForGroup(target.group()))
                 .size() > 1;
 
+        // "Each player loses life equal to the number of creatures they controlled …" (Deadly Tempest): each player's
+        // amount is evaluated with that player as the controller, as DealDamageToPlayersEffect does for eachPlayer().
+        boolean amountPerPlayer = subject instanceof PlayerSubject.Each each
+                && each.relation() == PlayerSubject.Relation.ALL;
         Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : players) {
             losses.put(playerId, amountPerTarget
                     ? amountEvaluationService.evaluate(gameData, e.amount(),
                     amountContext.withTargetPermanentId(playerId))
+                    : amountPerPlayer
+                    ? amountEvaluationService.evaluate(gameData, e.amount(), amountContext.withControllerId(playerId))
                     : amount);
         }
         Map<UUID, Integer> lifeBefore = new LinkedHashMap<>();

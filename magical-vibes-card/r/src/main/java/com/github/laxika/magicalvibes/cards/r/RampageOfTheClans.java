@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -21,9 +23,9 @@ public class RampageOfTheClans extends Card {
         addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate())),
-                new CreateTokenForEachDestroyedPermanentControllerEffect(
-                        new CreateTokenEffect("Centaur", 3, 3, CardColor.GREEN,
-                                List.of(CardSubtype.CENTAUR), Set.of(), Set.of()))));
+                        new PermanentIsEnchantmentPredicate()))));
+        addSpellEffect(new EachPlayerCreatesTokenEffect(new CreateTokenEffect(
+                new AmountThisWay(StepKind.DESTROY).controlledByYou(), "Centaur", 3, 3, CardColor.GREEN,
+                List.of(CardSubtype.CENTAUR), Set.of(), Set.of())));
     }
 }

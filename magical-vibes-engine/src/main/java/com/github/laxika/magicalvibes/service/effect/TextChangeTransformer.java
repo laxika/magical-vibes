@@ -307,7 +307,7 @@ public final class TextChangeTransformer {
                 CardEffect thenEffect = apply(destroy.thenEffect(), substitution);
                 yield filter == destroy.filter() && thenEffect == destroy.thenEffect() ? destroy
                         : new DestroyAllPermanentsEffect(filter, destroy.cannotBeRegenerated(), destroy.scope(),
-                        thenEffect, destroy.sparesPermanentsCreatedThisResolution(), destroy.destroyedCountScope());
+                        thenEffect, destroy.sparesPermanentsCreatedThisResolution());
             }
             case ChangeColorTextEffect change -> {
                 CardSubtype excluded = replaceSubtype(change.excludedReplacementCreatureType(), substitution);

@@ -276,10 +276,11 @@ public class DestructionSupport {
     }
 
     /**
-     * The permanents a batch destruction destroyed, and those of them that then died (went to a graveyard
-     * rather than somewhere a replacement such as Rest in Peace put them).
+     * The permanents a batch destruction destroyed, those of them that then died (went to a graveyard rather than
+     * somewhere a replacement such as Rest in Peace put them), and the departure result of every permanent it was
+     * told to destroy, those that stayed included, with their last-known information (CR 608.2h).
      */
-    public record BatchOutcome(List<Permanent> destroyed, List<Permanent> died) {
+    public record BatchOutcome(List<Permanent> destroyed, List<Permanent> died, List<DepartureResult> results) {
     }
 
     /** Same batch destruction as {@link #destroyBatch}, returning both the destroyed and the died permanents. */
@@ -306,7 +307,7 @@ public class DestructionSupport {
                 died.add(perm);
             }
         }
-        return new BatchOutcome(destroyed, died);
+        return new BatchOutcome(destroyed, died, done.results());
     }
 
     /**
@@ -360,7 +361,7 @@ public class DestructionSupport {
      * on its way counts unless it was exiled instead.
      */
     private static boolean diedFromBattlefield(DepartureResult result, Permanent perm) {
-        return result.wentToGraveyard() || result.destination() == null && perm.getCard().isToken();
+        return result.died(perm.getCard().isToken());
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {

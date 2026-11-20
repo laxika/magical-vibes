@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 16 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 17 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -535,6 +535,7 @@ cause under Findings.
 | 14 | run 13's graveyard "and" records: the imprint and track-with-source target exiles, then the token-copy and may-cast-a-copy records | done (2 absorbed into `ExileGraveyardCardsEffect`, `imprintingOnSource()`; 16 card files rewritten; stopped at `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`: no token-copy step copies a card an EXILE step recorded, a design decision; the may-cast-a-copy record not started) |
 | 15 | the Return family (fused names or a nested `CardEffect`; Exile left for the card-subject decision): the chosen return records a RETURN step, then its "then" records, the target-return "then" records, the attached bounce | done (6 split, 1 absorbed, 4 survivors, 1 unique, 9 blocked-other; 23 card files rewritten; `choosingOneOf`, `ReturnToHandEffect.targetCreatureAndAttached`, `toA(RETURN)`; Paradoxical Outcome kept on its record; the batch bounce now looks back, CR 603.10a) |
 | 16 | the Destroy family: the mana-value conditional (Perilous Voyage pattern), the same-name / same-mana-value / shared-colour sets (`otherCreaturesSharing` widened to any permanent), the block-trigger `allOf` pairs, the rider splits | done (3 split, 6 absorbed, 1 survivor, 1 blocked-player-loop, 10 blocked-other; 23 card files rewritten, 16 of them by hand; `otherPermanentsSharing(permanent, quality, filter)`, `SharedQuality.MANA_VALUE`; a permanent with all card names now shares every name; `DestroyAllPermanentsEffect`'s rider not started) |
+| 17 | `DestroyAllPermanentsEffect`'s rider: the wipe records a DESTROY step, the plain-count, count-scope and per-controller riders become later steps; Voodoo Doll if budget remains | done (1 split, 1 absorbed, 5 survivors, 2 blocked-player-loop, 3 blocked-other; 27 of the 30 rider cards split, 33 card files rewritten; `AmountThisWay.died` / `matching` / `controlledByYou`; the rider stays for From the Ashes, Seeds of Innocence, Stench of Evil; Voodoo Doll tried and kept) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4651,6 +4652,108 @@ compile.
 - **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
   `OrElse` name): 133 (1,264 card uses); by first word Exile 22, Search 10, Sacrifice 10, Reveal 9, Counter 8, Prevent 7, Each 6,
   Draw 6, Choose 5, Cant 5, Put 4, Destroy 3. About a third are not two instructions, so roughly 85 split-able families remain.
+
+### Step 8, run 17 (2026-11-20)
+
+Run 16's "Next run": `DestroyAllPermanentsEffect`'s `thenEffect` rider (30 cards). Verdicts (ledger, step `8`): **split 1**
+(`EachDestroyedPermanentControllerLosesLifeEffect`), **absorbed 1** (`DestroyedPermanentCountScope`, an enum), **survivor 5**
+(`DestroyAllPermanentsEffect`, `AmountThisWay`, `LoseLifeEffect`, `EachPlayerCreatesTokenEffect`, and `DestroyEachTargetPermanentEffect`
+whose count-scope component became a boolean), **blocked-player-loop 2** (From the Ashes', Stench of Evil's riders), **blocked-other 3**
+(Seeds of Innocence's rider, `CreateTokenForEachDestroyedPermanentControllerEffect`, Voodoo Doll's
+`DestroySourceThenDealDamageToControllerEffect`). Ratchet 4,744 / 3,977 → 4,743 / 3,976. 33 card files rewritten: 27 by a deleted
+scratch script (one replacement per card, read back by eye), 6 for the removed `(filter, scope, null)` constructor (Primeval Light, Behold
+the Power of Destruction, Ajani Vengeant, Total War, Siren's Call, Maddening Imp). Oracle text of every rider card, Chaos Orb, Anzrag's
+Rampage and Voodoo Doll checked with `get_card`; rulings of all of them with `get_rulings` (Fumigate, Deadly Tempest, Kaya's Wrath,
+Rampage of the Clans, Hellfire, Blood Money, Death Begets Life, Phyrexian Rebirth, Culling Ritual, Anzrag's Rampage, Bane of Progress,
+Whiptongue Hydra, Ori, Fracturing Gust and Decree of Pain have rulings; none contradicts the split). CR 700.4, 608.2c, 608.2h, 111.7 and
+603.10a checked with `get_rule` (2026-11-20).
+
+- **The wipe is a step.** `DestroyAllPermanentsEffectHandler` records `StackEntry.recordDestroyDepartures` (new; `ResolutionResults.withDestroyDepartures`
+  replaces the departures and the DESTROY outcome and keeps the other outcomes, so it does not clear a SACRIFICE result): NONE as it
+  begins (also when a `TARGET_PLAYER` sweep has no player), then every departure of the batch (`DestructionSupport.BatchOutcome.results`,
+  new). The DESTROY outcome is what was destroyed, wherever a replacement put it, with the controllers as they were destroyed;
+  indestructible and regenerated permanents are departures with `destroyed() == false`. No separate DIED step kind was needed: whether
+  each one died is in its departure (`DepartureResult.died(token)`, CR 700.4; `DestructionSupport.diedFromBattlefield` now calls it).
+- **Readers** (step 7's `AmountThisWay` pattern, run 7's `Stat`): `Stat.DIED` (`AmountThisWay.died(kind)`: how many of what the step
+  removed were put into a graveyard; a token in no zone afterwards died), `filter` (`.matching(filter)`: only those that, as they last
+  existed, match; the departed snapshot with its layered card, `ConditionEvaluationService.lastKnownPermanent`, now package-visible) and
+  `yours` (`.controlledByYou()`: only those the amount's controller controlled as they left). They read the departures of a SACRIFICE or
+  DESTROY step (refused for other kinds), counting only departures among the step's outcome objects, so a destroy step that records no
+  departures (`DestroyTargetPermanentEffect`) never reads an older step's. "The amount's controller" is the effect's controller, or the
+  player an effect evaluates its amount for: `LoseLifeEffectHandler` now evaluates the amount per player with that player as controller
+  for `eachPlayer()` (as `DealDamageToPlayersEffectHandler` already did; every existing `LoseLifeEffect(…, eachPlayer())` amount is
+  controller-independent: fixed, X, Shepherd of Rot's any-player Zombie count), and `EachPlayerCreatesTokenEffectHandler` builds each
+  player's context with `withControllerId` instead of a fresh `AmountContext` that dropped the stack entry.
+- **Split cards.** Spells: the wipe, then the rider as the next spell effect (targeted spells chain it on the target builder, Word of
+  Blasting's shape); triggers and modes: `SequenceEffect.of(wipe, rider)` (Bane of Progress, Whiptongue Hydra, Ori, The Phasing of
+  Zhalfir, Reign of Terror's modes, Chaos Orb inside its `ConditionalEffect`). Plain count `AmountThisWay(DESTROY)`: Avenge, Bane of
+  Progress, Culling Ritual, Death Begets Life, Decree of Pain, Fracturing Gust, Fumigate, Multani's Decree, Ori, Overwhelming Forces,
+  Paraselene, Phyrexian Rebirth, Rain of Daggers, Righteous Fury, Whiptongue Hydra. Count scopes: Blood Money `.matching(nontoken)`,
+  Ceaseless Conflict `.matching(nontoken).controlledByYou()`, Kaya's Wrath `.controlledByYou()`, Hellfire and Reign of Terror
+  `AmountThisWay.died(DESTROY)`, Mogg Infestation `died` with `CreateTokenEffect(…).forController(targetPlayerDeclaredElsewhere())` ("that
+  player creates", which also offers that player's token replacements; it declares no second target). Per controller: Deadly Tempest
+  `LoseLifeEffect(AmountThisWay(DESTROY).controlledByYou(), eachPlayer())`; March of Souls, Rampage of the Clans, The Phasing of Zhalfir
+  `EachPlayerCreatesTokenEffect(CreateTokenEffect(AmountThisWay(DESTROY).controlledByYou(), …))`. Chaos Orb: "Then destroy this artifact"
+  is the second step of the sequence (ungated, as written). Anzrag's Rampage: its look-at-top rider reads only
+  `ArtifactsPutIntoGraveyardFromBattlefieldThisTurn` (its ruling: any artifact this turn), so it is a plain second spell effect. Target
+  specs are unchanged: the wipe is the only step that declares a target (`TARGET_PLAYER`), and no rider declares one.
+- **Record.** `DestroyAllPermanentsEffect` lost `destroyedCountScope`; its constructors are `(filter)`, `(filter, cannotBeRegenerated)`,
+  `(filter, scope)` (new, for "all X target player controls"), `(filter, thenEffect)` and the canonical five-component one. The handler no
+  longer stamps `eventNontokenPlayerIds`. `DestroyEachTargetPermanentEffect`'s `DestroyedPermanentCountScope` component (only ALL / DIED were
+  allowed) is the boolean `countsOnlyDeaths` (`countingPermanentsPutIntoAGraveyard()` unchanged). `TextChangeTransformer` copies the five
+  components.
+- **Behaviour.** No rules change for the split cards: every count is the one the stamped `eventValue` gave (destroyed wherever it went,
+  died for the three "died" cards, nontoken / yours from the departures), and the rider ran as the next step before too. Token creation
+  order across players in March of Souls / Rampage / Phasing is now seat order (`EachPlayerCreatesTokenEffect`); before it was the order
+  the destroyed permanents were found in. The survivors' log lines win. AI: `SpellEvaluator` now also scores the riders as steps (the
+  life gain, draws, tokens), estimated with no resolution results (an `AmountThisWay` estimates 0), as for earlier split cards.
+- **Blocked, by cause.** From the Ashes (each controller may search once per land they lost, then the searchers shuffle) and Stench of
+  Evil (one pay-or-take per destroyed land for its controller): blocked-player-loop. Seeds of Innocence: "the controller of each of those
+  artifacts" includes indestructible ones the wipe didn't destroy, with each one's mana value per player; no step result names what an
+  instruction applied to. `CreateTokenForEachDestroyedPermanentControllerEffect`: its four other cards (Terastodon, Soul of Emancipation,
+  Descent of the Dragons, The Curse of Fenric) ride on `DestroyEachTargetPermanentEffect`, which stamps but records no step. Voodoo Doll:
+  the split `SequenceEffect.of(DestroyTargetPermanentEffect(source()), DealDamageToPlayersEffect(CountersOnSource(PIN), you()))` passed the
+  card's tests, but after the destroy `CountersOnSource` reads the entry's source snapshot taken when the ability triggered, so pin counters
+  put on the Doll in response were missed (new `VoodooDollTest.endStepDamageCountsCountersAddedInResponse` fails on the split, passes on the
+  fused record, which reads the live Doll before destroying it); the card is back on its record.
+
+**Tests** (one Gradle run, one `--tests` list per task): every card test that constructs a rewritten card (55 classes), the tests of
+every card naming `AmountThisWay`, `--tests-for DestroyAllPermanentsEffect DestroyEachTargetPermanentEffect EachPlayerCreatesTokenEffect
+--max-per-class 40`, `--tests-for LoseLifeEffect --max-per-class 20`, every `EachPlayerCreatesTokenEffect` card, Volcanic Eruption /
+Builder's Bane / Terastodon (203 card-test classes); application (every test naming `DestroyAllPermanentsEffect`, `DestructionSupport`,
+`AmountThisWay`, `DestroyEachTargetPermanentEffect`, `EachPlayerCreatesTokenEffect` or the life-loss handler, plus `TextChangeTransformerTest`,
+`EffectCountRatchetTest`, `SubjectResolutionServiceTest`, `EffectResolutionServiceTest`, `CardImmutabilityArchTest`) and AI
+(`GameDataDeepCopyTest`, `TargetPolarityGuardTest`, `SpellEvaluatorTest`, `BoardEvaluatorTest`): 311 result files, 4,695 test cases, all
+pass. New tests: `ResolutionScratchpadAmountTest` +3 (died vs destroyed, yours per controller, refused kinds),
+`DestroyAllPermanentsEffectHandlerTest` (the count-scope rider test became "records the destroy step" and "records an empty step without
+a player"), `KayasWrathTest` +2 (Rest in Peace exile still counts, by its ruling; a stolen creature counts for its controller),
+`BloodMoneyTest` +1 (an exiled nontoken creature still counts; `@DisplayName`s added), `VoodooDollTest` +1. Application, AI, engine
+testFixtures and every touched card and card-test module compile.
+
+**For later runs.**
+
+- "For each [filter] permanent destroyed / that died this way", "the number of creatures you / they controlled that were destroyed this
+  way" after a `DestroyAllPermanentsEffect` (or a sacrifice step) is `AmountThisWay(DESTROY | SACRIFICE)` with `died` / `matching` /
+  `controlledByYou`; "each player … they controlled" is `LoseLifeEffect(…, eachPlayer())`, "its controller creates" per destroyed permanent
+  is `EachPlayerCreatesTokenEffect(CreateTokenEffect(….controlledByYou()))`.
+- **Next run: `DestroyEachTargetPermanentEffect` records a DESTROY step** the same way (`recordDestroyDepartures` from
+  `destroyBatchWithOutcome(...).results()`), then its 9 rider cards split (Volcanic Eruption, The Elderspell, The Curse of Fenric,
+  Terastodon, Soul of Emancipation, Indomitable Creativity, Descent of the Dragons, Convert to Slime, Builder's Bane): that empties
+  `CreateTokenForEachDestroyedPermanentControllerEffect` (→ `EachPlayerCreatesTokenEffect`), likely `DealDamageToEachDestroyedPermanentControllerEffect`
+  (Builder's Bane; check its per-permanent damage events) and `countsOnlyDeaths` (→ `AmountThisWay.died`), and moves
+  `TotalManaValueOfDestroyedPermanents` to a `Stat.MANA_VALUE` over DESTROY (allow it for DESTROY in `AmountThisWay`'s constructor). Then
+  the stamping (`eventPlayerIds`, `eventNontokenPlayerIds`, `eventDestroyedPlayerIds`, `eventTargetedPlayerIds`, `eventManaValues`) can go
+  where nothing else reads it.
+- Voodoo Doll needs the amount source of a step after the source's own destruction to be its departure snapshot (as it last existed,
+  CR 608.2h), not the trigger-time `sourcePermanentSnapshot`: a fix in `AmountContext.forStackEntry` callers or in the DESTROY recording
+  (refresh the entry's source snapshot when a step removes the source) would also cover other "destroy this, then … equal to its
+  counters" texts.
+- `DestroyAllPermanentsEffect.thenEffect` stays for From the Ashes, Seeds of Innocence and Stench of Evil (each-player loops / an
+  "applied to" set); `TextChangeTransformer` has no `SequenceEffect` case (none of this run's triggers has a text-change word, but a later
+  split of a trigger with a colour or land-type word needs one).
+- **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
+  `OrElse` name): 133 (1,264 card uses), unchanged (this run's classes had no such names); by first word Exile 22, Search 10, Sacrifice 10,
+  Reveal 9, Counter 8, Prevent 7, Each 6, Draw 6, Choose 5, Cant 5, Put 4, Destroy 3.
 
 ## Prompt
 

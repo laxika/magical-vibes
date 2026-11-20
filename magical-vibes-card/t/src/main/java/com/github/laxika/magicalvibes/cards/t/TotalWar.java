@@ -37,7 +37,6 @@ public class TotalWar extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                         new PermanentNotPredicate(new PermanentIsAttackingPredicate()),
                         new PermanentControlledContinuouslySinceBeginningOfTurnPredicate())),
-                EachPermanentScope.TARGET_PLAYER,
-                null));
+                EachPermanentScope.TARGET_PLAYER));
     }
 }

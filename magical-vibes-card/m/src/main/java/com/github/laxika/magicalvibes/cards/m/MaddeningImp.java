@@ -35,7 +35,7 @@ public class MaddeningImp extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         nonWall,
                                         new PermanentNotPredicate(new PermanentAttackedThisTurnPredicate()))),
-                                EachPermanentScope.TARGET_PLAYER, null))),
+                                EachPermanentScope.TARGET_PLAYER))),
                 "{T}: Non-Wall creatures the active player controls attack this turn if able. At the beginning of the next end step, destroy each of those creatures that didn't attack this turn. Activate only during an opponent's turn and only before combat.",
                 ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT));
     }

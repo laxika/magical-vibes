@@ -210,6 +210,21 @@ class VoodooDollTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Pin counters put on the Doll after its end-step trigger are counted as it is destroyed")
+    void endStepDamageCountsCountersAddedInResponse() {
+        Permanent doll = addDoll(player1);
+        doll.setCounterCount(CounterType.PIN, 2);
+        harness.setLife(player1, 20);
+
+        beginControllerEndStep(player1);
+        doll.setCounterCount(CounterType.PIN, 5);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Voodoo Doll");
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
     @DisplayName("Activated damage still resolves after the Doll is destroyed")
     void activatedDamageUsesLastKnownInformationAfterDestruction() {
         Permanent doll = addDoll(player1);

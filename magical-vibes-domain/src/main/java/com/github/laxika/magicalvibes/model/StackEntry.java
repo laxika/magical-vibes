@@ -668,6 +668,15 @@ public class StackEntry {
     }
 
     /**
+     * Records the departures of the destroy step being resolved, replacing those of earlier steps: what it destroyed is
+     * its {@link StepKind#DESTROY} outcome, and a later step reads each one's last-known controller and whether it died
+     * from the departures. Recorded even when nothing was destroyed (an empty list).
+     */
+    public void recordDestroyDepartures(List<DepartureResult> departures) {
+        resolutionResults = resolutionResults.withDestroyDepartures(departures);
+    }
+
+    /**
      * Begins a sacrifice step whose permanents are chosen as it resolves: its departures arrive as they are sacrificed
      * ({@link #addSacrificeDepartures}), while it resolves or as its prompts are answered.
      */

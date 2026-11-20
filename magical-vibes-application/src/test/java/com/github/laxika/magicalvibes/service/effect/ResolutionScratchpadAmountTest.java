@@ -100,6 +100,43 @@ class ResolutionScratchpadAmountTest {
     }
 
     @Test
+    @DisplayName("A destroyed permanent exiled instead of put into a graveyard was destroyed but didn't die")
+    void diedCountsOnlyWhatWentToAGraveyard() {
+        entry.recordDestroyDepartures(List.of(destroyed(Zone.GRAVEYARD, controllerId),
+                destroyed(Zone.EXILE, controllerId)));
+
+        assertThat(evaluate(new AmountThisWay(StepKind.DESTROY))).isEqualTo(2);
+        assertThat(evaluate(AmountThisWay.died(StepKind.DESTROY))).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the permanents the amount's controller controlled as they were destroyed count as theirs")
+    void yoursCountsOnlyTheAmountControllersPermanents() {
+        UUID opponentId = UUID.randomUUID();
+        entry.recordDestroyDepartures(List.of(destroyed(Zone.GRAVEYARD, controllerId),
+                destroyed(Zone.GRAVEYARD, opponentId), destroyed(Zone.GRAVEYARD, opponentId)));
+        AmountThisWay yours = new AmountThisWay(StepKind.DESTROY).controlledByYou();
+
+        assertThat(evaluate(yours)).isEqualTo(1);
+        assertThat(amountEvaluationService.evaluate(gd, yours,
+                AmountContext.forStackEntry(entry, null).withControllerId(opponentId))).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Only a removal step records whether and whose what it removed died")
+    void diedOfAnotherKindIsRefused() {
+        assertThatThrownBy(() -> AmountThisWay.died(StepKind.DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new AmountThisWay(StepKind.EXILE).controlledByYou())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private DepartureResult destroyed(Zone destination, UUID lastKnownControllerId) {
+        return new DepartureResult(UUID.randomUUID(), destination, lastKnownControllerId, UUID.randomUUID(),
+                2, 2, true, false, lastKnownControllerId, Set.of(), Set.of(), 2);
+    }
+
+    @Test
     @DisplayName("A conditional amount reads the scratchpad")
     void conditionalAmountReadsTheScratchpad() {
         FixedIfCondition amount = new FixedIfCondition(HappenedThisWay.sacrificed(), 2, 0);

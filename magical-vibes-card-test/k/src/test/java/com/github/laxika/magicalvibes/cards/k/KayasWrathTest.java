@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AzoriusLocket;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.m.ManorGargoyle;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KayasWrath.class, GrizzlyBears.class, ManorGargoyle.class, AzoriusLocket.class, DrudgeSkeletons.class})
+@CardUsed({KayasWrath.class, GrizzlyBears.class, ManorGargoyle.class, AzoriusLocket.class, DrudgeSkeletons.class,
+        RestInPeace.class})
 class KayasWrathTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
@@ -113,5 +115,44 @@ class KayasWrathTest extends BaseCardTest {
         harness.assertLife(player1, STARTING_LIFE);
         harness.assertLife(player2, STARTING_LIFE);
         harness.assertInGraveyard(player1, "Kaya's Wrath");
+    }
+
+    @Test
+    @DisplayName("A creature exiled by Rest in Peace instead of dying still counts as destroyed")
+    void creatureExiledInsteadOfDyingStillCounts() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castKayasWrath();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears")).hasSize(2);
+        harness.assertLife(player1, STARTING_LIFE + 2);
+    }
+
+    @Test
+    @DisplayName("Counts the creatures the caster controlled, not those the caster owns")
+    void countsControlledCreaturesNotOwnedOnes() {
+        GrizzlyBears stolenFromOpponent = new GrizzlyBears();
+        stolenFromOpponent.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, stolenFromOpponent);
+        GrizzlyBears stolenFromCaster = new GrizzlyBears();
+        stolenFromCaster.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, stolenFromCaster);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castKayasWrath();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, STARTING_LIFE + 1);
+    }
+
+    private void castKayasWrath() {
+        harness.setHand(player1, List.of(new KayasWrath()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

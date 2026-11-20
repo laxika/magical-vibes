@@ -22,9 +22,9 @@ public class AnzragsRampage extends Card {
         addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestToExile(
-                        new ArtifactsPutIntoGraveyardFromBattlefieldThisTurn(),
-                        new CardTypePredicate(CardType.CREATURE), true, true).withExileBeforeChoosing()));
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))));
+        addSpellEffect(LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestToExile(
+                new ArtifactsPutIntoGraveyardFromBattlefieldThisTurn(),
+                new CardTypePredicate(CardType.CREATURE), true, true).withExileBeforeChoosing());
     }
 }

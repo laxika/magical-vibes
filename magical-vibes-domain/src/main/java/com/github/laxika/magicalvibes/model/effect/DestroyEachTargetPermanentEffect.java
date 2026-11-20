@@ -14,28 +14,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code eventManaValues}, for riders that need a per-player tally instead — see
  * {@link CreateTokenForEachDestroyedPermanentControllerEffect} (Descent of the Dragons). A permanent that
  * was destroyed but that a replacement such as Rest in Peace put somewhere other than a graveyard still
- * counts (Fumigate, Noxious Gearhulk and Break the Spell rulings), unless {@code destroyedCountScope} is
- * {@link DestroyedPermanentCountScope#DIED}, for "put into a graveyard this way" wordings (Volcanic
- * Eruption, Builder's Bane, Terastodon).
+ * counts (Fumigate, Noxious Gearhulk and Break the Spell rulings), unless {@code countsOnlyDeaths} is set, for
+ * "put into a graveyard this way" wordings (Volcanic Eruption, Builder's Bane, Terastodon).
  *
  * @param cannotBeRegenerated whether the destroyed permanents cannot be regenerated
  * @param filter optional resolution-time filter; nonmatching targets are left untouched
- * @param destroyedCountScope {@link DestroyedPermanentCountScope#ALL} (default) or
- *                            {@link DestroyedPermanentCountScope#DIED}; the other scopes are not supported
+ * @param countsOnlyDeaths    whether only the permanents put into a graveyard this way are counted (CR 700.4)
  */
 public record DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated,
                                                PermanentPredicate filter,
-                                               DestroyedPermanentCountScope destroyedCountScope) implements CardEffect {
-
-    public DestroyEachTargetPermanentEffect {
-        if (destroyedCountScope != DestroyedPermanentCountScope.ALL
-                && destroyedCountScope != DestroyedPermanentCountScope.DIED) {
-            throw new IllegalArgumentException("Unsupported destroyed count scope: " + destroyedCountScope);
-        }
-    }
+                                               boolean countsOnlyDeaths) implements CardEffect {
 
     public DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated, PermanentPredicate filter) {
-        this(cannotBeRegenerated, filter, DestroyedPermanentCountScope.ALL);
+        this(cannotBeRegenerated, filter, false);
     }
 
     public DestroyEachTargetPermanentEffect() {
@@ -44,7 +35,7 @@ public record DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated,
 
     /** Counts only the permanents put into a graveyard this way, for "put into a graveyard this way" riders. */
     public static DestroyEachTargetPermanentEffect countingPermanentsPutIntoAGraveyard() {
-        return new DestroyEachTargetPermanentEffect(false, null, DestroyedPermanentCountScope.DIED);
+        return new DestroyEachTargetPermanentEffect(false, null, true);
     }
 
     public DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated) {

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentWhileSourceControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
@@ -18,6 +17,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -34,10 +37,10 @@ public class ThePhasingOfZhalfir extends Card {
         addChapterPhaseOut(1);
         addChapterPhaseOut(2);
 
-        addTrigger(Triggers.chapter(3), new DestroyAllPermanentsEffect(
-                new PermanentIsCreaturePredicate(),
-                new CreateTokenForEachDestroyedPermanentControllerEffect(new CreateTokenEffect(
-                        1,
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
+                new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()),
+                new EachPlayerCreatesTokenEffect(new CreateTokenEffect(
+                        new AmountThisWay(StepKind.DESTROY).controlledByYou(),
                         "Phyrexian",
                         2,
                         2,

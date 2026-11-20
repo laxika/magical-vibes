@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
@@ -78,8 +77,7 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
 
         DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(
                 gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated());
-        List<Permanent> counted = destroy.destroyedCountScope() == DestroyedPermanentCountScope.DIED
-                ? outcome.died() : outcome.destroyed();
+        List<Permanent> counted = destroy.countsOnlyDeaths() ? outcome.died() : outcome.destroyed();
 
         // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
         List<UUID> destroyedControllerIds = new ArrayList<>();

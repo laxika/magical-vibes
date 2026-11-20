@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -9,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class FracturingGust extends Card {
         addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate())),
-                new GainLifeEffect(new Scaled(new EventValue(), 2))));
+                        new PermanentIsEnchantmentPredicate()))));
+        addSpellEffect(new GainLifeEffect(new Scaled(new AmountThisWay(StepKind.DESTROY), 2)));
     }
 }

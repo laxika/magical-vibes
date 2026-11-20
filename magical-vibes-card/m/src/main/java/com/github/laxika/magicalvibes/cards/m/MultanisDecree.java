@@ -2,18 +2,18 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 @CardRegistration(set = "UDS", collectorNumber = "114")
 public class MultanisDecree extends Card {
 
     public MultanisDecree() {
-        addSpellEffect(new DestroyAllPermanentsEffect(
-                new PermanentIsEnchantmentPredicate(),
-                new GainLifeEffect(new Scaled(new EventValue(), 2))));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsEnchantmentPredicate()));
+        addSpellEffect(new GainLifeEffect(new Scaled(new AmountThisWay(StepKind.DESTROY), 2)));
     }
 }

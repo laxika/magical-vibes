@@ -45,8 +45,7 @@ public class EachPlayerCreatesTokenEffectHandler implements NormalEffectHandlerB
         for (UUID playerId : gameData.orderedPlayerIds) {
             // Re-evaluate the token count relative to each creating player so CONTROLLER-scoped
             // counts read that player's own board (Waiting in the Weeds: untapped Forests they control).
-            AmountContext playerContext = new AmountContext(playerId, source, base.targetPermanentId(),
-                    base.xValue(), base.eventValue());
+            AmountContext playerContext = base.withControllerId(playerId);
             int amount = amountEvaluationService.evaluate(gameData, e.token().amount(), playerContext);
             if (amount <= 0) {
                 continue;

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,16 +11,18 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BloodMoney.class, GrizzlyBears.class, SolRing.class})
+@CardUsed({BloodMoney.class, GrizzlyBears.class, SolRing.class, RestInPeace.class})
 class BloodMoneyTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Destroys all creatures and creates a tapped Treasure for each destroyed nontoken creature")
     void destroysAllCreaturesAndCreatesTappedTreasureForEachDestroyedNontokenCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, createTokenCreature());
@@ -35,6 +38,7 @@ class BloodMoneyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An indestructible creature is not destroyed and creates no Treasure")
     void indestructibleCreatureDoesNotCreateTreasure() {
         Permanent indestructible = addCreatureReady(player1, new GrizzlyBears());
         PermanentGrants.keywordUntilEndOfTurn(gd, indestructible, com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
@@ -46,6 +50,7 @@ class BloodMoneyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The caster creates the Treasures for an opponent's creatures")
     void opponentCreaturesCreateAllTreasuresForSpellController() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -59,6 +64,7 @@ class BloodMoneyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroyed creature tokens create no Treasures")
     void destroysOnlyTokensWithoutCreatingTreasures() {
         harness.addToBattlefield(player1, createTokenCreature());
         harness.addToBattlefield(player2, createTokenCreature());
@@ -72,6 +78,7 @@ class BloodMoneyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A regenerated creature survives and creates no Treasure")
     void regeneratedCreatureSurvivesWithoutCreatingTreasure() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         gd.addRegenerationShields(creature.getId(), 1);
@@ -87,6 +94,7 @@ class BloodMoneyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Noncreature permanents survive and create no Treasures")
     void noncreaturePermanentsSurviveWithoutCreatingTreasures() {
         harness.addToBattlefield(player1, new SolRing());
         harness.addToBattlefield(player2, new SolRing());
@@ -97,6 +105,20 @@ class BloodMoneyTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Sol Ring");
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A nontoken creature exiled by Rest in Peace instead of dying still creates a Treasure")
+    void creatureExiledInsteadOfDyingStillCreatesTreasure() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, createTokenCreature());
+
+        castBloodMoney();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
     private void castBloodMoney() {

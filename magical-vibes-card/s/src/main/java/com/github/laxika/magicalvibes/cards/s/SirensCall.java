@@ -38,6 +38,6 @@ public class SirensCall extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                         new PermanentNotPredicate(new PermanentAttackedThisTurnPredicate()),
                         new PermanentControlledContinuouslySinceBeginningOfTurnPredicate())),
-                EachPermanentScope.TARGET_PLAYER, null)));
+                EachPermanentScope.TARGET_PLAYER)));
     }
 }

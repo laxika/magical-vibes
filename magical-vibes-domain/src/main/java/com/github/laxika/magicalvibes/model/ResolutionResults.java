@@ -54,6 +54,15 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
     }
 
     /**
+     * These results with {@code results} as the departures of a destroy step that destroyed several permanents at once,
+     * replacing the earlier ones: the permanents among them that were destroyed are its {@link StepKind#DESTROY}
+     * outcome, the other outcomes are kept.
+     */
+    public ResolutionResults withDestroyDepartures(List<DepartureResult> results) {
+        return withDepartures(results, StepKind.DESTROY);
+    }
+
+    /**
      * These results as a sacrifice step that chooses as it resolves begins: no departures and a {@link StepKind#SACRIFICE}
      * outcome of nothing yet, the other outcomes kept. The permanents it sacrifices, as it resolves or as its prompts are
      * answered, are added by {@link #withSacrificeDepartures}.

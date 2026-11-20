@@ -35,7 +35,7 @@ public class AjaniVengeant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new DestroyAllPermanentsEffect(new PermanentIsLandPredicate(),
-                        EachPermanentScope.TARGET_PLAYER, null)),
+                        EachPermanentScope.TARGET_PLAYER)),
                 "−7: Destroy all lands target player controls."));
     }
 }

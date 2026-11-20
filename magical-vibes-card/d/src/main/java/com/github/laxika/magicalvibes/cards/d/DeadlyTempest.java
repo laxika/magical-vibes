@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "C15", collectorNumber = "19")
 @CardRegistration(set = "C20", collectorNumber = "131")
@@ -13,8 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class DeadlyTempest extends Card {
 
     public DeadlyTempest() {
-        addSpellEffect(new DestroyAllPermanentsEffect(
-                new PermanentIsCreaturePredicate(),
-                new EachDestroyedPermanentControllerLosesLifeEffect()));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new LoseLifeEffect(new AmountThisWay(StepKind.DESTROY).controlledByYou(),
+                Subjects.eachPlayer()));
     }
 }

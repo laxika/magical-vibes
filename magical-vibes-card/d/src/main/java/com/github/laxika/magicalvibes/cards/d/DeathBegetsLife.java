@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class DeathBegetsLife extends Card {
         addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsEnchantmentPredicate())),
-                new DrawCardEffect(new EventValue())));
+                        new PermanentIsEnchantmentPredicate()))));
+        addSpellEffect(new DrawCardEffect(new AmountThisWay(StepKind.DESTROY)));
     }
 }

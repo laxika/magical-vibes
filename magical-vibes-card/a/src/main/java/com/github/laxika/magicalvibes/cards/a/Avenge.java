@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasAttackedByPlayerLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 @CardRegistration(set = "MSC", collectorNumber = "11")
 @CardRegistration(set = "MSC", collectorNumber = "295")
@@ -19,7 +20,7 @@ public class Avenge extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControllerWasAttackedByPlayerLastTurn(),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addSpellEffect(new DestroyAllPermanentsEffect(
-                new PermanentIsCreaturePredicate(), new GainLifeEffect(new EventValue())));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new GainLifeEffect(new AmountThisWay(StepKind.DESTROY)));
     }
 }

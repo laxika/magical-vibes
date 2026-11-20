@@ -74,4 +74,12 @@ public record DepartureResult(UUID permanentId, Zone destination, UUID destinati
     public boolean wentToGraveyard() {
         return destination == Zone.GRAVEYARD;
     }
+
+    /**
+     * Whether it died, was put into a graveyard from the battlefield (CR 700.4): it went to a graveyard, or it was a
+     * token ({@code token}) that is in no zone afterwards, having ceased to exist on its way.
+     */
+    public boolean died(boolean token) {
+        return wentToGraveyard() || destination == null && token;
+    }
 }

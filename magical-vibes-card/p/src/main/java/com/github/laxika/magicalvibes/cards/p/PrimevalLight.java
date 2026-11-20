@@ -18,7 +18,6 @@ public class PrimevalLight extends Card {
                 "Target must be a player"
         )).addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentIsEnchantmentPredicate(),
-                EachPermanentScope.TARGET_PLAYER,
-                null));
+                EachPermanentScope.TARGET_PLAYER));
     }
 }

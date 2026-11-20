@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -27,11 +26,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Destroys all matching permanents in the effect's scope, then resolves the optional
- * per-destroyed-count rider: the count of permanents actually destroyed, including those a replacement
- * put somewhere other than a graveyard unless the rider counts only deaths (and their controllers and
- * mana values), is stamped onto the entry's event values. When this effect is a step of the
- * resolution, the rider becomes the next step of the same entry; dispatched by another handler, it
+ * Destroys all matching permanents in the effect's scope as one event and records the step on the entry's resolution
+ * scratchpad: the departure of every permanent it was told to destroy, so {@code StepKind.DESTROY}'s outcome is those
+ * actually destroyed (wherever a replacement put them; indestructible and regenerated ones were not) with their
+ * controllers as they were destroyed (CR 608.2h), and a later step counts those that died, or only some of them, from
+ * the departures ({@code AmountThisWay}). It records even when nothing was destroyed.
+ *
+ * <p>A per-destroyed-permanent rider ({@code thenEffect}) is resolved after the destruction with the count of
+ * permanents destroyed, their controllers and mana values stamped onto the entry's event values. When this effect is a
+ * step of the resolution, the rider becomes the next step of the same entry; dispatched by another handler, it
  * resolves at once on a derived stack entry carrying those values.
  */
 @Slf4j
@@ -52,6 +55,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroyAllPermanentsEffect) effect;
+        entry.recordDestroyDepartures(List.of());
         // Whether this effect is the step the resolution loop is resolving on this entry (not one another
         // handler dispatches on an entry of its own), read before the destruction consumes the mark.
         boolean resolvesAsStep = gameData.stepDepartureEffect == effect;
@@ -111,12 +115,11 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
-        List<Permanent> died = outcome.died();
-        entry.setEventCardIds(died.stream().map(perm -> perm.getCard().getId()).toList());
+        entry.recordDestroyDepartures(outcome.results());
+        entry.setEventCardIds(outcome.died().stream().map(perm -> perm.getCard().getId()).toList());
         // A permanent a replacement exiled or moved elsewhere instead of its graveyard was still destroyed
-        // this way (Fumigate and Death Begets Life rulings); only "died this way" riders count just the deaths.
-        List<Permanent> destroyed = e.destroyedCountScope() == DestroyedPermanentCountScope.DIED
-                ? died : outcome.destroyed();
+        // this way (Fumigate and Death Begets Life rulings).
+        List<Permanent> destroyed = outcome.destroyed();
 
         if (e.thenEffect() == null) {
             return;
@@ -124,7 +127,6 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
         List<UUID> destroyedControllerIds = new ArrayList<>();
-        List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
         List<Integer> destroyedManaValues = new ArrayList<>();
         // "The controller of each of those artifacts gains life" (Seeds of Innocence) covers every
         // artifact the instruction applied to, including indestructible ones that survived.
@@ -137,36 +139,22 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 continue;
             }
             destroyedControllerIds.add(controllerId);
-            if (!perm.getCard().isToken()) {
-                destroyedNontokenControllerIds.add(controllerId);
-            }
             destroyedManaValues.add(manaValueByPermanentId.getOrDefault(perm.getId(), 0));
         }
 
-        int destroyedCount = switch (e.destroyedCountScope()) {
-            case ALL, DIED -> destroyed.size();
-            case ALL_NONTOKEN -> destroyedNontokenControllerIds.size();
-            case CONTROLLER -> (int) destroyedControllerIds.stream()
-                    .filter(entry.getControllerId()::equals)
-                    .count();
-            case CONTROLLER_NONTOKEN -> (int) destroyedNontokenControllerIds.stream()
-                    .filter(entry.getControllerId()::equals)
-                    .count();
-        };
+        int destroyedCount = destroyed.size();
         // CR 608.2c: the rider follows the destruction. As a step of its own on this entry it resolves in
         // its own window, so a question it asks before its first change (Lich's Duel Mastery's sacrifice for
         // Deadly Tempest's life loss) reruns only the rider, never the destruction.
         if (resolvesAsStep && entry.getResolvingEffectIndex() >= 0) {
-            stampRiderValues(entry, destroyedCount, destroyedControllerIds, destroyedNontokenControllerIds,
-                    destroyedManaValues);
+            stampRiderValues(entry, destroyedCount, destroyedControllerIds, destroyedManaValues);
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(e.thenEffect()));
             return;
         }
 
         StackEntry thenEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
-        stampRiderValues(thenEntry, destroyedCount, destroyedControllerIds, destroyedNontokenControllerIds,
-                destroyedManaValues);
+        stampRiderValues(thenEntry, destroyedCount, destroyedControllerIds, destroyedManaValues);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
@@ -180,10 +168,9 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
     }
 
     private static void stampRiderValues(StackEntry riderEntry, int destroyedCount, List<UUID> destroyedControllerIds,
-                                         List<UUID> destroyedNontokenControllerIds, List<Integer> destroyedManaValues) {
+                                         List<Integer> destroyedManaValues) {
         riderEntry.setEventValue(destroyedCount);
         riderEntry.setEventPlayerIds(destroyedControllerIds);
-        riderEntry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
         riderEntry.setEventManaValues(destroyedManaValues);
     }
 }

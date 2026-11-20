@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 @CardRegistration(set = "P02", collectorNumber = "85")
 @CardRegistration(set = "ME4", collectorNumber = "94")
@@ -26,7 +27,7 @@ public class RainOfDaggers extends Card {
         ))
                 .addSpellEffect(new DestroyAllPermanentsEffect(
                         new PermanentIsCreaturePredicate(),
-                        EachPermanentScope.TARGET_PLAYER,
-                        new LoseLifeEffect(new Scaled(new EventValue(), 2), Subjects.you())));
+                        EachPermanentScope.TARGET_PLAYER))
+                .addSpellEffect(new LoseLifeEffect(new Scaled(new AmountThisWay(StepKind.DESTROY), 2), Subjects.you()));
     }
 }

@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 @CardRegistration(set = "SCG", collectorNumber = "64")
 @CardRegistration(set = "SLD", collectorNumber = "187")
@@ -23,12 +23,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DecreeOfPain extends Card {
 
     public DecreeOfPain() {
-        addSpellEffect(new DestroyAllPermanentsEffect(
-                new PermanentIsCreaturePredicate(),
-                true,
-                EachPermanentScope.ALL_PLAYERS,
-                new DrawCardEffect(new EventValue()),
-                false));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true));
+        addSpellEffect(new DrawCardEffect(new AmountThisWay(StepKind.DESTROY)));
 
         addTrigger(Triggers.youCycleThisCard(), new BoostAllCreaturesEffect(-2, -2));
         addCycling("{3}{B}{B}");

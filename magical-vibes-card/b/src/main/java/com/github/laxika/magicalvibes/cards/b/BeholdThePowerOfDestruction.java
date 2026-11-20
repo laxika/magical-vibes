@@ -19,7 +19,6 @@ public class BeholdThePowerOfDestruction extends Card {
                 "You must target an opponent."
         )).addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                EachPermanentScope.TARGET_PLAYER,
-                null));
+                EachPermanentScope.TARGET_PLAYER));
     }
 }

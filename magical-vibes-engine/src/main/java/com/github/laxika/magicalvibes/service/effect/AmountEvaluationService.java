@@ -571,7 +571,7 @@ public class AmountEvaluationService {
             case CardsDrawnThisResolution ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
             case AmountThisWay thisWay ->
-                    ctx.stackEntry() == null ? 0 : amountThisWay(gameData, ctx.stackEntry(), thisWay);
+                    ctx.stackEntry() == null ? 0 : amountThisWay(gameData, ctx, thisWay);
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->
@@ -1123,26 +1123,45 @@ public class AmountEvaluationService {
 
     /**
      * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice
-     * or exile step removed (CR 608.2h), each counted as at least 0.
+     * or exile step removed (CR 608.2h), each counted as at least 0. A count of only those that died, match a filter or
+     * were the amount's controller's reads the removal step's departures, judging each permanent as it last existed on
+     * the battlefield and by the controller it had as it left.
      */
-    private int amountThisWay(GameData gameData, StackEntry entry, AmountThisWay thisWay) {
+    private int amountThisWay(GameData gameData, AmountContext ctx, AmountThisWay thisWay) {
+        StackEntry entry = ctx.stackEntry();
         ResolutionResults results = entry.getResolutionResults();
-        if (thisWay.stat() == AmountThisWay.Stat.AMOUNT) {
+        if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()) {
             return results.outcome(thisWay.kind()).amount();
         }
         if (thisWay.kind() == StepKind.EXILE) {
             return exiledStat(gameData, entry, results.outcome(StepKind.EXILE).objectIds(), thisWay.stat());
         }
+        boolean sacrifice = thisWay.kind() == StepKind.SACRIFICE;
+        Set<UUID> recorded = new HashSet<>(results.outcome(thisWay.kind()).objectIds());
+        FilterContext filterContext = thisWay.filter() == null ? null : FilterContext.of(gameData)
+                .withSourceControllerId(ctx.controllerId())
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId());
         int total = 0;
         for (DepartureResult result : results.departures()) {
-            if (!result.sacrificed()) {
+            if (!(sacrifice ? result.sacrificed() : result.destroyed()) || !recorded.contains(result.permanentId())) {
+                continue;
+            }
+            if (thisWay.yours() && (ctx.controllerId() == null
+                    || !ctx.controllerId().equals(result.lastKnownControllerId()))) {
+                continue;
+            }
+            Permanent lastKnown = thisWay.filter() != null || thisWay.stat() == AmountThisWay.Stat.DIED
+                    ? ConditionEvaluationService.lastKnownPermanent(gameData, result.permanentId()) : null;
+            if (thisWay.filter() != null && (lastKnown == null
+                    || !predicateEvaluationService.matchesPermanentPredicate(lastKnown, thisWay.filter(), filterContext))) {
                 continue;
             }
             Integer value = switch (thisWay.stat()) {
+                case AMOUNT -> 1;
+                case DIED -> result.died(lastKnown != null && lastKnown.getCard().isToken()) ? 1 : 0;
                 case POWER -> result.lastKnownPower();
                 case TOUGHNESS -> result.lastKnownToughness();
                 case MANA_VALUE -> result.lastKnownManaValue();
-                case AMOUNT -> 0;
             };
             total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
         }
@@ -1164,7 +1183,7 @@ public class AmountEvaluationService {
                     case POWER -> entry.getLastKnownPermanentPowers().get(id);
                     case TOUGHNESS -> entry.getLastKnownPermanentToughnesses().get(id);
                     case MANA_VALUE -> lastKnown == null ? null : lastKnown.getManaValue();
-                    case AMOUNT -> 0;
+                    case AMOUNT, DIED -> 0;
                 };
             } else {
                 Card card = gameQueryService.findCardById(gameData, id);
@@ -1172,7 +1191,7 @@ public class AmountEvaluationService {
                     case POWER -> gameQueryService.getEffectiveCardPower(gameData, card);
                     case TOUGHNESS -> gameQueryService.getEffectiveCardToughness(gameData, card);
                     case MANA_VALUE -> card.getManaValue();
-                    case AMOUNT -> 0;
+                    case AMOUNT, DIED -> 0;
                 };
             }
             total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));

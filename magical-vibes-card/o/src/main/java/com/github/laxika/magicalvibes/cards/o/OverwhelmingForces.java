@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 @CardRegistration(set = "PTK", collectorNumber = "79")
 @CardRegistration(set = "OTP", collectorNumber = "17")
@@ -25,7 +26,7 @@ public class OverwhelmingForces extends Card {
         ))
                 .addSpellEffect(new DestroyAllPermanentsEffect(
                         new PermanentIsCreaturePredicate(),
-                        EachPermanentScope.TARGET_PLAYER,
-                        new DrawCardEffect(new EventValue())));
+                        EachPermanentScope.TARGET_PLAYER))
+                .addSpellEffect(new DrawCardEffect(new AmountThisWay(StepKind.DESTROY)));
     }
 }
