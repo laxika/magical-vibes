@@ -9,19 +9,21 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfControllerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves cloaking the top card of the resolving controller's library. */
+/** Resolves cloaking the top card of each named player's library, in APNAP order. */
 @Component
 @RequiredArgsConstructor
 public class CloakTopCardOfControllerLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,11 +32,13 @@ public class CloakTopCardOfControllerLibraryEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (controllerId == null) {
-            return;
+        var cloak = (CloakTopCardOfControllerLibraryEffect) effect;
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, cloak, cloak.player())) {
+            cloakTopCard(gameData, playerId);
         }
+    }
 
+    private void cloakTopCard(GameData gameData, UUID controllerId) {
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (library == null || library.isEmpty()) {
             return;

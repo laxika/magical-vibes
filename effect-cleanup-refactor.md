@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 7 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 8 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -526,6 +526,7 @@ cause under Findings.
 | 5 | `--unaudited --family Deal`, the rest: the "And" simultaneous sets, "Unless" and perpetual riders | done (3 split, 2 absorbed, 4 blocked-step-model, 6 blocked-other, 2 unique; 7 of `DealDamageToTargetAndTheirCreaturesEffect`'s 8 cards split; `otherCreaturesSharing` subject; next-damage shields cover a whole simultaneous event; Goblin Chainwhirler and Sarkhan's Unsealing made one damage event by Oracle text) |
 | 6 | `--unaudited --family Sacrifice` (the family with the most first halves on step 7's earlier-step list: `SacrificeSelfEffect` and `SacrificePermanentsEffect`) | done (12 split, 8 blocked-other, 0 blocked-step-model, 0 blocked-player-loop, 0 unique; 17 cards rewritten; the blocked ones need the chosen sacrifice's last-known stats from `SacrificePermanentsEffect`, a granted ability's granter, or a delayed trigger that names a permanent) |
 | 7 | the chosen sacrifice's last-known stats: `SacrificePermanentsEffect` records `DepartureResult`s; `SacrificePermanentThenEffect`'s cards, Disciple of Bolas, Rupture, the Tribute to Hunger record | done (3 records split, 2 amounts absorbed into `AmountThisWay`; 111 of `SacrificePermanentThenEffect`'s 121 cards split, 10 kept; 10 "If you do" cards fixed from reflexive by Oracle text) |
+| 8 | `--unaudited --family Exile` restricted to `Then` / `And` / `IfYouDo` / `Unless` names: the permanent exiles whose first half is `ExileTargetPermanentEffect` | done (6 split, 2 absorbed, 2 survivors, 10 blocked-other, 2 blocked-step-model, 3 unique; 9 cards rewritten; `ManifestTopCardEffect` and `CloakTopCardOfControllerLibraryEffect` take a `PlayerSubject`) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3874,6 +3875,70 @@ survivor; `SacrificePermanentThenEffect` stays **blocked-other** with 10 cards. 
 - Hotel of Fears (WHO 584, no rulings) "Put X +1/+1 counters on target creature you control … Then sacrifice another creature" uses
   "other than the source" (a plane), so the targeted creature can be the sacrifice; "another" most likely means other than the
   target. Unchanged by this run; needs a target-relative predicate in `SacrificePermanentsEffect`'s filter context.
+- Fixed after this run (2026-11-20): Hotel of Fears now sacrifices "another creature" other than the targeted one
+  (`PermanentNotPredicate(PermanentIsTargetCardPredicate)`; `SacrificePermanentsEffectHandler` binds the entry's target permanent
+  as the target card when no rider handed it one; `HotelOfFearsTest`, `SacrificePermanentsEffectHandlerTest`).
+
+### Step 8, run 8 (2026-11-20)
+
+Family choice: of the candidate families (Draw 14, Create 17, Put 27, Return 39, Each 54, Reveal 46, Exile 189 fused names;
+Discard and Mill none), Exile has the most first halves on step 7's earlier-step list (`ExileTargetPermanentEffect` with a
+target, source or set subject). Most Exile names start with a graveyard, library or hand exile, which record no step, so the run
+took the permanent exiles plus the two graveyard records that need no result. Verdicts (ledger, step `8`): **split 6**,
+**absorbed 2**, **survivor 2**, **blocked-other 10**, **blocked-step-model 2**, **unique 3**, blocked-player-loop 0. Ratchet
+4,820 / 4,053 → 4,812 / 4,045 (8 records, 8 handlers deleted). Card text of every rewritten card checked with `get_card`.
+
+- **Split**: Dire Tactics (`ExileTargetPermanentEffect` + `ConditionalEffect(NotCondition(ControlsPermanent(Human)),
+  LoseLifeEffect(TargetToughness, you()))`; its rulings: last-known toughness, the Human checked after the exile), Archfiend's
+  Vessel (`SequenceEffect.of(ExileTargetPermanentEffect(source()), ConditionalEffect(HappenedThisWay.exiled(), token))`, "If you
+  do"), Diabolic Servitude (`SequenceEffect.of(ExileTriggeringCardFromGraveyardEffect, ReturnToHandEffect.self())`, ungated:
+  "exile it and return"), King Solomon's Frogs and Unexplained Absence (`ExileTargetPermanentEffect` over every chosen target, then
+  `DrawCardEffect(1, playersThisWay(EXILE))` / `CloakTopCardOfControllerLibraryEffect(playersThisWay(EXILE))`: one target per
+  player, so the resolver's distinct player list gives one draw or cloak per exiled permanent), Reality Shift
+  (`ManifestTopCardEffect(Fixed(1), controllerOf(target()))`). Target specs unchanged: the exile step is the only one that
+  declares a target, with the same harmful spec (the card's filter narrows it, as before).
+- **Absorbed** into `ExileTargetPermanentEffect` with a set subject (one leave batch, CR 603.10a as run 2 checked):
+  `ExileTargetAndAttachedMatchingEffect` → `allOf(attachmentsOf(target() | allTargets(), Equipment | Aura), target() |
+  allTargets())` (Soul Nova, Silence the Believers); `ExileTargetCreatureAndAllWithSameNameEffect` → `allOf(target(),
+  otherCreaturesSharing(target(), NAME))` (Sever the Bloodline; a face-down target shares its name with nothing, as before).
+- **Survivor changes.** `ManifestTopCardEffect(DynamicAmount, PlayerSubject)` and `CloakTopCardOfControllerLibraryEffect(PlayerSubject)`
+  (default `you()`, old constructors kept): each named player manifests or cloaks from their own library, through
+  `SubjectResolutionService`; their handlers gained that service (no hand-built test wiring named them).
+- **Behaviour changes.** King Solomon's Frogs and Unexplained Absence now exile every target before the first draw or cloak (the
+  old handler drew after each exile; the text reads exile, then "for each permanent exiled this way"; `UnexplainedAbsenceTest`'s
+  exile-first case passes). Archfiend's Vessel's token is gated on the exile ("If you do"; the old handler created it whether or not
+  the exile happened; no reachable state makes the exile fail, so no test fails on the old card). Reality Shift and Dire Tactics
+  apply their second sentence after the exile as the text reads, with no "if" (the old handlers skipped it when the exile was
+  replaced). The survivors' log lines win.
+- **AI.** Target polarity unchanged: every split card's target step is `ExileTargetPermanentEffect` (HARMFUL_REMOVAL through
+  `RemovalEffect`, as the records were), the riders declare no target; Sever the Bloodline's name entry in `TargetPolarityClassifier`
+  is deleted (the survivor gives the same HARMFUL_REMOVAL). The split cards' riders are now separate steps the evaluators see on
+  their own; no AI class named the deleted records but Sever's entry.
+- **Blocked, by cause**: a per-object or per-player amount of what was exiled (Swords family: Luminate Primordial's per-target
+  power, so `ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect` stays though its three one-target cards would split as
+  exile + `GainLifeEffect(TargetPower | TargetToughness, controllerOf(target()))`; Martyr's Cry; Declaration in Stone's nontoken
+  count); a token copy of a departed target (Dedicated Dollmaker, Kaya, Nemesis Trap); no same-name-token predicate (Legions to
+  Ashes); a cast permission on the cards exiled this way (Hurl Through Hell); graveyard exiles record no EXILE step and
+  `GraveyardTargetingSupport` names their records by class (`ExileSourceCardFromGraveyardThenEffect` 11 cards,
+  `ExileTargetCardFromGraveyardThenEffect`, `ExileTargetCardFromGraveyardAndGainLifeEffect`, Sphere of Annihilation's graveyard
+  half). Blocked-step-model: Forsaken City (hand-exile choice), Fortune (saddler choice). Unique: Unyielding Gatekeeper, Ugin the
+  Ineffable's linked token, `ExileSelfAndReturnFrontEffect`.
+
+**Tests** (one Gradle run, one `--tests` list per task): the 9 rewritten cards' tests, `--tests-for ManifestTopCardEffect
+CloakTopCardOfControllerLibraryEffect ExileTriggeringCardFromGraveyardEffect --max-per-class 8`, `--tests-for ExileTargetPermanentEffect
+--max-per-class 12`, Hotel of Fears, Feast of Worms, Mark for Death, Public Execution, application (`SacrificePermanentsEffectHandlerTest`,
+`ExileTargetPermanentEffectHandlerTest`, `EffectCountRatchetTest`, `SubjectResolutionServiceTest`, `StepResultsTest`,
+`CardImmutabilityArchTest`), AI `TargetPolarityGuardTest`: 48 top-level classes, 490 test cases (plus their `@Nested` suites), all
+pass. Application, AI, engine testFixtures and card-test `a`, `d`, `f`, `h`, `k`, `m`, `p`, `r`, `s`, `u` test sources compile.
+
+**For later runs.**
+
+- "Exile [one per player]. For each permanent exiled this way, its controller …" is the exile + the verb with
+  `playersThisWay(EXILE)`; a verb acting for "its controller" from their own library needs only a `PlayerSubject` (manifest and
+  cloak have one now).
+- The next prerequisite for Exile is a recorded EXILE step for graveyard, library and hand exiles (and taking those records out of
+  `GraveyardTargetingSupport`'s class list); it unlocks most of the 189 names. A per-object amount ("that creature's power" per
+  target) would finish the Swords family.
 
 ## Prompt
 

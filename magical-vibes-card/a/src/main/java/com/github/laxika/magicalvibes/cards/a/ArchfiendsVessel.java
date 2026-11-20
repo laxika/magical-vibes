@@ -12,13 +12,17 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "88")
 public class ArchfiendsVessel extends Card {
@@ -29,6 +33,8 @@ public class ArchfiendsVessel extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(
                         new EnteredFromZone(Zone.GRAVEYARD, true), new CastFromZone(Zone.GRAVEYARD, true)))),
-                new ExileSelfAndCreateTokenEffect(demon));
+                SequenceEffect.of(
+                        new ExileTargetPermanentEffect(Subjects.source()),
+                        new ConditionalEffect(HappenedThisWay.exiled(), demon)));
     }
 }

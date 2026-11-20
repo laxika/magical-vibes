@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureThenManifestEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 
 @CardRegistration(set = "FRF", collectorNumber = "46")
 @CardRegistration(set = "SOC", collectorNumber = "199")
@@ -23,6 +26,7 @@ public class RealityShift extends Card {
 
     public RealityShift() {
         target(TargetFilters.creature())
-                .addSpellEffect(new ExileTargetCreatureThenManifestEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new ManifestTopCardEffect(new Fixed(1), Subjects.controllerOf(Subjects.target())));
     }
 }

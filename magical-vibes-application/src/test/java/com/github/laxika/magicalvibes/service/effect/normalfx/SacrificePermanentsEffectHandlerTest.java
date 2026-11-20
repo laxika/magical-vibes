@@ -119,6 +119,23 @@ class SacrificePermanentsEffectHandlerTest {
         assertThat(gd.playerBattlefields.get(player1Id)).contains(first);
     }
 
+    @Test
+    @DisplayName("Without handed target cards, the filter reads the entry's target permanent as the target card")
+    void filterReadsTheEntrysTargetPermanentAsTheTargetCard() {
+        Permanent target = addPermanent(player1Id, "Targeted creature", CardType.CREATURE);
+        addPermanent(player1Id, "Other creature", CardType.CREATURE);
+        stubCount(1);
+        when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+        handler.resolve(gd, entry(player1Id, target.getId()),
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()));
+
+        verify(predicateEvaluationService, org.mockito.Mockito.atLeastOnce()).matchesPermanentPredicate(
+                any(Permanent.class), any(PermanentPredicate.class),
+                argThat(context -> target.getOriginalCard().getId().equals(context.targetCardId())));
+    }
+
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private GraveyardService graveyardService;
     @Mock private DamagePreventionService damagePreventionService;

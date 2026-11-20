@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -39,6 +40,7 @@ class HotelOfFearsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep exiles the top card, loses life equal to its mana value and lets you play it this turn")
     void upkeepExilesTopCardLosesItsManaValueAndMayPlayIt() {
         gd.planechase.faceUp.add(new PlanarObject(new HotelOfFears(), gd.nextTimestamp()));
         Card topCard = new AirElemental();
@@ -56,24 +58,64 @@ class HotelOfFearsTest extends BaseCardTest {
     }
 
     @Test
-    void chaosChoosesColorAddsDevotionCountersThenSacrificesAnotherCreature() {
+    @DisplayName("Chaos chooses a color, adds devotion counters to the target and offers only other creatures to sacrifice")
+    void chaosOffersOnlyCreaturesOtherThanTheTargetToSacrifice() {
         gd.planechase.faceUp.add(new PlanarObject(new HotelOfFears(), gd.nextTimestamp()));
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent spared = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
+        triggerChaosTargeting(target);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(fodder.getId(), spared.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spared).doesNotContain(fodder);
+        assertThat(gd.chosenSpellColor).isNull();
+    }
+
+    @Test
+    @DisplayName("The only other creature is sacrificed and the targeted creature survives")
+    void sacrificesTheOnlyOtherCreatureNotTheTarget() {
+        gd.planechase.faceUp.add(new PlanarObject(new HotelOfFears(), gd.nextTimestamp()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        triggerChaosTargeting(target);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With no other creature nothing is sacrificed and the targeted creature keeps its counters")
+    void targetedCreatureIsNeverSacrificed() {
+        gd.planechase.faceUp.add(new PlanarObject(new HotelOfFears(), gd.nextTimestamp()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        triggerChaosTargeting(target);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Air Elemental");
+    }
+
+    private void triggerChaosTargeting(Permanent target) {
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
-        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
-        harness.passBothPriorities();
-
-        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.chosenSpellColor).isNull();
     }
 }

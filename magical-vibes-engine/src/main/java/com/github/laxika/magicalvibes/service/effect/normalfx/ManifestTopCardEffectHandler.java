@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,7 @@ public class ManifestTopCardEffectHandler implements NormalEffectHandlerBean {
 
     private final ManifestService manifestService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,10 +27,13 @@ public class ManifestTopCardEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        int amount = amountEvaluationService.evaluate(gameData, ((ManifestTopCardEffect) effect).amount(),
+        var manifest = (ManifestTopCardEffect) effect;
+        int amount = amountEvaluationService.evaluate(gameData, manifest.amount(),
                 AmountContext.forStackEntry(entry, null));
-        for (int i = 0; i < amount; i++) {
-            manifestService.manifestTopCard(gameData, entry.getControllerId(), entry.getCard());
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, manifest, manifest.player())) {
+            for (int i = 0; i < amount; i++) {
+                manifestService.manifestTopCard(gameData, playerId, entry.getCard());
+            }
         }
     }
 }

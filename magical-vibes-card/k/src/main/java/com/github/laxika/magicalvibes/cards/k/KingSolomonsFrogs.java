@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentsAndControllersDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
@@ -19,6 +18,11 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "20")
 @CardRegistration(set = "MSC", collectorNumber = "312")
@@ -35,7 +39,9 @@ public class KingSolomonsFrogs extends Card {
                 "Target must be a permanent an opponent controls with mana value 3 or greater"), 0, 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new WasCast(true)),
-                        new ExileTargetPermanentsAndControllersDrawEffect());
+                        SequenceEffect.of(
+                                new ExileTargetPermanentEffect(),
+                                new DrawCardEffect(1, Subjects.playersThisWay(StepKind.EXILE))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

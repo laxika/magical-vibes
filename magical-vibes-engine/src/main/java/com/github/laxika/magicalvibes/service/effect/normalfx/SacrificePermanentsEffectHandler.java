@@ -308,6 +308,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
      * {@code PermanentNotPredicate(PermanentIsSourceCardPredicate)} for "other than this creature")
      * resolve correctly. Prefer the permanent's original (front-face) card id so DFC transforms
      * still exclude the source.
+     * A {@code PermanentIsTargetCardPredicate} reads the card a rider was handed in the entry's target cards (Feast of
+     * Worms' destroyed land) or, failing that, the entry's own target permanent (Hotel of Fears: "Put X +1/+1 counters
+     * on target creature you control ... Then sacrifice another creature").
      */
     private FilterContext filterContextFor(GameData gameData, StackEntry entry) {
         Permanent source = resolveSourcePermanent(gameData, entry);
@@ -315,7 +318,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 ? source.getOriginalCard().getId()
                 : (entry.getCard() != null ? entry.getCard().getId() : null);
         UUID targetCardId = entry.getTargetCardIds() == null || entry.getTargetCardIds().isEmpty()
-                ? null
+                ? targetPermanentCardId(gameData, entry)
                 : entry.getTargetCardIds().getFirst();
         return FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
@@ -325,6 +328,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 .withTargetCardId(targetCardId)
                 .withTriggeringPermanentId(entry.getTriggeringPermanentId())
                 .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot());
+    }
+
+    private UUID targetPermanentCardId(GameData gameData, StackEntry entry) {
+        Permanent target = entry.getTargetId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getTargetId())
+                : null;
+        return target != null ? target.getOriginalCard().getId() : null;
     }
 
     private Permanent resolveSourcePermanent(GameData gameData, StackEntry entry) {

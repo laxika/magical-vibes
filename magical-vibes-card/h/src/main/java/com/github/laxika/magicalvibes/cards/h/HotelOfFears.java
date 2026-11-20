@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,9 +25,10 @@ import java.util.List;
 @CardRegistration(set = "WHO", collectorNumber = "584")
 public class HotelOfFears extends Card {
 
+    /** "Another creature": a plane is no creature, so it means one other than the targeted creature. */
     private static final PermanentAllOfPredicate ANOTHER_CREATURE = new PermanentAllOfPredicate(List.of(
             new PermanentIsCreaturePredicate(),
-            new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
+            new PermanentNotPredicate(new PermanentIsTargetCardPredicate())));
 
     public HotelOfFears() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
