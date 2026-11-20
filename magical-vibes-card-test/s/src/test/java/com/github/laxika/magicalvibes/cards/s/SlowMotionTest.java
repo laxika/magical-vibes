@@ -183,6 +183,21 @@ class SlowMotionTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCopy);
     }
 
+    @Test
+    @DisplayName("Moving Slow Motion in response leaves the creature it enchanted as it triggered as the one sacrificed")
+    void sacrificesCreatureEnchantedAtTriggerAfterAuraMoves() {
+        Permanent original = addCreature(player2);
+        Permanent other = addCreature(player2);
+        Permanent aura = attachSlowMotion(player1, original);
+
+        advanceToUpkeep(player2);
+        aura.setAttachedTo(other.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(original).contains(other);
+    }
+
     private Permanent addCreature(Player player) {
         return harness.addToBattlefieldAndReturn(player, new GiantCockroach());
     }

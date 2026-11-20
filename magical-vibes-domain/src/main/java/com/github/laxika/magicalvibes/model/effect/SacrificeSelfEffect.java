@@ -1,25 +1,50 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+import java.util.Objects;
+
 /**
- * Sacrifices the stack entry's source permanent ("sacrifice this creature") or, for
- * {@link #ofTriggeringPermanent()}, the permanent whose event produced this triggered ability ("sacrifice that
+ * Sacrifices one named permanent: by default the stack entry's source permanent ("sacrifice this creature"). The
+ * {@code subject} names the permanent: {@link Subjects#source()}, {@link Subjects#triggering()} ("sacrifice that
  * permanent", read from the stack entry's triggering permanent; Grafted Wargear, Stitcher's Graft, the delayed
- * "sacrifice it at the beginning of the next end step" triggers). The default form requires the ability's
- * controller to still control that permanent; the flagged form instructs its current controller to sacrifice it
- * instead ("that creature's controller sacrifices it", Basalt Golem). An optional token rider is created for that
- * player only when the sacrifice succeeds ("if the player does, they create ..."). If the permanent has left the
- * battlefield, nothing happens.
+ * "sacrifice it at the beginning of the next end step" triggers), {@link Subjects#attached()} ("sacrifice it" after
+ * "if equipped creature didn't deal combat damage", Thirsting Axe), {@link Subjects#attachedAtTrigger()} ("that player
+ * sacrifices that creature" after "at the beginning of the upkeep of enchanted creature's controller": the creature
+ * the Aura enchanted as the ability triggered) or {@link Subjects#target()} / {@code target(group)}
+ * ("target creature you control deals damage ... Then sacrifice it"; the only subject that declares a target).
  *
- * @param sacrificed {@link PermanentReference#SOURCE} or {@link PermanentReference#TRIGGERING}
+ * <p>{@code sacrificer} is the player told to sacrifice it: {@link Subjects#you()} by default,
+ * {@code controllerOf(subject)} for "that creature's controller sacrifices it" (Basalt Golem), or the player a step
+ * trigger was about ("that player sacrifices it": {@link Subjects#activePlayer()} on the upkeep or end step of the
+ * enchanted permanent's controller, {@link Subjects#triggeringPlayer()} for a damaged player). A player can sacrifice
+ * only a permanent they control, so nothing happens unless the sacrificer controls it as the effect resolves. An
+ * optional token rider is created for that player only when the sacrifice succeeds ("if the player does, they create
+ * ..."). If the permanent has left the battlefield, nothing happens.
+ *
+ * @param subject                   which permanent is sacrificed
+ * @param sacrificer                who sacrifices it
+ * @param tokenForSacrificingPlayer created for the sacrificing player if they do, or {@code null}
+ * @param targetFilter              for a {@code target()} subject, what the target must be (it is still checked as
+ *                                  the effect resolves); {@code null} means a creature
  */
-public record SacrificeSelfEffect(PermanentReference sacrificed,
-                                  boolean currentControllerSacrifices,
-                                  CreateTokenEffect tokenForSacrificingPlayer)
+public record SacrificeSelfEffect(PermanentSubject subject,
+                                  PlayerSubject sacrificer,
+                                  CreateTokenEffect tokenForSacrificingPlayer,
+                                  PermanentPredicate targetFilter)
         implements CardEffect {
 
     public SacrificeSelfEffect {
-        if (sacrificed != PermanentReference.SOURCE && sacrificed != PermanentReference.TRIGGERING) {
-            throw new IllegalArgumentException("Sacrifices the source or the triggering permanent: " + sacrificed);
+        Objects.requireNonNull(subject, "subject");
+        Objects.requireNonNull(sacrificer, "sacrificer");
+        if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering
+                || subject instanceof PermanentSubject.Attached || subject instanceof PermanentSubject.AttachedAtTrigger
+                || subject instanceof PermanentSubject.Target)) {
+            throw new IllegalArgumentException("Sacrifices the source, the triggering, the attached (now or at "
+                    + "trigger) or the target permanent: " + subject);
+        }
+        if (targetFilter != null && !(subject instanceof PermanentSubject.Target)) {
+            throw new IllegalArgumentException("A target filter needs a target subject: " + subject);
         }
     }
 
@@ -32,7 +57,23 @@ public record SacrificeSelfEffect(PermanentReference sacrificed,
     }
 
     public SacrificeSelfEffect(boolean currentControllerSacrifices, CreateTokenEffect tokenForSacrificingPlayer) {
-        this(PermanentReference.SOURCE, currentControllerSacrifices, tokenForSacrificingPlayer);
+        this(Subjects.source(), sacrificerOf(Subjects.source(), currentControllerSacrifices), tokenForSacrificingPlayer,
+                null);
+    }
+
+    /** {@code subject}, sacrificed by the ability's controller. */
+    public SacrificeSelfEffect(PermanentSubject subject) {
+        this(subject, Subjects.you());
+    }
+
+    /** {@code subject}, sacrificed by {@code sacrificer}. */
+    public SacrificeSelfEffect(PermanentSubject subject, PlayerSubject sacrificer) {
+        this(subject, sacrificer, null, null);
+    }
+
+    /** A target permanent matching {@code targetFilter}, sacrificed by {@code sacrificer}. */
+    public SacrificeSelfEffect(PermanentSubject subject, PlayerSubject sacrificer, PermanentPredicate targetFilter) {
+        this(subject, sacrificer, null, targetFilter);
     }
 
     /** "Sacrifice that permanent": the stack entry's triggering permanent, by the ability's controller. */
@@ -46,17 +87,35 @@ public record SacrificeSelfEffect(PermanentReference sacrificed,
      */
     public static SacrificeSelfEffect ofTriggeringPermanent(boolean currentControllerSacrifices,
                                                             CreateTokenEffect tokenForSacrificingPlayer) {
-        return new SacrificeSelfEffect(PermanentReference.TRIGGERING, currentControllerSacrifices,
-                tokenForSacrificingPlayer);
+        return new SacrificeSelfEffect(Subjects.triggering(),
+                sacrificerOf(Subjects.triggering(), currentControllerSacrifices), tokenForSacrificingPlayer, null);
     }
 
-    /** Whether this sacrifices the ability's own source permanent rather than the triggering permanent. */
+    private static PlayerSubject sacrificerOf(PermanentSubject subject, boolean currentControllerSacrifices) {
+        return currentControllerSacrifices ? Subjects.controllerOf(subject) : Subjects.you();
+    }
+
+    /** Whether this sacrifices the ability's own source permanent. */
     public boolean sacrificesSource() {
-        return sacrificed == PermanentReference.SOURCE;
+        return subject instanceof PermanentSubject.Source;
+    }
+
+    @Override
+    public int targetGroup() {
+        return subject instanceof PermanentSubject.Target target && target.group() != null ? target.group() : -1;
+    }
+
+    @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return subject instanceof PermanentSubject.Attached;
     }
 
     @Override
     public TargetSpec targetSpec() {
+        if (subject.declaresTarget()) {
+            return TargetSpec.harmful(targetFilter == null ? TargetPredicates.creature()
+                    : TargetPredicates.permanents(targetFilter));
+        }
         // The source form implicitly acts on its own source permanent — so trigger collectors that key off
         // selfTargeting() (e.g. the spell-cast collector) carry the source id onto the stack entry.
         return sacrificesSource() ? new TargetSpec(null, false, null, true, 1) : TargetSpec.NONE;

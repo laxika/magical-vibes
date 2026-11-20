@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CascadeBluffs;
 import com.github.laxika.magicalvibes.cards.n.NettleSentinel;
+import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
 import com.github.laxika.magicalvibes.cards.s.SlipperyBogle;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AshlingTheExtinguisher.class, NettleSentinel.class, CascadeBluffs.class, SlipperyBogle.class})
+@CardUsed({AshlingTheExtinguisher.class, NettleSentinel.class, CascadeBluffs.class, SlipperyBogle.class,
+        SigardaHostOfHerons.class})
 class AshlingTheExtinguisherTest extends BaseCardTest {
 
     @Test
@@ -132,5 +134,20 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(hexproofCreature);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sigarda, Host of Herons stops Ashling's trigger from making her controller sacrifice")
+    void sigardaStopsTheSacrifice() {
+        Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
+        ashling.setAttacking(true);
+        Permanent enemyCreature = addCreatureReady(player2, new NettleSentinel());
+        Permanent sigarda = addCreatureReady(player2, new SigardaHostOfHerons());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, enemyCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enemyCreature, sigarda);
     }
 }

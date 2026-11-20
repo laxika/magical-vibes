@@ -1,19 +1,20 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import java.util.List;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
-import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "202")
 public class ThirstingAxe extends Card {
@@ -28,7 +29,7 @@ public class ThirstingAxe extends Card {
                                 new EquippedCreatureDidntDealCombatDamageToCreatureThisTurn(),
                                 new EnchantedPermanentMatches(new PermanentControlledBySourceControllerPredicate(),
                                         "you control equipped creature")))),
-                new SacrificeEnchantedCreatureEffect());
+                new SacrificeSelfEffect(Subjects.attached()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

@@ -22,7 +22,9 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilled
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -39,6 +41,7 @@ import org.springframework.stereotype.Component;
 public class MayEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final DrawService drawService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -269,8 +272,10 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             insertElseEffect(entry, e);
             return;
         }
-        boolean cannotSacrifice = e.wrapped() instanceof SacrificeEnchantedCreatureEffect
-                && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId);
+        boolean cannotSacrifice = e.wrapped() instanceof SacrificeSelfEffect sacrificeAttached
+                && (sacrificeAttached.subject() instanceof PermanentSubject.Attached
+                || sacrificeAttached.subject() instanceof PermanentSubject.AttachedAtTrigger)
+                && !canSacrificeEnchantedPermanent(gameData, entry, sacrificeAttached, choicePlayerId);
         if (optionalAction instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect sacrificeThen) {
             UUID sacrificedId = sacrificeThen.sacrificesTriggeringPermanent() && entry.getTriggeringPermanentId() != null
                     ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
@@ -368,18 +373,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                         && !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
-    private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, UUID choicePlayerId) {
-        UUID enchantedId = entry.getSourcePermanentSnapshot() != null
-                ? entry.getSourcePermanentSnapshot().getAttachedTo()
-                : null;
-        if (enchantedId == null && entry.getSourcePermanentId() != null) {
-            var aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            enchantedId = aura == null ? null : aura.getAttachedTo();
-        }
-        return enchantedId != null
-                && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId))
-                && !gameQueryService.cantBeSacrificed(gameData,
-                gameQueryService.findPermanentById(gameData, enchantedId));
+    /** Whether "that player" can sacrifice the permanent the source Aura enchants as the choice is offered. */
+    private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, SacrificeSelfEffect sacrifice,
+                                                   UUID choicePlayerId) {
+        var enchanted = subjectResolutionService.permanent(gameData, entry, sacrifice, sacrifice.subject());
+        return enchanted != null
+                && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchanted.getId()))
+                && !gameQueryService.cantBeSacrificed(gameData, enchanted);
     }
 
     private UUID targetPermanentController(GameData gameData, StackEntry entry, UUID targetId) {

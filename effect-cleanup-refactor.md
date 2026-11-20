@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i, 5j done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -395,7 +395,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | done (`DealDamageToTargetPermanentEffect` kept: not a subject sibling) |
 | 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | done (8 folded into two survivors; 13 left in the ledger) |
 | 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | done (3 folded into `BoostSelfEffect`; Hand of Vecna's choice record and `BoostTargetPermanentEffect` kept) |
-| 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | open |
+| 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | done (3 folded into `SacrificeSelfEffect`; the delayed and Animate Dead records kept) |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | open |
 | 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | open |
 | 5m | Whatever `--siblings` still lists | — | — | open |
@@ -2294,6 +2294,86 @@ compile on HEAD (`d563f5e806` changed the `StepTriggerService` constructor to `T
   the source. A merged record needs that as a property of the subject (target → source context) or an explicit choice.
 - "Gains [keyword] until end of turn" for one named permanent is `BoostSelfEffect(subject, 0, 0, keyword)`; Ogre
   Battledriver still pairs a boost with `GrantKeywordEffect(GrantScope.TRIGGERING_PERMANENT)` (step 6).
+
+### Step 5, run 5j (2026-11-20)
+
+`--family Sacrifice` / `--siblings` give the one-named-permanent sacrifices `SacrificeSelfEffect` (314 cards),
+`SacrificeEnchantedCreatureEffect` (5), `SacrificeEnchantedCreatureOnLeaveEffect` (4), `SacrificeTargetCreatureEffect` (2)
+and `SacrificePermanentDamagedPlayerControlsEffect` (1, the 4g leftover); the rest are player-choice sacrifices (4g),
+delayed sacrifices, sets or fused records.
+
+**Survivor.** `SacrificeSelfEffect(PermanentSubject subject, PlayerSubject sacrificer, CreateTokenEffect
+tokenForSacrificingPlayer, PermanentPredicate targetFilter)` replaced `PermanentReference sacrificed` and the
+`currentControllerSacrifices` flag. Every old constructor and `ofTriggeringPermanent(...)` is kept (the flag maps to
+`controllerOf(subject)`, else `you()`), so its 314 cards are untouched. New `(subject)`, `(subject, sacrificer)`,
+`(subject, sacrificer, targetFilter)`. Subjects: `source()`, `triggering()`, `attached()`, `target([group])`; a target
+filter needs `target()`. `targetSpec()`: the self-targeting marker for `source()`, harmful creature (or
+`permanents(targetFilter)`) for `target()`, else `NONE`; `targetGroup()` is the target subject's group (the old
+`SacrificeTargetCreatureEffect` component); `resolvesAgainstAttachedPermanent()` for `attached()`. `sacrificesSource()`
+is kept, so every engine reader of the source form (mana-ability inline path in `ActivatedAbilityExecutionService`,
+`TriggeredAbilityQueueService`, `MayAbilityHandlerService`, `DestructionSupport.sacrificeSource`,
+`ForcedCostOrElseEffectHandler`) is unchanged. The handler resolves both subjects through `SubjectResolutionService`
+and does nothing unless the sacrificer controls the permanent (CR 701.21a), a target still matches its filter (creature
+when none; CR 608.2b), it can be sacrificed, and Sigarda allows it (`canEffectCauseSacrifice`); then the old step
+departure (`departAsStep`, or `sacrificeThenContinue` for the token rider). The Master, Multiplied stays in
+`DepartureService.isUnaffected`; the scheme abandon branch is unchanged. No manafx handler exists for the record: the
+mana-ability sacrifice is inline and matches the class, which did not change (5b's concern).
+
+**Deleted** (3 records, 3 handlers; ratchet 4,886 / 4,119): `SacrificeEnchantedCreatureEffect` →
+`(attached())` (Thirsting Axe: "if equipped creature didn't deal combat damage ..., sacrifice it", read as it resolves)
+or `(attachedAtTrigger(), activePlayer())` ("that player sacrifices that creature / it / that artifact" on the upkeep /
+end step of the enchanted permanent's controller: Lingering Death, Soul Tithe, Slow Motion, Curse Artifact; "that
+creature" is the permanent the trigger condition named, as for Paroxysm and Venarian Gold in step 3; the old handler
+read the recorded `triggeringPermanentControllerId`, which is that active player);
+`SacrificeTargetCreatureEffect(g)` → `(target(g))` (Burn Together, Special Move); `SacrificePermanentDamagedPlayerControlsEffect`
+→ `(target(), triggeringPlayer(), creature ∧ PermanentControlledByTriggeringPlayerPredicate)` (Ashling). 8 card files
+rewritten by a deleted scratch script. Readers converted: `DestructionSupport`'s forced-cost else-branch (`SacrificeSelfEffect`
+with `PermanentSubject.Attached` or `AttachedAtTrigger`, through an `ObjectProvider<SacrificeSelfEffectHandler>`), `ForcedCostOrElseEffectHandler.
+killsBeforeChangingAnything` (`Source`, `Attached` or `AttachedAtTrigger`), `MayEffectHandler`'s "can that player
+sacrifice it" check (Curse Artifact; now the resolver on the effect's subject). The declined-payment synthetic entry in
+`MayPenaltyChoiceHandlerService` (enchanted-controller form) now carries the trigger-time host as its
+`attachedPermanentSnapshot`, read from the Aura's trigger-time source snapshot, so `attachedAtTrigger()` works there. No AI code read the absorbed records (`TargetPolarityClassifier` had no entry for them or the
+survivor; unchanged).
+
+**The `source()` fallback.** A temporary probe that threw when a `source()` sacrifice resolved on an entry with no
+source permanent and a target never fired across every test class of the 314 `SacrificeSelfEffect` cards (plus the
+handlers that call `SacrificeSelfEffectHandler` directly); step 3 had already made the lookup strict.
+
+**Behaviour changes.** (1) Sigarda, Host of Herons ("spells and abilities your opponents control can't cause you to
+sacrifice permanents") now stops every `SacrificeSelfEffect` whose sacrificer isn't the ability's controller: Ashling,
+Basalt Golem, the evoke and end-step "its controller sacrifices it" forms; only the enchanted-creature record checked
+it before. Test: `AshlingTheExtinguisherTest.sigardaStopsTheSacrifice`. (2) Burn Together / Foot Toss: "then
+sacrifice it" is the spell's controller; if another player gained control of the creature, nothing is sacrificed
+(CR 701.21a), where the old handler made its new controller sacrifice it. Test:
+`CallousSellSwordTest.adventureDoesNotSacrificeASourceAnotherPlayerNowControls`. (3) The target and Ashling sacrifices
+are a step departure (CR 616.1 question first) instead of `sacrificeAndLog`; Ashling's target is rechecked against its
+filter as it resolves. (4) An unattached Aura's sacrifice records an empty departure result and no longer logs a skip. (5) Lingering Death,
+Soul Tithe, Slow Motion and Curse Artifact sacrifice the permanent the Aura enchanted as the ability triggered, not the
+one it enchants as it resolves (Oracle "that creature" / "it" / "that artifact" refers to the trigger condition's
+permanent). Tests: `SlowMotionTest.sacrificesCreatureEnchantedAtTriggerAfterAuraMoves` (new);
+`SoulTitheTest`'s Aura Graft case rewritten (it asserted the old current-host reading; now "still sacrifices the
+permanent it enchanted as it triggered"). Soul Tithe's {X} is still the current host's mana value
+(`EnchantedPermanentManaValue`); "its mana value" is arguably the trigger-time permanent's too, not changed here.
+
+**Tests**: 376 classes, 3,766 test cases, all pass (then, after the `attachedAtTrigger()` follow-up, 76 suites /
+670 cases: the four Aura cards, Thirsting Axe, Paroxysm, Venarian Gold, every enchanted-controller may-pay card, the
+`ForcedCostOrElseEffect` / `MayEffect` sample and the forced-cost application tests): every test class of a `SacrificeSelfEffect` card (with the probe),
+the rewritten cards' tests, Sigarda, Animate Dead, a 30-per-class sample of `ForcedCostOrElseEffect` and `MayEffect`
+cards, `TargetPolarityGuardTest`, the two ratchets, `DestructionSupportFallbackTest`, `SubjectResolutionServiceTest`,
+the application tests naming `SacrificeSelfEffect`.
+
+**For later runs.**
+
+- Kept (ledger, `blocked-other`): `SacrificeEnchantedCreatureOnLeaveEffect` reads the departed Aura's
+  `chosenPermanentId` when it never attached (Animate Dead, Necromancy, Dance of the Dead; Reality Acid), which no
+  subject reads; it folds into `(attached(), controllerOf(attached()))` once one does. The delayed records
+  (`SacrificeSelfAtEndStepEffect`, `SacrificeTargetPermanentAtEndStepEffect`, `SacrificeAtEndOfCombatEffect`,
+  `SacrificeSelfAtNextCleanupEffect`) use `TemporaryGlobalTriggeredAbility`, not `DelayedPermanentActions` (5a's note).
+  `SacrificeSelfUnlessEscapedEffect` is a condition wrapper (step 9), `SacrificeSelfThenEffect` fused (step 8),
+  `SacrificeEachMatchingPermanentEffect` a `controlledBy` set (per-player Sigarda skip, sacrificed together).
+- `PermanentReference` lost its Sacrifice reader; the rest of 5i's list stands.
+- A sacrifice "that player" on an enchanted-controller step trigger is `activePlayer()`; `triggeringPlayer()` does not
+  work there for the end step (its entry's `targetId` is the enchanted permanent).
 
 ## Prompt
 

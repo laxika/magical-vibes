@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +18,7 @@ public class CurseArtifact extends Card {
         target(TargetFilters.artifact())
                 .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                         new MayEffect(
-                                new SacrificeEnchantedCreatureEffect(),
+                                new SacrificeSelfEffect(Subjects.attachedAtTrigger(), Subjects.activePlayer()),
                                 "Sacrifice that artifact?",
                                 new DealDamageToPlayersEffect(2, Subjects.triggeringPlayer()),
                                 MayChoicePlayer.ACTIVE_PLAYER));

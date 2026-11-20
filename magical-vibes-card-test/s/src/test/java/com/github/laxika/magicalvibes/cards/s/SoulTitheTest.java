@@ -182,8 +182,8 @@ class SoulTitheTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Moving the Aura before resolution makes the newly enchanted permanent be sacrificed")
-    void sacrificeUsesCurrentAttachmentAtResolution() {
+    @DisplayName("Moving the Aura before resolution still sacrifices the permanent it enchanted as it triggered")
+    void sacrificeUsesAttachmentAtTrigger() {
         Permanent original = addCreatureReady(player2, new GrizzlyBears());
         Permanent replacement = addCreatureReady(player2, new GrizzlyBears());
         attachSoulTithe(original);
@@ -198,8 +198,8 @@ class SoulTitheTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(original).doesNotContain(replacement);
-        harness.assertInGraveyard(player1, "Soul Tithe");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacement).doesNotContain(original);
+        assertThat(aura.getAttachedTo()).isEqualTo(replacement.getId());
     }
 
     @Test

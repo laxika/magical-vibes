@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -23,7 +24,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-
 import java.util.List;
 
 @CardRegistration(set = "TMC", collectorNumber = "26")
@@ -63,7 +63,7 @@ public class SpecialMove extends Card {
                         "Foot Toss — Target creature you control deals damage equal to its power to any other target, then sacrifice it",
                         List.<CardEffect>of(
                                 new TargetCreatureDealsPowerDamageToAnyTargetEffect(2, 1),
-                                new SacrificeTargetCreatureEffect(2)),
+                                new SacrificeSelfEffect(Subjects.target(2))),
                         List.of(anyTarget, controlledCreature)).withDistinctTargets()
         ), 2));
     }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -208,5 +209,21 @@ class CallousSellSwordTest extends BaseCardTest {
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(source.getCard());
+    }
+
+    @Test
+    @DisplayName("Burn Together doesn't make another player sacrifice its source after they gained control of it")
+    void adventureDoesNotSacrificeASourceAnotherPlayerNowControls() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        CallousSellSword card = new CallousSellSword();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAdventure(player1, 0, List.of(source.getId(), player2.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(source);
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,16 +14,21 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Sacrifices the stack entry's source permanent, or its triggering permanent for the triggering form, as a resolution
- * step. A player can sacrifice only a permanent they control (CR 701.21a), so the default form does nothing unless the
- * ability's controller still controls it, and nothing happens when it has left the battlefield or can't be
- * sacrificed. The step records its
+ * Sacrifices the permanent the effect's subject names (the source, the triggering, the attached or the target
+ * permanent, found by {@link SubjectResolutionService}) as a resolution step. The effect's sacrificer is told to
+ * sacrifice it, and a player can sacrifice only a permanent they control (CR 701.21a), so nothing happens unless the
+ * sacrificer controls it as the effect resolves; nor when it has left the battlefield, can't be sacrificed, is a target
+ * that is no longer legal (CR 608.2b), or the sacrificer's permanents can't be sacrificed by the effect's controller's
+ * spells and abilities (Sigarda, Host of Herons). The step records its
  * {@link com.github.laxika.magicalvibes.model.DepartureResult} (none when it couldn't sacrifice anything) for an "if
  * you do" step after it, and a CR 616.1 question about how the permanent leaves ends the step
  * ({@link DepartureService#departAsStep}). The form with a token for the sacrificing player creates it for the
@@ -41,6 +45,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
     private final SchemeAbandonSupport schemeAbandonSupport;
     private final DepartureService departureService;
     private final StepDepartureSupport stepDepartureSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,22 +60,42 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
             schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
-        Permanent self = subjectResolutionService.permanent(
-                gameData, entry, effect, Subjects.of(sacrifice.sacrificed()));
-        var currentControllerId = self == null ? null : gameQueryService.findPermanentController(gameData, self.getId());
-        if (currentControllerId == null
-                || !sacrifice.currentControllerSacrifices() && !currentControllerId.equals(entry.getControllerId())
-                || gameQueryService.cantBeSacrificed(gameData, self)) {
+        Permanent sacrificed = subjectResolutionService.permanent(gameData, entry, effect, sacrifice.subject());
+        UUID currentControllerId = sacrificed == null ? null
+                : gameQueryService.findPermanentController(gameData, sacrificed.getId());
+        UUID sacrificerId = currentControllerId == null ? null
+                : subjectResolutionService.player(gameData, entry, effect, sacrifice.sacrificer());
+        if (currentControllerId == null || !currentControllerId.equals(sacrificerId)
+                || sacrifice.subject().declaresTarget() && !isStillLegalTarget(gameData, entry, sacrifice, sacrificed)
+                || gameQueryService.cantBeSacrificed(gameData, sacrificed)
+                || !gameQueryService.canEffectCauseSacrifice(gameData, sacrificerId, entry.getControllerId())) {
             entry.recordDepartures(List.of());
             return;
         }
 
         if (sacrifice.tokenForSacrificingPlayer() == null) {
             departureService.departAsStep(gameData, entry, effect,
-                    DepartureBatch.of(List.of(DepartureIntent.sacrifice(self.getId()))));
+                    DepartureBatch.of(List.of(DepartureIntent.sacrifice(sacrificed.getId()))));
             return;
         }
-        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, self.getId(), this);
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sacrificed.getId(), this);
+    }
+
+    /**
+     * A target that no longer matches what it was chosen as is illegal and isn't affected (CR 608.2b); a spell with
+     * another, still legal target resolves without it.
+     */
+    private boolean isStillLegalTarget(GameData gameData, StackEntry entry, SacrificeSelfEffect sacrifice,
+                                       Permanent target) {
+        if (sacrifice.targetFilter() == null) {
+            return gameQueryService.isCreature(gameData, target);
+        }
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withTriggeringPlayerId(entry.getTriggeringPlayerId());
+        return predicateEvaluationService.matchesPermanentPredicate(target, sacrifice.targetFilter(), filterContext);
     }
 
     /** "If the player does, they create …": the token goes to the player who sacrificed it. */

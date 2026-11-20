@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSource
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -111,7 +110,6 @@ public class DestructionSupport {
     private final PhasingService phasingService;
     private final ExileSourceCardFromGraveyardEffectHandler exileSourceCardFromGraveyardEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
-    private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
     private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
     private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
@@ -127,6 +125,7 @@ public class DestructionSupport {
     private final ObjectProvider<ExileTargetPermanentEffectHandler> exileTargetPermanentEffectHandlerProvider;
     private final ObjectProvider<TapUntapSupport> tapUntapSupportProvider;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
+    private final ObjectProvider<SacrificeSelfEffectHandler> sacrificeSelfEffectHandlerProvider;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -871,10 +870,12 @@ public class DestructionSupport {
                 bounceSupport.applyReturnSelfToHand(gameData, entry);
             } else if (elseEffect instanceof EnergyCountersEffect energyCounters) {
                 energyCountersEffectHandler.resolve(gameData, entry, energyCounters);
-            } else if (elseEffect instanceof SacrificeEnchantedCreatureEffect sacrificeEnchanted) {
+            } else if (elseEffect instanceof SacrificeSelfEffect sacrificeEnchanted
+                    && (sacrificeEnchanted.subject() instanceof PermanentSubject.Attached
+                    || sacrificeEnchanted.subject() instanceof PermanentSubject.AttachedAtTrigger)) {
                 // "that player sacrifices it unless they pay {X}" (Soul Tithe) — the enchanted
                 // permanent, not the Aura, is sacrificed by its own controller.
-                sacrificeEnchantedHandler.resolve(gameData, entry, sacrificeEnchanted);
+                sacrificeSelfEffectHandlerProvider.getObject().resolve(gameData, entry, sacrificeEnchanted);
             } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect unblockable) {
                 // "it gains 'this creature can't be blocked' until end of turn unless defending
                 // player sacrifices a creature" (Ogre Marauder) — the attacking source.

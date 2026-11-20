@@ -2435,6 +2435,14 @@ public class MayPenaltyChoiceHandlerService {
         syntheticEntry.setAttackedTargetId(ability.attackedTargetId());
         if (effect.payerIsEnchantedController()) {
             syntheticEntry.setTriggeringPermanentControllerId(ability.controllerId());
+            // "That player sacrifices it": the permanent the Aura enchanted as the ability triggered, which the
+            // source snapshot taken then records.
+            Permanent auraAtTrigger = ability.sourcePermanentSnapshot();
+            Permanent enchantedAtTrigger = auraAtTrigger == null || auraAtTrigger.getAttachedTo() == null ? null
+                    : gameQueryService.findPermanentById(gameData, auraAtTrigger.getAttachedTo());
+            if (enchantedAtTrigger != null) {
+                syntheticEntry.setAttachedPermanentSnapshot(new Permanent(enchantedAtTrigger));
+            }
         }
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

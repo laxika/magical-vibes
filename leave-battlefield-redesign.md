@@ -644,7 +644,7 @@ Steps add notes here for later steps, under their number.
   - `DestructionSupport.sacrificeSource`: `departAsStep(gd, entry, null, …)` (always `departNow`), since the
     forced-cost fallback effects run in one synchronous loop, also from choice completions with synthetic entries.
 - Nested dispatches (`SacrificeSelfThenDealDamageToEnteringCreatureEffectHandler`,
-  `DestructionSupport` calling `SacrificeEnchantedCreatureEffectHandler` for Soul Tithe) are not the step, so they
+  `DestructionSupport` calling `SacrificeSelfEffectHandler` with an `attached()` subject for Soul Tithe) are not the step, so they
   never pend: `departNow` asks and reruns inside a marked handler's window, otherwise the old fallback applies.
 - Rules fixes along the way: Furnace Scamp and Whispering Specter now deal damage / force discards only if the
   creature was sacrificed ("if you do"); Soul Echo, Champion, the four `SacrificeUnless*` immediate branches,
