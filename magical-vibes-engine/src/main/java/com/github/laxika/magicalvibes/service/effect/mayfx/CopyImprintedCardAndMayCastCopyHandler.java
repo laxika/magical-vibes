@@ -1,31 +1,70 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileNormalCostCopySupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import java.util.List;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 /**
- * Accept/decline half of Elite Arcanist's copy ability. A declined copy is removed from the exile
- * zone it was parked in, since a copy of a card outside the stack or battlefield ceases to exist
- * (CR 707.10a).
+ * Accept/decline half of {@link CopyImprintedCardAndMayCastCopyEffect}. A declined copy is removed from the exile zone
+ * it was parked in, since a copy of a card outside the stack or battlefield ceases to exist (CR 707.10a). An accepted
+ * copy of an imprinted card is cast for free through the free-cast queue; a copy of a card a card subject named is cast
+ * as part of the resolution with the effect's cast options (split halves, a modal spell's mode, X when its costs are
+ * paid, the life loss and the "if you do" rider after the cast).
  */
 @Component
 @RequiredArgsConstructor
 public class CopyImprintedCardAndMayCastCopyHandler implements MayEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    private final ExileCastTargetSupport exileCastTargetSupport;
+    private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
+    private final PlayerInputService playerInputService;
+    private final SpellCastingService spellCastingService;
+    private final ExileNormalCostCopySupport exileNormalCostCopySupport;
+    @Autowired
+    @Lazy
+    private SplitCardCastSupport splitCardCastSupport;
+    @Autowired
+    @Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    @Lazy
+    private ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,6 +74,7 @@ public class CopyImprintedCardAndMayCastCopyHandler implements MayEffectHandlerB
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card copy = ability.sourceCard();
+        CopyImprintedCardAndMayCastCopyEffect effect = copyEffect(ability);
 
         if (!accepted) {
             gameData.removeFromExile(copy.getId());
@@ -43,7 +83,146 @@ public class CopyImprintedCardAndMayCastCopyHandler implements MayEffectHandlerB
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (effect.cards() == null) {
+            exileFreeCastQueueSupport.queueCopiesForFreeCast(gameData, player.getId(), List.of(copy.getId()));
+            return;
+        }
 
-        exileFreeCastQueueSupport.queueCopiesForFreeCast(gameData, player.getId(), List.of(copy.getId()));
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(copy.getId());
+        if (exiledEntry == null || copy.hasType(CardType.LAND)) {
+            gameData.removeFromExile(copy.getId());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (SplitCardCastSupport.isSplitCard(copy)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), copy,
+                    !effect.withoutPayingManaCost(),
+                    SplitCardCast.ExileCast.ofCopy().losingLifeOnCast(effect.lifeLossOnCast()), Integer.MAX_VALUE,
+                    effect.afterSuccessfulCastEffect(), ability.sourcePermanentId())) {
+                gameLogService.append(gameData, GameLog.cardThen(copy,
+                        " has no half that can be cast and the copy ceases to exist."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (effect.withoutPayingManaCost()) {
+            gameData.setExilePlayWithoutPayingManaCost(copy.getId(), true);
+            ChooseOneEffect modal = singleChoiceModal(copy);
+            if (modal != null) {
+                Map<String, Integer> modes = new LinkedHashMap<>();
+                for (int mode = 0; mode < modal.options().size(); mode++) {
+                    if (modal.options().get(mode).handOnly()) continue;
+                    modes.put(modal.options().get(mode).label(), mode);
+                }
+                // CR 601.2b: a modal spell's mode is chosen as it is cast, before it can be responded to.
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        player.getId(), null, null,
+                        new ChoiceContext.ExileCopyCastModeChoice(ability, modes),
+                        new ArrayList<>(modes.keySet()), "Choose a mode for " + copy.getName() + "."));
+                return;
+            }
+        } else if (exileNormalCostCopySupport.beginXValueChoice(gameData, player, copy, null, ability)) {
+            return;
+        }
+
+        castCopy(gameData, player, ability, effect, 0);
+    }
+
+    /** Casts the copy with the mode the caster chose for it. */
+    public void completeModeChoice(GameData gameData, Player player, String choice,
+                                   ChoiceContext.ExileCopyCastModeChoice context) {
+        Integer mode = context.modes().get(choice);
+        if (mode == null) throw new IllegalStateException("Invalid mode choice");
+        gameData.interaction.clearAwaitingInput();
+        PendingMayAbility ability = context.ability();
+        CopyImprintedCardAndMayCastCopyEffect effect = copyEffect(ability);
+        if (gameData.findExiledCard(ability.sourceCard().getId()) == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        castCopy(gameData, player, ability, effect, mode);
+    }
+
+    private static CopyImprintedCardAndMayCastCopyEffect copyEffect(PendingMayAbility ability) {
+        return ability.effects().stream()
+                .filter(CopyImprintedCardAndMayCastCopyEffect.class::isInstance)
+                .map(CopyImprintedCardAndMayCastCopyEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static ChooseOneEffect singleChoiceModal(Card card) {
+        return card.getSpellEffects().stream()
+                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(modal -> modal.choicesRequired() == 1 && !modal.modesMayRepeat())
+                .findFirst().orElse(null);
+    }
+
+    /** Resumes the copy cast once the caster has announced X for the cost being paid. */
+    public void resumeCastWithX(GameData gameData, Player player, PendingMayAbility ability, int xValue) {
+        Card copy = ability.sourceCard();
+        CopyImprintedCardAndMayCastCopyEffect effect = copyEffect(ability);
+        if (gameData.findExiledCard(copy.getId()) == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        castCopy(gameData, player, ability, effect, xValue);
+    }
+
+    private void castCopy(GameData gameData, Player player, PendingMayAbility ability,
+                          CopyImprintedCardAndMayCastCopyEffect effect, int xValue) {
+        Card copy = ability.sourceCard();
+        StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(copy);
+        List<CardEffect> spellEffects = new ArrayList<>(copy.getCastingCostsAndSpellEffects());
+        if (EffectResolution.needsTarget(copy) || EffectResolution.needsSpellTarget(spellEffects)) {
+            List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(
+                    gameData, copy, player.getId());
+            boolean hasLegalTargets = copy.getMaxTargets() > 1
+                    ? exileCastTargetSupport.hasLegalTargetSet(gameData, copy, player.getId())
+                    : !firstCandidates.isEmpty();
+            if (!hasLegalTargets) {
+                gameData.removeFromExile(copy.getId());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
+                    copy, player.getId(), spellEffects, spellType, true, List.of(), 0, true,
+                    effect.lifeLossOnCast(), false, false, effect.afterSuccessfulCastEffect(),
+                    ability.sourcePermanentId(), xValue));
+            playerInputService.beginPermanentChoice(gameData, player.getId(), firstCandidates,
+                    "Choose a target for " + copy.getName() + ".");
+            return;
+        }
+
+        try {
+            spellCastingService.playCardFromExileAsResolutionCast(
+                    gameData, player, copy.getId(), xValue, (UUID) null, true);
+            exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, copy, player.getId(),
+                    ability.sourcePermanentId(), effect.afterSuccessfulCastEffect());
+            applyLifeLoss(gameData, player, copy, effect.lifeLossOnCast());
+        } catch (IllegalStateException ex) {
+            if (effect.withoutPayingManaCost() && effect.lifeLossOnCast() == 0
+                    && effect.afterSuccessfulCastEffect() == null
+                    && ex.getMessage() != null && ex.getMessage().contains("additional cast cost is not supported")) {
+                // The exile cast cannot pay this additional cost; the free-cast queue asks the caster to
+                // choose how to pay it (Demand Answers' discard or sacrifice).
+                exileFreeCastQueueSupport.queueCopiesForFreeCast(gameData, player.getId(), List.of(copy.getId()));
+                return;
+            }
+            gameData.removeFromExile(copy.getId());
+            gameLogService.append(gameData, GameLog.cardThen(copy,
+                    " can't be cast and ceases to exist."));
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * "If you do, you lose N life": the loss follows the cast (CR 608.2c). It is a step of its own of the parked
+     * resolution that offered the cast, so a Lich's Duel Mastery sacrifice replacing it has its death replacements
+     * chosen before any life is lost (CR 616.1).
+     */
+    public void applyLifeLoss(GameData gameData, Player player, Card copy, int amount) {
+        lifeSupport.loseLifeAsStepOfParkedResolution(gameData, Map.of(player.getId(), amount), copy.getName());
     }
 }

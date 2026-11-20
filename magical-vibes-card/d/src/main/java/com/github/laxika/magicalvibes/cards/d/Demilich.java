@@ -6,11 +6,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnColoredCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,8 +36,9 @@ public class Demilich extends Card {
                 new SpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER)));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard), 0, 1)
                 .addTrigger(Triggers.attacks(),
-                        new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                instantOrSorcery, ownGraveyard, false));
+                        SequenceEffect.of(
+                                ExileGraveyardCardsEffect.upToOneTargetFromControllerGraveyard(instantOrSorcery),
+                                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)).payingItsCosts()));
         addCastingCost(new ExileNCardsFromGraveyardCost(4, null, instantOrSorcery, true));
         addCastingOption(new GraveyardCast());
     }

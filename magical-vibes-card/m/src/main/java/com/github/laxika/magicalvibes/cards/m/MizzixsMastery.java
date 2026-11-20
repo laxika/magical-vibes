@@ -6,11 +6,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,7 +38,9 @@ public class MizzixsMastery extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{R}{R}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(instantOrSorcery, ownGraveyard),
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(instantOrSorcery),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))),
                 new ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect()));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard));
         addSpellEffect(new ExileSpellEffect());

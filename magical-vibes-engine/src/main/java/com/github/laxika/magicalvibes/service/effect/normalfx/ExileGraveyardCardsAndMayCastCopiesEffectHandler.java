@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsAndMayCastCopiesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -46,9 +48,8 @@ public class ExileGraveyardCardsAndMayCastCopiesEffectHandler implements NormalE
         }
 
         List<Card> copies = new ArrayList<>();
-        ExileTargetCardFromGraveyardAndMayCastCopyEffect mayCastEffect =
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        copyEffect.filter(), copyEffect.scope(), 0, false, false);
+        CopyImprintedCardAndMayCastCopyEffect mayCastEffect =
+                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)).payingItsCosts();
         List<UUID> validGraveyardOwners = copyEffect.scope()
                 .graveyardOwners(gameData.orderedPlayerIds, entry.getControllerId());
         for (UUID targetCardId : targetCardIds) {

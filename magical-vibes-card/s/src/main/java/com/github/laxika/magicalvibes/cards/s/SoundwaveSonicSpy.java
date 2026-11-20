@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -37,11 +40,10 @@ public class SoundwaveSonicSpy extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsTokenPredicate()))),
                 TriggerOptions.ONE_OR_MORE,
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        new CardAllOfPredicate(List.of(instantOrSorcery,
-                                new CardManaValueEqualsEventValuePredicate())),
-                        GraveyardSearchScope.OPPONENT_GRAVEYARD,
-                        new TransformSelfEffect()));
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.oneTargetFromOpponentGraveyard(new CardAllOfPredicate(List.of(
+                                instantOrSorcery, new CardManaValueEqualsEventValuePredicate()))),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)).ifCastThen(new TransformSelfEffect())));
     }
 
     @Override

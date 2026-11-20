@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
@@ -54,7 +57,8 @@ public class JacobFrye extends Card {
                 .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                                 .withFilter(new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)),
                         TriggerOptions.ONE_OR_MORE,
-                        new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                ASSASSIN_OR_FREERUNNING, ownGraveyard, false));
+                        SequenceEffect.of(
+                                ExileGraveyardCardsEffect.upToOneTargetFromControllerGraveyard(ASSASSIN_OR_FREERUNNING),
+                                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)).payingItsCosts()));
     }
 }

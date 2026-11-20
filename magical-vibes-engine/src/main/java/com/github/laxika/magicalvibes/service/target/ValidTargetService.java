@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCar
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -2279,12 +2278,6 @@ public class ValidTargetService {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
         } else if (effect instanceof GrantJumpStartToTargetGraveyardCardEffect) {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
-        } else if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect e) {
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
-            return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
-                    || (graveyardOwnerId != null
-                    && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                            .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId,
                     gameData, controllerId, null, null, xValue);

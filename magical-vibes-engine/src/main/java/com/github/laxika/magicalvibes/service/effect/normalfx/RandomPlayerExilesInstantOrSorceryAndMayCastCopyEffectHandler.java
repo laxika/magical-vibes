@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,9 +33,8 @@ import java.util.stream.IntStream;
 public class RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffectHandler
         implements NormalEffectHandlerBean {
 
-    private static final ExileTargetCardFromGraveyardAndMayCastCopyEffect COPY_EFFECT =
-            new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                    null, GraveyardSearchScope.ALL_GRAVEYARDS);
+    private static final CopyImprintedCardAndMayCastCopyEffect COPY_EFFECT =
+            CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE));
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;

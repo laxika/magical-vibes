@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -16,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -51,6 +54,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,6 +64,9 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardsEffect) effect;
+        // The subject is read before this step's own (empty) result replaces an earlier exile step's.
+        List<SubjectResolutionService.LocatedCard> subjectCards = e.cards() == null ? List.of()
+                : subjectResolutionService.locatedCards(gameData, entry, e, e.cards());
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         switch (e.scope()) {
             case OWN -> resolveOwn(gameData, entry, e, entry.getControllerId());
@@ -77,6 +84,31 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry, e);
             case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry, e);
             case EACH_OPPONENT_KEEP -> resolveEachOpponentKeep(gameData, entry, e);
+            case CARDS -> resolveSubjectCards(gameData, entry, e, subjectCards);
+        }
+    }
+
+    /**
+     * "Exile it from your graveyard": each card the card subject names that is in a graveyard is exiled into its
+     * owner's exile, tracked with the source permanent when the effect says so; a card the subject names elsewhere (a
+     * discarded card a replacement put into exile instead) is not.
+     */
+    private void resolveSubjectCards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e,
+                                     List<SubjectResolutionService.LocatedCard> cards) {
+        for (SubjectResolutionService.LocatedCard located : cards) {
+            if (located.zone() != Zone.GRAVEYARD) {
+                continue;
+            }
+            Card card = located.card();
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
+            if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+                exileService.exileCard(gameData, located.ownerId(), card, entry.getSourcePermanentId());
+            } else {
+                exileService.exileCard(gameData, located.ownerId(), card);
+            }
+            recordExiled(entry, List.of(card), located.ownerId());
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", card,
+                    " from " + gameData.playerIdToName.get(located.ownerId()) + "'s graveyard."));
         }
     }
 
@@ -225,6 +257,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
      */
     private void resolveTargetAnyGraveyardCards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
         boolean controllerGraveyard = e.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD;
+        Integer triggerEventValue = triggerEventValue(entry);
         if (e.eventValueFilter() != null || controllerGraveyard) {
             entry.setEventValue(0);
         }
@@ -256,12 +289,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
 
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-            // The filter is judged as the target was chosen against it: with the ability's X and source, as it is or
-            // last existed ("creature card with mana value X", Sequence Engine; "less than Nahiri's loyalty").
+            // The filter is judged as the target was chosen against it: with the ability's X, the trigger's event value
+            // and its source, as it is or last existed ("creature card with mana value X", Sequence Engine; "less than
+            // Nahiri's loyalty").
             if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(),
                     entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
                     entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue(),
-                    entry.getSourcePermanentSnapshot())) {
+                    entry.getSourcePermanentSnapshot(), triggerEventValue)) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                                 + CardPredicateUtils.describeFilter(e.filter()) + ")."));
                 continue;
@@ -316,10 +350,20 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry,
                                             ExileGraveyardCardsEffect effect) {
-        List<UUID> targetCardIds = entry.getTargetCardIdsForEffect(effect);
+        // A spell's single graveyard target rides on its target id ("exile target instant or sorcery card from an
+        // opponent's graveyard", Flawless Forgery); an ability's on its target card ids.
+        List<UUID> targetCardIds = new ArrayList<>();
+        if (entry.getTargetId() != null && entry.getTargetZone() == Zone.GRAVEYARD) {
+            targetCardIds.add(entry.getTargetId());
+        }
+        for (UUID targetCardId : entry.getTargetCardIdsForEffect(effect)) {
+            if (!targetCardIds.contains(targetCardId)) {
+                targetCardIds.add(targetCardId);
+            }
+        }
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
 
-        if (targetCardIds == null || targetCardIds.isEmpty()) {
+        if (targetCardIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (no targets)."));
             return;
         }
@@ -338,8 +382,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             if (graveyardOwnerId == null || graveyardOwnerId.equals(entry.getControllerId())) {
                 continue;
             }
-            if (effect.filter() != null
-                    && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
+            if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(),
+                    entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
+                    entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue(),
+                    entry.getSourcePermanentSnapshot(), triggerEventValue(entry))) {
                 continue;
             }
             UUID trackingPermanentId = effect.trackWithSource() ? entry.getSourcePermanentId() : null;
@@ -570,6 +616,14 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         } else {
             gameData.setImprintedCard(entry.getCard(), card);
         }
+    }
+
+    /**
+     * The value of the event a triggered ability triggered on ("mana value equal to the damage dealt", Soundwave), read
+     * before this step writes its own count; {@code null} for a spell or an activated ability.
+     */
+    private static Integer triggerEventValue(StackEntry entry) {
+        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null;
     }
 
     private static void recordExiled(StackEntry entry, List<Card> cards, UUID ownerId) {

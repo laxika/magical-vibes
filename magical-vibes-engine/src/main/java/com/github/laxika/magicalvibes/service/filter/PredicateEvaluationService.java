@@ -119,6 +119,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSurveilledThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostXPredicate;
@@ -1350,6 +1351,9 @@ public class PredicateEvaluationService {
             // Bound to the event's value by the matchesCardPredicate overload that is given one (bindEventValue).
             case CardManaValueEqualsEventValuePredicate ignored -> false;
             case CardManaValueAtMostEventValuePredicate ignored -> false;
+            // Bound to its cards' card types by the handler that has the resolving entry
+            // (SubjectResolutionService.bindCardSubjects).
+            case CardSharesCardTypeWithCardsPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {

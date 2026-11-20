@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -16,6 +17,12 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -40,6 +47,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.List;
@@ -133,6 +141,36 @@ public class SubjectResolutionService {
         return switch (subject) {
             case CardSubject.CardsThisWay thisWay -> cardsThisWay(gameData, entry, thisWay.kind());
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
+        };
+    }
+
+    /**
+     * {@code filter} with each {@link CardSharesCardTypeWithCardsPredicate} bound to the card types the cards its subject
+     * names have as the effect applies ("a card that doesn't share a card type with the discarded card"): it becomes
+     * "is any of those types", which matches nothing when the subject names no card. A filter without the predicate is
+     * returned as it is.
+     */
+    public CardPredicate bindCardSubjects(GameData gameData, StackEntry entry, CardEffect effect, CardPredicate filter) {
+        return switch (filter) {
+            case null -> null;
+            case CardSharesCardTypeWithCardsPredicate shares -> {
+                Set<CardType> types = EnumSet.noneOf(CardType.class);
+                for (LocatedCard located : locatedCards(gameData, entry, effect, shares.cards())) {
+                    for (CardType type : CardType.values()) {
+                        if (gameQueryService.cardHasType(located.card(), type, gameData, located.ownerId())) {
+                            types.add(type);
+                        }
+                    }
+                }
+                yield new CardAnyOfPredicate(types.stream()
+                        .<CardPredicate>map(CardTypePredicate::new).toList());
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindCardSubjects(gameData, entry, effect, part)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindCardSubjects(gameData, entry, effect, part)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindCardSubjects(gameData, entry, effect, not.predicate()));
+            default -> filter;
         };
     }
 

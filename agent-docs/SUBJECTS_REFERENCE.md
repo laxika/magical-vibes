@@ -89,7 +89,10 @@ its zone and the player whose zone it is). No variant is static.
 | `targetCard(filter, scope)` | "a copy of target creature card in your graveyard": the effect's targeted card while it is in a graveyard of `scope` and matches `filter`; the effect reading it declares the graveyard target (Feldon of the Third Path) | yes |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)`, `ReturnCardFromGraveyardEffect.builder().returnAll(true).cards(...)`,
-`MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost").
+`MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost"),
+`CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy"), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
+from your graveyard") and, in a filter, `CardSharesCardTypeWithCardsPredicate(cards)` ("a card that doesn't share a card type with the
+discarded card"; bound by `SubjectResolutionService.bindCardSubjects`).
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
 creature; its controller loses 2 life"). A `PermanentIsTargetCardPredicate` leaf in a `controlledBy` filter is the entry's target permanent as the

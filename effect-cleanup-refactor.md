@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 23 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 24 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -173,8 +173,10 @@ card it moved to a public zone, CR 400.7j). Variants:
 | `targetCard(filter, scope)` | the effect's graveyard card target, declared by the effect reading it (added in run 23 for Feldon of the Third Path's copy without exiling) |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)` (the token-copy step), `ReturnCardFromGraveyardEffect.returnAll(true).cards(...)`
-(the return step), `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` (the "cast it now for free" step). The
-may-cast-a-copy step is not built yet (run 23's Findings).
+(the return step), `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` (the "cast it now for free" step),
+`CopyImprintedCardAndMayCastCopyEffect.of(cards)` (the may-cast-a-copy step, run 24), `ExileGraveyardCardsEffect.cards(cards)` (the
+exile step, run 24) and, inside a card filter, `CardSharesCardTypeWithCardsPredicate(cards)`, which a handler binds through
+`SubjectResolutionService.bindCardSubjects` (the seek, run 24).
 
 ### One resolver
 
@@ -559,6 +561,7 @@ cause under Findings.
 | 21 | run 20's next: the rest of the counter family (the source removal's "then" record, vanishing's upkeep record, the put-counters reflexive records, the threshold transform); `DiscardEffect`'s card filter not reached | done (3 split, 1 absorbed, 4 survivors, 1 blocked-other; 33 card files rewritten; `RemoveCounterFromSourceEffect` takes `CounterType.ANY`, `GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay()`, a sequence's own target is chosen beside a reflexive step; Verazol and Spectacular Showdown fixed by Oracle text, vanishing's sacrifice left to vanishing, CR 702.63a) |
 | 22 | run 21's next: a card filter on `DiscardEffect` and a filter-aware can't-discard check; `SacrificeUnlessDiscardCardTypeEffect` and the "discard a … If you do" `DiscardCardThenEffect` cards; Spectacular Showdown's overload record; the threshold transform if it fits | done (1 split, 2 absorbed, 4 survivors, `DiscardCardThenEffect` blocked-other with 41 of its 70 cards split; 61 card files rewritten; `DiscardEffect.matching`, `HappenedThisWay.toACard(DISCARD, …)`, `DiscardCardThenEffect.withDiscardedManaValueAsX`; Great Desert Hellion fixed by Oracle text; the threshold transform not reached) |
 | 23 | the card subject (human decision 2026-11-20): `CardSubject`, `cardsThisWay(kind)` and the records blocked on it (token copy of an exiled card, destroy-then-return, Hidetsugu and Kairi, the discarded-card riders) | done (3 split, 1 absorbed, 7 survivors, 3 blocked-other; 20 card files rewritten; `CardSubject.cardsThisWay` / `targetCard`, `StepOutcome.movedCards`, `PermanentSubject.Except`, `CardPutIntoGraveyardThisTurnPredicate`; Mordor on the March and Sorin fixed by Oracle text, Gyrus by a ruling; the may-cast-a-copy record not split) |
+| 24 | run 23's next: the trigger's event value in the graveyard exile's target filter, the may-cast-a-copy step and `ExileTargetCardFromGraveyardAndMayCastCopyEffect`'s 14 cards; an exile step and a seek filter over a card subject (Leonardo da Vinci, Anguished Recollection) | done (2 split, 1 absorbed, 3 survivors; 16 card files rewritten; `CopyImprintedCardAndMayCastCopyEffect.of(cards)` with `payingItsCosts` / `losingLifeOnCast` / `ifCastThen`, `ExileGraveyardCardsEffect.cards` / `oneTargetFromOpponentGraveyard`, `CardSharesCardTypeWithCardsPredicate`; no marker record kept; Hour of Eternity, The Ruinous Powers and the threshold transform not reached) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5345,6 +5348,97 @@ test sources compile.
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
   name): 111 (1,155 card uses); by first word Exile 19, Search 10, Reveal 9, Prevent 7, Counter 7, Each 6, Choose 5, Cant 5, Put 3, Draw 3,
   Destroy 3, Creatures 3, Boost 3, Shuffle 2.
+
+### Step 8, run 24 (2026-11-20)
+
+Run 23's "Next run" items (1) and (2); item (3) not reached. Verdicts (ledger, step `8`): **absorbed 1**
+(`ExileTargetCardFromGraveyardAndMayCastCopyEffect`, with its `normalfx` and `mayfx` handlers), **split 2**
+(`ExileDiscardedCardAndCreateTokenCopyEffect`, `SeekCardsNotSharingCardTypeWithTriggeringCardEffect`, with their handlers), **survivor 3**
+(`CopyImprintedCardAndMayCastCopyEffect`, `ExileGraveyardCardsEffect`, `SeekCardsToHandEffect`). Ratchet 4,715 / 3,945 → 4,712 / 3,941. 16 card
+files rewritten by hand (a deleted scratch script did the 14 exact replacements; each read back by eye, imports sorted). Oracle text of every
+rewritten card checked with `get_card`; rulings with `get_rulings` for Soundwave, Saruman, Reenact the Crime, Kaervek, Jacob Frye, Mizzix's
+Mastery, Shiko, Narset, Flawless Forgery and Demilich (none contradicts the split; the deciding ones below). CR 400.7, 603.3d, 608.2b, 608.2c,
+707.10a and 707.12 checked with `get_rule` (2026-11-20).
+
+- **The graveyard exile's target filter reads the trigger's event value.** `ExileGraveyardCardsEffect`'s target paths judge the filter with
+  the stack entry's event value when it is a triggered ability (read before the step writes its own count), and `validateExileGraveyardCards`
+  passes the context's: Soundwave's `CardManaValueEqualsEventValuePredicate` ("mana value equal to the damage dealt", its ruling) and Saruman's
+  reflexive `CardManaValueAtMostEventValuePredicate` are rechecked as the ability resolves, as the absorbed handler did. The opponent-graveyard
+  path judged its filter with no context at all; it now passes the graveyard owner, X, the source and its snapshot too, and it reads a spell's
+  single graveyard target from the entry's target id (Flawless Forgery's target rides there; an ability's on its target card ids). The
+  spell and activated-ability candidate lists need no event value (only a trigger has one). New factory `oneTargetFromOpponentGraveyard(filter)`.
+- **The may-cast-a-copy step.** `CopyImprintedCardAndMayCastCopyEffect` gained `CardSubject cards` and the cast options
+  (`withoutPayingManaCost`, `lifeLossOnCast`, `afterSuccessfulCastEffect`): `of(cards)`, `.payingItsCosts()`, `.losingLifeOnCast(n)`,
+  `.ifCastThen(effect)`; the compact constructor refuses cast options without a subject and an imprint flag with one. With a subject its
+  handler copies each named card that is in exile (one may-choice per copy, the first card's first, the source permanent kept for the
+  "if you do" rider); its `mayfx` handler casts such a copy with the absorbed record's accept path (split halves, a modal mode, X when the
+  costs are paid, the life loss as a step of the parked resolution, the rider after the cast, the free-cast queue for an additional cost),
+  while the imprinted default still goes through `ExileFreeCastQueueSupport` as before. `ChoiceHandlerService` (the copy's mode choice) and
+  `XValueChoiceInteractionHandler` (its X) now reach the survivor's `mayfx` handler. **No marker record is kept**: the three engine handlers
+  that exile and copy cards themselves (`RandomPlayerExilesInstantOrSorceryAndMayCastCopy…`, `ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopies…`,
+  `ExileGraveyardCardsAndMayCastCopies…`; Wildfire Devils, Mizzix's Mastery overloaded, The Tale of Tamiyo) park their copies with
+  `CopyImprintedCardAndMayCastCopyEffect.of(cardsThisWay(EXILE))` (`.payingItsCosts()` for The Tale of Tamiyo), which their handlers never
+  resolve; its subject only selects the accept path. The 14 cards are the target exile (`oneTargetFromControllerGraveyard`,
+  `upToOneTargetFromControllerGraveyard`, `oneTargetFromOpponentGraveyard`, `exactTargetedFromAnyGraveyard(1, filter, false)`) + the copy step,
+  in a `SequenceEffect` on a trigger slot (Saruman's inside its `QueueReflexiveAbilityEffect`, Mizzix's inside the `ConditionalReplacementEffect`)
+  and as two spell effects on Reenact the Crime and Flawless Forgery. Reenact the Crime's "put there from anywhere this turn" is the
+  `CardPutIntoGraveyardThisTurnPredicate` in the filter (the absorbed record's boolean and its `ValidTargetService` / validator branches are gone).
+  Jacob Frye's "exile up to one target … If you do, copy it": the copy step names nothing when nothing was exiled.
+- **An exile step over a card subject.** `ExileGraveyardCardsEffect.cards(CardSubject)` (new scope `GraveyardExileScope.CARDS`, 14th component
+  `cards`; the compact constructor ties the two): each named card still in a graveyard is exiled and recorded as the EXILE step; the subject is
+  read before the step records its own empty result. Leonardo da Vinci = `DrawCardEffect` + `SequenceEffect.of(DiscardEffect(1, you()),
+  ConditionalEffect(toACard(DISCARD, artifact), SequenceEffect.of(ExileGraveyardCardsEffect.cards(cardsThisWay(DISCARD)),
+  CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE), Thopter options))))`; a discarded artifact a replacement put into exile is not in the
+  graveyard, so nothing is exiled or copied (`LeonardoDaVinciTest.discardedArtifactExiledByReplacementIsNotCopied`, Rest in Peace; the old
+  handler behaved the same).
+- **A seek filter over a card subject.** `CardSharesCardTypeWithCardsPredicate(CardSubject)` (PREDICATES_REFERENCE row): unbound it matches
+  nothing (like the event-value predicates); `SubjectResolutionService.bindCardSubjects` turns it into "any of the card types those cards have
+  now" (layered, through `GameQueryService.cardHasType` with each card's owner) inside `AllOf` / `AnyOf` / `Not`, and `SeekCardsToHandEffect`
+  binds its filter before seeking. Anguished Recollection = `DiscardEffect(1, you())` + `ConditionalEffect(HappenedThisWay.discarded(),
+  SeekCardsToHandEffect(Fixed(2), not(CardSharesCardTypeWithCardsPredicate(cardsThisWay(DISCARD)))))`.
+- **Behaviour.** No rules change. Log lines are the survivors' (the exile's "exiles … from a graveyard / an opponent's graveyard", the seek's
+  "seeks N cards"); Anguished Recollection's seek no longer shuffles the library afterwards (a seek is a random pick; nothing reads the order);
+  the copy prompt text is unchanged.
+- **AI.** No AI class named a deleted record; the rewritten cards' targets are the exile step's benign graveyard target as before
+  (`TargetPolarityGuardTest`, `AiTargetSelectorTest`, `AiDecisionEngineTest` pass).
+
+**Tests** (one Gradle run of card tests, one `--tests` list per task, after per-card runs while converting): the 16 rewritten cards, the five
+imprint-copy cards, The Tale of Tamiyo, Wildfire Devils and every card test constructing one of them (the helper sweep), `--tests-for
+ExileGraveyardCardsEffect --max-per-class 25`, `SeekCardsToHandEffect` (all), `CreateTokenCopyOfCardEffect 10`, `DiscardEffect 5`,
+`QueueReflexiveAbilityEffect 8`: 86 classes (86 result files), 769 test cases, all pass (Flawless Forgery failed before the opponent path read
+the spell's target id). Application (`ExileGraveyardCardsEffectHandlerTest` (hand-built wiring gained the resolver), `DiscardEffectHandlerTest`,
+`SubjectResolutionServiceTest`, `StepResultsTest`, `EffectCountRatchetTest`, `CardImmutabilityArchTest`, `TargetSpecRatchetTest`,
+`InputHandlerEpilogueRatchetTest`, `SimulationCopyCompletenessTest`, `CardEffectTargetingConsistencyTest`, `ValidTargetServiceTest`,
+`TargetLegalityServiceTest`, `GraveyardTargetingServiceTest`, `PredicateEvaluationServiceTest`, `EffectResolutionServiceTest`,
+`MayEffectHandlerTest`, `MayAbilityHandlerServiceTest`, `SpellTriggersTest`, `TriggeredAbilityStackServiceTest`,
+`XValueChoiceInteractionHandlerTest`, `ColorChoiceInteractionHandlerTest`, `ReflexiveRouteRecordTest`, `ActivatedAbilityExecutionServiceTest`,
+`GraveyardChoiceInteractionHandlersTest`, `StackResolutionServiceTest`, `CreateTokenEffectHandlerTest`) and AI (`AiDecisionEngineTest`,
+`AiTargetSelectorTest`, `TargetPolarityGuardTest`, `GameDataDeepCopyTest`, `SpellEvaluatorTest`): 170 result files, 1,556 test cases, all pass.
+Application, AI, engine testFixtures and card-test `a d e f i j k l m n r s t w` test sources compile.
+
+**For later runs.**
+
+- "Exile target [filter] card from your graveyard / an opponent's graveyard / a graveyard. Copy it. You may cast the copy [without paying its
+  mana cost]" is the target exile + `CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))` (`.payingItsCosts()`,
+  `.losingLifeOnCast(n)`, `.ifCastThen(effect)`); "exile it from your graveyard" after a step that put a card there is
+  `ExileGraveyardCardsEffect.cards(cardsThisWay(kind))`; a card filter reading a card subject is bound by its handler through
+  `SubjectResolutionService.bindCardSubjects` (only `SeekCardsToHandEffect` does so now; another reader must bind too).
+- **Next run.** (1) The X-target exile: `ExileCreaturesFromGraveyardAndCreateTokensEffect` (Hour of Eternity, Midnight Ritual, Foggy Swamp
+  Visions, Necromancer's Covenant). `ExileCardsFromGraveyardEffect` is the candidate first step (X-scaled `maxTargets` 0, `exactTargets`), but
+  its two spell-cast paths in `SpellCastingService` (the `exileFromGraveyardEffect` branches near the cast-target code and the X validation)
+  offer only "exactly N from a single graveyard" or "up to N from all graveyards", ignore `ownGraveyardOnly` for a spell, and its handler
+  records no EXILE step; `AiDecisionEngine.getMaxXForGraveyardRequirements` caps X by class. Give it a spell-time graveyard scope (yours / all,
+  exact X) honoured in both places and the AI cap, record EXILE, then Hour = it + `CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE), 4/4
+  black).withCreatureTypesInstead(ZOMBIE)`, Foggy Swamp Visions the same copy + its end-step sacrifice, Midnight Ritual the Zombies ×
+  `AmountThisWay` of the exile. Necromancer's Covenant can split now (`TARGET_PLAYER_ALL_MATCHING` with a creature filter records EXILE).
+  (2) The threshold transform (run 21's blockers unchanged). (3) The Ruinous Powers. (4) Check whether the subject path's resolution cast
+  honours a copy's own "cast only during …" restriction (Mizzix's Mastery's ruling: timing restrictions from the copy's type are ignored, other
+  restrictions are not); the imprinted default's free-cast queue checks it, the subject path (the absorbed record's) may not; unify the two
+  accept paths if it doesn't. (5) Soundwave's "from their graveyard" is the damaged player's; the opponent-graveyard scope admits any
+  opponent's (unchanged; matters with more than one opponent).
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
+  name): 110 (1,150 card uses); by first word Exile 19, Search 10, Reveal 9, Prevent 7, Counter 7, Each 6, Choose 5, Cant 5, Put 3, Draw 3,
+  Destroy 3, Creatures 3, Boost 3, Shuffle 2, Grant 2, Create 2.
 
 ## Prompt
 

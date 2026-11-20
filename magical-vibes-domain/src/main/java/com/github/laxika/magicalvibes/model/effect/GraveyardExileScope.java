@@ -55,5 +55,11 @@ public enum GraveyardExileScope {
      * Each opponent keeps {@code count} cards of their choice in their graveyard and exiles the rest
      * (Watchers of the Dead). An opponent with {@code count} or fewer cards keeps them all.
      */
-    EACH_OPPONENT_KEEP
+    EACH_OPPONENT_KEEP,
+
+    /**
+     * Exiles the cards the effect's card subject names that are in a graveyard ("exile it from your graveyard" after
+     * an earlier step put it there). Nothing is targeted; {@code count} is unused.
+     */
+    CARDS
 }

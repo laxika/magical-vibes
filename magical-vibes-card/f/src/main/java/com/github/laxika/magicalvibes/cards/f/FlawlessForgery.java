@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,7 +34,7 @@ public class FlawlessForgery extends Card {
                 new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(3));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, opponentGraveyard));
-        addSpellEffect(new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                instantOrSorcery, opponentGraveyard));
+        addSpellEffect(ExileGraveyardCardsEffect.oneTargetFromOpponentGraveyard(instantOrSorcery));
+        addSpellEffect(CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)));
     }
 }

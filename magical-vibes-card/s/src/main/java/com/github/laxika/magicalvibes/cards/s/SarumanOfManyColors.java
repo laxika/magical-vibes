@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostEventValuePredicate;
@@ -32,10 +35,9 @@ public class SarumanOfManyColors extends Card {
         addTrigger(Triggers.youCastSpell().nthThisTurn(2),
                 new MillEachOpponentThenIfMilledEffect(
                         2,
-                        new QueueReflexiveAbilityEffect(
-                                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                        new CardAllOfPredicate(List.of(noncreatureSpell,
-                                                new CardManaValueAtMostEventValuePredicate())),
-                                        GraveyardSearchScope.OPPONENT_GRAVEYARD))));
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                ExileGraveyardCardsEffect.oneTargetFromOpponentGraveyard(new CardAllOfPredicate(
+                                        List.of(noncreatureSpell, new CardManaValueAtMostEventValuePredicate()))),
+                                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))))));
     }
 }

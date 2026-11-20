@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -28,6 +30,7 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,10 +62,12 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
                 : amountEvaluationService.evaluate(gameData, manaValueBound.amount(),
                         AmountContext.forStackEntry(entry, null)) + manaValueBound.offset();
 
+        // "A card that doesn't share a card type with the discarded card" reads the discarded card as the seek applies.
+        CardPredicate filter = subjectResolutionService.bindCardSubjects(gameData, entry, seek, seek.filter());
         List<Card> matchingCards = new ArrayList<>(library.stream()
                 .filter(card -> !card.isToken())
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, seek.filter(), null, gameData, controllerId))
+                        card, filter, null, gameData, controllerId))
                 .filter(card -> matchesManaValue(card, boundValue, manaValueBound))
                 .toList());
         Collections.shuffle(matchingCards);

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -69,6 +70,8 @@ class ExileGraveyardCardsEffectHandlerTest {
     private GraveyardReturnSupport graveyardReturnSupport;
     @Mock
     private PermanentCounterSupport permanentCounterSupport;
+    @Mock
+    private SubjectResolutionService subjectResolutionService;
 
     private GameData gd;
     private UUID player1Id;
@@ -93,7 +96,8 @@ class ExileGraveyardCardsEffectHandlerTest {
                 gameQueryService, gameLogService, exileService, predicateEvaluationService,
                 permanentCounterSupport);
         handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameLogService, exileService,
-                permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService);
+                permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService,
+                subjectResolutionService);
     }
 
     private static Card createCard(String name) {

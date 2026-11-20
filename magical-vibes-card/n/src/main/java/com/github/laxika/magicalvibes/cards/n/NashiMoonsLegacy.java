@@ -5,7 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -29,7 +33,8 @@ public class NashiMoonsLegacy extends Card {
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
         target(new GraveyardCardPredicateTargetFilter(LEGENDARY_OR_RAT, ownGraveyard), 0, 1);
         addTrigger(Triggers.attacks(),
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        LEGENDARY_OR_RAT, ownGraveyard, false));
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.upToOneTargetFromControllerGraveyard(LEGENDARY_OR_RAT),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)).payingItsCosts()));
     }
 }

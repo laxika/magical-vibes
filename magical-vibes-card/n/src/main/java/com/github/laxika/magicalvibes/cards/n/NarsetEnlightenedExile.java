@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
@@ -40,7 +43,9 @@ public class NarsetEnlightenedExile extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 NONCREATURE_NONLAND_BELOW_POWER, GraveyardSearchScope.ALL_GRAVEYARDS));
         addTrigger(Triggers.attacks(),
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        NONCREATURE_NONLAND_BELOW_POWER, GraveyardSearchScope.ALL_GRAVEYARDS));
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
+                                1, NONCREATURE_NONLAND_BELOW_POWER, false),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }

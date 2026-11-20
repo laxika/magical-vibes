@@ -38,6 +38,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                         a resolving spell with no source permanent remembers it on its own card instead, for a
  *                         delayed trigger of the spell that copies "the exiled card" (Surge to Victory); see
  *                         {@link #imprintingOnSource()}
+ * @param cards            the cards the {@link GraveyardExileScope#CARDS} scope exiles ("exile it from your graveyard"
+ *                         after a discard step, {@code Subjects.cardsThisWay(StepKind.DISCARD)}); {@code null} for every
+ *                         other scope
  */
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter,
@@ -45,14 +48,32 @@ public record ExileGraveyardCardsEffect(
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
         boolean allowZeroTargets, boolean putKickCounters,
         boolean returnExiledCardsToGraveyardOnSourceLeave,
-        boolean defendingPlayerOnly, boolean imprint) implements GraveyardCardChoosingEffect {
+        boolean defendingPlayerOnly, boolean imprint, CardSubject cards) implements GraveyardCardChoosingEffect {
 
     public ExileGraveyardCardsEffect {
+        if ((cards != null) != (scope == GraveyardExileScope.CARDS)) {
+            throw new IllegalArgumentException("Only the CARDS scope names a card subject: " + scope);
+        }
+        if (cards != null && cards.declaresTarget()) {
+            throw new IllegalArgumentException("The CARDS scope declares no target: " + cards);
+        }
         if (imprint && scope != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
                 && scope != GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD
                 && scope != GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
             throw new IllegalArgumentException("Only a target-card scope imprints: " + scope);
         }
+    }
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets, boolean putKickCounters,
+                                     boolean returnExiledCardsToGraveyardOnSourceLeave,
+                                     boolean defendingPlayerOnly, boolean imprint) {
+        this(count, scope, filter, exactTargetCount, trackWithSource, fromBattlefieldThisTurn, eventValueFilter,
+                grantPlayPermissionUntilEndOfTurn, allowZeroTargets, putKickCounters,
+                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, imprint, null);
     }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
@@ -206,6 +227,22 @@ public record ExileGraveyardCardsEffect(
                 filter, true, false, false, null, false);
     }
 
+    /**
+     * "Exile it from your graveyard" over the cards {@code cards} names that are in a graveyard as this step applies
+     * (Leonardo da Vinci's discarded artifact card: {@code Subjects.cardsThisWay(StepKind.DISCARD)}); the exiled cards
+     * are this step's EXILE result. Nothing is targeted.
+     */
+    public static ExileGraveyardCardsEffect cards(CardSubject cards) {
+        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.CARDS, null, false, false, false, null, false,
+                false, false, false, false, false, cards);
+    }
+
+    /** "Exile target [filter] card from an opponent's graveyard". */
+    public static ExileGraveyardCardsEffect oneTargetFromOpponentGraveyard(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
+                filter, true, false, false, null, false);
+    }
+
     /** "Exile up to one target [filter] card from your graveyard". */
     public static ExileGraveyardCardsEffect upToOneTargetFromControllerGraveyard(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
@@ -244,7 +281,7 @@ public record ExileGraveyardCardsEffect(
     public ExileGraveyardCardsEffect imprintingOnSource() {
         return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, true, fromBattlefieldThisTurn,
                 eventValueFilter, grantPlayPermissionUntilEndOfTurn, allowZeroTargets, putKickCounters,
-                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, true);
+                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, true, cards);
     }
 
     public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {

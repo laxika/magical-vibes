@@ -173,7 +173,7 @@ public class ChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService> gameServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport> exileFreeCastSupportProvider;
-    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.mayfx.ExileTargetCardFromGraveyardAndMayCastCopyHandler> exileCopyCastHandlerProvider;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.mayfx.CopyImprintedCardAndMayCastCopyHandler> exileCopyCastHandlerProvider;
     private final org.springframework.beans.factory.ObjectProvider<MayCastHandlerService> mayCastHandlerServiceProvider;
 
     private final GameQueryService gameQueryService;

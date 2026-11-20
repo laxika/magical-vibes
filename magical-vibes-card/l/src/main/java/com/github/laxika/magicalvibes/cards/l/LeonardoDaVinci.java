@@ -6,13 +6,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +27,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ACR", collectorNumber = "20")
 @CardRegistration(set = "ACR", collectorNumber = "118")
@@ -54,16 +59,14 @@ public class LeonardoDaVinci extends Card {
                 "{2}{U}",
                 List.of(
                         new DrawCardEffect(),
-                        new DiscardCardThenEffect(
-                                null,
-                                new ExileDiscardedCardAndCreateTokenCopyEffect(thopterCopy),
-                                "a card",
-                                new CardTypePredicate(CardType.ARTIFACT),
-                                false,
-                                null,
-                                null,
-                                Subjects.you(),
-                                true)),
+                        SequenceEffect.of(
+                                new DiscardEffect(1, Subjects.you()),
+                                new ConditionalEffect(
+                                        HappenedThisWay.toACard(StepKind.DISCARD, new CardTypePredicate(CardType.ARTIFACT)),
+                                        SequenceEffect.of(
+                                                ExileGraveyardCardsEffect.cards(Subjects.cardsThisWay(StepKind.DISCARD)),
+                                                CreateTokenCopyOfCardEffect.of(
+                                                        Subjects.cardsThisWay(StepKind.EXILE), thopterCopy))))),
                 "{2}{U}, {T}: Draw a card, then discard a card. If the discarded card was an artifact card, "
                         + "exile it from your graveyard. If you do, create a token that's a copy of it, except "
                         + "it's a 0/2 Thopter artifact creature with flying in addition to its other types."));

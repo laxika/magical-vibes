@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Haystack;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,7 +20,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeonardoDaVinci.class, DarksteelRelic.class, GrizzlyBears.class, Haystack.class})
+@CardUsed({LeonardoDaVinci.class, DarksteelRelic.class, GrizzlyBears.class, Haystack.class, RestInPeace.class})
 class LeonardoDaVinciTest extends BaseCardTest {
 
     @Test
@@ -71,6 +72,27 @@ class LeonardoDaVinciTest extends BaseCardTest {
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.THOPTER);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A discarded artifact that a replacement exiles instead is not in the graveyard, so no copy is made")
+    void discardedArtifactExiledByReplacementIsNotCopied() {
+        Permanent leonardo = addCreatureReady(player1, new LeonardoDaVinci());
+        harness.addToBattlefield(player2, new RestInPeace());
+        DarksteelRelic relic = new DarksteelRelic();
+        harness.setHand(player1, List.of(new GrizzlyBears(), relic));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(leonardo),
+                1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(relic);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Darksteel Relic"));
     }
 
     @Test

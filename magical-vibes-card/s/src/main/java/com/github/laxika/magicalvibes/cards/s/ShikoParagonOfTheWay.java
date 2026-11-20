@@ -4,7 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -27,6 +31,8 @@ public class ShikoParagonOfTheWay extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(nonlandManaValueAtMostThree, ownGraveyard));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(nonlandManaValueAtMostThree, ownGraveyard));
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(nonlandManaValueAtMostThree),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }

@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -67,9 +68,8 @@ public class ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffectHandler
             copyIds.add(copy.getId());
         }
 
-        ExileTargetCardFromGraveyardAndMayCastCopyEffect mayCastEffect =
-                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+        CopyImprintedCardAndMayCastCopyEffect mayCastEffect =
+                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE));
         for (int i = copyIds.size() - 1; i >= 0; i--) {
             UUID copyId = copyIds.get(i);
             Card copy = gameQueryService.findCardInExileById(gameData, copyId);
