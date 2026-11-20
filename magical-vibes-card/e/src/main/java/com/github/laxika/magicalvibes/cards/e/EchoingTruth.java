@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentAndAllWithSameNameToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -20,7 +22,7 @@ public class EchoingTruth extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        )).addSpellEffect(new ReturnTargetPermanentAndAllWithSameNameToHandEffect(
-                new PermanentNotPredicate(new PermanentIsLandPredicate()), new PermanentTruePredicate()));
+        )).addSpellEffect(new ReturnToHandEffect(Subjects.allOf(Subjects.target(),
+                Subjects.otherPermanentsSharing(Subjects.target(), SharedQuality.NAME, new PermanentTruePredicate()))));
     }
 }

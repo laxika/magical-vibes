@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentWithManaValueConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +32,9 @@ public class ContainmentBreach extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment"
-        )).addSpellEffect(new DestroyTargetPermanentWithManaValueConditionalEffect(2, pestToken()));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(
+                        new TargetPermanentMatches(new PermanentMaxManaValuePredicate(2)), pestToken()));
     }
 
     private static CreateTokenEffect pestToken() {

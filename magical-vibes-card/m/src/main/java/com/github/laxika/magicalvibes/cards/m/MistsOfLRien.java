@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentAndAllWithSameManaValueToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,8 +25,8 @@ public class MistsOfLRien extends Card {
         PermanentNotPredicate nonlandPermanent = new PermanentNotPredicate(new PermanentIsLandPredicate());
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}")));
         target(TargetFilters.nonlandPermanent())
-                .addSpellEffect(new ReturnTargetPermanentAndAllWithSameManaValueToHandEffect(
-                                nonlandPermanent, nonlandPermanent));
+                .addSpellEffect(new ReturnToHandEffect(Subjects.allOf(Subjects.target(),
+                        Subjects.otherPermanentsSharing(Subjects.target(), SharedQuality.MANA_VALUE, nonlandPermanent))));
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{U}")),
                 new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount("{U}")));

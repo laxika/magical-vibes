@@ -243,11 +243,24 @@ public final class Subjects {
 
     /**
      * "Each other creature that shares a color with it" (and a name, a creature type): the creatures other than the one
-     * {@code permanent} names that share {@code quality} with it as the effect resolves. Declares no target.
+     * {@code permanent} names that share {@code quality} with it as the effect resolves; nothing once the named
+     * permanent is no longer a creature. Declares no target.
      */
     public static PermanentSubject otherCreaturesSharing(PermanentSubject permanent,
-                                                         PermanentSubject.OtherCreaturesSharing.SharedQuality quality) {
-        return new PermanentSubject.OtherCreaturesSharing(permanent, quality);
+                                                         PermanentSubject.OtherPermanentsSharing.SharedQuality quality) {
+        return new PermanentSubject.OtherPermanentsSharing(permanent, quality, CREATURE);
+    }
+
+    /**
+     * "All other permanents with the same name as that permanent", "each other nonland permanent with the same mana
+     * value as that permanent": the permanents matching {@code filter}, other than the one {@code permanent} names,
+     * that share {@code quality} with it as the effect resolves; nothing once the named permanent no longer matches
+     * {@code filter}. Declares no target.
+     */
+    public static PermanentSubject otherPermanentsSharing(PermanentSubject permanent,
+                                                          PermanentSubject.OtherPermanentsSharing.SharedQuality quality,
+                                                          PermanentPredicate filter) {
+        return new PermanentSubject.OtherPermanentsSharing(permanent, quality, filter);
     }
 
     /**

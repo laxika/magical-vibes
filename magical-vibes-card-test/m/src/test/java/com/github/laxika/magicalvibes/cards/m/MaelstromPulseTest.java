@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.OmnipresentImpostor;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MaelstromPulse.class, GrizzlyBears.class, HillGiant.class, Island.class,
-        Unsummon.class, ZoeticCavern.class, HowlingMine.class, GloriousAnthem.class})
+        Unsummon.class, ZoeticCavern.class, HowlingMine.class, GloriousAnthem.class, OmnipresentImpostor.class})
 class MaelstromPulseTest extends BaseCardTest {
 
     private void giveManaAndCard() {
@@ -62,6 +63,22 @@ class MaelstromPulseTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Also destroys a permanent that has all card names (Omnipresent Impostor)")
+    void permanentWithAllCardNamesSharesEveryName() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new OmnipresentImpostor());
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        giveManaAndCard();
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Omnipresent Impostor");
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
 

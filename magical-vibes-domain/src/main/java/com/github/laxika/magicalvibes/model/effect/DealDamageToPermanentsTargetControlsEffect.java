@@ -44,9 +44,9 @@ public record DealDamageToPermanentsTargetControlsEffect(DynamicAmount damage,
     public DealDamageToPermanentsTargetControlsEffect {
         Objects.requireNonNull(damage, "damage");
         if (!(subject instanceof PermanentSubject.ControlledBy
-                || subject instanceof PermanentSubject.OtherCreaturesSharing)) {
+                || subject instanceof PermanentSubject.OtherPermanentsSharing)) {
             throw new IllegalArgumentException("Damage to a set of permanents needs a controlledBy or "
-                    + "otherCreaturesSharing subject: " + subject);
+                    + "otherPermanentsSharing subject: " + subject);
         }
     }
 

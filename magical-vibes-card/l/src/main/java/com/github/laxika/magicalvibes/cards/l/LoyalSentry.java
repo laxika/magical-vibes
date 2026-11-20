@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "27")
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LoyalSentry extends Card {
 
     public LoyalSentry() {
-        addTrigger(Triggers.blocks(), new DestroyBlockedCreatureAndSelfEffect());
+        addTrigger(Triggers.blocks(), new DestroyTargetPermanentEffect(
+                Subjects.allOf(Subjects.triggering(), Subjects.source())));
     }
 }

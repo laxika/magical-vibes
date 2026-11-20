@@ -24,7 +24,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
         PermanentSubject.AllOf, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
-        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherCreaturesSharing, PermanentSubject.ThisWay {
+        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.ThisWay {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -508,27 +508,35 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     }
 
     /**
-     * "Each other creature that shares a color with it", "each other creature with the same name as that creature",
-     * "each other creature that shares a creature type with it": every creature other than the one {@code permanent}
-     * names that shares {@code quality} with it, found as the effect resolves; nothing when the named permanent is gone
-     * or no longer a creature. It only reads {@code permanent} (a {@code target()} there is the target another effect
-     * declares), so it declares no target; "target creature and …" is the target's own effect beside it.
+     * "Each other creature that shares a color with it", "all other permanents with the same name as that permanent",
+     * "each other nonland permanent with the same mana value as that permanent": every permanent matching
+     * {@code filter} other than the one {@code permanent} names that shares {@code quality} with it, found as the
+     * effect resolves; nothing when the named permanent is gone or no longer matches {@code filter}. It only reads
+     * {@code permanent} (a {@code target()} there is the target another effect declares), so it declares no target;
+     * "target creature and …" is the target's own effect beside it, or an {@code allOf} with it.
      */
-    record OtherCreaturesSharing(PermanentSubject permanent, SharedQuality quality) implements PermanentSubject {
+    record OtherPermanentsSharing(PermanentSubject permanent, SharedQuality quality, PermanentPredicate filter)
+            implements PermanentSubject {
 
-        /** What the other creatures share with the named one. */
+        /** What the other permanents share with the named one. */
         public enum SharedQuality {
-            /** At least one color; a colorless creature shares a color with nothing. */
+            /** At least one color; a colorless permanent shares a color with nothing. */
             COLOR,
-            /** The name; a permanent with no name (face down, CR 708.2) shares it with nothing. */
+            /**
+             * The name; a permanent with no name (face down, CR 708.2) shares it with nothing, and one that has all
+             * card names shares it with every permanent that has a name.
+             */
             NAME,
             /** At least one creature type. */
-            CREATURE_TYPE
+            CREATURE_TYPE,
+            /** The mana value (a face-down permanent's is 0; a transformed permanent's is its front face's). */
+            MANA_VALUE
         }
 
-        public OtherCreaturesSharing {
+        public OtherPermanentsSharing {
             Objects.requireNonNull(permanent, "permanent");
             Objects.requireNonNull(quality, "quality");
+            Objects.requireNonNull(filter, "filter");
         }
 
         @Override

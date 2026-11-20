@@ -22,7 +22,7 @@ public class SeverTheBloodline extends Card {
     public SeverTheBloodline() {
         target(TargetFilters.creature())
                 .addSpellEffect(new ExileTargetPermanentEffect(Subjects.allOf(Subjects.target(),
-                        Subjects.otherCreaturesSharing(Subjects.target(), PermanentSubject.OtherCreaturesSharing.SharedQuality.NAME))));
+                        Subjects.otherCreaturesSharing(Subjects.target(), PermanentSubject.OtherPermanentsSharing.SharedQuality.NAME))));
         addCastingOption(new FlashbackCast("{5}{B}{B}"));
     }
 }

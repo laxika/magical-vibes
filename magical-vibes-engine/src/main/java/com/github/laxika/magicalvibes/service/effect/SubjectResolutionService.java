@@ -459,7 +459,7 @@ public class SubjectResolutionService {
             case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
-            case PermanentSubject.OtherCreaturesSharing sharing -> otherCreaturesSharingIds(ctx, sharing);
+            case PermanentSubject.OtherPermanentsSharing sharing -> otherPermanentsSharingIds(ctx, sharing);
         };
     }
 
@@ -573,36 +573,50 @@ public class SubjectResolutionService {
     }
 
     /**
-     * {@link PermanentSubject.OtherCreaturesSharing}: the other creatures sharing the quality with the one live creature
-     * the subject names.
+     * {@link PermanentSubject.OtherPermanentsSharing}: the other permanents matching the filter that share the quality
+     * with the one live permanent the subject names, while that one matches the filter too.
      */
-    private List<UUID> otherCreaturesSharingIds(Context ctx, PermanentSubject.OtherCreaturesSharing sharing) {
+    private List<UUID> otherPermanentsSharingIds(Context ctx, PermanentSubject.OtherPermanentsSharing sharing) {
         GameData gameData = ctx.gameData();
         List<Permanent> named = livePermanents(ctx, sharing.permanent());
-        if (named.isEmpty() || !gameQueryService.isCreature(gameData, named.getFirst())) {
+        FilterContext filterContext = filterContext(ctx);
+        if (named.isEmpty() || !predicateEvaluationService.matchesPermanentPredicate(named.getFirst(),
+                sharing.filter(), filterContext)) {
             return List.of();
         }
-        Permanent creature = named.getFirst();
+        Permanent shared = named.getFirst();
         Predicate<Permanent> shares = switch (sharing.quality()) {
             case COLOR -> {
-                Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, creature);
+                Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, shared);
                 yield candidate -> gameQueryService.getEffectiveColors(gameData, candidate).stream()
                         .anyMatch(colors::contains);
             }
             case NAME -> {
-                String name = gameQueryService.getEffectiveName(gameData, creature);
-                yield candidate -> name != null && name.equals(gameQueryService.getEffectiveName(gameData, candidate));
+                String name = gameQueryService.getEffectiveName(gameData, shared);
+                yield candidate -> name != null && (hasAllCardNames(shared) || hasAllCardNames(candidate)
+                        ? gameQueryService.getEffectiveName(gameData, candidate) != null
+                        : name.equals(gameQueryService.getEffectiveName(gameData, candidate)));
             }
-            case CREATURE_TYPE -> candidate -> gameQueryService.shareCreatureType(gameData, candidate, creature);
+            case CREATURE_TYPE -> candidate -> gameQueryService.shareCreatureType(gameData, candidate, shared);
+            case MANA_VALUE -> {
+                int manaValue = gameQueryService.getPermanentManaValue(shared);
+                yield candidate -> gameQueryService.getPermanentManaValue(candidate) == manaValue;
+            }
         };
         List<UUID> others = new ArrayList<>();
         gameData.forEachPermanent((playerId, candidate) -> {
-            if (!candidate.getId().equals(creature.getId()) && gameQueryService.isCreature(gameData, candidate)
+            if (!candidate.getId().equals(shared.getId())
+                    && predicateEvaluationService.matchesPermanentPredicate(candidate, sharing.filter(), filterContext)
                     && shares.test(candidate)) {
                 others.add(candidate.getId());
             }
         });
         return others;
+    }
+
+    /** A face-down permanent has no name, so the all-names characteristic of its card doesn't apply (CR 708.2). */
+    private static boolean hasAllCardNames(Permanent permanent) {
+        return !permanent.isFaceDown() && permanent.getCard().hasAllCardNames();
     }
 
     private List<UUID> targetIds(Context ctx, Integer group) {

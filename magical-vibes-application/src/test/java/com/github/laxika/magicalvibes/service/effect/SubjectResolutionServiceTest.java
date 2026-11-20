@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.SubgameResult;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherCreaturesSharing.SharedQuality;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherPermanentsSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -73,6 +73,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returnedThisResolution;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.otherCreaturesSharing;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.otherPermanentsSharing;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.target;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere;
@@ -638,8 +639,8 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
-    @DisplayName("otherCreaturesSharing(target(), quality)")
-    class OtherCreaturesSharing {
+    @DisplayName("otherCreaturesSharing(target(), quality) and otherPermanentsSharing(target(), quality, filter)")
+    class OtherPermanentsSharing {
 
         @Test
         @DisplayName("A color: every other creature sharing a color with the target, not the target, and declares no target")
@@ -686,6 +687,55 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             leaveBattlefield(bears);
 
             assertThat(permanents(entry, otherCreaturesSharing(target(), SharedQuality.COLOR))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A mana value: the other permanents matching the filter with the target's mana value")
+        void manaValue() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent runeclaw = addCreatureReady(player1, new RuneclawBear());
+            addCreatureReady(player1, new HillGiant());
+            addCreatureReady(player1, new Forest());
+
+            assertThat(permanents(entry(player1, bears.getId(), null), otherPermanentsSharing(target(),
+                    SharedQuality.MANA_VALUE, new PermanentNotPredicate(new PermanentIsLandPredicate()))))
+                    .containsExactly(runeclaw);
+        }
+
+        @Test
+        @DisplayName("Any permanent: the other lands with a land target's name")
+        void nameOfALand() {
+            Permanent forest = addCreatureReady(player2, new Forest());
+            Permanent otherForest = addCreatureReady(player1, new Forest());
+            addCreatureReady(player1, new GrizzlyBears());
+
+            assertThat(permanents(entry(player1, forest.getId(), null),
+                    otherPermanentsSharing(target(), SharedQuality.NAME, new PermanentIsLandPredicate())))
+                    .containsExactly(otherForest);
+        }
+
+        @Test
+        @DisplayName("Names only the other permanents the filter matches")
+        void filterNarrowsTheOthers() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            bears.tap();
+            addCreatureReady(player1, new GrizzlyBears());
+            Permanent tappedBears = addCreatureReady(player1, new GrizzlyBears());
+            tappedBears.tap();
+
+            assertThat(permanents(entry(player1, bears.getId(), null),
+                    otherPermanentsSharing(target(), SharedQuality.NAME, new PermanentIsTappedPredicate())))
+                    .containsExactly(tappedBears);
+        }
+
+        @Test
+        @DisplayName("Is nothing when the named permanent no longer matches the filter")
+        void namedPermanentOutsideTheFilter() {
+            Permanent forest = addCreatureReady(player2, new Forest());
+            addCreatureReady(player1, new Forest());
+
+            assertThat(permanents(entry(player1, forest.getId(), null),
+                    otherCreaturesSharing(target(), SharedQuality.NAME))).isEmpty();
         }
     }
 

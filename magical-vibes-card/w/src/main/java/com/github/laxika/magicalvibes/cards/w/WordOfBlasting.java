@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetWallDealManaValueDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -17,6 +20,8 @@ public class WordOfBlasting extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WALL),
                 "Target must be a Wall"
         ))
-                .addSpellEffect(new DestroyTargetWallDealManaValueDamageToControllerEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect(true))
+                .addSpellEffect(new DealDamageToPlayersEffect(new TargetManaValue(),
+                        Subjects.controllerOf(Subjects.target())));
     }
 }

@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 15 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 16 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -534,6 +534,7 @@ cause under Findings.
 | 13 | run 12's leftovers: the choose-one, cast-matching, random-opponent, token and Hidetsugu library records; Heated Argument's graveyard record; Raven Guild Master and Sire of Stagnation's player | done (6 absorbed, 2 split, 2 blocked-other, 1 unique; 32 card files rewritten; `mayOnlyCast(filter)`, `upTo(n)`, `choosingOne()`; Narset's Adventure fixed by a ruling; the four multi-card graveyard "and" records not reached) |
 | 14 | run 13's graveyard "and" records: the imprint and track-with-source target exiles, then the token-copy and may-cast-a-copy records | done (2 absorbed into `ExileGraveyardCardsEffect`, `imprintingOnSource()`; 16 card files rewritten; stopped at `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`: no token-copy step copies a card an EXILE step recorded, a design decision; the may-cast-a-copy record not started) |
 | 15 | the Return family (fused names or a nested `CardEffect`; Exile left for the card-subject decision): the chosen return records a RETURN step, then its "then" records, the target-return "then" records, the attached bounce | done (6 split, 1 absorbed, 4 survivors, 1 unique, 9 blocked-other; 23 card files rewritten; `choosingOneOf`, `ReturnToHandEffect.targetCreatureAndAttached`, `toA(RETURN)`; Paradoxical Outcome kept on its record; the batch bounce now looks back, CR 603.10a) |
+| 16 | the Destroy family: the mana-value conditional (Perilous Voyage pattern), the same-name / same-mana-value / shared-colour sets (`otherCreaturesSharing` widened to any permanent), the block-trigger `allOf` pairs, the rider splits | done (3 split, 6 absorbed, 1 survivor, 1 blocked-player-loop, 10 blocked-other; 23 card files rewritten, 16 of them by hand; `otherPermanentsSharing(permanent, quality, filter)`, `SharedQuality.MANA_VALUE`; a permanent with all card names now shares every name; `DestroyAllPermanentsEffect`'s rider not started) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4553,6 +4554,103 @@ CR 603.10a, 707.2 and 608.2c checked with `get_rule` (2026-11-20).
   `OrElse` name): 137 (1,275 card uses); by first word Exile 22, Search 10, Sacrifice 10, Reveal 9, Counter 8, Prevent 7,
   Destroy 7, Draw 6, Each 6, Cant 5, Choose 5, Put 4. About a third are not two instructions ("unless" taxes and restrictions,
   "and/or graveyard" searches), so roughly 90 split-able families remain.
+
+### Step 8, run 16 (2026-11-20)
+
+The Destroy family, as run 15's Findings named it. Verdicts (ledger, step `8`): **split 3**
+(`DestroyTargetPermanentWithManaValueConditionalEffect`, `DestroyTargetWallDealManaValueDamageToControllerEffect`,
+`DestroyTargetPermanentsThenEffect`), **absorbed 6** (`DestroyTargetPermanentAndAllWithSameNameEffect`,
+`ReturnTargetPermanentAndAllWithSameNameToHandEffect`, `ReturnTargetPermanentAndAllWithSameManaValueToHandEffect`,
+`DestroyTargetAndOtherEnchantmentsSharingColorEffect`, `DestroyBlockedCreatureAndSelfEffect`,
+`DestroyEquippedCreatureAndCombatOpponentEffect`), with their handlers; **survivor 1** (`PermanentSubject`), **blocked-player-loop 1**,
+**blocked-other 10**, blocked-step-model 0, unique 0. Ratchet 4,753 / 3,986 → 4,744 / 3,977. 23 card files rewritten: 16 by hand (Oracle text of each
+checked with `get_card`; rulings of Maelstrom Pulse, Isle of Vesuva, Containment Breach, Seedship Impact, Extinguish the Light (none),
+Echoing Truth (none), Mists of Lórien, Leave No Trace (none), Loyal Sentry, Dead-Iron Sledge, Word of Blasting (none) and Sylvan
+Primordial with `get_rulings`), 7 by the record rename only (Cleansing Beam, Wojek Embermage, Brightflame, Homing Lightning, Izzet
+Staticaster, Coward // Killer, Sever the Bloodline). CR 608.2b, 608.2h, 603.10a and 708.2 checked with `get_rule` (2026-11-20).
+
+- **Subject widened.** `PermanentSubject.OtherCreaturesSharing` became `OtherPermanentsSharing(permanent, quality, filter)`:
+  every permanent matching `filter`, other than the one `permanent` names, sharing the quality with it; nothing once the named
+  permanent is gone or no longer matches `filter`. `Subjects.otherCreaturesSharing(p, q)` is the creature filter (old meaning);
+  `Subjects.otherPermanentsSharing(p, q, filter)` is new. `SharedQuality.MANA_VALUE` compares `getPermanentManaValue` (face down
+  0, a transformed permanent its front face's); `NAME` now also matches when either permanent has all card names (not face down),
+  as the Echoing Truth record did. Readers renamed: `DealDamageToPermanentsTargetControlsEffect`, `SubjectResolutionService`,
+  `SubjectResolutionServiceTest`, the seven cards above. The filter is judged with the resolver's set filter context.
+- **Rewritten cards.** Mana value (run 15's Perilous Voyage pattern): Extinguish the Light, Seedship Impact, Containment Breach =
+  `DestroyTargetPermanentEffect()` + `ConditionalEffect(TargetPermanentMatches(PermanentMaxManaValuePredicate(n)), X)`, ungated
+  ("If its mana value was …", and the Containment Breach ruling: an indestructible target that isn't destroyed still makes the
+  Pest; the departed target is judged as it last existed). Same name: Maelstrom Pulse, Wake of Destruction, Echoing Ruin, Echoing
+  Calm = `DestroyTargetPermanentEffect(allOf(target(), otherPermanentsSharing(target(), NAME, filter)))`, Isle of Vesuva with
+  `otherCreaturesSharing(target(), NAME)` (one batch; the rulings say the others die even when the target is indestructible or
+  regenerates, and an illegal target makes nothing happen, CR 608.2b); Echoing Truth `ReturnToHandEffect(allOf(target(),
+  otherPermanentsSharing(target(), NAME, any)))`, Mists of Lórien the same with `MANA_VALUE` and a nonland filter; Leave No Trace
+  `allOf(target(), otherPermanentsSharing(target(), COLOR, enchantment))`. Block triggers: Loyal Sentry and Alaborn Zealot
+  `DestroyTargetPermanentEffect(allOf(triggering(), source()))` (the block trigger records the blocked attacker as triggering; the
+  Loyal Sentry ruling: the attacker is destroyed even if the Sentry left), Dead-Iron Sledge `allOf(triggering(), target())` (both
+  its triggers record the equipped creature as triggering and the combat opponent as the non-targeting target; its ruling: moving
+  the Equipment changes nothing). Word of Blasting `DestroyTargetPermanentEffect(true)` + `DealDamageToPlayersEffect(TargetManaValue,
+  controllerOf(target()))` (Viashino Heretic's shape). Sylvan Primordial `SequenceEffect.of(DestroyTargetPermanentEffect(allTargets()),
+  SearchLibraryEffect(AmountThisWay(DESTROY), Forest, battlefield tapped))` (its ruling: an indestructible or regenerated target
+  doesn't count; the DESTROY step counts only what was destroyed). Target specs: every target step is the harmful permanent target
+  the card's filter narrows, as before; Loyal Sentry / Alaborn Zealot declare none, as before.
+- **Behaviour changes.** A permanent with all card names (Omnipresent Impostor, MB2 504: "has all card names") now shares a name
+  with the other permanents for the destroy and damage cards (Maelstrom Pulse, Wake of Destruction, Echoing Ruin / Calm, Isle of
+  Vesuva, Homing Lightning, Izzet Staticaster, Sever the Bloodline); only the Echoing Truth record knew it
+  (`MaelstromPulseTest.permanentWithAllCardNamesSharesEveryName`, fails on the old card). Echoing Truth and Mists of Lórien return
+  their set through `BounceSupport.applyReturnPermanentsToHand`, one leave batch that looks back (CR 603.10a, run 15's change); the
+  old handlers returned one at a time (no test reaches a difference). Mists of Lórien's mana value is the permanent's (a
+  transformed permanent's front face). The same-name / sharing destroys leave orphaned Auras to the state-based action right after
+  (as every `DestroyTargetPermanentEffect` batch since 5a). Survivors' log lines win.
+- **AI.** No AI class named a deleted record. The rewritten target steps are `RemovalEffect` DESTROY / BOUNCE as the records were.
+  Dead-Iron Sledge's trigger is now a `RemovalEffect` (DESTROY; the old record declared the same harmful target but wasn't one).
+  `TargetPolarityGuardTest`, `SpellEvaluatorTest` pass.
+- **Blocked, by cause** (ledger): a card subject for cards a DESTROY step put into graveyards (`DestroyUpToTargetsThenReturnFromGraveyardEffect`,
+  Sorin Lord of Innistrad and Come Back Wrong: waits with the EXILE card-subject decision); an each-player search with a `PlayerSubject`
+  (`DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect`, Field of Ruin, blocked-player-loop; Demolition Field alone would
+  split); a DIED step result (Kalitas); a departed target's attachments or `attachedTo` (Unforge, Murderous Spoils); a departed
+  target as damage source (Goblin Tinkerer); another target group's mana value (Orim's Thunder); amass by "that creature's
+  controller" (Azog); "if a creature you controlled was destroyed this way" (Demonic Junker: a condition on the DESTROY outcome's
+  players); a last-known fallback for the named permanent of `otherPermanentsSharing` (Eye of Singularity's and Spreading
+  Plague's entering-permanent records would then be absorbed).
+
+**Tests** (one Gradle run, one `--tests` list per task): every card test that constructs one of the 23 rewritten
+cards, their own tests included (66 classes), `--tests-for DestroyTargetPermanentEffect ReturnToHandEffect --max-per-class 15`, `--tests-for
+DealDamageToPermanentsTargetControlsEffect SearchLibraryEffect DealDamageToPlayersEffect --max-per-class 6`, application
+(`SubjectResolutionServiceTest` +4: a mana value with a filter, a land target's name, the filter narrowing the others, a named
+permanent outside the filter; `StepResultsTest`, `EffectCountRatchetTest`, `EffectResolutionServiceTest`, `CardImmutabilityArchTest`,
+`DestroyTargetPermanentEffectHandlerTest`, `ReturnToHandEffectHandlerTest`, `DealDamageToPlayersEffectHandlerTest`), AI
+(`TargetPolarityGuardTest`, `SpellEvaluatorTest`): 124 top-level classes (186 result files with the `@Nested` suites), 1,267 test
+cases, all pass; `MaelstromPulseTest` +1. Application, AI, engine testFixtures and card-test `a b c d e h i l m o s w` test sources
+compile.
+
+**For later runs.**
+
+- "Destroy target X and all other [filter] permanents with the same name as / that share a color with it" is
+  `DestroyTargetPermanentEffect(allOf(target(), otherPermanentsSharing(target(), quality, filter)))`; "return …" the same in
+  `ReturnToHandEffect`. "Destroy that creature and this creature" in a block trigger is `allOf(triggering(), source())`; an
+  Equipment's "destroy both creatures" `allOf(triggering(), target())`. "Destroy target X. If its mana value was N or less" is run
+  15's `TargetPermanentMatches(PermanentMaxManaValuePredicate(N))` after the destroy.
+- **Next run: `DestroyAllPermanentsEffect`'s `thenEffect` rider** (not started here). 30 cards use a rider: 15 read a plain
+  `EventValue` count (Avenge, Bane of Progress, Culling Ritual, Death Begets Life, Decree of Pain, Fracturing Gust, Fumigate,
+  Multani's Decree, Ori-Plate Stacker, Overwhelming Forces, Paraselene, Phyrexian Rebirth, Rain of Daggers, Righteous Fury, Whiptongue
+  Hydra); Chaos Orb (ungated self-destroy) and Anzrag's Rampage (a look-at-top rider: read what it counts) are their own cases; 6 a `DestroyedPermanentCountScope` (Blood Money `ALL_NONTOKEN`,
+  Ceaseless Conflict `CONTROLLER_NONTOKEN`, Kaya's Wrath `CONTROLLER`, Hellfire / Mogg Infestation / Reign of Terror `DIED`); 7 a
+  per-destroyed-permanent-controller record (`EachDestroyedPermanentControllerLosesLifeEffect` Deadly Tempest,
+  `…MaySearchBasicLandToBattlefieldEffect` From the Ashes, `CreateTokenForEachDestroyedPermanentControllerEffect` March of Souls /
+  Rampage of the Clans / The Phasing of Zhalfir, `EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect` Seeds of Innocence
+  (every artifact the instruction applied to, indestructible ones included), `DamageEachDestroyedPermanentControllerUnlessPaysEffect`
+  Stench of Evil). Its handler records no DESTROY step yet: make it record one (objects destroyed, their controllers), move the 15
+  plain riders to `AmountThisWay(DESTROY)` as later steps, then decide the filtered counts (an `AmountThisWay` filter on the departed
+  snapshots: token, controller) and a DIED kind or filter, and the per-controller riders (`playersThisWay(DESTROY)` with one entry per
+  permanent, not per player). Then `thenEffect`, `destroyedCountScope` and the rider stamping (`eventPlayerIds`, `eventManaValues`)
+  can go.
+- Also open in Destroy: Voodoo Doll's `DestroySourceThenDealDamageToControllerEffect` (not audited: check that `CountersOnSource`
+  and `DealDamageToPlayersEffect` read a destroyed source as it last existed, then it is `SequenceEffect.of(DestroyTargetPermanentEffect(source()),
+  DealDamageToPlayersEffect(CountersOnSource(PIN), you()))`), the not-fused `DestroyCombatOpponentEffect` (4 cards, a step-9 absorption
+  into `DestroyTargetPermanentEffect(target(), b)` once the combat triggers' recording is checked per path), the two "Unless" records.
+- **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
+  `OrElse` name): 133 (1,264 card uses); by first word Exile 22, Search 10, Sacrifice 10, Reveal 9, Counter 8, Prevent 7, Each 6,
+  Draw 6, Choose 5, Cant 5, Put 4, Destroy 3. About a third are not two instructions, so roughly 85 split-able families remain.
 
 ## Prompt
 
