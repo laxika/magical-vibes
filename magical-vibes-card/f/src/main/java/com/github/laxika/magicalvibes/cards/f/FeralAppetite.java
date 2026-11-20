@@ -9,9 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,9 +18,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+
 
 @CardRegistration(set = "SOC", collectorNumber = "38")
 @CardRegistration(set = "SOC", collectorNumber = "86")
@@ -38,8 +40,10 @@ public class FeralAppetite extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
-                        new CardTypePredicate(CardType.CREATURE), pestToken(), new LoseLifeEffect(0))),
+                List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
+                        new ConditionalEffect(
+                                HappenedThisWay.toACard(StepKind.EXILE, new CardTypePredicate(CardType.CREATURE)),
+                                pestToken())),
                 "{1}{G}: Exile target card from a graveyard. If a creature card is exiled this way, create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\""
         ));
     }

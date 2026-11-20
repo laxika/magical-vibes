@@ -7,14 +7,17 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.amount.ToughnessOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+
 
 @CardRegistration(set = "SPE", collectorNumber = "22")
 public class VenomDeadlyDevourer extends Card {
@@ -25,12 +28,15 @@ public class VenomDeadlyDevourer extends Card {
                 GraveyardSearchScope.ALL_GRAVEYARDS);
         var symbiote = new PermanentHasSubtypePredicate(CardSubtype.SYMBIOTE);
         var counterEffect = new PutCounterOnTargetPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, new ToughnessOfLastCardExiledWithSource(), null, symbiote, false, null);
+                CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.exiledToughness(), null, symbiote, false, null);
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new ExileTargetCreatureCardFromGraveyardThenReflexiveEffect(counterEffect)),
+                List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
+                                1, new CardTypePredicate(CardType.CREATURE), true),
+                        new ConditionalEffect(HappenedThisWay.exiled(),
+                                new QueueReflexiveAbilityEffect(counterEffect))),
                 "{3}: Exile target creature card from a graveyard. When you do, put X +1/+1 counters on target Symbiote, where X is the exiled card's toughness.",
                 creatureCard));
     }

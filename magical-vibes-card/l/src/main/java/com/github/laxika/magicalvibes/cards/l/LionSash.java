@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -21,8 +20,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+
 
 @CardRegistration(set = "NEO", collectorNumber = "26")
 public class LionSash extends Card {
@@ -31,10 +34,9 @@ public class LionSash extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
-                        new CardIsPermanentPredicate(),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        new PutCountersOnSourceEffect(0, 0, 0))),
+                List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
+                        new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, new CardIsPermanentPredicate()),
+                                new PutCountersOnSourceEffect(1, 1, 1))),
                 "{W}: Exile target card from a graveyard. If it was a permanent card, put a +1/+1 counter on Lion Sash."));
 
         addStaticEffect(new AttachedBoostEffect(

@@ -5,15 +5,20 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.CardType;
+
 
 @CardRegistration(set = "RNA", collectorNumber = "170")
 public class EtherealAbsolution extends Card {
@@ -29,8 +34,10 @@ public class EtherealAbsolution extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}{B}",
-                List.of(new ExileGraveyardCardCreateTokenIfCreatureEffect(
-                        GraveyardSearchScope.OPPONENT_GRAVEYARD, spirit)),
+                List.of(new ExileGraveyardCardsEffect(
+                                1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD, null, true, false, false),
+                        new ConditionalEffect(
+                                HappenedThisWay.toACard(StepKind.EXILE, new CardTypePredicate(CardType.CREATURE)), spirit)),
                 "{2}{W}{B}: Exile target card from an opponent's graveyard. If it was a creature card, "
                         + "you create a 1/1 white and black Spirit creature token with flying."
         ));

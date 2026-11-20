@@ -15,9 +15,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -77,6 +84,27 @@ class StepResultsTest extends BaseCardTest {
     private StackEntry resolve(Player controller, UUID targetId, UUID sourcePermanentId, CardEffect... effects) {
         StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), controller.getId(), "Step results",
                 List.of(effects), targetId, sourcePermanentId);
+        gd.stack.add(entry);
+        harness.passBothPriorities();
+        return entry;
+    }
+
+    private final CardPredicate creatureCard = new CardTypePredicate(CardType.CREATURE);
+    private final CardPredicate landCard = new CardTypePredicate(CardType.LAND);
+
+    /** Resolves {@code effects} as a triggered ability of player 1 that targets the graveyard card {@code cardId}. */
+    private StackEntry resolveTargetingGraveyardCard(UUID cardId, CardEffect... effects) {
+        StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), player1.getId(), "Step results",
+                List.of(effects), cardId, Zone.GRAVEYARD);
+        gd.stack.add(entry);
+        harness.passBothPriorities();
+        return entry;
+    }
+
+    /** Resolves {@code effects} as a triggered ability of {@code source}, a card that is not on the battlefield. */
+    private StackEntry resolveFor(Card source, CardEffect... effects) {
+        StackEntry entry = TestStackDoor.triggered(source, player1.getId(), "Step results", List.of(effects), null,
+                (UUID) null);
         gd.stack.add(entry);
         harness.passBothPriorities();
         return entry;
@@ -216,6 +244,89 @@ class StepResultsTest extends BaseCardTest {
             assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()).containsExactly(bears.getId());
             assertThat(gd.getLife(player2.getId())).isEqualTo(22);
             assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Misfortune Teller: \"exile target card from a graveyard. If it was a creature card\" reads the card")
+        void graveyardExileRecordsTheCardAndItsOwner() {
+            Card bears = new GrizzlyBears();
+            gd.playerGraveyards.get(player2.getId()).add(bears);
+
+            StackEntry entry = resolveTargetingGraveyardCard(bears.getId(),
+                    ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, creatureCard), new GainLifeEffect(3)),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, landCard), new GainLifeEffect(5)));
+
+            StepOutcome exiled = entry.getResolutionResults().outcome(StepKind.EXILE);
+            assertThat(exiled.objectIds()).containsExactly(bears.getId());
+            assertThat(exiled.playerIds()).containsExactly(player2.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        }
+
+        @Test
+        @DisplayName("Klothys, God of Destiny: a land card exiled from a graveyard isn't a creature card exiled this way")
+        void exiledLandIsNotACreatureCard() {
+            Card forest = new Forest();
+            gd.playerGraveyards.get(player2.getId()).add(forest);
+
+            resolveTargetingGraveyardCard(forest.getId(),
+                    ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, creatureCard), new GainLifeEffect(3)),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, landCard), new GainLifeEffect(5)));
+
+            assertThat(gd.getLife(player1.getId())).isEqualTo(25);
+        }
+
+        @Test
+        @DisplayName("Rooting Kavu: \"exile it. If you do\" happens when the source's card is exiled from its graveyard")
+        void sourceCardExiledFromItsGraveyard() {
+            Card kavu = new GrizzlyBears();
+            gd.playerGraveyards.get(player1.getId()).add(kavu);
+
+            StackEntry entry = resolveFor(kavu, new ExileSourceCardFromGraveyardEffect(),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(2)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()).containsExactly(kavu.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        }
+
+        @Test
+        @DisplayName("A source card that already left its graveyard is not exiled this way, so \"if you do\" does nothing")
+        void sourceCardGoneFromItsGraveyard() {
+            Card kavu = new GrizzlyBears();
+
+            StackEntry entry = resolveFor(kavu, new ExileSourceCardFromGraveyardEffect(),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(2)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE)).isEqualTo(StepOutcome.NONE);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Bioplasm: the top card of a library exiled this way gives its power, toughness and mana value")
+        void libraryExileGivesTheCardsStats() {
+            harness.setLibrary(player1, List.of(new HillGiant()));
+
+            StackEntry entry = resolve(player1, null, null, new ExileTopCardOfOwnLibraryEffect(false),
+                    new GainLifeEffect(AmountThisWay.exiledPower()),
+                    new GainLifeEffect(AmountThisWay.exiledToughness()),
+                    new LoseLifeEffect(AmountThisWay.exiledManaValue(), Subjects.eachOpponent()));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).playerIds()).containsExactly(player1.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(26);
+            assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        }
+
+        @Test
+        @DisplayName("Swords to Plowshares: an exiled creature's power is its power as it last existed on the battlefield")
+        void exiledPermanentGivesItsLastKnownPower() {
+            harness.addToBattlefield(player2, new GloriousAnthem());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+            resolve(player1, bears.getId(), null, new ExileTargetPermanentEffect(),
+                    new GainLifeEffect(AmountThisWay.exiledPower(), Subjects.playersThisWay(StepKind.EXILE)));
+
+            assertThat(gd.getLife(player2.getId())).isEqualTo(23);
         }
     }
 

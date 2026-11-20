@@ -15,7 +15,10 @@ import java.util.Objects;
  * toughness", "its mana value": the total of that stat over the permanents the most recent {@link StepKind#SACRIFICE}
  * step sacrificed, as each last existed on the battlefield (CR 608.2h, its {@code DepartureResult}), each counted as at
  * least 0; a permanent that wasn't a creature has no power or toughness and counts 0. Only a sacrifice step records
- * those for every way it sacrifices, so a stat is read only from one.
+ * those for every way it sacrifices, so a stat is read from one, or from an {@link StepKind#EXILE} step: "the
+ * exiled card's toughness", "that card's mana value" is the total over what it exiled, a card exiled from a
+ * graveyard, a library or a hand as it is now (a card keeps its characteristics in exile, CR 608.2h), an exiled
+ * permanent as it last existed on the battlefield.
  *
  * @param kind the kind of step read
  * @param stat what is read from it
@@ -26,19 +29,20 @@ public record AmountThisWay(StepKind kind, Stat stat) implements DynamicAmount {
     public enum Stat {
         /** The step's amount ({@code StepOutcome.amount()}). */
         AMOUNT,
-        /** The last-known power of what the step sacrificed. */
+        /** The last-known power of what the step sacrificed or exiled. */
         POWER,
-        /** The last-known toughness of what the step sacrificed. */
+        /** The last-known toughness of what the step sacrificed or exiled. */
         TOUGHNESS,
-        /** The last-known mana value of what the step sacrificed. */
+        /** The last-known mana value of what the step sacrificed or exiled. */
         MANA_VALUE
     }
 
     public AmountThisWay {
         Objects.requireNonNull(kind, "kind");
         Objects.requireNonNull(stat, "stat");
-        if (stat != Stat.AMOUNT && kind != StepKind.SACRIFICE) {
-            throw new IllegalArgumentException("Only a sacrifice step records last-known " + stat + ": " + kind);
+        if (stat != Stat.AMOUNT && kind != StepKind.SACRIFICE && kind != StepKind.EXILE) {
+            throw new IllegalArgumentException(
+                    "Only a sacrifice or exile step records last-known " + stat + ": " + kind);
         }
     }
 
@@ -60,5 +64,20 @@ public record AmountThisWay(StepKind kind, Stat stat) implements DynamicAmount {
     /** "Its mana value" after a sacrifice step. */
     public static AmountThisWay sacrificedManaValue() {
         return new AmountThisWay(StepKind.SACRIFICE, Stat.MANA_VALUE);
+    }
+
+    /** "The exiled creature card's power" after an exile step. */
+    public static AmountThisWay exiledPower() {
+        return new AmountThisWay(StepKind.EXILE, Stat.POWER);
+    }
+
+    /** "The exiled card's toughness" after an exile step. */
+    public static AmountThisWay exiledToughness() {
+        return new AmountThisWay(StepKind.EXILE, Stat.TOUGHNESS);
+    }
+
+    /** "The exiled card's mana value", "that card's mana value" after an exile step. */
+    public static AmountThisWay exiledManaValue() {
+        return new AmountThisWay(StepKind.EXILE, Stat.MANA_VALUE);
     }
 }

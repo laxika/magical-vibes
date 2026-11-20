@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
 
 @CardRegistration(set = "4ED", collectorNumber = "52")
 @CardRegistration(set = "LEA", collectorNumber = "40")
@@ -69,6 +72,7 @@ public class SwordsToPlowshares extends Card {
 
     public SwordsToPlowshares() {
         target(TargetFilters.creature())
-                .addSpellEffect(new ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(new TargetPower(), Subjects.controllerOf(Subjects.target())));
     }
 }

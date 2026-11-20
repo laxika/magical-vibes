@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -14,13 +16,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Resolves "exile it" of an ability about a card put into a graveyard (a creature-death trigger such as Patron of the
  * Vein's or Illicit Masquerade's, Planar Void, a copy's reflexive ability): exiles the stack entry's triggering card
  * from its owner's graveyard. A card that left that graveyard and came back is a new object the ability no longer
- * refers to (CR 400.7), so it stays.
+ * refers to (CR 400.7), so it stays. Records the {@link StepKind#EXILE} step (the card and its owner, or nothing).
  */
 @Slf4j
 @Component
@@ -39,6 +42,7 @@ public class ExileTriggeringCardFromGraveyardEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         UUID triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId == null) {
             return;
@@ -53,6 +57,7 @@ public class ExileTriggeringCardFromGraveyardEffectHandler implements NormalEffe
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, triggeringCardId);
         exileService.exileCard(gameData, ownerId, triggeringCard);
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(triggeringCardId), List.of(ownerId)));
         gameLogService.append(gameData, GameLog.cardTextCard(triggeringCard, " is exiled by ", entry.getCard(), "."));
         log.info("Game {} - {} exiles {} from a graveyard", gameData.id,
                 entry.getCard().getName(), triggeringCard.getName());

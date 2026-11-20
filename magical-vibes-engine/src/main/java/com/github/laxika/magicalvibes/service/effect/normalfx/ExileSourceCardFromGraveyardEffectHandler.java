@@ -4,18 +4,25 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link ExileSourceCardFromGraveyardEffect}: exiles the source's card from its graveyard, if it is still the
+ * card the event named. Records the {@link StepKind#EXILE} step (the card and its owner, or nothing) for "if you do".
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -33,7 +40,7 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         UUID cardId = entry.getCard().getId();
         long expectedEntryVersion = entry.sourceCardGraveyardEntryVersion();
         if (expectedEntryVersion >= 0
@@ -56,6 +63,7 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
         if (ownerId != null) {
             exileService.exileCard(gameData, ownerId, sourceCard);
+            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(cardId), List.of(ownerId)));
         }
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is exiled."));

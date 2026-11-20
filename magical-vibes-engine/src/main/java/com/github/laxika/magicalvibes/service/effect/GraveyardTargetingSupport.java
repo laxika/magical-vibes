@@ -7,19 +7,14 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
@@ -62,16 +57,6 @@ public class GraveyardTargetingSupport {
             // SequenceEffect, so the targeting step lives one level deeper (Iname, Life Aspect).
             if (targetEffect instanceof SequenceEffect sequence) {
                 Target nested = findTarget(sequence.steps());
-                if (nested != null) {
-                    return nested;
-                }
-                continue;
-            }
-            // "Exile it. If you do, return target cards" keeps its targets chosen as the ability is put on
-            // the stack; only the payload of the same-ability form targets (Iname, Life Aspect).
-            if (targetEffect instanceof ExileSourceCardFromGraveyardThenEffect exileSourceThen
-                    && !exileSourceThen.reflexive()) {
-                Target nested = findTarget(List.of(exileSourceThen.thenEffect()));
                 if (nested != null) {
                     return nested;
                 }
@@ -150,10 +135,6 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect exile) {
             return new Target(exile.filter(), exile.graveyardScope(), "to exile", 1, 1);
         }
-        if (effect instanceof ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature) {
-            return new Target(exileCreature.filter(), exileCreature.graveyardScope(), "to exile", 1,
-                    exileCreature.upToOne() ? 0 : 1);
-        }
         if (effect instanceof ExileGraveyardCardsEffect exile) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope != null) {
@@ -179,13 +160,6 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect exileThen) {
             return new Target(exileThen.filter(), exileThen.scope(), "to exile", 1, 0);
         }
-        if (effect instanceof ExileTargetCardFromGraveyardWithConditionalEffectsEffect) {
-            return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
-        }
-        if (effect instanceof ExileTargetCardFromGraveyardThenEffect exileThen) {
-            return new Target(exileThen.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,
-                    "to exile", 1, 1);
-        }
         if (effect instanceof ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect discovery) {
             return new Target(discovery.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,
                     "to exile", 1, 0);
@@ -193,9 +167,6 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
             GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
             return new Target(copy.filter(), scope, "to exile and copy", 1, 1);
-        }
-        if (effect instanceof ExileTargetCardFromGraveyardAndGainLifeEffect exile) {
-            return new Target(exile.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect copy) {
             return new Target(copy.filter(), copy.scope(), "to exile", 1, 1);

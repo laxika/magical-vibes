@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -1044,8 +1043,6 @@ public class Card {
             case MayEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             case com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect e ->
                     bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case ExileSourceCardFromGraveyardThenEffect e ->
-                    bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case ExilePermanentYouControlAndTrackWithSourceEffect e ->
                     bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case SacrificePermanentThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);

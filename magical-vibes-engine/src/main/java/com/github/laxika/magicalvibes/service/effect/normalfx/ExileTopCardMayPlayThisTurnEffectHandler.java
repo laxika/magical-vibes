@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -25,7 +27,7 @@ import org.springframework.stereotype.Component;
 /**
  * Oracle's Vault: exile the top card of the controller's library; until end of turn the controller
  * may play that card (any type). The free variant additionally lets it be cast without paying its
- * mana cost.
+ * mana cost. Records the {@link StepKind#EXILE} step: the cards exiled and their owner.
  */
 @Slf4j
 @Component
@@ -46,6 +48,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileTopCardMayPlayThisTurnEffect exileEffect = (ExileTopCardMayPlayThisTurnEffect) effect;
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         boolean withoutPaying = exileEffect.withoutPayingManaCost();
         UUID controllerId = entry.getControllerId();
         var source = entry.getSourcePermanentId() == null ? null
@@ -76,6 +79,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             exiledCount++;
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
+            entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(topCard.getId()), List.of(controllerId)));
 
             // Play permission (any card type) expiring at end of turn.
             gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);

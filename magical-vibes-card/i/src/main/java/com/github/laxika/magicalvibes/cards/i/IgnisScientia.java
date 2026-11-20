@@ -6,15 +6,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+
 
 @CardRegistration(set = "FIN", collectorNumber = "227")
 @CardRegistration(set = "FIN", collectorNumber = "492")
@@ -27,7 +30,9 @@ public class IgnisScientia extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{G}{U}",
-                List.of(new ExileGraveyardCardCreateTokenIfCreatureEffect(foodToken())),
+                List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
+                        new ConditionalEffect(
+                                HappenedThisWay.toACard(StepKind.EXILE, new CardTypePredicate(CardType.CREATURE)), foodToken())),
                 "{1}{G}{U}, {T}: Exile target card from a graveyard. If a creature card was exiled this way, create a Food token."
         ));
     }

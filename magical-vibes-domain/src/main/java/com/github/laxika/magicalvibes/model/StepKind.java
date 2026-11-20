@@ -12,7 +12,8 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #EXILE}, {@link #DESTROY}, {@link #SACRIFICE}: the number of permanents, the permanents by their id as
  *       the step acted on them (a sacrifice made outside a departure, as by {@code MakeAnExampleEffect}: the card's
  *       id), their controllers as the step acted on them (CR 608.2h); a sacrifice step's {@code DepartureResult}s keep
- *       each one's last-known power, toughness and mana value;</li>
+ *       each one's last-known power, toughness and mana value; an {@link #EXILE} step that exiles cards from a
+ *       graveyard, a library or a hand records those cards and their owners;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
  *       acted on them; to the battlefield: the permanent each card became) or cards, their owners;</li>
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>
@@ -24,8 +25,10 @@ package com.github.laxika.magicalvibes.model;
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
  * prompts, pauses by resolving itself again before it changes anything, or pauses at the end of its step with its
- * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, destroy, copy, create a
- * token and mill (never prompt, or rerun before any change); the self sacrifice ({@code departAsStep}), discard and
+ * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, exile the source's or
+ * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
+ * chooses at a prompt), exile the top card of a library, destroy, copy, create a token and mill (never prompt, or
+ * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), put counters (a replacement order answered later adds the rest) and
  * counter a spell; deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that

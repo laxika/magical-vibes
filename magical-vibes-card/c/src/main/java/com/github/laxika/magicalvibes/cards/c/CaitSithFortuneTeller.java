@@ -2,11 +2,18 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 @CardRegistration(set = "FIC", collectorNumber = "54")
 @CardRegistration(set = "FIC", collectorNumber = "151")
@@ -15,6 +22,9 @@ public class CaitSithFortuneTeller extends Card {
     public CaitSithFortuneTeller() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new ScryEffect(1),
-                new ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffect()));
+                new ExileTopCardMayPlayThisTurnEffect(false),
+                new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(
+                        new BoostTargetCreatureEffect(AmountThisWay.exiledManaValue(), new Fixed(0),
+                                new PermanentControlledBySourceControllerPredicate())))));
     }
 }

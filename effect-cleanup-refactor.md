@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 8 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 9 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -527,6 +527,7 @@ cause under Findings.
 | 6 | `--unaudited --family Sacrifice` (the family with the most first halves on step 7's earlier-step list: `SacrificeSelfEffect` and `SacrificePermanentsEffect`) | done (12 split, 8 blocked-other, 0 blocked-step-model, 0 blocked-player-loop, 0 unique; 17 cards rewritten; the blocked ones need the chosen sacrifice's last-known stats from `SacrificePermanentsEffect`, a granted ability's granter, or a delayed trigger that names a permanent) |
 | 7 | the chosen sacrifice's last-known stats: `SacrificePermanentsEffect` records `DepartureResult`s; `SacrificePermanentThenEffect`'s cards, Disciple of Bolas, Rupture, the Tribute to Hunger record | done (3 records split, 2 amounts absorbed into `AmountThisWay`; 111 of `SacrificePermanentThenEffect`'s 121 cards split, 10 kept; 10 "If you do" cards fixed from reflexive by Oracle text) |
 | 8 | `--unaudited --family Exile` restricted to `Then` / `And` / `IfYouDo` / `Unless` names: the permanent exiles whose first half is `ExileTargetPermanentEffect` | done (6 split, 2 absorbed, 2 survivors, 10 blocked-other, 2 blocked-step-model, 3 unique; 9 cards rewritten; `ManifestTopCardEffect` and `CloakTopCardOfControllerLibraryEffect` take a `PlayerSubject`) |
+| 9 | run 8's prerequisite: graveyard and library exiles record an EXILE step; the fused Exile records that unblocks (graveyard target, source card, top of library) and the Swords family's one-target cards | done (11 split, 1 amount absorbed, 7 survivors, 2 blocked-other, 4 blocked-step-model, 1 unique; 37 cards rewritten; `HappenedThisWay.toACard` and `AmountThisWay.exiled*`) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3939,6 +3940,96 @@ pass. Application, AI, engine testFixtures and card-test `a`, `d`, `f`, `h`, `k`
 - The next prerequisite for Exile is a recorded EXILE step for graveyard, library and hand exiles (and taking those records out of
   `GraveyardTargetingSupport`'s class list); it unlocks most of the 189 names. A per-object amount ("that creature's power" per
   target) would finish the Swords family.
+
+### Step 8, run 9 (2026-11-20)
+
+Run 8's prerequisite: graveyard and library exiles record an EXILE step. Verdicts (ledger, step `8`): **split 11**
+(`ExileSourceCardFromGraveyardThenEffect`, `ExileTargetCardFromGraveyardThenEffect`, `ExileTargetCardFromGraveyardAndGainLifeEffect`,
+`ExileGraveyardCardCreateTokenIfCreatureEffect`, `ExileTargetCardFromGraveyardWithConditionalEffectsEffect`,
+`ExileTargetCreatureCardFromGraveyardThenReflexiveEffect`, `ExileTopCardMayPlayThisTurnThenDealManaValueDamageEffect`,
+`ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffect`, `ExileTopCardAndBoostSelfIfCreatureEffect`,
+`ExileTopCardMayPlayThisTurnAndBoostSelfIfMatchingEffect`, `ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffect`, with
+their handlers), **absorbed 1** (`ToughnessOfLastCardExiledWithSource` into `AmountThisWay`, `model/amount`), **survivor 7**
+(`HappenedThisWay`, `AmountThisWay`, `ExileGraveyardCardsEffect`, `ExileSourceCardFromGraveyardEffect`, `ExileTriggeringCardFromGraveyardEffect`,
+`ExileTopCardMayPlayThisTurnEffect`, `ExileTopCardOfOwnLibraryEffect`), **blocked-other 2**, **blocked-step-model 4**, **unique 1**,
+blocked-player-loop 0. The Swords record keeps Luminate Primordial; its three one-target cards split. Ratchet 4,812 / 4,045 →
+4,801 / 4,034. 37 card files rewritten by hand-written scripts (deleted); Oracle text of every one checked with `get_card`, Swords to
+Plowshares' ruling with `get_rulings`. CR 608.2b, 608.2c, 608.2h, 400.7, 603.12 and 120.8 checked with `get_rule` (2026-11-20).
+
+- **Recording** (each records `StepOutcome.NONE` first, then the cards it exiled and their owners, the graveyard's or library's player;
+  `StepKind` Javadoc updated): `ExileSourceCardFromGraveyardEffect`, `ExileTriggeringCardFromGraveyardEffect`, `ExileGraveyardCardsEffect`
+  (every branch but the cards chosen at a prompt: `OWN` / `TRIGGERING_PLAYER` with more cards than the count, `EACH_OPPONENT_KEEP`, so
+  those paths are not an earlier step), `ExileTopCardMayPlayThisTurnEffect`, `ExileTopCardOfOwnLibraryEffect`. `ExileGraveyardCardsEffect`'s
+  target filter is now judged with the ability's X, source and source power, as the fused records judged it ("creature card with mana
+  value X", Sequence Engine); predicates that need none of those are unaffected.
+- **Readers.** `HappenedThisWay` gained a `CardPredicate cardFilter` component and `toACard(StepKind.EXILE, filter)`: "if it was a
+  creature card", "when you exile a nonland card this way", one exiled card matches as it is now (`GameQueryService.findCardById`; a card
+  keeps its characteristics in exile). `AmountThisWay` accepts POWER / TOUGHNESS / MANA_VALUE for EXILE (`exiledPower()`,
+  `exiledToughness()`, `exiledManaValue()`): an exiled permanent as the target path recorded it, a card as it is now, each at least 0.
+- **`GraveyardTargetingSupport`** lost the five deleted records' branches (the `ExileSourceCardFromGraveyardThenEffect` same-ability
+  special case included): a sequence recurses into its steps, `ConditionalEffect` is unwrapped, and a `QueueReflexiveAbilityEffect` declares
+  no graveyard target, so "When you do" targets are still chosen by the reflexive ability. `Card.bindEffectToTargetGroup` lost its case.
+- **Split cards.** "Exile it. If you do" (Rooting Kavu, Iname Life Aspect, Iname as One, Greenwarden of Murasa):
+  `SequenceEffect.of(ExileSourceCardFromGraveyardEffect(), ConditionalEffect(HappenedThisWay.exiled(), X))`; "When you do" (The Balrog of
+  Moria, Sandbender Scavengers, Paramecia Coloniex, Glissa's Retriever, Flitting Guerrilla, Doombot Harbinger, Bone Rattler): X in a
+  `QueueReflexiveAbilityEffect`. Target graveyard card (`ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard`, up to one:
+  `upToOneTargetFromAnyGraveyard`, an opponent's graveyard: the `TARGET_CARDS_OPPONENT_GRAVEYARD` exact form): Kirin-Touched Orochi (both modes,
+  "When you do"), Sheoldred's Assimilator ("If a card is exiled this way"), Sequence Engine, Selesnya Eulogist, Grave Robbers, Shamble Back
+  (riders ungated: no "if", and an illegal only target makes the ability not resolve, CR 608.2b), Cleanup Crew's mode (the bare exile),
+  Boneclad Necromancer (`MayEffect` around the sequence, gated on `exiled()`), Deluge of the Dead, Raven Eagle, Ignis Scientia, General's
+  Enforcer, Ethereal Absolution, Feral Appetite (gated on `toACard(creature)`), Lion Sash (permanent card), Klothys (land / nonland),
+  Misfortune Teller (creature, land, and "Otherwise" as `toACard(Not(AnyOf(creature, land)))`, so a creature land card makes both tokens as
+  before and no card exiled gains nothing), Venom (tracked exile, reflexive counters read `exiledToughness()`). Library: Hidetsugu
+  (`toACard(nonland)` + reflexive damage of `exiledManaValue()`), Daredevil Fearless Fighter (damage to you of `exiledManaValue()`, ungated;
+  0 is no damage, CR 120.8), Bioplasm (`ExileTopCardOfOwnLibraryEffect` + `toACard(creature)` + `BoostSelfEffect(exiledPower(),
+  exiledToughness())`), Daredevil Man Without Fear (`toACard(Hero)`), Cait Sith (`exiled()` + reflexive `BoostTargetCreatureEffect(exiledManaValue())`).
+  Swords to Plowshares, Avenger en-Dal, Captain Marvel: `ExileTargetPermanentEffect` + `GainLifeEffect(TargetPower | TargetToughness,
+  controllerOf(target()))`. Target specs are unchanged: the exile step declares the target with the same predicate and scope; the riders
+  declare none.
+- **Behaviour changes.** Swords to Plowshares, Avenger en-Dal and Captain Marvel's life gain no longer depends on the exile happening
+  ("Its controller gains life", no "if"; run 7's Victorious Destruction reading; the ruling only says last-known power): no reachable state
+  makes the exile of a legal target fail, so no test fails on the old cards. Shamble Back's Zombie is unconditional by its text (its target
+  is a creature card, so the same outcome). The log lines of `ExileGraveyardCardsEffect` / `ExileTopCardMayPlayThisTurnEffect` win (Hidetsugu
+  and Daredevil said "and may play it this turn", now "(may play it this turn)"). Raven Eagle's Clue is created without investigating, as
+  the old handler made it (`withInvestigate(false)`; `RavenEagleTest` caught it).
+- **AI.** No AI class named a deleted record. The split cards' riders are separate steps now; tokens and boosts inside a `ConditionalEffect`
+  are scored as the evaluators score other gated riders. Swords to Plowshares, Avenger and Captain Marvel keep HARMFUL_REMOVAL through
+  `ExileTargetPermanentEffect` (`RemovalEffect`, EXILE).
+- **Blocked, by cause.** blocked-other: an own-graveyard single target (`ExileTargetCardFromGraveyardAndCreateTokenEffect`, Quintorius;
+  `ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect`, Nyla): `ExileGraveyardCardsEffect.TARGET_CARDS_CONTROLLER_GRAVEYARD` means "any
+  number of target cards" in `GraveyardTargetingSupport` and four validators (`GraveyardTargetValidators`, `ValidTargetService`,
+  `TargetLegalityService`); with a count-honouring controller-graveyard target both split (Nyla's X is `exiledManaValue()`).
+  blocked-step-model: the resolution-time own-graveyard choices (`ExileOwnGraveyardCardThenEffect`, `ExileCardFromGraveyardThenEffect`,
+  `ExileNCardsFromGraveyardThenEffect`, `ExileOwnGraveyardCardThenCreateTokenEffect`: `rerunCurrentEffectAfterInteraction` or a bespoke
+  continuation). Unique: `ExileSourceCardFromGraveyardAndShuffleTopCardsEffect` (Triumph of Saint Katherine).
+- **Hand exiles** record nothing yet: every hand-exile primitive chooses at a prompt (`TargetPlayerExilesFromHandEffect`,
+  `ExileFromHandToImprintEffect`, `ExileCardFromHandFaceDownWithSourceEffect`), and the whole-hand exiles are themselves fused records
+  with a delayed return.
+
+**Tests**: one Gradle run, one `--tests` list per task: the tests of the 35 rewritten cards that have one (Deluge of the Dead and
+Kirin-Touched Orochi through Invasion of Innistrad and Teachings of the Kirin, plus the seven other tests naming them), Luminate
+Primordial, `--tests-for ExileGraveyardCardsEffect ExileSourceCardFromGraveyardEffect ExileTriggeringCardFromGraveyardEffect
+ExileTopCardMayPlayThisTurnEffect ExileTopCardOfOwnLibraryEffect --max-per-class 15`, 25 cards reading `HappenedThisWay.exiled()` /
+`AmountThisWay`, AI `TargetPolarityGuardTest`, `SpellEvaluatorTest`: 112 top-level classes, 1,126 test cases, all pass (Raven Eagle's
+investigate check failed first, fixed in the card); application (`StepResultsTest` +7: graveyard target exile with its owner and
+`toACard`, a land not a creature card, the source card exiled or gone, library exile stats, an exiled permanent's last-known power;
+`StepTriggerServiceTest` (its Klothys fixture rewritten to the steps), `ExileGraveyardCardsEffectHandlerTest`,
+`ResolutionScratchpadAmountTest`, `GraveyardTargetingServiceTest`, `EffectResolutionServiceTest`, `SubjectResolutionServiceTest`,
+`EffectCountRatchetTest`, `CardImmutabilityArchTest`): 345 test cases, all pass. Application, AI, engine testFixtures and card
+modules `a b c d e f g h i k l m p r s shared t v` compile.
+
+**For later runs.**
+
+- "Exile target card from a graveyard. If it was a [type] card" is the exile + `ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE,
+  filter), …)`; "Otherwise" is the negated filter, not a `NotCondition` (which would also fire when nothing was exiled). "Exile the top card
+  of your library … that card's mana value / power" is `ExileTopCardMayPlayThisTurnEffect` or `ExileTopCardOfOwnLibraryEffect` + an
+  `AmountThisWay.exiled*()` amount; a reflexive ability reads it too (results are carried).
+- Next for Exile: (1) make `ExileGraveyardCardsEffect`'s controller-graveyard scope honour `count` (a single "target card from your
+  graveyard") and split Quintorius and Nyla; (2) the other library exiles with a play permission
+  (`ExileTopCardOfDamagedPlayerLibrary…`, `ExileTopCardOfTargetOpponentLibrary…`, `ExileTopCardsMayPlay…AndCreateTokens…`) need a library
+  exile primitive with a `PlayerSubject` for whose library, then record and split like Hidetsugu; (3) the choose-at-resolution graveyard
+  and hand exiles need a recording choice primitive (pause at the end of the step, as `DiscardEffect` does) before their fused records
+  split; (4) Luminate Primordial needs a per-object amount.
 
 ## Prompt
 

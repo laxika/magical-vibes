@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfExiledCardIntoTopFiveEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 
 @CardRegistration(set = "YONE", collectorNumber = "10")
 public class SheoldredsAssimilator extends Card {
@@ -23,9 +26,10 @@ public class SheoldredsAssimilator extends Card {
     }
 
     private CardEffect graveyardTrigger() {
-        return new ExileTargetCardFromGraveyardThenEffect(
-                null,
-                new MayEffect(new ConjureDuplicateOfExiledCardIntoTopFiveEffect(),
-                        "Conjure a duplicate of that card into the top five cards of your library?"));
+        return SequenceEffect.of(
+                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(),
+                new ConditionalEffect(HappenedThisWay.exiled(),
+                        new MayEffect(new ConjureDuplicateOfExiledCardIntoTopFiveEffect(),
+                                "Conjure a duplicate of that card into the top five cards of your library?")));
     }
 }

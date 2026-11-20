@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.ResolutionResults;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
@@ -262,7 +263,6 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ManaValueOfLastCardExiledWithSource;
-import com.github.laxika.magicalvibes.model.amount.ToughnessOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -572,7 +572,7 @@ public class AmountEvaluationService {
             case CardsDrawnThisResolution ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
             case AmountThisWay thisWay ->
-                    ctx.stackEntry() == null ? 0 : amountThisWay(ctx.stackEntry().getResolutionResults(), thisWay);
+                    ctx.stackEntry() == null ? 0 : amountThisWay(gameData, ctx.stackEntry(), thisWay);
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->
@@ -985,8 +985,6 @@ public class AmountEvaluationService {
                     totalManaValueOfCardsExiledWithSource(gameData, ctx);
             case ManaValueOfLastCardExiledWithSource ignored ->
                     manaValueOfLastCardExiledWithSource(gameData, ctx);
-            case ToughnessOfLastCardExiledWithSource ignored ->
-                    toughnessOfLastCardExiledWithSource(gameData, ctx);
             case TotalManaValueOfCardsInGraveyard a ->
                     totalManaValueOfCardsInGraveyard(gameData, a, ctx);
             case TotalManaValueOfCardsOwnedInExile ignored ->
@@ -1128,11 +1126,15 @@ public class AmountEvaluationService {
 
     /**
      * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice
-     * step sacrificed (CR 608.2h), each counted as at least 0.
+     * or exile step removed (CR 608.2h), each counted as at least 0.
      */
-    private static int amountThisWay(ResolutionResults results, AmountThisWay thisWay) {
+    private int amountThisWay(GameData gameData, StackEntry entry, AmountThisWay thisWay) {
+        ResolutionResults results = entry.getResolutionResults();
         if (thisWay.stat() == AmountThisWay.Stat.AMOUNT) {
             return results.outcome(thisWay.kind()).amount();
+        }
+        if (thisWay.kind() == StepKind.EXILE) {
+            return exiledStat(gameData, entry, results.outcome(StepKind.EXILE).objectIds(), thisWay.stat());
         }
         int total = 0;
         for (DepartureResult result : results.departures()) {
@@ -1145,6 +1147,37 @@ public class AmountEvaluationService {
                 case MANA_VALUE -> result.lastKnownManaValue();
                 case AMOUNT -> 0;
             };
+            total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
+        }
+        return total;
+    }
+
+    /**
+     * The total of {@code stat} over what an exile step exiled, each counted as at least 0: a permanent as the entry
+     * recorded it as it left the battlefield, a card exiled from another zone as it is now (it keeps its
+     * characteristics in exile).
+     */
+    private int exiledStat(GameData gameData, StackEntry entry, List<UUID> exiledIds, AmountThisWay.Stat stat) {
+        int total = 0;
+        for (UUID id : exiledIds) {
+            Integer value;
+            if (entry.getLastKnownPermanentPowers().containsKey(id)) {
+                Card lastKnown = entry.lastKnownPermanentCard(id);
+                value = switch (stat) {
+                    case POWER -> entry.getLastKnownPermanentPowers().get(id);
+                    case TOUGHNESS -> entry.getLastKnownPermanentToughnesses().get(id);
+                    case MANA_VALUE -> lastKnown == null ? null : lastKnown.getManaValue();
+                    case AMOUNT -> 0;
+                };
+            } else {
+                Card card = gameQueryService.findCardById(gameData, id);
+                value = card == null ? null : switch (stat) {
+                    case POWER -> gameQueryService.getEffectiveCardPower(gameData, card);
+                    case TOUGHNESS -> gameQueryService.getEffectiveCardToughness(gameData, card);
+                    case MANA_VALUE -> card.getManaValue();
+                    case AMOUNT -> 0;
+                };
+            }
             total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
         }
         return total;
@@ -4332,16 +4365,6 @@ public class AmountEvaluationService {
         if (ctx.sourcePermanent() == null) return 0;
         List<Card> exiled = gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId());
         return exiled.isEmpty() ? 0 : exiled.getLast().getManaValue();
-    }
-
-    private int toughnessOfLastCardExiledWithSource(GameData gameData, AmountContext ctx) {
-        List<Card> exiled = ctx.sourcePermanent() == null
-                ? List.of() : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId());
-        if (exiled.isEmpty()) {
-            return ctx.eventValue();
-        }
-        Integer toughness = gameQueryService.getEffectiveCardToughness(gameData, exiled.getLast());
-        return toughness == null ? 0 : Math.max(0, toughness);
     }
 
     private int totalManaValueOfCardsOwnedInExile(GameData gameData, AmountContext ctx) {

@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "685")
 public class DaredevilFearlessFighter extends Card {
@@ -22,6 +24,8 @@ public class DaredevilFearlessFighter extends Card {
                 new DealDamageToPlayersEffect(new EventValue(), Subjects.targetPlayer()));
 
         addTrigger(Triggers.attacks(),
-                new ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffect());
+                SequenceEffect.of(
+                        new ExileTopCardMayPlayThisTurnEffect(false),
+                        new DealDamageToPlayersEffect(AmountThisWay.exiledManaValue(), Subjects.you())));
     }
 }

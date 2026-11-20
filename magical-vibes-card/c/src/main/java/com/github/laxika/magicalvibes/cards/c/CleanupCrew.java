@@ -5,15 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+
 
 @CardRegistration(set = "SNC", collectorNumber = "141")
 public class CleanupCrew extends Card {
@@ -32,7 +32,7 @@ public class CleanupCrew extends Card {
                                 new PermanentIsEnchantmentPredicate(), "Target must be an enchantment.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile target card from a graveyard.",
-                        new ExileTargetCardFromGraveyardAndGainLifeEffect(null, 0)),
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false)),
                 new ChooseOneEffect.ChooseOneOption("You gain 4 life.", new GainLifeEffect(4))
         ))));
     }

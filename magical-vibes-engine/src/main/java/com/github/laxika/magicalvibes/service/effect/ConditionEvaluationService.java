@@ -1414,7 +1414,12 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
-            case HappenedThisWay c -> c.filter() == null
+            case HappenedThisWay c -> c.cardFilter() != null
+                    ? ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
+                    .map(id -> gameQueryService.findCardById(gameData, id))
+                    .anyMatch(card -> card != null && predicateEvaluationService.matchesCardPredicate(
+                            card, c.cardFilter(), ctx.sourceCard() == null ? null : ctx.sourceCard().getId()))
+                    : c.filter() == null
                     ? ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum()
                     : ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
                     .map(id -> c.kind() == StepKind.SACRIFICE || c.kind() == StepKind.DESTROY

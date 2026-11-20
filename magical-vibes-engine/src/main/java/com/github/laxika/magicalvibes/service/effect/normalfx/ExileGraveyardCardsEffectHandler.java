@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,6 +33,11 @@ import org.springframework.stereotype.Component;
  * Unified handler for {@link ExileGraveyardCardsEffect}, dispatching on
  * {@link com.github.laxika.magicalvibes.model.effect.GraveyardExileScope}. Each branch preserves the
  * behaviour (and log strings) of the record it was collapsed from.
+ *
+ * <p>Records the {@link StepKind#EXILE} step: the cards exiled and their owners (the graveyards they left). A branch
+ * whose player chooses the cards at a prompt ({@code OWN} and {@code TRIGGERING_PLAYER} with more cards than the
+ * count, {@code EACH_OPPONENT_KEEP}) records nothing for the chosen cards, so it is not an earlier step on that
+ * path.</p>
  */
 @Slf4j
 @Component
@@ -53,12 +60,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardsEffect) effect;
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         switch (e.scope()) {
-            case OWN -> resolveOwn(gameData,
+            case OWN -> resolveOwn(gameData, entry,
                     entry.getControllerId(), e.count());
             case TRIGGERING_PLAYER -> {
                 if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
-                    resolveOwn(gameData, entry.getTargetId(), e.count());
+                    resolveOwn(gameData, entry, entry.getTargetId(), e.count());
                 }
             }
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
@@ -74,7 +82,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     /** {@code affectedPlayerId} exiles {@code count} cards from their graveyard, choosing when they have more. */
-    private void resolveOwn(GameData gameData, UUID affectedPlayerId, int count) {
+    private void resolveOwn(GameData gameData, StackEntry entry, UUID affectedPlayerId, int count) {
         String playerName = gameData.playerIdToName.get(affectedPlayerId);
         List<Card> graveyard = gameData.playerGraveyards.get(affectedPlayerId);
 
@@ -93,6 +101,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             UUID batchPlayerId = affectedPlayerId;
             gameData.runAsSingleCardExileBatch(() -> toExile.forEach(
                     card -> exileService.exileCard(gameData, batchPlayerId, card)));
+            recordExiled(entry, toExile, affectedPlayerId);
             GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
             appendCardList(builder, toExile);
             builder.text(" from their graveyard.");
@@ -150,6 +159,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 }
             }
         }
+        recordExiled(entry, toExile, playerId);
 
         GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
         appendCardList(builder, toExile);
@@ -225,13 +235,17 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 continue;
             }
 
-            if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+            // The filter is judged as the target was chosen against it: with the ability's X and source ("creature
+            // card with mana value X", Sequence Engine).
+            if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(),
+                    entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
+                    entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue())) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                                 + CardPredicateUtils.describeFilter(e.filter()) + ")."));
                 continue;
             }
 
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
             if (controllerGraveyard && !entry.getControllerId().equals(graveyardOwnerId)) {
                 continue;
             }
@@ -250,6 +264,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 gameData.grantExilePlayPermission(targetCard.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
             }
             exiledCards.add(targetCard);
+            recordExiled(entry, List.of(targetCard), graveyardOwnerId);
         }
 
         if (exiledCards.isEmpty()) {
@@ -305,8 +320,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                     && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
                 continue;
             }
-            exiledCards.add(card);
-            graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+            if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card)) {
+                exiledCards.add(card);
+                recordExiled(entry, List.of(card), graveyardOwnerId);
+            }
         }
 
         if (!exiledCards.isEmpty()) {
@@ -353,6 +370,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }));
             graveyard.clear();
             graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
+            recordExiled(entry, toExile, targetPlayerId);
 
             String logEntry = playerName + "'s graveyard is exiled (" + count + " card"
                     + (count != 1 ? "s" : "") + ").";
@@ -412,6 +430,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             grantPersistentExileCastPermission(gameData, card, targetPlayerId,
                     entry.getControllerId(), persistentPermissions);
         }
+        recordExiled(entry, toExile, targetPlayerId);
 
         GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
         appendCardList(builder, toExile);
@@ -494,6 +513,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 }
                 graveyard.removeAll(toExile);
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
+                recordExiled(entry, toExile, playerId);
             }
         });
         graveyardService.endGraveyardLeaveBatch(gameData);
@@ -510,6 +530,15 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             log.info("Game {} - All graveyards already empty when {} resolved",
                     gameData.id, entry.getCard().getName());
         }
+    }
+
+    /** Adds {@code cards}, exiled from {@code ownerId}'s graveyard, to the {@link StepKind#EXILE} step's outcome. */
+    private static void recordExiled(StackEntry entry, List<Card> cards, UUID ownerId) {
+        if (cards.isEmpty()) {
+            return;
+        }
+        entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(
+                cards.stream().map(Card::getId).toList(), ownerId == null ? List.of() : List.of(ownerId)));
     }
 
     /** Appends {@code cards} to {@code builder} as comma-separated card segments. */
@@ -546,6 +575,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
             graveyard.clear();
             graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
+            recordExiled(entry, toExile, playerId);
 
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";

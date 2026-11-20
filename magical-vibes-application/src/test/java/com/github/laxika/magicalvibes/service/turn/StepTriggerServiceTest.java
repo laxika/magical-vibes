@@ -39,6 +39,9 @@ import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreatur
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -46,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
@@ -2671,10 +2673,10 @@ class StepTriggerServiceTest {
         void queuesGraveyardTargetChoice() {
             Card source = createCardWithName("Klothys, God of Destiny");
             source.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                    new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
-                            new CardTypePredicate(CardType.LAND),
-                            new GainLifeEffect(1),
-                            new GainLifeEffect(1)));
+                    SequenceEffect.of(
+                            ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false),
+                            new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE,
+                                    new CardTypePredicate(CardType.LAND)), new GainLifeEffect(1))));
             Card land = createCardWithName("Forest");
             land.setType(CardType.LAND);
             gd.playerGraveyards.get(player1Id).add(land);
