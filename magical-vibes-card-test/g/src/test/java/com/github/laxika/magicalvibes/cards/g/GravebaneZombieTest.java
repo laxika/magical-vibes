@@ -680,8 +680,6 @@ class GravebaneZombieTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.handlePermanentChosen(player1, zombie.getId());
-
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player1, "Gravebane Zombie");
@@ -751,8 +749,6 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.handlePermanentChosen(player1, zombie.getId());
-
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player1, "Gravebane Zombie");
@@ -788,8 +784,6 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         int player1Life = gd.getLife(player1.getId());
         int player2Life = gd.getLife(player2.getId());
-
-        harness.handlePermanentChosen(player1, zombie.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");

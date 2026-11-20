@@ -1,22 +1,59 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureRandomCreatureWithManaValueEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExpansiveReapplication.class, GrizzlyBears.class, Cancel.class})
+@CardUsed({ExpansiveReapplication.class, GrizzlyBears.class, Cancel.class, SavannahLions.class})
 class ExpansiveReapplicationTest extends BaseCardTest {
 
+    private Map<Integer, List<CardPrinting>> conjureCandidates;
+    private List<CardPrinting> previousOneDrops;
+
+    /**
+     * The conjured creature is chosen at random from every creature with the right mana value, and a random
+     * one-drop can die to zero toughness or bring tokens and triggers with it, so mana value 1 is pinned to a
+     * vanilla creature.
+     */
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void pinConjuredCreature() {
+        var handler = GameTestEngineContext.get().getBean(ConjureRandomCreatureWithManaValueEffectHandler.class);
+        conjureCandidates = (Map<Integer, List<CardPrinting>>)
+                ReflectionTestUtils.getField(handler, "candidatesByManaValue");
+        previousOneDrops = conjureCandidates.put(1, List.of(new CardPrinting("9ED", "41",
+                SavannahLions.class.getName(), "SavannahLions", false, SavannahLions::new)));
+    }
+
+    @AfterEach
+    void restoreConjuredCreatures() {
+        if (previousOneDrops == null) {
+            conjureCandidates.remove(1);
+        } else {
+            conjureCandidates.put(1, previousOneDrops);
+        }
+    }
+
     @Test
+    @DisplayName("Counters the target spell and conjures a creature with mana value X")
     void countersTargetSpellAndConjuresPermanentCreatureWithMatchingManaValue() {
         GrizzlyBears bears = castTargetSpell();
 
@@ -33,6 +70,7 @@ class ExpansiveReapplicationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot be cast with X of 0")
     void cannotCastWithZeroX() {
         GrizzlyBears bears = castTargetSpell();
 
@@ -42,6 +80,7 @@ class ExpansiveReapplicationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a player")
     void cannotTargetAPlayer() {
         harness.setHand(player1, List.of(new ExpansiveReapplication()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -63,6 +102,7 @@ class ExpansiveReapplicationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjures the creature for its controller when it counters an opponent's spell")
     void conjuresForItsControllerWhenCounteringOpponentsSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.forceActivePlayer(player2);
@@ -87,6 +127,7 @@ class ExpansiveReapplicationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does nothing when its target spell has already been countered")
     void doesNotConjureWhenTargetSpellHasAlreadyBeenCountered() {
         GrizzlyBears bears = castTargetSpell();
         harness.castInstant(player1, 0, 1, bears.getId());
