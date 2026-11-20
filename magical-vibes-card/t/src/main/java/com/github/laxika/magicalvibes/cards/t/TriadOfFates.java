@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -49,8 +50,9 @@ public class TriadOfFates extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new ExileTargetPermanentThenEffect(
-                        new DrawCardEffect(2), ThenEffectRecipient.TARGET_CONTROLLER)),
+                List.of(SequenceEffect.of(
+                        new ExileTargetPermanentEffect(),
+                        new DrawCardEffect(2, Subjects.controllerOf(Subjects.target())))),
                 "{B}, {T}: Exile target creature that has a fate counter on it. Its controller draws two cards.",
                 new PermanentPredicateTargetFilter(fateCreature, "Target must be a creature with a fate counter on it")));
     }

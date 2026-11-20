@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ExileTargetPermanentEffect}. A plain {@code target()} keeps the target path: every chosen target of
- * the effect's group, its controller and last-known card and power recorded for later steps, and the token for its
+ * the effect's group, its controller and last-known card, power and toughness recorded for later steps, and the token for its
  * controller. "That creature" ({@code triggering()}) takes the same path. Every other subject ("this permanent",
  * "enchanted creature") is found by {@link SubjectResolutionService}; a permanent that already left is not exiled.
  */
@@ -87,6 +87,8 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             // Later steps of the same resolution read the exiled permanent's last known information.
             entry.rememberLastKnownPermanentCard(targetId, target.getCard());
             entry.getLastKnownPermanentPowers().put(targetId, gameQueryService.getEffectivePower(gameData, target));
+            entry.getLastKnownPermanentToughnesses().put(targetId,
+                    gameQueryService.getEffectiveToughness(gameData, target));
             if (permanentRemovalService.removePermanentToExile(gameData, target)) {
                 exiled.add(targetId);
                 if (controllerId != null) {
@@ -111,11 +113,53 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         }
     }
 
+    /**
+     * Exiles what a non-target subject names. Several permanents ("exile this creature and target creature") leave as
+     * one event, so each one's leave abilities see the others leave with it (CR 603.10a); the target part of such a
+     * subject keeps its controller and last-known card and power for later steps, as the target path does.
+     */
     private void exileSubject(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile) {
         List<UUID> exiled = new java.util.ArrayList<>();
         List<UUID> exiledControllers = new java.util.ArrayList<>();
-        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, exile, exile.subject())) {
+        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, exile, exile.subject());
+        java.util.Set<UUID> targeted = new java.util.HashSet<>();
+        if (exile.subject() instanceof PermanentSubject.AllOf allOf) {
+            for (PermanentSubject part : allOf.subjects()) {
+                if (part.declaresTarget()) {
+                    targeted.addAll(subjectResolutionService.permanentIds(gameData, entry, exile, part));
+                }
+            }
+        }
+        boolean together = named.size() > 1;
+        if (together) {
+            permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        }
+        try {
+            exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers);
+        } finally {
+            if (together) {
+                permanentRemovalService.endPermanentLeaveBatch(gameData);
+            }
+        }
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers));
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    private void exileNamed(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile,
+                            List<Permanent> named, java.util.Set<UUID> targeted, List<UUID> exiled,
+                            List<UUID> exiledControllers) {
+        for (Permanent permanent : named) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (targeted.contains(permanent.getId())) {
+                if (controllerId != null) {
+                    entry.getRemovedPermanentControllers().put(permanent.getId(), controllerId);
+                }
+                entry.rememberLastKnownPermanentCard(permanent.getId(), permanent.getCard());
+                entry.getLastKnownPermanentPowers().put(permanent.getId(),
+                        gameQueryService.getEffectivePower(gameData, permanent));
+                entry.getLastKnownPermanentToughnesses().put(permanent.getId(),
+                        gameQueryService.getEffectiveToughness(gameData, permanent));
+            }
             if (exile.outsideGame()) {
                 if (!permanentRemovalService.removePermanentToOutsideGame(gameData, permanent)) {
                     continue;
@@ -134,7 +178,5 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, permanent.getCard().getName(), entry.getCard().getName());
         }
-        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers));
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

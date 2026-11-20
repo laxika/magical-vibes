@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -32,11 +32,7 @@ public class CarnivorousCanopy extends Card {
                         ))
                 )),
                 "Target must be an artifact, enchantment, or creature with flying."
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                EventStat.NONE,
-                new ProliferateEffect(),
-                ThenEffectRecipient.CONTROLLER,
-                new PermanentMaxManaValuePredicate(3)
-        ));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentMaxManaValuePredicate(3)), new ProliferateEffect()));
     }
 }

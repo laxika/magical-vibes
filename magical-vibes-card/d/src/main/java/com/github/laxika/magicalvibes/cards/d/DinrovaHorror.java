@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Dinrova Horror — {4}{U}{B} Creature — Horror 4/4.
@@ -24,12 +24,12 @@ public class DinrovaHorror extends Card {
 
     public DinrovaHorror() {
         // Any permanent is a legal target. The discard is caused by this ability's controller, so the
-        // then-effect keeps that controller as the causer and makes the permanent's owner the player
-        // who discards (so an opponent-caused discard applies Loxodon Smiter's replacement).
+        // ability's controller stays the causer while the permanent's owner is the player who
+        // discards (so an opponent-caused discard applies Loxodon Smiter's replacement).
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnTargetPermanentToHandThenEffect(
-                        new DiscardEffect(1, Subjects.targetPlayer()),
-                        ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                        ReturnToHandEffect.target(),
+                        new DiscardEffect(1, Subjects.ownerOf(Subjects.target()))));
     }
 }

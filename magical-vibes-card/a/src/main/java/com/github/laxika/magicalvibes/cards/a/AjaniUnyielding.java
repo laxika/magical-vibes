@@ -6,14 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -46,8 +46,9 @@ public class AjaniUnyielding extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new ExileTargetPermanentThenEffect(EventStat.POWER,
-                        new GainLifeEffect(new EventValue()), ThenEffectRecipient.TARGET_CONTROLLER)),
+                List.of(SequenceEffect.of(
+                        new ExileTargetPermanentEffect(),
+                        new GainLifeEffect(new TargetPower(), Subjects.controllerOf(Subjects.target())))),
                 "-2: Exile target creature. Its controller gains life equal to its power.",
                 TargetFilters.creature()
         ));

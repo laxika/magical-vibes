@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
@@ -28,7 +26,7 @@ public class GiantTrapDoorSpider extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}{G}",
-                List.of(new ExileTargetPermanentThenEffect(new ExileTargetPermanentEffect(Subjects.source()), ThenEffectRecipient.CONTROLLER)),
+                List.of(new ExileTargetPermanentEffect(Subjects.allOf(Subjects.source(), Subjects.target()))),
                 "{1}{R}{G}, {T}: Exile this creature and target creature without flying that's attacking you.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

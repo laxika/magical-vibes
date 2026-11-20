@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -26,8 +27,7 @@ public class LilianasDefeat extends Card {
     public LilianasDefeat() {
         // Destroy target black creature or black planeswalker. If it was a Liliana planeswalker,
         // her controller loses 3 life. The Liliana check runs on the destroyed permanent's
-        // last-known state (pre-destruction), and TARGET_CONTROLLER routes the loss to that
-        // permanent's controller.
+        // last-known information, and the loss goes to that permanent's last-known controller.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
@@ -37,10 +37,7 @@ public class LilianasDefeat extends Card {
                         ))
                 )),
                 "Target must be a black creature or black planeswalker"
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                EventStat.NONE,
-                new LoseLifeEffect(3),
-                ThenEffectRecipient.TARGET_CONTROLLER,
-                new PermanentHasSubtypePredicate(CardSubtype.LILIANA)));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.LILIANA)), new LoseLifeEffect(3, Subjects.controllerOf(Subjects.target()))));
     }
 }

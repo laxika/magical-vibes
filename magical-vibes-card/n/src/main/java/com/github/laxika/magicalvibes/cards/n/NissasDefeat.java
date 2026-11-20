@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -39,10 +39,7 @@ public class NissasDefeat extends Card {
                         ))
                 )),
                 "Target must be a Forest, green enchantment, or green planeswalker"
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                EventStat.NONE,
-                new DrawCardEffect(1),
-                ThenEffectRecipient.CONTROLLER,
-                new PermanentHasSubtypePredicate(CardSubtype.NISSA)));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.NISSA)), new DrawCardEffect(1)));
     }
 }

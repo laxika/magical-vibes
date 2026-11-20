@@ -96,7 +96,9 @@ class PathOfPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("The owner gains life when the target creature is controlled by another player")
     void ownerGainsLifeForStolenCreature() {
-        var target = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        var merfolk = new CoralMerfolk();
+        merfolk.setOwnerId(player1.getId());
+        var target = harness.addToBattlefieldAndReturn(player1, merfolk);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

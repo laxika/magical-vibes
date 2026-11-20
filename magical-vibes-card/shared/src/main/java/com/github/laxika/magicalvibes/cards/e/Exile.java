@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -32,9 +30,7 @@ public class Exile extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE))))),
                 "Target must be a nonwhite attacking creature"
         ))
-                .addSpellEffect(new ExileTargetPermanentThenEffect(
-                        EventStat.TOUGHNESS,
-                        new GainLifeEffect(new EventValue()),
-                        ThenEffectRecipient.CONTROLLER));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                        .addSpellEffect(new GainLifeEffect(new TargetToughness()));
     }
 }

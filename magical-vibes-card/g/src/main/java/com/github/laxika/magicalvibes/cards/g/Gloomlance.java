@@ -3,16 +3,16 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * Gloomlance — {3}{B}{B} Sorcery.
@@ -24,15 +24,12 @@ public class Gloomlance extends Card {
     public Gloomlance() {
         // "Destroy target creature. If that creature was green or white, its controller discards a
         // card." The colour check reads the destroyed creature's last-known information, and "its
-        // controller" is snapshotted before the destruction.
+        // controller" is the controller it last had.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
         ))
-                .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        EventStat.NONE,
-                        new DiscardEffect(1, Subjects.you()),
-                        ThenEffectRecipient.TARGET_CONTROLLER,
-                        new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))), new DiscardEffect(1, Subjects.controllerOf(Subjects.target()))));
     }
 }

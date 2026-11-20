@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -26,9 +26,8 @@ public class ForumFamiliar extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another permanent you control"
-        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new ReturnTargetPermanentToHandThenEffect(
-                new PutCountersOnSourceEffect(1, 1, 1),
-                ThenEffectRecipient.CONTROLLER
-        ));
+        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), SequenceEffect.of(
+                ReturnToHandEffect.target(),
+                new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

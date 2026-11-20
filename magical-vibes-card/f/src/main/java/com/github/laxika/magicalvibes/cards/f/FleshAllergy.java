@@ -4,11 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "62")
@@ -19,9 +18,7 @@ public class FleshAllergy extends Card {
         target(TargetFilters.creature())
                 // Destroy target creature. Its controller loses life equal to the number of
                 // creatures that died this turn (counted at resolution, after this destruction).
-                .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        new LoseLifeEffect(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER),
-                                Subjects.you()),
-                        ThenEffectRecipient.TARGET_CONTROLLER));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                        .addSpellEffect(new LoseLifeEffect(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER), Subjects.controllerOf(Subjects.target())));
     }
 }

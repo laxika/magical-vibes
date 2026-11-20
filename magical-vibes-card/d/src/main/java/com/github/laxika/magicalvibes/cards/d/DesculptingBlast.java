@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -37,10 +37,7 @@ public class DesculptingBlast extends Card {
 
     public DesculptingBlast() {
         target(TargetFilters.nonlandPermanent())
-                .addSpellEffect(new ReturnTargetPermanentToHandThenEffect(
-                        DRONE,
-                        ThenEffectRecipient.CONTROLLER,
-                        null,
-                        new TargetPermanentMatches(new PermanentIsAttackingPredicate())));
+                .addSpellEffect(ReturnToHandEffect.target())
+                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentIsAttackingPredicate()), DRONE));
     }
 }

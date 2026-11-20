@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.t.TailTheSuspect;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,11 +22,9 @@ public class KellanInquisitiveProdigyTailTheSuspect extends Card {
         addCastingOption(new AdventureCast("{G}{U}"));
 
         target(TargetFilters.artifact(), 0, 1).addTrigger(Triggers.attacks(),
-                new DestroyTargetPermanentThenEffect(
-                        EventStat.NONE,
-                        new DrawCardEffect(1),
-                        ThenEffectRecipient.CONTROLLER,
-                        new PermanentControlledBySourceControllerPredicate()));
+                SequenceEffect.of(
+                        new DestroyTargetPermanentEffect(),
+                        new ConditionalEffect(new TargetPermanentMatches(new PermanentControlledBySourceControllerPredicate()), new DrawCardEffect(1))));
     }
 
     @Override

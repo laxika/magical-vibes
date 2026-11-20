@@ -1475,6 +1475,12 @@ public class AmountEvaluationService {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         if (target != null) return gameQueryService.getPermanentManaValue(target);
+        // A target an earlier step removed has the mana value it had as it last existed on the battlefield
+        // (CR 608.2h): face down 0, a transformed permanent its front face's.
+        Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> ctx.targetPermanentId().equals(snapshot.getId()))
+                .findFirst().orElse(null);
+        if (departed != null) return gameQueryService.getPermanentManaValue(departed);
         Card card = ctx.stackEntry() != null
                 ? ctx.stackEntry().lastKnownPermanentCard(ctx.targetPermanentId()) : null;
         return card == null ? 0 : card.getManaValue();

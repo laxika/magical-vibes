@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -34,8 +34,9 @@ public class AjaniInspiringLeader extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new ExileTargetPermanentThenEffect(
-                        new GainLifeEffect(2), ThenEffectRecipient.TARGET_CONTROLLER)),
+                List.of(SequenceEffect.of(
+                        new ExileTargetPermanentEffect(),
+                        new GainLifeEffect(2, Subjects.controllerOf(Subjects.target())))),
                 "\u22123: Exile target creature. Its controller gains 2 life.",
                 TargetFilters.creature()
         ));

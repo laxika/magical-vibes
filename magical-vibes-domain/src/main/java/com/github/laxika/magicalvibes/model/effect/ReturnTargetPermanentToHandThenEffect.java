@@ -17,6 +17,11 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * original spell/ability controller (Compelling Deterrence: "then that player discards a card if
  * you control a Zombie" — the Zombie check must see the post-bounce board).
  *
+ * <p>A card whose rider has a subject is written as steps instead: the removal, then the rider naming
+ * {@code controllerOf(target())} / {@code ownerOf(target())} (read from last-known information), with
+ * {@code TargetPower} / {@code TargetToughness} / {@code TargetManaValue} amounts and {@code TargetPermanentMatches} or
+ * {@code HappenedThisWay} gates. This wrapper remains for the riders that can't be: "that player exiles a card from their hand" (no player subject yet) and "if it was a …" checks of a type or subtype layers can change.
+ *
  * @param thenEffect    an existing effect resolved after the bounce
  * @param recipient     whose controller / target slot the then-effect acts on
  * @param thenCondition when non-null, the then-effect happens only if this condition is met after

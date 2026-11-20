@@ -3,17 +3,16 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -28,38 +27,28 @@ public class CommonBlackRemoval extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then create a Food token",
-                        destroyThen(CreateTokenEffect.ofFoodToken(1), ThenEffectRecipient.CONTROLLER),
+                        destroyThen(CreateTokenEffect.ofFoodToken(1)),
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then create a Treasure token",
-                        destroyThen(CreateTokenEffect.ofTreasureToken(1), ThenEffectRecipient.CONTROLLER),
+                        destroyThen(CreateTokenEffect.ofTreasureToken(1)),
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then put a menace counter on a creature you control",
                         destroyThen(new PutCounterOnChosenOwnPermanentEffect(
-                                CounterType.MENACE, new Fixed(1), new PermanentIsCreaturePredicate(), false, true),
-                                ThenEffectRecipient.CONTROLLER),
+                                CounterType.MENACE, new Fixed(1), new PermanentIsCreaturePredicate(), false, true)),
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then its controller mills cards equal to its power",
-                        destroyThen(EventStat.POWER,
-                                new MillEffect(new EventValue(), Subjects.you()),
-                                ThenEffectRecipient.TARGET_CONTROLLER),
+                        destroyThen(new MillEffect(new TargetPower(),
+                                Subjects.controllerOf(Subjects.target()))),
                         creatureTargetFilter())
         )));
     }
 
-    private static DestroyTargetPermanentThenEffect destroyThen(
-            CardEffect thenEffect,
-            ThenEffectRecipient recipient) {
-        return new DestroyTargetPermanentThenEffect(EventStat.NONE, thenEffect, recipient);
-    }
-
-    private static DestroyTargetPermanentThenEffect destroyThen(
-            EventStat stat,
-            CardEffect thenEffect,
-            ThenEffectRecipient recipient) {
-        return new DestroyTargetPermanentThenEffect(stat, thenEffect, recipient);
+    /** "Destroy target creature, then [rider]": the rider follows the destruction (CR 608.2c). */
+    private static CardEffect destroyThen(CardEffect rider) {
+        return SequenceEffect.of(new DestroyTargetPermanentEffect(), rider);
     }
 
     private static TargetFilter creatureTargetFilter() {

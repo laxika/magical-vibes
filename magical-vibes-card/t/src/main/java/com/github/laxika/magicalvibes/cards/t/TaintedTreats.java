@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,11 +27,8 @@ public class TaintedTreats extends Card {
                 new PermanentIsCreaturePredicate()));
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature,
-                "Target must be an artifact or creature")).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        EventStat.MANA_VALUE,
-                        foodToken(),
-                        ThenEffectRecipient.CONTROLLER,
-                        new PermanentMaxManaValuePredicate(4)));
+                "Target must be an artifact or creature")).addSpellEffect(new DestroyTargetPermanentEffect())
+                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentMaxManaValuePredicate(4)), foodToken()));
     }
 
     private static CreateTokenEffect foodToken() {

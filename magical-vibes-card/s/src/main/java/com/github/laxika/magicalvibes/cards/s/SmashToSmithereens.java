@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,8 +18,7 @@ public class SmashToSmithereens extends Card {
         // Destroy target artifact. Smash to Smithereens deals 3 damage to that artifact's controller.
         // The rider stays controlled by the caster (damage source and shields key on the spell) while
         // retargeting the damaged player to the destroyed artifact's controller.
-        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                new DealDamageToPlayersEffect(3, Subjects.targetPlayer()),
-                ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
+        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target())));
     }
 }

@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -38,13 +39,9 @@ public class NoxiousGearhulk extends Card {
                 )),
                 "Target must be another creature"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new DestroyTargetPermanentThenEffect(
-                        EventStat.TOUGHNESS,
-                        new GainLifeEffect(new EventValue()),
-                        ThenEffectRecipient.CONTROLLER,
-                        new PermanentIsCreaturePredicate(),
-                        true
-                ),
+                SequenceEffect.of(
+                        new DestroyTargetPermanentEffect(),
+                        new ConditionalEffect(HappenedThisWay.destroyed(), new GainLifeEffect(new TargetToughness()))),
                 "Destroy another target creature?"
         ));
     }

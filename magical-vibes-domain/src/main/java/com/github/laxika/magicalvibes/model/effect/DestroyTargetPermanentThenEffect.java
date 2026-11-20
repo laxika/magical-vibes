@@ -29,6 +29,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * matched that predicate (Death's Caress: "If that creature was a Human, you gain life equal to its
  * toughness."), evaluated on last-known information before the permanent leaves.
  *
+ * <p>A card whose rider has a subject is written as steps instead: the removal, then the rider naming
+ * {@code controllerOf(target())} / {@code ownerOf(target())} (read from last-known information), with
+ * {@code TargetPower} / {@code TargetToughness} / {@code TargetManaValue} amounts and {@code TargetPermanentMatches} or
+ * {@code HappenedThisWay} gates. This wrapper remains for the riders that can't be: "its controller searches" and token riders (no player subject yet), "dies this way", counter totals, a non-targeting departed reference, and "if it was a …" checks of a type or subtype layers can change.
+ *
  * @param stat                 last-known stat to snapshot onto {@code eventValue} before destruction
  * @param thenEffect           an existing effect resolved after destruction (reused via its own handler)
  * @param recipient            whose controller slot the then-effect acts on

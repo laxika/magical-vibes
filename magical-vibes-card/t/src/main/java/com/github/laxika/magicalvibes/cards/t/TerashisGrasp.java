@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -28,7 +26,7 @@ public class TerashisGrasp extends Card {
                 )),
                 "Target must be an artifact or enchantment"
         ))
-                .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        EventStat.MANA_VALUE, new GainLifeEffect(new EventValue()), ThenEffectRecipient.CONTROLLER));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                        .addSpellEffect(new GainLifeEffect(new TargetManaValue()));
     }
 }

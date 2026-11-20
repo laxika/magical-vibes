@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class HideousEnd extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonblack creature"
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                new LoseLifeEffect(2), ThenEffectRecipient.TARGET_CONTROLLER));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new LoseLifeEffect(2, Subjects.controllerOf(Subjects.target())));
     }
 }

@@ -6,18 +6,19 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureAndPerpetuallyBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndPerpetuallyBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeAloraEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -68,16 +69,18 @@ public class AloraRogueCompanion extends Card {
 
     public static CardEffect specializedReturnEffect(CardColor color) {
         return switch (color) {
-            case WHITE -> new ReturnTargetPermanentToHandThenEffect(
-                    CreateTokenEffect.whiteSoldier(1), ThenEffectRecipient.CONTROLLER);
-            case BLUE -> new ReturnTargetPermanentToHandThenEffect(
-                    new ChooseOpponentCreatureAndPerpetuallyBoostEffect(-1, 0),
-                    ThenEffectRecipient.CONTROLLER);
-            case BLACK -> new ReturnTargetPermanentToHandThenEffect(
-                    new LoseLifeEffect(2, Subjects.eachOpponent()),
-                    ThenEffectRecipient.CONTROLLER);
-            case RED -> new ReturnTargetPermanentToHandThenEffect(
-                    CreateTokenEffect.ofTreasureToken(1), ThenEffectRecipient.CONTROLLER);
+            case WHITE -> SequenceEffect.of(
+                    ReturnToHandEffect.target(),
+                    new ConditionalEffect(HappenedThisWay.returned(), CreateTokenEffect.whiteSoldier(1)));
+            case BLUE -> SequenceEffect.of(
+                    ReturnToHandEffect.target(),
+                    new ConditionalEffect(HappenedThisWay.returned(), new ChooseOpponentCreatureAndPerpetuallyBoostEffect(-1, 0)));
+            case BLACK -> SequenceEffect.of(
+                    ReturnToHandEffect.target(),
+                    new ConditionalEffect(HappenedThisWay.returned(), new LoseLifeEffect(2, Subjects.eachOpponent())));
+            case RED -> SequenceEffect.of(
+                    ReturnToHandEffect.target(),
+                    new ConditionalEffect(HappenedThisWay.returned(), CreateTokenEffect.ofTreasureToken(1)));
             case GREEN -> new ReturnTargetCreatureToHandAndPerpetuallyBoostEffect(1, 1);
         };
     }

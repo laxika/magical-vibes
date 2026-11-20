@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import org.mockito.InOrder;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -35,7 +37,9 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -244,4 +248,31 @@ class ExileTargetPermanentEffectHandlerTest {
                 verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
+
+    @Test
+    @DisplayName("Exiles this permanent and the target as one leave event, keeping the target's last-known controller")
+    void exilesSourceAndTargetTogether() {
+        Permanent source = addPermanent(player1Id, createCreatureCard("Giant Trap Door Spider"));
+        Permanent target = addPermanent(player2Id, createCreatureCard("Grizzly Bears"));
+        var effect = new ExileTargetPermanentEffect(Subjects.allOf(Subjects.source(), Subjects.target()));
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), player1Id,
+                "Giant Trap Door Spider", List.of(effect), target.getId(), source.getId());
+
+        when(subjectResolutionService.permanents(gd, entry, effect, effect.subject()))
+                .thenReturn(List.of(source, target));
+        when(subjectResolutionService.permanentIds(gd, entry, effect, Subjects.target()))
+                .thenReturn(List.of(target.getId()));
+        when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
+        when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+        when(permanentRemovalService.removePermanentToExile(eq(gd), any())).thenReturn(true);
+
+        exileTargetPermanentHandler.resolve(gd, entry, effect);
+
+        InOrder order = inOrder(permanentRemovalService);
+        order.verify(permanentRemovalService).beginPermanentLeaveBatch(gd);
+        order.verify(permanentRemovalService).removePermanentToExile(gd, source);
+        order.verify(permanentRemovalService).removePermanentToExile(gd, target);
+        order.verify(permanentRemovalService).endPermanentLeaveBatch(gd);
+        assertThat(entry.lastKnownPermanentController(target.getId())).isEqualTo(player2Id);
+    }
 }

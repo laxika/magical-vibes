@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -33,10 +33,7 @@ public class FiligreeFracture extends Card {
                 )),
                 "Target must be an artifact or enchantment."
         ))
-                .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        EventStat.NONE,
-                        new DrawCardEffect(1),
-                        ThenEffectRecipient.CONTROLLER,
-                        new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.BLACK))));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.BLACK))), new DrawCardEffect(1)));
     }
 }

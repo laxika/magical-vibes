@@ -132,7 +132,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 .map(controllers::get).filter(Objects::nonNull).toList()));
     }
 
-    /** Records {@code target}'s controller, card and power as it is destroyed; returns that controller. */
+    /** Records {@code target}'s controller, card, power and toughness as it is destroyed; returns that controller. */
     private UUID rememberTarget(GameData gameData, StackEntry entry, Permanent target) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId != null) {
@@ -141,6 +141,8 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
         entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
         entry.getLastKnownPermanentPowers().put(target.getId(),
                 gameQueryService.getEffectivePower(gameData, target));
+        entry.getLastKnownPermanentToughnesses().put(target.getId(),
+                gameQueryService.getEffectiveToughness(gameData, target));
         return controllerId;
     }
 

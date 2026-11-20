@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,8 +18,7 @@ public class MangaraOfCorondor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new ExileTargetPermanentThenEffect(
-                        new ExileTargetPermanentEffect(Subjects.source()), ThenEffectRecipient.CONTROLLER)),
+                List.of(new ExileTargetPermanentEffect(Subjects.allOf(Subjects.source(), Subjects.target()))),
                 "{T}: Exile Mangara and target permanent.",
                 TargetFilters.permanent()
         ));

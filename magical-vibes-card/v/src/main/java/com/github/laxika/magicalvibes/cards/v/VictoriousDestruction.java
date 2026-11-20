@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -22,7 +22,7 @@ public class VictoriousDestruction extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                new LoseLifeEffect(1), ThenEffectRecipient.TARGET_CONTROLLER));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new LoseLifeEffect(1, Subjects.controllerOf(Subjects.target())));
     }
 }

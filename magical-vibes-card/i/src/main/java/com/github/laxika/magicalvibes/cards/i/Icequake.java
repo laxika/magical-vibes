@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,13 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Icequake extends Card {
 
     public Icequake() {
-        // The snow check and controller are snapshotted before the land is destroyed, but the
+        // The snow check and controller read the destroyed land's last-known information, and the
         // damage is dealt afterwards so a destroyed snow Glacial Chasm no longer prevents it.
         target(TargetFilters.land())
-                .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        EventStat.NONE,
-                        new DealDamageToPlayersEffect(1, Subjects.targetPlayer()),
-                        ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                        new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                        .addSpellEffect(new ConditionalEffect(new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.SNOW)), new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.target()))));
     }
 }

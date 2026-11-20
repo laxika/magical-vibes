@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -17,8 +16,7 @@ public class PeakEruption extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                 "Target must be a Mountain"
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                new DealDamageToPlayersEffect(3, Subjects.targetPlayer()),
-                ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new DealDamageToPlayersEffect(3, Subjects.controllerOf(Subjects.target())));
     }
 }

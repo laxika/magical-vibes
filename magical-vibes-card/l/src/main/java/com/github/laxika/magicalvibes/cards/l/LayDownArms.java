@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class LayDownArms extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target creature's mana value must be at most the number of Plains you control."
-        )).addSpellEffect(new ExileTargetPermanentThenEffect(
-                new GainLifeEffect(3), ThenEffectRecipient.TARGET_CONTROLLER));
+        )).addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(3, Subjects.controllerOf(Subjects.target())));
     }
 }

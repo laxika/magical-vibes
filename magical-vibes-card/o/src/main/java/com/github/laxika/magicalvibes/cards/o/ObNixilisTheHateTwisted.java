@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,8 +25,9 @@ public class ObNixilisTheHateTwisted extends Card {
         // −2: Destroy target creature. Its controller draws two cards.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new DestroyTargetPermanentThenEffect(
-                        new DrawCardEffect(2), ThenEffectRecipient.TARGET_CONTROLLER)),
+                List.of(SequenceEffect.of(
+                        new DestroyTargetPermanentEffect(),
+                        new DrawCardEffect(2, Subjects.controllerOf(Subjects.target())))),
                 "−2: Destroy target creature. Its controller draws two cards.",
                 TargetFilters.creature()
         ));

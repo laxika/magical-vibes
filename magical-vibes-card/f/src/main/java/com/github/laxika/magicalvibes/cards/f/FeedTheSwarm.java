@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -53,10 +51,7 @@ public class FeedTheSwarm extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be a creature or enchantment an opponent controls."
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                EventStat.MANA_VALUE,
-                new LoseLifeEffect(new EventValue(), Subjects.you()),
-                ThenEffectRecipient.CONTROLLER
-        ));
+        )).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new LoseLifeEffect(new TargetManaValue(), Subjects.you()));
     }
 }

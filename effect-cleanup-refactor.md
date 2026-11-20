@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: run 1 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 and 2 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -520,6 +520,7 @@ cause under Findings.
 | Run | Takes | Status |
 |---|---|---|
 | 1 | the `thenEffect` wrappers of one named permanent (sacrifice / exile / return this, the granting Equipment), mill and draw "then", the library-move and tap wrappers | done (6 split, 8 blocked-step-model, 1 unique; mill "when you do" gated, Necrite and Search the City gated; the Destroy / Exile / Return target wrappers and `DiscardCardThenEffect` need rider subjects first) |
+| 2 | the target "then" wrappers: `DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`, `ReturnTargetPermanentToHandThenEffect`, `DiscardCardThenEffect` | done (78 cards split: Destroy 54 of 89, Exile 15 of 25, Return 9 of 12; no wrapper emptied, all three kept as blocked-other; `DiscardCardThenEffect` audited, blocked-step-model; `ThenEffectRecipient` stays) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3402,6 +3403,97 @@ card-test modules compile.
   benign). Give those verbs a player subject first (a step-4-style run), then split per card. `DiscardCardThenEffect` (70):
   `DiscardEffect` needs a card filter and a "the discarded card was a …" condition (and the alternate-type branch) first.
 - `HappenedThisWay.atLeast` is the gate for any "when you [do N things] this way" (The Royal Scions, the three mill cards).
+
+### Step 8, run 2 (2026-11-20)
+
+The four target "then" wrappers. Verdicts (ledger, step `8`): **split 0 classes** (78 of their cards split, no wrapper
+emptied), **blocked-other 3** (`DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`,
+`ReturnTargetPermanentToHandThenEffect`, each keeping the cards below), **blocked-step-model 1** (`DiscardCardThenEffect`),
+unique 0. Ratchet unchanged (4,852 / 4,085: no record or handler deleted).
+
+- **No new prerequisite was needed for the split cards.** The riders that matter already take a `PlayerSubject`
+  (life, damage, draw, discard, mill, poison), and the last-known reads exist: `controllerOf(target())` reads the
+  controller `DestroyTargetPermanentEffect` / `ExileTargetPermanentEffect` / `ReturnToHandEffect` record as they remove
+  the target, `ownerOf(target())` the remembered card's owner, `TargetPower` / `TargetToughness` / `TargetManaValue`
+  the target's last-known stats (the live permanent when the destruction was replaced, as the wrapper's survivor
+  read), `TargetPermanentMatches` the departed snapshot (Thermokarst's existing pattern). Shapes (card text checked
+  with `get_card`):
+  - "Its controller loses / gains / draws / discards / mills / gets a poison counter", "~ deals N damage to its
+    controller": removal, then the rider with `controllerOf(target())` (`ownerOf` for Path of Peace and Misfortune's
+    Gain): Bitter Downfall, Despoil, Exterminate, Foolish Fate, Glissa's Scorn, Hideous End, Spreading Rot, Victorious
+    Destruction, Flesh Allergy, Cindervines, Consign to the Pit, Cryoclasm, Destructive Revelry, Grotag Siege-Runner,
+    Melt Terrain, Minion Missile, Peak Eruption, Smash to Smithereens, Viashino Heretic, Agonizing Demise, Crumble,
+    Grisly Spectacle, Nature's Claim, Pistus Strike, Ob Nixilis the Hate-Twisted, Assassin's Strike, Unlicensed
+    Disintegration, Common Black Removal's mill mode; Ajani Inspiring Leader, Lay Down Arms, Ajani Unyielding,
+    Solitude, Introduction to Annihilation, Triad of Fates, Season of the Burrow, Structural Distortion; Recoil,
+    Dinrova Horror, Compelling Deterrence (owner discards, caused by the caster).
+  - "You gain / lose life equal to its …", "+X/+0 where X is its mana value", "X Saprolings": Divine Offering,
+    Terashi's Grasp, Garruk Apex Predator, Feed the Swarm, Orzhov Charm, Vendetta, Devour in Shadow, Hoard-Smelter
+    Dragon, Artifact / Aura / Death Mutation, Exile.
+  - Plain "you" riders: Common Black Removal's other modes, King Macar, Forum Familiar, Alora's four.
+  - "If it was …": `ConditionalEffect(TargetPermanentMatches(...))` for colour (last-known colours), snow (the
+    supertype LKI branch), mana value, counters, "you controlled it" (the recorded controller), attacking, Gideon /
+    Nissa / Liliana: Icequake, Filigree Fracture, Gloomwidow's Feast, Gloomlance, Raze to the Ground, Carnivorous
+    Canopy, Tainted Treats, Rite of the Serpent, Kellan, Nissa's / Liliana's / Gideon's Defeat, Consuming Ashes,
+    Boomerang Basics, Geistwave, Desculpting Blast.
+  - "If … destroyed / returned / exiled this way", "if you do": `HappenedThisWay`: Acolyte Hybrid, Noxious Gearhulk
+    (its "if a creature" is the target filter, so only the destroyed gate), King Macar, Mirkwood Nurturer, Alora.
+  - "Exile this creature and target creature": `ExileTargetPermanentEffect(allOf(source(), target()))` (Giant Trap
+    Door Spider, Hunting Kavu, Mangara of Corondor).
+- **Survivor changes.** `ExileTargetPermanentEffectHandler`'s subject path exiles several permanents inside one
+  permanent-leave batch (CR 603.10a, as the wrapper did) and records the target part's controller, card, power and
+  toughness (`ExileTargetPermanentEffectHandlerTest.exilesSourceAndTargetTogether`). `DestroyTargetPermanentEffectHandler`
+  and the exile target path also record the target's last-known toughness (the removal service records it only for
+  entries on the stack, so a resolving loyalty ability read 0: Garruk's tests caught it). `TargetManaValue` reads a
+  departed target's snapshot through `getPermanentManaValue` (a transformed permanent's front-face mana value, face
+  down 0; `ViashinoHereticTest.transformedArtifactDealsDamageUsingFrontFaceManaValue`).
+- **Behaviour changes (Oracle text).** Alora's four modes and Mirkwood Nurturer read "If you do": gated on
+  `HappenedThisWay.returned()` (no game state the tests reach makes a return fail, so no test fails on the old cards).
+  Gloomlance's discard is now caused by the spell's controller (the wrapper made the target's controller the entry
+  controller), so opponent-caused discard replacements apply. `ownerOf(target())` reads the
+  card's owner, not the wrapper's `defaultControllerOf`; `PathOfPeaceTest.ownerGainsLifeForStolenCreature` now gives
+  its hand-built card an owner, as every card in a real game has.
+- **AI.** `TargetPolarityClassifier` gives `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect` and
+  `ReturnToHandEffect.target()` HARMFUL_REMOVAL, as its name entries gave the wrappers, and a sequence takes its
+  strongest step, so the target choice is unchanged. `SpellEvaluator`, `InstantCategoryClassifier` and
+  `BoardEvaluator` now see the split cards as single-target removal (`RemovalEffect.removalKind()`), which the
+  wrappers (not `RemovalEffect`) were never scored as.
+- **Kept, by cause** (what a later run needs):
+  - a rider with no player subject: "its controller may search for a basic land" (13 Destroy cards, Path to Exile,
+    Winds of Abandon; `SearchLibraryEffect.searchPlayer` is the `LibrarySearchPlayer` enum: convert it to a
+    `PlayerSubject` step-4 style, with `MayEffect` chooser `TARGET_PERMANENT_CONTROLLER`), "its controller creates a
+    token" (Get Lost, Wasteland playtest, Ravenform, Resculpt, Secure the Scene; `CreateTokenEffect` needs a controller
+    subject: the `tokenForController` fields of the removal records skip `CreateTokenEffectHandler`'s Mirrormind Crown
+    / Moonlit Meditation / Esix choices, so they are not a substitute), Dwarven Confluencer (token copy), Unwanted
+    Remake (manifest dread), Transforming Flourish (exile-top-until), Excise the Imperfect (incubator), Fragment
+    Reality and Obscura Polymorphist (seek), Ashiok (`TargetPlayerExilesFromHandEffect`, a subject-sibling group with
+    `EachOpponentExilesFromHandEffect` / `EachPlayerExilesFromHandEffect`);
+  - "if it was a …" of a type or subtype layers can change (Death's Caress Human, Shredder's Technique enchantment,
+    Smashing Success artifact, Rescue artifact, Zephyr Sentinel Soldier) and "nonbasic" through a not-predicate
+    (Choking Sands, Molten Rain, Helldozer): `TargetPermanentMatches` judges the departed snapshot without its layered
+    state (only colours and a direct supertype predicate have last-known fields), so Maskwood Nexus, Liquimetal
+    Coating or Arcum's Weathervane would be missed; needs the effective last-known card on the departed snapshot;
+  - "if it was dealt damage this turn" (Faller's Faithful, Sold Out): the damaged-this-turn sets forget a departed card;
+  - "dies this way" (Cinder Cloud, Kaervek's Purge, Tuktuk Scrapper): no DIED result (DESTROY counts a replaced
+    destruction);
+  - Break the Spell (any-of controlled-or-token after the destroy: the controlled special case matches only a bare
+    `PermanentControlledBySourceControllerPredicate`); target-player scopes after the destroy (Feast of Worms, Public
+    Execution, Impose Hierarchy, Roiling Terrain); counter totals (Parting Thoughts, Flay Essence:
+    `CountersOnTargetPermanent` has no last-known read); Engulfing Slagwurm (a non-targeting departed blocker).
+  - `DiscardCardThenEffect`: 46 of 72 cards are "discard. When you do" (reflexive); the 26 "if you do" ones need
+    `DiscardEffect` to take a card filter and `LastDiscardedCard*` / "the discarded card was a …" read from the
+    DISCARD result, and `SpellEvaluator` scores a bare `DiscardEffect(you())` as card loss, so an AI check comes with it.
+- `ThenEffectRecipient` stays: the three wrappers, `DestroyCombatOpponentAtEndOfCombatEffectHandler` and the three
+  blocked library records read it.
+
+**Tests**: card tests of the 78 rewritten cards: 80 suites, 648 test cases, all pass (after the toughness, mana-value
+and Path of Peace fixes above; the eight layer-sensitive cards were put back on their wrappers after Zephyr Sentinel's
+Maskwood Nexus test failed). Selection: `--tests-for DestroyTargetPermanentEffect ExileTargetPermanentEffect
+ReturnToHandEffect --max-per-class 15`, every card naming `TargetManaValue` / `TargetToughness`, the rewritten cards,
+`ExileTargetPermanentEffectHandlerTest` (+1), `DestroyTargetPermanentEffectHandlerTest`, `StepResultsTest`,
+`SubjectResolutionServiceTest`, `ResolutionScratchpadAmountTest`, `EffectCountRatchetTest`, AI
+`TargetPolarityGuardTest`: 159 suites, 1,295 test cases, all pass. Application, AI, engine testFixtures and the touched
+card-test modules compile.
 
 ## Prompt
 

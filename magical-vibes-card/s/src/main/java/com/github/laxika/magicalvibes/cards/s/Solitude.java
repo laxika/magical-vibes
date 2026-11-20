@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,9 +38,8 @@ public class Solitude extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetPermanentThenEffect(
-                        EventStat.POWER,
-                        new GainLifeEffect(new EventValue()),
-                        ThenEffectRecipient.TARGET_CONTROLLER));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                        new ExileTargetPermanentEffect(),
+                        new GainLifeEffect(new TargetPower(), Subjects.controllerOf(Subjects.target()))));
     }
 }

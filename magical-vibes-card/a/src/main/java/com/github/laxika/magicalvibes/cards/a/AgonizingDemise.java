@@ -3,15 +3,13 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -38,12 +36,9 @@ public class AgonizingDemise extends Card {
         )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DestroyTargetPermanentEffect(true),
-                new DestroyTargetPermanentThenEffect(
-                        EventStat.POWER,
-                        new DealDamageToPlayersEffect(new EventValue(), Subjects.targetPlayer()),
-                        ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                        true
-                )
+                SequenceEffect.of(
+                        new DestroyTargetPermanentEffect(true),
+                        new DealDamageToPlayersEffect(new TargetPower(), Subjects.controllerOf(Subjects.target())))
         ));
     }
 }

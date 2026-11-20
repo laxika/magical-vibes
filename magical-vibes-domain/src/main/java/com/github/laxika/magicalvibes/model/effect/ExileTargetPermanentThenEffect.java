@@ -26,6 +26,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * basic land card, put that card onto the battlefield tapped, then shuffle." (A restricted search
  * can always fail to find, so "may search" needs no extra flag.)
  *
+ * <p>A card whose rider has a subject is written as steps instead: the removal, then the rider naming
+ * {@code controllerOf(target())} / {@code ownerOf(target())} (read from last-known information), with
+ * {@code TargetPower} / {@code TargetToughness} / {@code TargetManaValue} amounts and {@code TargetPermanentMatches} or
+ * {@code HappenedThisWay} gates. This wrapper remains for the riders that can't be: "its controller searches", token, seek and incubate riders (no player subject yet), counter totals, and "if it was dealt damage this turn".
+ *
  * @param stat          last-known stat copied to the rider's event value, or {@code NONE}
  * @param thenEffect    an existing effect resolved after exile (reused via its own handler)
  * @param recipient     whose controller slot the then-effect acts on

@@ -10,10 +10,11 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -53,8 +54,9 @@ public class SeasonOfTheBurrow extends Card {
                     List.of(CardSubtype.RABBIT), Set.of(), Set.of()));
         }
         for (int i = 0; i < exiles; i++) {
-            effects.add(new ExileTargetPermanentThenEffect(
-                    new DrawCardEffect(), ThenEffectRecipient.TARGET_CONTROLLER));
+            effects.add(SequenceEffect.of(
+                    new ExileTargetPermanentEffect(),
+                    new DrawCardEffect(1, Subjects.controllerOf(Subjects.target()))));
         }
         if (returns == 1) {
             effects.add(ReturnCardFromGraveyardEffect.builder()
