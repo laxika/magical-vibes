@@ -1433,7 +1433,9 @@ Later (`effect-cleanup-refactor.md` step 8, run 11) the `ExilePlayWindow` axis w
 component of `ExileTopCardMayPlayThisTurnEffect` (`until(...)`), which absorbed `ExileTopCardMayPlayUntilNextUpkeepEffect`
 and the until-next-end-step / for-as-long-as-exiled records; the survivor's per-card log won. Run 12 absorbed
 `ExileTopCardsMayPlayUntilNextTurnEffect` (`until(UNTIL_END_OF_YOUR_NEXT_TURN | DURING_YOUR_NEXT_TURN)`) and
-`ExileTopCardMayPlayWhileExiledEffect` (`until(PERMANENT)`, `playableOnlyIf(condition)`).
+`ExileTopCardMayPlayWhileExiledEffect` (`until(PERMANENT)`, `playableOnlyIf(condition)`). Run 13 absorbed
+`ExileTopCardsMayCastMatchingThisTurnEffect` and its until-next-turn sibling (`mayOnlyCast(filter)`, the playable-filter
+axis), the three choose-one records (`choosingOne()`) and the up-to-N record (`upTo(n)`).
 
 **17a Target**
 ```java

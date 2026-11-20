@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
@@ -21,7 +21,7 @@ public class MeetingOfTheFive extends Card {
         CardAllOfPredicate exactlyThreeColorSpell = new CardAllOfPredicate(List.of(
                 new CardHasExactlyNColorsPredicate(3),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
-        addSpellEffect(new ExileTopCardsMayCastMatchingThisTurnEffect(10, exactlyThreeColorSpell));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(10, false).mayOnlyCast(exactlyThreeColorSpell));
 
         ManaRestriction restriction = new ManaRestriction.ExactlyThreeColorSpells();
         addSpellEffect(new AwardRestrictedManaEffect(ManaColor.WHITE, 2, restriction));

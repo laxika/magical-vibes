@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -27,8 +28,11 @@ public class YouFindSomePrisoners extends Card {
                         "Interrogate Them — Exile the top three cards of target opponent's library. "
                                 + "Choose one of them. Until the end of your next turn, you may play that card, "
                                 + "and you may spend mana as though it were mana of any color to cast it.",
-                        new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(
-                                3, Subjects.targetPlayer(), true),
+                        new ExileTopCardMayPlayThisTurnEffect(3, false)
+                                .fromLibraryOf(Subjects.targetPlayer())
+                                .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)
+                                .withAnyManaType()
+                                .choosingOne(),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent"))

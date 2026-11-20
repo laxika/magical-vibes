@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.c.CratersClaws;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -22,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NarsetEnlightenedMaster.class, Divination.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({NarsetEnlightenedMaster.class, Divination.class, Forest.class, GrizzlyBears.class, Shock.class,
+        BonecrusherGiant.class})
 class NarsetEnlightenedMasterTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,20 @@ class NarsetEnlightenedMasterTest extends BaseCardTest {
         assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(spell.getId(), otherSpell.getId())
                 .doesNotContain(creature.getId(), land.getId());
+    }
+
+    @Test
+    @DisplayName("A creature card whose Adventure is a noncreature spell is permitted, for that Adventure")
+    void creatureCardWithANoncreatureAdventureIsPermitted() {
+        Card adventurer = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(adventurer, new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        addCreatureReady(player1, new NarsetEnlightenedMaster());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(adventurer.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).containsExactly(adventurer.getId());
     }
 
     @Test

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -18,6 +21,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +35,9 @@ import org.springframework.stereotype.Component;
  * mana cost. Another library ("that player exiles the top card of their library", Fallen Shinobi): each player the
  * effect's {@code library} names exiles from their own, in APNAP order, and the controller (or the player the effect's
  * {@code player} names, as the effect resolves) may play the cards for the effect's duration, whose "your" is that
- * player's (face down, that player may look at them); with no such player, nothing is exiled.
+ * player's (face down, that player may look at them); with no such player, nothing is exiled. A cast filter permits
+ * only cards castable as a matching spell, a play limit groups the permitted cards, and "choose one of them" ends the
+ * step on the holder's choice of the one card that may be played.
  * Records the {@link StepKind#EXILE} step: the cards exiled and their owners.
  */
 @Slf4j
@@ -44,6 +51,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final SubjectResolutionService subjectResolutionService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,13 +76,32 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         if (holderId == null) {
             return;
         }
+        List<UUID> exiledIds = new ArrayList<>();
+        List<UUID> permittedIds = new ArrayList<>();
         for (UUID libraryOwnerId : subjectResolutionService.players(gameData, entry, effect, exileEffect.library())) {
-            exileFrom(gameData, exileEffect, entry, source, count, libraryOwnerId, holderId);
+            exileFrom(gameData, exileEffect, entry, source, count, libraryOwnerId, holderId, exiledIds, permittedIds);
+        }
+        String holderName = gameData.playerIdToName.get(holderId);
+        if (exileEffect.chooseOne()) {
+            if (!exiledIds.isEmpty()) {
+                // The exile is done and recorded; the step ends on the choice of the one card that may be played.
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCardMayPlayChoice(holderId,
+                        exiledIds, exileEffect.duration(), exileEffect.anyManaType(),
+                        exileEffect.withoutPayingManaCost(), false, false));
+            }
+        } else if (exileEffect.playLimit() > 0 && !permittedIds.isEmpty()) {
+            gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), exileEffect.playLimit(), permittedIds);
+            gameLogService.append(gameData, GameLog.text(holderName + " may "
+                    + (exileEffect.castOnly() ? "cast " : "play ")
+                    + (exileEffect.playLimit() == 1 ? "one" : "up to " + exileEffect.playLimit())
+                    + " of those cards" + (exileEffect.withoutPayingManaCost() ? " without paying its mana cost" : "")
+                    + durationText(gameData, holderId, exileEffect.duration()) + "."));
         }
     }
 
     private void exileFrom(GameData gameData, ExileTopCardMayPlayThisTurnEffect exileEffect, StackEntry entry,
-                           Permanent source, int count, UUID libraryOwnerId, UUID holderId) {
+                           Permanent source, int count, UUID libraryOwnerId, UUID holderId, List<UUID> exiledIds,
+                           List<UUID> permittedIds) {
         boolean withoutPaying = exileEffect.withoutPayingManaCost();
         Duration duration = exileEffect.duration();
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
@@ -88,6 +115,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
 
         String verb = exileEffect.castOnly() ? "cast" : "play";
         String player = libraryOwnerId.equals(holderId) ? "" : gameData.playerIdToName.get(holderId) + " ";
+        boolean notePerCard = !exileEffect.chooseOne() && exileEffect.playLimit() == 0;
         String playNote = " (" + player + "may " + verb + " it"
                 + (withoutPaying ? " without paying its mana cost" : "")
                 + durationText(gameData, holderId, duration) + ")";
@@ -99,12 +127,19 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             } else {
                 exileService.exileCard(gameData, libraryOwnerId, topCard);
             }
-            entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(topCard.getId()), List.of(libraryOwnerId)));
+            entry.addToStep(StepKind.EXILE,
+                    StepOutcome.ofObjects(List.of(topCard.getId()), List.of(libraryOwnerId)));
+            exiledIds.add(topCard.getId());
 
-            boolean permitted = !exileEffect.castOnly() || !topCard.hasType(CardType.LAND);
+            boolean permitted = !exileEffect.chooseOne() && permits(exileEffect, topCard);
             if (permitted) {
+                permittedIds.add(topCard.getId());
                 // Play permission for the effect's duration ("you may cast": not for a land card).
                 gameData.grantExilePlayPermission(topCard.getId(), holderId, duration);
+                if (exileEffect.castFilter() != null) {
+                    gameData.updateExilePlayPermission(topCard.getId(),
+                            granted -> granted.withSpellFilter(exileEffect.castFilter()));
+                }
                 if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
                     gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), holderId);
                 }
@@ -133,10 +168,29 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                 line.card(topCard);
             }
             gameLogService.append(gameData, line
-                    .text(" from the top of their library" + (permitted ? playNote : "") + ".").build());
+                    .text(" from the top of their library" + (permitted && notePerCard ? playNote : "") + ".")
+                    .build());
             log.info("Game {} - {} exiles {} from library top (withoutPaying={}, duration={})",
                     gameData.id, ownerName, topCard.getName(), withoutPaying, duration);
         }
+    }
+
+    /**
+     * Whether an exiled card gets the permission: with a cast filter, when it can be cast as a matching spell (its
+     * front face, a modal double-faced card's back face, or its Adventure); "you may cast": not a land card.
+     */
+    private boolean permits(ExileTopCardMayPlayThisTurnEffect exileEffect, Card card) {
+        CardPredicate castFilter = exileEffect.castFilter();
+        if (castFilter == null) {
+            return !exileEffect.castOnly() || !card.hasType(CardType.LAND);
+        }
+        if (predicateEvaluationService.matchesCardPredicate(card, castFilter, null)) {
+            return true;
+        }
+        Card backFace = card.getBackFaceCard();
+        return backFace != null
+                && (card.isModalDoubleFaced() || card.getCastingOption(AdventureCast.class).isPresent())
+                && predicateEvaluationService.matchesCardPredicate(backFace, castFilter, null);
     }
 
     /** How long the permission lasts, as the log says it; "your" is the permission holder's. */
@@ -148,6 +202,8 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             return " until " + controllerName + "'s next end step";
         } else if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
             return " until the end of " + controllerName + "'s next turn";
+        } else if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+            return " until " + controllerName + "'s next turn";
         } else if (Duration.DURING_YOUR_NEXT_TURN.equals(duration)) {
             return " during " + controllerName + "'s next turn";
         } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)) {

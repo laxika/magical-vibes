@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -23,6 +23,6 @@ public class ElectrostaticBlast extends Card {
         addSpellEffect(new DealDamageToAnyTargetEffect(2));
         addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 INSTANT_OR_SORCERY,
-                List.of(ExileTopCardsChooseOneMayPlayThisTurnEffect.mayPlayOneOfThem(3))));
+                List.of(new ExileTopCardMayPlayThisTurnEffect(3, false).upTo(1))));
     }
 }

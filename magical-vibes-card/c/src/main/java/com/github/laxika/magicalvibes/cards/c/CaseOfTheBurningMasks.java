@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerControlledSource
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -39,7 +39,7 @@ public class CaseOfTheBurningMasks extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new ExileTopCardsChooseOneMayPlayThisTurnEffect(3)),
+                        new ExileTopCardMayPlayThisTurnEffect(3, false).choosingOne()),
                 "Sacrifice this Case: Exile the top three cards of your library. Choose one of them. "
                         + "You may play that card this turn."
         ).withActivationCondition(new SourceIsSolved(), "Activate only if this Case is solved."));

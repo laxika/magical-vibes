@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -37,12 +37,13 @@ public class ChandraHopesBeacon extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new ExileTopCardsMayCastMatchingUntilNextTurnEffect(
-                        new Fixed(5),
-                        new CardAnyOfPredicate(List.of(
+                List.of(new ExileTopCardMayPlayThisTurnEffect(5, false)
+                        .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)
+                        .mayOnlyCast(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )), false, 1)),
+                        )))
+                        .upTo(1)),
                 "+1: Exile the top five cards of your library. Until the end of your next turn, you may cast an instant or sorcery spell from among those exiled cards."
         ));
 

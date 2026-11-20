@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -72,7 +74,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * permanents" / "that player" ({@code Subjects.thisWay} / {@code Subjects.playersThisWay}). Every case composes the
  * primitives the way a real card's text reads, without the card's own fused effect.
  */
-@CardUsed({GrizzlyBears.class, HillGiant.class, Forest.class, GloriousAnthem.class, DarksteelMyr.class})
+@CardUsed({GrizzlyBears.class, HillGiant.class, Forest.class, GloriousAnthem.class, DarksteelMyr.class,
+        BonecrusherGiant.class})
 class StepResultsTest extends BaseCardTest {
 
     @BeforeEach
@@ -352,6 +355,46 @@ class StepResultsTest extends BaseCardTest {
             assertThat(gd.findExiledCard(forest.getId())).isNotNull();
             assertThat(gd.exilePlayPermission(forest.getId())).isEmpty();
             assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Jaya, Fiery Negotiator: \"choose one of them\" ends the exile step on the choice, and a later step runs after it")
+        void chooseOneOfThemEndsTheStepOnTheChoice() {
+            Card giant = new HillGiant();
+            Card forest = new Forest();
+            harness.setLibrary(player1, List.of(giant, forest));
+
+            StackEntry entry = resolve(player1, null, null,
+                    new ExileTopCardMayPlayThisTurnEffect(2, false).choosingOne(),
+                    new GainLifeEffect(new AmountThisWay(StepKind.EXILE), Subjects.you()));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds())
+                    .containsExactly(giant.getId(), forest.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExiledCardMayPlayChoice.class);
+            assertThat(gd.exilePlayPermissionHolders()).isEmpty();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+            harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+            assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(forest.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        }
+
+        @Test
+        @DisplayName("Chandra, Hope's Beacon: a cast filter permits an Adventure card whose Adventure matches, and no other card")
+        void castFilterPermitsAMatchingAdventure() {
+            Card giant = new BonecrusherGiant();
+            Card bears = new GrizzlyBears();
+            Card forest = new Forest();
+            harness.setLibrary(player1, List.of(giant, bears, forest));
+            CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
+                    new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)));
+
+            resolve(player1, null, null,
+                    new ExileTopCardMayPlayThisTurnEffect(3, false).mayOnlyCast(instantOrSorcery));
+
+            assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(giant.getId());
+            assertThat(gd.exilePlayPermission(giant.getId()).orElseThrow().spellFilter()).isEqualTo(instantOrSorcery);
         }
 
         @Test

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,7 +33,7 @@ public class ChandraFlameshaper extends Card {
                 +2,
                 List.of(
                         new AwardManaEffect(ManaColor.RED, 3),
-                        new ExileTopCardsChooseOneMayPlayThisTurnEffect(3)),
+                        new ExileTopCardMayPlayThisTurnEffect(3, false).choosingOne()),
                 "+2: Add {R}{R}{R}. Exile the top three cards of your library. Choose one. You may play that card this turn."
         ));
 

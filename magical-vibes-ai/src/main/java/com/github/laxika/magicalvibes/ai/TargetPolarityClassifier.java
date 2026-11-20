@@ -599,7 +599,6 @@ public class TargetPolarityClassifier {
             entry("CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.HARMFUL),
             entry("EnchantedCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("EnteringCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
-            entry("ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect", TargetPolarity.HARMFUL),
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             // Scab-Clan Giant: the random opposing creature is the target.

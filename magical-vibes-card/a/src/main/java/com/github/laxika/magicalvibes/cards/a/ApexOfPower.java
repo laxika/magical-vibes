@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class ApexOfPower extends Card {
 
     public ApexOfPower() {
-        addSpellEffect(new ExileTopCardsMayCastMatchingThisTurnEffect(
-                        7, new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(7, false)
+                .mayOnlyCast(new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         addSpellEffect(new ConditionalEffect(new CastFromZone(Zone.HAND), new AwardAnyColorManaEffect(10)));
     }
 }

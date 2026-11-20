@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,13 +16,9 @@ import java.util.List;
 public class NarsetEnlightenedMaster extends Card {
 
     public NarsetEnlightenedMaster() {
-        addTrigger(Triggers.attacks(), new ExileTopCardsMayCastMatchingThisTurnEffect(
-                4,
-                new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.attacks(), new ExileTopCardMayPlayThisTurnEffect(4, true)
+                .mayOnlyCast(new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))
-                )),
-                true
-        ));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))))));
     }
 }

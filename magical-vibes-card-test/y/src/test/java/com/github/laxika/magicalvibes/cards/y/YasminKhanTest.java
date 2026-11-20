@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,15 +31,11 @@ class YasminKhanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExiledCardMayPlayChoice.class);
-
-        harness.handleMultipleCardsChosen(player1, List.of(topCard.getId()));
-
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
@@ -49,6 +44,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An exiled land can be played, but not beyond the land-play limit")
     void canPlayExiledLandButCannotExceedLandPlayLimit() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -58,8 +54,7 @@ class YasminKhanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstLand, secondLand));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
-        harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(firstLand.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.castFromExile(player1, firstLand.getId());
 
         assertThat(gd.findExiledCard(firstLand.getId())).isNull();
@@ -67,9 +62,7 @@ class YasminKhanTest extends BaseCardTest {
 
         yasmin.untap();
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
-        harness.passBothPriorities();
-        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
-                () -> harness.handleMultipleCardsChosen(player1, List.of(secondLand.getId())));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, secondLand.getId()))
@@ -78,6 +71,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An exiled instant can be cast on an opponent's turn by paying its mana cost")
     void canCastExiledInstantOnOpponentsTurnByPayingItsManaCost() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -88,9 +82,7 @@ class YasminKhanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(instant, drawnCard));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
-        harness.passBothPriorities();
-        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
-                () -> harness.handleMultipleCardsChosen(player1, List.of(instant.getId())));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, instant.getId()))
@@ -107,6 +99,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The exiled card can no longer be cast once the controller's next end step begins")
     void cannotCastExiledInstantOnceNextEndStepBegins() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -115,9 +108,7 @@ class YasminKhanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(instant, new Forest()));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
-        harness.passBothPriorities();
-        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
-                () -> harness.handleMultipleCardsChosen(player1, List.of(instant.getId())));
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, harness::passBothPriorities);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -127,6 +118,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activated during the end step, the exiled land can be played on the following turn")
     void activationDuringEndStepAllowsLandPlayOnFollowingTurn() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
@@ -138,9 +130,7 @@ class YasminKhanTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
-        harness.passBothPriorities();
-        harness.withAutoStop(TurnStep.END_STEP,
-                () -> harness.handleMultipleCardsChosen(player1, List.of(land.getId())));
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -152,6 +142,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With an empty library the tap cost is paid and nothing is exiled")
     void emptyLibraryStillPaysTapCostWithoutCreatingAChoice() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -167,6 +158,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
     void summoningSicknessPreventsPayingTapCost() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -180,6 +172,7 @@ class YasminKhanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability resolves and the permission holds after Yasmin Khan leaves the battlefield")
     void abilityStillResolvesAndPermissionSurvivesWhenYasminLeavesBattlefield() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -190,8 +183,7 @@ class YasminKhanTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
         gd.playerBattlefields.get(player1.getId()).remove(yasmin);
         harness.setGraveyard(player1, List.of(yasmin.getCard()));
-        harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         harness.castFromExile(player1, land.getId());
 
         harness.assertOnBattlefield(player1, "Forest");

@@ -61,8 +61,8 @@ class HeatedArgumentTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with an empty graveyard deals no controller damage")
-    void acceptWithEmptyGraveyardNoDamage() {
+    @DisplayName("With an empty graveyard there is no exile to offer and no controller damage")
+    void emptyGraveyardOffersNoExileAndNoDamage() {
         harness.addToBattlefield(player2, new AvatarOfMight());
         UUID targetId = harness.getPermanentId(player2, "Avatar of Might");
         harness.setHand(player1, List.of(new HeatedArgument()));
@@ -70,9 +70,9 @@ class HeatedArgumentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castAndResolveInstant(player1, 0, targetId);
-        harness.handleMayAbilityChosen(player1, true); // accept, but nothing to exile
 
-        harness.assertLife(player2, 20); // no controller damage
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 20);
     }
 
     @Test

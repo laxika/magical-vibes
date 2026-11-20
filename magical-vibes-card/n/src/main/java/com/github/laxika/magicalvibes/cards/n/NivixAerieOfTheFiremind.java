@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -22,13 +23,12 @@ public class NivixAerieOfTheFiremind extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{U}{R}",
-                List.of(new ExileTopCardsMayCastMatchingUntilNextTurnEffect(
-                        1,
-                        new CardAnyOfPredicate(List.of(
+                List.of(new ExileTopCardMayPlayThisTurnEffect(1, false)
+                        .until(Duration.UNTIL_YOUR_NEXT_TURN)
+                        .mayOnlyCast(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )), true
-                )),
+                        )))),
                 "{2}{U}{R}, {T}: Exile the top card of your library. Until your next turn, you may cast it if it's an instant or sorcery spell."
         ));
     }

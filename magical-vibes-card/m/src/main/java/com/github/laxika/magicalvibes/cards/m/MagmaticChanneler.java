@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -31,7 +31,7 @@ public class MagmaticChanneler extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new ExileTopCardsChooseOneMayPlayThisTurnEffect(2)
+                        new ExileTopCardMayPlayThisTurnEffect(2, false).choosingOne()
                 ),
                 "{T}, Discard a card: Exile the top two cards of your library, then choose one of them. You may play that card this turn."
         ));

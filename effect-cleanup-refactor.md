@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 12 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 13 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -531,6 +531,7 @@ cause under Findings.
 | 10 | run 9's next prerequisites: a count-honouring controller-graveyard target (Quintorius, Loremaster; Nyla), a `PlayerSubject` for whose library the two library-exile primitives take, and the "that player / target opponent exiles the top card, you may play it" records that unblocks | done (5 split, 5 absorbed, 3 survivors, 1 blocked-other, item 3 not started; 16 cards rewritten; `fromLibraryOf`, `mayOnlyCast`, `withAnyManaType`) |
 | 11 | run 10's leftovers: permission durations on the library-exile primitive and the records they absorb; the recording choose-a-card graveyard exile and the "you may exile a card from your graveyard. If you do" records | done (4 split, 12 absorbed, 1 amount absorbed, 4 survivors; 39 card files rewritten; `until(Duration)`, `exiledFaceDown`, `payingLifeEqualToManaValue`, a count on `ExileTopCardOfOwnLibraryEffect`, `fromOwnGraveyard`) |
 | 12 | run 11's leftovers: `ExileTopCardsMayPlayUntilNextTurnEffect` and Curse of Hospitality's record (a who-may-play subject), `ExileTopCardsOfDefendingPlayerLibraryEffect`, `ExileTopCardMayPlayWhileExiledEffect`, `ExileNCardsFromGraveyardThenEffect` ("exactly N or none") | done (4 absorbed, 1 split, 1 unique, 2 survivors; 72 card files rewritten; `playableBy(PlayerSubject)`, `playableOnlyIf(Condition)`; Blightwing Bandit and Skywarp Skaab fixed by Oracle text) |
+| 13 | run 12's leftovers: the choose-one, cast-matching, random-opponent, token and Hidetsugu library records; Heated Argument's graveyard record; Raven Guild Master and Sire of Stagnation's player | done (6 absorbed, 2 split, 2 blocked-other, 1 unique; 32 card files rewritten; `mayOnlyCast(filter)`, `upTo(n)`, `choosingOne()`; Narset's Adventure fixed by a ruling; the four multi-card graveyard "and" records not reached) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4301,6 +4302,89 @@ Return 7, Destroy 7, Draw 6, Each 6). Roughly a third are not two instructions (
 taxes, the "and/or graveyard" searches, `DrawDiscardAndConnive`), so about 90 to 100 fused multi-card families remain: some six or seven runs at this
 run's size, the Exile family two of them. Counting nested-`CardEffect` records too gives 236 multi-card records, but most of the extra are wrappers
 (`ConditionalEffect`, `MayEffect`, `SequenceEffect`, `MayPayManaEffect`).
+
+### Step 8, run 13 (2026-11-20)
+
+Run 12's "Next for Exile": the library records it named, then the graveyard records as far as the budget went. Verdicts (ledger,
+step `8`): **absorbed 6** (`ExileTopCardsChooseOneMayPlayThisTurnEffect`, `ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect`,
+`ExileTopCardsChooseOneMayPlayUntilNextTurnEffect`, `ExileTopCardsMayCastMatchingThisTurnEffect`, `ExileTopCardsMayCastMatchingUntilNextTurnEffect`,
+`ExileTopCardsMayPlayUpToNUntilNextTurnEffect`), **split 2** (`ExileTopCardsMayPlayThisTurnAndCreateTokensEffect`,
+`ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect`), with their handlers; **blocked-other 2**
+(`ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOfTurnEffect`, `ExileTopCardLoseLifeEqualToManaValueAndMayCastInstantOrSorceryEffect`),
+**unique 1** (`ExileTopCardsMayPlayThisTurnAndCreateTokensForStillExiledEffect`); **survivor 1** (`ExileTopCardMayPlayThisTurnEffect`).
+Ratchet 4,770 / 4,003 → 4,762 / 3,995. 32 card files rewritten (a deleted scratch script for the 28 library cards, Bonehoard
+Dracosaur, Heated Argument, Raven Guild Master and Sire of Stagnation by hand); Oracle text of every one checked with `get_card`, rulings
+of Narset, Chandra Hope's Beacon, Magmatic Channeler, March of Reckless Joy and Heated Argument with `get_rulings`. No CR number is cited
+below.
+
+- **Survivor.** `ExileTopCardMayPlayThisTurnEffect` gained three components (old 12-argument constructor kept):
+  - `CardPredicate castFilter` (`mayOnlyCast(filter)`, also sets `castOnly`): "you may cast [red | instant or sorcery | noncreature]
+    spells from among them", "if it's a nonland card, you may cast it". A card is permitted when its front face, a modal double-faced
+    card's back face or its Adventure matches (Chandra, Hope's Beacon's ruling: "if you exile a creature card that has an Adventure, you
+    can cast that Adventure spell"), and the permission carries the filter as its spell filter, as both old records did.
+  - `int playLimit` (`upTo(n)`): "you may play one of those cards", "up to two", "an instant or sorcery spell from among those": the
+    permitted cards share one `registerExilePlayPermissionGroup`, then one log line ("<holder> may play one of those cards …").
+  - `boolean chooseOne` (`choosingOne()`): "choose one of them. You may play that card": the cards are exiled and recorded, then the
+    holder answers the existing `ExiledCardMayPlayChoice` (duration, any-type mana and free play carried; never cast at once). The
+    step pauses at its end with its EXILE result recorded, so a later step may read it (`StepResultsTest.chooseOneOfThemEndsTheStepOnTheChoice`:
+    the rider runs after the choice). The compact constructor refuses `chooseOne` with the per-card options (cast filter, limit, face
+    down, for life, condition, free filter, lore renewal).
+  - `targetSpec()`: a target library stays harmful, but is benign when `player` is `targetPlayerDeclaredElsewhere()` (the target player
+    gets the permission: Casey & Raph, as its old record declared).
+  - The handler gained `InteractionHandlerRegistry` (no hand-built wiring names it) and the `UNTIL_YOUR_NEXT_TURN` log text (Nivix).
+- **Rewritten cards.** Choose one: Magmatic Channeler, Jaya, Fireglass Mentor, Chandra Flameshaper, Case of the Burning Masks (this
+  turn); Tectonic Giant, Strongbox Raider, Riverwheel Sweep, Mishra's Research Desk, Heroes' Hangout, Feldon, End-Blaze Epiphany
+  (`until(UNTIL_END_OF_YOUR_NEXT_TURN)`), You Find Some Prisoners (`fromLibraryOf(targetPlayer()).withAnyManaType()`). One of them:
+  Electrostatic Blast (`upTo(1)`), Unlucky Witness (`until(UNTIL_YOUR_NEXT_END_STEP).upTo(1)`), March of Reckless Joy (`upTo(2)`). One card,
+  no choice: Yasmin Khan (`until(UNTIL_YOUR_NEXT_END_STEP)`), Casey & Raph (`fromLibraryOf(targetPlayer()).playableBy(targetPlayerDeclaredElsewhere())`,
+  free; `targetPlayerDeclaredElsewhere()` reads the same `targetsForEffect` target). Cast filter: Vance's Blasting Cannons, Narset (free),
+  Meeting of the Five, Dream Pillager, Chandra Dressed to Kill (both), Apex of Power; Rundvelt Hordemaster, Eager Flameguide,
+  Chandra Hope's Beacon (`upTo(1)`) until the end of your next turn; Nivix `until(UNTIL_YOUR_NEXT_TURN)`. Split: Bonehoard Dracosaur
+  (`SequenceEffect.of(exile 2, ConditionalEffect(toACard(EXILE, land), Dinosaur), ConditionalEffect(toACard(EXILE, nonland), Treasure))`;
+  the tokens now go through `CreateTokenEffectHandler`, so token replacements apply), Heated Argument (`MayEffect(SequenceEffect.of(
+  fromOwnGraveyard(1, not this card), ConditionalEffect(exiled(), DealDamageToPlayersEffect(2, controllerOf(target())))))`; the
+  not-this-card filter keeps the old handler's exclusion of the resolving spell). Raven Guild Master `of(triggeringPlayer(), 10)` and Sire
+  of Stagnation `of(controllerOf(triggering()), 2)` ("that player"): neither declares a player target any more (run 11's open item).
+- **Behaviour changes.** Narset, Vance, Meeting of the Five, Dream Pillager, Chandra Dressed to Kill and Apex of Power now permit an
+  Adventure card whose Adventure matches (the this-turn record checked modal back faces only; the until-next-turn record already checked
+  Adventures): `NarsetEnlightenedMasterTest.creatureCardWithANoncreatureAdventureIsPermitted` fails on the old card. Prompt shapes: Yasmin
+  Khan and Casey & Raph no longer ask a one-of-one choice; Heated Argument no longer offers its "you may" with no other card in the
+  graveyard (`MayEffectHandler`'s run-11 guard). The target spec of You Find Some Prisoners' mode is harmful now (benign before; its
+  opponent filter leaves one legal player). Log lines are the survivor's: one line per exiled card; the cast-filter and choose-one cards
+  name the permission per card or after the choice instead of one aggregate line. Dream Pillager's count is evaluated with the source as it
+  is or last was (it read none; `EventValue` needs none).
+- **Blocked / unique.** The Ruinous Powers: no random-opponent `PlayerSubject`, and its "when you cast a spell this way" delayed trigger
+  names the exiled card. Hidetsugu and Kairi: the exile and `LoseLifeEffect(AmountThisWay.exiledManaValue(), targetPlayer())` would split,
+  but no step offers "you may cast it without paying its mana cost" now for the card an EXILE step recorded (a `MayCast…ExiledThisWay`
+  primitive would also serve the `ExileTopUntilNonland…MayCast…` and `MillTargetPlayerAndMayCastMilledSpell` records; build it when two
+  of them can take it). Glimpse the Impossible: its end-step delayed trigger about the cards exiled this way has no step-reading primitive.
+- **AI.** No AI class named a deleted library record; `TargetPolarityClassifier`'s `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect`
+  entry is deleted (Heated Argument's target step is `DealDamageToTargetCreatureEffect`). `TargetPolarityGuardTest`, `AiTargetSelectorTest`
+  and `SpecializedInteractionAiStrategiesTest` (the `ExiledCardMayPlayChoice` strategy) pass.
+- **Tests.** One Gradle run (one `--tests` list per task): the tests of the 32 rewritten cards and of the 31 other card tests that construct
+  one, `--tests-for ExileTopCardMayPlayThisTurnEffect --max-per-class 15`, `--tests-for ExileGraveyardCardsEffect MayEffect
+  ExileTopCardOfOwnLibraryEffect --max-per-class 8`, application (`StepResultsTest` +2: choose one ends the step on the choice, a cast filter
+  permits a matching Adventure; `EffectCountRatchetTest`, `CardImmutabilityArchTest`, `SubjectResolutionServiceTest`,
+  `EffectResolutionServiceTest`, `GraveyardTargetingServiceTest`, `MayEffectHandlerTest`, `MayAbilityHandlerServiceTest`,
+  `ExileGraveyardCardsEffectHandlerTest`, `GraveyardChoiceInteractionHandlersTest`, `ReflexiveRouteRecordTest`, `StepTriggerServiceTest`,
+  `TriggeredAbilityStackServiceTest`, `ValidTargetServiceTest`, `TargetLegalityServiceTest`, `EtbTriggerServiceTest`,
+  `ActivatedAbilityExecutionServiceTest`) and the three AI tests: 119 top-level classes (219 result files with the `@Nested` suites), 2,002
+  test cases, all pass; Narset's new case passes. Updated: `YasminKhanTest` (no choice; `@DisplayName`s added), `CaseyRaphHotheadsTest` (no
+  choice; `@DisplayName`s added, +1: an opponent targeted by the exile mode gets the permission), `HeatedArgumentTest` (no may prompt with an
+  empty graveyard). Application, AI, engine testFixtures and card-test `a b c d e f h j m n r s t u v y` test sources compile.
+
+**For later runs.**
+
+- "Choose one of them. You may play that card [duration]" is `new ExileTopCardMayPlayThisTurnEffect(n, false)[.until(d)].choosingOne()`;
+  "you may play one / up to N of those cards" is `.upTo(n)`; "you may cast [filter] spells from among them" is `.mayOnlyCast(filter)`.
+- Next for Exile, the graveyard "and" records this run did not reach (read each handler and its engine readers first):
+  `ExileTargetCardFromGraveyardAndImprintOnSourceEffect` (10 cards; readers `GraveyardTargetValidators`, `ValidTargetService`,
+  `GraveyardTargetingSupport`, `GraveyardReturnSupport`, `AiTargetSelector`, `ValidTargetServiceTest`, `AiTargetSelectorTest`) and
+  `ExileTargetCardFromGraveyardAndTrackWithSourceEffect` (6) are tracking variants of `ExileGraveyardCardsEffect`'s target scopes
+  (`trackWithSource` exists; imprint and the spell's `setImprintedCard` fallback do not), not fused records;
+  `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect` (15, 20 components) needs a token-copy step reading the EXILE result;
+  `ExileTargetCardFromGraveyardAndMayCastCopyEffect` (14, 321-line handler) a may-cast-a-copy step reading it. Each is probably a run.
+- A "you may cast the card exiled this way without paying its mana cost" step (now, at resolution) would unblock Hidetsugu and Kairi.
 
 ## Prompt
 

@@ -12,6 +12,6 @@ public class RavenGuildMaster extends Card {
     public RavenGuildMaster() {
         addMorph("{2}{U}{U}");
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer(), 10));
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.triggeringPlayer(), 10));
     }
 }

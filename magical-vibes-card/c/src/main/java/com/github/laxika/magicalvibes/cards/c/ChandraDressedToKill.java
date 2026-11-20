@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -44,8 +44,8 @@ public class ChandraDressedToKill extends Card {
         // +1: Exile the top card of your library. If it's red, you may cast it this turn.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new ExileTopCardsMayCastMatchingThisTurnEffect(
-                        1, new CardColorPredicate(CardColor.RED))),
+                List.of(new ExileTopCardMayPlayThisTurnEffect(1, false)
+                        .mayOnlyCast(new CardColorPredicate(CardColor.RED))),
                 "+1: Exile the top card of your library. If it's red, you may cast it this turn."
         ));
 
@@ -55,8 +55,8 @@ public class ChandraDressedToKill extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(
-                        new ExileTopCardsMayCastMatchingThisTurnEffect(
-                                5, new CardColorPredicate(CardColor.RED)),
+                        new ExileTopCardMayPlayThisTurnEffect(5, false)
+                                .mayOnlyCast(new CardColorPredicate(CardColor.RED)),
                         new CreateEmblemEffect(
                                 new TriggeredAbility(
                                         Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),

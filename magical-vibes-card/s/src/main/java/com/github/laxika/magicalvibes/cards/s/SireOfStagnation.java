@@ -15,6 +15,6 @@ public class SireOfStagnation extends Card {
 
     public SireOfStagnation() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS), SequenceEffect.of(
-                ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer(), 2), new DrawCardEffect(2)));
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.controllerOf(Subjects.triggering()), 2), new DrawCardEffect(2)));
     }
 }

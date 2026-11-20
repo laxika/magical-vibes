@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +23,8 @@ public class HeroesHangout extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card",
-                        new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(2)),
+                        new ExileTopCardMayPlayThisTurnEffect(2, false)
+                                .until(Duration.UNTIL_END_OF_YOUR_NEXT_TURN).choosingOne()),
                 new ChooseOneEffect.ChooseOneOption(
                         "One or two target creatures each get +1/+0 and gain first strike until end of turn",
                         List.<CardEffect>of(
