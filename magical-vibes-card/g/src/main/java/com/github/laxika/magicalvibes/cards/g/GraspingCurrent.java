@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "282")
@@ -15,6 +16,7 @@ public class GraspingCurrent extends Card {
 
         // Search your library and/or graveyard for a card named Jace, Ingenious Mind-Mage,
         // reveal it, and put it into your hand. If you searched your library this way, shuffle.
-        addSpellEffect(new SearchLibraryAndOrGraveyardForNamedCardToHandEffect("Jace, Ingenious Mind-Mage"));
+        addSpellEffect(new SearchLibraryAndOrGraveyardForCardToHandEffect(
+                new CardNamedPredicate("Jace, Ingenious Mind-Mage")));
     }
 }

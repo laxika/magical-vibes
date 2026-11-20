@@ -141,6 +141,11 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
         return new HappenedThisWay(StepKind.COPY_SPELL);
     }
 
+    /** "Transform [convert] this. If you do / When you do" after a transform step: the source transformed. */
+    public static HappenedThisWay transformed() {
+        return new HappenedThisWay(StepKind.TRANSFORM);
+    }
+
     @Override
     public String conditionName() {
         return verb() + " this way";
@@ -169,6 +174,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case COUNTER_SPELL -> "countered";
             case COPY_SPELL -> "copied";
             case MANIFEST -> "manifested";
+            case TRANSFORM -> "transformed";
         };
     }
 }

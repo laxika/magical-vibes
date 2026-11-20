@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 27 done; run 27's "counter unless" item waits for the human's decision) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 28 done; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -565,6 +565,7 @@ cause under Findings.
 | 25 | run 24's next: the subject-path cast-copy restriction check (a rules bug), the X-target graveyard exile (Hour of Eternity, Midnight Ritual, Foggy Swamp Visions, Necromancer's Covenant), the threshold transform, The Ruinous Powers | done (2 split, 4 survivors, 1 blocked-other; 11 card files rewritten; `ExileFreeCastQueueSupport.castableFromExile` for both copy accept paths, `ExileCardsFromGraveyardEffect.exactlyXFromOwnGraveyard` / `exactlyXFromGraveyards` recording EXILE, `GraveyardCardChoosingEffect.choosesFromControllersGraveyardOnly`; Mizzix's Mastery fixed by a ruling, the threshold transforms made transform events; The Ruinous Powers kept; item 4 audited, not started) |
 | 26 | run 25's next: non-copy resolution casts from exile honour the card's own timing restriction, AnimationSupport's CR citation, Primal Amulet's departed-source question; the Counter family (a countered-ability-source subject, `LockTargetPermanentEffect` with a subject, the "and" records, the "unless" records); the next fused family | done (4 split, 3 survivors, 8 blocked-other, 1 blocked-step-model, 5 unique; 6 card files rewritten; `Subjects.targetAbilitySource([filter])`, `StackEntry.counteredAbilitySourceId`, `LockTargetPermanentEffect.activatedAbilitiesOf`; Chandra, Torch of Defiance's +1 and the other resolution casts from exile fixed by a ruling, Interdict and Ouphe Vandals by Oracle text; Primal Amulet kept by Treasure Map's ruling; the "unless" counters ledgered; no further fused family split) |
 | 27 | run 26's next: the "counter unless" records (investigate the ransom kind first, ask before changing ward), COUNTER_SPELL in `cardsThisWay` + a cast-permission step, the dying-creature exiles, verdicts for `ExileTargetPermanentAndTrackWithSourceEffect` and `ExileSelfAndReturnTransformedEffect` | done but item 1 (2 split, 4 survivors, 1 new step record, 1 blocked-other kept, 2 unique; 9 card files rewritten; `cardsThisWay(COUNTER_SPELL)`, `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect`, `ExileSelfAndReturnTransformedEffect` records RETURN; the "counter unless" split held for the human: options in Findings) |
+| 28 | the "counter unless" decision (option B: keep the records, fix the declined-ransom counter for Guile), then run 27's named largest unaudited fused names: `ForcedCostOrElseEffect`, the `CantAttack` / `CantBlock` "unless" restrictions, `SearchLibraryAndOrGraveyardForNamedCardToHandEffect`, `TransformSelfThenEffect`, and the next fused families | done (1 split, 1 absorbed, 2 survivors, 7 unique, 5 blocked-other, 1 blocked-step-model, the three counter-unless records re-ledgered; 26 card files rewritten; `StepKind.TRANSFORM`, `HappenedThisWay.transformed()`, `CounterSupport.counterSpell(gameData, counterControllerId, description, target)`; the declined discard / sacrifice / evidence / poison / blight / graveyard-exile / discard-hand ransoms now apply Guile's replacement, flashback's exile and the countered events) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5736,6 +5737,98 @@ card-test `b k l n s t u` test sources compile.
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
   name): 98 (977 card uses); by first word Search 10, Reveal 9, Prevent 7, Each 6, Exile 15, Choose 5, Cant 5, Put 3, Destroy 3, Creatures 3,
   Boost 3, Shuffle 2, Grant 2, Create 2, and 22 first words with one each (Counter 1: `CounterUnlessPaysEffect`).
+
+### Step 8, run 28 (2026-11-20)
+
+The orchestrator's decision on run 27's "counter unless" options, then run 27's named largest unaudited fused names and the
+fused families after them. Verdicts (ledger, step `8`): **split 1** (`TransformSelfThenEffect`), **absorbed 1**
+(`SearchLibraryAndOrGraveyardForNamedCardToHandEffect`), with their handlers; **survivor 2** (`TransformSelfEffect`,
+`SearchLibraryAndOrGraveyardForCardToHandEffect`), **unique 7**, **blocked-other 5**, **blocked-step-model 1**; the three
+"counter unless" records re-ledgered. Ratchet 4,705 / 3,934 → 4,703 / 3,932. 26 card files rewritten: the 21 named-search cards by a
+deleted scratch script, the five transform cards by hand (read back by eye, imports sorted). Oracle text of every rewritten card
+checked with `get_card` (the transform back faces through their front faces, BOT 2, 9, 12, 14, TLA 207) and rulings with
+`get_rulings` (and Guile's). CR 118.12, 118.12a, 400.7, 607.2a, 608.2c, 614.1a, 701.27g, 701.28a, 702.24a, 702.30a and 702.34a
+checked with `get_rule` (2026-11-20).
+
+- **"Counter unless": option B (the orchestrator's decision, pending the human's override).** The 37 ransom records stay as they are
+  (unique for now). **Option C is the plan for step 10:** one `CounterUnlessEffect`-shaped record (the ransom step + the counter)
+  replacing every "counter unless" record at once, ward {N} (`CounterUnlessPaysEffect`, 308 cards, its X / dynamic / rider forms)
+  included, with the AI and ward detection reading the ransom from it. Step 10 should also take
+  `DestroyTargetPermanentUnlessControllerTakesDamageEffect` (an "unless" ransom carrying `RemovalEffect` / `DamageDealingEffect`) into
+  that design.
+- **The declined-ransom counter (fixed).** `MayPenaltyChoiceHandlerService.counterUnlessCounter` (the declined discard, sacrifice,
+  collect-evidence, exile-graveyard, discard-hand, discard-or-pay, poison and blight ransoms) moved the spell to its graveyard itself,
+  so Guile's "If a spell or ability you control would counter a spell, instead exile that spell and you may play that card" never
+  applied (Guile's ruling: it replaces "counter [a certain spell]"), and neither did flashback's exile (CR 702.34a), nor the countered
+  events (`notifyCounteredSpell`: "whenever a spell is countered" triggers, the countered-creature-by-an-opponent record). It now calls
+  `CounterSupport.counterSpell(gameData, counterControllerId, description, target)`, the normal counter path, as the ransom's
+  controller (the `StackEntry` form delegates to it). The collect-evidence, discard-hand, exile-graveyard and sacrifice handlers now
+  pass the ransom's controller to their `PendingMayAbility` (the others did). `GuileTest.declinedDiscardRansomExilesInsteadOfCountering`
+  (Guile and Reality Smasher; the opponent declines to discard) fails on the old code: Shock went to the graveyard. The log line is
+  the normal path's ("X is countered."; no test asserted the old "(source)" suffix). **Not changed, for a later run:** the ward {N} /
+  "unless pays" decline path, `MayPenaltyChoiceHandlerService.counterSpell` (a private copy), applies Guile but still puts a flashback
+  spell into its graveyard and emits no countered events; route it through `CounterSupport` too (keeping its `exileIfCountered` and
+  not-paid rider).
+- **The transform step.** `StepKind.TRANSFORM` (1 when the source transformed or converted, that permanent, its controller), recorded by
+  `TransformSelfEffectHandler` (NONE when the source is gone, transformed since the ability was put on the stack, CR 701.27g, can't
+  transform, or has no other face), and `HappenedThisWay.transformed()`. "Transform / convert this. If you do / When you do, X" is
+  `SequenceEffect.of(new TransformSelfEffect(), new ConditionalEffect(HappenedThisWay.transformed(), X))` (convert follows the transform
+  rules, CR 701.28a): Soundwave, Superior Captain's two triggers, Cyclonus, Cybertronian Fighter, Ratchet, Field Medic (the reflexive
+  return inside the gate), Megatron, Tyrant and Aang, Master of Elements (a `SequenceEffect` of the four riders inside the gate), the
+  optional ones in their `MayEffect`. Behaviour is unchanged (the old handler ran its riders only when the transform happened);
+  `StepResultsTest` +2 (Transform).
+- **The named search.** `SearchLibraryAndOrGraveyardForNamedCardToHandEffect(name)` was `SearchLibraryAndOrGraveyardForCardToHandEffect`
+  with a `CardNamedPredicate` (its handler built exactly that); the 21 planeswalker-deck cards use it directly.
+- **Not fused (unique).** `ForcedCostOrElseEffect` (158 cards): the resolution-time cost combinator ("unless" costs, echo, cumulative
+  upkeep, about 20 `CostEffect` kinds, the any-player / enchanted-controller / defending-player payers, villainous choice). Its "if you
+  do" asks whether the player chose to pay, not what happened (CR 118.12: "regardless of what events actually occurred"), so it is not a
+  step + `HappenedThisWay`; it is a wrapper beside `MayEffect`, a step-10 question. `CantAttackUnlessEffect` (66), `CantBlockUnlessEffect`
+  (28), `CantAttackOrBlockUnlessEffect` (25): one static restriction with a `Condition` each (merging the three into one restriction
+  record is step 10). `PowerBoostForCrewAndSaddleEffect` (20): one crew/saddle power modifier. `PreventDamageAndRemovePlusOnePlusOneCountersEffect`
+  (18): a static replacement whose replacing event prevents and removes counters (CR 614.1a), not a resolution, so no step result
+  exists for its riders. `ExileTargetPermanentAndImprintEffect` (6): one exile linked to the source (CR 607.2a), as run 27's track-with-source
+  exile; step 9.
+- **Blocked.** No boost record takes a set `PermanentSubject`: `BoostTargetCreatureAndAllWithSameNameEffect` (3) is a boost over
+  `allOf(target(), otherCreaturesSharing(target(), NAME))` once one does (`BoostTargetAndSharingCreaturesUntilEndOfTurnEffect`, 2,
+  likely the same). The Crowns (`BoostEnchantedAndSharingCreaturesUntilEndOfTurnEffect`, `GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffect`)
+  also need the host's last-known creature types once it left: `otherCreaturesSharing` names nothing then, while their handlers still
+  give the sharing creatures the bonus. `CreateTokenAndLinkToSourceEffect` (4): the source link and the per-token delayed triggers have
+  no step over `createdThisResolution()`. `ExileAnyGraveyardCardThenIfMatchesEffect` (2, blocked-step-model): its resolution-time
+  any-graveyard choice reruns the handler and records no EXILE step.
+- **Pre-existing failure, not this run's.** `MegatronTyrantTest`'s three back-face attack tests (`attackMaySacrificeArtifactToDamageTargetCreature`,
+  `deathtouchMakesOneDamageLethalForDeterminingExcess`, `damageWithoutExcessDoesNotConvertOrDamageController`) answer a sacrifice prompt
+  that `SacrificePermanentsEffectHandler` no longer opens for a lone artifact (it sacrifices it; two artifacts open a multi-permanent
+  choice), so `handlePermanentChosen` hits the target prompt. Megatron, Destructive Force and the sacrifice handler are untouched here;
+  the tests (not the card) need the prompts they now get.
+
+**Tests** (one Gradle run, one `--tests` list per task; six card-test modules hit a compiler out-of-memory and were rerun with two
+workers): every rewritten card's test, every card test constructing a rewritten card, Guile or Reality Smasher (the helper sweep),
+`--tests-for SearchLibraryAndOrGraveyardForCardToHandEffect`, the eight counter-unless records named above and
+`ReplaceControlledCounterWithExileAndPlayEffect` (all), `TransformSelfEffect --max-per-class 25`, `CounterSpellEffect ConditionalEffect
+SequenceEffect --max-per-class 6`; application (`StepResultsTest` +2, `EffectCountRatchetTest`, `CardImmutabilityArchTest`, `TargetSpecRatchetTest`,
+`CardEffectTargetingConsistencyTest`, `SubjectResolutionServiceTest`, `EffectResolutionServiceTest`, `StackResolutionServiceTest`, the four
+counter handler tests, `MayAbilityHandlerServiceTest`, `MayEffectHandlerTest`, `LibraryChoiceHandlerServiceTest`, `ReflexiveRouteRecordTest`,
+`FlipCoinWinEffectHandlerTest`, `ResolutionScratchpadAmountTest`, `StepTriggerServiceTest`, `SimulationCopyCompletenessTest`, the trigger
+record tests, `LastCounterRemovedTriggerTest` and three handler tests naming `StepKind`) and AI (`TargetPolarityGuardTest`, `GameDataDeepCopyTest`,
+`AiDecisionEngineTest`, `SpellEvaluatorTest`): 125 card classes and 31 application / AI classes, 238 result files, 4,482 test cases; all pass but the three
+`MegatronTyrantTest` cases above. Application, AI, engine testFixtures and card-test `a b c d e g j l m n r s t v y` test sources compile.
+
+**For later runs.**
+
+- "Transform / convert this. If you do / When you do" is `TransformSelfEffect` + `ConditionalEffect(HappenedThisWay.transformed(), …)`; "a
+  card named X" in a library-and/or-graveyard search is `SearchLibraryAndOrGraveyardForCardToHandEffect(new CardNamedPredicate("X"))`. A
+  countering effect with no stack entry of its own counters through `CounterSupport.counterSpell(gameData, controllerId, description,
+  target)`.
+- **Next run.** (1) Route the ward {N} / "unless pays" decline (`MayPenaltyChoiceHandlerService.counterSpell`) through `CounterSupport`
+  (flashback exile, countered events), with a test. (2) A set subject on a boost record (`BoostAllCreaturesEffect` or a subject form of
+  `BoostTargetCreatureEffect`), then `BoostTargetCreatureAndAllWithSameNameEffect` (3) and `BoostTargetAndSharingCreaturesUntilEndOfTurnEffect`
+  (2); the Crowns only with a last-known "sharing" read. (3) A recording resolution-time "you may exile a card from a graveyard" choice,
+  then `ExileAnyGraveyardCardThenIfMatchesEffect` (2). (4) The fused families left have almost no step-recording first half: Reveal 9,
+  Search 8 and Prevent 6 have no `StepKind` (a REVEAL or SEARCH step would be the prerequisite; decide whether that is step 8 or step 9
+  work), Each 6 are mostly player loops. Consider closing step 8 after (1)–(3) and moving the rest to step 9's family sweeps.
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
+  name): 82 (600 card uses, `CounterUnlessPaysEffect`'s 308 included); by first word Exile 13, Reveal 9, Search 8, Prevent 6, Each 6,
+  Choose 5, Put 3, Creatures 3, Shuffle 2, Destroy 2, Cant 2, and 18 first words with one each.
 
 ## Prompt
 

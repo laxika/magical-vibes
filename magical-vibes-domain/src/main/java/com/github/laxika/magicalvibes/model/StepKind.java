@@ -27,7 +27,8 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #PUT_COUNTERS}, {@link #REMOVE_COUNTERS}: the number of counters, the permanents, their controllers;</li>
  *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0; a countered
  *       spell's {@link StepOutcome#movedCards()} name the card it became in its graveyard or in exile;</li>
- *   <li>{@link #MANIFEST}: the number of permanents manifested, those permanents, their controllers.</li>
+ *   <li>{@link #MANIFEST}: the number of permanents manifested, those permanents, their controllers;</li>
+ *   <li>{@link #TRANSFORM}: 1 when the source transformed (or converted), else 0; that permanent, its controller.</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -35,7 +36,8 @@ package com.github.laxika.magicalvibes.model;
  * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, destroy, copy, create a token, manifest, mill and exile the
- * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}) (never prompt, or
+ * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
+ * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
@@ -62,5 +64,6 @@ public enum StepKind {
     REMOVE_COUNTERS,
     COUNTER_SPELL,
     COPY_SPELL,
-    MANIFEST
+    MANIFEST,
+    TRANSFORM
 }

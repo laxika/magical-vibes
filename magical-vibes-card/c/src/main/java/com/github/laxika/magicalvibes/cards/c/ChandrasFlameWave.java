@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,6 +21,7 @@ public class ChandrasFlameWave extends Card {
         ));
         addSimultaneousSpellEffects(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
                 DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(2)));
-        addSpellEffect(new SearchLibraryAndOrGraveyardForNamedCardToHandEffect("Chandra, Flame's Fury"));
+        addSpellEffect(new SearchLibraryAndOrGraveyardForCardToHandEffect(
+                new CardNamedPredicate("Chandra, Flame's Fury")));
     }
 }

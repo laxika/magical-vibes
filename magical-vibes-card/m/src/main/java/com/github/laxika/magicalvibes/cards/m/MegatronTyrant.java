@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,9 +28,10 @@ public class MegatronTyrant extends Card {
         addStaticEffect(new OpponentsCantCastSpellsDuringCombatEffect());
         addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new MayEffect(
-                        new TransformSelfThenEffect(
-                                new AwardManaEffect(ManaColor.COLORLESS,
-                                        new LifeLostThisTurn(CountScope.OPPONENTS))),
+                        SequenceEffect.of(new TransformSelfEffect(),
+                                new ConditionalEffect(HappenedThisWay.transformed(),
+                                        new AwardManaEffect(ManaColor.COLORLESS,
+                                                new LifeLostThisTurn(CountScope.OPPONENTS)))),
                         "Convert Megatron?",
                         null,
                         MayChoicePlayer.CONTROLLER));

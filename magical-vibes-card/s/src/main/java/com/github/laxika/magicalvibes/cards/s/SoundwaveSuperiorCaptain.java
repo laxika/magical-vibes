@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,8 +33,10 @@ public class SoundwaveSuperiorCaptain extends Card {
                 false, false, List.of(), List.of(), false, false, true, 0, Set.of());
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardManaValueParityPredicate(ManaValueParity.ODD)),
-                new TransformSelfThenEffect(ravage));
+                SequenceEffect.of(new TransformSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.transformed(), ravage)));
         addTrigger(Triggers.youCastSpell().withFilter(new CardManaValueParityPredicate(ManaValueParity.EVEN)),
-                new TransformSelfThenEffect(laserbeak));
+                SequenceEffect.of(new TransformSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.transformed(), laserbeak)));
     }
 }

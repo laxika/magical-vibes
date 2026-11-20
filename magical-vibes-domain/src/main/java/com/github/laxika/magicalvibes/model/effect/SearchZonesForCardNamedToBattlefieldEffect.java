@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * presents an interactive pick and shuffles afterwards. With {@code includeHand} and no
  * {@code selectedZones}, matches in several of the searched zones first prompt the controller to
  * choose the zone to search. Mirrors
- * {@link SearchLibraryAndOrGraveyardForNamedCardToHandEffect} but puts the card onto the
+ * {@link SearchLibraryAndOrGraveyardForCardToHandEffect} with a card-name filter but puts the card onto the
  * battlefield instead of into hand (Gate to the Afterlife's God-Pharaoh's Gift tutor).
  *
  * <p>The attached-Aura variant first offers graveyard, library, or both. Only searching the

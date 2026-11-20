@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
+import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -77,7 +79,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * primitives the way a real card's text reads, without the card's own fused effect.
  */
 @CardUsed({GrizzlyBears.class, HillGiant.class, Forest.class, GloriousAnthem.class, DarksteelMyr.class,
-        BonecrusherGiant.class})
+        BonecrusherGiant.class, DelverOfSecrets.class})
 class StepResultsTest extends BaseCardTest {
 
     @BeforeEach
@@ -814,6 +816,41 @@ class StepResultsTest extends BaseCardTest {
 
             assertThat(entry.getResolutionResults().outcome(StepKind.MANIFEST).happened()).isFalse();
             assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("Transform")
+    class Transform {
+
+        @Test
+        @DisplayName("Cyclonus, Cybertronian Fighter: \"convert it. If you do\" happens after the source transformed")
+        void ifYouDoFollowsTheTransform() {
+            Permanent delver = harness.addToBattlefieldAndReturn(player1, new DelverOfSecrets());
+
+            StackEntry entry = resolve(player1, null, delver.getId(),
+                    new TransformSelfEffect(),
+                    new ConditionalEffect(HappenedThisWay.transformed(), new GainLifeEffect(3)));
+
+            assertThat(delver.isTransformed()).isTrue();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+            assertThat(entry.getResolutionResults().outcome(StepKind.TRANSFORM).objectIds())
+                    .containsExactly(delver.getId());
+            assertThat(entry.getResolutionResults().outcome(StepKind.TRANSFORM).playerIds())
+                    .containsExactly(player1.getId());
+        }
+
+        @Test
+        @DisplayName("A source with no other face doesn't transform, so its \"if you do\" step does nothing")
+        void noBackFaceMeansNothingTransformed() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+            StackEntry entry = resolve(player1, null, bears.getId(),
+                    new TransformSelfEffect(),
+                    new ConditionalEffect(HappenedThisWay.transformed(), new GainLifeEffect(3)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.TRANSFORM).happened()).isFalse();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         }
     }
 

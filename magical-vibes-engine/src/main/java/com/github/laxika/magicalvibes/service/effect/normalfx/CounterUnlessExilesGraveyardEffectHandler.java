@@ -36,7 +36,8 @@ public class CounterUnlessExilesGraveyardEffectHandler implements NormalEffectHa
                 List.of(effect),
                 "Exile all cards from your graveyard to prevent "
                         + targetEntry.getCard().getName() + " from being countered?",
-                targetCardId
+                targetCardId,
+                entry.getControllerId()
         ));
     }
 }

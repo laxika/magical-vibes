@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +29,7 @@ public class LilianasInfluence extends Card {
         // You may search your library and/or graveyard for a card named Liliana, Death Wielder,
         // reveal it, and put it into your hand. If you search your library this way, shuffle.
         addSpellEffect(new MayEffect(
-                new SearchLibraryAndOrGraveyardForNamedCardToHandEffect("Liliana, Death Wielder"),
+                new SearchLibraryAndOrGraveyardForCardToHandEffect(new CardNamedPredicate("Liliana, Death Wielder")),
                 "Search your library and/or graveyard for a card named Liliana, Death Wielder?"
         ));
     }

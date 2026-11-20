@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +32,9 @@ public class RatchetFieldMedic extends Card {
                 .build();
         addTrigger(Triggers.youGainLife(),
                 new MayEffect(
-                        new TransformSelfThenEffect(new QueueReflexiveAbilityEffect(returnArtifact)),
+                        SequenceEffect.of(new TransformSelfEffect(),
+                                new ConditionalEffect(HappenedThisWay.transformed(),
+                                        new QueueReflexiveAbilityEffect(returnArtifact))),
                         "Convert Ratchet?"));
     }
 

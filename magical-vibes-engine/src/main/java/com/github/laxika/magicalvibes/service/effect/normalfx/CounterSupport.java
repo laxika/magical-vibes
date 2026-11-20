@@ -127,6 +127,17 @@ public class CounterSupport {
     }
 
     public boolean counterSpell(GameData gameData, StackEntry source, StackEntry target) {
+        return counterSpell(gameData, source.getControllerId(), source.getDescription(), target);
+    }
+
+    /**
+     * Counters {@code target} for a countering spell or ability controlled by {@code counterControllerId}
+     * whose own stack entry is not at hand: a declined "counter unless" ransom answered at its prompt. The
+     * countered card goes where a countered card goes (flashback and similar riders, Guile's "exile it
+     * instead" replacement). Returns false when the replacement applied (the spell was not countered).
+     */
+    public boolean counterSpell(GameData gameData, UUID counterControllerId, String counterDescription,
+                                StackEntry target) {
         if (target.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                 && target.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
             gameData.recordCounteredSpellManaCost(target.getTargetableId(),
@@ -142,7 +153,7 @@ public class CounterSupport {
         if (!target.isCopy() && !isAbility) {
             // Guile (CR 614): "If a spell or ability you control would counter a spell, instead exile
             // that spell and you may play that card without paying its mana cost."
-            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+            if (applyControlledCounterExileReplacement(gameData, counterControllerId, target)) {
                 return false;
             }
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
@@ -155,7 +166,7 @@ public class CounterSupport {
             }
         }
 
-        notifyCounteredSpell(gameData, source.getControllerId(), target);
+        notifyCounteredSpell(gameData, counterControllerId, target);
 
         if (isAbility) {
             gameLogService.append(gameData,
@@ -164,7 +175,7 @@ public class CounterSupport {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is countered."));
         }
-        log.info("Game {} - {} countered {}", gameData.id, source.getDescription(), target.getDescription());
+        log.info("Game {} - {} countered {}", gameData.id, counterDescription, target.getDescription());
         return true;
     }
 
@@ -403,7 +414,7 @@ public class CounterSupport {
         // Only replaces the countering of spells (CR: "would counter a spell"), never abilities.
         boolean isAbility = target.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
-        if (isAbility) {
+        if (isAbility || counterControllerId == null) {
             return false;
         }
 

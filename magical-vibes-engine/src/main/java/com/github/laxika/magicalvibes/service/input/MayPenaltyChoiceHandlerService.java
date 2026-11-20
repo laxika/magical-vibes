@@ -458,7 +458,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — counter the spell/ability
-        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability, targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -508,7 +508,7 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
-        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability, targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -548,7 +548,7 @@ public class MayPenaltyChoiceHandlerService {
                     targetEntry.getCard(), " is not countered."));
         } else {
             if (!gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
-                counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+                counterUnlessCounter(gameData, ability, targetEntry);
             }
         }
 
@@ -591,7 +591,7 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
-        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability, targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -641,7 +641,7 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
-        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability, targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -675,7 +675,7 @@ public class MayPenaltyChoiceHandlerService {
                     player.getUsername() + " gets " + effect.amount() + " poison counters. ",
                     targetEntry.getCard(), " is not countered."));
         } else {
-            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+            counterUnlessCounter(gameData, ability, targetEntry);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -728,7 +728,7 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
-        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability, targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -786,29 +786,19 @@ public class MayPenaltyChoiceHandlerService {
         if (!gameQueryService.isUncounterable(gameData, targetEntry.getCard())
                 && !gameQueryService.isProtectedFromCounterBySourceCard(
                 gameData, targetEntry.getControllerId(), ability.sourceCard())) {
-            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+            counterUnlessCounter(gameData, ability, targetEntry);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void counterUnlessCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
-        gameData.stack.remove(targetEntry);
-        stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
-
-        boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
-        if (!targetEntry.isCopy() && !isAbility) {
-            graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
-                    targetEntry.getPhysicalCard(), targetEntry.getControllerId());
-        }
-        counterSupport.emitCounteredCue(gameData, targetEntry);
-
-        GameLog.Builder counterLog = GameLog.builder().card(targetEntry.getCard())
-                .text(isAbility ? "'s ability is countered. (" : " is countered. (")
-                .card(sourceCard)
-                .text(")");
-        gameLogService.append(gameData, counterLog.build());
-        log.info("Game {} - {} counters {}", gameData.id, sourceCard.getName(), targetEntry.getCard().getName());
+    /**
+     * A declined ransom counters through {@link CounterSupport#counterSpell(GameData, UUID, String, StackEntry)},
+     * so the countered card goes where a countered card goes and Guile's "exile it instead" replacement applies to
+     * the ransom's controller.
+     */
+    private void counterUnlessCounter(GameData gameData, PendingMayAbility ability, StackEntry targetEntry) {
+        counterSupport.counterSpell(gameData, ability.sourceControllerId(), ability.sourceCard().getName(),
+                targetEntry);
     }
 
     public void handleLoseLifeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

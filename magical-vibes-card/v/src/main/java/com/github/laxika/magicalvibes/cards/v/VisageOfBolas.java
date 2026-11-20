@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +21,7 @@ public class VisageOfBolas extends Card {
         // Nicol Bolas, the Deceiver, reveal it, and put it into your hand. If you search your
         // library this way, shuffle.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SearchLibraryAndOrGraveyardForNamedCardToHandEffect("Nicol Bolas, the Deceiver"),
+                new SearchLibraryAndOrGraveyardForCardToHandEffect(new CardNamedPredicate("Nicol Bolas, the Deceiver")),
                 "Search your library and/or graveyard for a card named Nicol Bolas, the Deceiver?"
         ));
 

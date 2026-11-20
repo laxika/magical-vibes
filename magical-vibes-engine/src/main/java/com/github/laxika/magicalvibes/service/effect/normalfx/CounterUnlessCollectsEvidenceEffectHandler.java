@@ -46,6 +46,6 @@ public class CounterUnlessCollectsEvidenceEffectHandler implements NormalEffectH
                 + " to prevent " + targetEntry.getCard().getName() + " from being countered?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetEntry.getControllerId(), List.of(evidenceEffect),
-                prompt, targetCardId));
+                prompt, targetCardId, entry.getControllerId()));
     }
 }

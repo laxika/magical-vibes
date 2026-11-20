@@ -38,6 +38,7 @@ public class CounterUnlessDiscardsHandEffectHandler implements NormalEffectHandl
         String prompt = "Discard your hand to prevent " + targetEntry.getCard().getName() + " from being countered?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetEntry.getControllerId(),
-                List.of(new CounterUnlessDiscardsHandEffect()), prompt, targetCardId));
+                List.of(new CounterUnlessDiscardsHandEffect()), prompt, targetCardId,
+                entry.getControllerId()));
     }
 }

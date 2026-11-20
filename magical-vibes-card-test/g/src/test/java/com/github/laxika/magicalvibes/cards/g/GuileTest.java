@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.cards.r.RealitySmasher;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Thoughtseize;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Guile.class, Cancel.class, GrizzlyBears.class, Thoughtseize.class, Lignify.class})
+@CardUsed({Guile.class, Cancel.class, GrizzlyBears.class, Thoughtseize.class, Lignify.class, RealitySmasher.class,
+        Shock.class})
 class GuileTest extends BaseCardTest {
 
     @Test
@@ -277,5 +280,28 @@ class GuileTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Guile");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(guile.getId()));
+    }
+
+    @Test
+    @DisplayName("A declined discard ransom you control exiles the spell instead and offers a free play")
+    void declinedDiscardRansomExilesInsteadOfCountering() {
+        harness.addToBattlefield(player1, new Guile());
+        Permanent smasher = harness.addToBattlefieldAndReturn(player1, new RealitySmasher());
+        Shock shock = new Shock();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(shock, new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, smasher.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotInGraveyard(player2, "Shock");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(shock.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 }

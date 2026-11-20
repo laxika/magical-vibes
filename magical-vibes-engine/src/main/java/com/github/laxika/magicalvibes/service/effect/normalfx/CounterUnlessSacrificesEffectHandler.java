@@ -60,6 +60,6 @@ public class CounterUnlessSacrificesEffectHandler implements NormalEffectHandler
                 + " from being countered?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetEntry.getControllerId(),
-                List.of(sacrificeEffect), prompt, targetCardId));
+                List.of(sacrificeEffect), prompt, targetCardId, entry.getControllerId()));
     }
 }
