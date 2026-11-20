@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -35,12 +39,8 @@ public class TheFirstEruption extends Card {
         addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED, 2));
 
         // Chapter III: sacrifice a Mountain; if you do, deal 3 damage to each creature
-        addTrigger(Triggers.chapter(3), new SacrificePermanentThenEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
-                new MassDamageEffect(3),
-                "a Mountain",
-                false,
-                false
-        ));
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
+                new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), Subjects.you()),
+                new ConditionalEffect(HappenedThisWay.sacrificed(), new MassDamageEffect(3))));
     }
 }

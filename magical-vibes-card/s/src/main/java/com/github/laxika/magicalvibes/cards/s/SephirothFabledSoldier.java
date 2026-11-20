@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -44,8 +45,9 @@ public class SephirothFabledSoldier extends Card {
             new GainLifeEffect(1));
 
     private static final MayEffect SACRIFICE_ANOTHER_AND_DRAW = new MayEffect(
-            new SacrificePermanentThenEffect(ANOTHER_CREATURE, new DrawCardEffect(1),
-                    "another creature"),
+            SequenceEffect.of(
+                    new SacrificePermanentsEffect(1, ANOTHER_CREATURE, Subjects.you()),
+                    new ConditionalEffect(HappenedThisWay.sacrificed(), new DrawCardEffect(1))),
             "Sacrifice another creature?");
 
     public SephirothFabledSoldier() {

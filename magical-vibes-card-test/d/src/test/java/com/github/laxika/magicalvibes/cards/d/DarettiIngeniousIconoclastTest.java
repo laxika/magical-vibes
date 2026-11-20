@@ -40,7 +40,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     @Test
     void minusOneSacrificesArtifactThenDestroysTarget() {
         Permanent daretti = addReadyDaretti(6);
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -48,9 +48,6 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         assertThat(daretti.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         harness.assertNotOnBattlefield(player1, "Spellbook");
@@ -99,14 +96,12 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     @Test
     void minusOneDestroysNoncreatureArtifact() {
         addReadyDaretti(3);
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Spellbook());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertNotOnBattlefield(player2, "Spellbook");
@@ -122,8 +117,6 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, artifact.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact.getCard());

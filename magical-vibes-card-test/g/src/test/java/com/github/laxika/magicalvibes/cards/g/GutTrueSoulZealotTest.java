@@ -37,7 +37,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
@@ -53,7 +52,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
@@ -100,7 +98,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, attacker.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertSkeletonWasCreated(gut);
@@ -116,7 +113,7 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(countPermanents(player1, "Skeleton")).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -151,7 +148,7 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, gut.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(gut.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(gut);
@@ -168,7 +165,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         assertThat(countPermanents(player1, "Skeleton")).isEqualTo(1);

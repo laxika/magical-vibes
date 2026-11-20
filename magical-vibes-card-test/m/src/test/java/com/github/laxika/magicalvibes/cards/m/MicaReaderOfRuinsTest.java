@@ -49,11 +49,6 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-
-        var artifact = findPermanent(player1, "Iron Myr");
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.handleMayAbilityChosen(player1, false);
         }
@@ -149,15 +144,13 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
     @DisplayName("Sacrifice and copying happen during the same ability resolution")
     void sacrificeCreatesCopyWithoutAnotherResponseWindow() {
         harness.addToBattlefield(player1, new MicaReaderOfRuins());
-        var artifact = harness.addToBattlefieldAndReturn(player1, new IronMyr());
+        harness.addToBattlefield(player1, new IronMyr());
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         // CR 707.10c: the copy is put onto the stack only once its controller has decided its targets.
         assertThat(gd.stack).hasSize(1)
@@ -212,15 +205,13 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
     @DisplayName("A copied sorcery retains X and is not cast again")
     void sorceryCopyRetainsXWithoutRetriggering() {
         harness.addToBattlefield(player1, new MicaReaderOfRuins());
-        var artifact = harness.addToBattlefieldAndReturn(player1, new IronMyr());
+        harness.addToBattlefield(player1, new IronMyr());
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castSorcery(player1, 0, 1);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
@@ -235,15 +226,13 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
     @DisplayName("The copy can choose a new target while the original retains its target")
     void copyCanChooseNewTarget() {
         harness.addToBattlefield(player1, new MicaReaderOfRuins());
-        var artifact = harness.addToBattlefieldAndReturn(player1, new IronMyr());
+        harness.addToBattlefield(player1, new IronMyr());
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());

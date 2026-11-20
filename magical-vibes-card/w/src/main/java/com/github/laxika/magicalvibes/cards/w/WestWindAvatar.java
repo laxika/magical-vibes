@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -25,8 +29,9 @@ public class WestWindAvatar extends Card {
                 new PermanentIsTokenPredicate(),
                 new PermanentIsLandPredicate()));
         var sacrificeForLife = new MayEffect(
-                new SacrificePermanentThenEffect(tokenOrLand, new GainLifeEffect(3),
-                        "a token or a land", false, false),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, tokenOrLand, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new GainLifeEffect(3))),
                 "Sacrifice a token or a land?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeForLife);
         addTrigger(Triggers.attacks(), sacrificeForLife);

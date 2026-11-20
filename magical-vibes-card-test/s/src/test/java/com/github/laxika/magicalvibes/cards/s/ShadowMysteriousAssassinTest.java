@@ -25,13 +25,11 @@ class ShadowMysteriousAssassinTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent shadow = addCreatureReady(player1, new ShadowMysteriousAssassin());
-        Permanent sacrificed = addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player1, new HillGiant());
         shadow.setAttacking(true);
 
         resolveCombat();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Hill Giant");
@@ -78,14 +76,12 @@ class ShadowMysteriousAssassinTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent shadow = addCreatureReady(player1, new ShadowMysteriousAssassin());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.addToBattlefield(player1, new MindStone());
         shadow.setAttacking(true);
 
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         harness.assertInGraveyard(player1, "Mind Stone");
         harness.assertOnBattlefield(player1, "Shadow, Mysterious Assassin");

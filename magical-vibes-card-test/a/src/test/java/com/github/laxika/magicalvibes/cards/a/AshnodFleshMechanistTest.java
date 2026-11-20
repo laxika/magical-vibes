@@ -25,6 +25,7 @@ class AshnodFleshMechanistTest extends BaseCardTest {
     void attackingOffersSacrificeForPowerstone() {
         Permanent ashnod = addCreatureReady(player1, new AshnodFleshMechanist());
         Permanent sprite = addCreatureReady(player1, new ArgothianSprite());
+        Permanent otherSprite = addCreatureReady(player1, new ArgothianSprite());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -32,12 +33,12 @@ class AshnodFleshMechanistTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(sprite.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(sprite.getId(), otherSprite.getId());
         assertThat(choice.validIds()).doesNotContain(ashnod.getId());
 
-        harness.handlePermanentChosen(player1, sprite.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sprite.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sprite.getCard());
@@ -105,10 +106,10 @@ class AshnodFleshMechanistTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(gd.currentStep,
-                () -> harness.handlePermanentChosen(player1, sprite.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sprite.getCard());
         assertThat(findPermanents(player1, "Powerstone")).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
@@ -118,6 +119,7 @@ class AshnodFleshMechanistTest extends BaseCardTest {
     void onlyAnotherControlledCreatureCanBeSacrificed() {
         addCreatureReady(player1, new AshnodFleshMechanist());
         Permanent sprite = addCreatureReady(player1, new ArgothianSprite());
+        Permanent otherSprite = addCreatureReady(player1, new ArgothianSprite());
         harness.addToBattlefield(player1, new Swamp());
         addCreatureReady(player2, new ArgothianSprite());
 
@@ -125,10 +127,10 @@ class AshnodFleshMechanistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(sprite.getId());
-        harness.handlePermanentChosen(player1, sprite.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(sprite.getId(), otherSprite.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sprite.getId()));
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Powerstone")).hasSize(1);
         assertThat(findPermanents(player2, "Powerstone")).isEmpty();

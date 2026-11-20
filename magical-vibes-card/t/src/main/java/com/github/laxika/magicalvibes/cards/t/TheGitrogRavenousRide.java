@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -9,10 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEf
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,16 +29,15 @@ public class TheGitrogRavenousRide extends Card {
 
     public TheGitrogRavenousRide() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayEffect(new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                new MayEffect(SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentThatSaddledSourceThisTurnPredicate())),
-                        SequenceEffect.of(
-                                new DrawCardEffect(new SacrificedPermanentPower()),
+                                new PermanentThatSaddledSourceThisTurnPredicate())), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
+                                new DrawCardEffect(AmountThisWay.sacrificedPower()),
                                 new PutUpToCardsFromHandOntoBattlefieldEffect(
                                         new CardTypePredicate(CardType.LAND), "land",
-                                        new SacrificedPermanentPower(), true)),
-                        "a creature that saddled it this turn"),
+                                        AmountThisWay.sacrificedPower(), true)))),
                         "Sacrifice a creature that saddled it this turn?"));
 
         addActivatedAbility(new ActivatedAbility(

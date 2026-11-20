@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -8,9 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -34,9 +35,9 @@ public class GrabTheReins extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice a creature. Grab the Reins deals damage equal to that creature's power to any target",
-                        new SacrificePermanentThenEffect(new PermanentIsCreaturePredicate(),
-                                new DealDamageToAnyTargetEffect(new SacrificedPermanentPower()),
-                                "a creature", true, false),
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                                new DealDamageToAnyTargetEffect(AmountThisWay.sacrificedPower())),
                         null)
         )));
     }

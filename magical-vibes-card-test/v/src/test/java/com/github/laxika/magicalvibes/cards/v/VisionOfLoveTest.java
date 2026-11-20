@@ -32,7 +32,6 @@ class VisionOfLoveTest extends BaseCardTest {
         castVisionOfLove();
         acceptMay();
         harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw two cards");
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
@@ -92,7 +91,6 @@ class VisionOfLoveTest extends BaseCardTest {
         castVisionOfLove();
         acceptMay();
         harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw two cards");
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.stack).isEmpty();

@@ -25,13 +25,12 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
         gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.of(
                 com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS));
         addCreatureReady(player1, new CaesarLegionsEmperor());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         int opponentLifeBefore = gd.getLife(player2.getId());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1,
                 "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");
@@ -58,14 +57,13 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
     @DisplayName("The draw mode draws a card and loses 1 life")
     void drawModeDrawsAndLosesLife() {
         addCreatureReady(player1, new CaesarLegionsEmperor());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int lifeBefore = gd.getLife(player1.getId());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Draw a card and lose 1 life");
         harness.handleListChoice(player1,
@@ -97,12 +95,11 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
     @DisplayName("Reflexive modes and target are chosen before players receive priority")
     void reflexiveChoicesPrecedePriority() {
         addCreatureReady(player1, new CaesarLegionsEmperor());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1,
@@ -122,14 +119,13 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
     @DisplayName("Token and draw modes work together when selected in reverse order")
     void tokenAndDrawModes() {
         addCreatureReady(player1, new CaesarLegionsEmperor());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int lifeBefore = gd.getLife(player1.getId());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
         harness.handleListChoice(player1, "Draw a card and lose 1 life");
         harness.handleListChoice(player1,
                 "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");
@@ -147,13 +143,12 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
     @DisplayName("Caesar triggers when only another creature attacks and that attacker can be sacrificed")
     void caesarDoesNotNeedToAttack() {
         addCreatureReady(player1, new CaesarLegionsEmperor());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.handleListChoice(player1, "Draw a card and lose 1 life");
         harness.handleListChoice(player1,
                 "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");

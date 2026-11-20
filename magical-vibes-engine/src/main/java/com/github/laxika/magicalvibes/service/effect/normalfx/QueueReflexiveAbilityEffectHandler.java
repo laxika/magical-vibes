@@ -62,6 +62,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         } else {
             record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()));
         }
+        // "When you do, ... that creature's power": the ability reads what the earlier steps of this resolution did.
+        record.carryResolutionResultsFrom(entry);
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }

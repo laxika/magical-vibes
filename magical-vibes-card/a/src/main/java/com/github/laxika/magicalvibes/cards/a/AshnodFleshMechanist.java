@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -24,13 +28,12 @@ public class AshnodFleshMechanist extends Card {
 
     public AshnodFleshMechanist() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        )),
-                        CreateTokenEffect.ofPowerstoneToken(new Fixed(1)),
-                        "another creature", false, false),
+                        )), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                CreateTokenEffect.ofPowerstoneToken(new Fixed(1)))),
                 "Sacrifice another creature?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -48,15 +48,12 @@ class SmokeBombTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep sacrifice queues an unblockable target creature you control")
     void upkeepSacrificeQueuesUnblockableTarget() {
-        Permanent smokeBomb = harness.addToBattlefieldAndReturn(player1, new SmokeBomb());
+        harness.addToBattlefield(player1, new SmokeBomb());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, smokeBomb.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingCreature.getId()))
@@ -87,13 +84,12 @@ class SmokeBombTest extends BaseCardTest {
     @Test
     @DisplayName("Another Smoke Bomb prevents choosing a reflexive target")
     void anotherSmokeBombLeavesNoLegalTarget() {
-        Permanent smokeBomb = harness.addToBattlefieldAndReturn(player1, new SmokeBomb());
+        harness.addToBattlefield(player1, new SmokeBomb());
         harness.addToBattlefield(player2, new SmokeBomb());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, smokeBomb.getId());
 
         harness.assertInGraveyard(player1, "Smoke Bomb");
         harness.assertOnBattlefield(player2, "Smoke Bomb");
@@ -106,12 +102,11 @@ class SmokeBombTest extends BaseCardTest {
     @Test
     @DisplayName("Smoke Bomb is sacrificed even with no creature you control")
     void sacrificeWithoutOwnCreatures() {
-        Permanent smokeBomb = harness.addToBattlefieldAndReturn(player1, new SmokeBomb());
+        harness.addToBattlefield(player1, new SmokeBomb());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, smokeBomb.getId());
 
         harness.assertInGraveyard(player1, "Smoke Bomb");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

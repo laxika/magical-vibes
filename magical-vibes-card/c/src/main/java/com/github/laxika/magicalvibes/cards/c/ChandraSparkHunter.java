@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -51,9 +54,10 @@ public class ChandraSparkHunter extends Card {
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Sacrifice an artifact. If you do, draw a card",
-                                        new SacrificePermanentThenEffect(
-                                                new PermanentIsArtifactPredicate(), new DrawCardEffect(1), "an artifact",
-                                                false, false)),
+                                        SequenceEffect.of(
+                                                new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
+                                                new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                                        new DrawCardEffect(1)))),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Discard a card. If you do, draw a card",
                                         DiscardCardThenEffect.continuing(

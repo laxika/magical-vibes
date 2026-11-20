@@ -53,6 +53,33 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
         return new ResolutionResults(results, pickedIds, updated);
     }
 
+    /**
+     * These results as a sacrifice step that chooses as it resolves begins: no departures and a {@link StepKind#SACRIFICE}
+     * outcome of nothing yet, the other outcomes kept. The permanents it sacrifices, as it resolves or as its prompts are
+     * answered, are added by {@link #withSacrificeDepartures}.
+     */
+    public ResolutionResults withSacrificeStepBegun() {
+        return withDepartures(List.of(), StepKind.SACRIFICE);
+    }
+
+    /**
+     * These results with {@code results} added to the departures of the sacrifice step being resolved, and its
+     * {@link StepKind#SACRIFICE} outcome made from all of them, as {@link #withDepartures} makes it; the other outcomes
+     * are kept.
+     */
+    public ResolutionResults withSacrificeDepartures(List<DepartureResult> results) {
+        List<DepartureResult> all = new ArrayList<>(departures);
+        all.addAll(results);
+        return withDepartures(all, StepKind.SACRIFICE);
+    }
+
+    private ResolutionResults withDepartures(List<DepartureResult> results, StepKind kind) {
+        Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
+        updated.putAll(outcomes);
+        updated.put(kind, departed(results, kind == StepKind.DESTROY));
+        return new ResolutionResults(results, pickedIds, updated);
+    }
+
     /** These results with {@code ids} as the latest picks, replacing the earlier ones. */
     public ResolutionResults withPickedIds(List<UUID> ids) {
         return new ResolutionResults(departures, ids, outcomes);
@@ -82,18 +109,9 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
     }
 
     /**
-     * The total last-known power of the permanents removed this way (CR 608.2h), each counted as at
-     * least 0. A permanent that wasn't a creature counts 0.
+     * The total last-known toughness of the permanents removed this way (CR 608.2h), each counted as at least 0. A
+     * permanent that wasn't a creature counts 0.
      */
-    public int lastKnownPower() {
-        int total = 0;
-        for (DepartureResult result : departures) {
-            total = SaturatingMath.add(total, nonNegative(result.lastKnownPower()));
-        }
-        return total;
-    }
-
-    /** The total last-known toughness of the permanents removed this way; see {@link #lastKnownPower}. */
     public int lastKnownToughness() {
         int total = 0;
         for (DepartureResult result : departures) {

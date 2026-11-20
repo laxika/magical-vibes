@@ -24,7 +24,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
 
         castGlorifier();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
@@ -41,7 +41,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
 
         castGlorifier();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
@@ -64,11 +64,10 @@ class GlorifierOfSufferingTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice can be made while choosing zero counter targets")
     void sacrificesWithZeroTargets() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DeconstructionHammer());
+        harness.addToBattlefield(player1, new DeconstructionHammer());
 
         castGlorifier();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -80,13 +79,13 @@ class GlorifierOfSufferingTest extends BaseCardTest {
     @Test
     @DisplayName("Glorifier and an opponent's creature can both receive counters")
     void targetsItselfAndOpponentsCreature() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DeconstructionHammer());
+        harness.addToBattlefield(player1, new DeconstructionHammer());
         Permanent opposingTarget = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
 
         castGlorifier();
         var sourceId = harness.getPermanentId(player1, "Glorifier of Suffering");
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.assertInGraveyard(player1, "Deconstruction Hammer");
         harness.handleMultiplePermanentsChosen(player1, List.of(sourceId, opposingTarget.getId()));
 
         assertThat(opposingTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -126,7 +125,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
         Permanent latecomer = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(latecomer.getId()));
 
         assertThat(latecomer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

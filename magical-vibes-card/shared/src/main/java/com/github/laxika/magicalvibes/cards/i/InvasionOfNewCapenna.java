@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.h.HolyFrazzleCannon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,10 +36,10 @@ public class InvasionOfNewCapenna extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        artifactOrCreature,
-                        new ExileTargetPermanentEffect(artifactOrCreatureOpponentControls),
-                        "an artifact or creature"),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, artifactOrCreature, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                new ExileTargetPermanentEffect(artifactOrCreatureOpponentControls)))),
                 "Sacrifice an artifact or creature?"));
     }
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BolgOfTheNorthTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Sacrificing deals damage equal to the sacrificed creature's power and amasses the excess")
     void sacrificeDealsSacrificedPowerDamageAndAmassesExcess() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -34,6 +36,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No excess damage means no amass")
     void noExcessDamageMeansNoAmass() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
@@ -46,6 +49,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice does nothing")
     void decliningSacrificeDoesNothing() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new BolgOfTheNorth()));
@@ -60,19 +64,20 @@ class BolgOfTheNorthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The damage cannot target Bolg itself")
     void targetCreatureCannotBeBolgItself() {
-        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         Permanent bolg = castToSacrificeChoice();
 
-        harness.handlePermanentChosen(player1, sacrificed.getId());
-
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIds()).contains(target.getId()).doesNotContain(bolg.getId());
     }
 
     @Test
+    @DisplayName("Exactly lethal damage does not amass")
     void exactlyLethalDamageDoesNotAmass() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -82,6 +87,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Previously marked damage increases the excess")
     void previouslyMarkedDamageIncreasesExcess() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
@@ -92,6 +98,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the sacrificed creature's modified power")
     void modifiedPowerIsRememberedAfterSacrifice() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         sacrificed.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
@@ -103,6 +110,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can damage another creature you control")
     void canDamageAnotherCreatureYouControl() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -114,7 +122,9 @@ class BolgOfTheNorthTest extends BaseCardTest {
 
     private void castAndResolve(Permanent sacrificed, Permanent target) {
         castToSacrificeChoice();
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice) {
+            harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
+        }
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }

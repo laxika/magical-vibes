@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DreadfeastDemon.class, PersistentSpecimen.class})
@@ -20,15 +22,16 @@ class DreadfeastDemonTest extends BaseCardTest {
     void sacrificesNonDemonCreatureAndCreatesTokenCopy() {
         Permanent demon = harness.addToBattlefieldAndReturn(player1, new DreadfeastDemon());
         Permanent specimen = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
+        Permanent otherSpecimen = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(specimen.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(specimen.getId(), otherSpecimen.getId());
 
-        harness.handlePermanentChosen(player1, specimen.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(specimen.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(demon);
@@ -54,12 +57,11 @@ class DreadfeastDemonTest extends BaseCardTest {
     @DisplayName("The copy is created during the sacrifice ability's resolution without another priority window")
     void createsCopyBeforePlayersReceivePriorityAfterSacrifice() {
         harness.addToBattlefield(player1, new DreadfeastDemon());
-        Permanent specimen = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
+        harness.addToBattlefield(player1, new PersistentSpecimen());
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             advanceToEndStep(player1);
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, specimen.getId());
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .filteredOn(permanent -> permanent.getCard().isToken())
@@ -103,11 +105,10 @@ class DreadfeastDemonTest extends BaseCardTest {
     @DisplayName("A token copy retains the end-step ability but does not trigger in the end step it enters")
     void tokenCopyTriggersAtALaterEndStep() {
         harness.addToBattlefield(player1, new DreadfeastDemon());
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
+        harness.addToBattlefield(player1, new PersistentSpecimen());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, first.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
@@ -115,15 +116,10 @@ class DreadfeastDemonTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
-        Permanent third = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
+        harness.addToBattlefield(player1, new PersistentSpecimen());
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() == null) {
-            harness.passBothPriorities();
-        }
-        harness.handlePermanentChosen(player1, third.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);

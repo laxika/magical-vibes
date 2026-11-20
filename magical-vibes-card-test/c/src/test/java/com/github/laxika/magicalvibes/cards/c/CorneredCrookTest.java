@@ -2,14 +2,17 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GearbaneOrangutan;
 import com.github.laxika.magicalvibes.cards.r.RedHerring;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CorneredCrook.class, RedHerring.class, GearbaneOrangutan.class})
 class CorneredCrookTest extends BaseCardTest {
@@ -30,7 +33,6 @@ class CorneredCrookTest extends BaseCardTest {
 
         castCrookToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Red Herring"));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -46,7 +48,6 @@ class CorneredCrookTest extends BaseCardTest {
 
         castCrookToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Red Herring"));
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Gearbane Orangutan"));
         harness.passBothPriorities();
 
@@ -90,7 +91,6 @@ class CorneredCrookTest extends BaseCardTest {
 
         castCrookToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Red Herring"));
 
         harness.assertInGraveyard(player1, "Red Herring");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
@@ -107,27 +107,25 @@ class CorneredCrookTest extends BaseCardTest {
     @Test
     @DisplayName("Only a controlled artifact can be sacrificed")
     void rejectsOpponentsArtifactAndOwnNonartifact() {
-        harness.addToBattlefield(player1, new RedHerring());
+        Permanent herring = harness.addToBattlefieldAndReturn(player1, new RedHerring());
+        Permanent otherHerring = harness.addToBattlefieldAndReturn(player1, new RedHerring());
         harness.addToBattlefield(player1, new GearbaneOrangutan());
         harness.addToBattlefield(player2, new RedHerring());
 
         castCrookToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1,
-                harness.getPermanentId(player2, "Red Herring")))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1,
-                harness.getPermanentId(player1, "Gearbane Orangutan")))
-                .isInstanceOf(IllegalStateException.class);
-        harness.assertOnBattlefield(player2, "Red Herring");
-        harness.assertOnBattlefield(player1, "Gearbane Orangutan");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(herring.getId(), otherHerring.getId());
 
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Red Herring"));
+        harness.handleMultiplePermanentsChosen(player1, List.of(herring.getId()));
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gearbane Orangutan"));
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Red Herring");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(herring.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherHerring);
         harness.assertInGraveyard(player1, "Gearbane Orangutan");
         harness.assertOnBattlefield(player2, "Red Herring");
     }

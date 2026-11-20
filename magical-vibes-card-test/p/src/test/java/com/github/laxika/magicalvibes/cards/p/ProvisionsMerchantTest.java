@@ -32,14 +32,11 @@ class ProvisionsMerchantTest extends BaseCardTest {
         merchant.setSummoningSick(false);
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent food = findPermanent(player1, "Food");
 
         declareAttackers(player1, java.util.List.of(battlefieldIndex(merchant), battlefieldIndex(attacker)));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, food.getId());
-        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(gqs.getEffectivePower(gd, merchant)).isEqualTo(4);

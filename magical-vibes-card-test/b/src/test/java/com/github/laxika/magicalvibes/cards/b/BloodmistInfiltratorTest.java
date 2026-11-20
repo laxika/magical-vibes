@@ -21,6 +21,7 @@ class BloodmistInfiltratorTest extends BaseCardTest {
     void attackingOffersSacrifice() {
         Permanent infiltrator = addCreatureReady(player1, new BloodmistInfiltrator());
         Permanent hybrid = addCreatureReady(player1, new SauroformHybrid());
+        Permanent otherHybrid = addCreatureReady(player1, new SauroformHybrid());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -28,9 +29,9 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(hybrid.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(hybrid.getId(), otherHybrid.getId());
         assertThat(choice.validIds()).doesNotContain(infiltrator.getId());
     }
 
@@ -42,9 +43,8 @@ class BloodmistInfiltratorTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, hybrid.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(hybrid.getCard());
@@ -68,13 +68,12 @@ class BloodmistInfiltratorTest extends BaseCardTest {
     @DisplayName("The unblockable effect expires at end of turn")
     void unblockableExpiresAtEndOfTurn() {
         Permanent infiltrator = addCreatureReady(player1, new BloodmistInfiltrator());
-        Permanent hybrid = addCreatureReady(player1, new SauroformHybrid());
+        addCreatureReady(player1, new SauroformHybrid());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, hybrid.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
 
@@ -106,9 +105,8 @@ class BloodmistInfiltratorTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, sacrifice.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -124,11 +122,12 @@ class BloodmistInfiltratorTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(another.getId());
-        assertThat(choice.validIds()).doesNotContain(infiltrator.getId(), opponent.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(another.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(infiltrator);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isTrue();
     }
 }

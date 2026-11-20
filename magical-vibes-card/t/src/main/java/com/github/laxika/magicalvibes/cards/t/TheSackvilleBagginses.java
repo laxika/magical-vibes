@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -7,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -41,10 +43,10 @@ public class TheSackvilleBagginses extends Card {
     public TheSackvilleBagginses() {
         // "If you do" is part of the same ability, not a reflexive "when you do" trigger.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        ANOTHER_CREATURE_OR_ARTIFACT,
-                        SequenceEffect.of(new DrawCardEffect(), CreateTokenEffect.ofTreasureToken(1)),
-                        "another creature or artifact", false, false),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, ANOTHER_CREATURE_OR_ARTIFACT, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                SequenceEffect.of(new DrawCardEffect(), CreateTokenEffect.ofTreasureToken(1)))),
                 "Sacrifice another creature or artifact?"));
 
         target(OPPONENT_TARGET).addTrigger(Triggers.sacrificed(

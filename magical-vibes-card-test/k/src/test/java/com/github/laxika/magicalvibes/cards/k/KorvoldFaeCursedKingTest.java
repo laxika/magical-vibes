@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,14 +21,12 @@ class KorvoldFaeCursedKingTest extends BaseCardTest {
 
     @Test
     void entersAndSacrificesAnotherPermanentThenGrowsAndDraws() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.castFromHand(player1, new KorvoldFaeCursedKing(), "{2}{B}{R}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, forest.getId());
         resolveAllTriggers();
 
         Permanent korvold = findPermanent(player1, "Korvold, Fae-Cursed King");
@@ -42,15 +39,13 @@ class KorvoldFaeCursedKingTest extends BaseCardTest {
     @Test
     void attacksAndSacrificesAnotherPermanent() {
         Permanent korvold = addCreatureReady(player1, new KorvoldFaeCursedKing());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, forest.getId());
         resolveAllTriggers();
 
         assertThat(korvold.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

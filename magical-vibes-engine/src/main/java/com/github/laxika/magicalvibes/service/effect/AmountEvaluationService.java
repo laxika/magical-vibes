@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.ResolutionResults;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
@@ -34,8 +36,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerT
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
-import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayPower;
-import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayToughness;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
@@ -572,11 +572,7 @@ public class AmountEvaluationService {
             case CardsDrawnThisResolution ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
             case AmountThisWay thisWay ->
-                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().outcome(thisWay.kind()).amount();
-            case PermanentLeftThisWayPower ignored ->
-                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().lastKnownPower();
-            case PermanentLeftThisWayToughness ignored ->
-                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().lastKnownToughness();
+                    ctx.stackEntry() == null ? 0 : amountThisWay(ctx.stackEntry().getResolutionResults(), thisWay);
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->
@@ -1128,6 +1124,30 @@ public class AmountEvaluationService {
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getChosenNumber();
             case ChosenNumberOnCreatedPermanent ignored -> chosenNumberOnCreatedPermanent(gameData, ctx);
         };
+    }
+
+    /**
+     * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice
+     * step sacrificed (CR 608.2h), each counted as at least 0.
+     */
+    private static int amountThisWay(ResolutionResults results, AmountThisWay thisWay) {
+        if (thisWay.stat() == AmountThisWay.Stat.AMOUNT) {
+            return results.outcome(thisWay.kind()).amount();
+        }
+        int total = 0;
+        for (DepartureResult result : results.departures()) {
+            if (!result.sacrificed()) {
+                continue;
+            }
+            Integer value = switch (thisWay.stat()) {
+                case POWER -> result.lastKnownPower();
+                case TOUGHNESS -> result.lastKnownToughness();
+                case MANA_VALUE -> result.lastKnownManaValue();
+                case AMOUNT -> 0;
+            };
+            total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
+        }
+        return total;
     }
 
     /** The chosen number of the first permanent created earlier in the resolving entry; 0 if none. */

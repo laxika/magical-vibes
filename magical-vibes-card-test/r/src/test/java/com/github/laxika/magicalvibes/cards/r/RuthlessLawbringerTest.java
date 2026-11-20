@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RuthlessLawbringer.class, VoraciousVarmint.class, Forest.class, BanditsHaul.class})
@@ -22,16 +24,17 @@ class RuthlessLawbringerTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new VoraciousVarmint());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new VoraciousVarmint());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new VoraciousVarmint());
         RuthlessLawbringer lawbringer = new RuthlessLawbringer();
         harness.castFromHand(player1, lawbringer, "{1}{W}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(sacrificeChoice.validIds()).containsExactlyInAnyOrder(sacrifice.getId(), otherCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -90,7 +93,6 @@ class RuthlessLawbringerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -107,7 +109,6 @@ class RuthlessLawbringerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ruthless Lawbringer"));
         harness.passBothPriorities();
 
@@ -126,7 +127,6 @@ class RuthlessLawbringerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
 
         harness.addMana(player2, ManaColor.COLORLESS, 1);

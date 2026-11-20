@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -34,7 +35,6 @@ class RuthlessTechnomancerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(findPermanents(player1, "Treasure")).hasSize(3);
@@ -98,17 +98,17 @@ class RuthlessTechnomancerTest extends BaseCardTest {
     @DisplayName("Cannot sacrifice the source or an opponent's creature")
     void sacrificeChoiceExcludesSourceAndOpponentsCreature() {
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castTechnomancer();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(
-                player1, findPermanent(player1, "Ruthless Technomancer").getId()))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(fodder.getId(), otherCreature.getId())
+                .doesNotContain(findPermanent(player1, "Ruthless Technomancer").getId(), opponentCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Ruthless Technomancer");
@@ -199,11 +199,10 @@ class RuthlessTechnomancerTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a zero-power creature creates no Treasures")
     void sacrificingZeroPowerCreatureCreatesNoTreasures() {
-        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
         castTechnomancer();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Ornithopter");

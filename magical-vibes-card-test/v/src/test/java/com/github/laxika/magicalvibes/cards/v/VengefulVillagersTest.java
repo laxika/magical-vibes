@@ -34,7 +34,7 @@ class VengefulVillagersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
@@ -72,7 +72,7 @@ class VengefulVillagersTest extends BaseCardTest {
     @Test
     @DisplayName("The attacking Villagers may sacrifice themselves to stun the chosen creature")
     void attackerCanSacrificeItself() {
-        Permanent attacker = addCreatureReady(player1, new VengefulVillagers());
+        addCreatureReady(player1, new VengefulVillagers());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new VengefulVillagers());
 
         declareAttackers(player1, List.of(0));
@@ -82,7 +82,6 @@ class VengefulVillagersTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getCounterCount(CounterType.STUN)).isZero();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, attacker.getId());
 
         harness.assertInGraveyard(player1, "Vengeful Villagers");
         harness.assertNotOnBattlefield(player1, "Vengeful Villagers");
@@ -101,7 +100,7 @@ class VengefulVillagersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
         harness.performUntapStep(player2);

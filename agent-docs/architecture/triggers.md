@@ -884,7 +884,7 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   (`XValue`, `CardManaValueEqualsXPredicate`); what the preceding action determined ("that much", a die roll, a revealed
   card's mana value, excess damage) is the event value (`EventValue`, `CardManaValueEqualsEventValuePredicate`,
   `CardManaValueAtMostEventValuePredicate`, `PermanentManaValueAtMostEventValuePredicate` via `FilterContext.eventValue`);
-  a sacrificed creature's power is `SacrificedPermanentPower`; a discarded card is the record's snapshot
+  a creature sacrificed as a cost has `SacrificedPermanentPower`, one a step of the maker sacrificed `AmountThisWay.sacrificedPower()` (a `QueueReflexiveAbilityEffect` record carries its maker's step results); a discarded card is the record's snapshot
   (`LastDiscardedCardManaValue`, `LastDiscardedCardTypeCount`, carried by `carryTriggerRecord`).
   `QueueReflexiveAbilityEffect` has no "event value as X". A random "that player" or "the tapped creature" is set on the
   record through `QueueReflexiveAbilityEffectHandler.resolve(gameData, entry, queueEffect, recordSetup)`, and targets are

@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,14 +32,13 @@ public class SkyfisherSpider extends Card {
 
     public SkyfisherSpider() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        )),
-                        new DestroyTargetPermanentEffect(
-                                new PermanentNotPredicate(new PermanentIsLandPredicate())),
-                        "another creature"),
+                        )), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                new DestroyTargetPermanentEffect(
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()))))),
                 "Sacrifice another creature?"));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(

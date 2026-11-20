@@ -60,7 +60,6 @@ class RuptureTest extends BaseCardTest {
         UUID hillGiantId = harness.getPermanentId(player1, "Hill Giant");
         harness.castAndResolveInstant(player1, 0, hillGiantId);
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, hillGiantId);
 
         harness.assertInGraveyard(player1, "Hill Giant");
         harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
@@ -77,7 +76,6 @@ class RuptureTest extends BaseCardTest {
         giveMana();
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ornithopter"));
 
         harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertOnBattlefield(player2, "Fugitive Wizard");

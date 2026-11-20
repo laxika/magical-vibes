@@ -22,6 +22,7 @@ class BeetleHeadedMerchantsTest extends BaseCardTest {
     void sacrificingAnotherCreatureDrawsAndAddsCounter() {
         Permanent merchants = addCreatureReady(player1, new BeetleHeadedMerchants());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
@@ -29,12 +30,14 @@ class BeetleHeadedMerchantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(bears.getId());
-        harness.handlePermanentChosen(player1, bears.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), mindStone.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mindStone);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(merchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -50,7 +53,6 @@ class BeetleHeadedMerchantsTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, mindStone.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(mindStone.getCard());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -106,12 +108,8 @@ class BeetleHeadedMerchantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(otherMerchants.getId());
-        harness.handlePermanentChosen(player1, otherMerchants.getId());
-
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherMerchants.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(merchants);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(merchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -131,7 +129,6 @@ class BeetleHeadedMerchantsTest extends BaseCardTest {
                 .destroyPermanentToGraveyard(gd, merchants));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, otherMerchants.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(merchants.getCard(), otherMerchants.getCard());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NamazuTraderTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering loses 1 life and creates a Treasure")
     void entersWithLifeLossAndTreasure() {
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new NamazuTrader()));
@@ -35,6 +37,7 @@ class NamazuTraderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking may sacrifice another creature to surveil 2")
     void maySacrificeAnotherCreatureOrArtifactToSurveilTwo() {
         addCreatureReady(player1, new NamazuTrader());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -45,7 +48,6 @@ class NamazuTraderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
@@ -60,6 +62,7 @@ class NamazuTraderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking may sacrifice an artifact to surveil 2")
     void maySacrificeAnotherArtifactToSurveilTwo() {
         addCreatureReady(player1, new NamazuTrader());
         Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
@@ -70,7 +73,6 @@ class NamazuTraderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, relic.getId());
 
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
@@ -81,6 +83,7 @@ class NamazuTraderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice leaves the library and creatures untouched")
     void decliningSacrificeLeavesLibraryAndCreatureUntouched() {
         addCreatureReady(player1, new NamazuTrader());
         Permanent other = addCreatureReady(player1, new NamazuTrader());
@@ -98,9 +101,11 @@ class NamazuTraderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice choice excludes the source, lands and opponents' permanents")
     void sacrificeChoiceExcludesSourceLandsAndOpponentsCreatures() {
         addCreatureReady(player1, new NamazuTrader());
         Permanent other = addCreatureReady(player1, new NamazuTrader());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player2, new NamazuTrader());
 
@@ -108,13 +113,15 @@ class NamazuTraderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(other.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(other.getId(), relic.getId());
     }
 
     @Test
+    @DisplayName("Surveil can keep both cards on top in a chosen order")
     void surveilCanKeepBothCardsInChosenOrderDuringAttackAbilityResolution() {
         addCreatureReady(player1, new NamazuTrader());
         Permanent other = addCreatureReady(player1, new NamazuTrader());
@@ -126,7 +133,6 @@ class NamazuTraderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, other.getId());
 
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();

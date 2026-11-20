@@ -28,7 +28,7 @@ class AltarOfTheWretchedTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may sacrifice a nontoken creature to draw and mill its power")
     void etbSacrificeDrawsAndMillsEqualToPower() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.addToBattlefield(player1, new HillGiant());
         List<Card> library = List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
@@ -37,8 +37,6 @@ class AltarOfTheWretchedTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
@@ -165,8 +163,6 @@ class AltarOfTheWretchedTest extends BaseCardTest {
         castAltar();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BoilerbilgesRipper.class, AuraOfSilence.class, GrizzlyBears.class})
@@ -18,12 +20,11 @@ class BoilerbilgesRipperTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may sacrifice another creature to deal 2 damage to a player")
     void etbSacrificesCreatureAndDealsDamage() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         int lifeBefore = gd.getLife(player2.getId());
 
         castRipperToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -34,16 +35,11 @@ class BoilerbilgesRipperTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may sacrifice another enchantment to deal 2 damage")
     void etbSacrificesEnchantmentAndDealsDamage() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new AuraOfSilence());
+        harness.addToBattlefield(player1, new AuraOfSilence());
         int lifeBefore = gd.getLife(player2.getId());
 
         castRipperToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -68,16 +64,17 @@ class BoilerbilgesRipperTest extends BaseCardTest {
     @DisplayName("Only another creature or enchantment controlled by you can be sacrificed")
     void sacrificeExcludesSourceAndOpponentsPermanents() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownAura = harness.addToBattlefieldAndReturn(player1, new AuraOfSilence());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new AuraOfSilence());
 
         castRipperToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(sacrifice.getId(), ownAura.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -103,12 +100,11 @@ class BoilerbilgesRipperTest extends BaseCardTest {
     @Test
     @DisplayName("Damage waits for the reflexive trigger to resolve and can kill a creature")
     void damageToCreatureUsesSeparateTrigger() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castRipperToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, target.getId());
 

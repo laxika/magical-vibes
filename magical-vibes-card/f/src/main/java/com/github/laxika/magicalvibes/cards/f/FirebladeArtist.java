@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -16,10 +21,10 @@ public class FirebladeArtist extends Card {
 
     public FirebladeArtist() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT),
-                        "a creature"),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT)))),
                 "Sacrifice a creature?"));
     }
 }

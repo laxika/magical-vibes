@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Lithobraking.class, EntropicBattlecruiser.class, IntrepidTenderfoot.class, Forest.class})
@@ -28,7 +30,7 @@ class LithobrakingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Entropic Battlecruiser");
@@ -60,9 +62,7 @@ class LithobrakingTest extends BaseCardTest {
 
         castLithobraking();
         harness.passBothPriorities();
-        Permanent lander = findPermanent(player1, "Lander");
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, lander.getId());
 
         assertThat(findPermanents(player1, "Lander")).isEmpty();
         harness.assertInGraveyard(player1, "Lithobraking");
@@ -128,7 +128,6 @@ class LithobrakingTest extends BaseCardTest {
         castLithobraking();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Lander").getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Intrepid Tenderfoot");

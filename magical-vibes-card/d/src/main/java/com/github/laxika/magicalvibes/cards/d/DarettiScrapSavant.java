@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -49,8 +53,9 @@ public class DarettiScrapSavant extends Card {
                 .build();
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new SacrificePermanentThenEffect(
-                        new PermanentIsArtifactPredicate(), returnArtifact, "an artifact", true, false)),
+                List.of(SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), returnArtifact))),
                 "−2: Sacrifice an artifact. If you do, return target artifact card from your graveyard "
                         + "to the battlefield.",
                 new GraveyardCardPredicateTargetFilter(

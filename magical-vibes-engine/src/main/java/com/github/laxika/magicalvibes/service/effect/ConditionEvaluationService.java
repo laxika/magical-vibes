@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -1416,7 +1417,8 @@ public class ConditionEvaluationService {
             case HappenedThisWay c -> c.filter() == null
                     ? ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum()
                     : ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
-                    .map(id -> gameQueryService.findPermanentById(gameData, id))
+                    .map(id -> c.kind() == StepKind.SACRIFICE || c.kind() == StepKind.DESTROY
+                            ? permanentOrLastKnown(gameData, id) : gameQueryService.findPermanentById(gameData, id))
                     .anyMatch(permanent -> permanent != null && matchesPermanent(gameData, permanent, c.filter(), ctx));
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.
             // "If it has a single target": the spell or ability the event was about, as the ability triggers (CR 603.4),
@@ -1727,16 +1729,9 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 if (target == null && ctx.targetId() != null) {
                     // Last known information: "if it was a token" after the target already left (CR 608.2h).
-                    target = gameData.departedPermanentSnapshots.values().stream()
-                            .filter(departed -> ctx.targetId().equals(departed.getId()))
-                            .findFirst().orElse(null);
-                    if (target != null && target.getLastKnownCard() != null) {
-                        // Its layered characteristics as it last existed (a Soldier through Maskwood Nexus, an
-                        // artifact through Liquimetal Coating, snow from Rimefeather Owl), since its layer state is gone.
-                        Permanent lastKnown = new Permanent(target);
-                        lastKnown.setCard(target.getLastKnownCard());
-                        target = lastKnown;
-                    } else if (target != null && c.filter() instanceof PermanentHasSupertypePredicate supertypePredicate
+                    target = lastKnownPermanent(gameData, ctx.targetId());
+                    if (target != null && target.getLastKnownCard() == null
+                            && c.filter() instanceof PermanentHasSupertypePredicate supertypePredicate
                             && target.getLastKnownSupertypes() != null) {
                         yield target.getLastKnownSupertypes().contains(supertypePredicate.supertype());
                     }
@@ -3938,6 +3933,30 @@ public class ConditionEvaluationService {
             }
         }
         return cardTypes.size();
+    }
+
+    /** The permanent {@code permanentId} names on the battlefield, else as it last existed there (see below). */
+    private Permanent permanentOrLastKnown(GameData gameData, UUID permanentId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+        return permanent != null ? permanent : lastKnownPermanent(gameData, permanentId);
+    }
+
+    /**
+     * The permanent {@code permanentId} named as it last existed on the battlefield (CR 608.2h), or {@code null}: its
+     * departure snapshot with its layered characteristics (a Soldier through Maskwood Nexus, an artifact through
+     * Liquimetal Coating, snow from Rimefeather Owl), since its layer state is gone; a snapshot taken without them as
+     * it is.
+     */
+    private static Permanent lastKnownPermanent(GameData gameData, UUID permanentId) {
+        Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> permanentId.equals(snapshot.getId()))
+                .findFirst().orElse(null);
+        if (departed == null || departed.getLastKnownCard() == null) {
+            return departed;
+        }
+        Permanent lastKnown = new Permanent(departed);
+        lastKnown.setCard(departed.getLastKnownCard());
+        return lastKnown;
     }
 
     private boolean targetToughnessAtMostControllerGraveyardCount(GameData gameData, ConditionContext ctx) {

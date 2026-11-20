@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,10 +35,9 @@ public class HeiBaiSpiritOfBalance extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         var sacrificeTrigger = new MayEffect(
-                new SacrificePermanentThenEffect(
-                        anotherCreatureOrArtifact,
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        "another creature or artifact"),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, anotherCreatureOrArtifact, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))),
                 "Sacrifice another creature or artifact?");
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeTrigger);

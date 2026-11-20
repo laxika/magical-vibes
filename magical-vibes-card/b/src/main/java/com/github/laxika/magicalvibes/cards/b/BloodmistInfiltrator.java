@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -18,14 +22,11 @@ public class BloodmistInfiltrator extends Card {
 
     public BloodmistInfiltrator() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        )),
-                        new MakeCreatureUnblockableEffect(true),
-                        "another creature", false, false
-                ),
+                        )), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new MakeCreatureUnblockableEffect(true))),
                 "Sacrifice another creature?"
         ));
     }

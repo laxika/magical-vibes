@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,14 +25,12 @@ public class WeddingSecurity extends Card {
 
     public WeddingSecurity() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsTokenPredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD))),
-                        SequenceEffect.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD))), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new DrawCardEffect()),
-                        "a Blood token", false, false),
+                                new DrawCardEffect()))),
                 "Sacrifice a Blood token?"));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -65,14 +64,12 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
     @DisplayName("The -2 ability deals sacrificed power damage and draws for a Hamster")
     void minusTwoSacrificesHamsterDealsDamageAndDraws() {
         Permanent minsc = enterMinscAndCreateBoo();
-        Permanent boo = findPermanent(player1, "Boo");
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new RagingGoblin()));
         int opponentLife = gd.getLife(player2.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, boo.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -156,6 +153,7 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -2 ability deals a non-Hamster's modified power without drawing")
     void minusTwoNonHamsterDealsModifiedPowerWithoutDrawing() {
         addReadyMinsc(3);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -166,7 +164,6 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -176,6 +173,7 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -2 ability draws for a creature that is a Hamster through Maskwood Nexus")
     void minusTwoDrawsForCreatureMadeHamsterByMaskwoodNexus() {
         addReadyMinsc(3);
         harness.addToBattlefield(player1, new MaskwoodNexus());
@@ -187,7 +185,6 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -196,6 +193,7 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -2 ability uses Boo's boosted power after Minsc & Boo leaves the battlefield")
     void minusTwoUsesBoostedBooPowerAfterMinscLeavesBattlefield() {
         Permanent minsc = enterMinscAndCreateBoo();
         Permanent boo = findPermanent(player1, "Boo");
@@ -208,7 +206,6 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, boo.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

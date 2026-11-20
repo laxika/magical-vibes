@@ -65,7 +65,7 @@ class EuruAcornScroungerTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, squirrel.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(squirrel.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(squirrel);
@@ -174,7 +174,7 @@ class EuruAcornScroungerTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, squirrel.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(squirrel.getId()));
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.ACORN)).isEqualTo(1);
@@ -218,7 +218,6 @@ class EuruAcornScroungerTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, foodPermanent.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(foodPermanent);

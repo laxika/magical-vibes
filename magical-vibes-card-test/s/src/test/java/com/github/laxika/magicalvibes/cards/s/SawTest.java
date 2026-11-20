@@ -47,10 +47,10 @@ class SawTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(currentHost.getId(), sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Balemurk Leech");
@@ -90,10 +90,6 @@ class SawTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker, saw).doesNotContain(sacrifice);
@@ -143,7 +139,7 @@ class SawTest extends BaseCardTest {
     @DisplayName("Saw's controller sacrifices and draws when an opponent controls the attacker")
     void equipmentControllerReceivesAttackTrigger() {
         Permanent attacker = addCreatureReady(player2, new BalemurkLeech());
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BalemurkLeech());
+        harness.addToBattlefield(player1, new BalemurkLeech());
         Permanent saw = harness.addToBattlefieldAndReturn(player1, new Saw());
         saw.setAttachedTo(attacker.getId());
         harness.setLibrary(player1, List.of(new BalemurkLeech()));
@@ -153,10 +149,6 @@ class SawTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Balemurk Leech");
@@ -171,16 +163,15 @@ class SawTest extends BaseCardTest {
     @DisplayName("The sacrifice and draw occur during the same resolution without another priority window")
     void sacrificeDrawsImmediatelyWithoutAnotherTrigger() {
         Permanent attacker = addCreatureReady(player1, new BalemurkLeech());
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BalemurkLeech());
+        harness.addToBattlefield(player1, new BalemurkLeech());
         Permanent saw = harness.addToBattlefieldAndReturn(player1, new Saw());
         saw.setAttachedTo(attacker.getId());
         harness.setLibrary(player1, List.of(new BalemurkLeech()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(gd.currentStep,
-                () -> harness.handlePermanentChosen(player1, sacrifice.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertInGraveyard(player1, "Balemurk Leech");
         harness.assertInHand(player1, "Balemurk Leech");

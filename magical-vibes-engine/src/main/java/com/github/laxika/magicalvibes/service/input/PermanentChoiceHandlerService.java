@@ -437,7 +437,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy
                 || context instanceof PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy
                 || context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife
-                || context instanceof PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness
                 || context instanceof PermanentChoiceContext.SacrificeCreatureThenSearchLibrary
                 || context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower
                 || context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeast
@@ -457,12 +456,10 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower
                 || context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage
                 || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage
-                || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw
                 || context instanceof PermanentChoiceContext.ExploitSacrifice
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
                 || context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue
                 || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType
-                || context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
                 || context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest
                 || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter
@@ -528,9 +525,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleEachPlayerChoosesCreatureToDestroy(gameData, permanentId, destroy);
             case PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp ->
                     battlefieldHandler.handleSacrificeCreatureOpponentsLoseLife(gameData, permanentId, sacrificeOpp);
-            case PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness sacrificeGainLife ->
-                    battlefieldHandler.handleSacrificeCreatureControllerGainsLifeEqualToToughness(
-                            gameData, permanentId, sacrificeGainLife);
             case PermanentChoiceContext.SacrificeCreatureThenSearchLibrary sacrificeSearch ->
                     battlefieldHandler.handleSacrificeCreatureThenSearchLibrary(gameData, permanentId, sacrificeSearch);
             case PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower targetPlayerSacrifice ->
@@ -576,8 +570,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
             case PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage sacpd ->
                     battlefieldHandler.handleSacrificeAnotherCreatureDealPowerDamage(gameData, permanentId, sacpd);
-            case PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw sacgld ->
-                    battlefieldHandler.handleSacrificeAnotherCreatureGainLifeAndDraw(gameData, permanentId, sacgld);
             case PermanentChoiceContext.ExploitSacrifice exploitSac ->
                     battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
             case PermanentChoiceContext.SacrificePermanentThen spt ->
@@ -593,8 +585,6 @@ public class PermanentChoiceHandlerService {
                                 gameData, descendantsFury.sourceCard(), descendantsFury.controllerId(), permanent));
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             }
-            case PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower rupture ->
-                    battlefieldHandler.handleSacrificeCreatureThenMassDamageEqualToPower(gameData, permanentId, rupture);
             case PermanentChoiceContext.MaySacrificeForCounterOnSource msfc ->
                     battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
             case PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf ->

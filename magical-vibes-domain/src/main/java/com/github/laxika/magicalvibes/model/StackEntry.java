@@ -667,6 +667,27 @@ public class StackEntry {
         resolutionResults = resolutionResults.withOutcome(kind, resolutionResults.outcome(kind).plus(more));
     }
 
+    /**
+     * Begins a sacrifice step whose permanents are chosen as it resolves: its departures arrive as they are sacrificed
+     * ({@link #addSacrificeDepartures}), while it resolves or as its prompts are answered.
+     */
+    public void beginSacrificeStep() {
+        resolutionResults = resolutionResults.withSacrificeStepBegun();
+    }
+
+    /** Adds the departures of permanents the sacrifice step being resolved sacrificed. */
+    public void addSacrificeDepartures(List<DepartureResult> departures) {
+        resolutionResults = resolutionResults.withSacrificeDepartures(departures);
+    }
+
+    /**
+     * Gives this entry, a reflexive ability made by {@code resolving}'s resolution ("when you do, ..."), what the
+     * earlier steps of that resolution did, so it can read "the sacrificed creature" (CR 603.12, 608.2h).
+     */
+    public void carryResolutionResultsFrom(StackEntry resolving) {
+        resolutionResults = resolving.resolutionResults;
+    }
+
     /** Records what a player picked in the step being resolved, for the next step to act on. */
     public void recordPicks(List<UUID> pickedIds) {
         resolutionResults = resolutionResults.withPickedIds(pickedIds);

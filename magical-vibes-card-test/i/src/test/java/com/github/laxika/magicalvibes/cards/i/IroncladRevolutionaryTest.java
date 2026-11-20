@@ -22,11 +22,10 @@ class IroncladRevolutionaryTest extends BaseCardTest {
     @Test
     @DisplayName("ETB sacrifice puts two counters on Ironclad Revolutionary and makes each opponent lose 2 life")
     void etbSacrificeArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
         castIronclad();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         Permanent revolutionary = findPermanent(player1, "Ironclad Revolutionary");
@@ -86,7 +85,7 @@ class IroncladRevolutionaryTest extends BaseCardTest {
         castIronclad();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(remaining).doesNotContain(chosen);
@@ -100,13 +99,12 @@ class IroncladRevolutionaryTest extends BaseCardTest {
     @Test
     @DisplayName("Counters and life loss happen during the sacrifice ability's resolution")
     void rewardsResolveWithoutAnotherPriorityRound() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
         harness.setHand(player2, List.of(new LeaveInTheDust()));
         harness.addMana(player2, ManaColor.BLUE, 4);
         castIronclad();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(findPermanent(player1, "Ironclad Revolutionary")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -118,7 +116,7 @@ class IroncladRevolutionaryTest extends BaseCardTest {
     @Test
     @DisplayName("Life loss still happens if Ironclad Revolutionary leaves before its ability resolves")
     void lifeLossWithSourceAbsent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
         harness.setHand(player2, List.of(new LeaveInTheDust()));
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.forceActivePlayer(player1);
@@ -130,7 +128,6 @@ class IroncladRevolutionaryTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, revolutionary.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ironclad Revolutionary");

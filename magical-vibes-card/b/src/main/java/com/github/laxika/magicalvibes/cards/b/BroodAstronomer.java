@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.a.AdagiaWindsweptBastion;
 import com.github.laxika.magicalvibes.cards.e.EvendoWakingHaven;
@@ -16,7 +21,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,15 +35,14 @@ public class BroodAstronomer extends Card {
 
     public BroodAstronomer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentIsLandPredicate(),
-                        new DraftFromSpellbookEffect(List.of(
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DraftFromSpellbookEffect(List.of(
                                 AdagiaWindsweptBastion::new,
                                 EvendoWakingHaven::new,
                                 KavaronMemorialWorld::new,
                                 SusurSecundiVoidAltar::new,
-                                UthrosTitanicGodcore::new)),
-                        "a land", false, false),
+                                UthrosTitanicGodcore::new)))),
                 "Sacrifice a land?"));
 
         addActivatedAbility(new ActivatedAbility(

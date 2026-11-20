@@ -44,11 +44,9 @@ class DiscipleOfBolasTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castDisciple();
-        int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         harness.assertNotOnBattlefield(player1, "Hill Giant");
     }
 
@@ -59,11 +57,9 @@ class DiscipleOfBolasTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castDisciple();
-        int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -74,7 +70,6 @@ class DiscipleOfBolasTest extends BaseCardTest {
 
         castDisciple();
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ornithopter"));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -99,13 +94,15 @@ class DiscipleOfBolasTest extends BaseCardTest {
     @DisplayName("The Disciple itself is not a legal sacrifice choice")
     void discipleCannotSacrificeItself() {
         harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Ornithopter());
 
         castDisciple();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds())
-                .containsExactly(harness.getPermanentId(player1, "Grizzly Bears"));
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(
+                harness.getPermanentId(player1, "Grizzly Bears"), harness.getPermanentId(player1, "Ornithopter"));
+        assertThat(choice.maxCount()).isEqualTo(1);
     }
 
     @Test
@@ -113,13 +110,14 @@ class DiscipleOfBolasTest extends BaseCardTest {
     void opponentCreatureIsNotChoosable() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new HillGiant());
+        int lifeBefore = gd.getLife(player1.getId());
 
         castDisciple();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds())
-                .doesNotContain(harness.getPermanentId(player2, "Hill Giant"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertLife(player1, lifeBefore + 2);
     }
 
     @Test
@@ -130,7 +128,6 @@ class DiscipleOfBolasTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castDisciple();
-        harness.handlePermanentChosen(player1, giant.getId());
 
         harness.assertLife(player1, lifeBefore + 4);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -146,7 +143,6 @@ class DiscipleOfBolasTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castDisciple();
-        harness.handlePermanentChosen(player1, bears.getId());
 
         harness.assertLife(player1, lifeBefore);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -161,11 +157,7 @@ class DiscipleOfBolasTest extends BaseCardTest {
 
         castDisciple();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertOnBattlefield(player1, "Alexios, Deimos of Kosmos");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -208,11 +200,7 @@ class DiscipleOfBolasTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(returnedId);
-        harness.handlePermanentChosen(player1, returnedId);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertNotOnBattlefield(player1, "Disciple of Bolas");
         harness.assertInGraveyard(player1, "Disciple of Bolas");

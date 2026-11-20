@@ -26,7 +26,7 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
         castFelothar();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.passBothPriorities();
 
         Permanent felothar = findPermanent(player1, "Felothar, Dawn of the Abzan");
@@ -59,7 +59,7 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.passBothPriorities();
 
         assertThat(felothar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -71,15 +71,16 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
     @DisplayName("The sacrifice choice contains nonland permanents but not lands")
     void sacrificeChoiceExcludesLands() {
         Permanent felothar = addCreatureReady(player1, new FelotharDawnOfTheAbzan());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(felothar.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(felothar.getId(), bears.getId());
         assertThat(choice.validIds()).doesNotContain(land.getId());
     }
 
@@ -92,11 +93,11 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
         Permanent felothar = castFelothar();
 
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).contains(artifact.getId());
         assertThat(choice.validIds()).doesNotContain(opponentArtifact.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Jeskai Monument");
@@ -111,7 +112,7 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
         Permanent felothar = castFelothar();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, felothar.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(felothar.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Felothar, Dawn of the Abzan");
@@ -127,7 +128,7 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(felothar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());

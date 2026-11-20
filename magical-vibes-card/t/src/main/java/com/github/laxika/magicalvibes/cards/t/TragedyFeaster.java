@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,6 +27,6 @@ public class TragedyFeaster extends Card {
         // life this turn. The sacrifice only happens at resolution if you didn't gain life.
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new DidntGainLifeThisTurn(),
-                new SacrificePermanentThenEffect(new PermanentTruePredicate(), null, "a permanent")));
+                new SacrificePermanentsEffect(1, new PermanentTruePredicate(), Subjects.you())));
     }
 }

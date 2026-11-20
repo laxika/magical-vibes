@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -21,7 +24,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekInstantOrSorceryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKarlachEffect;
@@ -75,11 +77,10 @@ public class KarlachRagingTiefling extends Card {
     public static CardEffect specializedTrigger(CardColor color) {
         return switch (color) {
             case BLACK -> new MayEffect(
-                    new SacrificePermanentThenEffect(
-                            new PermanentIsCreaturePredicate(),
-                            SequenceEffect.of(new DrawCardEffect(2),
-                                    new LoseLifeEffect(2, Subjects.eachOpponent())),
-                            "a creature", false, false),
+                    SequenceEffect.of(
+                            new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                            new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(new DrawCardEffect(2),
+                                    new LoseLifeEffect(2, Subjects.eachOpponent())))),
                     "Sacrifice a creature?");
             case BLUE -> new SeekInstantOrSorceryAndMayCastFreeEffect();
             case RED -> new CantBlockThisTurnEffect(Subjects.target());

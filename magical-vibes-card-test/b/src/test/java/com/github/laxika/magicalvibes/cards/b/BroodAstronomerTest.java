@@ -29,12 +29,11 @@ class BroodAstronomerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may sacrifice a land to draft one of three Planets and put it tapped")
     void draftsPlanetAfterSacrificingLand() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.castFromHand(player1, new BroodAstronomer(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forest.getId());
 
         PendingInteraction.ColorChoice interaction =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -156,13 +155,12 @@ class BroodAstronomerTest extends BaseCardTest {
     @Test
     @DisplayName("Drafting a Planet onto the battlefield does not trigger conjure abilities")
     void draftingAPlanetDoesNotTriggerConjureAbilities() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         harness.castFromHand(player1, new BroodAstronomer(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forest.getId());
         ChoiceContext.ChooseModeChoice context = (ChoiceContext.ChooseModeChoice)
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
         String chosenName = context.effect().options().getFirst().label();

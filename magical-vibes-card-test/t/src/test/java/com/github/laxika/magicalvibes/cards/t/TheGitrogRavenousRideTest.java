@@ -35,8 +35,6 @@ class TheGitrogRavenousRideTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, saddler.getId());
-        harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of(forestOne.getId(), forestTwo.getId()));
 
@@ -50,6 +48,7 @@ class TheGitrogRavenousRideTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice keeps the saddler and draws nothing")
     void canDeclineSacrificingSaddler() {
         addCreatureReady(player1, new TheGitrogRavenousRide());
         Permanent saddler = addCreatureReady(player1, new BristlepackSentry());
@@ -68,9 +67,10 @@ class TheGitrogRavenousRideTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lands drawn by the ability can be put onto the battlefield in the same resolution")
     void drawsAndChoosesNewlyDrawnLandsWithinOriginalAbility() {
         addCreatureReady(player1, new TheGitrogRavenousRide());
-        Permanent saddler = addCreatureReady(player1, new BristlepackSentry());
+        addCreatureReady(player1, new BristlepackSentry());
         Forest first = new Forest();
         Forest second = new Forest();
         Forest third = new Forest();
@@ -82,8 +82,6 @@ class TheGitrogRavenousRideTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, saddler.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
         harness.handleMultipleCardsChosen(player1, List.of(first.getId()));

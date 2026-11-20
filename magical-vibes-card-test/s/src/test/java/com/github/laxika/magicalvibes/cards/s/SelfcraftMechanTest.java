@@ -27,7 +27,7 @@ class SelfcraftMechanTest extends BaseCardTest {
         castSelfcraftMechan();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -58,10 +58,8 @@ class SelfcraftMechanTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         castSelfcraftMechan();
-        Permanent mechan = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, mechan.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -76,10 +74,8 @@ class SelfcraftMechanTest extends BaseCardTest {
     void sacrificeOnlyCreatureDoesNotDrawWithoutLegalTarget() {
         harness.setLibrary(player1, List.of(new Forest()));
         castSelfcraftMechan();
-        Permanent mechan = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, mechan.getId());
 
         harness.assertInGraveyard(player1, "Selfcraft Mechan");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -95,7 +91,7 @@ class SelfcraftMechanTest extends BaseCardTest {
         castSelfcraftMechan();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertInGraveyard(player1, "Ornithopter");

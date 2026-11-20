@@ -31,7 +31,7 @@ class TheMeepTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
 
         assertThat(gqs.getEffectivePower(gd, meep)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, meep)).isEqualTo(6);
@@ -81,7 +81,7 @@ class TheMeepTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
 
         assertThat(gqs.getEffectivePower(gd, meep)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(6);
@@ -100,12 +100,11 @@ class TheMeepTest extends BaseCardTest {
     @DisplayName("Creatures entering after resolution are not affected")
     void laterCreatureIsNotAffected() {
         Permanent meep = addCreatureReady(player1, new TheMeep());
-        Permanent sacrificed = addCreatureReady(player1, new ColossalDreadmaw());
+        addCreatureReady(player1, new ColossalDreadmaw());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
 
         assertThat(gqs.getEffectivePower(gd, meep)).isEqualTo(6);
@@ -155,7 +154,7 @@ class TheMeepTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "The Meep");

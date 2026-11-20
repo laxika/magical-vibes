@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -277,6 +278,111 @@ class StepResultsTest extends BaseCardTest {
                     ifDone(StepKind.SACRIFICE, new DrawCardEffect(1)));
 
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A lone eligible creature is sacrificed without a prompt and its last-known power and mana value are read")
+        void autoPickRecordsLastKnownStats() {
+            harness.addToBattlefield(player1, new GloriousAnthem());
+            Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+            int lifeBefore = gd.getLife(player1.getId());
+
+            StackEntry entry = resolve(player1, null, null,
+                    new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                    new GainLifeEffect(AmountThisWay.sacrificedPower()),
+                    new LoseLifeEffect(AmountThisWay.sacrificedManaValue(), Subjects.you()));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.SACRIFICE).objectIds())
+                    .containsExactly(giant.getId());
+            // Hill Giant is 4/4 under Glorious Anthem as it is sacrificed; its mana value is 4.
+            harness.assertLife(player1, lifeBefore + 4 - 4);
+            assertThat(entry.getResolutionResults().departures()).singleElement()
+                    .satisfies(departure -> {
+                        assertThat(departure.lastKnownPower()).isEqualTo(4);
+                        assertThat(departure.lastKnownToughness()).isEqualTo(4);
+                        assertThat(departure.lastKnownManaValue()).isEqualTo(4);
+                    });
+        }
+
+        @Test
+        @DisplayName("The creature chosen at the sacrifice prompt gives \"that creature's toughness\"")
+        void promptAnswerRecordsTheChosenCreature() {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+            int lifeBefore = gd.getLife(player1.getId());
+
+            StackEntry entry = resolve(player1, null, null,
+                    new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                    new GainLifeEffect(AmountThisWay.sacrificedToughness()));
+            harness.handlePermanentChosen(player1, giant.getId());
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.SACRIFICE).objectIds())
+                    .containsExactly(giant.getId());
+            harness.assertLife(player1, lifeBefore + 3);
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+        }
+
+        @Test
+        @DisplayName("Each player chooses, then all sacrifice together, and the step records every sacrificed creature")
+        void eachPlayerChoosesThenSacrificesTogether() {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+            Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            int lifeBefore = gd.getLife(player1.getId());
+
+            StackEntry entry = resolve(player1, null, null,
+                    new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer()),
+                    new GainLifeEffect(AmountThisWay.sacrificedPower()));
+            harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId()));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.SACRIFICE).objectIds())
+                    .containsExactlyInAnyOrder(giant.getId(), opposingBears.getId());
+            assertThat(entry.getResolutionResults().outcome(StepKind.SACRIFICE).playerIds())
+                    .containsExactlyInAnyOrder(player1.getId(), player2.getId());
+            harness.assertLife(player1, lifeBefore + 3 + 2);
+        }
+
+        @Test
+        @DisplayName("\"If you sacrifice a Bear this way\" judges the sacrificed creature as it last existed")
+        void filteredConditionReadsTheSacrificedCreature() {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.setLibrary(player1, List.of(new Forest()));
+
+            resolve(player1, null, null,
+                    new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                    new ConditionalEffect(HappenedThisWay.toA(StepKind.SACRIFICE,
+                            new PermanentHasSubtypePredicate(CardSubtype.BEAR)), new DrawCardEffect(1)));
+
+            assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+        }
+
+        @Test
+        @DisplayName("A sacrificed creature that isn't a Bear fails \"if you sacrifice a Bear this way\"")
+        void filteredConditionFailsForAnotherType() {
+            harness.addToBattlefield(player1, new HillGiant());
+            harness.setLibrary(player1, List.of(new Forest()));
+
+            resolve(player1, null, null,
+                    new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                    new ConditionalEffect(HappenedThisWay.toA(StepKind.SACRIFICE,
+                            new PermanentHasSubtypePredicate(CardSubtype.BEAR)), new DrawCardEffect(1)));
+
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A \"when you do\" reflexive ability reads the sacrificed creature's power")
+        void reflexiveAbilityReadsTheSacrifice() {
+            harness.addToBattlefield(player1, new HillGiant());
+            int lifeBefore = gd.getLife(player1.getId());
+
+            resolve(player1, null, null,
+                    new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                    ifDone(StepKind.SACRIFICE, new QueueReflexiveAbilityEffect(
+                            new GainLifeEffect(AmountThisWay.sacrificedPower()))));
+            harness.passBothPriorities();
+
+            harness.assertLife(player1, lifeBefore + 3);
         }
     }
 

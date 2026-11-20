@@ -82,7 +82,7 @@ class CabalTherapistTest extends BaseCardTest {
     @Test
     @DisplayName("Cabal Therapist can sacrifice itself and target its controller")
     void canSacrificeItselfAndTargetController() {
-        Permanent therapist = harness.addToBattlefieldAndReturn(player1, new CabalTherapist());
+        harness.addToBattlefield(player1, new CabalTherapist());
         Card matching = new UniversalAutomaton();
         Card other = new Defile();
         harness.setHand(player1, List.of(matching, other));
@@ -90,7 +90,6 @@ class CabalTherapistTest extends BaseCardTest {
         advanceToFirstMainPhase();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, therapist.getId());
         harness.handlePermanentChosen(player1, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matching, other);
@@ -127,13 +126,12 @@ class CabalTherapistTest extends BaseCardTest {
     @Test
     @DisplayName("An empty target hand still allows naming a nonland card")
     void canTargetEmptyHand() {
-        Permanent therapist = harness.addToBattlefieldAndReturn(player1, new CabalTherapist());
+        harness.addToBattlefield(player1, new CabalTherapist());
         harness.setHand(player2, List.of());
 
         advanceToFirstMainPhase();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, therapist.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Cabal Therapist");

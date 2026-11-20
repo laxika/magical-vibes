@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +31,9 @@ public class Saw extends Card {
     public Saw() {
         addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SacrificePermanentThenEffect(OTHER_PERMANENT, new DrawCardEffect(1), "a permanent", false, false),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, OTHER_PERMANENT, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DrawCardEffect(1))),
                 "Sacrifice a permanent other than that creature or this Equipment?"));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

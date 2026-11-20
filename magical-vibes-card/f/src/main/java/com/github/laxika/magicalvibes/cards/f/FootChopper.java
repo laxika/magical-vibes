@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayPower;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -36,7 +36,7 @@ public class FootChopper extends Card {
                 new MayEffect(SequenceEffect.of(
                         new SacrificeSelfEffect(Subjects.triggering()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new DrawCardEffect(new PermanentLeftThisWayPower()))),
+                                new DrawCardEffect(AmountThisWay.sacrificedPower()))),
                         "You may sacrifice the equipped creature to draw cards equal to its power?"));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

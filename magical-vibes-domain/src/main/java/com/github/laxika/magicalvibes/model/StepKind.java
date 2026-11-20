@@ -10,8 +10,9 @@ package com.github.laxika.magicalvibes.model;
  * <ul>
  *   <li>{@link #DRAW}, {@link #DISCARD}, {@link #MILL}: the number of cards, those cards, the players they belonged to;</li>
  *   <li>{@link #EXILE}, {@link #DESTROY}, {@link #SACRIFICE}: the number of permanents, the permanents by their id as
- *       the step acted on them (a sacrifice recorded outside a departure step: the card's id), their controllers as the
- *       step acted on them (CR 608.2h);</li>
+ *       the step acted on them (a sacrifice made outside a departure, as by {@code MakeAnExampleEffect}: the card's
+ *       id), their controllers as the step acted on them (CR 608.2h); a sacrifice step's {@code DepartureResult}s keep
+ *       each one's last-known power, toughness and mana value;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
  *       acted on them; to the battlefield: the permanent each card became) or cards, their owners;</li>
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>
@@ -26,7 +27,7 @@ package com.github.laxika.magicalvibes.model;
  * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, destroy, copy, create a
  * token and mill (never prompt, or rerun before any change); the self sacrifice ({@code departAsStep}), discard and
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
- * {@code GameData.recordSacrificedPermanent}), put counters (a replacement order answered later adds the rest) and
+ * {@code DestructionSupport.sacrificeTogether}), put counters (a replacement order answered later adds the rest) and
  * counter a spell; deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
  * own, is never an earlier step. A damage, discard or sacrifice step records {@link StepOutcome#NONE} as it begins and the

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BreechesTheBlastmaker.class, SeizeTheSecrets.class, BoomBox.class, EdgarKingOfFigaro.class})
@@ -30,6 +32,7 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
     @DisplayName("The second spell offers an artifact sacrifice and resolves one coin-flip branch")
     void secondSpellOffersArtifactSacrifice() {
         Permanent artifact = addBreechesAndArtifact();
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player1, new BoomBox());
 
         castSeizeTheSecretsAndResolve();
         harness.castFromHand(player1, new SeizeTheSecrets(), "{2}{U}");
@@ -37,12 +40,12 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(sacrificeChoice.validIds()).containsExactly(artifact.getId());
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(sacrificeChoice.validIds()).containsExactlyInAnyOrder(artifact.getId(), otherArtifact.getId());
 
         int lifeBefore = gd.getLife(player2.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
@@ -62,6 +65,7 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice does not flip, and the third spell does not trigger")
     void decliningSacrificeDoesNotFlipAndThirdSpellDoesNotTrigger() {
         Permanent artifact = addBreechesAndArtifact();
         castSeizeTheSecretsAndResolve();
@@ -80,6 +84,7 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without an artifact there is no coin flip")
     void noArtifactMeansNoCoinFlip() {
         harness.addToBattlefield(player1, new BreechesTheBlastmaker());
         castSeizeTheSecretsAndResolve();
@@ -95,6 +100,7 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spells cast before Breeches enters count toward the second spell")
     void spellsCastBeforeBreechesEntersCountTowardSecondSpell() {
         castSeizeTheSecretsAndResolve();
         Permanent artifact = addBreechesAndArtifact();
@@ -109,14 +115,14 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
 
     @Test
     @CardUsed({EdgarKingOfFigaro.class})
+    @DisplayName("The flip happens on resolution, but the winning copy waits for a separate trigger")
     void sacrificeFlipsImmediatelyButWinningCopyWaitsForSeparateTrigger() {
-        Permanent artifact = addBreechesAndArtifact();
+        addBreechesAndArtifact();
         harness.addToBattlefield(player1, new EdgarKingOfFigaro());
         castSeizeTheSecretsAndResolve();
         harness.castFromHand(player1, new SeizeTheSecrets(), "{2}{U}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gameLogContains("wins the coin flip for Breeches, the Blastmaker")).isTrue();
         assertThat(gameLogContains("A copy of Seize the Secrets is created.")).isFalse();
@@ -129,14 +135,14 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
 
     @Test
     @CardUsed({EdgarKingOfFigaro.class})
+    @DisplayName("Winning the flip copies a permanent spell as a token")
     void winningFlipCopiesPermanentSpellAsToken() {
-        Permanent artifact = addBreechesAndArtifact();
+        addBreechesAndArtifact();
         harness.addToBattlefield(player1, new EdgarKingOfFigaro());
         castSeizeTheSecretsAndResolve();
         harness.castFromHand(player1, new BoomBox(), "{2}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

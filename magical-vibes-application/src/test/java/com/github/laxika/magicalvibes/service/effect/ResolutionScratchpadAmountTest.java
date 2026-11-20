@@ -7,24 +7,27 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
-import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayPower;
-import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayToughness;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 /**
- * The amounts that read a resolving entry's scratchpad: "its power" / "its toughness" after an
- * earlier step removed a permanent, using its last-known information (CR 608.2h).
+ * The amounts that read a resolving entry's scratchpad: "its power" / "its toughness" / "its mana value" after an
+ * earlier step sacrificed a permanent, using its last-known information (CR 608.2h).
  */
 class ResolutionScratchpadAmountTest {
 
@@ -47,7 +50,7 @@ class ResolutionScratchpadAmountTest {
 
     private DepartureResult departure(Integer power, Integer toughness, boolean sacrificed) {
         return new DepartureResult(UUID.randomUUID(), Zone.GRAVEYARD, controllerId, UUID.randomUUID(),
-                power, toughness, false, sacrificed, controllerId);
+                power, toughness, !sacrificed, sacrificed, controllerId, Set.of(), Set.of(), 2);
     }
 
     private int evaluate(com.github.laxika.magicalvibes.model.amount.DynamicAmount amount) {
@@ -55,29 +58,49 @@ class ResolutionScratchpadAmountTest {
     }
 
     @Test
-    void powerAndToughnessAreTheLastKnownValuesOfWhatLeftThisWay() {
+    @DisplayName("Power, toughness and mana value are the last-known values of what was sacrificed this way")
+    void statsAreTheLastKnownValuesOfWhatWasSacrificed() {
         entry.recordDepartures(List.of(departure(5, 3, true)));
 
-        assertThat(evaluate(new PermanentLeftThisWayPower())).isEqualTo(5);
-        assertThat(evaluate(new PermanentLeftThisWayToughness())).isEqualTo(3);
+        assertThat(evaluate(AmountThisWay.sacrificedPower())).isEqualTo(5);
+        assertThat(evaluate(AmountThisWay.sacrificedToughness())).isEqualTo(3);
+        assertThat(evaluate(AmountThisWay.sacrificedManaValue())).isEqualTo(2);
     }
 
     @Test
+    @DisplayName("Several sacrificed permanents add up and negative power counts as zero")
     void severalPermanentsAddUpAndNegativePowerCountsAsZero() {
         entry.recordDepartures(List.of(departure(4, 4, true), departure(-2, 1, true), departure(null, null, true)));
 
-        assertThat(evaluate(new PermanentLeftThisWayPower())).isEqualTo(4);
-        assertThat(evaluate(new PermanentLeftThisWayToughness())).isEqualTo(5);
+        assertThat(evaluate(AmountThisWay.sacrificedPower())).isEqualTo(4);
+        assertThat(evaluate(AmountThisWay.sacrificedToughness())).isEqualTo(5);
     }
 
     @Test
+    @DisplayName("A destroyed permanent is not counted as sacrificed")
+    void destroyedPermanentIsNotCounted() {
+        entry.recordDepartures(List.of(departure(4, 4, false)));
+
+        assertThat(evaluate(AmountThisWay.sacrificedPower())).isZero();
+    }
+
+    @Test
+    @DisplayName("Nothing sacrificed this way is zero")
     void nothingRemovedThisWayIsZero() {
         entry.recordDepartures(List.of());
 
-        assertThat(evaluate(new PermanentLeftThisWayPower())).isZero();
+        assertThat(evaluate(AmountThisWay.sacrificedPower())).isZero();
     }
 
     @Test
+    @DisplayName("Only a sacrifice step's last-known stats can be read")
+    void statOfAnotherKindIsRefused() {
+        assertThatThrownBy(() -> new AmountThisWay(StepKind.DRAW, AmountThisWay.Stat.POWER))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("A conditional amount reads the scratchpad")
     void conditionalAmountReadsTheScratchpad() {
         FixedIfCondition amount = new FixedIfCondition(HappenedThisWay.sacrificed(), 2, 0);
         assertThat(evaluate(amount)).isZero();

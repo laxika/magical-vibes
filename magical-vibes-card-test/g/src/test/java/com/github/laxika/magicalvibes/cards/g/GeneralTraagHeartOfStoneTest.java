@@ -19,7 +19,7 @@ class GeneralTraagHeartOfStoneTest extends BaseCardTest {
     void sacrificeAnotherArtifactDealsFourDamageToTargetCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        UUID artifactId = harness.addToBattlefieldAndReturn(player1, new Ornithopter()).getId();
+        harness.addToBattlefield(player1, new Ornithopter());
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         harness.setHand(player1, List.of(new GeneralTraagHeartOfStone()));
@@ -29,7 +29,6 @@ class GeneralTraagHeartOfStoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifactId);
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
@@ -78,7 +77,7 @@ class GeneralTraagHeartOfStoneTest extends BaseCardTest {
     void reflexiveDamageCanTargetGeneralTraagAndWaitsForResolution() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        UUID artifactId = harness.addToBattlefieldAndReturn(player1, new Ornithopter()).getId();
+        harness.addToBattlefield(player1, new Ornithopter());
 
         harness.setHand(player1, List.of(new GeneralTraagHeartOfStone()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -87,7 +86,6 @@ class GeneralTraagHeartOfStoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifactId);
         UUID sourceId = harness.getPermanentId(player1, "General Traag, Heart of Stone");
         harness.handlePermanentChosen(player1, sourceId);
 

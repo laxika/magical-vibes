@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PromiseOfAclazotzTest extends BaseCardTest {
 
     @Test
+    @DisplayName("End step sacrifice of a non-Demon creature populates")
     void frontFaceSacrificesNonDemonAndPopulates() {
         Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfAclazotz());
         harness.addToBattlefield(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
@@ -32,7 +34,7 @@ class PromiseOfAclazotzTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(promise);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
@@ -40,6 +42,7 @@ class PromiseOfAclazotzTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Demon cannot be sacrificed to the end step trigger")
     void frontFaceCannotSacrificeDemon() {
         harness.addToBattlefield(player1, new PromiseOfAclazotz());
         Permanent demon = harness.addToBattlefieldAndReturn(player1, demon());
@@ -53,8 +56,9 @@ class PromiseOfAclazotzTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The adventure sacrifices a non-Demon creature and creates a Vampire Demon")
     void adventureSacrificesNonDemonAndCreatesVampireDemon() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         PromiseOfAclazotz card = new PromiseOfAclazotz();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -62,9 +66,9 @@ class PromiseOfAclazotzTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         Permanent token = findPermanent(player1, "Vampire Demon");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
@@ -76,6 +80,7 @@ class PromiseOfAclazotzTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice does not populate")
     void decliningSacrificeDoesNotPopulate() {
         harness.addToBattlefield(player1, new PromiseOfAclazotz());
         Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
@@ -89,19 +94,20 @@ class PromiseOfAclazotzTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing the only creature token leaves nothing to populate")
     void sacrificingOnlyCreatureTokenLeavesNothingToPopulate() {
         Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfAclazotz());
-        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
+        harness.addToBattlefield(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, token.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(promise);
     }
 
     @Test
+    @DisplayName("The sacrifice still happens with no creature token to populate")
     void sacrificeStillHappensWithoutCreatureTokensToPopulate() {
         Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfAclazotz());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -110,7 +116,6 @@ class PromiseOfAclazotzTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(promise);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
@@ -118,6 +123,7 @@ class PromiseOfAclazotzTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger on an opponent's end step")
     void doesNotTriggerOnOpponentsEndStep() {
         harness.addToBattlefield(player1, new PromiseOfAclazotz());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -130,6 +136,7 @@ class PromiseOfAclazotzTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The adventure with no eligible creature creates no token and the enchantment can still be cast")
     void adventureWithoutEligibleCreatureCreatesNoTokenAndStillAllowsEnchantmentCast() {
         Permanent demon = harness.addToBattlefieldAndReturn(player1, demon());
         harness.addToBattlefield(player2, new GrizzlyBears());

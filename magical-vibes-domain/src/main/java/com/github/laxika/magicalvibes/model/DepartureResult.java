@@ -24,16 +24,28 @@ import java.util.UUID;
  *                           event couldn't touch it
  * @param lastKnownSubtypes  the subtypes it had immediately before the event (CR 608.2h), or empty when the
  *                           event couldn't touch it
+ * @param lastKnownManaValue its mana value immediately before the event (CR 608.2h: a transformed permanent's is its
+ *                           front face's, a face-down one's 0), or {@code null} when the event couldn't touch it
  */
 public record DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
                               Integer lastKnownPower, Integer lastKnownToughness,
                               boolean destroyed, boolean sacrificed, UUID lastKnownControllerId,
-                              Set<CardType> lastKnownCardTypes, Set<CardSubtype> lastKnownSubtypes) {
+                              Set<CardType> lastKnownCardTypes, Set<CardSubtype> lastKnownSubtypes,
+                              Integer lastKnownManaValue) {
 
     public DepartureResult {
         Objects.requireNonNull(permanentId, "permanentId");
         lastKnownCardTypes = lastKnownCardTypes == null ? Set.of() : Set.copyOf(lastKnownCardTypes);
         lastKnownSubtypes = lastKnownSubtypes == null ? Set.of() : Set.copyOf(lastKnownSubtypes);
+    }
+
+    /** A result without a last-known mana value. */
+    public DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
+                           Integer lastKnownPower, Integer lastKnownToughness,
+                           boolean destroyed, boolean sacrificed, UUID lastKnownControllerId,
+                           Set<CardType> lastKnownCardTypes, Set<CardSubtype> lastKnownSubtypes) {
+        this(permanentId, destination, destinationOwnerId, newCardId, lastKnownPower, lastKnownToughness,
+                destroyed, sacrificed, lastKnownControllerId, lastKnownCardTypes, lastKnownSubtypes, null);
     }
 
     /** A result without last-known subtypes. */
@@ -42,7 +54,7 @@ public record DepartureResult(UUID permanentId, Zone destination, UUID destinati
                            boolean destroyed, boolean sacrificed, UUID lastKnownControllerId,
                            Set<CardType> lastKnownCardTypes) {
         this(permanentId, destination, destinationOwnerId, newCardId, lastKnownPower, lastKnownToughness,
-                destroyed, sacrificed, lastKnownControllerId, lastKnownCardTypes, Set.of());
+                destroyed, sacrificed, lastKnownControllerId, lastKnownCardTypes, Set.of(), null);
     }
 
     /** A result without last-known card types or subtypes. */
@@ -50,7 +62,7 @@ public record DepartureResult(UUID permanentId, Zone destination, UUID destinati
                            Integer lastKnownPower, Integer lastKnownToughness,
                            boolean destroyed, boolean sacrificed, UUID lastKnownControllerId) {
         this(permanentId, destination, destinationOwnerId, newCardId, lastKnownPower, lastKnownToughness,
-                destroyed, sacrificed, lastKnownControllerId, Set.of(), Set.of());
+                destroyed, sacrificed, lastKnownControllerId, Set.of(), Set.of(), null);
     }
 
     /** Whether it left the battlefield. */

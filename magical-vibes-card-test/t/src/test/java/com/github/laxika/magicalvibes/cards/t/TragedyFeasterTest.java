@@ -33,10 +33,10 @@ class TragedyFeasterTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities(); // resolve end-step trigger → begins sacrifice choice
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -76,25 +76,26 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tragedy Feaster is sacrificed when it is the only permanent")
     void canSacrificeItself() {
-        Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
+        harness.addToBattlefield(player1, new TragedyFeaster());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, feaster.getId());
 
         harness.assertNotOnBattlefield(player1, "Tragedy Feaster");
         harness.assertInGraveyard(player1, "Tragedy Feaster");
     }
 
     @Test
+    @DisplayName("A land can be chosen for the sacrifice")
     void canSacrificeALand() {
         harness.addToBattlefield(player1, new TragedyFeaster());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, swamp.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(swamp.getId()));
 
         harness.assertNotOnBattlefield(player1, "Swamp");
         harness.assertInGraveyard(player1, "Swamp");
@@ -102,6 +103,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger during an opponent's end step")
     void doesNotTriggerDuringOpponentsEndStep() {
         harness.addToBattlefield(player1, new TragedyFeaster());
 
@@ -113,6 +115,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers even when life was gained but sacrifices nothing")
     void triggersEvenWhenLifeWasAlreadyGained() {
         harness.addToBattlefield(player1, new TragedyFeaster());
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
@@ -126,6 +129,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gaining life after it triggers prevents the sacrifice")
     void gainingLifeAfterTriggeringPreventsSacrifice() {
         harness.addToBattlefield(player1, new TragedyFeaster());
         advanceToEndStep(player1);
@@ -139,18 +143,19 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's life gain does not prevent the sacrifice")
     void opponentsLifeGainDoesNotPreventSacrifice() {
-        Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
+        harness.addToBattlefield(player1, new TragedyFeaster());
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, feaster.getId());
 
         harness.assertInGraveyard(player1, "Tragedy Feaster");
     }
 
     @Test
+    @DisplayName("Life gained still counts after losing more life")
     void lifeGainStillCountsAfterLosingMoreLife() {
         harness.addToBattlefield(player1, new TragedyFeaster());
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
@@ -164,6 +169,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ward counters a spell when the opponent has no card to discard")
     void wardCountersSpellWhenOpponentHasNoCardToDiscard() {
         Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
         harness.setHand(player2, List.of(new Shock()));
@@ -178,6 +184,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the ward discard counters the spell")
     void decliningWardDiscardCountersSpell() {
         Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
         harness.setHand(player2, List.of(new Shock(), new GrizzlyBears()));
@@ -194,6 +201,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying the ward discard lets the spell resolve")
     void payingWardDiscardAllowsSpellToResolve() {
         Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
         harness.setHand(player2, List.of(new Shock(), new GrizzlyBears()));
@@ -212,6 +220,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ward does not trigger for its controller's own spell")
     void wardDoesNotTriggerForControllersOwnSpell() {
         Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
         harness.setHand(player1, List.of(new Shock()));
@@ -225,6 +234,7 @@ class TragedyFeasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ward counters an opponent's activated ability")
     void wardCountersOpponentsActivatedAbility() {
         Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
         Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());

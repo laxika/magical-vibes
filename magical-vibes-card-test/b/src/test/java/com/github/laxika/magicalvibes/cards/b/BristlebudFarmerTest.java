@@ -35,7 +35,7 @@ class BristlebudFarmerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Food"));
+        harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player1, "Food")));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -73,7 +73,7 @@ class BristlebudFarmerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Food"));
+        harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player1, "Food")));
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(card -> card.getName().equals("Bristlebud Farmer"))
@@ -170,7 +170,7 @@ class BristlebudFarmerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Food"));
+        harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player1, "Food")));
         resolveAllTriggers();
     }
 

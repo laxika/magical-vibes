@@ -26,18 +26,14 @@ class CavalierOfNightTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another creature destroys a target creature an opponent controls")
     void sacrificeAnotherCreatureDestroysTargetOpponentCreature() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castCavalier();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -93,12 +89,11 @@ class CavalierOfNightTest extends BaseCardTest {
     @Test
     @DisplayName("Another creature can be sacrificed even with no opposing creature to target")
     void sacrificeWithoutLegalDestructionTarget() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
+        harness.addToBattlefield(player1, new GreenwoodSentinel());
         castCavalier();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         harness.assertInGraveyard(player1, "Greenwood Sentinel");
         harness.assertNotOnBattlefield(player1, "Greenwood Sentinel");
@@ -127,13 +122,12 @@ class CavalierOfNightTest extends BaseCardTest {
     @Test
     @DisplayName("Destruction waits for the separate reflexive trigger to resolve")
     void destructionIsSeparateFromSacrifice() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
+        harness.addToBattlefield(player1, new GreenwoodSentinel());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CentaurCourser());
         castCavalier();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertInGraveyard(player1, "Greenwood Sentinel");

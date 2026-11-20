@@ -19,8 +19,10 @@ import java.util.Objects;
  * four cards this way" ({@link #atLeast}): a step that did less than it was told, a library running out, did not do
  * the written action (The Royal Scions' ruling: fewer than four cards drawn don't trigger its "when you do").
  *
- * <p>{@code filter} is "if a [Dinosaur | nonred permanent] is dealt damage this way" ({@link #toA}): one of the
- * permanents the step recorded, as it is on the battlefield now, matches it ({@code minimum} is then 1).
+ * <p>{@code filter} is "if a [Dinosaur | nonred permanent] is dealt damage this way", "if you sacrifice an Island this
+ * way" ({@link #toA}): one of the permanents the step recorded, as it is on the battlefield now, matches it
+ * ({@code minimum} is then 1). A permanent a sacrifice or destroy step removed is judged as it last existed on the
+ * battlefield, with its layered characteristics (CR 608.2h).
  *
  * @param kind    the kind of step read
  * @param minimum the least amount the step must have recorded; at least 1
@@ -43,8 +45,9 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
     }
 
     /**
-     * "If a Dinosaur is dealt damage this way": the most recent {@code kind} step recorded a permanent that, on the
-     * battlefield now, matches {@code filter}.
+     * "If a Dinosaur is dealt damage this way", "if the sacrificed creature was a Hamster": the most recent
+     * {@code kind} step recorded a permanent that, on the battlefield now or as a sacrificed or destroyed one last
+     * existed, matches {@code filter}.
      */
     public static HappenedThisWay toA(StepKind kind, PermanentPredicate filter) {
         return new HappenedThisWay(kind, 1, Objects.requireNonNull(filter, "filter"));

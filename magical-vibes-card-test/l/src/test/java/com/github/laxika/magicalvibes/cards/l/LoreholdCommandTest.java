@@ -73,8 +73,8 @@ class LoreholdCommandTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 3}, null, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Spellbook");
@@ -112,12 +112,6 @@ class LoreholdCommandTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new HillGiant()));
         castCommand();
         harness.castModalInstantWithModes(player1, 0, 2, new int[]{3, 0}, null, List.of());
-        harness.passBothPriorities();
-
-        Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
-                .findFirst().orElseThrow();
-        harness.handlePermanentChosen(player1, spirit.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spirit");

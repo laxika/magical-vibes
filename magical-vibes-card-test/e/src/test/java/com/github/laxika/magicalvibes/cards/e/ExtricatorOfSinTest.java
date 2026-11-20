@@ -38,7 +38,6 @@ class ExtricatorOfSinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(sacrifice.getId()));
@@ -129,7 +128,6 @@ class ExtricatorOfSinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
         assertThat(findToken()).isNotNull();

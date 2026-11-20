@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,16 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SephirothFabledSoldierTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering may sacrifice another creature to draw a card")
     void entersAndMaySacrificeAnotherCreatureToDraw() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.castFromHand(player1, new SephirothFabledSoldier(), "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -39,6 +39,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The fourth resolved death trigger in a turn transforms it and creates the emblem")
     void fourthResolvedDeathTriggerTransformsAndCreatesDeathEmblem() {
         Permanent sephiroth = harness.addToBattlefieldAndReturn(player1, new SephirothFabledSoldier());
         sephiroth.setSummoningSick(false);
@@ -70,6 +71,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The back face may sacrifice any number of other creatures to draw that many")
     void oneWingedAngelMaySacrificeAnyNumberOfOtherCreaturesToDrawThatMany() {
         SephirothFabledSoldier front = new SephirothFabledSoldier();
         Permanent sephiroth = new Permanent(front);
@@ -94,6 +96,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The emblem exists as soon as the fourth death trigger resolves")
     void emblemExistsImmediatelyWhenFourthDeathAbilityResolves() {
         Permanent sephiroth = harness.addToBattlefieldAndReturn(player1, new SephirothFabledSoldier());
         for (int i = 0; i < 4; i++) {
@@ -109,6 +112,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the entry sacrifice neither draws nor drains")
     void decliningEntrySacrificeDoesNotDrawOrDrain() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -126,16 +130,16 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking with the front face may sacrifice another creature to draw")
     void frontFaceAttackCanSacrificeAnotherCreatureAndDraw() {
         Permanent sephiroth = harness.addToBattlefieldAndReturn(player1, new SephirothFabledSoldier());
         sephiroth.setSummoningSick(false);
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bear.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
@@ -147,6 +151,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The back face attack may sacrifice no creatures")
     void backFaceAttackCanChooseZeroSacrifices() {
         SephirothFabledSoldier front = new SephirothFabledSoldier();
         Permanent sephiroth = new Permanent(front);
@@ -169,6 +174,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The back face sacrifices the chosen creatures simultaneously")
     void backFaceSacrificesChosenCreaturesSimultaneously() {
         SephirothFabledSoldier front = new SephirothFabledSoldier();
         Permanent sephiroth = new Permanent(front);
@@ -199,6 +205,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The front face does not drain for its own death")
     void frontFaceDoesNotDrainForItsOwnDeath() {
         Permanent sephiroth = harness.addToBattlefieldAndReturn(player1, new SephirothFabledSoldier());
         harness.forceActivePlayer(player2);

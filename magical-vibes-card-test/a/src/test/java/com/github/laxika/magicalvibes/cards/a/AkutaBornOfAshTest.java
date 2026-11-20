@@ -56,15 +56,16 @@ class AkutaBornOfAshTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.setHand(player2, List.of());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent secondSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(swamp.getId());
-        harness.handlePermanentChosen(player1, swamp.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(swamp.getId(), secondSwamp.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(swamp.getId()));
 
         harness.assertOnBattlefield(player1, "Akuta, Born of Ash");
         harness.assertNotInGraveyard(player1, "Akuta, Born of Ash");
@@ -129,13 +130,6 @@ class AkutaBornOfAshTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(swamp.getId());
-
-        harness.handlePermanentChosen(player1, swamp.getId());
-        harness.passBothPriorities();
-
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(akuta.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -157,10 +151,11 @@ class AkutaBornOfAshTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, swamp.getId());
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(akuta.getId()));
+                .anyMatch(permanent -> permanent.getCard().getId().equals(akuta.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(swamp.getId()));
     }
 
     @Test

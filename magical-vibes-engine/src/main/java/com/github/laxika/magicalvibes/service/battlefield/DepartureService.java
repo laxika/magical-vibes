@@ -892,10 +892,11 @@ public class DepartureService {
             }
             Integer power = snapshot.creature() ? snapshot.permanent().getLastKnownPower() : null;
             Integer toughness = snapshot.creature() ? snapshot.permanent().getLastKnownToughness() : null;
+            Integer manaValue = gameQueryService.getPermanentManaValue(snapshot.permanent());
             if (findOnBattlefield(gameData, permanentId) != null) {
                 results.add(new DepartureResult(permanentId, Zone.BATTLEFIELD, null, null, power, toughness,
                         false, false, snapshot.controllerId(), lastKnownCardTypes(snapshot),
-                        lastKnownSubtypes(snapshot)));
+                        lastKnownSubtypes(snapshot), manaValue));
                 continue;
             }
             Location location = cardIds.getOrDefault(permanentId, List.of()).stream()
@@ -906,7 +907,7 @@ public class DepartureService {
             results.add(new DepartureResult(permanentId, location == null ? null : location.zone(),
                     location == null ? null : location.ownerId(), location == null ? null : location.cardId(),
                     power, toughness, intent.cause().isDestruction(), intent.cause() == DepartureCause.SACRIFICE,
-                    snapshot.controllerId(), lastKnownCardTypes(snapshot), lastKnownSubtypes(snapshot)));
+                    snapshot.controllerId(), lastKnownCardTypes(snapshot), lastKnownSubtypes(snapshot), manaValue));
         }
         return results;
     }

@@ -39,7 +39,6 @@ class StensiaUprisingTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, uprising.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -125,7 +124,6 @@ class StensiaUprisingTest extends BaseCardTest {
         resolveEndStepTrigger(player1);
         Permanent human = findPermanent(player1, "Human");
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, uprising.getId());
         harness.assertInGraveyard(player1, "Stensia Uprising");
         harness.handlePermanentChosen(player1, human.getId());
 

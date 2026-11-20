@@ -32,15 +32,12 @@ class TheGooseMotherTest extends BaseCardTest {
         Permanent goose = castGoose(2);
         goose.setSummoningSick(false);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        Permanent food = findPermanent(player1, "Food");
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(goose)));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, food.getId());
-        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

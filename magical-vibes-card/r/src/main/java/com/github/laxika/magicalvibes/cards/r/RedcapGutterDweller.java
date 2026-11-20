@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,15 +38,12 @@ public class RedcapGutterDweller extends Card {
                         Set.of(), Set.of(), List.of(StaticAbility.of(new CantBlockEffect()))));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        SequenceEffect.of(
+                        )), Subjects.you()), new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new ExileTopCardMayPlayThisTurnEffect(false)),
-                        "another creature", false, false),
+                                new ExileTopCardMayPlayThisTurnEffect(false)))),
                 "Sacrifice another creature?"));
     }
 }

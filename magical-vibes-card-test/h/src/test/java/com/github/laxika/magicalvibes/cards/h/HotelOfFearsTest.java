@@ -68,8 +68,8 @@ class HotelOfFearsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, ManaColor.GREEN.name());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, fodder.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

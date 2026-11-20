@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,9 +13,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -31,12 +35,11 @@ public class EuruAcornScrounger extends Card {
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)),
                 TriggerOptions.ONE_OR_MORE,
                 new MayEffect(
-                        new SacrificePermanentThenEffect(
-                                new PermanentIsTokenPredicate(),
-                                new PutCounterOnEachControlledPermanentEffect(
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentIsTokenPredicate(), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new PutCounterOnEachControlledPermanentEffect(
                                         CounterType.ACORN, 1,
-                                        new PermanentNamedPredicate("Chitterspitter")),
-                                "a token"),
+                                        new PermanentNamedPredicate("Chitterspitter")))),
                         "Sacrifice a token?"));
     }
 }

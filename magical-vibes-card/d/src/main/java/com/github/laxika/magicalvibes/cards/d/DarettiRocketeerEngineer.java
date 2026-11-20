@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,8 +32,9 @@ public class DarettiRocketeerEngineer extends Card {
                 .filter(new CardTypePredicate(CardType.ARTIFACT))
                 .targetGraveyard(true)
                 .build();
-        SacrificePermanentThenEffect sacrificeThenReturn = new SacrificePermanentThenEffect(
-                new PermanentIsArtifactPredicate(), returnArtifact, "an artifact", true, false);
+        CardEffect sacrificeThenReturn = SequenceEffect.of(
+                new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
+                new ConditionalEffect(HappenedThisWay.sacrificed(), returnArtifact));
         MayEffect ability = new MayEffect(sacrificeThenReturn, "Sacrifice an artifact?");
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), ability);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
     @Test
     void attackingMaySacrificeAnotherCreatureToDrawAndLoseLife() {
         Permanent greven = addCreatureReady(player1, new GrevenPredatorCaptain());
-        Permanent hillGiant = addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player1, new HillGiant());
         gd.lifeLostThisTurn.put(player1.getId(), 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new HillGiant(), new GrizzlyBears()));
@@ -38,7 +39,6 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, hillGiant.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
@@ -67,15 +67,14 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
     @Test
     void drawsAndLosesLifeDuringTheOriginalAttackTriggerResolution() {
         addCreatureReady(player1, new GrevenPredatorCaptain());
-        Permanent sacrifice = addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player1, new HillGiant());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         harness.assertLife(player1, 17);
@@ -95,7 +94,6 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -120,6 +118,7 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
     void canOnlySacrificeAnotherCreatureYouControl() {
         addCreatureReady(player1, new GrevenPredatorCaptain());
         Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new HillGiant());
         addCreatureReady(player2, new HillGiant());
         harness.setLibrary(player1, List.of(new HillGiant(), new HillGiant()));
 
@@ -127,12 +126,13 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
-                .containsExactly(sacrifice.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(sacrifice.getId(), otherCreature.getId());
 
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Greven, Predator Captain");
+        harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertOnBattlefield(player2, "Hill Giant");
         harness.assertLife(player1, 18);
     }

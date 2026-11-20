@@ -38,13 +38,12 @@ class LordSkittersButcherTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another creature scries 2, then draws a card")
     void sacrificesAnotherCreatureScriesAndDraws() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Card drawCard = new Island();
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), drawCard));
         castButcher(SACRIFICE_MODE);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry.cards()).hasSize(2);

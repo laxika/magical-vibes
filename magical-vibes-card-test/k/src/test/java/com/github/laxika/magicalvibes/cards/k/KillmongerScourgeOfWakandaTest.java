@@ -29,10 +29,7 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
         castKillmonger();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.assertInGraveyard(player1, "K\'un-Lun Warrior");
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -100,12 +97,11 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
     @Test
     @DisplayName("A creature may be sacrificed even when the opponent has no nonland target")
     void sacrificeWithoutDestructionTargetStillHappens() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new KunLunWarrior());
+        harness.addToBattlefield(player1, new KunLunWarrior());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         castKillmonger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "K'un-Lun Warrior");
@@ -117,7 +113,7 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
     @DisplayName("The sacrifice can turn on the graveyard bonus before the destruction trigger resolves")
     void sacrificeTurnsOnGraveyardBonus() {
         harness.setGraveyard(player1, List.of(new KunLunWarrior()));
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new KunLunWarrior());
+        harness.addToBattlefield(player1, new KunLunWarrior());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KunLunWarrior());
 
         castKillmonger();
@@ -125,7 +121,6 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, killmonger)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, killmonger)).isEqualTo(3);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -141,13 +136,12 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
     @Test
     @DisplayName("The reflexive destruction trigger cannot target an opponent's creature with hexproof")
     void hexproofCreatureIsNotALegalDestructionTarget() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new KunLunWarrior());
+        harness.addToBattlefield(player1, new KunLunWarrior());
         Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new KunLunWarrior());
         Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new SlipperyBogle());
 
         castKillmonger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -161,16 +155,13 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
     @Test
     @DisplayName("Destruction can target noncreature artifacts but cannot target your own permanents")
     void destroysOpposingNoncreatureArtifact() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new KunLunWarrior());
+        harness.addToBattlefield(player1, new KunLunWarrior());
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new IronManArmor());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new IronManArmor());
 
         castKillmonger();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.assertInGraveyard(player1, "K\'un-Lun Warrior");
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(targetChoice.validIds()).containsExactly(target.getId());

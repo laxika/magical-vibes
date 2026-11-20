@@ -38,7 +38,6 @@ class LarvalScoutlanderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificedLand.getId());
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibrarySearch.class);
 
@@ -78,8 +77,6 @@ class LarvalScoutlanderTest extends BaseCardTest {
 
         castLarvalScoutlander();
         harness.handleMayAbilityChosen(player1, true);
-        Permanent lander = findPermanents(player1, "Lander").getFirst();
-        harness.handlePermanentChosen(player1, lander.getId());
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibrarySearch.class);
         chooseLibraryCard(0);
@@ -173,7 +170,6 @@ class LarvalScoutlanderTest extends BaseCardTest {
 
         castLarvalScoutlander();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificedLand.getId());
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibrarySearch.class);
         chooseLibraryCard(-1);

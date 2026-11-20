@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,18 +30,15 @@ public class MukotaiSoulripper extends Card {
 
     public MukotaiSoulripper() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsCreaturePredicate()
                                 )),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        SequenceEffect.of(
+                        )), Subjects.you()), new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new GrantKeywordEffect(Keyword.MENACE, Subjects.source())),
-                        "another artifact or creature", false, false),
+                                new GrantKeywordEffect(Keyword.MENACE, Subjects.source())))),
                 "Sacrifice another artifact or creature?"));
 
         addActivatedAbility(new ActivatedAbility(

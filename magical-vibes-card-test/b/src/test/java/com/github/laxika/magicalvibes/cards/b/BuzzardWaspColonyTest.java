@@ -29,7 +29,7 @@ class BuzzardWaspColonyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
@@ -81,7 +81,7 @@ class BuzzardWaspColonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.stack).isEmpty();
@@ -98,7 +98,7 @@ class BuzzardWaspColonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Kyoshi Battle Fan");
@@ -116,7 +116,6 @@ class BuzzardWaspColonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Buzzard-Wasp Colony"));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

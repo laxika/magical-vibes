@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -14,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,10 +37,10 @@ public class CelestineCaveWitch extends Card {
         addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new ControlsPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.INSECT)),
                 new MayEffect(
-                        new SacrificePermanentThenEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.INSECT),
-                                new CreateTokenAttachedToDefendingPlayerEffect(curseToken()),
-                                "an Insect"),
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.INSECT), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                        new CreateTokenAttachedToDefendingPlayerEffect(curseToken())))),
                         "Sacrifice an Insect?")));
     }
 

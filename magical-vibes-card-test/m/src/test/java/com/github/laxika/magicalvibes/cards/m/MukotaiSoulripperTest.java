@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PatchworkAutomaton;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -41,7 +42,7 @@ class MukotaiSoulripperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
 
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, vehicle, Keyword.MENACE)).isTrue();
@@ -63,7 +64,7 @@ class MukotaiSoulripperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
 
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, vehicle, Keyword.MENACE)).isTrue();
@@ -90,17 +91,19 @@ class MukotaiSoulripperTest extends BaseCardTest {
     void cannotSacrificeItself() {
         Permanent vehicle = crewVehicle();
         Permanent crew = findPermanent(player1, "Grizzly Bears");
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, vehicle.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(crew.getId(), millstone.getId());
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, vehicle, Keyword.MENACE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(vehicle);
-        harness.handlePermanentChosen(player1, crew.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(crew.getId()));
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -114,7 +117,6 @@ class MukotaiSoulripperTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, crew.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -153,10 +155,7 @@ class MukotaiSoulripperTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, crew.getId());
-
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(crew.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -170,7 +169,7 @@ class MukotaiSoulripperTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
 
         harness.assertInGraveyard(player1, "Patchwork Automaton");
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

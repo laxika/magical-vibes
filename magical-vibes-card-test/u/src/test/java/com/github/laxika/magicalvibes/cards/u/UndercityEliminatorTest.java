@@ -36,10 +36,10 @@ class UndercityEliminatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(sacrificeChoice.validIds()).contains(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -90,11 +90,11 @@ class UndercityEliminatorTest extends BaseCardTest {
         Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(eliminator.getId()))
                 .findFirst().orElseThrow();
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(sacrificeChoice.validIds()).contains(source.getId(), ownCreature.getId())
                 .doesNotContain(ownLand.getId(), target.getId());
-        harness.handlePermanentChosen(player1, source.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(source.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -122,7 +122,7 @@ class UndercityEliminatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
@@ -144,11 +144,11 @@ class UndercityEliminatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(sacrificeChoice.validIds()).contains(sacrifice.getId())
                 .doesNotContain(opponentArtifact.getId(), target.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -175,7 +175,7 @@ class UndercityEliminatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();

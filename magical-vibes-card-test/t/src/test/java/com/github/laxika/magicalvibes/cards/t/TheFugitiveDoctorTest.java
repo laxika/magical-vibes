@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 class TheFugitiveDoctorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering investigates")
     void entersAndInvestigates() {
         castDoctor();
 
@@ -28,6 +30,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking may sacrifice a Clue to grant flashback with a fixed cost")
     void attackingMaySacrificeClueToGrantFixedCostFlashback() {
         Shock shock = new Shock();
         harness.setGraveyard(player1, List.of(shock));
@@ -39,10 +42,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(sacrificeChoice.validIds()).containsExactly(findPermanents(player1, "Clue").getFirst().getId());
-        harness.handlePermanentChosen(player1, sacrificeChoice.validIds().iterator().next());
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
 
         PendingInteraction.MultiGraveyardChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -62,6 +62,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the attack trigger keeps the Clue")
     void decliningAttackTriggerKeepsClue() {
         Permanent doctor = castDoctor();
         doctor.setSummoningSick(false);
@@ -74,6 +75,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Clue may be sacrificed even with no graveyard target")
     void maySacrificeClueEvenWithoutGraveyardTargets() {
         Permanent doctor = castDoctor();
         doctor.setSummoningSick(false);
@@ -82,7 +84,6 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Clue").getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Clue")).isEmpty();
@@ -91,6 +92,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without a Clue no flashback is granted")
     void cannotGrantFlashbackWithoutAClue() {
         Preordain preordain = new Preordain();
         harness.setGraveyard(player1, List.of(preordain));
@@ -109,6 +111,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Targets only instant or sorcery cards in your own graveyard")
     void targetsOnlyOwnInstantOrSorceryCardsAfterSacrificing() {
         Preordain preordain = new Preordain();
         Shock shock = new Shock();
@@ -122,7 +125,6 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Clue").getId());
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -138,6 +140,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that leaves the graveyard in response gains no flashback")
     void targetLeavingGraveyardInResponseDoesNotGainFlashback() {
         Preordain preordain = new Preordain();
         harness.setGraveyard(player1, List.of(preordain));
@@ -147,7 +150,6 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Clue").getId());
         harness.handleMultipleCardsChosen(player1, List.of(preordain.getId()));
         assertThat(gd.stack).hasSize(1);
         assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(preordain.getId());
@@ -161,6 +163,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A spell cast with the granted flashback is exiled after resolving")
     void flashbackSpellIsExiledAfterResolving() {
         Shock shock = new Shock();
         grantFlashback(shock);
@@ -177,6 +180,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The granted flashback expires after the turn")
     void flashbackPermissionExpiresAfterTheTurn() {
         Shock shock = new Shock();
         grantFlashback(shock);
@@ -201,7 +205,6 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Clue").getId());
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
     }

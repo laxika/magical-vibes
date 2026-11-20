@@ -89,7 +89,6 @@ class ShrapnelSlingerTest extends BaseCardTest {
         castShrapnelSlinger();
         passEtbTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Shrapnel Slinger"));
         harness.assertInGraveyard(player1, "Shrapnel Slinger");
         harness.handlePermanentChosen(player1, opponentArtifact.getId());
         harness.assertOnBattlefield(player2, "Shrapnel Slinger");
@@ -131,7 +130,6 @@ class ShrapnelSlingerTest extends BaseCardTest {
         castShrapnelSlinger();
         passEtbTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Shrapnel Slinger"));
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(targetChoice.validIds()).containsExactly(legalArtifact.getId());

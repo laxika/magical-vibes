@@ -27,7 +27,6 @@ class SpringbloomDruidTest extends BaseCardTest {
 
         castSpringbloomDruid();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificedLand.getId());
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -65,7 +64,7 @@ class SpringbloomDruidTest extends BaseCardTest {
         SnowCoveredMountain mountain = new SnowCoveredMountain();
         harness.setLibrary(player1, List.of(forest, mountain));
 
-        beginSearch(land);
+        beginSearch();
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -87,7 +86,7 @@ class SpringbloomDruidTest extends BaseCardTest {
         SnowCoveredMountain mountain = new SnowCoveredMountain();
         harness.setLibrary(player1, List.of(forest, mountain));
 
-        beginSearch(land);
+        beginSearch();
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, mountain);
@@ -105,7 +104,7 @@ class SpringbloomDruidTest extends BaseCardTest {
         SnowCoveredMountain mountain = new SnowCoveredMountain();
         harness.setLibrary(player1, List.of(forest, mountain));
 
-        beginSearch(land);
+        beginSearch();
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
 
@@ -139,7 +138,6 @@ class SpringbloomDruidTest extends BaseCardTest {
 
         castSpringbloomDruid();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land.getCard());
@@ -157,7 +155,7 @@ class SpringbloomDruidTest extends BaseCardTest {
         SpringbloomDruid nonland = new SpringbloomDruid();
         harness.setLibrary(player1, List.of(nonbasic, forest, nonland));
 
-        beginSearch(land);
+        beginSearch();
         harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanent(forest).isTapped()).isTrue();
@@ -172,10 +170,9 @@ class SpringbloomDruidTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void beginSearch(Permanent land) {
+    private void beginSearch() {
         castSpringbloomDruid();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
         if (gd.interaction.activeInteraction() == null && !gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

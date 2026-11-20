@@ -24,14 +24,13 @@ class UndercityScavengerTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another creature puts two counters on Undercity Scavenger and scries 2")
     void sacrificesAnotherCreatureAndScriesTwo() {
-        var sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         prepareCast(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         var scavenger = findPermanent(player1, "Undercity Scavenger");
         assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -80,16 +79,17 @@ class UndercityScavengerTest extends BaseCardTest {
     @DisplayName("The sacrifice choice excludes the source and opposing creatures")
     void onlyAnotherControlledCreatureCanBeSacrificed() {
         var ownCreature = harness.addToBattlefieldAndReturn(player1, new CatacombCrocodile());
+        var otherOwnCreature = harness.addToBattlefieldAndReturn(player1, new CatacombCrocodile());
         var opponentCreature = harness.addToBattlefieldAndReturn(player2, new CatacombCrocodile());
         prepareCast(List.of(new CatacombCrocodile()));
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(ownCreature.getId());
-        harness.handlePermanentChosen(player1, ownCreature.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(ownCreature.getId(), otherOwnCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId()));
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
@@ -103,7 +103,7 @@ class UndercityScavengerTest extends BaseCardTest {
     @Test
     @DisplayName("Scry still happens if Undercity Scavenger leaves before its trigger resolves")
     void sourceLeavingDoesNotPreventSacrificeOrScry() {
-        var sacrifice = harness.addToBattlefieldAndReturn(player1, new CatacombCrocodile());
+        harness.addToBattlefield(player1, new CatacombCrocodile());
         var first = new CatacombCrocodile();
         var second = new CatacombCrocodile();
         var third = new CatacombCrocodile();
@@ -118,7 +118,6 @@ class UndercityScavengerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Undercity Scavenger");
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         var scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -133,12 +132,11 @@ class UndercityScavengerTest extends BaseCardTest {
     @Test
     @DisplayName("An empty library does not prevent the sacrifice or counters")
     void emptyLibraryStillAllowsSacrificeAndCounters() {
-        var sacrifice = harness.addToBattlefieldAndReturn(player1, new CatacombCrocodile());
+        harness.addToBattlefield(player1, new CatacombCrocodile());
         prepareCast(List.of());
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         harness.assertInGraveyard(player1, "Catacomb Crocodile");
         assertThat(findPermanent(player1, "Undercity Scavenger")

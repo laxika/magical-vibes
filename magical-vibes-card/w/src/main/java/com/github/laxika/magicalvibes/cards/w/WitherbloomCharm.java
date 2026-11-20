@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -7,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
@@ -26,8 +30,9 @@ public class WitherbloomCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "You may sacrifice a permanent. If you do, draw two cards",
                         new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        new PermanentTruePredicate(), new DrawCardEffect(2), "a permanent", false, false),
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, new PermanentTruePredicate(), Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DrawCardEffect(2))),
                                 "You may sacrifice a permanent to draw two cards")),
                 new ChooseOneEffect.ChooseOneOption(
                         "You gain 5 life",

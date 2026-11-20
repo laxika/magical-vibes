@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -51,16 +53,16 @@ public class SorinImperiousBloodlord extends Card {
         ));
 
         // +1: You may sacrifice a Vampire. When you do, Sorin deals 3 damage to any target and you gain 3 life.
-        // SacrificePermanentThen pushes a reflexive trigger; any-target is chosen as that trigger goes on the stack.
+        // The reflexive ability chooses its any-target as it goes on the stack.
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(new MayEffect(
-                        new SacrificePermanentThenEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                                SequenceEffect.of(
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                        SequenceEffect.of(
                                         new DealDamageToAnyTargetEffect(3),
-                                        new GainLifeEffect(3)),
-                                "a Vampire"),
+                                        new GainLifeEffect(3))))),
                         "Sacrifice a Vampire?")),
                 "+1: You may sacrifice a Vampire. When you do, Sorin deals 3 damage to any target and you gain 3 life."
         ));

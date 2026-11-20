@@ -1,5 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,15 +18,11 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardIfSacrificedCardMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -64,14 +69,14 @@ public class MinscBooTimelessHeroes extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new SacrificePermanentThenEffect(
-                        new PermanentIsCreaturePredicate(),
-                        SequenceEffect.of(
-                                new DealDamageToAnyTargetEffect(new SacrificedPermanentPower()),
-                                new DrawCardIfSacrificedCardMatchesEffect(
-                                        new CardSubtypePredicate(CardSubtype.HAMSTER),
-                                        new SacrificedPermanentPower())),
-                        "a creature")),
+                List.of(new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                SequenceEffect.of(
+                                        new DealDamageToAnyTargetEffect(AmountThisWay.sacrificedPower()),
+                                        new ConditionalEffect(
+                                                HappenedThisWay.toA(StepKind.SACRIFICE,
+                                                        new PermanentHasSubtypePredicate(CardSubtype.HAMSTER)),
+                                                new DrawCardEffect(AmountThisWay.sacrificedPower())))))),
                 "−2: Sacrifice a creature. When you do, Minsc & Boo deals X damage to any target, "
                         + "where X is that creature's power. If the sacrificed creature was a Hamster, "
                         + "draw X cards."));

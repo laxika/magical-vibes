@@ -30,7 +30,6 @@ class BullseyeDeathDealerTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "Sacrifice an artifact");
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ornithopter"));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

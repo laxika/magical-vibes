@@ -1082,9 +1082,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
 
-    /** {@code lifeGainerId} is the sacrificing player for Devour Flesh, the controller otherwise. */
-    record SacrificeCreatureControllerGainsLifeEqualToToughness(UUID sacrificingPlayerId, UUID lifeGainerId, String sourceCardName) implements PermanentChoiceContext {}
-
     /**
      * An activated ability whose permanent-choice cost is being paid one choice at a time.
      * The ability definition and source snapshot are retained because paying an earlier choice
@@ -1922,10 +1919,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             reflexiveFollowUps = List.copyOf(reflexiveFollowUps);
         }
     }
-
-    record SacrificeAnotherCreatureGainLifeAndDraw(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
-
-    record SacrificeCreatureThenMassDamageEqualToPower(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,

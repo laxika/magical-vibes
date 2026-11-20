@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,10 +34,10 @@ public class BullseyeDeathDealer extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Sacrifice an artifact",
-                                new SacrificePermanentThenEffect(
-                                        new PermanentIsArtifactPredicate(),
-                                        new DealDamageToAnyTargetEffect(2),
-                                        "an artifact")),
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                                new DealDamageToAnyTargetEffect(2))))),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Discard a nonland card",
                                 new DiscardCardThenEffect(

@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfTargetArti
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,8 +39,9 @@ public class DarettiIngeniousIconoclast extends Card {
         DestroyTargetPermanentEffect destroyArtifactOrCreature = new DestroyTargetPermanentEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())));
-        SacrificePermanentThenEffect sacrificeThenDestroy = new SacrificePermanentThenEffect(
-                new PermanentIsArtifactPredicate(), destroyArtifactOrCreature, "an artifact", true, false);
+        CardEffect sacrificeThenDestroy = SequenceEffect.of(
+                new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
+                new ConditionalEffect(HappenedThisWay.sacrificed(), destroyArtifactOrCreature));
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(new MayEffect(sacrificeThenDestroy, "Sacrifice an artifact?")),

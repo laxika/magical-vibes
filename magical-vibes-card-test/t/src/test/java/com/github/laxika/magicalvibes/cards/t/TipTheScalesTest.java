@@ -47,7 +47,6 @@ class TipTheScalesTest extends BaseCardTest {
         Permanent survivor = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castTipTheScales();
-        harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(1);
@@ -81,7 +80,6 @@ class TipTheScalesTest extends BaseCardTest {
         Permanent survivor = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castTipTheScales();
-        harness.handlePermanentChosen(player1, sacrificed.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Tip the Scales");
@@ -103,7 +101,6 @@ class TipTheScalesTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castTipTheScales();
-        harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -135,7 +132,6 @@ class TipTheScalesTest extends BaseCardTest {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castTipTheScales();
-        harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 

@@ -32,12 +32,9 @@ class EnigmaticIncarnationTest extends BaseCardTest {
         harness.addToBattlefield(player1, enchantment);
         harness.setLibrary(player1, List.of(foundCreature, wrongManaValue));
 
-        Permanent enchantmentPermanent = findPermanent(player1, "Underworld Dreams");
-
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, enchantmentPermanent.getId());
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -110,7 +107,6 @@ class EnigmaticIncarnationTest extends BaseCardTest {
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Underworld Dreams"));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(wrongManaValue, nonCreature);
@@ -129,7 +125,6 @@ class EnigmaticIncarnationTest extends BaseCardTest {
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Underworld Dreams"));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);

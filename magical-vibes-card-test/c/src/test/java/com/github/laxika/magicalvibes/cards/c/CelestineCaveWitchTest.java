@@ -46,10 +46,6 @@ class CelestineCaveWitchTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validIds())
-                .containsExactly(insect.getId());
-
-        harness.handlePermanentChosen(player1, insect.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(insect.getCard());
@@ -128,7 +124,7 @@ class CelestineCaveWitchTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, insect.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(insect.getId()));
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Insect")).isEqualTo(1);

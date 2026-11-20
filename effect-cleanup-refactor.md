@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 6 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 7 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -525,6 +525,7 @@ cause under Findings.
 | 4 | `--unaudited --family Deal`, the damage-then families ("deals N damage … If a [creature] is dealt damage this way, …") | done (12 split, 4 blocked-other, 0 blocked-step-model, 0 unique; `thisWay(kind, filter)` and `HappenedThisWay.toA`; Smite the Deathless and The War Doctor fixed by Oracle text) |
 | 5 | `--unaudited --family Deal`, the rest: the "And" simultaneous sets, "Unless" and perpetual riders | done (3 split, 2 absorbed, 4 blocked-step-model, 6 blocked-other, 2 unique; 7 of `DealDamageToTargetAndTheirCreaturesEffect`'s 8 cards split; `otherCreaturesSharing` subject; next-damage shields cover a whole simultaneous event; Goblin Chainwhirler and Sarkhan's Unsealing made one damage event by Oracle text) |
 | 6 | `--unaudited --family Sacrifice` (the family with the most first halves on step 7's earlier-step list: `SacrificeSelfEffect` and `SacrificePermanentsEffect`) | done (12 split, 8 blocked-other, 0 blocked-step-model, 0 blocked-player-loop, 0 unique; 17 cards rewritten; the blocked ones need the chosen sacrifice's last-known stats from `SacrificePermanentsEffect`, a granted ability's granter, or a delayed trigger that names a permanent) |
+| 7 | the chosen sacrifice's last-known stats: `SacrificePermanentsEffect` records `DepartureResult`s; `SacrificePermanentThenEffect`'s cards, Disciple of Bolas, Rupture, the Tribute to Hunger record | done (3 records split, 2 amounts absorbed into `AmountThisWay`; 111 of `SacrificePermanentThenEffect`'s 121 cards split, 10 kept; 10 "If you do" cards fixed from reflexive by Oracle text) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3792,6 +3793,87 @@ compile. A repeated `:module:test` task on one command line keeps only its last 
   [filter]. If you do" is `SacrificePermanentsEffect(1, filter, you())` + `ConditionalEffect(HappenedThisWay.sacrificed(), …)`.
 - The next prerequisite for this family is last-known stats from `SacrificePermanentsEffect` (unlocks `SacrificePermanentThenEffect`
   and four more records).
+
+### Step 8, run 7 (2026-11-20)
+
+Run 6's prerequisite: what `SacrificePermanentsEffect` sacrificed, with its last-known stats. Verdicts (ledger, step `8`): **split 3**
+(`SacrificeAnotherCreatureGainLifeAndDrawEqualToPowerEffect`, `SacrificeCreatureThenMassDamageEqualToPowerEffect`,
+`SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect`, with their handlers, choice contexts and completion methods),
+**absorbed 2** (`PermanentLeftThisWayPower` / `PermanentLeftThisWayToughness` into `AmountThisWay`, `model/amount`), `AmountThisWay`
+survivor; `SacrificePermanentThenEffect` stays **blocked-other** with 10 cards. Ratchet 4,823 / 4,056 → 4,820 / 4,053.
+
+- **Recording.** `DepartureResult` gained `lastKnownManaValue` (`DepartureService.report`, `getPermanentManaValue` of the snapshot:
+  front face of a transformed permanent, 0 face down). `SacrificePermanentsEffectHandler` begins its step with
+  `StackEntry.beginSacrificeStep()` (departures emptied, SACRIFICE = NONE, other outcomes kept, so a sacrifice step no longer
+  clears a DESTROY outcome the way `recordDepartures` does). `DestructionSupport.sacrificeTogether`, which every path goes through
+  (auto-pick `performSimultaneousSacrifice` / `sacrificeAndLog`, the single-creature `SacrificeCreature` prompt, the
+  `ForcedSacrifice` multi-choice and the APNAP choose-then-sacrifice), adds its `DepartureResult`s to the resolving or parked entry
+  once a SACRIFICE step has begun (`addSacrificeDepartures`), and the SACRIFICE outcome is remade from them with step 7's mapping
+  (`ResolutionResults.departed`): its objects are now permanent ids, not card ids (no reader used the card ids).
+  `GameData.recordSacrificedPermanent` still adds to the outcome for sacrifices outside `sacrificeTogether` (Make an Example, pile
+  separation).
+- **Readers.** `AmountThisWay(kind, Stat)`: `Stat.AMOUNT` (the old meaning), `POWER`, `TOUGHNESS`, `MANA_VALUE` (SACRIFICE only:
+  the total of the last-known stat of the departures that were sacrificed, each at least 0); factories `sacrificedPower()`,
+  `sacrificedToughness()`, `sacrificedManaValue()`. `HappenedThisWay.toA(SACRIFICE | DESTROY, filter)` judges a permanent that
+  left as it last existed (`departedPermanentSnapshots` with its layered `lastKnownCard`, the lookup `TargetPermanentMatches`
+  already had, now a shared helper). `QueueReflexiveAbilityEffectHandler` gives the reflexive record its maker's resolution
+  results (`StackEntry.carryResolutionResultsFrom`), so "When you do, … that creature's power" reads the sacrifice (CR 603.12,
+  608.2h checked with `get_rule` 2026-11-20). Tests: `StepResultsTest` +6 (auto-pick with Glorious Anthem power and mana value,
+  the single-player prompt's toughness, each player choosing then sacrificing together, a Bear / non-Bear `toA`, a reflexive
+  ability reading the power), `ResolutionScratchpadAmountTest` rewritten for the stats (+2). Real cards: Disciple of Bolas and Foot
+  Chopper (power), Tribute to Hunger, Devour Flesh, Doomgape (toughness), Shadow / The Meep / Enigmatic Incarnation (mana value),
+  Serendib Djinn (`toA` Island), Minsc & Boo (reflexive power and `toA` Hamster).
+- **Split cards** (Oracle text of each checked with `get_card`). Disciple of Bolas, Rupture (`MassDamageEffect(sacrificedPower())`),
+  Tribute to Hunger, Consuming Vapors (`targetPlayer()` sacrificer, you gain), Devour Flesh (gain for
+  `targetPlayerDeclaredElsewhere()`), Doomgape. 111 `SacrificePermanentThenEffect` cards by a deleted script:
+  `SacrificePermanentsEffect(1, filter, you())` then `ConditionalEffect(HappenedThisWay.sacrificed(), X)` for "If you do"
+  (`reflexive = false`, also the 6 `targetBeforeSacrifice` cards: the target is the rider's, declared by the sequence as before),
+  `ConditionalEffect(sacrificed(), QueueReflexiveAbilityEffect(X))` for "When you do", ungated for "then" (Lorehold Command, Grab
+  the Reins) and bare for a `null` rider; `SacrificedPermanentPower` / `Toughness` / `ManaValue` in the riders became the
+  `AmountThisWay` factories; Serendib Djinn and Minsc & Boo by hand (`toA` replaced `DealDamageToControllerIfSacrificedCardMatchesEffect`
+  / `DrawCardIfSacrificedCardMatchesEffect` on them). Target specs and the reflexive target choice are unchanged (the rider is the
+  only step that declares a target; `targetsChosenByReflexiveAbility` comes through `ConditionalEffect`).
+- **Behaviour changes.**
+  - Oracle text: ten cards read "If you do" but were reflexive (the wrapper's 3-argument constructor defaulted to reflexive): Altar
+    of the Wretched, Euru Acorn Scrounger (the token sacrifice; its forage line stays "when you do"), Greven Predator Captain, Hei Bai
+    Spirit of Balance, Provisions Merchant, Sephiroth Fabled Soldier, Echo of Death's Wail, The Gitrog Ravenous Ride, The Goose
+    Mother, Wilhelt the Rotcleaver: the rider now happens in the same resolution, with no stack object of its own (their tests
+    assert that). Grab the Reins ("Sacrifice a creature. Grab the Reins deals damage equal to that creature's power to any target",
+    no "if you do") is ungated.
+  - Prompt shapes: the wrapper always asked, even with one candidate; `SacrificePermanentsEffect` sacrifices a lone eligible
+    permanent without a prompt, asks a `SacrificeCreature` permanent choice for a bare creature filter and a one-of
+    `MultiPermanentChoice` otherwise. It also skips a sacrifice an opponent's effect can't cause (Tajuru Preserver style) and
+    creature tokens protected from a resolving triggered ability, which the old handlers didn't check. Tribute to Hunger / Doomgape
+    gain the last-known toughness from the departure (before: the effective toughness read before the sacrifice; same value).
+  - Rupture's damage is dealt by the spell's own entry (the old handler built a throwaway entry); a 0-power sacrifice deals 0.
+- **Tests.** All 114 card test classes of the split cards were updated by two delegated runs (prompt shapes, the ten "if you do"
+  cards; no test deleted, about 35 tests gained a second eligible permanent so the prompt still shows its exclusions, a few now assert
+  the outcome instead of a lone-candidate prompt; missing `@DisplayName`s added in touched files). Final run (one `--tests` list per
+  task): the rewritten cards' tests, the 10 kept wrapper cards, `--tests-for SacrificePermanentsEffect --max-per-class 25`,
+  `--tests-for QueueReflexiveAbilityEffect SacrificeSelfEffect MassDamageEffect --max-per-class 15`, application (`StepResultsTest`,
+  `ResolutionScratchpadAmountTest`, both ratchets, `SacrificePermanentsEffectHandlerTest`, `SacrificePermanentThenEffectHandlerTest`,
+  `EffectResolutionServiceTest`, `SubjectResolutionServiceTest`, `ReflexiveRouteRecordTest`, `MayEffectHandlerTest`,
+  `EtbTriggerServiceTest`, `InputHandlerEpilogueRatchetTest`), AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`,
+  `GameDataDeepCopyTest`): 197 classes, 1,977 test cases, all pass. Application, AI, engine testFixtures and every touched card-test
+  module compile.
+
+**For later runs.**
+
+- `SacrificePermanentThenEffect` keeps 10 cards and three engine-internal builders (`ForageEffectHandler`,
+  `MayPayTapAndSacrificePermanentEffectHandler`, `SacrificePermanentOrDiscardCardThenDrawAndBoostSelfEffectHandler`). Each card's
+  cause: granting-permanent restriction (Dire Blunderbuss, Sunfire Torch: needs a "the granter" / "not the granter" permanent
+  predicate in `SacrificePermanentsEffect`'s filter context), a face-up scheme is abandoned, not sacrificed (Reality Is Mine to
+  Control), a rider reading the entry's sacrificed snapshot (Bound // Determined colour count, Braids Arisen Nightmare, Heart-Shaped
+  Herb's return, Transmute Artifact, Vivien on the Hunt, Tevesh Szat's commander check: `PermanentIsCommanderPredicate` with `toA`
+  likely works), and Wyll's per-colour reflexive flag (mechanical: pick the shape per colour). Convert the internal builders, then
+  delete the record.
+- "That creature's power / toughness / mana value" after any sacrifice step is `AmountThisWay.sacrificed*()`; "if you sacrifice an X
+  this way" is `HappenedThisWay.toA(StepKind.SACRIFICE, filter)`. The `Sacrificed*` amounts are now for sacrifice costs only.
+- Check "When you do" against the Oracle text when splitting: the wrapper's short constructors were reflexive by default, and ten
+  "If you do" cards had that wrong.
+- Hotel of Fears (WHO 584, no rulings) "Put X +1/+1 counters on target creature you control … Then sacrifice another creature" uses
+  "other than the source" (a plane), so the targeted creature can be the sacrifice; "another" most likely means other than the
+  target. Unchanged by this run; needs a target-relative predicate in `SacrificePermanentsEffect`'s filter context.
 
 ## Prompt
 

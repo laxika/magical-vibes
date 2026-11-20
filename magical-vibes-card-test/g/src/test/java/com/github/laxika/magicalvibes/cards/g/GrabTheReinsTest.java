@@ -46,7 +46,6 @@ class GrabTheReinsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         cast(new int[]{1}, List.of(player2.getId()), false);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -119,7 +118,6 @@ class GrabTheReinsTest extends BaseCardTest {
         stolen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         cast(new int[]{0, 1}, List.of(stolen.getId(), player2.getId()), true);
-        harness.handlePermanentChosen(player1, stolen.getId());
 
         harness.assertLife(player2, 17);
         harness.assertNotOnBattlefield(player1, "Lumengrid Warden");
@@ -141,13 +139,12 @@ class GrabTheReinsTest extends BaseCardTest {
     @Test
     void entwineStillSacrificesAndDealsDamageWhenControlTargetLeaves() {
         Permanent stolen = addCreatureReady(player2, new LumengridWarden());
-        Permanent sacrifice = addCreatureReady(player1, new LumengridWarden());
+        addCreatureReady(player1, new LumengridWarden());
         prepareCast(true);
         harness.castModalInstantWithModes(player1, 0, 1, 2,
                 new int[]{0, 1}, List.of(stolen.getId(), player2.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(stolen);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player1, "Lumengrid Warden");
@@ -163,7 +160,6 @@ class GrabTheReinsTest extends BaseCardTest {
                 new int[]{0, 1}, List.of(stolen.getId(), damageTarget.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(damageTarget);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, stolen.getId());
 
         harness.assertInGraveyard(player2, "Lumengrid Warden");
         harness.assertNotOnBattlefield(player1, "Lumengrid Warden");

@@ -32,7 +32,6 @@ class WeddingSecurityTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, blood.getId());
 
         assertThat(security.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
@@ -101,7 +100,7 @@ class WeddingSecurityTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, firstBlood.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstBlood.getId()));
 
         assertThat(security.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
@@ -130,10 +129,6 @@ class WeddingSecurityTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
-                .validPermanentIds()).containsExactly(blood.getId());
-        harness.handlePermanentChosen(player1, blood.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(copy).doesNotContain(blood);
         assertThat(security.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

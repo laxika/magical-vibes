@@ -59,7 +59,6 @@ class ChandraSparkHunterTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw a card");
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Ornithopter");
@@ -272,7 +271,6 @@ class ChandraSparkHunterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw a card");
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

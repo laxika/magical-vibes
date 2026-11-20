@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -52,7 +53,6 @@ class RenoAndRudeTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
@@ -75,13 +75,12 @@ class RenoAndRudeTest extends BaseCardTest {
     @DisplayName("The sacrificed branch lets the controller play an exiled land")
     void sacrificingCreatureLetsControllerPlayExiledLand() {
         addAttackingReno();
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         Card topCard = new Forest();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -97,14 +96,13 @@ class RenoAndRudeTest extends BaseCardTest {
     @DisplayName("Play permission is granted during the original trigger, without a separate trigger")
     void sacrificeGrantsPermissionWithoutAnotherPriorityRound() {
         addAttackingReno();
-        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+        addCreatureReady(player1, new Ornithopter());
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(gd.currentStep,
-                () -> harness.handlePermanentChosen(player1, artifact.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
@@ -114,7 +112,7 @@ class RenoAndRudeTest extends BaseCardTest {
     @DisplayName("A later sacrifice does not grant access to a card exiled by an earlier declined trigger")
     void laterSacrificeDoesNotUnlockEarlierExiledCard() {
         Permanent reno = addAttackingReno();
-        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+        addCreatureReady(player1, new Ornithopter());
         Card earlierCard = new GrizzlyBears();
         Card currentCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(earlierCard, currentCard, new Forest()));
@@ -127,7 +125,6 @@ class RenoAndRudeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(earlierCard.getId())).isNotNull();
@@ -150,20 +147,19 @@ class RenoAndRudeTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponent = addCreatureReady(player2, new Ornithopter());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent artifact = addCreatureReady(player1, new Ornithopter());
         Card topCard = new Forest();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, reno.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponent.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(creature.getId(), artifact.getId())
+                .doesNotContain(reno.getId(), land.getId(), opponent.getId());
 
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -174,13 +170,12 @@ class RenoAndRudeTest extends BaseCardTest {
     @DisplayName("Unplayed exiled cards stay exiled after the permission expires at end of turn")
     void playPermissionExpiresAtEndOfTurn() {
         Permanent reno = addAttackingReno();
-        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+        addCreatureReady(player1, new Ornithopter());
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(topCard, new Forest()));
 
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
@@ -214,13 +209,12 @@ class RenoAndRudeTest extends BaseCardTest {
     @DisplayName("Permission does not waive spell timing or the exiled card's mana cost")
     void exiledCreatureStillRequiresMainPhaseAndMana() {
         addAttackingReno();
-        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+        addCreatureReady(player1, new Ornithopter());
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);

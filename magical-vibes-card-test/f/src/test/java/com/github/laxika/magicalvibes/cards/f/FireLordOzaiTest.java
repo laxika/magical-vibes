@@ -28,11 +28,8 @@ class FireLordOzaiTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, bears.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
@@ -93,13 +90,12 @@ class FireLordOzaiTest extends BaseCardTest {
     @Test
     void sacrificeAddsManaDuringTheOriginalAttackTriggerResolution() {
         addReadyOzai();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, bears.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
@@ -117,7 +113,7 @@ class FireLordOzaiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            harness.handlePermanentChosen(player1, bears.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
             resolveAllTriggers();
         });
 
@@ -134,9 +130,8 @@ class FireLordOzaiTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            harness.handlePermanentChosen(player1, bears.getId());
+            harness.handleMayAbilityChosen(player1, true);
             resolveAllTriggers();
         });
 

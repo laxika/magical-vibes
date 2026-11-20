@@ -43,7 +43,7 @@ class DoomgapeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness.class);
+                .isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
 
     @Test

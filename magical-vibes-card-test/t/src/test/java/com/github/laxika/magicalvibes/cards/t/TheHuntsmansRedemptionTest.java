@@ -58,10 +58,6 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
-                .validPermanentIds()).containsExactly(sacrificed.getId());
-        harness.handlePermanentChosen(player1, sacrificed.getId());
-        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -134,7 +130,7 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter II searches during the same resolution as the sacrifice")
     void chapterIISearchIsNotASeparateTrigger() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new UnassumingSage());
+        harness.addToBattlefield(player1, new UnassumingSage());
         addSaga(1);
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land));
@@ -144,7 +140,6 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 3);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.stack).isEmpty();
@@ -156,6 +151,7 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
     @DisplayName("Chapter II cannot sacrifice an opponent's creature or a noncreature")
     void chapterIISacrificeIsRestrictedToControlledCreatures() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new UnassumingSage());
+        Permanent otherOwnCreature = harness.addToBattlefieldAndReturn(player1, new UnassumingSage());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new UnassumingSage());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         addSaga(1);
@@ -165,7 +161,7 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
-                .validPermanentIds()).containsExactly(ownCreature.getId())
+                .validPermanentIds()).containsExactlyInAnyOrder(ownCreature.getId(), otherOwnCreature.getId())
                 .doesNotContain(opposingCreature.getId(), land.getId());
     }
 
@@ -181,8 +177,6 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
         triggerChapter();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -205,8 +199,6 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
         triggerChapter();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
-        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);

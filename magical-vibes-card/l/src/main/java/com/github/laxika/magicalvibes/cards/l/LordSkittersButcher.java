@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -13,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -40,13 +42,13 @@ public class LordSkittersButcher extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "You may sacrifice another creature. If you do, scry 2, then draw a card.",
                         new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        new PermanentAllOfPredicate(List.of(
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),
                                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                                        )),
-                                        SequenceEffect.of(new ScryEffect(2), new DrawCardEffect()),
-                                        "another creature", false, false),
+                                        )), Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                                SequenceEffect.of(new ScryEffect(2), new DrawCardEffect()))),
                                 "Sacrifice another creature?")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain menace until end of turn.",

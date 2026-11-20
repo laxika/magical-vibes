@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,8 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheSackvilleBagginsesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering may sacrifice another creature to draw and create a Treasure")
     void maySacrificeAnotherCreatureDrawsAndCreatesTreasure() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         GrizzlyBears drawn = new GrizzlyBears();
         harness.setHand(player1, List.of(new TheSackvilleBagginses()));
         harness.setLibrary(player1, List.of(drawn));
@@ -32,7 +34,6 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -41,8 +42,9 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entering may sacrifice another artifact to draw and create a Treasure")
     void maySacrificeAnotherArtifactDrawsAndCreatesTreasure() {
-        Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.addToBattlefield(player1, new MindStone());
         GrizzlyBears drawn = new GrizzlyBears();
         harness.setHand(player1, List.of(new TheSackvilleBagginses()));
         harness.setLibrary(player1, List.of(drawn));
@@ -52,7 +54,6 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, mindStone.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Mind Stone");
@@ -61,6 +62,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a token makes target opponent lose 1 life")
     void sacrificingATokenMakesTargetOpponentLoseLife() {
         harness.addToBattlefield(player1, new TheSackvilleBagginses());
         addTreasureToken(player1);
@@ -78,8 +80,9 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The draw and Treasure happen during the original ability's resolution")
     void sacrificeRewardHappensDuringTheOriginalAbilityResolution() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.addToBattlefield(player1, new MindStone());
         GrizzlyBears drawn = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawn));
         harness.setHand(player1, List.of(new TheSackvilleBagginses()));
@@ -88,7 +91,6 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         harness.assertInGraveyard(player1, "Mind Stone");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -97,6 +99,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice neither draws nor creates a Treasure")
     void decliningSacrificeDoesNotDrawOrCreateTreasure() {
         harness.addToBattlefield(player1, new MindStone());
         GrizzlyBears drawn = new GrizzlyBears();
@@ -117,6 +120,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot sacrifice itself or an opponent's permanent")
     void cannotSacrificeItselfOrAnOpponentsPermanent() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new MindStone());
@@ -140,6 +144,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a nontoken artifact causes no life loss")
     void sacrificingANontokenArtifactDoesNotCauseLifeLoss() {
         harness.addToBattlefield(player1, new TheSackvilleBagginses());
         harness.addToBattlefield(player1, new MindStone());
@@ -158,8 +163,9 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Treasure from the entry ability can be sacrificed for mana and life loss")
     void treasureCreatedByEnterAbilityCanBeSacrificedForManaAndLifeLoss() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.addToBattlefield(player1, new MindStone());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new TheSackvilleBagginses()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -167,7 +173,6 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
         harness.assertLife(player2, 20);
 
@@ -185,6 +190,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a token to the entry ability draws, creates a Treasure and triggers life loss")
     void sacrificingATokenToEnterAbilityDrawsCreatesTreasureAndTriggersLifeLoss() {
         addTreasureToken(player1);
         Permanent treasure = findPermanent(player1, "Treasure");
@@ -196,7 +202,6 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, treasure.getId());
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
@@ -209,6 +214,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's token sacrifice does not trigger life loss")
     void opponentsTokenSacrificeDoesNotTriggerLifeLoss() {
         harness.addToBattlefield(player1, new TheSackvilleBagginses());
         addTreasureToken(player2);

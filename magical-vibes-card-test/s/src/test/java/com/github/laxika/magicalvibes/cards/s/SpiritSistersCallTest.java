@@ -34,8 +34,6 @@ class SpiritSistersCallTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(call.getCard().getId()));
@@ -64,7 +62,7 @@ class SpiritSistersCallTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles the returned permanent when it would leave the battlefield")
     void returnedPermanentIsExiledIfItLeavesBattlefield() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new SpiritSistersCall());
         Card chosen = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(chosen));
@@ -73,7 +71,6 @@ class SpiritSistersCallTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player2, List.of(new LightningBolt()));
@@ -111,6 +108,7 @@ class SpiritSistersCallTest extends BaseCardTest {
     void sacrificeChoicesRequireControlAndSharedCardType() {
         Permanent call = harness.addToBattlefieldAndReturn(player1, new SpiritSistersCall());
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card chosen = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(chosen));
@@ -120,10 +118,10 @@ class SpiritSistersCallTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(sacrifice.getId(), otherCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(call);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
@@ -160,7 +158,6 @@ class SpiritSistersCallTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, call.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(call);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -172,7 +169,7 @@ class SpiritSistersCallTest extends BaseCardTest {
     @Test
     @DisplayName("A later Tamiyo's Compleation removes the gained exile replacement ability")
     void laterAbilityRemovalAllowsReturnedCreatureToDie() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new SpiritSistersCall());
         Card chosen = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(chosen));
@@ -181,7 +178,6 @@ class SpiritSistersCallTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         Permanent returned = findPermanent(player1, "Grizzly Bears");
 
         harness.setHand(player2, List.of(new TamiyosCompleation(), new LightningBolt()));

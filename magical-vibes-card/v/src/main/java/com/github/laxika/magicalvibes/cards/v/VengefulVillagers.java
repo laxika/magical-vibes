@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -30,12 +32,10 @@ public class VengefulVillagers extends Card {
                 .addTrigger(Triggers.attacks(), SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.target()),
                         new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        artifactOrCreature,
-                                        new PutCounterOnTargetPermanentEffect(CounterType.STUN),
-                                        "an artifact or creature",
-                                        true,
-                                        false),
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, artifactOrCreature, Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                                new PutCounterOnTargetPermanentEffect(CounterType.STUN))),
                                 "Sacrifice an artifact or creature?")));
     }
 }

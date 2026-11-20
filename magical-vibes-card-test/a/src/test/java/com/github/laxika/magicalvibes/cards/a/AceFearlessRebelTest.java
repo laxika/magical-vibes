@@ -26,7 +26,6 @@ class AceFearlessRebelTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, defender.getId());
@@ -62,7 +61,6 @@ class AceFearlessRebelTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ace)).isEqualTo(3);
@@ -80,7 +78,6 @@ class AceFearlessRebelTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -96,14 +93,13 @@ class AceFearlessRebelTest extends BaseCardTest {
     @DisplayName("Only defending player's creatures can be chosen for the fight")
     void fightCannotTargetControllersCreature() {
         Permanent ace = addCreatureReady(player1, new AceFearlessRebel());
-        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+        addCreatureReady(player1, new Ornithopter());
         Permanent ally = addCreatureReady(player1, new GrizzlyBears());
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();

@@ -26,7 +26,7 @@ class HarvesterTrollTest extends BaseCardTest {
         castHarvesterTroll();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
         Permanent troll = findPermanent(player1, "Harvester Troll");
@@ -41,7 +41,7 @@ class HarvesterTrollTest extends BaseCardTest {
         castHarvesterTroll();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
         harness.passBothPriorities();
 
         Permanent troll = findPermanent(player1, "Harvester Troll");
@@ -69,7 +69,7 @@ class HarvesterTrollTest extends BaseCardTest {
         castHarvesterTroll();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
 
         Permanent troll = findPermanent(player1, "Harvester Troll");
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -81,10 +81,8 @@ class HarvesterTrollTest extends BaseCardTest {
     @DisplayName("Harvester Troll can sacrifice itself without another permanent")
     void canSacrificeItself() {
         castHarvesterTroll();
-        Permanent troll = findPermanent(player1, "Harvester Troll");
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, troll.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Harvester Troll");
@@ -103,10 +101,10 @@ class HarvesterTrollTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(ownLand.getId(), troll.getId())
                 .doesNotContain(opposingCreature.getId(), opposingLand.getId());
-        harness.handlePermanentChosen(player1, ownLand.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId()));
         harness.passBothPriorities();
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

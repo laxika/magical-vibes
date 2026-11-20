@@ -20,14 +20,12 @@ class BenthicCriminologistsTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may sacrifice an artifact to draw a card")
     void etbSacrificeArtifactDrawsCard() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ThinkingCap());
+        harness.addToBattlefield(player1, new ThinkingCap());
         harness.setLibrary(player1, List.of(new Forest()));
         castBenthicCriminologists();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         harness.assertInGraveyard(player1, "Thinking Cap");
@@ -51,15 +49,13 @@ class BenthicCriminologistsTest extends BaseCardTest {
     @DisplayName("Attacking may sacrifice an artifact to draw a card")
     void attackSacrificeArtifactDrawsCard() {
         addCreatureReady(player1, new BenthicCriminologists());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ThinkingCap());
+        harness.addToBattlefield(player1, new ThinkingCap());
         harness.setLibrary(player1, List.of(new Forest()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         harness.assertInGraveyard(player1, "Thinking Cap");
@@ -83,13 +79,12 @@ class BenthicCriminologistsTest extends BaseCardTest {
     @Test
     @DisplayName("Drawing happens during the sacrifice ability's resolution")
     void drawsBeforePlayersReceivePriorityAfterSacrifice() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ThinkingCap());
+        harness.addToBattlefield(player1, new ThinkingCap());
         harness.setLibrary(player1, List.of(new Forest()));
         castBenthicCriminologists();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
-                () -> harness.handlePermanentChosen(player1, artifact.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertInGraveyard(player1, "Thinking Cap");
         harness.assertInHand(player1, "Forest");

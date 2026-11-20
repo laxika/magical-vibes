@@ -79,15 +79,14 @@ class UnscrupulousContractorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can sacrifice itself and target its own controller")
     void canSacrificeItselfAndTargetItsController() {
         harness.setLibrary(player1, List.of(new Plains(), new Plains()));
         castContractor();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        Permanent contractor = findPermanent(player1, "Unscrupulous Contractor");
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, contractor.getId());
         harness.assertInGraveyard(player1, "Unscrupulous Contractor");
         harness.assertNotOnBattlefield(player1, "Unscrupulous Contractor");
         harness.handlePermanentChosen(player1, player1.getId());
@@ -103,7 +102,9 @@ class UnscrupulousContractorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice choice excludes an opponent's creatures")
     void sacrificeChoiceExcludesOpponentsCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new Cactarantula());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new Cactarantula());
         castContractor();
         harness.passBothPriorities();
@@ -112,11 +113,13 @@ class UnscrupulousContractorTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(findPermanent(player1, "Unscrupulous Contractor").getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(
+                findPermanent(player1, "Unscrupulous Contractor").getId(), ownCreature.getId());
         assertThat(choice.validIds()).doesNotContain(opponentCreature.getId());
     }
 
     @Test
+    @DisplayName("Plotting costs three mana and allows a free cast only on a later turn at sorcery speed")
     void plotPaysThreeManaAndAllowsFreeCastingOnlyOnALaterTurnAtSorcerySpeed() {
         UnscrupulousContractor contractor = new UnscrupulousContractor();
         harness.setHand(player1, List.of(contractor));
@@ -156,6 +159,7 @@ class UnscrupulousContractorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Plotting requires the full cost and sorcery timing")
     void plottingRequiresFullCostAndSorceryTiming() {
         UnscrupulousContractor contractor = new UnscrupulousContractor();
         harness.setHand(player1, List.of(contractor));

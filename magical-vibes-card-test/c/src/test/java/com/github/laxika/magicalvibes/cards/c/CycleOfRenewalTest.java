@@ -36,9 +36,6 @@ class CycleOfRenewalTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, landToSacrifice.getId());
-
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(plains, forest, island);
         assertThat(search.params().remainingCount()).isEqualTo(2);
@@ -61,28 +58,28 @@ class CycleOfRenewalTest extends BaseCardTest {
     @DisplayName("A nonland permanent cannot be sacrificed")
     void sacrificeChoiceContainsOnlyLands() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new CatOwl());
         castSpell();
 
         harness.passBothPriorities();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(land.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(land.getId(), otherLand.getId());
         assertThat(choice.validIds()).doesNotContain(creature.getId());
     }
 
     @Test
     @DisplayName("The search can find fewer than two basic lands")
     void searchFindsAvailableBasicLands() {
-        Permanent landToSacrifice = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Card plains = new Plains();
         Card nonland = new CycleOfRenewal();
         setLibrary(plains, nonland);
         castSpell();
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, landToSacrifice.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -115,13 +112,12 @@ class CycleOfRenewalTest extends BaseCardTest {
     @Test
     @DisplayName("The search may stop after finding one land even when more are available")
     void canChooseOnlyOneLand() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Card plains = new Plains();
         Card island = new Island();
         setLibrary(plains, island);
         castSpell();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, land.getId());
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
 
@@ -143,7 +139,6 @@ class CycleOfRenewalTest extends BaseCardTest {
         setLibrary(plains, island);
         castSpell();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, land.getId());
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();

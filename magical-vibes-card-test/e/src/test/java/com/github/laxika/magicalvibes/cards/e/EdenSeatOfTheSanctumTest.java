@@ -39,7 +39,6 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, eden.getId());
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(eden.getCard().getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
@@ -70,7 +69,7 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
 
     @Test
     void canTargetFreshlyMilledPermanentAndReturnWaitsForTriggerResolution() {
-        Permanent eden = addReadyEden();
+        addReadyEden();
         Card returned = new Forest();
         harness.setGraveyard(player1, List.of());
         harness.setLibrary(player1, List.of(returned));
@@ -79,7 +78,6 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, eden.getId());
         harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
 
         harness.assertNotInHand(player1, "Forest");
@@ -95,7 +93,7 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
 
     @Test
     void cannotReturnCardFromOpponentsGraveyard() {
-        Permanent eden = addReadyEden();
+        addReadyEden();
         Card ownCard = new Forest();
         Card opponentCard = new Forest();
         harness.setGraveyard(player1, List.of(ownCard));
@@ -106,7 +104,6 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, eden.getId());
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
@@ -118,7 +115,7 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
 
     @Test
     void canSacrificeWithEmptyLibraryAndNoOtherPermanentToReturn() {
-        Permanent eden = addReadyEden();
+        addReadyEden();
         harness.setGraveyard(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -126,7 +123,6 @@ class EdenSeatOfTheSanctumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, eden.getId());
 
         harness.assertNotOnBattlefield(player1, "Eden, Seat of the Sanctum");
         harness.assertInGraveyard(player1, "Eden, Seat of the Sanctum");

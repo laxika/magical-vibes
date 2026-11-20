@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,12 +36,10 @@ public class RenoAndRude extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new ExileTopCardsToSourceEffect(1, false, false, Subjects.triggeringPlayer()),
                 new MayEffect(
-                        new SacrificePermanentThenEffect(
-                                anotherCreatureOrArtifact,
-                                new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null, false, true),
-                                "another creature or artifact",
-                                false,
-                                false),
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, anotherCreatureOrArtifact, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                        new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null, false, true))),
                         "Sacrifice another creature or artifact?")));
     }
 }

@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
@@ -19,10 +23,9 @@ public class VisionOfLove extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Sacrifice an artifact. If you do, draw two cards",
-                                new SacrificePermanentThenEffect(
-                                        new PermanentIsArtifactPredicate(),
-                                        new DrawCardEffect(2),
-                                        "an artifact", false, false)),
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, new PermanentIsArtifactPredicate(), Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DrawCardEffect(2)))),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Discard a card. If you do, draw two cards",
                                 DiscardCardThenEffect.continuing(

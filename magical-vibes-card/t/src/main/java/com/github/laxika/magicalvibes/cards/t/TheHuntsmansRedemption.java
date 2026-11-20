@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -34,14 +37,13 @@ public class TheHuntsmansRedemption extends Card {
                 List.of(CardSubtype.BEAST), Set.of(), Set.of()));
 
         addTrigger(Triggers.chapter(2), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new SearchLibraryEffect(
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new SearchLibraryEffect(
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
                                         CardPredicateUtils.basicLand())),
-                                LibrarySearchDestination.HAND),
-                        "a creature", false, false),
+                                LibrarySearchDestination.HAND))),
                 "Sacrifice a creature?"));
 
         addTrigger(Triggers.chapter(3),

@@ -39,7 +39,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificedArtifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificedArtifact.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -118,12 +118,11 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
 
     @Test
     void sacrificingCreatureExilesOpponentsCreature() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new AlabasterHostSanctifier());
+        harness.addToBattlefield(player1, new AlabasterHostSanctifier());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenScaleAeronaut());
 
         castInvasion();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
@@ -135,11 +134,10 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
 
     @Test
     void canSacrificeEvenWithoutAnOpposingArtifactOrCreature() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new AlabasterHostSanctifier());
+        harness.addToBattlefield(player1, new AlabasterHostSanctifier());
 
         castInvasion();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Alabaster Host Sanctifier");

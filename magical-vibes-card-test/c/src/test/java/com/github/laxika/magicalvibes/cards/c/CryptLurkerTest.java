@@ -86,12 +86,6 @@ class CryptLurkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "Sacrifice a creature");
 
-        java.util.UUID lurkerId = harness.getPermanentId(player1, "Crypt Lurker");
-        PendingInteraction.PermanentChoice sacrifice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(sacrifice.validPermanentIds()).containsExactly(lurkerId);
-        harness.handlePermanentChosen(player1, lurkerId);
-
         harness.assertNotOnBattlefield(player1, "Crypt Lurker");
         harness.assertInGraveyard(player1, "Crypt Lurker");
         harness.assertOnBattlefield(player2, "Alpine Watchdog");

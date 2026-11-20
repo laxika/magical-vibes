@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,9 +32,9 @@ public class YunasDecision extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Continue the Pilgrimage — Sacrifice a creature. If you do, draw a card, then you may put a creature card and/or a land card from your hand onto the battlefield",
-                        new SacrificePermanentThenEffect(
-                                new PermanentIsCreaturePredicate(),
-                                SequenceEffect.of(
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
                                         new DrawCardEffect(),
                                         new PutCardsOntoBattlefieldTogetherEffect(List.of(
                                                 new MayEffect(
@@ -39,8 +42,7 @@ public class YunasDecision extends Card {
                                                         "Put a creature card from your hand onto the battlefield?"),
                                                 new MayEffect(
                                                         new PutCardToBattlefieldEffect(landCard, "land"),
-                                                        "Put a land card from your hand onto the battlefield?")))),
-                                "a creature", false, false)),
+                                                        "Put a land card from your hand onto the battlefield?"))))))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Find Another Way — Return one or two target permanent cards from your graveyard to your hand",
                         new ReturnTargetCardsFromGraveyardToHandEffect(

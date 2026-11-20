@@ -34,14 +34,13 @@ class YumaProudProtectorTest extends BaseCardTest {
     @Test
     @DisplayName("Entering may sacrifice a land and draw a card")
     void enteringMaySacrificeLandAndDraw() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.enterBattlefieldAndReturn(player1, new YumaProudProtector());
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
@@ -51,7 +50,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking may sacrifice a land and draw a card")
     void attackingMaySacrificeLandAndDraw() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Permanent yuma = harness.enterBattlefieldAndReturn(player1, new YumaProudProtector());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         yuma.setSummoningSick(false);
@@ -62,7 +61,6 @@ class YumaProudProtectorTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
@@ -72,12 +70,11 @@ class YumaProudProtectorTest extends BaseCardTest {
     @Test
     @DisplayName("Putting a Desert card into your graveyard creates a Plant Warrior with reach")
     void desertInGraveyardCreatesPlantWarrior() {
-        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        harness.addToBattlefield(player1, new Desert());
         harness.enterBattlefieldAndReturn(player1, new YumaProudProtector());
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, desert.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -93,6 +90,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice does not draw")
     void decliningSacrificeDoesNotDraw() {
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of());
@@ -108,6 +106,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without a land does not draw")
     void acceptingWithoutLandDoesNotDraw() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -122,6 +121,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Many lands in the graveyard reduce only the generic cost")
     void manyLandsReduceOnlyGenericCost() {
         harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest()));
@@ -132,6 +132,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Desert milled into the graveyard creates a token")
     void eachDesertPutIntoGraveyardFromLibraryCreatesAToken() {
         harness.addToBattlefield(player1, new YumaProudProtector());
         harness.setLibrary(player1, List.of(new Desert(), new Desert(), new Forest(), new GrizzlyBears()));
@@ -148,6 +149,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Non-Desert cards do not trigger the graveyard ability")
     void nonDesertCardsDoNotTriggerGraveyardAbility() {
         harness.addToBattlefield(player1, new YumaProudProtector());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -162,6 +164,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discarding a Desert creates a token")
     void discardingDesertCreatesToken() {
         harness.addToBattlefield(player1, new YumaProudProtector());
         harness.setLibrary(player1, List.of(new Desert(), new Forest()));

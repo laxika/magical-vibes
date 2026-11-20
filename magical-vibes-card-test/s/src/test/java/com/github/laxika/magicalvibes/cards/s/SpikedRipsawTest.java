@@ -38,6 +38,7 @@ class SpikedRipsawTest extends BaseCardTest {
         Permanent ripsaw = addCreatureReady(player1, new SpikedRipsaw());
         ripsaw.setAttachedTo(creature.getId());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent otherForest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -45,9 +46,9 @@ class SpikedRipsawTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(forest.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(forest.getId(), otherForest.getId());
     }
 
     @Test
@@ -62,7 +63,6 @@ class SpikedRipsawTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, forest.getId());
         });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
@@ -138,14 +138,13 @@ class SpikedRipsawTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new DawnhartDisciple());
         Permanent ripsaw = addCreatureReady(player1, new SpikedRipsaw());
         ripsaw.setAttachedTo(creature.getId());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, forest.getId());
         });
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
@@ -159,14 +158,13 @@ class SpikedRipsawTest extends BaseCardTest {
         Permanent otherCreature = addCreatureReady(player1, new DawnhartDisciple());
         Permanent ripsaw = addCreatureReady(player1, new SpikedRipsaw());
         ripsaw.setAttachedTo(attacker.getId());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
 
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(0));
             ripsaw.setAttachedTo(otherCreature.getId());
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, forest.getId());
         });
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
@@ -179,7 +177,7 @@ class SpikedRipsawTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new DawnhartDisciple());
         Permanent ripsaw = addCreatureReady(player1, new SpikedRipsaw());
         ripsaw.setAttachedTo(creature.getId());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
 
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(0));
@@ -187,7 +185,6 @@ class SpikedRipsawTest extends BaseCardTest {
             gd.playerGraveyards.get(player1.getId()).add(ripsaw.getCard());
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, forest.getId());
         });
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
@@ -198,13 +195,12 @@ class SpikedRipsawTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new DawnhartDisciple());
         Permanent ripsaw = addCreatureReady(player1, new SpikedRipsaw());
         ripsaw.setAttachedTo(creature.getId());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
 
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, forest.getId());
         });
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 

@@ -31,14 +31,13 @@ class VraskaGolgariQueenTest extends BaseCardTest {
     @DisplayName("+2 sacrifices another permanent, gains life, and draws a card")
     void plusTwoSacrificesGainsLifeAndDraws() {
         Permanent vraska = addReadyVraska(5);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest()));
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
@@ -70,14 +69,15 @@ class VraskaGolgariQueenTest extends BaseCardTest {
     void plusTwoOnlyOffersAnotherPermanent() {
         Permanent vraska = addReadyVraska(5);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(bears.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), forest.getId());
         assertThat(choice.validIds()).doesNotContain(vraska.getId());
     }
 
@@ -135,17 +135,17 @@ class VraskaGolgariQueenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("+2 gains life and draws during the original ability's resolution")
     void plusTwoCompletesLifeGainAndDrawDuringOriginalResolution() {
         addReadyVraska(5);
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.setLibrary(player1, List.of(new Forest()));
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
-                () -> harness.handlePermanentChosen(player1, forest.getId()));
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);

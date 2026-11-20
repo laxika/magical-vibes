@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -34,10 +37,10 @@ public class StensiaUprising extends Card {
                                 new ControlsPermanentCount(13, new PermanentTruePredicate()),
                                 new ControlsPermanentCountAtMost(13, new PermanentTruePredicate()))),
                         new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        new PermanentIsSourcePermanentPredicate(),
-                                        new DealDamageToAnyTargetEffect(7),
-                                        "this enchantment"),
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, new PermanentIsSourcePermanentPredicate(), Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                                new DealDamageToAnyTargetEffect(7)))),
                                 "Sacrifice this enchantment?"))));
     }
 }

@@ -29,7 +29,7 @@ class IronManTitanOfInnovationTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, mindStone.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(mindStone.getId()));
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -66,11 +66,11 @@ class IronManTitanOfInnovationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent treasure = findPermanent(player1, "Treasure");
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(mindStone.getId(), treasure.getId())
                 .doesNotContain(ironMyr.getId());
-        harness.handlePermanentChosen(player1, mindStone.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(mindStone.getId()));
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ironMyr);
@@ -87,7 +87,6 @@ class IronManTitanOfInnovationTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Treasure").getId());
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -111,7 +110,7 @@ class IronManTitanOfInnovationTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, mindStone.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(mindStone.getId()));
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -137,11 +136,11 @@ class IronManTitanOfInnovationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(solRing.getId(), findPermanent(player1, "Treasure").getId())
                 .doesNotContain(opposingArtifact.getId());
-        harness.handlePermanentChosen(player1, solRing.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(solRing.getId()));
         harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanent(player1, "Iron Myr").isTapped()).isTrue();

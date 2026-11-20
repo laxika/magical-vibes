@@ -42,7 +42,6 @@ class RedcapGutterDwellerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
 
         assertThat(gqs.getEffectivePower(gd, redcap)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, redcap)).isEqualTo(4);
@@ -102,7 +101,7 @@ class RedcapGutterDwellerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, rat.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(rat.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rat).hasSize(2);
         assertThat(gqs.getEffectivePower(gd, redcap)).isEqualTo(4);
@@ -142,7 +141,7 @@ class RedcapGutterDwellerTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, redcap));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, rat.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(rat.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(redcap, rat).hasSize(1);
         harness.assertInGraveyard(player1, "Redcap Gutter-Dweller");

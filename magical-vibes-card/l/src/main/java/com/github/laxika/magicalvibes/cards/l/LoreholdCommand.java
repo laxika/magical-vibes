@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -61,8 +62,9 @@ public class LoreholdCommand extends Card {
                                 "Target must be a player."))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice a permanent, then draw two cards",
-                        SacrificePermanentThenEffect.thenRegardless(
-                                new PermanentTruePredicate(), new DrawCardEffect(2), "a permanent"))
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentTruePredicate(), Subjects.you()),
+                                new DrawCardEffect(2)))
         ), 2));
     }
 }

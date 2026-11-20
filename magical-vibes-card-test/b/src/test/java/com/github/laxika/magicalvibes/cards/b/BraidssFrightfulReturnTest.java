@@ -30,7 +30,6 @@ class BraidssFrightfulReturnTest extends BaseCardTest {
         triggerNextChapter();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
         harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

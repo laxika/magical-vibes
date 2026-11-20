@@ -50,8 +50,6 @@ class GearbaneOrangutanTest extends BaseCardTest {
         harness.handleListChoice(player1,
                 "Sacrifice an artifact. If you do, put two +1/+1 counters on this creature.");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         Permanent orangutan = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof GearbaneOrangutan)
@@ -100,7 +98,6 @@ class GearbaneOrangutanTest extends BaseCardTest {
         harness.handleListChoice(player1,
                 "Sacrifice an artifact. If you do, put two +1/+1 counters on this creature.");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         Permanent orangutan = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof GearbaneOrangutan)

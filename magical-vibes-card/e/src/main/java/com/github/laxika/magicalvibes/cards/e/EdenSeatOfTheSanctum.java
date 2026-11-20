@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +14,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -32,17 +36,17 @@ public class EdenSeatOfTheSanctum extends Card {
                 List.of(
                         new MillEffect(2, Subjects.you()),
                         new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        new PermanentIsSourceCardPredicate(),
-                                        ReturnCardFromGraveyardEffect.builder()
+                                SequenceEffect.of(
+                                        new SacrificePermanentsEffect(1, new PermanentIsSourceCardPredicate(), Subjects.you()),
+                                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                                ReturnCardFromGraveyardEffect.builder()
                                                 .destination(GraveyardChoiceDestination.HAND)
                                                 .filter(new CardAllOfPredicate(List.of(
                                                         new CardIsPermanentPredicate(),
                                                         new CardNotPredicate(new CardIsSelfPredicate())
                                                 )))
                                                 .targetGraveyard(true)
-                                                .build(),
-                                        "this land"),
+                                                .build()))),
                                 "Sacrifice this land?")),
                 "{5}, {T}: Mill two cards. Then you may sacrifice this land. When you do, return another target permanent card from your graveyard to your hand."
         ));

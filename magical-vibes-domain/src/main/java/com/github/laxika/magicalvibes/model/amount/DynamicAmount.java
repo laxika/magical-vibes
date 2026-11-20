@@ -36,8 +36,6 @@ public sealed interface DynamicAmount permits
         CreatureTypesAmongControlledCreatures,
         CardsDrawnThisResolution,
         AmountThisWay,
-        PermanentLeftThisWayPower,
-        PermanentLeftThisWayToughness,
         CardsDrawnThisTurn,
         CardsLookedAtWhileScrying,
         OpponentsWithAtLeastCardsDrawnThisTurn,

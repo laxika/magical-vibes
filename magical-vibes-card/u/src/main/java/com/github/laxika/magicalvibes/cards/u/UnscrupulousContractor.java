@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,12 +26,12 @@ public class UnscrupulousContractor extends Card {
         // When this creature enters, you may sacrifice a creature. When you do, target player
         // draws two cards and loses 2 life.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentIsCreaturePredicate(),
-                        SequenceEffect.of(
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                SequenceEffect.of(
                                 new DrawCardEffect(2, Subjects.targetPlayerDeclaredElsewhere()),
-                                new LoseLifeEffect(2, Subjects.targetPlayer())),
-                        "a creature"),
+                                new LoseLifeEffect(2, Subjects.targetPlayer()))))),
                 "Sacrifice a creature?"));
 
         // Plot {2}{B}

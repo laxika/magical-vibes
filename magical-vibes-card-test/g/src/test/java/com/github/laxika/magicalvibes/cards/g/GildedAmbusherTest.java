@@ -33,8 +33,6 @@ class GildedAmbusherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ambusher).doesNotContain(sacrifice);
@@ -66,7 +64,7 @@ class GildedAmbusherTest extends BaseCardTest {
     @DisplayName("An opponent without an eligible permanent still exiles a random nonland library card")
     void exilesLibraryCardWithoutOpposingPermanent() {
         addCreatureReady(player1, new GildedAmbusher());
-        Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         Forest forest = new Forest();
         Shock shock = new Shock();
         harness.addToBattlefield(player2, forest);
@@ -76,7 +74,6 @@ class GildedAmbusherTest extends BaseCardTest {
             declareAttackers(List.of(0));
             resolveAllTriggers();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, sacrifice.getId());
             resolveAllTriggers();
         });
 
@@ -89,7 +86,7 @@ class GildedAmbusherTest extends BaseCardTest {
     @DisplayName("A library containing only lands does not prevent permanent exile and damage")
     void exilesPermanentWithOnlyLandsInLibrary() {
         addCreatureReady(player1, new GildedAmbusher());
-        Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent opposing = addCreatureReady(player2, new GrizzlyBears());
         Forest forest = new Forest();
         harness.setLibrary(player2, List.of(forest));
@@ -98,7 +95,6 @@ class GildedAmbusherTest extends BaseCardTest {
             declareAttackers(List.of(0));
             resolveAllTriggers();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, sacrifice.getId());
             resolveAllTriggers();
         });
 
@@ -112,7 +108,7 @@ class GildedAmbusherTest extends BaseCardTest {
     @DisplayName("The opponent chooses which nonland nontoken permanent to exile")
     void opponentChoosesPermanent() {
         addCreatureReady(player1, new GildedAmbusher());
-        Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent first = addCreatureReady(player2, new GrizzlyBears());
         Permanent second = addCreatureReady(player2, new GildedAmbusher());
         harness.setLibrary(player2, List.of());
@@ -121,7 +117,6 @@ class GildedAmbusherTest extends BaseCardTest {
             declareAttackers(List.of(0));
             resolveAllTriggers();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, sacrifice.getId());
             resolveAllTriggers();
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -152,7 +147,6 @@ class GildedAmbusherTest extends BaseCardTest {
             declareAttackers(player2, List.of(1));
             resolveAllTriggers();
             harness.handleMayAbilityChosen(player2, true);
-            harness.handlePermanentChosen(player2, bears.getId());
             resolveAllTriggers();
         });
 

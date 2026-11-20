@@ -65,7 +65,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, ghoul.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ghoul.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -92,6 +92,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice neither draws nor kills the Zombie")
     void decliningSacrificeDoesNotDrawOrKillZombie() {
         harness.addToBattlefield(player1, new WilheltTheRotcleaver());
         harness.addToBattlefield(player1, new DiregrafGhoul());
@@ -109,16 +110,15 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing Wilhelt itself draws during the same resolution")
     void sacrificingWilheltDrawsDuringTheSameResolution() {
-        Permanent wilhelt = harness.addToBattlefieldAndReturn(player1, new WilheltTheRotcleaver());
+        harness.addToBattlefield(player1, new WilheltTheRotcleaver());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new DiregrafGhoul()));
 
         advanceToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, wilhelt.getId());
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Wilhelt, the Rotcleaver");
         harness.assertInHand(player1, "Diregraf Ghoul");
@@ -127,6 +127,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing the decayed Zombie token draws without creating another")
     void sacrificingGeneratedDecayedTokenDrawsWithoutReplacingIt() {
         harness.addToBattlefield(player1, new WilheltTheRotcleaver());
         Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new DiregrafGhoul());
@@ -139,7 +140,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
         advanceToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, token.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(token.getId()));
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Zombie")).isZero();
@@ -148,6 +149,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Zombie dying creates no token")
     void opponentsZombieDeathDoesNotCreateToken() {
         harness.addToBattlefield(player1, new WilheltTheRotcleaver());
         Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new DiregrafGhoul());

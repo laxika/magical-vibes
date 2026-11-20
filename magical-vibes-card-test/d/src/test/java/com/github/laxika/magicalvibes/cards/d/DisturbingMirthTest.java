@@ -21,7 +21,7 @@ class DisturbingMirthTest extends BaseCardTest {
 
     @Test
     void entersMaySacrificeAnotherCreatureToDrawTwoCards() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Card firstDraw = new Forest();
         Card secondDraw = new Forest();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
@@ -30,9 +30,6 @@ class DisturbingMirthTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -91,7 +88,6 @@ class DisturbingMirthTest extends BaseCardTest {
         castDisturbingMirth();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, otherMirth.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherMirth);

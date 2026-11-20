@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,10 +38,10 @@ public class VraskaGolgariQueen extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(new MayEffect(
-                        new SacrificePermanentThenEffect(
-                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
-                                SequenceEffect.of(new GainLifeEffect(1), new DrawCardEffect(1)),
-                                "another permanent", false, false),
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentNotPredicate(new PermanentIsSourceCardPredicate()), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                        SequenceEffect.of(new GainLifeEffect(1), new DrawCardEffect(1)))),
                         "Sacrifice another permanent?")),
                 "+2: You may sacrifice another permanent. If you do, you gain 1 life and draw a card."
         ));

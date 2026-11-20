@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GastalBlockbuster.class, HowlersHeavy.class, StartingColumn.class, DuneDrifter.class})
@@ -27,10 +29,10 @@ class GastalBlockbusterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(sacrificeChoice.validIds()).contains(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -55,10 +57,10 @@ class GastalBlockbusterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(sacrificeChoice.validIds()).contains(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Starting Column"));
         harness.passBothPriorities();
 
@@ -90,7 +92,6 @@ class GastalBlockbusterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gastal Blockbuster"));
         harness.assertInGraveyard(player1, "Gastal Blockbuster");
         harness.handlePermanentChosen(player1, target.getId());
         harness.assertOnBattlefield(player2, "Starting Column");
@@ -103,18 +104,22 @@ class GastalBlockbusterTest extends BaseCardTest {
     @DisplayName("Sacrifice remains optional and available without any legal destruction target")
     void canSacrificeWithoutOpponentArtifact() {
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new StartingColumn());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HowlersHeavy());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HowlersHeavy());
         castGastalBlockbuster();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(harness.getPermanentId(player1, "Gastal Blockbuster"));
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(
+                harness.getPermanentId(player1, "Gastal Blockbuster"), ownCreature.getId());
         assertThat(choice.validIds()).doesNotContain(ownArtifact.getId(), opponentCreature.getId());
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gastal Blockbuster"));
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Gastal Blockbuster")));
         harness.assertInGraveyard(player1, "Gastal Blockbuster");
         harness.assertOnBattlefield(player1, "Starting Column");
+        harness.assertOnBattlefield(player1, "Howler's Heavy");
         harness.assertOnBattlefield(player2, "Howler's Heavy");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

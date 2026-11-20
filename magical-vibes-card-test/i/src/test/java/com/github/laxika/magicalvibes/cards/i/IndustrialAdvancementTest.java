@@ -27,13 +27,12 @@ class IndustrialAdvancementTest extends BaseCardTest {
         Shock rest = new Shock();
 
         harness.addToBattlefield(player1, advancement);
-        Permanent sacrificedPermanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.addToBattlefield(player1, sacrificed);
         harness.setLibrary(player1, List.of(found, rest));
 
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificedPermanent.getId());
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -80,13 +79,12 @@ class IndustrialAdvancementTest extends BaseCardTest {
         AirElemental third = new AirElemental();
 
         harness.addToBattlefield(player1, advancement);
-        Permanent sacrificedPermanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.addToBattlefield(player1, sacrificed);
         harness.setLibrary(player1, List.of(first, second, third));
 
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificedPermanent.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -103,13 +101,12 @@ class IndustrialAdvancementTest extends BaseCardTest {
         GrizzlyBears second = new GrizzlyBears();
         Shock untouched = new Shock();
         harness.addToBattlefield(player1, advancement);
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.addToBattlefield(player1, sacrificed);
         harness.setLibrary(player1, List.of(first, second, untouched));
 
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, permanent.getId());
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
@@ -127,13 +124,12 @@ class IndustrialAdvancementTest extends BaseCardTest {
         AirElemental sacrificed = new AirElemental();
         GrizzlyBears found = new GrizzlyBears();
         harness.addToBattlefield(player1, advancement);
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.addToBattlefield(player1, sacrificed);
         harness.setLibrary(player1, List.of(found));
 
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, permanent.getId());
         harness.handleMultipleCardsChosen(player1, List.of(found.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
@@ -148,13 +144,12 @@ class IndustrialAdvancementTest extends BaseCardTest {
         IndustrialAdvancement advancement = new IndustrialAdvancement();
         GrizzlyBears sacrificed = new GrizzlyBears();
         harness.addToBattlefield(player1, advancement);
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.addToBattlefield(player1, sacrificed);
         harness.setLibrary(player1, List.of());
 
         moveToEndStep();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, permanent.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))

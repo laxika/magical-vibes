@@ -28,16 +28,17 @@ class SkyfisherSpiderTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         SkyfisherSpider spiderCard = new SkyfisherSpider();
         harness.castFromHand(player1, spiderCard, "{2}{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice sacrificeChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(sacrificeChoice.validIds()).containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        PendingInteraction.MultiPermanentChoice sacrificeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(sacrificeChoice.validIds()).containsExactlyInAnyOrder(sacrifice.getId(), otherCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         PendingInteraction.PermanentChoice targetChoice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -161,7 +162,6 @@ class SkyfisherSpiderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         Permanent spider = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(spiderCard.getId()))

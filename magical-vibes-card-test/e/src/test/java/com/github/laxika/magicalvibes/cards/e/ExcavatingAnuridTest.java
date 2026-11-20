@@ -23,16 +23,12 @@ class ExcavatingAnuridTest extends BaseCardTest {
     @Test
     @DisplayName("May sacrifice a land when it enters to draw a card")
     void maySacrificeLandToDraw() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
+        harness.addToBattlefield(player1, new SnowCoveredForest());
         Card drawnCard = new SnowCoveredForest();
         harness.setLibrary(player1, List.of(drawnCard));
         castAnurid(player1);
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, land.getId());
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Snow-Covered Forest");
         harness.assertInHand(player1, "Snow-Covered Forest");
@@ -93,13 +89,11 @@ class ExcavatingAnuridTest extends BaseCardTest {
     @DisplayName("Sacrificing a land as the seventh card immediately enables threshold")
     void sacrificeEnablesThreshold() {
         harness.setGraveyard(player1, graveyardWithCards(6));
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
+        harness.addToBattlefield(player1, new SnowCoveredForest());
         harness.setLibrary(player1, List.of(new SnowCoveredForest()));
         castAnurid(player1);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
-        harness.passBothPriorities();
 
         Permanent anurid = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof ExcavatingAnurid).findFirst().orElseThrow();

@@ -37,12 +37,10 @@ class WitherbloomCharmTest extends BaseCardTest {
             harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
             addBG();
 
-            UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
             harness.castInstant(player1, 0, 0, null);
             harness.passBothPriorities();
 
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, bearId);
             harness.passBothPriorities();
 
             harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -59,11 +57,9 @@ class WitherbloomCharmTest extends BaseCardTest {
             harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
             addBG();
 
-            UUID landId = harness.getPermanentId(player1, "Swamp");
             harness.castInstant(player1, 0, 0, null);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, landId);
 
             harness.assertNotOnBattlefield(player1, "Swamp");
             harness.assertInGraveyard(player1, "Swamp");

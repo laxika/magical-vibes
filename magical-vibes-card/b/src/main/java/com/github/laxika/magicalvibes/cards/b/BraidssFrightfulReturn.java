@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -35,10 +36,10 @@ public class BraidssFrightfulReturn extends Card {
     public BraidssFrightfulReturn() {
         addStaticEffect(new ReadAheadEffect(false));
         addTrigger(Triggers.chapter(1), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new DiscardEffect(1, Subjects.eachOpponent()),
-                        "a creature", false, false),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                new DiscardEffect(1, Subjects.eachOpponent()))),
                 "Sacrifice a creature?"));
 
         addTrigger(Triggers.chapter(2), ReturnCardFromGraveyardEffect.builder()

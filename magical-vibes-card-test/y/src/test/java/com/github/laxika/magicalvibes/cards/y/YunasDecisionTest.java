@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ class YunasDecisionTest extends BaseCardTest {
     @Test
     @DisplayName("Continue the Pilgrimage sacrifices, draws, and offers a creature and a land")
     void continueThePilgrimage() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Card creature = new GrizzlyBears();
         Card land = new Forest();
         harness.setHand(player1, List.of(new YunasDecision(), creature, land));
@@ -32,8 +31,6 @@ class YunasDecisionTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -98,15 +95,13 @@ class YunasDecisionTest extends BaseCardTest {
     @Test
     @DisplayName("The player may decline both cards after sacrificing and drawing")
     void mayDeclineBothCards() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new YunasDecision(), new GrizzlyBears(), new Forest()));
         harness.setLibrary(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -121,7 +116,7 @@ class YunasDecisionTest extends BaseCardTest {
     @Test
     @DisplayName("The drawn card may be put onto the battlefield, with the land declined")
     void mayPutDrawnCreatureOnly() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Card drawnCreature = new GrizzlyBears();
         harness.setHand(player1, List.of(new YunasDecision(), new Forest()));
         harness.setLibrary(player1, List.of(drawnCreature));
@@ -129,8 +124,6 @@ class YunasDecisionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 1);
@@ -145,7 +138,7 @@ class YunasDecisionTest extends BaseCardTest {
     @Test
     @DisplayName("The creature must wait for the land selection so both enter together")
     void creatureDoesNotEnterBeforeLandIsChosen() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Card creature = new GrizzlyBears();
         harness.setHand(player1, List.of(new YunasDecision(), creature, new Forest()));
         harness.setLibrary(player1, List.of(new Shock()));
@@ -153,8 +146,6 @@ class YunasDecisionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -192,14 +183,13 @@ class YunasDecisionTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing continues the spell immediately without a separate trigger")
     void sacrificeContinuesResolutionImmediately() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new YunasDecision(), new GrizzlyBears(), new Forest()));
         harness.setLibrary(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
 
         harness.assertInHand(player1, "Shock");
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -211,15 +201,13 @@ class YunasDecisionTest extends BaseCardTest {
     @Test
     @DisplayName("The creature may be declined while the land is put onto the battlefield")
     void mayPutLandOnly() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new YunasDecision(), new GrizzlyBears(), new Forest()));
         harness.setLibrary(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,10 +26,9 @@ public class WanderwineProphets extends Card {
         // Whenever this deals combat damage to a player, you may sacrifice a Merfolk. If you do, take an extra turn after this one.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
-                        new SacrificePermanentThenEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                                new ControllerExtraTurnEffect(1),
-                                "a Merfolk", false, false),
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new ControllerExtraTurnEffect(1))),
                         "You may sacrifice a Merfolk. If you do, take an extra turn after this one."));
     }
 }

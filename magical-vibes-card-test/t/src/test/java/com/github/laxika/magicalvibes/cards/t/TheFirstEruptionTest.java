@@ -115,7 +115,7 @@ class TheFirstEruptionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter III prompts to sacrifice a Mountain and deals 3 damage to all creatures")
+    @DisplayName("Chapter III sacrifices the only Mountain and deals 3 damage to all creatures")
     void chapterIIISacrificesMountainAndDealsDamage() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFirstEruption());
         assertThat(saga).isNotNull();
@@ -140,11 +140,8 @@ class TheFirstEruptionTest extends BaseCardTest {
 
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
-        // Resolve chapter III — should prompt for Mountain sacrifice
+        // Resolve chapter III — the only Mountain is sacrificed without a prompt
         harness.passBothPriorities();
-
-        // Choose the Mountain to sacrifice
-        harness.handlePermanentChosen(player1, mountain.getId());
 
         assertThat(gd.stack).isEmpty();
 
@@ -190,16 +187,14 @@ class TheFirstEruptionTest extends BaseCardTest {
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Need a Mountain for chapter III to sacrifice
-        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // precombat main → chapter III triggers
 
-        harness.passBothPriorities(); // resolve chapter III → sacrifice Mountain prompt
-
-        harness.handlePermanentChosen(player1, mountain.getId()); // choose Mountain
+        harness.passBothPriorities(); // resolve chapter III → the only Mountain is sacrificed
 
         assertThat(gd.stack).isEmpty();
 
@@ -242,7 +237,7 @@ class TheFirstEruptionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
 
         assertThat(creature.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(retained).doesNotContain(chosen);

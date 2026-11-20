@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SerendibDjinn.class, Island.class, Forest.class, PhantasmalTerrain.class})
@@ -25,8 +27,8 @@ class SerendibDjinnTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, island.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
 
         harness.assertLife(player1, 17);
         harness.assertNotOnBattlefield(player1, "Island");
@@ -37,12 +39,11 @@ class SerendibDjinnTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a non-Island land deals no damage")
     void sacrificingNonIslandDealsNoDamage() {
-        var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new SerendibDjinn());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, forest.getId());
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
@@ -64,13 +65,13 @@ class SerendibDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing the last Island deals 3 damage and then Serendib Djinn is sacrificed")
     void sacrificingLastIslandDealsDamageAndSacrificesDjinn() {
-        var island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new SerendibDjinn());
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, island.getId());
         resolveAllTriggers();
 
         harness.assertLife(player1, 17);
@@ -80,6 +81,7 @@ class SerendibDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's lands do not stop the no-lands trigger")
     void opponentsLandsDoNotPreventStateTrigger() {
         harness.addToBattlefield(player2, new Island());
         harness.addToBattlefield(player1, new SerendibDjinn());
@@ -92,6 +94,7 @@ class SerendibDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's upkeep does not require a sacrifice")
     void opponentsUpkeepDoesNotRequireSacrifice() {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new SerendibDjinn());
@@ -106,6 +109,7 @@ class SerendibDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a Forest that is an Island deals damage")
     void sacrificingForestChangedToIslandDealsDamage() {
         var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
@@ -116,7 +120,7 @@ class SerendibDjinnTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         resolveAllTriggers();
 
         harness.assertLife(player1, 17);
@@ -125,6 +129,7 @@ class SerendibDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing an Island that is now a Forest deals no damage")
     void sacrificingIslandChangedToForestDealsNoDamage() {
         var island = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.addToBattlefield(player1, new Forest());
@@ -135,7 +140,7 @@ class SerendibDjinnTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, island.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);

@@ -120,17 +120,18 @@ class WestWindAvatarTest extends BaseCardTest {
     @DisplayName("The sacrifice choice includes only your tokens and lands")
     void sacrificeChoiceExcludesOpposingLandsAndNontokenCreatures() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent otherForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new WestWindAvatar());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(forest.getId());
-        harness.handlePermanentChosen(player1, forest.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(forest.getId(), otherForest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
         harness.assertLife(player1, 23);
         harness.assertOnBattlefield(player2, "Forest");
@@ -231,8 +232,7 @@ class WestWindAvatarTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, permanent.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(permanent);
     }
 
     private Permanent addReadyAvatar() {

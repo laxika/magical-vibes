@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -46,7 +47,7 @@ public class HotelOfFears extends Card {
                 SequenceEffect.of(
                         new ChooseColorAtResolutionEffect(),
                         counterEffect,
-                        new SacrificePermanentThenEffect(ANOTHER_CREATURE, null, "another creature"),
+                        new SacrificePermanentsEffect(1, ANOTHER_CREATURE, Subjects.you()),
                         new ClearChosenColorEffect()));
     }
 }

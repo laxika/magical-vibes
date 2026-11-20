@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -634,8 +635,8 @@ public class DestructionSupport {
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         gameData.simultaneousSacrificeDepth++;
         try {
-            return departureService.departNow(gameData, DepartureBatch.of(intents), DepartureService.Hooks.afterEach(
-                    (intent, perm, snapshot, removed) -> {
+            DepartureService.Outcome.Done done = departureService.departNow(gameData, DepartureBatch.of(intents),
+                    DepartureService.Hooks.afterEach((intent, perm, snapshot, removed) -> {
                         if (snapshot == null) {
                             // It couldn't be sacrificed (CR 701.21a), so it wasn't, and nothing that watches for a
                             // sacrifice sees one.
@@ -644,11 +645,26 @@ public class DestructionSupport {
                         UUID playerId = sacrificingPlayerId != null ? sacrificingPlayerId : snapshot.controllerId();
                         logSacrifice(gameData, perm.getCard(), playerId, snapshot.creature());
                     }));
+            recordOnSacrificeStep(gameData, done.results());
+            return done;
         } finally {
             if (--gameData.simultaneousSacrificeDepth == 0) {
                 gameData.sacrificeBoonBatchPlayerIds.clear();
             }
             permanentRemovalService.endPermanentLeaveBatch(gameData);
+        }
+    }
+
+    /**
+     * Adds what was sacrificed to the sacrifice step of the resolution it happens in, the resolving entry or the one
+     * parked on that step's prompt, once such a step has begun ({@link StackEntry#beginSacrificeStep}): "the sacrificed
+     * creature's power" and "if you do" then read its last-known information there (CR 608.2h).
+     */
+    private static void recordOnSacrificeStep(GameData gameData, List<DepartureResult> results) {
+        StackEntry stepEntry = gameData.resolvingEntry != null
+                ? gameData.resolvingEntry : gameData.pendingEffectResolutionEntry;
+        if (stepEntry != null && stepEntry.getResolutionResults().outcomes().containsKey(StepKind.SACRIFICE)) {
+            stepEntry.addSacrificeDepartures(results);
         }
     }
 

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -52,9 +51,6 @@ class DarettiScrapSavantTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(returnTarget));
 
         harness.activateAbility(player1, 0, 1, null, returnTarget.getId(), Zone.GRAVEYARD);
-        harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         assertThat(daretti.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);

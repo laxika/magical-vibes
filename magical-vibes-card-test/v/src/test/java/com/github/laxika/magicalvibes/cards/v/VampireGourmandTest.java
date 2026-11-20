@@ -22,6 +22,7 @@ class VampireGourmandTest extends BaseCardTest {
     void attackingOffersSacrifice() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
         Permanent bears = addCreatureReady(player1, new BearCub());
+        Permanent otherBears = addCreatureReady(player1, new BearCub());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -29,9 +30,9 @@ class VampireGourmandTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(bears.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), otherBears.getId());
         assertThat(choice.validIds()).doesNotContain(vampire.getId());
     }
 
@@ -47,7 +48,6 @@ class VampireGourmandTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
@@ -92,14 +92,13 @@ class VampireGourmandTest extends BaseCardTest {
     @DisplayName("The unblockable effect expires at end of turn")
     void unblockableExpiresAtEndOfTurn() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
-        Permanent bears = addCreatureReady(player1, new BearCub());
+        addCreatureReady(player1, new BearCub());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gqs.hasCantBeBlocked(gd, vampire)).isTrue();
 
@@ -115,14 +114,13 @@ class VampireGourmandTest extends BaseCardTest {
     @DisplayName("Drawing and becoming unblockable happen during the attack trigger's resolution")
     void sacrificeFollowUpResolvesWithoutAnotherPriorityRound() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
-        Permanent bears = addCreatureReady(player1, new BearCub());
+        addCreatureReady(player1, new BearCub());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gqs.hasCantBeBlocked(gd, vampire)).isTrue();

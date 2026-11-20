@@ -72,12 +72,11 @@ class FirebladeArtistTest extends BaseCardTest {
     @Test
     @DisplayName("Fireblade Artist can sacrifice itself and damage resolves separately")
     void canSacrificeItself() {
-        Permanent artist = harness.addToBattlefieldAndReturn(player1, new FirebladeArtist());
+        harness.addToBattlefield(player1, new FirebladeArtist());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artist.getId());
         harness.handlePermanentChosen(player1, player2.getId());
 
         harness.assertInGraveyard(player1, "Fireblade Artist");
@@ -111,14 +110,13 @@ class FirebladeArtistTest extends BaseCardTest {
     @Test
     @DisplayName("The damage trigger can target its controller's planeswalker")
     void canDamageOwnPlaneswalker() {
-        Permanent artist = harness.addToBattlefieldAndReturn(player1, new FirebladeArtist());
+        harness.addToBattlefield(player1, new FirebladeArtist());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new DovinGrandArbiter());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artist.getId());
         harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
 
@@ -142,6 +140,7 @@ class FirebladeArtistTest extends BaseCardTest {
     @DisplayName("Only creatures controlled by the ability's controller can be sacrificed")
     void cannotSacrificeOpponentsCreature() {
         Permanent artist = harness.addToBattlefieldAndReturn(player1, new FirebladeArtist());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         harness.addToBattlefield(player2, new SauroformHybrid());
 
         advanceToUpkeep(player1);
@@ -150,12 +149,13 @@ class FirebladeArtistTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(artist.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(artist.getId(), ownCreature.getId());
         harness.handlePermanentChosen(player1, artist.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Sauroform Hybrid");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
         harness.assertLife(player2, 18);
     }
 }

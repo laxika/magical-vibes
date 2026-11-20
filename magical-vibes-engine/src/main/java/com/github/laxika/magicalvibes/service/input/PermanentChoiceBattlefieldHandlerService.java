@@ -120,7 +120,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEither
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
@@ -292,8 +291,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler
             targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler;
-
-    private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
 
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
 
@@ -1730,27 +1727,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleSacrificeCreatureControllerGainsLifeEqualToToughness(GameData gameData, UUID permanentId,
-                                                                            PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Target creature no longer exists");
-        }
-
-        UUID sacrificingPlayerId = context.sacrificingPlayerId();
-
-        // Capture effective toughness before removing from battlefield (static bonuses still apply)
-        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
-
-        if (gameQueryService.cantBeSacrificed(gameData, target)) {
-            throw new IllegalStateException("This creature cannot be sacrificed");
-        }
-        destructionSupport.sacrificeAndLog(gameData, target, sacrificingPlayerId);
-        lifeSupport.applyGainLife(gameData, context.lifeGainerId(), toughness, context.sourceCardName());
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleActivatedAbilityCostChoice(GameData gameData, Player player, UUID permanentId, PermanentChoiceContext.ActivatedAbilityCostChoice costChoice) {
         abilityActivationService.completeActivatedAbilityCostChoice(gameData, player, costChoice, permanentId);
     }
@@ -2735,41 +2711,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         record.setSacrificedPermanentSnapshot(sacrificed);
         record.setSacrificedPower(power);
         triggeredAbilityStackService.putMade(gameData, record);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeAnotherCreatureGainLifeAndDraw(GameData gameData, UUID permanentId,
-                                                             PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw ctx) {
-        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
-        if (toSacrifice == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        // Capture effective power before removing from battlefield (static bonuses still apply;
-        // negative power counts as 0).
-        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
-
-        destructionSupport.sacrificeAndLog(gameData, toSacrifice, ctx.controllerId());
-
-        if (power > 0) {
-            lifeSupport.applyGainLife(gameData, ctx.controllerId(), power, ctx.sourceCard().getName());
-            for (int i = 0; i < power; i++) {
-                drawService.resolveDrawCard(gameData, ctx.controllerId());
-            }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeCreatureThenMassDamageEqualToPower(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower context) {
-        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosen == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        sacrificeCreatureThenMassDamageHandler.resolveAfterChoice(gameData, chosen, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

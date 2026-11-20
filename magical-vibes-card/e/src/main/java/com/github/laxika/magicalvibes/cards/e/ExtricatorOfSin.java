@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -27,10 +31,9 @@ public class ExtricatorOfSin extends Card {
         // When this creature enters, you may sacrifice another permanent. If you do, create a
         // 3/2 colorless Eldrazi Horror creature token.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
-                        eldraziHorrorToken(),
-                        "another permanent", false, false),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentNotPredicate(new PermanentIsSourceCardPredicate()), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), eldraziHorrorToken())),
                 "Sacrifice another permanent?"));
 
         // Delirium — At the beginning of your upkeep, if there are four or more card types among

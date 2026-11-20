@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -19,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -39,13 +41,12 @@ public class LarvalScoutlander extends Card {
 
     public LarvalScoutlander() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAnyOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.LANDER))),
-                        new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "a land or Lander", false, false),
+                                new PermanentHasSubtypePredicate(CardSubtype.LANDER))), Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                        new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED))),
                 "Sacrifice a land or Lander?"));
 
         addActivatedAbility(new ActivatedAbility(

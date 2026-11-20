@@ -22,14 +22,12 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may sacrifice another creature to put two +1/+1 counters on Hei Bai")
     void etbSacrificesAnotherCreatureForCounters() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        harness.addToBattlefield(player1, new TurtleDuck());
         Permanent heiBai = castHeiBai();
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -39,14 +37,12 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
     @DisplayName("Attacking may sacrifice another creature to put two +1/+1 counters on Hei Bai")
     void attackSacrificesAnotherCreatureForCounters() {
         Permanent heiBai = addCreatureReady(player1, new HeiBaiSpiritOfBalance());
-        Permanent sacrifice = addCreatureReady(player1, new TurtleDuck());
+        addCreatureReady(player1, new TurtleDuck());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -55,13 +51,11 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice can be an artifact")
     void etbSacrificesArtifactForCounters() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new TrustyBoomerang());
+        harness.addToBattlefield(player1, new TrustyBoomerang());
         Permanent heiBai = castHeiBai();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -89,13 +83,11 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
 
     @Test
     void countersArePlacedDuringTheSacrificeAbilityResolution() {
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        harness.addToBattlefield(player1, new TurtleDuck());
         Permanent heiBai = castHeiBai();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
@@ -104,13 +96,11 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
     @Test
     void attackCountersArePlacedDuringTheSacrificeAbilityResolution() {
         Permanent heiBai = addCreatureReady(player1, new HeiBaiSpiritOfBalance());
-        Permanent sacrifice = addCreatureReady(player1, new TurtleDuck());
+        addCreatureReady(player1, new TurtleDuck());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
@@ -133,17 +123,22 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
     @Test
     void sacrificeChoiceExcludesHeiBaiAndOpponentsPermanents() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new TrustyBoomerang());
         harness.addToBattlefield(player2, new TurtleDuck());
         harness.addToBattlefield(player2, new TrustyBoomerang());
-        castHeiBai();
+        Permanent heiBai = castHeiBai();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(sacrifice.getId());
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(sacrifice.getId(), artifact.getId())
+                .doesNotContain(heiBai.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
         resolveAllTriggers();
+
+        assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
     }
 
     @Test

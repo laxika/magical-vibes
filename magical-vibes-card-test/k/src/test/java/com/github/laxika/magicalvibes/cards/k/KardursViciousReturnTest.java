@@ -23,13 +23,12 @@ class KardursViciousReturnTest extends BaseCardTest {
     @DisplayName("Chapter I may sacrifice a creature to deal 3 damage to any target")
     void chapterIMaySacrificeCreatureForDamage() {
         Permanent saga = addSaga(0);
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearlessPup());
+        harness.addToBattlefield(player1, new FearlessPup());
         int opponentLife = gd.getLife(player2.getId());
 
         advanceToChapter();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WanderwineProphets.class, DeeptreadMerrow.class, GoldmeadowHarrier.class})
@@ -96,11 +98,8 @@ class WanderwineProphetsTest extends BaseCardTest {
 
         resolveCombat();
 
-        // Accept the may -> prompted to choose which Merfolk to sacrifice (only Prophets qualifies).
+        // Accept the may -> Prophets is the only Merfolk, so it is sacrificed without a prompt.
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-
-        harness.handlePermanentChosen(player1, prophets.getId());
 
         harness.assertInGraveyard(player1, "Wanderwine Prophets");
         assertThat(gd.extraTurns).contains(player1.getId());
@@ -116,7 +115,7 @@ class WanderwineProphetsTest extends BaseCardTest {
         resolveCombat();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, otherProphets.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(otherProphets.getId()));
 
         harness.assertOnBattlefield(player1, "Wanderwine Prophets");
         harness.assertInGraveyard(player1, "Wanderwine Prophets");

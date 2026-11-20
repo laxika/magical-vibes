@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WretchedBonemass;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -7,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -16,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,17 +37,15 @@ public class AltarOfTheWretched extends Card {
     public AltarOfTheWretched() {
         setBackFaceCard(new WretchedBonemass());
 
-        SacrificedPermanentPower sacrificedPower = new SacrificedPermanentPower();
+        AmountThisWay sacrificedPower = AmountThisWay.sacrificedPower();
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SacrificePermanentThenEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
-                        )),
-                        SequenceEffect.of(
+                        )), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
                                 new DrawCardEffect(sacrificedPower),
-                                new MillEffect(sacrificedPower, Subjects.you())),
-                        "a nontoken creature"),
+                                new MillEffect(sacrificedPower, Subjects.you())))),
                 "Sacrifice a nontoken creature?"));
 
         addActivatedAbility(new ActivatedAbility(

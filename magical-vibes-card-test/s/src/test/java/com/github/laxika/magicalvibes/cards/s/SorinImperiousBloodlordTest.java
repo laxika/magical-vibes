@@ -84,14 +84,13 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     @DisplayName("+1 sacrifice Vampire deals 3 damage and gains 3 life")
     void plusOneSacrificeDealsDamageAndGainsLife() {
         Permanent sorin = addReadySorin(player1);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
         int lifeBefore = gd.getLife(player1.getId());
         int oppLifeBefore = gd.getLife(player2.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampire.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -123,22 +122,23 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     void plusOneSacrificeOnlyOffersVampires() {
         addReadySorin(player1);
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        Permanent otherVampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
         harness.addToBattlefield(player1, new LanternBearer());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(vampire.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(vampire.getId(), otherVampire.getId());
     }
 
     @Test
     @DisplayName("+1 sacrifice rider offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
     void plusOneSacrificeRiderReadsTheDeclaredAnyTarget() {
         Permanent sorin = addReadySorin(player1);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
         Permanent opponentSorin = harness.addToBattlefieldAndReturn(player2, new SorinImperiousBloodlord());
         opponentSorin.setCounterCount(CounterType.LOYALTY, 3);
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
@@ -147,7 +147,6 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampire.getId());
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -228,14 +227,13 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     @DisplayName("Sacrifice trigger excludes opposing hexproof creatures but allows your own")
     void sacrificeTriggerRespectsHexproof() {
         addReadySorin(player1);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
         Permanent ownSigarda = harness.addToBattlefieldAndReturn(player1, new SigardaHostOfHerons());
         Permanent opposingSigarda = harness.addToBattlefieldAndReturn(player2, new SigardaHostOfHerons());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampire.getId());
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -248,14 +246,13 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     @DisplayName("Sacrifice trigger damages a creature only after its separate resolution")
     void sacrificeTriggerDamagesCreature() {
         addReadySorin(player1);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LanternBearer());
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampire.getId());
         harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertInGraveyard(player1, "Captivating Vampire");
@@ -271,7 +268,7 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     @DisplayName("Sacrifice trigger does not gain life if its target is gone before it resolves")
     void sacrificeTriggerIllegalTargetPreventsLifeGain() {
         addReadySorin(player1);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LanternBearer());
         int lifeBefore = gd.getLife(player1.getId());
         harness.setHand(player1, List.of(new Shock()));
@@ -280,7 +277,6 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampire.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
@@ -293,7 +289,7 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     @DisplayName("Sacrifice trigger removes three loyalty from a planeswalker")
     void sacrificeTriggerDamagesPlaneswalker() {
         addReadySorin(player1);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        harness.addToBattlefield(player1, new CaptivatingVampire());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SorinImperiousBloodlord());
         target.setCounterCount(CounterType.LOYALTY, 4);
         int lifeBefore = gd.getLife(player1.getId());
@@ -301,7 +297,6 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampire.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

@@ -57,13 +57,12 @@ class GristTheHungerTideTest extends BaseCardTest {
     @DisplayName("-2 sacrifices a creature and destroys a target creature")
     void minusTwoSacrificesAndDestroys() {
         Permanent grist = addReadyGrist(player1, 3);
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -189,14 +188,13 @@ class GristTheHungerTideTest extends BaseCardTest {
     @DisplayName("-2 can destroy a planeswalker through a separate reflexive trigger")
     void minusTwoTargetsPlaneswalkerAfterSacrifice() {
         addReadyGrist(player1, 3);
-        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GristTheHungerTide());
         target.setCounterCount(CounterType.LOYALTY, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
