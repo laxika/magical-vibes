@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,10 +28,10 @@ public class Ravenform extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"
-        )).addSpellEffect(new ExileTargetPermanentThenEffect(
-                new CreateTokenEffect("Bird", 1, 1, CardColor.BLUE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+        )).addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new CreateTokenEffect("Bird", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())
+                        .forController(Subjects.controllerOf(Subjects.target())));
         addCastingOption(new ForetellCast("{U}"));
     }
 }

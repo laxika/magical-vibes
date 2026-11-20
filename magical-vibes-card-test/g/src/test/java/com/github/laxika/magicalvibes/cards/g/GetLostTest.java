@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MirrormindCrown;
 import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GetLost.class, GrizzlyBears.class, Forest.class, GloriousAnthem.class, QuintoriusKand.class})
+@CardUsed({GetLost.class, GrizzlyBears.class, Forest.class, GloriousAnthem.class, QuintoriusKand.class,
+        MirrormindCrown.class})
 class GetLostTest extends BaseCardTest {
 
     @Test
@@ -35,6 +38,27 @@ class GetLostTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Map")).allMatch(map ->
                 map.getCard().hasType(CardType.ARTIFACT)
                         && map.getCard().getSubtypes().contains(CardSubtype.MAP));
+    }
+
+    @Test
+    @DisplayName("The destroyed creature's controller is offered their Mirrormind Crown and creates the copies instead")
+    void controllersMirrormindCrownReplacesTheMaps() {
+        Permanent equipped = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent crown = harness.addToBattlefieldAndReturn(player2, new MirrormindCrown());
+        crown.setAttachedTo(equipped.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(target);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(findPermanents(player2, "Map")).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Grizzly Bears"))
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
 
     @Test

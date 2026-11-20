@@ -6,14 +6,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -41,15 +43,15 @@ public class VolatileFault extends Card {
                 "{1}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DestroyTargetPermanentThenEffect(
+                        SequenceEffect.of(
+                                new DestroyTargetPermanentEffect(),
                                 new MayEffect(new SearchLibraryEffect(
                                         new CardAllOfPredicate(List.of(
                                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                                 new CardTypePredicate(CardType.LAND)
                                         )),
-                                        LibrarySearchDestination.BATTLEFIELD),
-                                "Search your library for a basic land card?"),
-                                ThenEffectRecipient.TARGET_CONTROLLER),
+                                        LibrarySearchDestination.BATTLEFIELD).searchedBy(Subjects.controllerOf(Subjects.target())),
+                                "Search your library for a basic land card?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER)),
                         CreateTokenEffect.ofTreasureToken(1)
                 ),
                 "{1}, {T}, Sacrifice this land: Destroy target nonbasic land an opponent controls. That player may search their library for a basic land card, put it onto the battlefield, then shuffle. You create a Treasure token.",

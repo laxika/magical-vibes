@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -69,14 +70,12 @@ public class PathToExile extends Card {
         // Exile target creature. Its controller may search their library for a basic land card,
         // put that card onto the battlefield tapped, then shuffle.
         // The controller first chooses whether to search; declining neither searches nor shuffles.
-        target(TargetFilters.creature()).addSpellEffect(new ExileTargetPermanentThenEffect(
-                new MayEffect(new SearchLibraryEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ExileTargetPermanentEffect()).addSpellEffect(new MayEffect(new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                 new CardTypePredicate(CardType.LAND)
                         )),
-                        LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "Search your library for a basic land card?"),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED).searchedBy(Subjects.controllerOf(Subjects.target())),
+                        "Search your library for a basic land card?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER));
     }
 }

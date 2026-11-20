@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -33,7 +33,7 @@ public class VerdantSuccession extends Card {
                         ObjectRelation.ANY),
                 new MayEffect(new SearchLibraryEffect(new Fixed(1),
                         new CardSharesNameWithTriggeringPermanentPredicate(), LibrarySearchDestination.BATTLEFIELD,
-                        LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER),
+                        Subjects.controllerOf(Subjects.triggering())),
                         "Search your library for a card with the same name and put it onto the battlefield?",
                         null, MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
     }

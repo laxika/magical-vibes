@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
@@ -34,8 +33,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Worldwaker's "those lands become 4/4 Elemental creatures with trample").
  * {@code battlefieldCounter} optionally puts one counter on each permanent the search puts onto the
  * battlefield, before its enters-the-battlefield triggers are processed.
- * {@code searchPlayer} selects whose library is searched; it defaults to the stack entry's
- * controller and can use the active player for effects such as Oath of Lieges.
+ * {@code searchPlayer} is the player who searches their own library: {@code you()} by default,
+ * {@code activePlayer()} for Oath of Lieges, {@code controllerOf(target())} for "its controller may search"
+ * after a removal, {@code controllerOf(triggering())} for "that creature's controller", and
+ * {@code targetPlayer()} (which declares the player target) for "target player searches".
  * {@code shuffleAfterSelection} controls whether the search interaction shuffles immediately after
  * the selected card is moved. Set it to false when a later effect must resolve before the shuffle.
  * {@code battlefieldIfOpponentControlsMoreLands} lets a single selected hand-search card be put
@@ -57,7 +58,7 @@ public record SearchLibraryEffect(
         boolean exileAtEndStep,
         boolean returnToHandAtEndStep,
         AnimatePermanentsEffect animateFound,
-        LibrarySearchPlayer searchPlayer,
+        PlayerSubject searchPlayer,
         boolean battlefieldIfChosenBeholdType,
         boolean shuffleAfterSelection,
         CounterType battlefieldCounter,
@@ -68,6 +69,25 @@ public record SearchLibraryEffect(
         boolean optionalCount,
         boolean continuesPreviousSearch
 ) implements CardEffect {
+
+    public SearchLibraryEffect {
+        if (searchPlayer == null) {
+            throw new IllegalArgumentException("SearchLibraryEffect requires a searching player");
+        }
+    }
+
+    /**
+     * The same search made by {@code searcher} in their own library ("its controller may search their library",
+     * {@code controllerOf(target())} after a removal step).
+     */
+    public SearchLibraryEffect searchedBy(PlayerSubject searcher) {
+        return new SearchLibraryEffect(count, filter, destination, manaValueBound, castFromGraveyardCount,
+                requireDifferentNames, grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                searcher, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, enterWithCounters, topLibraryPosition,
+                battlefieldIfOpponentControlsMoreLands, topLibraryFractionDenominator, optionalCount,
+                continuesPreviousSearch);
+    }
 
     /**
      * The same tutor without its own shuffle, for a multi-part search whose last part shuffles once
@@ -86,7 +106,7 @@ public record SearchLibraryEffect(
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
-                               LibrarySearchPlayer searchPlayer,
+                               PlayerSubject searchPlayer,
                                boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
                                CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
                                int topLibraryPosition, boolean battlefieldIfOpponentControlsMoreLands,
@@ -114,7 +134,7 @@ public record SearchLibraryEffect(
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
-                               LibrarySearchPlayer searchPlayer,
+                               PlayerSubject searchPlayer,
                                boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
                                CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
                                int topLibraryPosition, boolean battlefieldIfOpponentControlsMoreLands,
@@ -128,7 +148,7 @@ public record SearchLibraryEffect(
     /** Unrestricted search for any number of cards up to the supplied count, without revealing them. */
     public static SearchLibraryEffect upToCountToHand(DynamicAmount count) {
         return new SearchLibraryEffect(count, null, LibrarySearchDestination.HAND, null, 1,
-                false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false,
+                false, false, false, false, null, Subjects.you(), false,
                 true, null, null, 0, false, 0, true);
     }
 
@@ -136,7 +156,7 @@ public record SearchLibraryEffect(
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
-                               LibrarySearchPlayer searchPlayer,
+                               PlayerSubject searchPlayer,
                                boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
                                CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
                                int topLibraryPosition, boolean battlefieldIfOpponentControlsMoreLands) {
@@ -150,7 +170,7 @@ public record SearchLibraryEffect(
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
-                               LibrarySearchPlayer searchPlayer,
+                               PlayerSubject searchPlayer,
                                boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
                                CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
                                int topLibraryPosition) {
@@ -163,7 +183,7 @@ public record SearchLibraryEffect(
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
-                               LibrarySearchPlayer searchPlayer,
+                               PlayerSubject searchPlayer,
                                boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
                                CounterType battlefieldCounter) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
@@ -175,7 +195,7 @@ public record SearchLibraryEffect(
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
-                               LibrarySearchPlayer searchPlayer,
+                               PlayerSubject searchPlayer,
                                boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
                 grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer, battlefieldIfChosenBeholdType, shuffleAfterSelection, null, null, 0);
@@ -186,14 +206,14 @@ public record SearchLibraryEffect(
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                AnimatePermanentsEffect animateFound) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
-                grantHaste, exileAtEndStep, false, animateFound, LibrarySearchPlayer.CONTROLLER, false, true,
+                grantHaste, exileAtEndStep, false, animateFound, Subjects.you(), false, true,
                 null, null, 0);
     }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
-                               AnimatePermanentsEffect animateFound, LibrarySearchPlayer searchPlayer) {
+                               AnimatePermanentsEffect animateFound, PlayerSubject searchPlayer) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
                 grantHaste, exileAtEndStep, false, animateFound, searchPlayer, false, true,
                 null, null, 0);
@@ -204,33 +224,33 @@ public record SearchLibraryEffect(
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                AnimatePermanentsEffect animateFound, boolean battlefieldIfChosenBeholdType) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
-                grantHaste, exileAtEndStep, false, animateFound, LibrarySearchPlayer.CONTROLLER,
+                grantHaste, exileAtEndStep, false, animateFound, Subjects.you(),
                 battlefieldIfChosenBeholdType, true, null, null, 0);
     }
 
     /** Unrestricted single-card tutor to hand (e.g. Diabolic Tutor). */
     public SearchLibraryEffect() {
         this(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single card matching {@code filter} to hand (basic land, artifact, creature, …). */
     public SearchLibraryEffect(CardPredicate filter) {
         this(new Fixed(1), filter, LibrarySearchDestination.HAND, null, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single card matching {@code filter} to the given destination. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single-card search that may put the selected card onto the battlefield tapped when an opponent controls more lands. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                boolean battlefieldIfOpponentControlsMoreLands) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0,
+                Subjects.you(), false, true, null, null, 0,
                 battlefieldIfOpponentControlsMoreLands);
     }
 
@@ -238,26 +258,26 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                CounterType battlefieldCounter) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, battlefieldCounter, null, 0);
+                Subjects.you(), false, true, battlefieldCounter, null, 0);
     }
 
     /** Single card matching {@code filter} to the battlefield with an as-enters counter effect. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, EnterWithCountersEffect enterWithCounters) {
         this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, enterWithCounters, 0);
+                Subjects.you(), false, true, null, enterWithCounters, 0);
     }
 
     /** Up to {@code count} cards matching {@code filter} to the given destination. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination) {
         this(count, filter, destination, null, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                int castFromGraveyardCount) {
         this(count, filter, destination, null, castFromGraveyardCount, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /**
@@ -266,20 +286,20 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(CardPredicate filter, int count, int castFromGraveyardCount) {
         this(new Fixed(count), filter, LibrarySearchDestination.HAND, null, castFromGraveyardCount, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single card matching {@code filter} to the given destination with a dynamic mana-value bound. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination, ManaValueBound manaValueBound) {
         this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single card matching {@code filter} with a dynamic mana-value bound and configurable shuffling. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, boolean shuffleAfterSelection) {
         this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, shuffleAfterSelection);
+                Subjects.you(), false, shuffleAfterSelection);
     }
 
     /**
@@ -289,7 +309,7 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, boolean requireDifferentNames) {
         this(count, filter, destination, manaValueBound, 1, requireDifferentNames, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /**
@@ -299,14 +319,14 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                boolean grantHaste, boolean exileAtEndStep) {
         this(new Fixed(1), filter, destination, null, 1, false, grantHaste, exileAtEndStep, false, null,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single card matching {@code filter} onto the battlefield with haste and a delayed return to hand. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                boolean grantHaste, boolean exileAtEndStep, boolean returnToHandAtEndStep) {
         this(new Fixed(1), filter, destination, null, 1, false, grantHaste, exileAtEndStep,
-                returnToHandAtEndStep, null, LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                returnToHandAtEndStep, null, Subjects.you(), false, true, null, null, 0);
     }
 
     /**
@@ -315,12 +335,12 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, AnimatePermanentsEffect animateFound) {
         this(count, filter, LibrarySearchDestination.BATTLEFIELD, null, 1, false, false, false, false, animateFound,
-                LibrarySearchPlayer.CONTROLLER, false, true, null, null, 0);
+                Subjects.you(), false, true, null, null, 0);
     }
 
     /** Single-card search using the specified player as the library owner. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
-                               LibrarySearchPlayer searchPlayer) {
+                               PlayerSubject searchPlayer) {
         this(count, filter, destination, null, 1, false, false, false, false, null, searchPlayer, false, true,
                 null, null, 0);
     }
@@ -329,7 +349,7 @@ public record SearchLibraryEffect(
     /** Unrestricted single-card tutor that leaves the library shuffle to a later effect. */
     public static SearchLibraryEffect withDeferredShuffle() {
         return new SearchLibraryEffect(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1,
-                false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false, null, null, 0);
+                false, false, false, false, null, Subjects.you(), false, false, null, null, 0);
     }
 
     /** Single-card search that shuffles, then places the selected card at a fixed position from the top. */
@@ -338,21 +358,21 @@ public record SearchLibraryEffect(
             throw new IllegalArgumentException("Library position cannot be negative");
         }
         return new SearchLibraryEffect(new Fixed(1), filter, LibrarySearchDestination.TOP_OF_LIBRARY, null, 1,
-                false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, true,
+                false, false, false, false, null, Subjects.you(), false, true,
                 null, null, position);
     }
 
     /** Single-card unrestricted search limited to the top third of the library. */
     public static SearchLibraryEffect topThirdOfLibraryToHand() {
         return new SearchLibraryEffect(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1,
-                false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, true,
+                false, false, false, false, null, Subjects.you(), false, true,
                 null, null, 0, false, 3);
     }
 
     @Override
     public TargetSpec targetSpec() {
         if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER
-                || searchPlayer == LibrarySearchPlayer.TARGET_PLAYER) {
+                || searchPlayer.declaresTarget()) {
             return TargetSpec.benign(TargetPredicates.player());
         }
         // Tithe: count scales off whether the targeted opponent controls more lands.

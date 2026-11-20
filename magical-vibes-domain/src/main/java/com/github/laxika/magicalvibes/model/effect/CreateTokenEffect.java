@@ -46,12 +46,49 @@ public record CreateTokenEffect(
         boolean investigate,
         List<CreateTokenEffect> simultaneousTokens,
         boolean attackingUntapped,
-        String manaCost
+        String manaCost,
+        PlayerSubject controller
 ) implements TokenCreatingEffect {
 
     public CreateTokenEffect {
         simultaneousTokens = List.copyOf(simultaneousTokens);
         manaCost = manaCost == null ? "" : manaCost;
+        controller = controller == null ? Subjects.you() : controller;
+    }
+
+    /** Compatibility constructor for a blueprint whose tokens the effect's controller creates. */
+    public CreateTokenEffect(CardType primaryType, DynamicAmount amount, String tokenName,
+            DynamicAmount power, DynamicAmount toughness, CardColor color, Set<CardColor> colors,
+            List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes,
+            boolean tappedAndAttacking, boolean tapped, List<Ability> tokenEffects,
+            List<ActivatedAbility> tokenAbilities, boolean exileAtEndOfCombat, boolean exileAtEndStep,
+            boolean legendary, int initialPlusOnePlusOneCounters,
+            Set<Keyword> grantedKeywordsUntilEndOfTurn, Set<CardSupertype> supertypes,
+            TargetFilter tokenTargetFilter, boolean investigate, List<CreateTokenEffect> simultaneousTokens,
+            boolean attackingUntapped, String manaCost) {
+        this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords,
+                additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat,
+                exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn,
+                supertypes, tokenTargetFilter, investigate, simultaneousTokens, attackingUntapped, manaCost,
+                Subjects.you());
+    }
+
+    /**
+     * Copy of this blueprint whose tokens {@code tokenController} creates and controls ("its controller creates a
+     * token" after a removal step: {@code controllerOf(target())}). The "first time you would create tokens"
+     * replacements (Mirrormind Crown, Moonlit Meditation, Esix) are offered to that player.
+     */
+    public CreateTokenEffect forController(PlayerSubject tokenController) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors,
+                subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter,
+                investigate, simultaneousTokens, attackingUntapped, manaCost, tokenController);
+    }
+
+    @Override
+    public PlayerSubject tokenController() {
+        return controller;
     }
 
     /** Compatibility constructor for blueprints without a mana cost (the token has no mana cost). */
@@ -79,7 +116,7 @@ public record CreateTokenEffect(
                 subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter,
-                investigate, simultaneousTokens, attackingUntapped, newManaCost);
+                investigate, simultaneousTokens, attackingUntapped, newManaCost, controller);
     }
 
     /** Compatibility constructor for a single token blueprint. */
@@ -135,12 +172,12 @@ public record CreateTokenEffect(
                 subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter,
-                investigate, simultaneousTokens, true, manaCost);
+                investigate, simultaneousTokens, true, manaCost, controller);
     }
 
     /** Other token profiles created simultaneously by this same instruction. */
     public CreateTokenEffect withSimultaneousTokens(List<CreateTokenEffect> otherTokens) {
-        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, otherTokens, attackingUntapped, manaCost);
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, otherTokens, attackingUntapped, manaCost, controller);
     }
 
     @Override
@@ -151,6 +188,7 @@ public record CreateTokenEffect(
     @Override
     public TargetSpec targetSpec() {
         return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
+                || controller.declaresTarget()
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
@@ -223,7 +261,7 @@ public record CreateTokenEffect(
                 subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
-                tokenTargetFilter, newInvestigate, List.of(), attackingUntapped, manaCost);
+                tokenTargetFilter, newInvestigate, List.of(), attackingUntapped, manaCost, controller);
     }
     /**
      * Copy with the token target filter: an Aura token's enchant restriction ("enchant creature"), or the
@@ -234,7 +272,7 @@ public record CreateTokenEffect(
                 subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
-                newTokenTargetFilter, investigate, simultaneousTokens, attackingUntapped, manaCost);
+                newTokenTargetFilter, investigate, simultaneousTokens, attackingUntapped, manaCost, controller);
     }
 
     /**
@@ -246,7 +284,7 @@ public record CreateTokenEffect(
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate,
-                simultaneousTokens, attackingUntapped, manaCost);
+                simultaneousTokens, attackingUntapped, manaCost, controller);
     }
 
     /** Copy of this blueprint with a different (already-evaluated) token count, all other fields preserved. */
@@ -254,7 +292,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost, controller);
     }
 
     /** Copy of this blueprint with a different number of initial +1/+1 counters. */
@@ -262,7 +300,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, newCount,
-                grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost);
+                grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost, controller);
     }
 
     /** Copy of this blueprint with a different tapped state, all other fields preserved. */
@@ -270,7 +308,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, newTapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost, controller);
     }
 
     /**
@@ -282,7 +320,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, new Fixed(newPower), new Fixed(newToughness),
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost, controller);
     }
 
     /** Copy of this blueprint with a different token name. */
@@ -290,7 +328,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, newTokenName, power, toughness,
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost, controller);
     }
 
     /**
@@ -302,7 +340,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes,
                 keywords, additionalTypes, tappedAndAttacking, tapped, newTokenEffects, tokenAbilities,
                 exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped, manaCost, controller);
     }
 
     /** Canonical shape with a dynamic token count and printed power/toughness */

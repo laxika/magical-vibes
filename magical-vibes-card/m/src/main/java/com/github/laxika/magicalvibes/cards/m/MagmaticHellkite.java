@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,14 +35,14 @@ public class MagmaticHellkite extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a nonbasic land an opponent controls"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentThenEffect(
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                new DestroyTargetPermanentEffect(),
                 new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.LAND),
                                 new CardSupertypePredicate(CardSupertype.BASIC)
                         )),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED,
-                        CounterType.STUN),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+                        CounterType.STUN).searchedBy(Subjects.controllerOf(Subjects.target()))));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class ClaimJumper extends Card {
         SearchLibraryEffect searchPlains = new SearchLibraryEffect(
                 new Fixed(1), new CardSubtypePredicate(CardSubtype.PLAINS),
                 LibrarySearchDestination.BATTLEFIELD_TAPPED, null, 1, false,
-                false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false);
+                false, false, false, null, Subjects.you(), false, false);
         ConditionalEffect moreLands = new ConditionalEffect(new OpponentControlsMoreLands(),
                 new MayEffect(searchPlains, "Search your library for another Plains card?"));
         ConditionalEffect moreLandsAfterDecline = new ConditionalEffect(new OpponentControlsMoreLands(),

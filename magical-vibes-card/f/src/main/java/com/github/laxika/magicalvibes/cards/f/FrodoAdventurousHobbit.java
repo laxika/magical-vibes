@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerRingLevelAtLeast;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -43,7 +43,7 @@ public class FrodoAdventurousHobbit extends Card {
                         new CardNamedPredicate(PARTNER_NAME),
                         LibrarySearchDestination.HAND,
                         true,
-                        LibrarySearchPlayer.TARGET_PLAYER),
+                        Subjects.targetPlayerDeclaredElsewhere()),
                 "Have target player put " + PARTNER_NAME + " into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -76,6 +77,8 @@ class SearchLibraryEffectHandlerTest {
     private AmountEvaluationService amountEvaluationService;
     @Mock
     private CreateTokenEffectHandler createTokenEffectHandler;
+    @Mock
+    private SubjectResolutionService subjectResolutionService;
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -109,8 +112,12 @@ class SearchLibraryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
         lenient().when(amountEvaluationService.evaluate(any(GameData.class), any(), any())).thenReturn(1);
+        // "You": the resolving entry's controller, as the resolver answers it.
+        org.mockito.Mockito.lenient().when(subjectResolutionService.player(any(), any(), any(), any()))
+                .thenAnswer(invocation -> ((StackEntry) invocation.getArgument(1)).getControllerId());
         searchLibraryHandler = new SearchLibraryEffectHandler(gameQueryService, predicateEvaluationService,
-                gameLogService, support, amountEvaluationService, createTokenEffectHandler);
+                gameLogService, support, amountEvaluationService, createTokenEffectHandler,
+                subjectResolutionService);
         distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameLogService, support);
         headGamesHandler = new HeadGamesEffectHandler(gameLogService, support);
     }

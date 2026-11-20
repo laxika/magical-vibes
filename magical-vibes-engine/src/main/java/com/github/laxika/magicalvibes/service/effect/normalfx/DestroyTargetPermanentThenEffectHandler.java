@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -19,12 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRiderForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
@@ -91,16 +87,12 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         // Snapshot everything read from the destroyed permanent BEFORE it leaves the battlefield.
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
-        boolean wasLand = e.stat() == EventStat.BASIC_LAND_SEARCH_COUNT
-                && predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, target, new PermanentIsLandPredicate());
         int statValue = switch (e.stat()) {
             case NONE -> 0;
             case MANA_VALUE -> gameQueryService.getPermanentManaValue(target);
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
             case TOTAL_COUNTERS -> target.getTotalCounterCount();
-            case BASIC_LAND_SEARCH_COUNT -> 0;
         };
         FilterContext conditionContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
@@ -123,9 +115,6 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 case MANA_VALUE -> gameQueryService.getPermanentManaValue(target);
                 default -> statValue;
             };
-        }
-        if (e.stat() == EventStat.BASIC_LAND_SEARCH_COUNT) {
-            statValue = wasLand && destroyed ? 2 : 1;
         }
 
         boolean died = gameData.graveyardEntryVersion(target.getOriginalCard().getId()) > previousGraveyardVersion;
@@ -234,27 +223,6 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 return;
             }
             thenEffect = conditional.wrapped();
-        }
-
-        if (thenEffect instanceof MayEffect may && may.elseEffect() == null
-                && may.choicePlayer() == MayChoicePlayer.CONTROLLER
-                && may.wrapped() instanceof SearchLibraryEffect search
-                && search.searchPlayer() == LibrarySearchPlayer.CONTROLLER) {
-            var boundSearch = new SearchLibraryEffect(search.count(), search.filter(), search.destination(),
-                    search.manaValueBound(), search.castFromGraveyardCount(), search.requireDifferentNames(),
-                    search.grantHaste(), search.exileAtEndStep(), search.returnToHandAtEndStep(),
-                    search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER, search.battlefieldIfChosenBeholdType(), search.shuffleAfterSelection(),
-                    search.battlefieldCounter(), search.enterWithCounters(), search.topLibraryPosition(),
-                    search.battlefieldIfOpponentControlsMoreLands(), search.topLibraryFractionDenominator());
-            // The destroyed permanent's controller makes the choice by identity: the entry's triggering
-            // permanent may be the source itself (an enters trigger), whose controller is the caster.
-            var boundMay = MayEffect.forPlayer(boundSearch, may.prompt(), thenControllerId);
-            entry.setTriggeringPermanentControllerId(thenControllerId);
-            entry.setEventValue(statValue);
-            entry.replaceEffectToResolve(entry.getResolvingEffectIndex(), boundMay);
-            effectHandlerRegistry.getHandler(boundMay).resolve(gameData, entry, boundMay);
-            gameOutcomeService.checkWinCondition(gameData);
-            return;
         }
 
         if (thenEffect instanceof SequenceEffect) {

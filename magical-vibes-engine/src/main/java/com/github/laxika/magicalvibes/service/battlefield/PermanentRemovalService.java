@@ -2521,6 +2521,7 @@ public class PermanentRemovalService {
         departureSnapshot.setLastKnownLostPrintedAbilities(!hadPrintedAbilities);
         departureSnapshot.setLastKnownPower(powerAtDeparture);
         departureSnapshot.setLastKnownSupertypes(Set.copyOf(lastKnownCard.getSupertypes()));
+        departureSnapshot.setLastKnownCard(lastKnownCard);
         emitDeparture(gameData, target, departureSnapshot, lastKnownCard, controllerId, destination,
                 grantedZoneChangeAbilities, deathTriggersSuppressed);
         gameData.departedPermanentSnapshots.put(target.getCard().getId(), departureSnapshot);

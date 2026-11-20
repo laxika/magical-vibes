@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -62,8 +62,8 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                                 UUID targetPlayerId, LibrarySearchFollowUp followUp) {
         SearchTargetLibraryEffect e = effect;
         UUID controllerId = entry.getControllerId();
-        UUID searcherId = e.searchPlayer() == LibrarySearchPlayer.TARGET_PLAYER
-                ? targetPlayerId : controllerId;
+        // The targeted player searches the library they own, which the caller names (the effect allows no other subject).
+        UUID searcherId = e.searchPlayer() instanceof PlayerSubject.You ? controllerId : targetPlayerId;
         String searcherName = gameData.playerIdToName.get(searcherId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 

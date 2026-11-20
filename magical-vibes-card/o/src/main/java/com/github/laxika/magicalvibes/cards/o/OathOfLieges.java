@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreLandsThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -29,7 +29,7 @@ public class OathOfLieges extends Card {
                         new FixedIfTargetPlayerControlsMoreLands(1, 1),
                         CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD,
-                        LibrarySearchPlayer.ACTIVE_PLAYER),
+                        Subjects.activePlayer()),
                 "Search your library for a basic land card?",
                 null,
                 MayChoicePlayer.ACTIVE_PLAYER));

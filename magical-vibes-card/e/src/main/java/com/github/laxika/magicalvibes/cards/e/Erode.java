@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,14 +34,12 @@ public class Erode extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
-                new MayEffect(new SearchLibraryEffect(
+        )).addSpellEffect(new DestroyTargetPermanentEffect()).addSpellEffect(new MayEffect(new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                 new CardTypePredicate(CardType.LAND)
                         )),
-                        LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "Search your library for a basic land card?"),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED).searchedBy(Subjects.controllerOf(Subjects.target())),
+                        "Search your library for a basic land card?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER));
     }
 }

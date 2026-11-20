@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -41,7 +40,7 @@ public class SilvarDevourerOfTheFree extends Card {
                         new CardNamedPredicate(PARTNER_NAME),
                         LibrarySearchDestination.HAND,
                         true,
-                        LibrarySearchPlayer.TARGET_PLAYER),
+                        Subjects.targetPlayerDeclaredElsewhere()),
                 "Have target player put " + PARTNER_NAME + " into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER

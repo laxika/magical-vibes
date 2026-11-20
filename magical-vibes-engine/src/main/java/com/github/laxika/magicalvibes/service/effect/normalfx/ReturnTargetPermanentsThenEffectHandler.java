@@ -125,7 +125,6 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
             case TOTAL_COUNTERS -> target.getTotalCounterCount();
-            case BASIC_LAND_SEARCH_COUNT -> 0;
         };
     }
 }

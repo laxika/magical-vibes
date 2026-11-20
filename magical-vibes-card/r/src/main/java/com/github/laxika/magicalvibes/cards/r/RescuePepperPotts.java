@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,11 +31,9 @@ public class RescuePepperPotts extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another artifact or creature you control"
-        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnTargetPermanentToHandThenEffect(
-                new PutCountersOnSourceEffect(1, 1, 1),
-                ThenEffectRecipient.CONTROLLER,
-                null,
-                new TargetPermanentMatches(new PermanentIsArtifactPredicate())
-        ));
+        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                ReturnToHandEffect.target(),
+                new ConditionalEffect(new TargetPermanentMatches(new PermanentIsArtifactPredicate()),
+                        new PutCountersOnSourceEffect(1, 1, 1))));
     }
 }

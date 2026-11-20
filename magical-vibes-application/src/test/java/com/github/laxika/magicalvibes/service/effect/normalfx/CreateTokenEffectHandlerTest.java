@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,8 @@ class CreateTokenEffectHandlerTest {
 
     @Mock
     private EsixTokenReplacementSupport esixTokenReplacementSupport;
+    @Mock
+    private SubjectResolutionService subjectResolutionService;
 
     private CreateTokenEffectHandler handler;
     private GameData gd;
@@ -60,9 +63,12 @@ class CreateTokenEffectHandlerTest {
         gd.orderedPlayerIds.add(playerId);
         gd.playerIds.add(playerId);
         gd.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
+        // "You": the resolving entry's controller, as the resolver answers it.
+        org.mockito.Mockito.lenient().when(subjectResolutionService.player(any(), any(), any(), any()))
+                .thenAnswer(invocation -> ((StackEntry) invocation.getArgument(1)).getControllerId());
         handler = new CreateTokenEffectHandler(
                 permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
-                chosenCreatureTokenCopyHandler, esixTokenReplacementSupport, null);
+                chosenCreatureTokenCopyHandler, esixTokenReplacementSupport, null, subjectResolutionService);
     }
 
     @Test
@@ -132,7 +138,7 @@ class CreateTokenEffectHandlerTest {
         gd.resolvedMayAccepted = true;
         handler.resolve(gd, entry, effect);
 
-        verify(tokenCopyHandler).createCopiesOfHost(gd, entry, moonlit.getId(), 1);
+        verify(tokenCopyHandler).createCopiesOfHost(gd, entry, moonlit.getId(), 1, playerId);
     }
 
     /** The rules events emitted into {@code gameData} and not yet matched. */

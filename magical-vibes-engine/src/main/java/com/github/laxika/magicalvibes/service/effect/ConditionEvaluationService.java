@@ -1726,10 +1726,14 @@ public class ConditionEvaluationService {
                     target = gameData.departedPermanentSnapshots.values().stream()
                             .filter(departed -> ctx.targetId().equals(departed.getId()))
                             .findFirst().orElse(null);
-                    if (target != null && c.filter() instanceof PermanentHasSupertypePredicate supertypePredicate
+                    if (target != null && target.getLastKnownCard() != null) {
+                        // Its layered characteristics as it last existed (a Soldier through Maskwood Nexus, an
+                        // artifact through Liquimetal Coating, snow from Rimefeather Owl), since its layer state is gone.
+                        Permanent lastKnown = new Permanent(target);
+                        lastKnown.setCard(target.getLastKnownCard());
+                        target = lastKnown;
+                    } else if (target != null && c.filter() instanceof PermanentHasSupertypePredicate supertypePredicate
                             && target.getLastKnownSupertypes() != null) {
-                        // Layer-granted supertypes (e.g. snow from Rimefeather Owl) are read as they were
-                        // when the target left the battlefield, since its layer state is gone.
                         yield target.getLastKnownSupertypes().contains(supertypePredicate.supertype());
                     }
                 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
@@ -35,7 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Unified handler for {@link SearchLibraryEffect}: searches the controller's library for up to
+ * Unified handler for {@link SearchLibraryEffect}: searches the library of the player its {@code searchPlayer} names
+ * (the controller by default) for up to
  * {@code count} cards matching the effect's filter (plus an optional X-relative mana-value bound)
  * and routes them to the effect's {@link LibrarySearchDestination} through the shared
  * {@link LibrarySearchSupport}/{@code LibraryChoiceHandlerService} interaction pipeline.
@@ -58,6 +59,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private final LibrarySearchSupport librarySearchSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final CreateTokenEffectHandler createTokenEffectHandler;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -92,12 +94,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                            LibrarySearchFollowUp followUp, Integer totalManaValueBound,
                            List<Card> enteringWithFound) {
-        UUID controllerId = switch (effect.searchPlayer()) {
-            case ACTIVE_PLAYER -> entry.getActivePlayerId();
-            case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId();
-            case CONTROLLER -> entry.getControllerId();
-            case TARGET_PLAYER -> entry.getTargetId();
-        };
+        UUID controllerId = subjectResolutionService.player(gameData, entry, effect, effect.searchPlayer());
         if (controllerId == null) return;
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {
             insertNoCardFollowUp(gameData, entry, followUp);

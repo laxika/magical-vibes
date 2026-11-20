@@ -359,7 +359,7 @@ ReturnCombatOpponentToHandAtEndOfCombatEffect,blocked-other,5c,"schedules a Temp
 ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffect,blocked-other,5c,"one delayed trigger returning Aura and host simultaneously (TemporaryGlobalTriggeredAbility); scheduling each through DelayedPermanentActions would split the event"
 ReturnSelectedPermanentToHandAtEndOfCombatEffect,blocked-other,5c,"reads ResolutionResults.pickedIds; needs a step-7 picked() subject"
 ReturnSelfToHandThenEffect,split,8,"SequenceEffect.of(ReturnToHandEffect.self(), ConditionalEffect(HappenedThisWay.returned(), X)); Cartographer's Hawk, Bob"
-ReturnTargetPermanentToHandThenEffect,blocked-other,8,"9 of 12 cards split; left: Ashiok (TargetPlayerExilesFromHandEffect has no subject) and Zephyr Sentinel / Rescue (types or subtypes layers can change, read before the bounce)"
+ReturnTargetPermanentToHandThenEffect,blocked-other,8,"11 of 12 cards split (runs 2-3); left: Ashiok (TargetPlayerExilesFromHandEffect has no subject)"
 ReturnSelfToHandOnCoinFlipLossEffect,blocked-other,5c,"fused coin flip + self-bounce (step 8)"
 ReturnSourceToHandAtNextCleanupEffect,unique,5c,"delayed to the next cleanup step (Thawing Glaciers); no subject sibling"
 ReturnSourceToHandAtNextUntapEffect,unique,5c,"flag read by UntapStepService (Undiscovered Paradise); no subject sibling"
@@ -618,7 +618,7 @@ CantBlockThisTurnEffect,survivor,6.2e,"TapUntapScope + filter became PermanentSu
 CantAttackThisTurnEffect,survivor,6.2e,"TapUntapScope + filter became PermanentSubject; a set is a rule on each of its players, CR 611.2c"
 DoesntUntapEffect,survivor,6.2e,"TapUntapScope became PermanentSubject (source/attached static, target/triggering resolved)"
 ReturnCardFromGraveyardEffect,survivor,7,head primitive; records its RETURN step result (the choose-at-resolution paths record none: not an earlier step)
-CreateTokenEffect,survivor,7,head primitive; records its CREATE_TOKEN step result
+CreateTokenEffect,survivor,7,"head primitive; records its CREATE_TOKEN step result; step 8 run 3: token controller is a PlayerSubject (forController), replacements offered to that player"
 DealDamageToAnyTargetEffect,survivor,7,head primitive; begins its DEAL_DAMAGE step result (DamageSupport adds the damage as it is dealt)
 CounterSpellEffect,survivor,7,head primitive; records its COUNTER_SPELL step result (was ResolutionResults.counteredSpell)
 CopyTriggeringSpellEffect,survivor,7,head primitive; records its COPY_SPELL step result (was ResolutionResults.copiedSpell)
@@ -629,5 +629,8 @@ PutCardToBattlefieldThenEffect,blocked-step-model,8,"put-from-hand choice with a
 PutTargetPermanentIntoLibraryNFromTopThenEffect,blocked-step-model,8,"put-into-library is not an earlier-step primitive and has no StepKind; ThenEffectRecipient stays for it"
 ShuffleCardsFromHandIntoLibraryThenEffect,blocked-step-model,8,"hand-card choice with a bespoke continuation (PutCardsFromHandOnLibraryCardChoice)"
 CreateTokenThenEffect,unique,8,"""when you do"" triggers once per written quantity of tokens made (CR 603.12a) and aboutThatToken binds each token; a gate step cannot count occurrences"
-DestroyTargetPermanentThenEffect,blocked-other,8,"54 of 89 cards split (removal + subject rider); 35 left: search/token/manifest/exile-top riders with no player subject (19), dies-this-way (3), layer-sensitive it-was-a checks (6), dealt-damage LKI (1), target-player sets/amounts (4), counters LKI and the non-targeting Engulfing Slagwurm (2)"
-ExileTargetPermanentThenEffect,blocked-other,8,"15 of 25 cards split; 10 left: search/token/seek/incubator riders with no player subject (8), counters LKI (Flay Essence), dealt-damage LKI (Sold Out)"
+DestroyTargetPermanentThenEffect,blocked-other,8,"75 of 89 cards split (runs 2-3); 14 left: manifest dread / token copy / exile-top riders with no player subject (Unwanted Remake, Dwarven Confluencer, Transforming Flourish), dies-this-way (Cinder Cloud, Kaervek's Purge, Tuktuk Scrapper), dealt-damage LKI (Faller's Faithful), target-player sets after the destroy (Feast of Worms, Public Execution, Impose Hierarchy, Roiling Terrain), counter totals (Parting Thoughts), Break the Spell, the non-targeting Engulfing Slagwurm"
+ExileTargetPermanentThenEffect,blocked-other,8,"20 of 25 cards split (runs 2-3); 5 left: seek (Fragment Reality, Obscura Polymorphist), incubate (Excise the Imperfect), counters LKI (Flay Essence), dealt-damage LKI (Sold Out)"
+LibrarySearchPlayer,absorbed,8,"enum deleted; SearchLibraryEffect.searchPlayer and SearchTargetLibraryEffect.searchPlayer are PlayerSubjects (CONTROLLER you(), ACTIVE_PLAYER activePlayer(), TRIGGERING_PERMANENT_CONTROLLER controllerOf(triggering()), TARGET_PLAYER targetPlayer() / targetPlayerDeclaredElsewhere())"
+SearchLibraryEffect,survivor,8,"searchPlayer is a PlayerSubject (searchedBy); resolved through SubjectResolutionService"
+SearchTargetLibraryEffect,survivor,8,"searchPlayer is you() or targetPlayerDeclaredElsewhere() (this effect declares the target)"

@@ -5,15 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "APC", collectorNumber = "72")
 public class WildResearch extends Card {
@@ -53,7 +52,7 @@ public class WildResearch extends Card {
                 false,
                 false,
                 null,
-                LibrarySearchPlayer.CONTROLLER,
+                Subjects.you(),
                 false,
                 false);
     }

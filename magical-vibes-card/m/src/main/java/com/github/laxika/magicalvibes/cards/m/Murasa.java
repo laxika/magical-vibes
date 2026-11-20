@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -37,7 +36,7 @@ public class Murasa extends Card {
                                 new Fixed(1),
                                 CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED,
-                                LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER),
+                                Subjects.controllerOf(Subjects.triggering())),
                         "Search your library for a basic land card?",
                         null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));

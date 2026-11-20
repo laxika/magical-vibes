@@ -23,4 +23,9 @@ public interface TokenCreatingEffect extends CardEffect {
 
     /** The token's printed toughness. */
     int tokenToughness();
+
+    /** Who creates and controls the tokens: {@code you()} unless the effect says otherwise ("its controller creates"). */
+    default PlayerSubject tokenController() {
+        return Subjects.you();
+    }
 }

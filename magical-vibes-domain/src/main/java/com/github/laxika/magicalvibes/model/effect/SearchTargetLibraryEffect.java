@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -21,6 +20,9 @@ import java.util.Set;
  * must find that many if they are there (CR 701.23d), from a search for cards with a stated quality or
  * an "up to" wording, neither of which obliges the searcher to find anything (CR 701.23b).
  *
+ * <p>{@code searchPlayer} is who searches: {@code you()}, or the targeted player searching their own library
+ * ({@code targetPlayerDeclaredElsewhere()}: this effect's own target spec declares the player).
+ *
  * <p>Replaced the {@code SearchTargetLibraryFor*} family (cards-to-exile, cards-to-graveyard,
  * card-to-battlefield-under-your-control, and card-to-exile-with-play-permission).
  */
@@ -28,7 +30,7 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
                                         CardPredicate filter,
                                         LibrarySearchDestination destination,
                                         boolean canFailToFind,
-                                        LibrarySearchPlayer searchPlayer) implements CardEffect {
+                                        PlayerSubject searchPlayer) implements CardEffect {
 
     /**
      * The destinations a target-library search knows how to reach. Anything else would fall through
@@ -48,27 +50,29 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
             throw new IllegalArgumentException(
                     "SearchTargetLibraryEffect does not support destination " + destination);
         }
-        if (searchPlayer == null) {
-            throw new IllegalArgumentException("SearchTargetLibraryEffect requires a search player");
+        if (!(searchPlayer instanceof PlayerSubject.You
+                || searchPlayer instanceof PlayerSubject.TargetPlayer target && !target.declaresTarget())) {
+            throw new IllegalArgumentException("SearchTargetLibraryEffect is searched by you() or by the targeted player"
+                    + " (targetPlayerDeclaredElsewhere(), this effect declares the target)");
         }
     }
 
     /** Dynamic-count search with the controller as the searcher. */
     public SearchTargetLibraryEffect(DynamicAmount count, CardPredicate filter,
                                      LibrarySearchDestination destination, boolean canFailToFind) {
-        this(count, filter, destination, canFailToFind, LibrarySearchPlayer.CONTROLLER);
+        this(count, filter, destination, canFailToFind, Subjects.you());
     }
 
     /** Fixed-count search (Jester's Cap, Life's Finale, Bribery, Praetor's Grasp). */
     public SearchTargetLibraryEffect(int count, CardPredicate filter,
                                      LibrarySearchDestination destination, boolean canFailToFind) {
-        this(new Fixed(count), filter, destination, canFailToFind, LibrarySearchPlayer.CONTROLLER);
+        this(new Fixed(count), filter, destination, canFailToFind, Subjects.you());
     }
 
     /** Fixed-count search with an explicitly chosen searcher (e.g. a target player searches their own library). */
     public SearchTargetLibraryEffect(int count, CardPredicate filter,
                                      LibrarySearchDestination destination, boolean canFailToFind,
-                                     LibrarySearchPlayer searchPlayer) {
+                                     PlayerSubject searchPlayer) {
         this(new Fixed(count), filter, destination, canFailToFind, searchPlayer);
     }
 

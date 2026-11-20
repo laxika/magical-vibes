@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouDontControlAndSearchBasicLandsToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsAndSearchBasicLandPerControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -30,11 +33,12 @@ public class WindsOfAbandon extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{W}{W}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new ExileTargetPermanentThenEffect(
-                        new SearchLibraryEffect(
+                SequenceEffect.of(
+                        new ExileTargetPermanentEffect(),
+                        new ConditionalEffect(HappenedThisWay.exiled(), new SearchLibraryEffect(
                                 CardPredicateUtils.basicLand(),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        ThenEffectRecipient.TARGET_CONTROLLER),
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                                .searchedBy(Subjects.controllerOf(Subjects.target())))),
                 new ExileAllPermanentsAndSearchBasicLandPerControllerEffect(opponentCreatures())));
         target(TargetFilters.creatureAnOpponentControls());
     }

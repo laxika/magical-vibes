@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 and 2 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1, 2 and 3 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -521,6 +521,7 @@ cause under Findings.
 |---|---|---|
 | 1 | the `thenEffect` wrappers of one named permanent (sacrifice / exile / return this, the granting Equipment), mill and draw "then", the library-move and tap wrappers | done (6 split, 8 blocked-step-model, 1 unique; mill "when you do" gated, Necrite and Search the City gated; the Destroy / Exile / Return target wrappers and `DiscardCardThenEffect` need rider subjects first) |
 | 2 | the target "then" wrappers: `DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`, `ReturnTargetPermanentToHandThenEffect`, `DiscardCardThenEffect` | done (78 cards split: Destroy 54 of 89, Exile 15 of 25, Return 9 of 12; no wrapper emptied, all three kept as blocked-other; `DiscardCardThenEffect` audited, blocked-step-model; `ThenEffectRecipient` stays) |
+| 3 | the groups run 2 left on the target wrappers: "its controller may search" (`LibrarySearchPlayer` → `PlayerSubject`), "its controller creates a token" (`CreateTokenEffect` token controller), the layer-sensitive "if it was a …" checks | done (28 cards split: 15 search, 5 token, 8 layered; `LibrarySearchPlayer` deleted; `TargetPermanentMatches` reads a departed target's layered last-known card; no wrapper emptied: Destroy 14, Exile 5, Return 1 left; `ThenEffectRecipient` stays) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3494,6 +3495,69 @@ ReturnToHandEffect --max-per-class 15`, every card naming `TargetManaValue` / `T
 `SubjectResolutionServiceTest`, `ResolutionScratchpadAmountTest`, `EffectCountRatchetTest`, AI
 `TargetPolarityGuardTest`: 159 suites, 1,295 test cases, all pass. Application, AI, engine testFixtures and the touched
 card-test modules compile.
+
+### Step 8, run 3 (2026-11-20)
+
+Unlocked and split the three largest groups run 2 left on the target wrappers. Verdicts (ledger, step `8`): **split 0 classes**
+(28 more of the wrappers' cards split, no wrapper emptied), the three wrappers stay **blocked-other** with new notes,
+`LibrarySearchPlayer` **absorbed** (enum deleted), `SearchLibraryEffect` / `SearchTargetLibraryEffect` **survivor**. Ratchet
+unchanged (4,852 / 4,085: no `model/effect` record or handler deleted; the enum lived in `model/`).
+
+- **`LibrarySearchPlayer` → `PlayerSubject`** (step-4 style). `SearchLibraryEffect.searchPlayer` and
+  `SearchTargetLibraryEffect.searchPlayer` are `PlayerSubject`s; 19 card files rewritten by a deleted script: `CONTROLLER` →
+  `you()`, `ACTIVE_PLAYER` → `activePlayer()` (Oath of Lieges; the old read was the entry's recorded active player, the same
+  player during the upkeep trigger), `TRIGGERING_PERMANENT_CONTROLLER` → `controllerOf(triggering())` (Verdant Succession,
+  Pattern of Rebirth, Murasa: the `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER` chooser already wrote that player into the
+  baked id the old switch read), `TARGET_PLAYER` → `targetPlayer()` on `SearchLibraryEffect` (Jacob Frye, Evie Frye, Blue: it
+  declares the benign player target the old `targetSpec` declared) and `targetPlayerDeclaredElsewhere()` on
+  `SearchTargetLibraryEffect` (seven partner cards; that record declares its own player target, and its compact constructor
+  now accepts only `you()` or that). `SearchLibraryEffectHandler` resolves the searcher through `SubjectResolutionService`;
+  `SearchLibraryEffect.searchedBy(subject)` is the wither. AI: no AI class reads either record.
+- **"Its controller may search"** (Assassin's Trophy, Avengers Disassembled, Boseiju, Cleansing Wildfire, Erode, Geomancer's
+  Gambit, Ghost Quarter, Magmatic Hellkite (no "may"), Path to Exile, Price of Freedom, Sandworm, Volatile Fault, White Orchid
+  Phantom, Dire-Strain Rampage, Winds of Abandon): removal primitive, then
+  `MayEffect(SearchLibraryEffect(...).searchedBy(controllerOf(target())), prompt, null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER)`
+  (flat on spells, `SequenceEffect.of` on triggers, abilities and modes; split by a deleted script). The chooser reads the
+  controller the removal recorded, which is what the wrapper bound by identity. Dire-Strain Rampage:
+  `ConditionalEffect(AllOf(HappenedThisWay.destroyed(), TargetPermanentMatches(land)), may search for two)` and its
+  `NotCondition` with the one-card search (`EventStat.BASIC_LAND_SEARCH_COUNT` deleted; the prompts now say one or two cards).
+  Winds of Abandon's "for each creature exiled this way" is gated on `HappenedThisWay.exiled()` (the wrapper didn't gate; no game
+  state the tests reach makes the exile fail). The wrappers' bespoke may-search binding branches are deleted.
+- **"Its controller creates a token"** (Get Lost, Waste Land playtest, Ravenform, Resculpt, Secure the Scene):
+  `CreateTokenEffect(...).forController(controllerOf(target()))`. `CreateTokenEffect` gained a last component
+  `PlayerSubject controller` (default `you()`, every old constructor kept, every wither carries it); its handler resolves it and
+  runs `resolveForController` for that player, so Mirrormind Crown, Moonlit Meditation and Esix are offered to the token
+  controller, and an accepted replacement makes that player create the copies (`createCopiesOfHost(..., tokenControllerId)`,
+  `CreateTokenCopyOfChosenCreatureEffectHandler.resolveFor`). Test: `GetLostTest.controllersMirrormindCrownReplacesTheMaps`.
+  AI parity: `TokenCreatingEffect.tokenController()` (default `you()`); `SpellEvaluator`'s four token reads score only `you()`
+  tokens, so the split cards don't count the opponent's tokens as the caster's (the wrappers weren't `TokenCreatingEffect`).
+- **Layered last-known types.** A departure snapshot now carries `Permanent.lastKnownCard`, the effective card the removal
+  already built (types, subtypes, supertypes, colours, keywords with the layers applied), and `TargetPermanentMatches` judges a
+  departed target as that card (CR 608.2h, checked with `get_rule` 2026-11-20). The old supertype-only branch is the
+  fallback for a snapshot without it. Copied by `Permanent(Permanent)`; `GameDataDeepCopyTest.deepCopyKeepsDepartedSnapshotLastKnownCard`.
+  Split with it: Death's Caress (`TargetToughness`), Shredder's Technique and Smashing Success (`AllOf(destroyed(), type)` for
+  "if an … was destroyed this way"), Rescue, Pepper Potts and Zephyr Sentinel (`ReturnToHandEffect.target()` then the check),
+  Choking Sands and Molten Rain (damage to `controllerOf(target())`), Helldozer. Tests: `ZephyrSentinelTest`'s Maskwood Nexus
+  case passes on the split card; `DeathsCaressTest.humanThroughMaskwoodNexusGainsLife` (new).
+- **Test changes.** `CreateTokenEffectHandlerTest` and `SearchLibraryEffectHandlerTest` wire a mocked `SubjectResolutionService`
+  (answers the entry's controller); the Moonlit Meditation case verifies the new `createCopiesOfHost` overload.
+
+**Tests**: card tests of the 47 rewritten cards, every card naming the three wrappers or `SearchTargetLibraryEffect`, a
+25-per-class sample of `SearchLibraryEffect` and `CreateTokenEffect`, and every card naming `TargetPermanentMatches`,
+`CreateTokenCopyOfChosenCreatureEffect`, Mirrormind Crown, Moonlit Meditation, Esix, Liquimetal Coating or Maskwood Nexus:
+302 suites, 2,551 test cases, all pass. Application (every test naming the touched records, conditions or handlers, plus
+`EffectCountRatchetTest`, `StepResultsTest`, `SubjectResolutionServiceTest`): 133 suites, 2,868 test cases, all pass after the
+`CreateTokenEffectHandlerTest` verify update; AI `SpellEvaluatorTest`, `GameDataDeepCopyTest`, `TargetPolarityGuardTest`: 150,
+all pass. Application, AI, engine testFixtures and the touched card-test modules compile.
+
+**For later runs.**
+
+- Left on the wrappers (ledger notes): Destroy 14 (manifest dread, token copy and exile-top riders; dies-this-way; dealt-damage
+  LKI; target-player sets after the destroy; counter totals; Break the Spell; Engulfing Slagwurm), Exile 5 (seek, incubate,
+  counters LKI, dealt-damage LKI), Return 1 (Ashiok). `ThenEffectRecipient` stays for them, `DestroyCombatOpponentAtEndOfCombatEffectHandler`
+  and the three blocked library records.
+- A rider whose verb has a player subject now splits with no wrapper; `forController` / `searchedBy` are the patterns for a verb
+  whose actor is a component. `TargetPermanentMatches` on a departed target is layer-correct, so "if it was a <type>" splits.
 
 ## Prompt
 

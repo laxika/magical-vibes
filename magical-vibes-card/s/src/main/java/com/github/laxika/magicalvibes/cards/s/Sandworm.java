@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,14 +25,14 @@ public class Sandworm extends Card {
 
     public Sandworm() {
         target(TargetFilters.land()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DestroyTargetPermanentThenEffect(
+                SequenceEffect.of(
+                        new DestroyTargetPermanentEffect(),
                         new MayEffect(new SearchLibraryEffect(
                                 new CardAllOfPredicate(List.of(
                                         new CardSupertypePredicate(CardSupertype.BASIC),
                                         new CardTypePredicate(CardType.LAND)
                                 )),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                                "Search your library for a basic land card?"),
-                        ThenEffectRecipient.TARGET_CONTROLLER));
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED).searchedBy(Subjects.controllerOf(Subjects.target())),
+                                "Search your library for a basic land card?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER)));
     }
 }

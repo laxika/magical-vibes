@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,10 +32,10 @@ public class ChokingSands extends Card {
                 )),
                 "Target must be a non-Swamp land"
         ))
-                .addSpellEffect(new DestroyTargetPermanentThenEffect(
-                        EventStat.NONE,
-                        new DealDamageToPlayersEffect(2, Subjects.targetPlayer()),
-                        ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                        new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(
+                        new TargetPermanentMatches(
+                                new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))),
+                        new DealDamageToPlayersEffect(2, Subjects.controllerOf(Subjects.target()))));
     }
 }

@@ -8,15 +8,17 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -81,11 +83,10 @@ public class BoseijuWhoEndures extends Card {
                                 )),
                                 CountScope.CONTROLLER
                         )),
-                        new DestroyTargetPermanentThenEffect(
+                        SequenceEffect.of(
+                                new DestroyTargetPermanentEffect(),
                                 new MayEffect(new SearchLibraryEffect(landWithBasicLandType,
-                                        LibrarySearchDestination.BATTLEFIELD), "Search for a land card with a basic land type?"),
-                                ThenEffectRecipient.TARGET_CONTROLLER
-                        )
+                                        LibrarySearchDestination.BATTLEFIELD).searchedBy(Subjects.controllerOf(Subjects.target())), "Search for a land card with a basic land type?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER))
                 ),
                 "Channel — {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic land an opponent controls. That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle.",
                 target

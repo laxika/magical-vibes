@@ -596,7 +596,7 @@ public class SpellEvaluator {
             return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
-        if (effect instanceof TokenCreatingEffect token) {
+        if (effect instanceof TokenCreatingEffect token && token.tokenController() instanceof PlayerSubject.You) {
             int tokenAmount = amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                     AmountContext.forEstimation(aiPlayerId));
             if (token.tokenType() == CardType.CREATURE) {
@@ -765,7 +765,7 @@ public class SpellEvaluator {
         }
 
         // Tokens
-        if (effect instanceof TokenCreatingEffect token) {
+        if (effect instanceof TokenCreatingEffect token && token.tokenController() instanceof PlayerSubject.You) {
             int tokenAmount = amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                     AmountContext.forEstimation(aiPlayerId));
             if (token.tokenType() == CardType.CREATURE) {
@@ -1005,13 +1005,15 @@ public class SpellEvaluator {
         // Check if this card creates creature tokens
         int tokenCount = 0;
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
-            if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE) {
+            if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE
+                    && token.tokenController() instanceof PlayerSubject.You) {
                 tokenCount += amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                         AmountContext.forEstimation(aiPlayerId));
             }
         }
         for (CardEffect effect : card.getOwnEntryEffects()) {
-            if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE) {
+            if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE
+                    && token.tokenController() instanceof PlayerSubject.You) {
                 tokenCount += amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                         AmountContext.forEstimation(aiPlayerId));
             }

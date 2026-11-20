@@ -190,6 +190,15 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
      * that Aura or Equipment is no longer attached to a permanent. Offers no replacement of its own.
      */
     public void createCopiesOfHost(GameData gameData, StackEntry entry, UUID attachmentId, int amount) {
+        createCopiesOfHost(gameData, entry, attachmentId, amount, entry.getControllerId());
+    }
+
+    /**
+     * {@link #createCopiesOfHost(GameData, StackEntry, UUID, int)} for the tokens {@code tokenControllerId} would have
+     * created: that player creates the copies ("its controller creates a token" with that player's Mirrormind Crown).
+     */
+    public void createCopiesOfHost(GameData gameData, StackEntry entry, UUID attachmentId, int amount,
+                                   UUID tokenControllerId) {
         Permanent attachment = gameQueryService.findPermanentById(gameData, attachmentId);
         UUID hostId = attachment == null ? null : attachment.getAttachedTo();
         if (hostId == null || gameData.playerIds.contains(hostId)) {
@@ -197,8 +206,15 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         }
         CreateTokenCopyOfTargetPermanentEffect copyEffect =
                 new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(hostId);
-        resolveCopies(gameData, entry, copyEffect,
-                subjectResolutionService.permanentIds(gameData, entry, copyEffect, copyEffect.subject()), false);
+        if (tokenControllerId.equals(entry.getControllerId())) {
+            resolveCopies(gameData, entry, copyEffect,
+                    subjectResolutionService.permanentIds(gameData, entry, copyEffect, copyEffect.subject()), false);
+            return;
+        }
+        StackEntry copyEntry = new StackEntry(entry.getCard(), tokenControllerId);
+        resolveCopies(gameData, copyEntry, copyEffect,
+                subjectResolutionService.permanentIds(gameData, copyEntry, copyEffect, copyEffect.subject()), false);
+        entry.getCreatedPermanentIds().addAll(copyEntry.getCreatedPermanentIds());
     }
 
     /**

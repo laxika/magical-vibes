@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GavonyIronwright;
 import com.github.laxika.magicalvibes.cards.h.HighbornGhoul;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathsCaress.class, GavonyIronwright.class, HighbornGhoul.class})
+@CardUsed({DeathsCaress.class, GavonyIronwright.class, HighbornGhoul.class, MaskwoodNexus.class})
 class DeathsCaressTest extends BaseCardTest {
 
     @Test
@@ -39,6 +40,25 @@ class DeathsCaressTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("A creature that was a Human only through Maskwood Nexus still counts as a Human once it is destroyed")
+    void humanThroughMaskwoodNexusGainsLife() {
+        harness.addToBattlefield(player2, new MaskwoodNexus());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new HighbornGhoul());
+
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        GameData gd = harness.getGameData();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, ghoul.getId());
+
+        harness.assertInGraveyard(player2, "Highborn Ghoul");
+        // Highborn Ghoul is a 2/1 Zombie, every creature type through Maskwood Nexus as it died (CR 608.2h).
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
     @Test

@@ -388,6 +388,10 @@ public class Permanent {
     @Setter private Set<CardSubtype> lastKnownSubtypes;
     /** Effective supertypes immediately before this permanent left the battlefield (layer-granted ones included). */
     @Setter private Set<CardSupertype> lastKnownSupertypes;
+    /** The card as this permanent last existed on the battlefield, every continuous effect applied (its types, subtypes,
+     *  supertypes, colors and keywords), recorded on its departure snapshot: "if it was a Soldier" reads it once the
+     *  permanent is gone (CR 608.2h). {@code null} on a permanent that hasn't left. */
+    @Setter private Card lastKnownCard;
     /** Keywords this permanent had from continuous effects that end as it leaves the battlefield (an Aura's or another
      *  permanent's static grant), kept so a last-known-information copy still has them (CR 608.2h). */
     @Setter private Set<Keyword> lastKnownKeywords;
@@ -725,6 +729,7 @@ public class Permanent {
         this.lastKnownColors = source.lastKnownColors == null ? null : Set.copyOf(source.lastKnownColors);
         this.lastKnownSubtypes = source.lastKnownSubtypes == null ? null : Set.copyOf(source.lastKnownSubtypes);
         this.lastKnownSupertypes = source.lastKnownSupertypes == null ? null : Set.copyOf(source.lastKnownSupertypes);
+        this.lastKnownCard = source.lastKnownCard;
         this.lastKnownKeywords = source.lastKnownKeywords == null ? null : Set.copyOf(source.lastKnownKeywords);
         this.lastKnownLostPrintedAbilities = source.lastKnownLostPrintedAbilities;
         this.kicked = source.kicked;

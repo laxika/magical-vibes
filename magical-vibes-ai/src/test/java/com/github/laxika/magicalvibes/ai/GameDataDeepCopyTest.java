@@ -171,6 +171,23 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a departed permanent's last-known card on an independent snapshot")
+    void deepCopyKeepsDepartedSnapshotLastKnownCard() {
+        Card card = new GrizzlyBears();
+        Permanent departed = new Permanent(card);
+        Card lastKnown = card.createRuntimeCopy();
+        departed.setLastKnownCard(lastKnown);
+        gd.departedPermanentSnapshots.put(card.getId(), departed);
+
+        GameData copy = gd.simulationCopy();
+        copy.departedPermanentSnapshots.get(card.getId()).setLastKnownCard(null);
+
+        assertThat(gd.departedPermanentSnapshots.get(card.getId()).getLastKnownCard()).isSameAs(lastKnown);
+        assertThat(gd.simulationCopy().departedPermanentSnapshots.get(card.getId()).getLastKnownCard())
+                .isSameAs(lastKnown);
+    }
+
+    @Test
     @DisplayName("Deep copy preserves primitive fields")
     void deepCopyPreservesPrimitives() {
         gd.turnNumber = 5;

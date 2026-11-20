@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private final CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
     private final EsixTokenReplacementSupport esixTokenReplacementSupport;
     private final ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler;
+    private final SubjectResolutionService subjectResolutionService;
 
     public CreateTokenEffectHandler(PermanentControlSupport permanentControlSupport,
                                     GameQueryService gameQueryService,
@@ -47,7 +49,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                                     CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler,
                                     CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler,
                                     EsixTokenReplacementSupport esixTokenReplacementSupport,
-                                    ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler) {
+                                    ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler,
+                                    SubjectResolutionService subjectResolutionService) {
         this.permanentControlSupport = permanentControlSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
@@ -55,6 +58,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         this.chosenCreatureTokenCopyHandler = chosenCreatureTokenCopyHandler;
         this.esixTokenReplacementSupport = esixTokenReplacementSupport;
         this.attackTargetsHandler = attackTargetsHandler;
+        this.subjectResolutionService = subjectResolutionService;
     }
 
     @Override
@@ -64,8 +68,14 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (CreateTokenEffect) effect;
         int createdBefore = entry.getCreatedPermanentIds().size();
-        resolveForController(gameData, entry, (CreateTokenEffect) effect, entry.getControllerId());
+        // "Its controller creates": the player the blueprint's token controller names, read again when a token-creation
+        // replacement's answer resolves this effect once more.
+        UUID controllerId = subjectResolutionService.player(gameData, entry, e, e.controller());
+        if (controllerId != null) {
+            resolveForController(gameData, entry, e, controllerId);
+        }
         recordCreated(gameData, entry, createdBefore);
     }
 
@@ -133,17 +143,18 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             Boolean accepted = gameData.resolvedMayAccepted;
             gameData.resolvedMayAccepted = null;
             if (Boolean.TRUE.equals(accepted)) {
+                // The player who would have created the tokens creates the copies instead.
                 if (pending.copyEnchantedPermanent()) {
                     tokenCopyHandler.createCopiesOfHost(gameData, entry, pending.replacementPermanentId(),
-                            pending.amount());
+                            pending.amount(), controllerId);
                 } else if (pending.copyChosenCreature()) {
-                    chosenCreatureTokenCopyHandler.resolve(gameData, entry,
+                    chosenCreatureTokenCopyHandler.resolveFor(gameData, entry,
                             new CreateTokenCopyOfChosenCreatureEffect(
-                                    pending.amount(), pending.replacementPermanentId()));
+                                    pending.amount(), pending.replacementPermanentId()), controllerId);
                 } else {
                     int createdBefore = entry.getCreatedPermanentIds().size();
                     tokenCopyHandler.createCopiesOfHost(gameData, entry, pending.replacementPermanentId(),
-                            pending.amount());
+                            pending.amount(), controllerId);
                     if (e.tapped()) {
                         // The replacement changes what is created, not how the original event had it enter.
                         entry.getCreatedPermanentIds().stream().skip(createdBefore)

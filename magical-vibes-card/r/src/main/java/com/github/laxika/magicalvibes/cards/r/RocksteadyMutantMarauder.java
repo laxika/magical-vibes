@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -33,7 +33,7 @@ public class RocksteadyMutantMarauder extends Card {
                         new CardNamedPredicate(PARTNER_NAME),
                         LibrarySearchDestination.HAND,
                         true,
-                        LibrarySearchPlayer.TARGET_PLAYER),
+                        Subjects.targetPlayerDeclaredElsewhere()),
                 "Search your library for " + PARTNER_NAME + "?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER

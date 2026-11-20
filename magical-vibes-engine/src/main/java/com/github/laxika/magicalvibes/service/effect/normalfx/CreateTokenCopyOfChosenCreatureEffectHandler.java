@@ -40,7 +40,15 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var copyEffect = (CreateTokenCopyOfChosenCreatureEffect) effect;
+        resolveFor(gameData, entry, (CreateTokenCopyOfChosenCreatureEffect) effect, entry.getControllerId());
+    }
+
+    /**
+     * Esix's replacement: {@code tokenControllerId}, the player who would have created the replaced tokens, chooses
+     * the creature and creates the copies.
+     */
+    public void resolveFor(GameData gameData, StackEntry entry, CreateTokenCopyOfChosenCreatureEffect copyEffect,
+                           UUID tokenControllerId) {
         List<UUID> creatureIds = creatureIds(gameData, copyEffect.excludedPermanentId());
         if (creatureIds.isEmpty() || copyEffect.amount() <= 0) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
@@ -49,9 +57,9 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
         }
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EsixCreatureChoice(
-                entry.getControllerId(), entry.getCard(), entry, copyEffect.amount(),
+                tokenControllerId, entry.getCard(), entry, copyEffect.amount(),
                 copyEffect.excludedPermanentId()));
-        playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), creatureIds,
+        playerInputService.beginPermanentChoice(gameData, tokenControllerId, creatureIds,
                 entry.getCard().getName() + " — Choose a creature other than Esix to copy.");
     }
 
@@ -60,7 +68,7 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
         if (!creatureIds(gameData, context.excludedPermanentId()).contains(permanentId)) {
             return;
         }
-        createCopies(gameData, context.resolvingEntry(), permanentId, context.amount());
+        createCopies(gameData, context.resolvingEntry(), context.controllerId(), permanentId, context.amount());
     }
 
     private List<UUID> creatureIds(GameData gameData, UUID excludedPermanentId) {
@@ -76,14 +84,14 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
         return ids;
     }
 
-    private void createCopies(GameData gameData, StackEntry resolvingEntry,
+    private void createCopies(GameData gameData, StackEntry resolvingEntry, UUID tokenControllerId,
                               UUID chosenPermanentId, int amount) {
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
         if (chosen == null) {
             return;
         }
 
-        StackEntry copyEntry = new StackEntry(resolvingEntry.getCard(), resolvingEntry.getControllerId());
+        StackEntry copyEntry = new StackEntry(resolvingEntry.getCard(), tokenControllerId);
         copyEntry.setTargetId(chosenPermanentId);
         tokenCopyHandler.resolve(gameData, copyEntry,
                 new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)));

@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -44,7 +44,7 @@ public class JacobFrye extends Card {
                         new Fixed(1),
                         new CardNamedPredicate("Evie Frye"),
                         LibrarySearchDestination.HAND,
-                        LibrarySearchPlayer.TARGET_PLAYER),
+                        Subjects.targetPlayer()),
                 "Put Evie Frye into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,9 +28,9 @@ public class Resculpt extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"
-        )).addSpellEffect(new ExileTargetPermanentThenEffect(
-                new CreateTokenEffect("Elemental", 4, 4, CardColor.BLUE,
-                        Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+        )).addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new CreateTokenEffect("Elemental", 4, 4, CardColor.BLUE,
+                        Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL))
+                        .forController(Subjects.controllerOf(Subjects.target())));
     }
 }

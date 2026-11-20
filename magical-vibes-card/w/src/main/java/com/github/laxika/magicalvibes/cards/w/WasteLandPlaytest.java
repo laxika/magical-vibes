@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -55,7 +55,8 @@ public class WasteLandPlaytest extends Card {
                 "",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DestroyTargetPermanentThenEffect(wastesToken, ThenEffectRecipient.TARGET_CONTROLLER)
+                        new DestroyTargetPermanentEffect(),
+                        wastesToken.forController(Subjects.controllerOf(Subjects.target()))
                 ),
                 "{T}, Sacrifice Waste Land: Destroy target nonbasic land. That land's controller creates a Wastes token.",
                 new PermanentPredicateTargetFilter(
