@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreLifeThanEachOtherPlayer;
@@ -359,14 +360,10 @@ import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.OpponentPutThreeOrMoreCardsIntoGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
-import com.github.laxika.magicalvibes.model.condition.CardDrawnThisWay;
-import com.github.laxika.magicalvibes.model.condition.SpellCounteredThisWay;
-import com.github.laxika.magicalvibes.model.condition.SpellCopiedThisWay;
 import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
@@ -1416,12 +1413,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
-            case PermanentLeftThisWay c -> c.how() == PermanentLeftThisWay.How.SACRIFICED
-                    ? ctx.resolutionResults().anySacrificed()
-                    : ctx.resolutionResults().anyDestroyed();
-            case CardDrawnThisWay ignored -> !ctx.resolutionResults().drawnCardIds().isEmpty();
-            case SpellCounteredThisWay ignored -> ctx.resolutionResults().counteredSpell();
-            case SpellCopiedThisWay ignored -> ctx.resolutionResults().copiedSpell();
+            case HappenedThisWay c -> ctx.resolutionResults().outcome(c.kind()).happened();
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.
             // "If it has a single target": the spell or ability the event was about, as the ability triggers (CR 603.4),
             // judged from the ability's controller and source.

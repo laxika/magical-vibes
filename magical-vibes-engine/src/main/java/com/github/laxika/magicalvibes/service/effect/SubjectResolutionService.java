@@ -455,6 +455,8 @@ public class SubjectResolutionService {
                     .toList();
             case PermanentSubject.TriggeringSpellTargets ignored -> triggeringSpellTargetIds(ctx);
             case PermanentSubject.CreatedThisResolution ignored -> List.copyOf(ctx.entry().getCreatedPermanentIds());
+            case PermanentSubject.ThisWay thisWay -> ctx.entry().getResolutionResults().outcome(thisWay.kind()).objectIds()
+                    .stream().distinct().toList();
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
         };
@@ -776,6 +778,10 @@ public class SubjectResolutionService {
                     .filter(gameData.playerIds::contains)
                     .toList();
             case PlayerSubject.PlayersDealtDamage ignored -> ctx.entry().getPlayersDealtDamageThisResolution().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            case PlayerSubject.PlayersThisWay thisWay -> ctx.entry().getResolutionResults().outcome(thisWay.kind())
+                    .playerIds().stream()
                     .filter(gameData.playerIds::contains)
                     .toList();
             case PlayerSubject.SubgameWinners ignored -> {

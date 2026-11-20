@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -40,7 +42,12 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DealDamageToAnyTargetEffect) effect;
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
+        dealDamage(gameData, entry, (DealDamageToAnyTargetEffect) effect);
+    }
+
+    private void dealDamage(GameData gameData, StackEntry entry, DealDamageToAnyTargetEffect e) {
         if (e.recordDamageDealt()) {
             entry.setEventValue(0);
         }

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +14,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -50,22 +54,41 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
             source = entry.getSourcePermanentSnapshot();
         }
         List<UUID> players = subjectResolutionService.players(gameData, entry, effect, mill.player());
+        List<Card> milled = new ArrayList<>();
         if (millingPlayerIsAmountTarget(mill.player())) {
             for (UUID playerId : players) {
-                graveyardService.resolveMillPlayer(gameData, playerId,
-                        evaluateCount(gameData, entry, mill, source, playerId));
+                milled.addAll(graveyardService.resolveMillPlayerIncludingExiled(gameData, playerId,
+                        evaluateCount(gameData, entry, mill, source, playerId)));
             }
-            return;
+        } else if (players.size() == 1) {
+            milled.addAll(graveyardService.resolveMillPlayerIncludingExiled(gameData, players.getFirst(),
+                    evaluateCount(gameData, entry, mill, source, null)));
+        } else if (!players.isEmpty()) {
+            milled.addAll(graveyardService.resolveMillPlayersSimultaneously(gameData, players,
+                    evaluateCount(gameData, entry, mill, source, null)));
         }
-        if (players.isEmpty()) {
-            return;
+        recordMilled(gameData, entry, milled);
+    }
+
+    /**
+     * The step's result: the cards milled, found in the public zone they went to (CR 701.17c), and their owners (a card
+     * with no recorded owner: the player whose graveyard it is in).
+     */
+    private void recordMilled(GameData gameData, StackEntry entry, List<Card> milled) {
+        List<UUID> owners = new ArrayList<>();
+        for (Card card : milled) {
+            UUID owner = gameData.ownerOf(card);
+            if (owner == null) {
+                owner = gameData.playerGraveyards.entrySet().stream()
+                        .filter(graveyard -> graveyard.getValue().stream().anyMatch(c -> c.getId().equals(card.getId())))
+                        .map(java.util.Map.Entry::getKey)
+                        .findFirst().orElse(null);
+            }
+            if (owner != null) {
+                owners.add(owner);
+            }
         }
-        int count = evaluateCount(gameData, entry, mill, source, null);
-        if (players.size() == 1) {
-            graveyardService.resolveMillPlayer(gameData, players.getFirst(), count);
-        } else {
-            graveyardService.resolveMillPlayersSimultaneously(gameData, players, count);
-        }
+        entry.recordStep(StepKind.MILL, StepOutcome.ofObjects(milled.stream().map(Card::getId).toList(), owners));
     }
 
     private static boolean millingPlayerIsAmountTarget(PlayerSubject player) {

@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -9,54 +13,62 @@ import java.util.UUID;
  * written (CR 608.2c), so "sacrifice this; if you do, draw a card" is a sacrifice step that records its
  * {@link DepartureResult} followed by a condition step that reads it.
  *
+ * <p>Each step of a {@link StepKind} records its {@link StepOutcome} ({@link #withOutcome}), replacing the
+ * outcome of the previous step of that kind, even when nothing happened, so a later step never reads an older
+ * step's result. A later step reads it through {@link #outcome}: the {@code HappenedThisWay} condition, the
+ * {@code AmountThisWay} amount and the {@code thisWay} / {@code playersThisWay} subjects. A removal step's
+ * {@link DepartureResult}s are its {@link StepKind#DESTROY} and {@link StepKind#SACRIFICE} outcomes too.</p>
+ *
  * <p>Immutable, so a {@link StackEntry} copy shares it safely with the live game.</p>
  *
  * @param departures the departures recorded by the most recent step that removed permanents ("this
  *                   way"), including those that stayed on the battlefield (indestructible,
- *                   regenerated). A removal step records its results even when nothing left, so a later
- *                   step never reads an older step's departures
+ *                   regenerated), with their last-known information (CR 608.2h). A removal step records
+ *                   its results even when nothing left, so a later step never reads an older step's departures
  * @param pickedIds  the ids a player picked in an earlier step, for the next step to act on
- * @param drawnCardIds the cards the most recent draw step actually drew ("this way"); a draw step records
- *                   its result even when nothing was drawn, so a later step never reads an older draw
- * @param counteredSpell whether the most recent counter step actually countered its target spell ("this
- *                   way"); a counter step records its result even when nothing was countered
- * @param copiedSpell whether the most recent copy step copied its spell ("if you don't copy a spell this way"); a
- *                   copy step records its result even when nothing was copied
+ * @param outcomes   the outcome of the most recent step of each kind
  */
-public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds, List<UUID> drawnCardIds,
-                                boolean counteredSpell, boolean copiedSpell) {
+public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds,
+                                Map<StepKind, StepOutcome> outcomes) {
 
-    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), List.of(), false, false);
+    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), Map.of());
 
     public ResolutionResults {
         departures = List.copyOf(departures);
         pickedIds = List.copyOf(pickedIds);
-        drawnCardIds = List.copyOf(drawnCardIds);
+        outcomes = Collections.unmodifiableMap(outcomes.isEmpty()
+                ? new EnumMap<>(StepKind.class) : new EnumMap<>(outcomes));
     }
 
-    /** These results with {@code results} as the latest step's departures, replacing the earlier ones. */
+    /**
+     * These results with {@code results} as the latest step's departures, replacing the earlier ones; the
+     * permanents among them that were destroyed and those that were sacrificed (wherever they ended up) are the
+     * step's {@link StepKind#DESTROY} and {@link StepKind#SACRIFICE} outcomes.
+     */
     public ResolutionResults withDepartures(List<DepartureResult> results) {
-        return new ResolutionResults(results, pickedIds, drawnCardIds, counteredSpell, copiedSpell);
+        Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
+        updated.putAll(outcomes);
+        updated.put(StepKind.DESTROY, departed(results, true));
+        updated.put(StepKind.SACRIFICE, departed(results, false));
+        return new ResolutionResults(results, pickedIds, updated);
     }
 
     /** These results with {@code ids} as the latest picks, replacing the earlier ones. */
     public ResolutionResults withPickedIds(List<UUID> ids) {
-        return new ResolutionResults(departures, ids, drawnCardIds, counteredSpell, copiedSpell);
+        return new ResolutionResults(departures, ids, outcomes);
     }
 
-    /** These results with {@code ids} as the latest draw step's drawn cards, replacing the earlier ones. */
-    public ResolutionResults withDrawnCardIds(List<UUID> ids) {
-        return new ResolutionResults(departures, pickedIds, ids, counteredSpell, copiedSpell);
+    /** These results with {@code outcome} as the latest {@code kind} step's outcome, replacing the earlier one. */
+    public ResolutionResults withOutcome(StepKind kind, StepOutcome outcome) {
+        Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
+        updated.putAll(outcomes);
+        updated.put(kind, outcome);
+        return new ResolutionResults(departures, pickedIds, updated);
     }
 
-    /** These results with {@code countered} as the latest counter step's outcome, replacing the earlier one. */
-    public ResolutionResults withCounteredSpell(boolean countered) {
-        return new ResolutionResults(departures, pickedIds, drawnCardIds, countered, copiedSpell);
-    }
-
-    /** These results with {@code copied} as the latest copy step's outcome, replacing the earlier one. */
-    public ResolutionResults withCopiedSpell(boolean copied) {
-        return new ResolutionResults(departures, pickedIds, drawnCardIds, counteredSpell, copied);
+    /** The outcome of the most recent {@code kind} step, or {@link StepOutcome#NONE} when none ran. */
+    public StepOutcome outcome(StepKind kind) {
+        return outcomes.getOrDefault(kind, StepOutcome.NONE);
     }
 
     /** Whether a permanent was sacrificed this way, wherever it ended up. */
@@ -88,6 +100,20 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
             total = SaturatingMath.add(total, nonNegative(result.lastKnownToughness()));
         }
         return total;
+    }
+
+    private static StepOutcome departed(List<DepartureResult> results, boolean destroyed) {
+        List<UUID> permanents = new ArrayList<>();
+        List<UUID> controllers = new ArrayList<>();
+        for (DepartureResult result : results) {
+            if (destroyed ? result.destroyed() : result.sacrificed()) {
+                permanents.add(result.permanentId());
+                if (result.lastKnownControllerId() != null) {
+                    controllers.add(result.lastKnownControllerId());
+                }
+            }
+        }
+        return StepOutcome.ofObjects(permanents, controllers);
     }
 
     private static int nonNegative(Integer value) {

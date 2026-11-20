@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,6 +33,15 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCountersOnSelfEffect) effect;
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData,
+                selfId == null ? List.of() : List.of(selfId), e.counterType());
+        putCounters(gameData, entry, e);
+        entry.recordStep(StepKind.PUT_COUNTERS,
+                permanentCounterSupport.counterChange(gameData, before, e.counterType(), true));
+    }
+
+    private void putCounters(GameData gameData, StackEntry entry, PutCountersOnSelfEffect e) {
         if (entry.getSourcePlanarObject() != null && entry.getSourcePermanentId() == null) {
             resolvePlanarSource(gameData, entry, e);
             return;

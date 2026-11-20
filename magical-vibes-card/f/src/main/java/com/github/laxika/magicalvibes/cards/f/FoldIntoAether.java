@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.condition.SpellCounteredThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -21,7 +21,7 @@ public class FoldIntoAether extends Card {
         target(null, 1, 1)
                 .addSpellEffect(new CounterSpellEffect())
                 .addSpellEffect(new ConditionalEffect(
-                        new SpellCounteredThisWay(),
+                        HappenedThisWay.countered(),
                         new MayEffect(
                                 new PutCardToBattlefieldForTargetSpellControllerEffect(
                                         new CardTypePredicate(CardType.CREATURE), "creature"),

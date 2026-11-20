@@ -652,29 +652,19 @@ public class StackEntry {
     }
 
     /**
-     * Records the cards the step being resolved actually drew, replacing those of earlier steps. A draw
-     * step calls this even when nothing was drawn (an empty list), so "if you do" reads this step's result.
+     * Records what the {@code kind} step being resolved did, replacing the outcome of earlier steps of that kind. A
+     * step calls this even when nothing happened ({@link StepOutcome#NONE}), so "if you do" reads this step's result.
      */
-    public void recordDrawnCards(List<UUID> drawnCardIds) {
-        resolutionResults = resolutionResults.withDrawnCardIds(drawnCardIds);
+    public void recordStep(StepKind kind, StepOutcome outcome) {
+        resolutionResults = resolutionResults.withOutcome(kind, outcome);
     }
 
     /**
-     * Records whether the counter step being resolved actually countered its target spell, replacing that
-     * of earlier steps. A counter step calls this even when nothing was countered (false), so "if that
-     * spell is countered this way" reads this step's result.
+     * Adds {@code more} to the outcome of the {@code kind} step being resolved, for a step whose result arrives in
+     * parts (damage dealt as its damage event ends). The step first records {@link StepOutcome#NONE}.
      */
-    public void recordCounteredSpell(boolean countered) {
-        resolutionResults = resolutionResults.withCounteredSpell(countered);
-    }
-
-    /**
-     * Records whether the copy step being resolved copied its spell, replacing that of earlier steps. A copy step
-     * calls this even when nothing was copied (false), so "if you don't copy a spell this way" reads this step's
-     * result.
-     */
-    public void recordCopiedSpell(boolean copied) {
-        resolutionResults = resolutionResults.withCopiedSpell(copied);
+    public void addToStep(StepKind kind, StepOutcome more) {
+        resolutionResults = resolutionResults.withOutcome(kind, resolutionResults.outcome(kind).plus(more));
     }
 
     /** Records what a player picked in the step being resolved, for the next step to act on. */

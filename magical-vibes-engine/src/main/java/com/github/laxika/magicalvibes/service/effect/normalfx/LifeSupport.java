@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.LifeEvent;
@@ -361,6 +362,24 @@ public class LifeSupport {
      *
      * @return the total life the players lost
      */
+    /**
+     * What the players' life totals did since {@code lifeBefore} (each player's life then): the life gained, or lost,
+     * and the players whose total moved that way, as a gain or lose life step's result.
+     */
+    public StepOutcome lifeChange(GameData gameData, Map<UUID, Integer> lifeBefore, boolean gained) {
+        int total = 0;
+        List<UUID> changed = new ArrayList<>();
+        for (Map.Entry<UUID, Integer> before : lifeBefore.entrySet()) {
+            int delta = gained ? gameData.getLife(before.getKey()) - before.getValue()
+                    : before.getValue() - gameData.getLife(before.getKey());
+            if (delta > 0) {
+                total = SaturatingMath.add(total, delta);
+                changed.add(before.getKey());
+            }
+        }
+        return StepOutcome.ofAmount(total, changed);
+    }
+
     public int applyLifeLosses(GameData gameData, Map<UUID, Integer> losses, String sourceName) {
         askBeforeLifeLosses(gameData, losses);
         int totalLifeLost = 0;

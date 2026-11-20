@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -13,7 +15,9 @@ import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -40,7 +44,13 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GainLifeEffect) effect;
         List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.player());
+        Map<UUID, Integer> lifeBefore = new LinkedHashMap<>();
+        players.forEach(playerId -> lifeBefore.put(playerId, gameData.getLife(playerId)));
+        gainLife(gameData, entry, e, players);
+        entry.recordStep(StepKind.GAIN_LIFE, lifeSupport.lifeChange(gameData, lifeBefore, true));
+    }
 
+    private void gainLife(GameData gameData, StackEntry entry, GainLifeEffect e, List<UUID> players) {
         if (e.player() instanceof PlayerSubject.TargetPlayer) {
             AmountContext targetContext = AmountContext.forStackEntry(entry, null);
             for (UUID playerId : players) {

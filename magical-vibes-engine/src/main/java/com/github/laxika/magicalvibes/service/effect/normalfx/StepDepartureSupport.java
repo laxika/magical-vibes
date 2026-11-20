@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ContinueAfterDepartureEffect;
@@ -183,7 +183,7 @@ public class StepDepartureSupport {
                 dispatch(gameData, entry, payload);
             }
         } else {
-            insertAfterResolvingStep(entry, new ConditionalEffect(PermanentLeftThisWay.sacrificed(), payload));
+            insertAfterResolvingStep(entry, new ConditionalEffect(HappenedThisWay.sacrificed(), payload));
         }
     }
 

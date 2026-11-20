@@ -59,6 +59,8 @@ import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1207,7 +1209,14 @@ public class DamageSupport {
             return event.toPermanent() ? event.amount() : 0;
         }
         return switch (damageJournalService.next(gameData)) {
-            case DamageJournalService.Step.Replay replay -> replay.dealt();
+            case DamageJournalService.Step.Replay replay -> {
+                // The effect is resolved again after a prompt and its step result began again: count what it dealt.
+                if (event.toPermanent() && replay.dealt() > 0) {
+                    addToDamageStep(event.entry(), new StepOutcome(replay.dealt(),
+                            List.of(event.recipientPermanentId()), List.of()));
+                }
+                yield replay.dealt();
+            }
             case DamageJournalService.Step.Hold hold -> 0;
             case DamageJournalService.Step.FinishReady ready -> {
                 int dealt = finishDamage(gameData, ready.event());
@@ -1490,10 +1499,30 @@ public class DamageSupport {
             return 0;
         }
         if (event.toPermanent()) {
-            return finishPermanentDamage(gameData, event);
+            int dealt = finishPermanentDamage(gameData, event);
+            if (dealt > 0) {
+                addToDamageStep(event.entry(), new StepOutcome(dealt, List.of(event.recipientPermanentId()), List.of()));
+            }
+            return dealt;
         }
         finishPlayerDamage(gameData, event);
+        if (event.amount() > 0) {
+            addToDamageStep(event.entry(), new StepOutcome(event.amount(), List.of(),
+                    List.of(event.recipientPlayerId())));
+        }
         return 0;
+    }
+
+    /**
+     * Adds noncombat damage the entry dealt to its {@link StepKind#DEAL_DAMAGE} step result: a damage step records
+     * {@link StepOutcome#NONE} as it begins, and its damage arrives here as each damage event is dealt, which for
+     * simultaneous steps is when their damage event ends. Damage dealt by a handler that records no step begin is
+     * added to the latest damage step's result.
+     */
+    private static void addToDamageStep(StackEntry entry, StepOutcome dealt) {
+        if (entry != null) {
+            entry.addToStep(StepKind.DEAL_DAMAGE, dealt);
+        }
     }
 
     public UUID findHarshJudgmentRedirectTarget(GameData gameData, StackEntry entry, UUID damagedPlayerId) {

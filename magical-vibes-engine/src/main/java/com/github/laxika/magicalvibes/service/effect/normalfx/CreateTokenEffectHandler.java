@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -23,6 +25,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -61,7 +64,28 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        int createdBefore = entry.getCreatedPermanentIds().size();
         resolveForController(gameData, entry, (CreateTokenEffect) effect, entry.getControllerId());
+        recordCreated(gameData, entry, createdBefore);
+    }
+
+    /**
+     * The step's result: the tokens it created (those {@code entry} recorded after the first {@code createdBefore}),
+     * whoever made them, and their controllers. A creation that waits for a replacement choice records none and is
+     * resolved again once the choice is made.
+     */
+    private void recordCreated(GameData gameData, StackEntry entry, int createdBefore) {
+        List<UUID> created = List.copyOf(entry.getCreatedPermanentIds()
+                .subList(Math.min(createdBefore, entry.getCreatedPermanentIds().size()),
+                        entry.getCreatedPermanentIds().size()));
+        List<UUID> controllers = new ArrayList<>();
+        for (UUID tokenId : created) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, tokenId);
+            if (controllerId != null) {
+                controllers.add(controllerId);
+            }
+        }
+        entry.recordStep(StepKind.CREATE_TOKEN, StepOutcome.ofObjects(created, controllers));
     }
 
     public void resolveForController(GameData gameData, StackEntry entry, CreateTokenEffect e,

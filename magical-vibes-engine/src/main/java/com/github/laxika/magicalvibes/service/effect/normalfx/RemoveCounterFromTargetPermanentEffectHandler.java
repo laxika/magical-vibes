@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,6 +42,14 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveCounterFromTargetPermanentEffect) effect;
+        Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData,
+                entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId()), e.counterType());
+        removeCounters(gameData, entry, e);
+        entry.recordStep(StepKind.REMOVE_COUNTERS,
+                permanentCounterSupport.counterChange(gameData, before, e.counterType(), false));
+    }
+
+    private void removeCounters(GameData gameData, StackEntry entry, RemoveCounterFromTargetPermanentEffect e) {
         if (e.upTo() && gameData.chosenXValue != null) {
             int chosen = Math.max(0, gameData.chosenXValue);
             gameData.chosenXValue = null;

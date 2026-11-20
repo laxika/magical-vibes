@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SpellCopiedThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
@@ -25,6 +25,6 @@ public class ShikoAndNarsetUnified extends Card {
                         new StackEntryTargetsPermanentPredicate(new PermanentTruePredicate()),
                         new StackEntryTargetsAnyPlayerPredicate()))),
                         new CopyTriggeringSpellEffect()),
-                new ConditionalEffect(new NotCondition(new SpellCopiedThisWay()), new DrawCardEffect()));
+                new ConditionalEffect(new NotCondition(HappenedThisWay.copied()), new DrawCardEffect()));
     }
 }

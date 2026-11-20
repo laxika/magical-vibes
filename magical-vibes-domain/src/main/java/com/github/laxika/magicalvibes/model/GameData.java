@@ -6774,6 +6774,18 @@ public class GameData {
         }
     }
 
+    /**
+     * Adds a discard to the {@link StepKind#DISCARD} step result of the resolution it happens in (the resolving entry,
+     * else the one parked on its discard prompt), once a discard step of that resolution has begun.
+     */
+    private void addToDiscardStep(UUID playerId, Card card) {
+        StackEntry stepEntry = resolvingEntry != null ? resolvingEntry : pendingEffectResolutionEntry;
+        if (stepEntry != null && card != null
+                && stepEntry.getResolutionResults().outcomes().containsKey(StepKind.DISCARD)) {
+            stepEntry.addToStep(StepKind.DISCARD, StepOutcome.ofObjects(List.of(card.getId()), List.of(playerId)));
+        }
+    }
+
     /** {@link #discarded(UUID, Card, boolean)} of a discard that isn't a cycling. */
     public void discarded(UUID playerId, Card card) {
         discarded(playerId, card, false);
@@ -6788,6 +6800,7 @@ public class GameData {
         if (cycled) {
             recordCardCycled(playerId, card);
         }
+        addToDiscardStep(playerId, card);
         cardsDiscardedThisTurn.merge(playerId, 1, Integer::sum);
         if (card != null && !card.hasType(CardType.LAND)) {
             nonlandCardsDiscardedThisTurn.merge(playerId, 1, Integer::sum);
@@ -7050,6 +7063,11 @@ public class GameData {
     /** Records a permanent sacrificed by the given player this turn. */
     public void recordSacrificedPermanent(UUID playerId, Card card) {
         if (playerId == null || card == null) return;
+        StackEntry stepEntry = resolvingEntry != null ? resolvingEntry : pendingEffectResolutionEntry;
+        if (stepEntry != null && stepEntry.getResolutionResults().outcomes().containsKey(StepKind.SACRIFICE)) {
+            // A sacrifice step of the resolution this happens in has begun: it is that step's (the card's id).
+            stepEntry.addToStep(StepKind.SACRIFICE, StepOutcome.ofObjects(List.of(card.getId()), List.of(playerId)));
+        }
         playersWhoSacrificedPermanentsThisTurn.add(playerId);
         sacrificedPermanentCountThisTurn.merge(playerId, 1, Integer::sum);
         permanentsSacrificedThisTurn

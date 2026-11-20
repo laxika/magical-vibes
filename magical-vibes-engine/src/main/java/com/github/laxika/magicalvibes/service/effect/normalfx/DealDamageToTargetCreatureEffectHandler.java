@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -53,7 +55,13 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DealDamageToTargetCreatureEffect) effect;
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
+        dealDamage(gameData, entry, (DealDamageToTargetCreatureEffect) effect);
+    }
+
+    private void dealDamage(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect e) {
+        CardEffect effect = e;
         switch (e.subject()) {
             case PermanentSubject.Source ignored -> {
                 damageSource(gameData, entry, e);
@@ -85,6 +93,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
             int amount = amountEvaluationService.evaluate(gameData, e.damage(),
                     AmountContext.forStackEntry(entry, dealing.getSourcePermanentSnapshot()));
             damageSupport.resolveCreatureTargetDamage(gameData, dealing, amount);
+            entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
             return;
         }
 

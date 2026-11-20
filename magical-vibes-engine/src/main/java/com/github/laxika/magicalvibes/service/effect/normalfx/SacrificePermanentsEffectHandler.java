@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -54,6 +56,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // A new sacrifice step: every permanent sacrificed from here on, as this resolves or as its sacrifice prompts
+        // are answered, is added to the step's result (GameData.recordSacrificedPermanent).
+        entry.recordStep(StepKind.SACRIFICE, StepOutcome.NONE);
         var e = (SacrificePermanentsEffect) effect;
         // "Sacrifice a creature" (bare creature filter) uses the single-select creature primitive;
         // every other filter uses the multi-permanent-choice flow. Both are behaviourally tested.

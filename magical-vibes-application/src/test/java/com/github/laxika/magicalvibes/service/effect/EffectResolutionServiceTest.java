@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -1232,7 +1232,7 @@ class EffectResolutionServiceTest {
 
         private StackEntry sacrificeThenIfYouDoDraw() {
             return createEntry(createCard("Sacrifice then draw"), player1Id,
-                    List.of(sacrifice, new ConditionalEffect(PermanentLeftThisWay.sacrificed(), draw)));
+                    List.of(sacrifice, new ConditionalEffect(HappenedThisWay.sacrificed(), draw)));
         }
 
         @Test
@@ -1264,7 +1264,7 @@ class EffectResolutionServiceTest {
         void laterRemovalStepReplacesEarlierResults() {
             CardEffect secondSacrifice = new SacrificeSelfEffect(true);
             StackEntry entry = createEntry(createCard("Two sacrifices"), player1Id, List.of(sacrifice,
-                    secondSacrifice, new ConditionalEffect(PermanentLeftThisWay.sacrificed(), draw)));
+                    secondSacrifice, new ConditionalEffect(HappenedThisWay.sacrificed(), draw)));
             recording(sacrifice, entry, List.of(left(Zone.GRAVEYARD, false, true)));
             recording(secondSacrifice, entry, List.of());
             EffectHandler drawHandler = stubHandler(draw);
@@ -1278,7 +1278,7 @@ class EffectResolutionServiceTest {
         @DisplayName("\"If it was destroyed this way\" ignores a permanent that regenerated")
         void destroyedThisWayIgnoresARegeneratedPermanent() {
             StackEntry entry = createEntry(createCard("Destroy then draw"), player1Id,
-                    List.of(destroy, new ConditionalEffect(PermanentLeftThisWay.destroyed(), draw)));
+                    List.of(destroy, new ConditionalEffect(HappenedThisWay.destroyed(), draw)));
             recording(destroy, entry, List.of(left(Zone.BATTLEFIELD, false, false)));
             EffectHandler drawHandler = stubHandler(draw);
 
@@ -1291,7 +1291,7 @@ class EffectResolutionServiceTest {
         @DisplayName("\"If it was destroyed this way\" resolves after a destruction")
         void destroyedThisWayResolvesAfterADestruction() {
             StackEntry entry = createEntry(createCard("Destroy then draw"), player1Id,
-                    List.of(destroy, new ConditionalEffect(PermanentLeftThisWay.destroyed(), draw)));
+                    List.of(destroy, new ConditionalEffect(HappenedThisWay.destroyed(), draw)));
             recording(destroy, entry, List.of(left(Zone.GRAVEYARD, true, false)));
             EffectHandler drawHandler = stubHandler(draw);
 

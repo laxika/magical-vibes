@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -48,6 +50,8 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             exileSubject(gameData, entry, exile);
             return;
         }
+        List<UUID> exiled = new java.util.ArrayList<>();
+        List<UUID> exiledControllers = new java.util.ArrayList<>();
         // Multi-target / optional group: exile each chosen target for this effect's group
         // (targetsForEffect). An empty group ("any number" / "up to N" with none chosen) exiles
         // nothing — do not fall back to List.of(null) when targetId is unset.
@@ -83,7 +87,12 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             // Later steps of the same resolution read the exiled permanent's last known information.
             entry.rememberLastKnownPermanentCard(targetId, target.getCard());
             entry.getLastKnownPermanentPowers().put(targetId, gameQueryService.getEffectivePower(gameData, target));
-            permanentRemovalService.removePermanentToExile(gameData, target);
+            if (permanentRemovalService.removePermanentToExile(gameData, target)) {
+                exiled.add(targetId);
+                if (controllerId != null) {
+                    exiledControllers.add(controllerId);
+                }
+            }
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
@@ -94,6 +103,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             }
         }
 
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers));
         permanentRemovalService.removeOrphanedAuras(gameData);
         for (UUID controllerId : tokenControllers) {
             destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
@@ -102,7 +112,10 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     }
 
     private void exileSubject(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile) {
+        List<UUID> exiled = new java.util.ArrayList<>();
+        List<UUID> exiledControllers = new java.util.ArrayList<>();
         for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, exile, exile.subject())) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             if (exile.outsideGame()) {
                 if (!permanentRemovalService.removePermanentToOutsideGame(gameData, permanent)) {
                     continue;
@@ -113,10 +126,15 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
                     continue;
                 }
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+                exiled.add(permanent.getId());
+                if (controllerId != null) {
+                    exiledControllers.add(controllerId);
+                }
             }
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, permanent.getCard().getName(), entry.getCard().getName());
         }
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers));
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

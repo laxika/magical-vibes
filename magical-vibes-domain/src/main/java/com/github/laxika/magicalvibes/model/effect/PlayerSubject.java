@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 
 import java.util.List;
@@ -20,7 +21,8 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
         PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers,
-        PlayerSubject.PlayersDealtDamage, PlayerSubject.SubgameWinners, PlayerSubject.Except, PlayerSubject.AllOf, PlayerSubject.Matching {
+        PlayerSubject.PlayersDealtDamage, PlayerSubject.SubgameWinners, PlayerSubject.Except, PlayerSubject.AllOf, PlayerSubject.Matching,
+        PlayerSubject.PlayersThisWay {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -177,6 +179,35 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
      * step result.
      */
     record PlayersDealtDamage() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That player", "each player who [drew | discarded | milled | lost life] this way", "its controller" of what a step
+     * removed: the players the most recent {@code kind} step of the same resolution recorded on the stack entry's
+     * resolution scratchpad (the players it happened to, or the controllers, owners for cards, of what it acted on as
+     * it acted, CR 608.2h; see {@link StepKind}). Not for {@link StepKind#DEAL_DAMAGE} ({@link PlayersDealtDamage}),
+     * {@link StepKind#COUNTER_SPELL} ({@code controllerOf(targetSpell())}) or {@link StepKind#COPY_SPELL}. A step
+     * result.
+     */
+    record PlayersThisWay(StepKind kind) implements PlayerSubject {
+
+        public PlayersThisWay {
+            Objects.requireNonNull(kind, "kind");
+            switch (kind) {
+                case DEAL_DAMAGE -> throw new IllegalArgumentException(
+                        "Players dealt damage this way are Subjects.playersDealtDamageThisResolution()");
+                case COUNTER_SPELL -> throw new IllegalArgumentException(
+                        "The countered spell's controller is Subjects.controllerOf(Subjects.targetSpell())");
+                case COPY_SPELL -> throw new IllegalArgumentException("A copy step records no player");
+                default -> {
+                }
+            }
+        }
 
         @Override
         public boolean needsStackEntry() {

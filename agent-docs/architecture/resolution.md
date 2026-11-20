@@ -57,9 +57,14 @@ Why: reconnect replay and answer matching break otherwise.
 ## Resolution scratchpad
 
 ### Later steps read what happened from the scratchpad (CR 608.2c)
-A removal step records its `DepartureResult`s on `StackEntry.resolutionResults` even when nothing left; "if you do" and last-known values are read there, never from earlier state.
-Owner: `ResolutionResults`, `StackEntry`.
-Why: a removal that didn't happen must not count.
+Every step of a `StepKind` records its `StepOutcome` (`StackEntry.recordStep`; a removal step's `DepartureResult`s) even when nothing happened; "if you do", "that many" and "those creatures" read it there (`HappenedThisWay`, `AmountThisWay`, `thisWay` / `playersThisWay`), never earlier state.
+Owner: `ResolutionResults`, `StepKind`, `StackEntry`.
+Why: a step that didn't happen must not count, and an older step of the same kind must not be read.
+
+### Only a step that finishes before the next one starts may be read
+An earlier step is a handler that never prompts, pauses by resolving itself again before it changes anything, or pauses at the end of its step with its result recorded by then (list: `StepKind` Javadoc's handlers); a handler that pauses mid-step by `rerunCurrentEffectAfterInteraction` or a bespoke continuation is not.
+Owner: `EffectResolutionService`, the recording handlers.
+Why: a later step would run before the earlier one finished, or read half its result.
 
 ### A removal step asks before anything leaves (CR 616.1)
 A step removes through `DepartureService.departAsStep`; on `Pending` the handler returns and is not run again, so what follows goes through `StepDepartureSupport`. `DestructionSupport.tryDestroyAndLog` / `sacrificeAndLog` never end a step.

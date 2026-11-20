@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,7 +30,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        entry.recordCounteredSpell(false);
+        entry.recordStep(StepKind.COUNTER_SPELL, StepOutcome.NONE);
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null && entry.targetsForEffect(effect).size() == 1) {
             targetCardId = entry.targetsForEffect(effect).getFirst();
@@ -74,7 +77,8 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
                 yield true;
             }
         };
-        entry.recordCounteredSpell(countered);
+        entry.recordStep(StepKind.COUNTER_SPELL, countered
+                ? StepOutcome.ofObjects(List.of(targetCardId), listOfController(targetEntry)) : StepOutcome.NONE);
     }
 
     /**
@@ -107,5 +111,9 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CounteredSpellLibraryDestinationChoice(
                 entry.getControllerId(), ownerId, countered.getId(), countered.getName()));
+    }
+
+    private static List<UUID> listOfController(StackEntry countered) {
+        return countered.getControllerId() == null ? List.of() : List.of(countered.getControllerId());
     }
 }

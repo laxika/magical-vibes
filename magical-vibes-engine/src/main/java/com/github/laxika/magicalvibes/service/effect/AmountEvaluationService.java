@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisT
 import com.github.laxika.magicalvibes.model.amount.CardsDelved;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayPower;
 import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayToughness;
@@ -570,6 +571,8 @@ public class AmountEvaluationService {
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisResolution ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
+            case AmountThisWay thisWay ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().outcome(thisWay.kind()).amount();
             case PermanentLeftThisWayPower ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().lastKnownPower();
             case PermanentLeftThisWayToughness ignored ->

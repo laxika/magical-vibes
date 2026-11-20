@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -69,12 +71,17 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         if (e.rememberAmount()) entry.setEventValue(amount);
 
         List<UUID> drawnCardIds = new ArrayList<>();
+        List<UUID> drawingPlayerIds = new ArrayList<>();
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
             if (gameData.playerIds.contains(playerId)) {
-                drawnCardIds.addAll(draw(gameData, entry, playerId, amount));
+                List<UUID> drawn = draw(gameData, entry, playerId, amount);
+                drawnCardIds.addAll(drawn);
+                if (!drawn.isEmpty()) {
+                    drawingPlayerIds.add(playerId);
+                }
             }
         }
-        entry.recordDrawnCards(drawnCardIds);
+        entry.recordStep(StepKind.DRAW, StepOutcome.ofObjects(drawnCardIds, drawingPlayerIds));
     }
 
     /** {@code playerId} draws {@code amount} cards; returns the cards this instruction drew. */

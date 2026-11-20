@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -56,7 +58,12 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DealDamageToPlayersEffect) effect;
+        // The damage this step deals is added to its result as each damage event is dealt (DamageSupport).
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
+        dealDamage(gameData, entry, (DealDamageToPlayersEffect) effect);
+    }
+
+    private void dealDamage(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         // The entry the damage is dealt through: the resolving one, or one whose source is the permanent that dealt
         // the trigger event's damage ("that Archer deals that much damage"); the players are always read from the
         // resolving entry.
@@ -78,6 +85,10 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 resolvePlayerOrTheirPlaneswalker(gameData, entry, dealing, e);
             } else {
                 resolvePlayers(gameData, entry, dealing, e);
+            }
+            if (dealing != entry) {
+                // Dealt through the permanent that deals it: the damage is this step's.
+                entry.addToStep(StepKind.DEAL_DAMAGE, dealing.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
             }
 
             if (e.recordDamageDealt()) {

@@ -617,3 +617,8 @@ SkipNextUntapEffect,survivor,6.2e,"TapUntapScope + filter became PermanentSubjec
 CantBlockThisTurnEffect,survivor,6.2e,"TapUntapScope + filter became PermanentSubject; a set is a floating rule (SubjectResolutionService.lastingRule), CR 611.2c"
 CantAttackThisTurnEffect,survivor,6.2e,"TapUntapScope + filter became PermanentSubject; a set is a rule on each of its players, CR 611.2c"
 DoesntUntapEffect,survivor,6.2e,"TapUntapScope became PermanentSubject (source/attached static, target/triggering resolved)"
+ReturnCardFromGraveyardEffect,survivor,7,head primitive; records its RETURN step result (the choose-at-resolution paths record none: not an earlier step)
+CreateTokenEffect,survivor,7,head primitive; records its CREATE_TOKEN step result
+DealDamageToAnyTargetEffect,survivor,7,head primitive; begins its DEAL_DAMAGE step result (DamageSupport adds the damage as it is dealt)
+CounterSpellEffect,survivor,7,head primitive; records its COUNTER_SPELL step result (was ResolutionResults.counteredSpell)
+CopyTriggeringSpellEffect,survivor,7,head primitive; records its COPY_SPELL step result (was ResolutionResults.copiedSpell)

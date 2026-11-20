@@ -19,7 +19,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
-| 7 | Step results: one way for a step to tell the next what happened | open |
+| 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
@@ -3184,6 +3184,131 @@ audit ledger left as history). `scripts/effect-inventory.py` prints a PermanentS
 
 **For later runs.** `BoostTargetAndSharingCreaturesUntilEndOfTurnEffect` (Rally's second half) could fold the same way onto
 a boost survivor. Ask for a full card-test run (6.3's 5,582 rewritten card files are still unconfirmed by one).
+
+### Step 7 (2026-11-20)
+
+**Inventory: how a later step learns what an earlier one did** (writer → reader; "stays" = kept as it is).
+
+| Channel on `StackEntry` | Writers | Readers | Now |
+|---|---|---|---|
+| `resolutionResults.departures` | `DepartureService.departAsStep` / `finishStepDeparture`, `SacrificeSelfEffectHandler`, `DepartPermanentsEffectHandler` (empty list) | ~20 fused handlers (`SacrificeTarget*Then*`, `SacrificeSelfAnd*`, `DestroyTargetThenRevealUntilType*`, `InfernalOffering`, `ResolveDelayedPermanentAction`, `RemoveAllCountersThenDestroy...`, `PlayersWhoTappedLandForMana...`), `StepDepartureSupport`, `PermanentLeftThisWayPower` / `Toughness` | stays (last-known power, toughness, types); also gives the DESTROY / SACRIFICE outcomes |
+| `resolutionResults.pickedIds` | `LibraryChoiceHandlerService`, `LibrarySelectionFollowUp`, `SearchLibraryAndOrGraveyardChoiceInteractionHandler`, `QueueReflexiveAbility`, `CreateTokenThen`, `BendOrBreak`, `AttachSelectedAurasToLegalTargets`, `RevealUntilNonlandBottomThenDealManaValueDamage` | `TransformChosenPermanent`, `ReturnSelectedPermanentToHandAtEndOfCombat`, `MakeChosenPermanentAttacking`, `ConjureDuplicateOfSelectedPermanent`, `AttachSelected*`, `AttachOneOfEquipment*`, the writers above | stays (a choice, not an outcome) |
+| `resolutionResults.drawnCardIds` | `DrawCardEffectHandler` (`recordDrawnCards`) | `CardDrawnThisWay` | **replaced** by the DRAW outcome |
+| `resolutionResults.counteredSpell` | `CounterSpellEffectHandler` | `SpellCounteredThisWay` | **replaced** by COUNTER_SPELL |
+| `resolutionResults.copiedSpell` | `CopyTriggeringSpellEffectHandler` | `SpellCopiedThisWay` | **replaced** by COPY_SPELL |
+| `eventValue` | 11 trigger collectors (the event's number) and ~135 resolution writers: 123 `normalfx` handlers (`rememberAmount`, `recordDamageDealt`, `recordTargetLifeLost`, `recordSacrificedCount` / `Power` flags; the roll, pay-X, mill/exile/reveal "then" handlers), 2 `mayfx`, 8 input/interaction completions, `ReflexiveAbilitySupport`, `DamagePreventionService`, `PermanentRemovalService` | `EventValue` (555 card files, mostly the trigger payload), `AmountEvaluationService` (target-spell mana value fallback) | stays: a trigger's payload; the in-resolution writers move to `AmountThisWay` card by card in steps 8–9 |
+| `createdPermanentIds` (whole resolution) | `CreateTokenEffectHandler`, ~50 token handlers, `TokenCopySupport`, `ChoiceHandlerService` | `createdThisResolution()`, ~37 `*CreatedPermanents*` / `CreateToken*` / `Attach*ToCreatedPermanent` handlers, `DestroyAllPermanents` (spares them), `AmountEvaluationService` | stays (the CREATE_TOKEN outcome is the step's share) |
+| `resolutionExiledCardIds` | `LibraryChoiceHandlerService`, `ExileTopCardsToSource`, `ExileGraveyardCards`, `LivingDeath` | `ChooseNonlandCardExiledWithSourceMayCast`, `AllowCastAllCardsExiledWithSourceUntilEndOfTurn`, `LivingDeath`, `LibraryChoiceHandlerService` | stays (cards exiled from libraries and graveyards) |
+| `drawnCardIdsThisResolution` (whole resolution) | `DrawCardEffectHandler`, `EachOpponentDrawsCard`, `DrawCardForEachOpponentControllingReturnedPermanent`, `TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanent` | `CardsDrawnThisResolution`, `DiscardEffect.onlyCardsDrawnThisResolution`, `RevealDrawnCard*` (2), `MayCastAnySpellFromHandWithoutPayingManaCost`, `EachPlayerSacrificesPermanentUnlessDiscard`, `DrawCardsThen`, `DrawCardThenIfNoCardsDrawn` | stays |
+| `returnedPermanentIds` | `ReturnTargetCardsFromGraveyardToBattlefield`, `ReturnAllCardsExiledWithSource`, `AnimationSupport`, `FlickerEffectHandler` (clears) | `returnedThisResolution()`, `PutCounterOnReturnedPermanents`, `PutCounterOnOneTarget`, `AmountEvaluationService.opponentsControllingReturnedPermanents`, `ReturnTargetCardsFromGraveyardToBattlefield` | stays |
+| `acceptedPlayerIds` | `EachPlayerMayDiscardHandThenDrawEffectHandler` | `acceptedPlayers()`, `EachPlayerMayDiscardHandThenDrawEffect` | stays |
+| `playersDealtDamageThisResolution` | `DamageSupport.finishPlayerDamage` | `playersDealtDamageThisResolution()`, `DealDividedDamage`, `ScryIfPlayerDealtDamageThisWay`, `DiscardIfPlayerDealtDamageThisWay` | stays |
+| `permanentsDealtDamageThisResolution` | `DamageSupport` (2 sites) | `DealDamageToTriggeringPermanentThenBoostSourceIfDamaged` | stays (DEAL_DAMAGE's objects are the step's share) |
+| `counteredPermanentIdsThisResolution` (permanents given counters) | `MultiPermanentChoiceHandlerService`, `PutCounterOnChosenOwnPermanent` | `PhaseOutPermanentsThatReceivedCountersThisWay`, `MultiPermanentChoiceHandlerService` | stays |
+| `sacrificedCard*` | `SpellCastingService`, `StackResolutionService`, `PermanentChoiceBattlefieldHandlerService`, `SacrificeEnchantedPermanentAndReattachSourceAura` | `StackResolutionService`, `ConditionContext` (`SacrificedCardMatches`) | stays: a cost, not a step |
+| `subgameResult` | `SubgameService`, `EachPlayerLosesFractionOfLifeRoundedUp` (clears) | `subgameWinners()` | stays |
+| `targetId` read as a result | the exile / return steps' targets | `returned()`, `exiledThisResolution()` | stays |
+
+Step-result subjects that already existed and are reused, not duplicated: `returned()`, `returnedThisResolution()`,
+`exiledThisResolution()`, `createdThisResolution()`, `playersDealtDamageThisResolution()`, `subgameWinners()`,
+`acceptedPlayers()`.
+
+**Design.** `ResolutionResults(departures, pickedIds, Map<StepKind, StepOutcome> outcomes)` (domain `model/`, immutable,
+an unmodifiable `EnumMap`, shared by the `StackEntry` copy like before). `StepKind` has DRAW, DISCARD, MILL, EXILE,
+DESTROY, SACRIFICE, RETURN, CREATE_TOKEN, DEAL_DAMAGE, GAIN_LIFE, LOSE_LIFE, PUT_COUNTERS, REMOVE_COUNTERS,
+COUNTER_SPELL, COPY_SPELL; its Javadoc says what each kind puts in `StepOutcome(amount, objectIds, playerIds)` (how
+many; which cards or permanents, by the id the step acted on; which players, the controllers or owners as the step
+acted, CR 608.2h). One outcome per kind, the latest step's: `StackEntry.recordStep(kind, outcome)` replaces it and
+every step calls it, `StepOutcome.NONE` when nothing happened, so a later step never reads an older one (keyed by kind
+so a step of another kind in between, or a wrapper, does not hide it). `addToStep` is for results that arrive in parts
+(damage as its event ends, a discard or sacrifice answered at a prompt). `withDepartures` also writes DESTROY and
+SACRIFICE from the departures, so the removal steps on the step model need no second record. Deep copy: shared
+immutable value; `GameDataDeepCopyTest.deepCopyKeepsStepResultsIndependently`.
+
+**Readers.** Condition `HappenedThisWay(StepKind)` (factories `drew()`, `sacrificed()`, `destroyed()`, `countered()`,
+`copied()`); it absorbed `PermanentLeftThisWay`, `CardDrawnThisWay`, `SpellCounteredThisWay`, `SpellCopiedThisWay`
+(deleted; Dreamcatcher, Baral, Fold into Aether, Shiko and Narset, `StepDepartureSupport`, two application tests and
+the docs moved; the same meaning: PermanentLeftThisWay read the departures, which now are the SACRIFICE / DESTROY
+outcome; the log reason text changed to "nothing was <verb> this way", no test asserted it). Amount
+`AmountThisWay(StepKind)` (`model/amount`; `CardsDrawnThisResolution` stays: it counts the whole resolution).
+Subjects `thisWay(StepKind)` (`PermanentSubject.ThisWay`: PUT_COUNTERS, REMOVE_COUNTERS, DEAL_DAMAGE only, live
+permanents only, CR 400.7; CREATE_TOKEN / RETURN are refused in favour of `createdThisResolution()` /
+`returnedThisResolution()`, the removal kinds because nothing is left to name) and `playersThisWay(StepKind)`
+(`PlayerSubject.PlayersThisWay`: not DEAL_DAMAGE, COUNTER_SPELL, COPY_SPELL, refused in favour of
+`playersDealtDamageThisResolution()` / `controllerOf(targetSpell())`). Both `needsStackEntry()`; SUBJECTS_REFERENCE rows.
+CR 608.2c and 608.2h checked with `get_rule` (2026-11-20).
+
+**Recording primitives** (each handler's `resolve` records; behaviour otherwise unchanged): `DrawCardEffect` (cards
+drawn from the library, as before), `DiscardEffect` (begins the step unless it is a rerun of its each-player loop;
+`GameData.discarded` adds each discard of that resolution, the resolving entry or the one parked on its prompt),
+`MillEffect` (the milled cards in any public zone, CR 701.17c: it now calls `resolveMillPlayerIncludingExiled`, and
+`GraveyardService.resolveMillPlayersSimultaneously` returns the cards; the flag only changes what is returned),
+`ExileTargetPermanentEffect` (both paths), `DestroyTargetPermanentEffect` (target path: `tryDestroyAndLog`'s result;
+batch paths: `destroyBatchDestroyed`), `SacrificePermanentsEffect` (begins the step; `GameData.recordSacrificedPermanent`
+adds each sacrifice; `SacrificeSelfEffect` already recorded departures), `ReturnToHandEffect` (permanents whose card is
+in a hand afterwards; players = the hand's owner, Recoil's "that player"), `ReturnCardFromGraveyardEffect` (cards gone
+from graveyards into a hand or onto the battlefield; owners), `CreateTokenEffect` (`resolve` only; tokens and their
+controllers), `DealDamageToAnyTarget` / `ToPlayers` / `ToTargetCreature` (begin the step; `DamageSupport.finishDamage`
+adds noncombat damage as dealt, replayed permanent damage after a journal rerun too; carrier entries hand theirs
+back), `GainLifeEffect` / `LoseLifeEffect` (life-total change per player, `LifeSupport.lifeChange`),
+`PutCountersOnSelfEffect` / `PutCounterOnTargetPermanentEffect` (counter-count change on the candidates,
+`PermanentCounterSupport.counterCounts` / `counterChange`; a counter-replacement order answered later adds the rest),
+`RemoveCounterFromTargetPermanentEffect`, `CounterSpellEffect`, `CopyTriggeringSpellEffect`.
+
+Tests (`StepResultsTest`, harness, 23 cases): one or more per primitive composed as a real card's text reads, without its
+fused effect — Baral (draw / if you do), Mishra's Command ("a card for each card discarded this way", across the discard
+prompt), Saprazzan Breaker and CR 701.17b (mill), Swords to Plowshares (exile → its controller), Break the Spell and an
+indestructible target (destroy), Victimize (sacrifice / if you do), Recoil (return → that player), Turntimber Ranger
+(token / if you do), Syphon Soul (damage dealt this way), Provoke the Trolls (creature dealt damage this way, and a
+player target naming none), Gonti's Machinations (life lost this way), a 0-life gain, counters put and Living Artifact's
+"remove a counter. If you do"; plus "if you don't", a later same-kind step replacing the earlier, and the refused
+duplicate subjects. `MillEffectHandlerTest` verifies the including-exiled call. Oracle text of every named card checked
+with `get_card`.
+
+**Test runs**: application selection (`StepResultsTest`, `EffectResolutionServiceTest`, `ResolutionScratchpadAmountTest`,
+`SubjectResolutionServiceTest`, `LibraryChoiceHandlerServiceTest`, `EffectCountRatchetTest`, the handler tests of every
+touched handler and every application test naming them or `GraveyardService`): 3,553 test cases, all pass after
+`MillEffectHandlerTest` was updated; card tests (`--tests-for` of the 19 recording records, 25 per class, plus Dreamcatcher,
+Baral, Fold into Aether, Shiko and Narset): 511 suites, 3,914 test cases, all pass; `GameDataDeepCopyTest` 51, all pass.
+Application, AI, engine testFixtures and card-test `b`, `d`, `f`, `s` test sources compile. Ratchet unchanged (no
+`model/effect` record or handler added or removed; the new types are in `model/`, `model/condition`, `model/amount`).
+
+**Handlers that may be an earlier step** (rule added to `architecture/resolution.md`):
+
+- Never prompt: `GainLifeEffect`, `LoseLifeEffect` (Lich's Duel Mastery's question reruns it before anything changes),
+  `ExileTargetPermanentEffect`, `DestroyTargetPermanentEffect` (`AsksDeathReplacementsFirst`: asked before anything
+  changes), `CopyTriggeringSpellEffect` (records before the new-target choice), `CreateTokenEffect` (a token-creation
+  replacement question reruns it before anything is created), `MillEffect` (journal reruns replay the milled cards),
+  `DrawCardEffect`.
+- Pause at the end of the step with the result recorded by then: `SacrificeSelfEffect` (`departAsStep`),
+  `DiscardEffect`, `SacrificePermanentsEffect` (results added as the prompts are answered),
+  `PutCountersOnSelfEffect` / `PutCounterOnTargetPermanentEffect` (counter-replacement order),
+  `CounterSpellEffect` (the top-or-bottom choice comes after the record).
+- Only on some paths: `DealDamageTo{AnyTarget,Players,TargetCreature}Effect` are safe unless a replacement-order prompt
+  reruns them after player damage was dealt (a replayed player hit reports 0 dealt, so it is lost from the step result;
+  permanent damage is replayed); `ReturnCardFromGraveyardEffect` only on the pre-targeted, topmost, return-all and random
+  paths (the choose-at-resolution completions record nothing); `PutCounterOnTargetPermanentEffect` not with its
+  predicate (choose your own permanent) path; `RemoveCounterFromTargetPermanentEffect` not when the controller picks the
+  kind of counter; `ReturnToHandEffect` not when a commander's zone choice is pending.
+- Everything else, and every `rerunCurrentEffectAfterInteraction` user (194 files), is `blocked-step-model` as an earlier
+  step.
+
+**For later runs.**
+
+- Step 8 reads results only through these: "if you do" = `ConditionalEffect(new HappenedThisWay(kind), then)` after the
+  step, "that many" = `AmountThisWay(kind)`, "its controller" of what a step exiled / destroyed / returned =
+  `playersThisWay(kind)` (not `controllerOf(target())` when the card means the target whether or not it was removed:
+  Victorious Destruction's "its controller loses 1 life" has no "if", so by its text it happens even if the land is
+  indestructible; no ruling says otherwise).
+- Damage, discard and sacrifice results are added by central hooks once a step of that kind began: damage, discards or
+  sacrifices from a later handler that records no begin are added to the latest step of that kind. Make a new
+  damage/discard/sacrifice primitive call `recordStep(kind, NONE)` first.
+- A declined `MayEffect` runs no step and records nothing; an "if you do" after it would read an older step of that
+  kind. No card has two same-kind steps around a may yet; record NONE on decline if one appears.
+- Turntimber Ranger's `MayEffect(SequenceEffect.of(CreateTokenEffect, PutCountersOnSourceEffect))` has no "if you do"
+  gate; step 8 should gate it with `HappenedThisWay(CREATE_TOKEN)`.
+- The in-resolution `eventValue` writers (`rememberAmount`, `recordDamageDealt`, `recordTargetLifeLost`,
+  `recordSacrificedCount`) now have a typed twin; steps 8–9 move their cards to `AmountThisWay` and drop the flags.
 
 ## Prompt
 

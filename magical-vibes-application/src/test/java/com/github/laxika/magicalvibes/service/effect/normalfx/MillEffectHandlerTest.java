@@ -100,7 +100,7 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player1Id, 4);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player1Id, 4);
         }
     }
 
@@ -117,7 +117,7 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player2Id, 3);
         }
 
         @Test
@@ -133,7 +133,7 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player1Id, 3);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player1Id, 3);
         }
 
         @Test
@@ -146,7 +146,7 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player1Id, 0);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player1Id, 0);
         }
 
         @Test
@@ -166,8 +166,8 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 4);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player1Id, 2);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player2Id, 4);
         }
 
         @Test
@@ -184,7 +184,7 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player2Id, 3);
         }
     }
 
@@ -203,7 +203,7 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player2Id, 3);
         }
     }
 
@@ -220,8 +220,8 @@ class MillEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 2);
-            verify(graveyardService, never()).resolveMillPlayer(eq(gd), eq(player1Id), any(int.class));
+            verify(graveyardService).resolveMillPlayerIncludingExiled(gd, player2Id, 2);
+            verify(graveyardService, never()).resolveMillPlayerIncludingExiled(eq(gd), eq(player1Id), any(int.class));
         }
 
         @Test
@@ -237,7 +237,7 @@ class MillEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayersSimultaneously(gd, List.of(player2Id, player3Id), 2);
-            verify(graveyardService, never()).resolveMillPlayer(eq(gd), any(UUID.class), any(int.class));
+            verify(graveyardService, never()).resolveMillPlayerIncludingExiled(eq(gd), any(UUID.class), any(int.class));
         }
     }
 

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -52,6 +54,11 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DiscardEffect) effect;
+        if (!gameData.eachPlayerRummage.active) {
+            // A new discard step (not a rerun after one player's choice): every card discarded from here on, as this
+            // resolves or as its discard prompts are answered, is added to the step's result (GameData.discarded).
+            entry.recordStep(StepKind.DISCARD, StepOutcome.NONE);
+        }
 
         // Clear the last-discarded snapshot so a trailing LastDiscardedCardManaValue on the same
         // spell reads this discard only, and stays 0 when nothing is discarded (empty hand).

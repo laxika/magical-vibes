@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayPower;
 import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayToughness;
-import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -79,7 +79,7 @@ class ResolutionScratchpadAmountTest {
 
     @Test
     void conditionalAmountReadsTheScratchpad() {
-        FixedIfCondition amount = new FixedIfCondition(PermanentLeftThisWay.sacrificed(), 2, 0);
+        FixedIfCondition amount = new FixedIfCondition(HappenedThisWay.sacrificed(), 2, 0);
         assertThat(evaluate(amount)).isZero();
 
         entry.recordDepartures(List.of(departure(1, 1, true)));

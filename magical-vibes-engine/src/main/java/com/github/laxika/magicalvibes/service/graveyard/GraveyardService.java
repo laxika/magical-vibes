@@ -154,17 +154,20 @@ public class GraveyardService {
     /**
      * Mills {@code count} cards from each listed player's library as a single simultaneous event
      * ("each player mills a card"): one rules event batch, so "one or more nonland cards are milled" triggers fire
-     * once for the combined number of nonland cards milled by all of the players.
+     * once for the combined number of nonland cards milled by all of the players. Returns the cards milled, as
+     * {@link #resolveMillPlayerIncludingExiled} finds them.
      */
-    public void resolveMillPlayersSimultaneously(GameData gameData, List<UUID> playerIds, int count) {
+    public List<Card> resolveMillPlayersSimultaneously(GameData gameData, List<UUID> playerIds, int count) {
+        List<Card> milled = new ArrayList<>();
         gameData.rulesEvents.beginBatch();
         try {
             for (UUID playerId : playerIds) {
-                resolveMillPlayer(gameData, playerId, count, false, false, null);
+                milled.addAll(resolveMillPlayer(gameData, playerId, count, true, false, null));
             }
         } finally {
             gameData.rulesEvents.endBatch();
         }
+        return milled;
     }
 
     /**

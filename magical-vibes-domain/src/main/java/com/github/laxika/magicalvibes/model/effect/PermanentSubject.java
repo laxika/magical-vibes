@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
         PermanentSubject.AllOf, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
-        PermanentSubject.WithCreaturesSharingAColor {
+        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.ThisWay {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -423,6 +424,36 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * recorded as created this resolution, those still on the battlefield. A step result.
      */
     record CreatedThisResolution() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Those creatures", "each creature dealt damage this way": the permanents the most recent {@code kind} step of the
+     * same resolution acted on, as the stack entry's resolution scratchpad recorded them, those still on the
+     * battlefield as the same objects (CR 400.7). Only for the kinds whose objects stay on the battlefield
+     * ({@link StepKind#PUT_COUNTERS}, {@link StepKind#REMOVE_COUNTERS}, {@link StepKind#DEAL_DAMAGE}); tokens created
+     * this way are {@link CreatedThisResolution} and permanents returned this way {@link ReturnedThisResolution}. A step
+     * result.
+     */
+    record ThisWay(StepKind kind) implements PermanentSubject {
+
+        public ThisWay {
+            Objects.requireNonNull(kind, "kind");
+            switch (kind) {
+                case PUT_COUNTERS, REMOVE_COUNTERS, DEAL_DAMAGE -> {
+                }
+                case CREATE_TOKEN -> throw new IllegalArgumentException(
+                        "Tokens created this way are Subjects.createdThisResolution()");
+                case RETURN -> throw new IllegalArgumentException(
+                        "Permanents returned this way are Subjects.returnedThisResolution()");
+                default -> throw new IllegalArgumentException("A " + kind + " step leaves no permanent to name; its "
+                        + "players are Subjects.playersThisWay(" + kind + ")");
+            }
+        }
 
         @Override
         public boolean needsStackEntry() {

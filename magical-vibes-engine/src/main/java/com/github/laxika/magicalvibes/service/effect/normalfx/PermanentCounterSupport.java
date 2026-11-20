@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,6 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1003,4 +1008,44 @@ public class PermanentCounterSupport {
         return gameQueryService.findPermanentController(gameData, target.getId());
     }
 
+
+    /**
+     * How many {@code type} counters (every kind, for {@code null}) each of the permanents has now, for the result of
+     * the counter step about to act on them ({@link #counterChange}).
+     */
+    public Map<UUID, Integer> counterCounts(GameData gameData, Collection<UUID> permanentIds, CounterType type) {
+        Map<UUID, Integer> counts = new LinkedHashMap<>();
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null) {
+                counts.put(permanentId, type == null ? permanent.getTotalCounterCount() : permanent.getCounterCount(type));
+            }
+        }
+        return counts;
+    }
+
+    /**
+     * The counters put on ({@code added}) or removed from the permanents since {@link #counterCounts} found
+     * {@code before}, as a counter step's result: how many, the permanents that changed (the same objects, still on
+     * the battlefield) and their controllers.
+     */
+    public StepOutcome counterChange(GameData gameData, Map<UUID, Integer> before, CounterType type, boolean added) {
+        int total = 0;
+        List<UUID> changed = new ArrayList<>();
+        List<UUID> controllers = new ArrayList<>();
+        Map<UUID, Integer> after = counterCounts(gameData, before.keySet(), type);
+        for (Map.Entry<UUID, Integer> was : before.entrySet()) {
+            Integer now = after.get(was.getKey());
+            int delta = now == null ? 0 : added ? now - was.getValue() : was.getValue() - now;
+            if (delta > 0) {
+                total = SaturatingMath.add(total, delta);
+                changed.add(was.getKey());
+                UUID controllerId = gameQueryService.findPermanentController(gameData, was.getKey());
+                if (controllerId != null) {
+                    controllers.add(controllerId);
+                }
+            }
+        }
+        return new StepOutcome(total, changed, controllers);
+    }
 }

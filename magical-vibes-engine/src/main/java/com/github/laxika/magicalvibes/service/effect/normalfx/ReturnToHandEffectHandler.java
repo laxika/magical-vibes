@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -21,6 +23,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,7 +62,33 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnToHandEffect) effect;
+        Map<UUID, Permanent> before = new LinkedHashMap<>();
+        gameData.forEachPermanent((playerId, permanent) -> before.put(permanent.getId(), permanent));
+        returnToHand(gameData, entry, (ReturnToHandEffect) effect);
+        recordReturned(gameData, entry, before);
+    }
+
+    /**
+     * The step's result: the permanents that were on the battlefield before it and whose card is now in a hand (by
+     * their id as the step acted on them), and the players whose hand each went to, its owner. A permanent a
+     * replacement exiled instead was not returned.
+     */
+    private void recordReturned(GameData gameData, StackEntry entry, Map<UUID, Permanent> before) {
+        Map<UUID, UUID> handOwners = new HashMap<>();
+        gameData.playerHands.forEach((playerId, hand) -> hand.forEach(card -> handOwners.put(card.getId(), playerId)));
+        List<UUID> returned = new ArrayList<>();
+        List<UUID> owners = new ArrayList<>();
+        before.forEach((permanentId, permanent) -> {
+            UUID ownerId = handOwners.get(permanent.getOriginalCard().getId());
+            if (ownerId != null && gameQueryService.findPermanentById(gameData, permanentId) == null) {
+                returned.add(permanentId);
+                owners.add(ownerId);
+            }
+        });
+        entry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(returned, owners));
+    }
+
+    private void returnToHand(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
         if (e.returnsResolvingSpell()) {
             resolveSelfSpell(gameData, entry);
             return;

@@ -3,12 +3,20 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +37,43 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnCardFromGraveyardEffect) effect;
+        Map<UUID, UUID> before = new LinkedHashMap<>();
+        gameData.playerGraveyards.forEach((ownerId, graveyard) -> graveyard.forEach(card -> before.put(card.getId(),
+                ownerId)));
+        returnCard(gameData, entry, (ReturnCardFromGraveyardEffect) effect);
+        recordReturned(gameData, entry, before);
+    }
+
+    /**
+     * The step's result: the cards that were in a graveyard before it and are now in a hand (the card) or on the
+     * battlefield (the permanent it became), and their owners. A return that waits for its player's choice records
+     * none: the choice's completion returns the card, so this handler is not an earlier step that may be read.
+     */
+    private void recordReturned(GameData gameData, StackEntry entry, Map<UUID, UUID> before) {
+        Set<UUID> inGraveyards = new HashSet<>();
+        gameData.playerGraveyards.values().forEach(graveyard -> graveyard.forEach(card -> inGraveyards.add(card.getId())));
+        Set<UUID> inHands = new HashSet<>();
+        gameData.playerHands.values().forEach(hand -> hand.forEach(card -> inHands.add(card.getId())));
+        Map<UUID, UUID> permanentsByCard = new HashMap<>();
+        gameData.forEachPermanent((playerId, permanent) ->
+                permanentsByCard.put(permanent.getOriginalCard().getId(), permanent.getId()));
+        List<UUID> returned = new ArrayList<>();
+        List<UUID> owners = new ArrayList<>();
+        before.forEach((cardId, ownerId) -> {
+            if (inGraveyards.contains(cardId)) {
+                return;
+            }
+            UUID returnedId = inHands.contains(cardId) ? cardId : permanentsByCard.get(cardId);
+            if (returnedId != null) {
+                returned.add(returnedId);
+                owners.add(ownerId);
+            }
+        });
+        entry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(returned, owners));
+    }
+
+    private void returnCard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect e) {
+        CardEffect effect = e;
         if (e.filter() instanceof CardIsSelfPredicate
                 && entry.sourceCardGraveyardEntryVersion() >= 0
                 && gameData.graveyardEntryVersion(entry.getCard().getId())

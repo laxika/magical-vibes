@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -211,6 +212,15 @@ public final class Subjects {
     /** "Those tokens": the permanents an earlier step of the same resolution created. */
     public static PermanentSubject createdThisResolution() {
         return CREATED_THIS_RESOLUTION;
+    }
+
+    /**
+     * "Those creatures": the permanents the most recent {@code kind} step of the same resolution acted on, still on the
+     * battlefield ({@link StepKind#PUT_COUNTERS}, {@link StepKind#REMOVE_COUNTERS}, {@link StepKind#DEAL_DAMAGE} only;
+     * see {@link PermanentSubject.ThisWay}). A step result.
+     */
+    public static PermanentSubject thisWay(StepKind kind) {
+        return new PermanentSubject.ThisWay(kind);
     }
 
     /** "Each other creature banded with it": the other attacking creatures in {@code permanent}'s band. */
@@ -482,6 +492,15 @@ public final class Subjects {
     /** The players an earlier step of this resolution dealt damage to ("each player dealt damage this way"). */
     public static PlayerSubject playersDealtDamageThisResolution() {
         return PLAYERS_DEALT_DAMAGE;
+    }
+
+    /**
+     * "That player", "each player who [drew | milled | lost life] this way", "its controller" of what a step removed: the
+     * players the most recent {@code kind} step of the same resolution recorded (see {@link PlayerSubject.PlayersThisWay}).
+     * A step result.
+     */
+    public static PlayerSubject playersThisWay(StepKind kind) {
+        return new PlayerSubject.PlayersThisWay(kind);
     }
 
     /** The players who won the subgame an earlier step of this resolution played. */

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -94,7 +95,10 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
                     amountContext.withTargetPermanentId(playerId))
                     : amount);
         }
+        Map<UUID, Integer> lifeBefore = new LinkedHashMap<>();
+        losses.keySet().forEach(playerId -> lifeBefore.put(playerId, gameData.getLife(playerId)));
         int totalLifeLost = lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
+        entry.recordStep(StepKind.LOSE_LIFE, lifeSupport.lifeChange(gameData, lifeBefore, false));
 
         if (e.recordTargetLifeLost()) {
             entry.setEventValue(totalLifeLost);

@@ -5,15 +5,20 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +47,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyTargetPermanentEffect) effect;
+        entry.recordStep(StepKind.DESTROY, StepOutcome.NONE);
         if (!(destroy.subject() instanceof PermanentSubject.Target)) {
             destroyNamedPermanents(gameData, entry, destroy);
             return;
@@ -60,7 +66,11 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
 
         // Capture the controller before destruction (needed for token creation)
         UUID controllerId = rememberTarget(gameData, entry, target);
-        destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
+        if (destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(),
+                destroy.cannotBeRegenerated())) {
+            entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(target.getId()),
+                    controllerId == null ? List.of() : List.of(controllerId)));
+        }
 
         // Create token for the target's controller if specified
         if (destroy.tokenForController() != null && controllerId != null
@@ -100,7 +110,26 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 entry.setTriggeringPermanentControllerId(controllerId);
             }
         }
-        destructionSupport.destroyBatch(gameData, named, entry.getCard().getName(), destroy.cannotBeRegenerated());
+        destroyAndRecord(gameData, entry, named, destroy.cannotBeRegenerated());
+    }
+
+    /**
+     * Destroys {@code permanents} as one batch and records the step's result: those actually destroyed (wherever they
+     * went; indestructible and regenerated ones were not) and their controllers as they were destroyed (CR 608.2h).
+     */
+    private void destroyAndRecord(GameData gameData, StackEntry entry, List<Permanent> permanents,
+                                  boolean cannotBeRegenerated) {
+        Map<UUID, UUID> controllers = new HashMap<>();
+        for (Permanent permanent : permanents) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (controllerId != null) {
+                controllers.put(permanent.getId(), controllerId);
+            }
+        }
+        List<UUID> destroyed = destructionSupport.destroyBatchDestroyed(gameData, permanents,
+                entry.getCard().getName(), cannotBeRegenerated).stream().map(Permanent::getId).toList();
+        entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(destroyed, destroyed.stream()
+                .map(controllers::get).filter(Objects::nonNull).toList()));
     }
 
     /** Records {@code target}'s controller, card and power as it is destroyed; returns that controller. */
@@ -147,8 +176,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
             rememberTarget(gameData, entry, target);
             toDestroy.add(target);
         }
-        destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(),
-                destroy.cannotBeRegenerated());
+        destroyAndRecord(gameData, entry, toDestroy, destroy.cannotBeRegenerated());
         return true;
     }
 }

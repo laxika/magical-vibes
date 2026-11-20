@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +35,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         // "If you don't copy a spell this way" reads this step's result; it is false until a copy is made.
-        entry.recordCopiedSpell(false);
+        entry.recordStep(StepKind.COPY_SPELL, StepOutcome.NONE);
         UUID triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId == null) return;
 
@@ -64,7 +67,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        entry.recordCopiedSpell(true);
+        entry.recordStep(StepKind.COPY_SPELL, StepOutcome.ofObjects(List.of(triggeringCardId), List.of()));
         if (!triggeringSpellEffect.retargetToSource()) {
             // The copy's controller is the spell's: the shared copy machinery makes the copies, with the effect's
             // modifications, and offers the new-target choice.

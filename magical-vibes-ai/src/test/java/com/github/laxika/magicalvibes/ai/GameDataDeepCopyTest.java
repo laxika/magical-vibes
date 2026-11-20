@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -632,6 +634,24 @@ class GameDataDeepCopyTest {
         assertThat(copied.isTriggeredBySourceAttacking()).isTrue();
         copied.setTriggeredBySourceAttacking(false);
         assertThat(record.isTriggeredBySourceAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps a stack entry's step results, and a step recorded on the copy stays in the copy")
+    void deepCopyKeepsStepResultsIndependently() {
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Resolving spell", List.of());
+        UUID drawnCardId = UUID.randomUUID();
+        entry.recordStep(StepKind.DRAW, StepOutcome.ofObjects(List.of(drawnCardId), List.of(player1.getId())));
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+        StackEntry copied = copy.stack.getFirst();
+        copied.recordStep(StepKind.DRAW, StepOutcome.NONE);
+        copied.addToStep(StepKind.DEAL_DAMAGE, new StepOutcome(3, List.of(), List.of(player2.getId())));
+
+        assertThat(entry.getResolutionResults().outcome(StepKind.DRAW).objectIds()).containsExactly(drawnCardId);
+        assertThat(entry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE)).isEqualTo(StepOutcome.NONE);
+        assertThat(copied.getResolutionResults().outcome(StepKind.DEAL_DAMAGE).amount()).isEqualTo(3);
     }
 
     @Test

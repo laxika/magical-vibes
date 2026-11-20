@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +70,35 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCounterOnTargetPermanentEffect) effect;
+        Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData,
+                candidates(gameData, entry, e), e.counterType());
+        putCounters(gameData, entry, e);
+        entry.recordStep(StepKind.PUT_COUNTERS,
+                permanentCounterSupport.counterChange(gameData, before, e.counterType(), true));
+    }
+
+    /**
+     * Every permanent the effect may put counters on: its subject's, its targets, or (for a predicate choice) every
+     * permanent its controller controls; the step's result is read from their counts.
+     */
+    private List<UUID> candidates(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
+        if (!(e.subject() instanceof PermanentSubject.Target)) {
+            return subjectResolutionService.permanents(gameData, entry, e, e.subject()).stream()
+                    .map(Permanent::getId).toList();
+        }
+        if (e.predicate() != null) {
+            return gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
+                    .map(Permanent::getId).toList();
+        }
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (!targetIds.isEmpty()) {
+            return targetIds;
+        }
+        return entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+    }
+
+    private void putCounters(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e) {
+        CardEffect effect = e;
         if (!(e.subject() instanceof PermanentSubject.Target)) {
             resolveNamedPermanents(gameData, entry, e);
             return;
@@ -241,7 +272,13 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         for (var replacement : remaining) {
             count = gameQueryService.applyCounterReplacement(gameData, type, count, replacement);
         }
+        List<UUID> rest = new ArrayList<>(List.of(order.targetId()));
+        rest.addAll(order.subsequentTargets());
+        Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData, rest, type);
         placeOnTarget(gameData, order.entry(), order.targetId(), order.effect(), count, List.of(), true);
         resolveTargets(gameData, order.entry(), order.subsequentTargets(), order.effect(), order.originalCount());
+        // The placement waited for this order, so its step recorded only what came before; the rest is added now.
+        order.entry().addToStep(StepKind.PUT_COUNTERS, permanentCounterSupport.counterChange(gameData, before, type,
+                true));
     }
 }
