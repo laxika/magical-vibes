@@ -16,12 +16,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Resolves {@link SetCombatRequirementThisTurnEffect}: stamps the requested transient combat-requirement
@@ -35,6 +35,7 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,42 +46,23 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetCombatRequirementThisTurnEffect) effect;
         if (e.scope() == GrantScope.ALL_OWN_CREATURES) {
-            resolveForOwnCreatures(gameData, entry, e.requirement());
+            resolveForOwnCreatures(gameData, entry, e, e.requirement());
             return;
         }
 
-        if (e.scope() == GrantScope.TARGETS) {
-            for (UUID targetId : entry.targetsForEffect(e)) {
-                resolveForTarget(gameData, entry, e.requirement(), targetId);
-            }
-            return;
+        // TARGETS is every target of one multi-target group; TARGET the first; ENCHANTED_CREATURE the Aura's host as
+        // it resolves, so moving the Aura in response redirects the requirement.
+        List<Permanent> recipients = subjectResolutionService.permanents(gameData, entry, effect, e.scope().subject());
+        if (e.scope() != GrantScope.TARGETS && recipients.size() > 1) {
+            recipients = recipients.subList(0, 1);
         }
-
-        if (e.scope() == GrantScope.ENCHANTED_CREATURE) {
-            // Resolved against the aura's current host so that moving the aura in response redirects the requirement.
-            Permanent aura = entry.getSourcePermanentId() == null
-                    ? null
-                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (aura == null || !aura.isAttached()) {
-                return;
-            }
-            resolveForTarget(gameData, entry, e.requirement(), aura.getAttachedTo());
-            return;
+        for (Permanent target : recipients) {
+            resolveForTarget(gameData, entry, e.requirement(), target);
         }
-
-        UUID targetId = e.scope() == GrantScope.SELF
-                ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
-                : entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());
-        resolveForTarget(gameData, entry, e.requirement(), targetId);
     }
 
     private void resolveForTarget(GameData gameData, StackEntry entry,
-                                  CombatRequirement requirement, UUID targetId) {
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
-        }
-
+                                  CombatRequirement requirement, Permanent target) {
         switch (requirement) {
             case MUST_ATTACK -> {
                 stamp(gameData, entry, target, requirement);
@@ -139,18 +121,11 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
      * (Joraga Invocation). The per-creature log lines of the targeted branches would flood the log here,
      * so the sweep appends a single line naming the source instead.
      */
-    private void resolveForOwnCreatures(GameData gameData, StackEntry entry, CombatRequirement requirement) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null) {
-            return;
-        }
-
+    private void resolveForOwnCreatures(GameData gameData, StackEntry entry, CardEffect effect,
+                                        CombatRequirement requirement) {
         int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) {
-                continue;
-            }
-
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                GrantScope.ALL_OWN_CREATURES.subject())) {
             stamp(gameData, entry, permanent, requirement);
             count++;
         }

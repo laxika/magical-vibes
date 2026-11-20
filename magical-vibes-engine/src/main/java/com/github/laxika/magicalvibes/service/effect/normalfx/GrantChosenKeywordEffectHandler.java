@@ -6,19 +6,18 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class GrantChosenKeywordEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,7 +27,8 @@ public class GrantChosenKeywordEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantChosenKeywordEffect) effect;
-        Permanent recipient = gameQueryService.findPermanentById(gameData, resolveRecipientId(entry, e));
+        Permanent recipient = subjectResolutionService.permanent(gameData, entry, effect,
+                e.scope() == GrantScope.SELF ? GrantScope.SELF.subject() : GrantScope.TARGET.subject());
         if (recipient == null) {
             return;
         }
@@ -36,16 +36,5 @@ public class GrantChosenKeywordEffectHandler implements NormalEffectHandlerBean 
         playerInputService.beginKeywordChoice(gameData, entry.getControllerId(), recipient.getId(), e.options(),
                 e.duration(), entry.getCard() == null ? null : entry.getCard().getName(),
                 entry.getSourcePermanentId());
-    }
-
-    /**
-     * Self-scoped abilities have no target and resolve against the source permanent, falling back to
-     * {@code targetId} for the trigger shapes that carry the source there instead.
-     */
-    private UUID resolveRecipientId(StackEntry entry, GrantChosenKeywordEffect e) {
-        if (e.scope() == GrantScope.SELF) {
-            return entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-        }
-        return entry.getTargetId();
     }
 }

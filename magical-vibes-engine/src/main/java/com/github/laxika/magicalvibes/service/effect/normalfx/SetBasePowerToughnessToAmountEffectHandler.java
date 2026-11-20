@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final AmountEvaluationService amountEvaluationService;
     private final SetBasePowerToughnessEffectHandler setBasePowerToughnessEffectHandler;
 
@@ -45,7 +45,7 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
         if (setPT.scope() != GrantScope.SELF) {
             return;
         }
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent source = subjectResolutionService.permanent(gameData, entry, effect, setPT.scope().subject());
         if (source == null) {
             return;
         }

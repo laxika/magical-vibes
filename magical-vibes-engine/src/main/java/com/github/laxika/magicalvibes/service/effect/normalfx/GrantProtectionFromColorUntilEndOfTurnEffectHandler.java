@@ -1,32 +1,31 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.Set;
+
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,17 +36,14 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantProtectionFromColorUntilEndOfTurnEffect) effect;
         if (e.scope() == GrantScope.OWN_CREATURES) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-            if (battlefield == null) {
-                return;
-            }
-            battlefield.stream()
-                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+            // The one-shot "creatures you control" includes the source.
+            subjectResolutionService.permanents(gameData, entry, effect, GrantScope.ALL_OWN_CREATURES.subject())
                     .forEach(permanent -> grantProtection(entry, permanent, e.color(), gameData));
             return;
         }
 
-        Permanent target = resolveRecipient(gameData, entry, e);
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect,
+                e.scope() == GrantScope.SELF ? GrantScope.SELF.subject() : GrantScope.TARGET.subject());
         if (target == null) {
             return;
         }
@@ -66,16 +62,5 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
                 .build());
 
         log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), colorName);
-    }
-
-    private Permanent resolveRecipient(GameData gameData, StackEntry entry,
-                                       GrantProtectionFromColorUntilEndOfTurnEffect e) {
-        if (e.scope() == GrantScope.SELF) {
-            UUID selfId = entry.getSourcePermanentId() != null
-                    ? entry.getSourcePermanentId()
-                    : entry.getTargetId();
-            return selfId != null ? gameQueryService.findPermanentById(gameData, selfId) : null;
-        }
-        return gameQueryService.findPermanentById(gameData, entry.getTargetId());
     }
 }

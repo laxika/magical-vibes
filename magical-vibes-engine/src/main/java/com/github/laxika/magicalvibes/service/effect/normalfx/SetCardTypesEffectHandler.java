@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Component("normalSetCardTypesEffectHandler")
@@ -20,6 +20,7 @@ import java.util.UUID;
 public class SetCardTypesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,15 +38,7 @@ public class SetCardTypesEffectHandler implements NormalEffectHandlerBean {
                 || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
             return;
         }
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, set.scope().subject())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), set, target.getId(), null, null,

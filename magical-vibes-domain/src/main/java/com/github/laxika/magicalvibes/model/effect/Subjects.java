@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -158,6 +159,31 @@ public final class Subjects {
     /** Every permanent {@code players} control. */
     public static PermanentSubject controlledBy(PlayerSubject players) {
         return new PermanentSubject.ControlledBy(players, new PermanentTruePredicate());
+    }
+
+    /**
+     * The set {@code set} names, narrowed to the permanents that also match {@code filter} ("creatures you control" with
+     * an effect's own filter); a {@code null} filter leaves it as it is.
+     *
+     * @throws IllegalArgumentException if {@code set} is not a set ({@link PermanentSubject#isSet()})
+     */
+    public static PermanentSubject narrowed(PermanentSubject set, PermanentPredicate filter) {
+        if (filter == null) {
+            return set;
+        }
+        return switch (set) {
+            case PermanentSubject.ControlledBy controlledBy ->
+                    new PermanentSubject.ControlledBy(controlledBy.players(), and(controlledBy.filter(), filter));
+            case PermanentSubject.OwnedBy ownedBy ->
+                    new PermanentSubject.OwnedBy(ownedBy.players(), and(ownedBy.filter(), filter));
+            case PermanentSubject.AttachmentsOf attachmentsOf ->
+                    new PermanentSubject.AttachmentsOf(attachmentsOf.permanents(), and(attachmentsOf.filter(), filter));
+            default -> throw new IllegalArgumentException("Only a set is narrowed by a filter: " + set);
+        };
+    }
+
+    private static PermanentPredicate and(PermanentPredicate base, PermanentPredicate filter) {
+        return base instanceof PermanentTruePredicate ? filter : new PermanentAllOfPredicate(List.of(base, filter));
     }
 
     /** Every permanent matching {@code filter} that {@code players} own, whoever controls it. */

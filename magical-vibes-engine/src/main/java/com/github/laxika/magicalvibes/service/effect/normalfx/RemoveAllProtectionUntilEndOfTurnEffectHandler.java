@@ -8,16 +8,16 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -25,9 +25,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RemoveAllProtectionUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,36 +44,17 @@ public class RemoveAllProtectionUntilEndOfTurnEffectHandler implements NormalEff
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         if (remove.scope() == GrantScope.ALL_PERMANENTS) {
-            for (UUID playerId : gameData.playerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent permanent : battlefield) {
-                    if (entry.getSourcePermanentId() != null
-                            && entry.getSourcePermanentId().equals(permanent.getId())) {
-                        continue;
-                    }
-                    if (remove.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
-                            permanent, remove.filter(), filterContext)) {
-                        removeFrom(gameData, entry, remove, permanent);
-                    }
-                }
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    Subjects.narrowed(GrantScope.ALL_PERMANENTS.subject(), remove.filter()))) {
+                removeFrom(gameData, entry, remove, permanent);
             }
             return;
         }
-
-        UUID targetId = switch (remove.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null
-                    ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
-            default -> null;
-        };
-        if (targetId == null) {
+        if (remove.scope() != GrantScope.SELF && remove.scope() != GrantScope.TARGET) {
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, remove.scope().subject());
         if (target != null && (remove.filter() == null
                 || predicateEvaluationService.matchesPermanentPredicate(target, remove.filter(), filterContext))) {
             removeFrom(gameData, entry, remove, target);

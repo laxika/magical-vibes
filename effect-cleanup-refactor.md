@@ -18,7 +18,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5c, 5e–5l done; 5d partly done: its restriction readers move to step 6; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a done |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -442,6 +442,17 @@ predicate in the constant name.
 
 Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run the application
 `layers` tests yourself.
+
+| Run | Takes | Status |
+|---|---|---|
+| 6.1 | the inventory | done |
+| 6.2a | the one-shot `normalfx` readers | done |
+| 6.2b | `staticfx` + `StaticEffectSupport`, the static `TapUntapScope` readers | open |
+| 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | open |
+| 6.2d | the AI | open |
+| 6.2e | the one-shot `TapUntapScope` restriction handlers | open |
+| 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` / `TapUntapScope` deleted | open |
+| 6.4 | the rule-4 tests | open |
 
 ### 7. Step results: one way for a step to tell the next what happened
 
@@ -2656,6 +2667,121 @@ the rewritten cards, `EffectCountRatchetTest`, `SubjectResolutionServiceTest`, `
   (step 6 / a player-restriction run), not one-shot permanent verbs.
 - `PutTargetOnTopOfLibraryEffect.self()` is the same verb as `PutTargetPermanentIntoLibraryNFromTopEffect.self(0)`; not a
   name sibling, not checked.
+
+### Step 6, runs 6.1 and 6.2a (2026-11-20)
+
+**6.1 Inventory.** `GrantScope.subject()` (domain) gives each constant's subject; `Subjects.narrowed(set, filter)` ANDs an
+effect's own filter into a set (`controlledBy` / `ownedBy` / `attachmentsOf`; a non-set throws). "Other" is
+`PermanentNotPredicate(PermanentIsSourcePermanentPredicate)` (by permanent id, 5d's form; 32 tap/untap cards use the card-id
+form `PermanentIsSourceCardPredicate`: check a card before swapping forms in 6.3). Readers were found by a scratch grep of
+`GrantScope.X` comparisons and `case X` over engine and AI main code; a construction of a `GrantScope.TARGET` floating payload
+is not a reader. One-shot = `normalfx`; static = `staticfx` + `StaticEffectSupport` (SES); L/Q = `LayerSystemService` (LSS) +
+`GameQueryService` ("both" = the two); other = engine classifiers outside those.
+
+| Constant | `subject()` | One-shot (6.2a, done) | Static (6.2b) | L/Q (6.2c) | AI (6.2d) | Other (6.2c) |
+|---|---|---|---|---|---|---|
+| SELF | `source()` | 26 handlers | 20 `*Self*` handlers, `SetCardTypes`, `SetName`, `SetChosenNameAndCreatureType`, `GrantTriggeredAbility`, `BoostByAttackCount`, SES | both | | `LayerClassifier`, `PermanentCopierService`, `TriggerIndex`, `TokenCreationReplacementSupport`, `EachOpponentChoosesCreatureCreateTokenCopy…` handler |
+| TRIGGERING_PERMANENT | `triggering()` | AnimationSupport, BecomeSaddled, GrantColorUEOT, GrantKeyword, GrantSubtypeResolution | | | | |
+| SELF_AND_PAIRED | `controlledBy(eachPlayer(), PermanentIsSourceOrPairedPredicate)` | | 8 (`*Self*`, `GrantEffect`, `GrantTriggeredAbility`), SES | | | |
+| TARGET | `target()` | 18 handlers | | LSS (payload marker) | `AiTargetSelector`, `SpellEvaluator`, `TargetPolarityClassifier` | |
+| TARGET_AND_SHARING_CREATURES | throws: needs a shares-a-colour-with-target predicate | GrantKeyword (own lookup kept) | | | `AiTargetSelector`, `TargetPolarityClassifier` | |
+| TARGETS | `target()` | GrantColorUEOT, SetCombatRequirement; GrantKeyword's is the triggering spell's targets (own lookup kept: needs `triggeringSpellTargets()`) | | | | |
+| DECLARED_ATTACKERS | throws: needs `triggeringAttackers()` | GrantKeyword (own lookup kept) | | | | |
+| ENCHANTED_CREATURE, EQUIPPED_CREATURE | `attached()` (the creature check stays in the reader) | GrantKeyword, SetCombatRequirement, Suspect, Unsuspect | `ProtectionFromChosenColor`, `ProtectionFromColorsOfPermanentsYouControl`, `ProtectionFromMulticolored`, SES | both | `AiTargetSelector`, `GameSimulator`, `SpellEvaluator`, `TargetPolarityClassifier` | `AuraAttachmentService`, `PredicateEvaluationService` |
+| ENCHANTED_PERMANENT | `attached()` | AnimationSupport, GrantActivatedAbility, GrantEffectToTarget, GrantKeyword, GrantSupertypeUEOT, Unsuspect | SES | both | | `PredicateEvaluationService` |
+| OWN_TAPPED_CREATURES | `controlledBy(you(), creature ∧ tapped ∧ ¬source)` | | SES | LSS | | |
+| OWN_UNTAPPED_CREATURES | `controlledBy(you(), creature ∧ ¬tapped)` | | SES | | | |
+| OWN_CREATURES | `controlledBy(you(), creature ∧ ¬source)` | 11 (most read it including the source, below) | SES | both | `BoardEvaluator`, `HardAiDecisionEngine`, `SpellEvaluator` | `AttackLegalityService`, `BattlefieldPlacementService` |
+| ALL_OWN_CREATURES | `controlledBy(you(), creature)` | BoostAllCreaturesOfChosenSubtype, GrantKeyword, SetCombatRequirement | `DynamicStaticBoostSelf`, `GrantActivatedAbilitySelf`, `GrantColorSelf`, `StaticBoostSelf`, SES | both | same three | same two |
+| OPPONENT_CREATURES | `controlledBy(eachOpponent(), creature)` | LosesAllAbilities, RemoveKeyword, SetBasePowerToughness | SES | both | | |
+| OWN_PERMANENTS | `controlledBy(you())` | AnimatePermanents, GrantActivatedAbility, GrantKeyword | `AnimatePermanents`, `GrantColorSelf`, `GrantEffect`, `GrantKeywordSelf`, `GrantTriggeredAbility`, `SetCardTypes`, SES | both | | `LayerClassifier` |
+| TARGET_PLAYERS_CREATURES | `controlledBy(targetPlayer(), creature)` | 9 handlers | | | | |
+| TARGET_PLAYERS_LANDS | `controlledBy(targetPlayer(), land)` | AnimatePermanents | | | | |
+| ALL_CREATURES | `controlledBy(eachPlayer(), creature ∧ ¬source)` | 8 (most read it including the source, below) | SES | both | `BoardEvaluator`, `SpellEvaluator` | |
+| ALL_CREATURES_INCLUDING_SELF | `controlledBy(eachPlayer(), creature)` | 5 handlers | 5 `*Self*` handlers, SES | LSS | | |
+| ALL_PERMANENTS | `controlledBy(eachPlayer(), ¬source)` | RemoveAllProtection, RemoveKeyword (including the source) | `AnimatePermanents`, `BecomeColorless`, `GrantCardType`, `GrantColor`, `GrantEffect`, `GrantSubtype`, `GrantTriggeredAbility`, `SetCardTypes` | LSS | | `LayerClassifier` |
+| ENCHANTED_PLAYER_CREATURES | `controlledBy(enchantedPlayer(), creature)` | | SES | LSS | | `AttackLegalityService` |
+| OWN_LANDS | `controlledBy(you(), land)` | AnimatePermanents, GrantActivatedAbility | `AllLandsAreCreatures`, `GrantActivatedAbilitySelf`, `LosesAllNonManaAbilities`, SES | both | | |
+| OPPONENT_LANDS | `controlledBy(eachOpponent(), land)` | | `AllLandsAreCreatures`, SES | both | | |
+| ALL_LANDS | `controlledBy(eachPlayer(), land ∧ ¬source)` | AnimatePermanents, GrantKeyword (both including the source) | `AllLandsAreCreatures`, `LosesAllNonManaAbilities`, SES | both | | `BattlefieldPlacementService` |
+| ALL_LANDS_INCLUDING_SELF | `controlledBy(eachPlayer(), land)` | | 4 `*Self*` handlers, `LosesAllNonManaAbilities`, SES | LSS | | `BattlefieldPlacementService` |
+| TOKENS_CREATED_THIS_RESOLUTION | throws: step 7's `createdThisResolution()` | AnimationSupport, GrantKeyword, Suspect, TargetCreatureDealsDamageToController (own lookups kept) | | | | |
+| BANDED_WITH_SELF | throws: needs `bandmatesOf(source())` | GrantKeyword (own lookup kept) | | | | |
+
+**Self-inclusion differs per verb on the one-shot path.** `subject()` follows step 3's table. These one-shot handlers read
+the constant including the source and now name the including-self constant's subject, so 6.3 maps a card's constant by
+verb, not by constant: ALL_CREATURES in GrantKeyword, RemoveKeyword, GrantProtectionChoice, TargetCreatureBecomesChosenSubtype
+(GrantActivatedAbility, GrantColorUEOT, LosesAllAbilities and SetBasePowerToughness exclude it, as `subject()` does);
+OWN_CREATURES in LosesAllAbilities, GrantColorUEOT, GrantSubtypeUEOT, TemporaryCreatureTypes
+(`GrantAllCreatureTypesToOwnCreaturesEffect`), TargetCreatureBecomesSubtype, TargetCreatureBecomesChosenSubtype,
+GrantProtectionChoice, GrantProtectionFromColorUEOT; ALL_LANDS in GrantKeyword and AnimationSupport (Natural Affinity);
+ALL_PERMANENTS in RemoveKeyword (written `controlledBy(eachPlayer())`). BoostAllCreaturesOfChosenSubtype reads every own
+constant as ALL_OWN_CREATURES and everything else as ALL_CREATURES_INCLUDING_SELF; GrantActivatedAbility's unknown-constant
+default is ALL_OWN_CREATURES.
+
+**`TapUntapScope` leftovers (5d).** Lasting player-scoped rules, which reach creatures arriving later (they change rules, not
+characteristics: CR 611.2c, second sentence): `CantBlockThisTurnEffect` TARGET_PLAYERS_PERMANENTS,
+TARGET_CONTROLLERS_OTHER_CREATURES and ALL_CREATURES (floating rules with a predicate); `CantAttackThisTurnEffect`
+TARGET_PLAYERS_PERMANENTS (a player rule); `SkipNextUntapEffect` CONTROLLED / TARGET_PLAYERS_PERMANENTS / OPPONENTS_PERMANENTS
+with `matchAtUntap` (`restrictNextUntapStep`). Sets fixed at resolution: `SkipNextUntapEffect` without `matchAtUntap` and its
+ALL_CREATURES (a skip per permanent), and `CantAttackThisTurnEffect` ALL_CREATURES, one effect per creature: a "can't attack"
+is a rules change and should reach creatures entering later (611.2c), so 6.2e checks its cards' Oracle text and adds a test.
+TARGET / SELF / TRIGGERING / ENCHANTED name one permanent. Static (the resolver's static entry point, 6.2b): `DoesntUntapEffect`
+(`self()` / `enchanted()`, read by `UntapStepService` and `UntapPreventionSupport`; its TRIGGERING form is the one-shot
+`DoesntUntapEffectHandler`), `DoesntUntapWithCounterEffect` (already a subject) and
+`UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` (CONTROLLED, `UntapStepService`). Other readers:
+`ActivatedAbilityExecutionService` (SELF ×3), `TargetPolarityClassifier` (TARGET, TARGET_PLAYERS_PERMANENTS,
+TARGET_CONTROLLERS_OTHER_CREATURES; 6.2d), `VentureIntoDungeonEffectHandler` (a TARGET payload).
+
+**Sub-run plan**: 6.2b `staticfx` + SES on the static entry point, and the static `TapUntapScope` readers; 6.2c LSS
+(`scopeTargets`) + `GameQueryService` and the "other" classifiers (a new pass input goes into `computeBoardFingerprint`);
+6.2d the AI; 6.2e the one-shot `TapUntapScope` restriction handlers (a rule keeps a player-scoped predicate rule, a set
+resolves through the resolver); 6.3 the 85 effects take a `PermanentSubject`, cards rewritten by script per verb (list
+above), `GrantScope` and `TapUntapScope` deleted, after the four missing variants (shares-a-colour-with-target,
+`triggeringSpellTargets()`, `triggeringAttackers()`, `bandmatesOf()`) and step 7's `createdThisResolution()` exist, else those
+constants stay; 6.4 the rule-4 tests.
+
+**6.2a done.** The one-shot readers find their permanents with `SubjectResolutionService.permanents(gameData, entry, effect,
+subject)` and `scope.subject()` (narrowed by the effect's filter where the old code filtered the set): GrantKeyword,
+GrantActivatedAbility, RemoveKeyword, LosesAllAbilities, RemoveAllProtectionUEOT, GrantChosenKeyword, GrantChosenLandwalk,
+GrantEffectToTarget, GrantAdditionalBlockToTargetUEOT, GrantProtectionChoiceUEOT, GrantProtectionFromColorUEOT,
+SetBasePowerToughness, SetBasePowerToughnessToAmount, GrantColorUEOT, GrantColorEffectResolution, GrantSubtypeEffectResolution,
+GrantSubtypeUEOT, GrantSupertypeUEOT, TemporaryCreatureTypes, TargetCreatureBecomesSubtypeUEOT,
+TargetCreatureBecomesChosenSubtypeUEOT, SetCardTypesUEOT, SetCardTypes, RemoveCardTypeFromTargetPermanent,
+LoseAllCreatureTypes, BoostAllCreaturesOfChosenSubtype, AnimationSupport (every scope-reading method), BecomeSaddledUEOT,
+SetCombatRequirementThisTurn, TargetCreatureDealsDamageToController, CantBecomeUntapped, Suspect, Unsuspect (33 files).
+Each still makes one floating effect per permanent found as it resolves: the set is locked (CR 611.2c), as before. No card
+file changed, no record deleted, ratchet unchanged (no ledger rows: nothing was folded).
+
+**Kept on purpose.** (1) GrantActivatedAbility OWN_CREATURES + WHILE_SOURCE_REMAINS still installs a predicate-scoped
+floating grant that reaches creatures entering later. It grants an ability, a characteristic, so by 611.2c its set should be
+locked: 6.4 checks its cards' text and tests it. (2) The SELF fallback to the entry's target, only in GrantKeyword and
+GrantEffectToTarget and only on an entry with no source permanent: Terminal Velocity's "put an artifact or creature card onto
+the battlefield ... it gains haste" (`PutCardToBattlefieldThenEffect`'s "then" on a spell) finds the entered permanent there,
+written by `CardChoiceHandlerService`. It is written as `target()`; 6.3/step 7 give it a "the permanent put onto the
+battlefield" step-result subject and the fallback goes. Temporary probes (thrown where the old lookup would have named
+another permanent: the SELF fallback, an activation-captured ENCHANTED_PERMANENT target (the Genju cycle), AnimationSupport's
+target-before-self reads, `getTargetId()` outside the effect's target group, the flat target list) fired only for Terminal
+Velocity over the 1,446 test classes below, and were removed.
+
+**Behaviour differences** (the kinds 5d and 5i accepted): sets in APNAP order (log and creation order only); the resolver's
+fuller filter context; `target()` / `targetPlayer()` read the effect's target group before `getTargetId()`; `attached()` is
+live, then last-known (CR 608.2h), so the Genju and GrantSupertype ENCHANTED_PERMANENT read the host as the ability resolves
+rather than the activation-captured one (no test differs: the probes never fired); SetCombatRequirement's ENCHANTED_CREATURE
+uses the last-known host once the Aura has left (it did nothing); TemporaryCreatureTypes no longer adds a floating effect to a
+target that left; LosesAllAbilities' TARGET_PLAYERS_CREATURES logs "0 creature(s)" when there is no player target.
+
+**Tests**: 1,502 suites, 12,183 test cases, all pass, after the probes were removed: every test class of every card of the
+33 records the converted handlers resolve (`AnimateReturnedPermanentIfSubtype`, `SetTargetBasePowerToughnessFromSource` and
+`SetBasePowerToughnessOfCreaturesThatDamagedSource` included), except `GrantKeywordEffect`, `AnimatePermanentsEffect` and
+`GrantActivatedAbilityEffect`: those three ran a 50-per-class sample plus every card that builds one of them outside a static
+ability with a constant other than TARGET or SELF (634 cards, the Genju cycle among them); the other
+`PutCardToBattlefieldThenEffect` cards; the application `layers` package (`SevenLayerTest`, `LayerDependencyTest`,
+`LayeredBoardCacheTest`, `FloatingEffectLifecycleTest`, `ModifierExplanationTest`, `StaticSourceCacheTest`,
+`LayerPassBenchmarkTest`), `SubjectResolutionServiceTest`, `LayerClassifierTest`, `EffectCountRatchetTest`,
+`LibraryChoiceHandlerServiceTest`, `FlickerEffectHandlerTest`; application, AI and testFixtures test sources compile. Ask for a
+full card-test run (the plan asks for one after sub-step 2: run it after 6.2e, or now).
+
 
 ## Prompt
 

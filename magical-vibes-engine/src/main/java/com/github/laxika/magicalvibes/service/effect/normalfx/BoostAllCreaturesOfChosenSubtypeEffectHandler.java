@@ -11,14 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
-    private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
@@ -71,46 +71,35 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), amountContext);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), amountContext);
 
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
         PermanentHasSubtypePredicate subtypePredicate = new PermanentHasSubtypePredicate(chosenSubtype);
-        int[] affectedCount = {0};
+        // Both "creatures you control" readings and "all creatures" include the source here.
+        PermanentSubject creatures = boost.scope() == GrantScope.OWN_CREATURES
+                || boost.scope() == GrantScope.ALL_OWN_CREATURES
+                ? GrantScope.ALL_OWN_CREATURES.subject() : GrantScope.ALL_CREATURES_INCLUDING_SELF.subject();
+        int affectedCount = 0;
 
-        Consumer<Permanent> applyToPermanent = permanent -> {
-            if (gameQueryService.isCreature(gameData, permanent)
-                    && predicateEvaluationService.matchesPermanentPredicate(
-                    permanent, subtypePredicate, filterContext)) {
-                gameData.addPowerToughnessBoost(entry, permanent.getId(), powerBoost, toughnessBoost);
-                Set<Keyword> grantableKeywords = boost.keywords().stream()
-                        .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
-                        .collect(Collectors.toSet());
-                if (!grantableKeywords.isEmpty()) {
-                    gameData.addFloatingEffect(new FloatingContinuousEffect(
-                            UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
-                            new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
-                            permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
-                }
-                affectedCount[0]++;
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                Subjects.narrowed(creatures, subtypePredicate))) {
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), powerBoost, toughnessBoost);
+            Set<Keyword> grantableKeywords = boost.keywords().stream()
+                    .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
+                    .collect(Collectors.toSet());
+            if (!grantableKeywords.isEmpty()) {
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
+                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
+                        permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             }
-        };
-
-        if (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES) {
-            var battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield != null) {
-                battlefield.forEach(applyToPermanent);
-            }
-        } else {
-            gameData.forEachBattlefield((playerId, battlefield) -> battlefield.forEach(applyToPermanent));
+            affectedCount++;
         }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(String.format(" gives %+d/%+d to %d creature(s)%s until end of turn.",
-                        powerBoost, toughnessBoost, affectedCount[0],
+                        powerBoost, toughnessBoost, affectedCount,
                         boost.keywords().isEmpty() ? "" : " and grants " + boost.keywords()))
                 .build());
         log.info("Game {} - {} gives {}/{} to {} creatures of chosen subtype",
-                gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, affectedCount[0]);
+                gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, affectedCount);
     }
 }

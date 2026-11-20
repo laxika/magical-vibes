@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +22,7 @@ public class UnsuspectEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,22 +33,9 @@ public class UnsuspectEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UnsuspectEffect unsuspect = (UnsuspectEffect) effect;
         List<UUID> targetIds = switch (unsuspect.scope()) {
-            case SELF -> entry.getSourcePermanentId() == null
-                    ? List.of() : List.of(entry.getSourcePermanentId());
-            case TARGET -> {
-                List<UUID> ids = entry.targetsForEffect(effect);
-                if (ids.isEmpty() && entry.getTargetId() != null) {
-                    ids = List.of(entry.getTargetId());
-                }
-                yield ids;
-            }
-            case ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE -> {
-                Permanent source = entry.getSourcePermanentId() == null
-                        ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (source == null) source = entry.getSourcePermanentSnapshot();
-                yield source == null || source.getAttachedTo() == null
-                        ? List.of() : List.of(source.getAttachedTo());
-            }
+            case SELF, TARGET, ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE ->
+                    subjectResolutionService.permanents(gameData, entry, effect, unsuspect.scope().subject()).stream()
+                            .map(Permanent::getId).toList();
             default -> List.of();
         };
 

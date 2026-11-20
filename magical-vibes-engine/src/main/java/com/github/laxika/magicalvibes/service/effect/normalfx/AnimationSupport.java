@@ -31,8 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
@@ -42,7 +42,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
@@ -75,13 +75,13 @@ public class AnimationSupport {
     private final PlayerInputService playerInputService;
     private final CreatureControlService creatureControlService;
     private final AmountEvaluationService amountEvaluationService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LudevicCopySupport ludevicCopySupport;
     private final CreateEmblemEffectHandler createEmblemEffectHandler;
+    private final SubjectResolutionService subjectResolutionService;
 
     private AmountContext animationAmountContext(GameData gameData, StackEntry entry) {
         Permanent source = entry.getSourcePermanentId() == null
@@ -122,43 +122,14 @@ public class AnimationSupport {
      * SELF/TARGET scope, until end of turn (manlands, Crew, Chimeric Staff/Mass, Warden of the Wall).
      * A {@code null} power/toughness means "use the source's printed value" (Crew on Vehicles).
      *
-     * <p>Supports "up to N target" abilities (Fendeep Summoner) by iterating over
-     * {@code entry.getTargetIds()} when a multi-target ability populated them; a single-target
-     * self/target animation still reads {@code entry.getTargetId()}. A non-targeting SELF-scope
-     * animation uses {@code entry.getSourcePermanentId()} even when the entry carries separate
-     * trigger context.
-     *
-     * <p>ENCHANTED_PERMANENT scope animates the permanent the source Aura was attached to when the
-     * ability was activated, captured on the entry as its target (the Genju cycle's "enchanted Plains
-     * becomes a 2/5 white Spirit creature until end of turn"), so it still resolves if the Aura leaves
-     * in response. Without a captured target it re-derives the attachment at resolution and does
-     * nothing if the Aura is gone or unattached.
+     * <p>The animated permanents are the effect's {@code GrantScope} subject as the subject resolver names them:
+     * the source, the effect's targets ("up to N target" abilities, Fendeep Summoner), the triggering permanent, or
+     * the permanent the source Aura is attached to (the Genju cycle's "enchanted Plains becomes a 2/5 white Spirit
+     * creature until end of turn": the host now, else the host as the Aura last existed on the battlefield).
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        List<UUID> targetIds;
-        if (effect.scope() == GrantScope.ENCHANTED_PERMANENT) {
-            UUID enchantedId = entry.getTargetId() != null
-                    ? entry.getTargetId() : enchantedPermanentIdOf(gameData, entry);
-            if (enchantedId == null) {
-                return;
-            }
-            targetIds = List.of(enchantedId);
-        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
-            targetIds = List.of(entry.getSourcePermanentId());
-        } else if (effect.scope() == GrantScope.TRIGGERING_PERMANENT && entry.getTriggeringPermanentId() != null) {
-            // "It becomes …": the permanent whose event triggered the ability (Kolodin, Triumph Caster).
-            targetIds = List.of(entry.getTriggeringPermanentId());
-        } else if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
-                && entry.targetsForResolvingEffectGroup() != null) {
-            targetIds = entry.targetsForResolvingEffectGroup();
-        } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
-                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
-            targetIds = entry.getTargetIds();
-        } else if (entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        } else {
-            return;
-        }
+        List<UUID> targetIds = subjectResolutionService.permanents(gameData, entry, effect, effect.scope().subject())
+                .stream().map(Permanent::getId).toList();
         for (UUID targetId : targetIds) {
             Duration duration = effect.duration();
             if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
@@ -173,15 +144,6 @@ public class AnimationSupport {
                 animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
         }
-    }
-
-    /** The permanent the resolving Aura is attached to, or null if the Aura left or is unattached. */
-    private UUID enchantedPermanentIdOf(GameData gameData, StackEntry entry) {
-        if (entry.getSourcePermanentId() == null) {
-            return null;
-        }
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        return aura == null ? null : aura.getAttachedTo();
     }
 
     /**
@@ -374,11 +336,8 @@ public class AnimationSupport {
 
     /** OWN_LANDS scope — all lands you control (Sylvan Awakening), until end of turn or your next turn. */
     public void animateOwnLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
+        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, effect,
+                GrantScope.OWN_LANDS.subject());
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -389,11 +348,7 @@ public class AnimationSupport {
 
         boolean untilNextTurn = Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration());
 
-        for (Permanent perm : battlefield) {
-            if (!gameQueryService.isLand(gameData, perm)) {
-                continue;
-            }
-
+        for (Permanent perm : lands) {
             addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
                     untilNextTurn ? Duration.UNTIL_YOUR_NEXT_TURN : Duration.UNTIL_END_OF_TURN);
 
@@ -427,13 +382,11 @@ public class AnimationSupport {
 
     /** TARGET_PLAYERS_LANDS scope — all lands the targeted player controls, until end of turn. */
     public void animateTargetPlayersLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
-        List<Permanent> battlefield = targetPlayerId == null
-                ? null
-                : gameData.playerBattlefields.get(targetPlayerId);
-        if (battlefield == null) {
+        if (subjectResolutionService.player(gameData, entry, effect, Subjects.targetPlayer()) == null) {
             return;
         }
+        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, effect,
+                GrantScope.TARGET_PLAYERS_LANDS.subject());
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -442,10 +395,7 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        for (Permanent perm : battlefield) {
-            if (!gameQueryService.isLand(gameData, perm)) {
-                continue;
-            }
+        for (Permanent perm : lands) {
             // Timestamped, so the creature type still applies to a land whose card types were overridden by an
             // earlier effect (e.g. Song of the Dryads, CR 613.1d/613.7).
             addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness, Duration.UNTIL_END_OF_TURN);
@@ -466,18 +416,15 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent perm : battlefield) {
-                if (!gameQueryService.isLand(gameData, perm)) {
-                    continue;
-                }
-                // Timestamped, so the creature type still applies to a land whose card types were overridden by
-                // an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
-                addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
-                        Duration.UNTIL_END_OF_TURN);
+        // "All lands" includes the source when it is a land.
+        for (Permanent perm : subjectResolutionService.permanents(gameData, entry, effect,
+                GrantScope.ALL_LANDS_INCLUDING_SELF.subject())) {
+            // Timestamped, so the creature type still applies to a land whose card types were overridden by
+            // an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
+            addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
+                    Duration.UNTIL_END_OF_TURN);
 
-                log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
-            }
+            log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
         }
 
         gameLogService.append(gameData, GameLog.text("All lands become " + power + "/" + toughness
@@ -489,44 +436,37 @@ public class AnimationSupport {
      * creatures until end of turn (The Antiquities War chapter III).
      */
     public void animateControlledPermanents(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null) {
-            return;
-        }
+        // An animation of "permanents you control" names its permanents by its filter; with none it names nothing.
+        List<Permanent> matching = effect.filter() == null ? List.of()
+                : subjectResolutionService.permanents(gameData, entry, effect,
+                Subjects.narrowed(GrantScope.OWN_PERMANENTS.subject(), effect.filter()));
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId())
-                .withSourcePermanentSnapshot(source);
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
         int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), filterContext)) {
-                // Without "becomes a creature" (Ghirapur's "becomes a 5/3 Vehicle in addition to its other types")
-                // the base P/T only shows once something else makes it a creature.
-                addAnimationFloatingEffects(gameData, entry, permanent, effect, power, toughness,
-                        Duration.UNTIL_END_OF_TURN);
-                if (!effect.becomesCreature()) {
-                    count++;
-                    continue;
-                }
-
-                // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
-                if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo());
-                    permanent.setAttachedTo(null);
-                    durationClock.sourceUnattached(gameData, permanent.getId());
-                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
-                }
+        for (Permanent permanent : matching) {
+            // Without "becomes a creature" (Ghirapur's "becomes a 5/3 Vehicle in addition to its other types")
+            // the base P/T only shows once something else makes it a creature.
+            addAnimationFloatingEffects(gameData, entry, permanent, effect, power, toughness,
+                    Duration.UNTIL_END_OF_TURN);
+            if (!effect.becomesCreature()) {
                 count++;
+                continue;
             }
+
+            // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
+            if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo());
+                permanent.setAttachedTo(null);
+                durationClock.sourceUnattached(gameData, permanent.getId());
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
+            }
+            count++;
         }
 
         String logEntry = count + " permanent(s) become " + power + "/" + toughness
@@ -549,23 +489,10 @@ public class AnimationSupport {
         List<UUID> targetIds;
         if (effect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
             targetIds = List.copyOf(entry.getCreatedPermanentIds());
-        } else if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
-                && entry.targetsForResolvingEffectGroup() != null) {
-            targetIds = entry.targetsForResolvingEffectGroup();
-        } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
-                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
-            targetIds = entry.getTargetIds();
-        } else if (entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
-            targetIds = List.of(entry.getSourcePermanentId());
-        } else if (effect.scope() == GrantScope.TRIGGERING_PERMANENT && entry.getTriggeringPermanentId() != null) {
-            // "It becomes …": the permanent whose event triggered the ability (Kolodin, Triumph Caster).
-            targetIds = List.of(entry.getTriggeringPermanentId());
         } else {
-            return;
+            targetIds = subjectResolutionService.permanents(gameData, entry, effect, effect.scope().subject())
+                    .stream().map(Permanent::getId).toList();
         }
-
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -591,24 +518,13 @@ public class AnimationSupport {
      */
     public void animateControlledPermanentsPermanently(GameData gameData, StackEntry entry,
                                                        AnimatePermanentsEffect effect) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null) {
-            return;
-        }
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId())
-                .withSourcePermanentSnapshot(source);
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         entry.clearReturnedPermanentIds();
-        List<Permanent> matching = battlefield.stream()
-                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, effect.filter(), filterContext))
-                .toList();
+        List<Permanent> matching = subjectResolutionService.permanents(gameData, entry, effect,
+                Subjects.narrowed(GrantScope.OWN_PERMANENTS.subject(), effect.filter()));
         for (Permanent permanent : matching) {
             int power = effect.power() == null ? printedPower(permanent)
                     : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
@@ -711,7 +627,7 @@ public class AnimationSupport {
      * for as long as the source permanent remains on the battlefield (Awakener Druid).
      */
     public void animateWhileSource(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, effect.scope().subject());
         if (target == null) {
             return;
         }
@@ -778,7 +694,7 @@ public class AnimationSupport {
      */
     public void animateWhileSourceRemainsTapped(GameData gameData, StackEntry entry,
                                                 AnimatePermanentsEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, effect.scope().subject());
         if (target == null) {
             return;
         }

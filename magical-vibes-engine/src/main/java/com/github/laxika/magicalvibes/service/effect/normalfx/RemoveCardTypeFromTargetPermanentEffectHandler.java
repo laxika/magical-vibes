@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RemoveCardTypeFromTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -31,8 +31,8 @@ public class RemoveCardTypeFromTargetPermanentEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var remove = (RemoveCardTypeFromTargetPermanentEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData,
-                remove.scope() == GrantScope.SELF ? entry.getSourcePermanentId() : entry.getTargetId());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect,
+                remove.scope() == GrantScope.SELF ? GrantScope.SELF.subject() : GrantScope.TARGET.subject());
         if (target == null) {
             return;
         }

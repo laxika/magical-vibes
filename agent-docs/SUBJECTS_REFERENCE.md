@@ -58,3 +58,7 @@ resolver's static entry point rejects the others).
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
 creature; its controller loses 2 life").
+
+`Subjects.narrowed(set, filter)` narrows a set subject (`controlledBy`, `ownedBy`, `attachmentsOf`) by an effect's own
+filter. `GrantScope.subject()` gives a `GrantScope` constant's subject while the effects still carry the enum; a one-shot
+handler that reads a constant including the source names the including-self constant's subject.

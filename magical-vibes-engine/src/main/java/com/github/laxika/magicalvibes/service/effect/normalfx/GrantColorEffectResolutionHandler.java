@@ -1,24 +1,24 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class GrantColorEffectResolutionHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,23 +32,10 @@ public class GrantColorEffectResolutionHandler implements NormalEffectHandlerBea
             return;
         }
 
-        List<UUID> targetIds;
-        if (grant.scope() == GrantScope.SELF) {
-            targetIds = entry.getSourcePermanentId() == null
-                    ? List.of() : List.of(entry.getSourcePermanentId());
-        } else {
-            targetIds = entry.targetsForEffect(grant);
-            if (targetIds.isEmpty() && entry.getTargetId() != null) {
-                targetIds = List.of(entry.getTargetId());
-            }
-        }
-        for (UUID targetId : targetIds) {
-            if (gameQueryService.findPermanentById(gameData, targetId) == null) {
-                continue;
-            }
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, grant.scope().subject())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                    entry.getControllerId(), grant, targetId, null, null,
+                    entry.getControllerId(), grant, target.getId(), null, null,
                     Duration.PERMANENT, 0));
         }
     }

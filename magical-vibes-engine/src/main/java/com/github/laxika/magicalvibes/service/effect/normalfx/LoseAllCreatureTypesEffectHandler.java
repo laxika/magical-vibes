@@ -5,23 +5,23 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -34,26 +34,20 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
         var lose = (LoseAllCreatureTypesEffect) effect;
 
         if (lose.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
-            UUID targetPlayerId = entry.getTargetId();
-            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            if (subjectResolutionService.players(gameData, entry, effect, Subjects.targetPlayer()).isEmpty()) {
                 return;
             }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
             int count = 0;
-            if (battlefield != null) {
-                for (Permanent permanent : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, permanent)) {
-                        continue;
-                    }
-                    applyTypeLoss(gameData, entry, effect, permanent);
-                    count++;
-                }
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    lose.scope().subject())) {
+                applyTypeLoss(gameData, entry, effect, permanent);
+                count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) lose all creature types until end of turn.").build());
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.TARGET.subject());
         if (target == null) {
             return;
         }

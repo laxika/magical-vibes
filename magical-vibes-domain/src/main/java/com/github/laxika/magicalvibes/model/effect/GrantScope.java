@@ -1,5 +1,22 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+import java.util.List;
+
+/**
+ * Which permanents a grant, boost or characteristic change applies to. Being replaced by {@link PermanentSubject}:
+ * {@link #subject()} gives each constant's subject, which handlers resolve with the engine's subject resolver. A
+ * handler that reads a constant differently from its subject (a one-shot "all creatures" that includes the source)
+ * names the constant whose subject it means.
+ */
 public enum GrantScope {
     SELF,
     /** The permanent referenced by the triggering event of a triggered ability. */
@@ -85,5 +102,51 @@ public enum GrantScope {
      * permanent. The source itself is excluded — "banded with this creature" means the rest
      * of the band. Yields nothing when the source is not attacking in a band.
      */
-    BANDED_WITH_SELF
+    BANDED_WITH_SELF;
+
+    private static final PermanentPredicate CREATURE = new PermanentIsCreaturePredicate();
+    private static final PermanentPredicate LAND = new PermanentIsLandPredicate();
+    private static final PermanentPredicate NOT_SOURCE =
+            new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
+    private static final PermanentPredicate TAPPED = new PermanentIsTappedPredicate();
+
+    /**
+     * The subject this constant stands for. "Other" is the not-the-source-permanent predicate (it matches by permanent
+     * id). {@link #TARGET_AND_SHARING_CREATURES}, {@link #DECLARED_ATTACKERS}, {@link #TOKENS_CREATED_THIS_RESOLUTION}
+     * and {@link #BANDED_WITH_SELF} have no subject variant yet; their handlers keep their own lookup.
+     *
+     * @throws UnsupportedOperationException for those four constants
+     */
+    public PermanentSubject subject() {
+        return switch (this) {
+            case SELF -> Subjects.source();
+            case TRIGGERING_PERMANENT -> Subjects.triggering();
+            case SELF_AND_PAIRED -> Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsSourceOrPairedPredicate());
+            case TARGET, TARGETS -> Subjects.target();
+            case ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE -> Subjects.attached();
+            case OWN_TAPPED_CREATURES -> Subjects.controlledBy(Subjects.you(), allOf(CREATURE, TAPPED, NOT_SOURCE));
+            case OWN_UNTAPPED_CREATURES -> Subjects.controlledBy(Subjects.you(),
+                    allOf(CREATURE, new PermanentNotPredicate(TAPPED)));
+            case OWN_CREATURES -> Subjects.controlledBy(Subjects.you(), allOf(CREATURE, NOT_SOURCE));
+            case ALL_OWN_CREATURES -> Subjects.controlledBy(Subjects.you(), CREATURE);
+            case OPPONENT_CREATURES -> Subjects.controlledBy(Subjects.eachOpponent(), CREATURE);
+            case OWN_PERMANENTS -> Subjects.controlledBy(Subjects.you());
+            case TARGET_PLAYERS_CREATURES -> Subjects.controlledBy(Subjects.targetPlayer(), CREATURE);
+            case TARGET_PLAYERS_LANDS -> Subjects.controlledBy(Subjects.targetPlayer(), LAND);
+            case ALL_CREATURES -> Subjects.controlledBy(Subjects.eachPlayer(), allOf(CREATURE, NOT_SOURCE));
+            case ALL_CREATURES_INCLUDING_SELF -> Subjects.controlledBy(Subjects.eachPlayer(), CREATURE);
+            case ALL_PERMANENTS -> Subjects.controlledBy(Subjects.eachPlayer(), NOT_SOURCE);
+            case ENCHANTED_PLAYER_CREATURES -> Subjects.controlledBy(Subjects.enchantedPlayer(), CREATURE);
+            case OWN_LANDS -> Subjects.controlledBy(Subjects.you(), LAND);
+            case OPPONENT_LANDS -> Subjects.controlledBy(Subjects.eachOpponent(), LAND);
+            case ALL_LANDS -> Subjects.controlledBy(Subjects.eachPlayer(), allOf(LAND, NOT_SOURCE));
+            case ALL_LANDS_INCLUDING_SELF -> Subjects.controlledBy(Subjects.eachPlayer(), LAND);
+            case TARGET_AND_SHARING_CREATURES, DECLARED_ATTACKERS, TOKENS_CREATED_THIS_RESOLUTION, BANDED_WITH_SELF ->
+                    throw new UnsupportedOperationException("No subject variant for " + this + " yet");
+        };
+    }
+
+    private static PermanentPredicate allOf(PermanentPredicate... predicates) {
+        return new PermanentAllOfPredicate(List.of(predicates));
+    }
 }

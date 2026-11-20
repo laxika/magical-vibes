@@ -7,17 +7,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -25,9 +24,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,93 +36,23 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var remove = (RemoveKeywordEffect) effect;
 
-        if (remove.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
-            UUID targetPlayerId = entry.targetsForEffect(effect).stream()
-                    .filter(gameData.playerIds::contains)
-                    .findFirst()
-                    .orElse(entry.getTargetId());
-            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-                return;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-            if (battlefield == null) {
-                return;
-            }
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                    .withSourcePermanentId(entry.getSourcePermanentId())
-                    .withSourceControllerId(entry.getControllerId());
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)
-                        && (remove.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, remove.filter(), filterContext))) {
-                    removeFrom(gameData, entry, remove, permanent);
-                }
-            }
-            return;
-        }
-
         // Mass one-shot removal floats a per-permanent layer-6 removal. Invert the Skies =
         // opponents; Hour of Devastation = all creatures; Spectacular Pileup = all permanents
-        // narrowed to creatures and Vehicles.
-        if (remove.scope() == GrantScope.OPPONENT_CREATURES
-                || remove.scope() == GrantScope.ALL_CREATURES
-                || remove.scope() == GrantScope.ALL_PERMANENTS) {
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                    .withSourcePermanentId(entry.getSourcePermanentId())
-                    .withSourceControllerId(entry.getControllerId());
-            for (UUID playerId : gameData.playerIds) {
-                if (remove.scope() == GrantScope.OPPONENT_CREATURES
-                        && playerId.equals(entry.getControllerId())) {
-                    continue;
-                }
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent p : battlefield) {
-                    if (remove.scope() != GrantScope.ALL_PERMANENTS
-                            && !gameQueryService.isCreature(gameData, p)) {
-                        continue;
-                    }
-                    if (remove.filter() != null
-                            && !predicateEvaluationService.matchesPermanentPredicate(
-                                    p, remove.filter(), filterContext)) {
-                        continue;
-                    }
-                    removeFrom(gameData, entry, remove, p);
-                }
-            }
-            return;
-        }
-
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (remove.scope() == GrantScope.TARGET && !targetIds.isEmpty()) {
-            for (UUID multiTargetId : targetIds) {
-                Permanent multiTarget = gameQueryService.findPermanentById(gameData, multiTargetId);
-                if (multiTarget != null) {
-                    removeFrom(gameData, entry, remove, multiTarget);
-                }
-            }
-            return;
-        }
-
-        UUID targetId = switch (remove.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
+        // narrowed to creatures and Vehicles. The one-shot "all" sets include the source.
+        PermanentSubject subject = switch (remove.scope()) {
+            case TARGET_PLAYERS_CREATURES, OPPONENT_CREATURES ->
+                    Subjects.narrowed(remove.scope().subject(), remove.filter());
+            case ALL_CREATURES -> Subjects.narrowed(GrantScope.ALL_CREATURES_INCLUDING_SELF.subject(), remove.filter());
+            case ALL_PERMANENTS -> Subjects.narrowed(Subjects.controlledBy(Subjects.eachPlayer()), remove.filter());
+            case SELF, TARGET -> remove.scope().subject();
             default -> null;
         };
-        if (targetId == null) {
+        if (subject == null) {
             return;
         }
-
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, subject)) {
+            removeFrom(gameData, entry, remove, permanent);
         }
-        removeFrom(gameData, entry, remove, target);
     }
 
     private void removeFrom(GameData gameData, StackEntry entry, RemoveKeywordEffect remove, Permanent target) {

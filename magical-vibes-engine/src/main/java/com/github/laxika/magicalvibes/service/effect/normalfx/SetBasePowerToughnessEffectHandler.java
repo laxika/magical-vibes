@@ -8,16 +8,16 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -38,19 +38,14 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetBasePowerToughnessEffect) effect;
         if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
-            UUID targetPlayerId = entry.getTargetId();
-            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            if (subjectResolutionService.players(gameData, entry, effect, Subjects.targetPlayer()).isEmpty()) {
                 return;
             }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
             int count = 0;
-            if (battlefield != null) {
-                for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
-                        applyEffect(gameData, entry, e, permanent);
-                        count++;
-                    }
-                }
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    e.scope().subject())) {
+                applyEffect(gameData, entry, e, permanent);
+                count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" sets the base power and toughness of " + count + " creature(s) to "
@@ -60,17 +55,10 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
 
         if (e.scope() == GrantScope.OPPONENT_CREATURES) {
             int count = 0;
-            for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
-                if (battlefieldEntry.getKey().equals(entry.getControllerId())) {
-                    continue;
-                }
-                for (Permanent permanent : battlefieldEntry.getValue()) {
-                    if (!gameQueryService.isCreature(gameData, permanent)) {
-                        continue;
-                    }
-                    applyEffect(gameData, entry, e, permanent);
-                    count++;
-                }
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    e.scope().subject())) {
+                applyEffect(gameData, entry, e, permanent);
+                count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" sets the base power and toughness of " + count
@@ -80,20 +68,15 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         }
 
         if (e.scope() == GrantScope.TARGET) {
-            List<UUID> targetIds = entry.targetsForEffect(e);
-            if (targetIds.isEmpty() && entry.getTargetId() != null) {
-                targetIds = List.of(entry.getTargetId());
-            }
-            for (UUID targetId : targetIds) {
-                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target == null || (e.filter() != null
+            for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, e.scope().subject())) {
+                if (e.filter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(target, e.filter(),
                                 FilterContext.of(gameData)
                                         .withSourceCardId(entry.getCard().getId())
                                         .withSourceControllerId(entry.getControllerId())
                                         .withSourcePermanentId(entry.getSourcePermanentId())
                                         .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
-                                        .withXValue(entry.getXValue())))) {
+                                        .withXValue(entry.getXValue()))) {
                     continue;
                 }
                 applyEffect(gameData, entry, e, target);
@@ -104,36 +87,15 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        if (e.scope() == GrantScope.OPPONENT_CREATURES
-                || e.scope() == GrantScope.ALL_CREATURES
+        if (e.scope() == GrantScope.ALL_CREATURES
                 || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
-            UUID sourcePermanentId = entry.getSourcePermanentId();
             SetBasePowerToughnessEffect individualEffect = new SetBasePowerToughnessEffect(
                     e.power(), e.toughness(), GrantScope.TARGET, e.duration());
             int count = 0;
-            for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
-                UUID playerId = battlefieldEntry.getKey();
-                if (e.scope() == GrantScope.OPPONENT_CREATURES
-                        && playerId.equals(entry.getControllerId())) {
-                    continue;
-                }
-                List<Permanent> battlefield = battlefieldEntry.getValue();
-                for (Permanent permanent : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, permanent)
-                            || (e.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                            permanent, e.filter(), FilterContext.of(gameData)
-                                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                                    .withSourceControllerId(entry.getControllerId())
-                                    .withSourcePermanentId(entry.getSourcePermanentId())
-                                    .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
-                                    .withXValue(entry.getXValue())))
-                            || (e.scope() == GrantScope.ALL_CREATURES
-                            && permanent.getId().equals(sourcePermanentId))) {
-                        continue;
-                    }
-                    applyEffect(gameData, entry, individualEffect, permanent);
-                    count++;
-                }
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    Subjects.narrowed(e.scope().subject(), e.filter()))) {
+                applyEffect(gameData, entry, individualEffect, permanent);
+                count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" sets the base power and toughness of " + count
@@ -142,9 +104,9 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        // SELF scope ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter)
+        // SELF scope ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter), and any other scope,
         // resolves against the source.
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.SELF.subject());
         if (target == null) {
             return;
         }

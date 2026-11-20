@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -48,14 +48,12 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
 
         if (chosenEffect.scope() == GrantScope.ALL_CREATURES) {
             int[] affectedCount = {0};
-            gameData.forEachBattlefield((playerId, battlefield) -> {
-                for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
-                        setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
-                        affectedCount[0]++;
-                    }
-                }
-            });
+            // This one-shot "all creatures" includes the source.
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    GrantScope.ALL_CREATURES_INCLUDING_SELF.subject())) {
+                setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
+                affectedCount[0]++;
+            }
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" makes " + affectedCount[0] + " creature(s) into "
@@ -66,14 +64,11 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
 
         if (chosenEffect.scope() == GrantScope.OWN_CREATURES) {
             int affectedCount = 0;
-            var battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-            if (battlefield != null) {
-                for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
-                        setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
-                        affectedCount++;
-                    }
-                }
+            // This one-shot "creatures you control" includes the source.
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    GrantScope.ALL_OWN_CREATURES.subject())) {
+                setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
+                affectedCount++;
             }
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
@@ -83,7 +78,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.TARGET.subject());
         if (target == null) {
             return;
         }

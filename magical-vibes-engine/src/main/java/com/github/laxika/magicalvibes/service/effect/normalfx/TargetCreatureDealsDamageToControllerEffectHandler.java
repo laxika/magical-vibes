@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,9 +44,10 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
             dealToEachOpponent(gameData, entry, targetEffect);
             return;
         }
+        // The target as it is, else as it last existed: the ids of the ones that left too.
         List<UUID> sourceIds = targetEffect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION
                 ? List.copyOf(entry.getCreatedPermanentIds())
-                : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+                : subjectResolutionService.permanentIds(gameData, entry, effect, targetEffect.scope().subject());
         for (UUID sourceId : sourceIds) {
             Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
             if (source != null) {
@@ -70,7 +73,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
      */
     private void dealToEachOpponent(GameData gameData, StackEntry entry,
                                     TargetCreatureDealsDamageToControllerEffect targetEffect) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent source = subjectResolutionService.permanent(gameData, entry, targetEffect, GrantScope.TARGET.subject());
         if (source == null || gameQueryService.findPermanentController(gameData, source.getId()) == null) {
             return;
         }

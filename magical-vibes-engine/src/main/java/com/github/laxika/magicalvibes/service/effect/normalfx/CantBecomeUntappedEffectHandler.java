@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,6 +29,7 @@ public class CantBecomeUntappedEffectHandler implements NormalEffectHandlerBean 
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,16 +46,8 @@ public class CantBecomeUntappedEffectHandler implements NormalEffectHandlerBean 
                 gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
             return;
         }
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
-            gameData.addEffectOnPermanent(entry, effect, targetId, Duration.WHILE_SOURCE_CONTROLLED);
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, GrantScope.TARGET.subject())) {
+            gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.WHILE_SOURCE_CONTROLLED);
             gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(),
                     " can't become untapped for as long as its controller controls ", entry.getCard(), "."));
         }

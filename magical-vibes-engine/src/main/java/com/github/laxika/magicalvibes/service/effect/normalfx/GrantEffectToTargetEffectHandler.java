@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
@@ -12,19 +12,20 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -33,6 +34,7 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,12 +46,8 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         var e = (GrantEffectToTargetEffect) effect;
 
         if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
-            Permanent aura = entry.getSourcePermanentId() == null ? null
-                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            UUID enchantedId = entry.getTargetId() != null ? entry.getTargetId()
-                    : aura == null ? null : aura.getAttachedTo();
-            Permanent enchanted = enchantedId == null ? null
-                    : gameQueryService.findPermanentById(gameData, enchantedId);
+            Permanent enchanted = subjectResolutionService.permanent(gameData, entry, effect,
+                    GrantScope.ENCHANTED_PERMANENT.subject());
             if (enchanted != null) {
                 grantTo(gameData, entry, e, enchanted);
             }
@@ -57,29 +55,18 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         }
 
         if (e.scope() == GrantScope.SELF) {
-            UUID sourcePermanentId = entry.getSourcePermanentId() != null
-                    ? entry.getSourcePermanentId() : entry.getTargetId();
-            Permanent source = sourcePermanentId == null
-                    ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            // A spell's "put a card onto the battlefield, then it gains ...": the put handler records the permanent as
+            // the entry's target, and the spell has no source permanent (Terminal Velocity).
+            Permanent source = subjectResolutionService.permanent(gameData, entry, effect,
+                    entry.getSourcePermanentId() == null ? Subjects.target() : GrantScope.SELF.subject());
             if (source != null) {
                 grantTo(gameData, entry, e, source);
             }
             return;
         }
 
-        List<UUID> ids = entry.targetsForEffect(effect);
-        if (ids.isEmpty() && entry.getTargetId() != null) {
-            ids = List.of(entry.getTargetId());
-        }
-        if (ids.isEmpty() && entry.getTargetIds() != null) {
-            ids = entry.getTargetIds();
-        }
-
-        for (UUID targetId : ids) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect,
+                GrantScope.TARGET.subject())) {
             grantTo(gameData, entry, e, target);
         }
     }

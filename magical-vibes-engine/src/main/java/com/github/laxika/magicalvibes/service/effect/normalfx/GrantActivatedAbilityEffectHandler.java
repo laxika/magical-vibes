@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,12 +19,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,8 +33,8 @@ import java.util.UUID;
 public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -84,10 +83,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         }
         int count = 0;
         if (e.scope() == GrantScope.SELF) {
-            UUID sourceId = entry.getSourcePermanentId() != null
-                    ? entry.getSourcePermanentId() : entry.getTargetId();
-            Permanent source = sourceId == null ? null
-                    : gameQueryService.findPermanentById(gameData, sourceId);
+            Permanent source = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.SELF.subject());
             if (source != null) {
                 grantTo(gameData, entry, source, e);
                 count++;
@@ -100,71 +96,30 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 return;
             }
             // "Target creature gains '[ability]' until end of turn" (e.g. Banishing Knack).
-            // Bound to a target group; falls back to the single-target id.
-            List<UUID> ids = new ArrayList<>();
-            if (entry.getTargetId() != null) {
-                ids.add(entry.getTargetId());
-            }
-            for (UUID id : entry.targetsForEffect(effect)) {
-                if (!ids.contains(id)) {
-                    ids.add(id);
-                }
-            }
-            for (UUID id : ids) {
-                Permanent target = gameQueryService.findPermanentById(gameData, id);
-                if (target == null) {
-                    continue; // Partially resolves — skip removed targets
-                }
+            for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect,
+                    GrantScope.TARGET.subject())) {
                 grantTo(gameData, entry, target, e);
                 count++;
             }
         } else if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
-            // The Genju cycle: the permanent the source Aura was attached to at activation (captured
-            // as the entry's target), falling back to the live attachment. No creature check.
-            Permanent aura = entry.getSourcePermanentId() == null ? null
-                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            UUID enchantedId = entry.getTargetId() != null ? entry.getTargetId()
-                    : aura == null ? null : aura.getAttachedTo();
-            Permanent enchanted = enchantedId == null ? null
-                    : gameQueryService.findPermanentById(gameData, enchantedId);
+            // The Genju cycle: no creature check.
+            Permanent enchanted = subjectResolutionService.permanent(gameData, entry, effect,
+                    GrantScope.ENCHANTED_PERMANENT.subject());
             if (enchanted != null) {
                 grantTo(gameData, entry, enchanted, e);
                 count++;
             }
         } else {
-            boolean grantsToAllCreatures = e.scope() == GrantScope.ALL_CREATURES
-                    || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF;
-            List<Permanent> battlefield = grantsToAllCreatures
-                    ? gameData.playerBattlefields.values().stream().flatMap(List::stream).toList()
-                    : gameData.playerBattlefields.get(entry.getControllerId());
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                    .withSourceControllerId(entry.getControllerId());
-            // OWN_CREATURES means "other creatures you control" — the source is excluded.
-            // ALL_OWN_CREATURES includes the source.
-            boolean excludeSource = e.scope() == GrantScope.OWN_CREATURES
-                    || e.scope() == GrantScope.ALL_CREATURES;
-            boolean grantsToLands = e.scope() == GrantScope.OWN_LANDS;
-            boolean grantsToAllPermanents = e.scope() == GrantScope.OWN_PERMANENTS;
-            if (battlefield != null) {
-                for (Permanent permanent : battlefield) {
-                    if (grantsToLands && !gameQueryService.isLand(gameData, permanent)) {
-                        continue;
-                    }
-                    if (!grantsToLands && !grantsToAllPermanents
-                            && !gameQueryService.isCreature(gameData, permanent)) {
-                        continue;
-                    }
-                    if (excludeSource && permanent.getId().equals(entry.getSourcePermanentId())) {
-                        continue;
-                    }
-                    if (e.filter() != null
-                            && !predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) {
-                        continue;
-                    }
-                    grantTo(gameData, entry, permanent, e);
-                    count++;
-                }
+            GrantScope scope = switch (e.scope()) {
+                case ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF, OWN_CREATURES, ALL_OWN_CREATURES, OWN_LANDS,
+                     OWN_PERMANENTS -> e.scope();
+                // Any other constant has always meant the creatures you control, the source included.
+                default -> GrantScope.ALL_OWN_CREATURES;
+            };
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
+                    Subjects.narrowed(scope.subject(), e.filter()))) {
+                grantTo(gameData, entry, permanent, e);
+                count++;
             }
         }
 
