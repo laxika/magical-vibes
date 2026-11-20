@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "NEM", collectorNumber = "88")
 public class LaccolithRig extends Card {
@@ -17,7 +18,7 @@ public class LaccolithRig extends Card {
                 .addTrigger(Triggers.becomesBlocked(),
                         new MayEffect(
                                 SequenceEffect.of(
-                                        new EnchantedCreatureDealsPowerDamageToTargetCreatureEffect(),
+                                        new TargetDealsPowerDamageToTargetEffect(Subjects.attachedAtTrigger(), Subjects.target()),
                                         new AssignNoCombatDamageToEnchantedCreatureEffect()),
                                 "Have enchanted creature deal damage equal to its power to target creature?"));
     }

@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "172")
 @CardRegistration(set = "DDL", collectorNumber = "43")
@@ -28,6 +29,6 @@ public class PolukranosWorldEater extends Card {
                 TargetFilters.creatureAnOpponentControls(), 99)
                 .addTrigger(Triggers.becomesMonstrous(),
                         DealDividedDamageEffect.xAmongTargetCreaturesAtResolution(),
-                        new EachTargetCreatureDealsPowerDamageToSourceEffect());
+                        new TargetDealsPowerDamageToTargetEffect(Subjects.target(), Subjects.source()));
     }
 }

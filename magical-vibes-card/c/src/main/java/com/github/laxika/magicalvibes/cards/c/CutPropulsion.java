@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 
 @CardRegistration(set = "EOE", collectorNumber = "130")
 public class CutPropulsion extends Card {
@@ -15,7 +15,7 @@ public class CutPropulsion extends Card {
     public CutPropulsion() {
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                         new TargetPermanentMatches(new PermanentHasKeywordPredicate(Keyword.FLYING)),
-                        new TargetCreatureDealsPowerDamageToSelfEffect(),
-                        new TargetCreatureDealsPowerDamageToSelfEffect(2)));
+                        TargetDealsPowerDamageToTargetEffect.toItself(),
+                        TargetDealsPowerDamageToTargetEffect.toItself(2)));
     }
 }

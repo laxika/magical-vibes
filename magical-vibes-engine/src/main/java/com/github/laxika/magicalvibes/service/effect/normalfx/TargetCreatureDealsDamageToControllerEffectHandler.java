@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -26,6 +28,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,6 +38,10 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var targetEffect = (TargetCreatureDealsDamageToControllerEffect) effect;
+        if (targetEffect.player().equals(Subjects.eachOpponent())) {
+            dealToEachOpponent(gameData, entry, targetEffect);
+            return;
+        }
         List<UUID> sourceIds = targetEffect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION
                 ? List.copyOf(entry.getCreatedPermanentIds())
                 : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
@@ -55,6 +62,26 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
                                 entry.getTriggeringPermanentControllerId()));
             }
         }
+    }
+
+    /**
+     * "Target creature deals damage to each opponent": the targeted creature is the damage source for the amount,
+     * prevention, protection, lifelink and damage triggers; the opponents are those of the ability's controller.
+     */
+    private void dealToEachOpponent(GameData gameData, StackEntry entry,
+                                    TargetCreatureDealsDamageToControllerEffect targetEffect) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (source == null || gameQueryService.findPermanentController(gameData, source.getId()) == null) {
+            return;
+        }
+        StackEntry damageEntry = StackEntry.carrier(source.getCard(),
+                entry.getControllerId(),
+                source.getCard().getName() + "'s ability",
+                List.of(),
+                null,
+                source.getId());
+        dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry,
+                new DealDamageToPlayersEffect(targetEffect.damage(), Subjects.eachOpponent()));
     }
 
     /**

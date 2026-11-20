@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,16 +12,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 
-class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDamageHandlerTest {
+class TargetDealsPowerDamageToItselfEffectHandlerTest extends AbstractDamageHandlerTest {
 
-    private TargetCreatureDealsPowerDamageToSelfEffectHandler handler;
+    private TargetDealsPowerDamageToTargetEffectHandler handler;
 
     @Override
     protected void setUpHandler() {
-        handler = new TargetCreatureDealsPowerDamageToSelfEffectHandler(
-                damageSupport, gameQueryService, gameLogService);
+        handler = new TargetDealsPowerDamageToTargetEffectHandler(damageSupport, gameQueryService, gameLogService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
     }
 
     @Test
@@ -38,12 +41,13 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         stubCreatureDamageCore(target, 5);
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(3);
+        lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), eq(target))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, target);
 
-        handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect());
+        handler.resolve(gd, entry, TargetDealsPowerDamageToTargetEffect.toItself());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -63,12 +67,13 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         stubCreatureDamageCore(target, 2);
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(2);
+        lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), eq(target))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, target);
 
-        handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect());
+        handler.resolve(gd, entry, TargetDealsPowerDamageToTargetEffect.toItself());
 
         // Lethal marked damage — the SBA check after resolution performs the destruction.
         assertThat(target.getMarkedDamage()).isEqualTo(2);
@@ -88,12 +93,13 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         stubCreatureDamageCore(target, 2);
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(1);
+        lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), eq(target))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, target);
 
-        handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect(2));
+        handler.resolve(gd, entry, TargetDealsPowerDamageToTargetEffect.toItself(2));
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertDamageToPermanent(target, 2, player2Id, target.getCard(), target.getId());

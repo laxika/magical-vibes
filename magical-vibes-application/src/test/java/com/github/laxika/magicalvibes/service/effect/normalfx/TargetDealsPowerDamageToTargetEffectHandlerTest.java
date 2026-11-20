@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +21,10 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
 
     @Override
     protected void setUpHandler() {
-        targetDealsPowerDamageToTargetHandler = new TargetDealsPowerDamageToTargetEffectHandler(damageSupport, gameQueryService, gameLogService);
+        targetDealsPowerDamageToTargetHandler = new TargetDealsPowerDamageToTargetEffectHandler(damageSupport,
+                gameQueryService, gameLogService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
     }
 
     @Test
@@ -38,6 +42,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
         when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
         when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
+        lenient().when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
         // Stub controller for the biting creature (used for trigger sourceControllerId)
@@ -66,6 +71,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         when(gameQueryService.findPermanentById(gd, myAngel.getId())).thenReturn(myAngel);
         when(gameQueryService.findPermanentById(gd, theirAngel.getId())).thenReturn(theirAngel);
         when(gameQueryService.getPowerBasedDamage(gd, myAngel)).thenReturn(4);
+        lenient().when(gameQueryService.isCreature(gd, myAngel)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, myAngel)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(theirAngel), any(Permanent.class))).thenReturn(false);
         // Stub controller for the biting creature (used for trigger sourceControllerId)
@@ -94,6 +100,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
         when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
         when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
+        lenient().when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
@@ -120,6 +127,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
         when(gameQueryService.getPowerBasedDamage(gd, source)).thenReturn(3);
+        lenient().when(gameQueryService.isCreature(gd, source)).thenReturn(true);
         when(gameQueryService.isPreventedFromDealingDamage(gd, source)).thenReturn(false);
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), any(Permanent.class))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(source.getId()))).thenReturn(player1Id);
@@ -130,5 +138,22 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
 
         assertThat(entry.getEventValue()).isEqualTo(1);
         assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A dealer that is no longer a creature deals no damage")
+    void noncreatureDealerDealsNoDamage() {
+        Card wingCard = createCard("Wing Puncture");
+        Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+        Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+        StackEntry entry = createMultiTargetEntry(wingCard, player1Id, List.of(bears.getId(), angel.getId()));
+
+        when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+        when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+        when(gameQueryService.isCreature(gd, bears)).thenReturn(false);
+
+        targetDealsPowerDamageToTargetHandler.resolve(gd, entry, new TargetDealsPowerDamageToTargetEffect());
+
+        assertThat(angel.getMarkedDamage()).isZero();
     }
 }

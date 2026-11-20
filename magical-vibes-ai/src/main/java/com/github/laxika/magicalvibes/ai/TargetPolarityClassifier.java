@@ -60,6 +60,8 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
@@ -261,6 +263,23 @@ public class TargetPolarityClassifier {
         // controller") is still harmful to whoever the card targets; damage with no
         // permanent in its target spec carries no permanent polarity — the player-targeting
         // branch handles it.
+        // One permanent deals damage equal to its power to another: the bite of two target groups is harmful, a
+        // creature damaging itself or damage from this or the triggering creature is creature damage, the rest
+        // (Aura's creature as it triggered, damage to this creature) aims at no permanent.
+        if (effect instanceof TargetDealsPowerDamageToTargetEffect powerDamage) {
+            if (powerDamage.readsTwoTargetGroups()) {
+                return TargetPolarity.HARMFUL;
+            }
+            return powerDamage.recipient() instanceof PermanentSubject.Target
+                    && !(powerDamage.dealer() instanceof PermanentSubject.AttachedAtTrigger)
+                    ? TargetPolarity.HARMFUL_DAMAGE
+                    : null;
+        }
+        // "Target creature you control deals damage to each opponent" aims at the AI's own creature.
+        if (effect instanceof TargetCreatureDealsDamageToControllerEffect toPlayers
+                && toPlayers.player() instanceof PlayerSubject.Each) {
+            return null;
+        }
         if (effect instanceof DamageDealingEffect damage) {
             if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 return null;
@@ -530,7 +549,6 @@ public class TargetPolarityClassifier {
             entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("TargetCreatureDealsPowerDamageToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ExileTopCardMayDealDamageOrPlayEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -576,11 +594,9 @@ public class TargetPolarityClassifier {
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
-            entry("TargetCreatureDealsPowerDamageToControllerEffect", TargetPolarity.HARMFUL),
             entry("TargetCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreatureDealsPowerDamageToTargetCreatureThenApplyPerpetualPowerToughnessEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("TargetDealsPowerDamageToTargetEffect", TargetPolarity.HARMFUL),
             entry("EachTargetCreatureDealsPowerDamageToTargetCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RemoveUpToCountersFromTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetPlayerGainsControlOfTargetPermanentEffect", TargetPolarity.HARMFUL),

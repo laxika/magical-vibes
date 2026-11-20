@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 
 @CardRegistration(set = "MIR", collectorNumber = "260")
 public class Delirium extends Card {
@@ -31,7 +32,7 @@ public class Delirium extends Card {
                         new PermanentControlledByActivePlayerPredicate())),
                 "Target must be a creature the active player controls"))
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new TargetCreatureDealsPowerDamageToControllerEffect())
+                .addSpellEffect(new TargetCreatureDealsDamageToControllerEffect(new SourcePower()))
                 .addSpellEffect(PreventDamageEffect.allCombatToTargetCreatures())
                 .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures());
     }

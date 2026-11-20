@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -393,7 +393,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | done |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | done |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | done (`DealDamageToTargetPermanentEffect` kept: not a subject sibling) |
-| 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | open |
+| 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | done (8 folded into two survivors; 13 left in the ledger) |
 | 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | open |
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | open |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | open |
@@ -2125,6 +2125,92 @@ the two ratchets, `GameSimulatorTest`.
   `controlledBy` damage run (ledger).
 - The early `isDamageSourcePreventedWithLog` / `isDamagePreventedForCreature` checks still differ per path (4d); a run
   that unifies them needs the user's sign-off.
+
+### Step 5, run 5h (2026-11-20)
+
+`--siblings` lists `*DealsPowerDamageTo*` (8 with the survivor), `*DealsDamageTo*` (8), `*DealsPowerDamageToAny*` (2)
+and `Each*DealsPowerDamageTo*` (2). Two shapes absorb at least two classes each: a permanent dealt power damage by
+another permanent, and a player dealt damage by a target creature. All are one-sided damage, not fight (CR 701.14a);
+no fight record was touched.
+
+**Survivor A.** `TargetDealsPowerDamageToTargetEffect` replaced `int sourceTargetGroup, int victimTargetGroup` with
+`PermanentSubject dealer, PermanentSubject recipient` and gained `PermanentPredicate targetFilter`; it is now a
+`DamageDealingEffect` (`damageAmount()` `SourcePower`, `canDamageCreatures()` only for a `source()` / `triggering()`
+dealer, the two old DDE shapes, `canDamagePlayers()` false). Every old constructor is kept (`target(g)` subjects), so
+its 57 cards are untouched. New `(dealer, recipient)`, `toItself([m])`, `bySource([filter])`, `readsTwoTargetGroups()`.
+The compact constructor accepts only the six shapes in its Javadoc. `targetSpec()`: two target groups keep the old
+rule (harmful creature if it records excess, else benign `playerOrPermanent`); a group-less `target()` recipient is
+harmful creature (+ filter), as all four absorbed target records were; `(target(), source())` is `NONE`. The handler
+resolves every id through `SubjectResolutionService`; target dealers share the old bite path (loop over the dealers);
+`source()`, `attachedAtTrigger()` and `triggering()` dealers keep their old handlers' paths exactly (the ability's own
+entry and last-known power for `source()`; the trigger-time host, its attached snapshot or departed snapshot and its
+last controller for Laccolith Rig; the trigger's recorded snapshot, controller and power for Lothlórien Blade).
+
+**Survivor B.** `TargetCreatureDealsDamageToControllerEffect` accepts `eachOpponent()` (target scope only) beside
+`controllerOf(target())` and `you()`; `damagesController()` is true for `you()`. The `eachOpponent()` path is the old
+Origin of Thor handler (a carrier with the ability's controller handed to `DealDamageToPlayersEffectHandler`). Its
+dealer stays a `GrantScope` (`TARGET` / `TOKENS_CREATED_THIS_RESOLUTION`) until step 6 / step 7.
+
+**Deleted** (8 records, 8 handlers; ratchet 4,892 / 4,125): `TargetCreatureDealsPowerDamageToSelfEffect` → A
+`toItself([m])` (9 cards), `EachTargetCreatureDealsPowerDamageToSourceEffect` → A `(target(), source())` (Living
+Inferno, Polukranos, Ravenous Gigantotherium), `SourcePermanentDealsPowerDamageToTargetCreatureEffect` → A
+`bySource([f])` (4), `EnchantedCreatureDealsPowerDamageToTargetCreatureEffect` → A `(attachedAtTrigger(), target())`
+(Laccolith Rig: "have it deal" after "whenever enchanted creature becomes blocked" is the host as it triggered; its
+"Aura moved after the trigger" test passes), `EquippedCreatureDealsPowerDamageToTargetCreatureEffect` → A
+`(triggering(), target())` (Lothlórien Blade; the attack trigger always records the creature, so the old
+"no triggering id: the Equipment's host" fallback had no user), `TargetCreatureDealsPowerDamageToControllerEffect` → B
+`(new SourcePower())` (5), `TargetCreatureDealsPowerDamageToAbilityControllerEffect` → B `(new TargetPower(), TARGET,
+you())` (Form of the Dinosaur), `TargetCreatureDealsPowerDamageToEachOpponentEffect` → B `(new SourcePower(), TARGET,
+eachOpponent())` (Origin of Thor). 25 card files rewritten by a deleted scratch script (Self-Destruct's local variable
+type by hand), 1 handler test renamed (`TargetDealsPowerDamageToItselfEffectHandlerTest`), 4 agent-docs files.
+
+**AI parity.** `TargetPolarityClassifier` lost the name entries for the survivor, the self record and the controller
+record; a structural branch gives the old answers (two groups `HARMFUL`; a `target()` recipient `HARMFUL_DAMAGE`
+except the Aura shape, which had no polarity; `(target(), source())` none; B with `eachOpponent()` none, as Origin of
+Thor had). `GameSimulator.isAimedDamage` skips A unless `canDamageCreatures()`, so the bite and self shapes (never
+`DamageDealingEffect`s) still add no damage to an ability's target ranking. B was already a `DamageDealingEffect`; the
+five power-to-controller cards become one with `canDamageCreatures()` false and a non-`Fixed` amount, which every AI
+reader of the interface ignores (`RaceEvaluator` counts only `Fixed`; none is a mana ability).
+
+**Behaviour changes.** (1) A target dealer that is no longer a creature deals nothing: a noncreature permanent has no
+power (CR 208.3) and 0 damage is no damage (CR 120.8); the bite and self paths read the printed power. Test:
+`TargetDealsPowerDamageToTargetEffectHandlerTest.noncreatureDealerDealsNoDamage`. (2) The self and "damage to this
+creature" shapes now skip their protection check when the dealer's damage can't be prevented (the bite's check).
+(3) Origin of Thor's target spec is harmful (protection from the saga is honoured where the engine reads `harmful`,
+CR 702.16b) instead of benign; the saga chapter's target prompt does not consult it (a pro-red creature is still
+offered: a separate gap in the chapter target path, not fixed here). (4) Log lines of the absorbed paths are the
+bite's ("X's damage is prevented."). Damage multipliers saturate (`SaturatingMath`) instead of throwing.
+
+**Kept exactly.** The damage source (the dealer, through a carrier entry or, for `source()`, the ability's entry):
+deathtouch, lifelink, infect, wither and damage triggers key off it; power read at resolution, last-known for a
+non-target dealer that left; nothing happens when a target dealer or the recipient is gone; prevention and protection
+checks; every target spec.
+
+**Tests**: 120 suites, 1,060 test cases, all pass: every test class of every card naming either survivor (84: all 57
+bite cards, every rewritten card), `TargetDealsPowerDamageToTargetEffectHandlerTest`,
+`TargetDealsPowerDamageToItselfEffectHandlerTest`, `SubjectResolutionServiceTest`, the two ratchets,
+`TargetPolarityGuardTest`, `GameSimulatorTest`, `AiTargetSelectorTest`.
+
+**For later runs.**
+
+- Kept (ledger, `blocked-other`): `EachTargetCreatureDealsPowerDamageToTargetCreatureEffect` is the two-group shape but
+  declares a harmful creature spec where the bite declares benign `playerOrPermanent`; deciding which is right (the
+  benign bite skips protection at targeting) folds it. The any-target records
+  (`TargetCreatureDealsPowerDamageToAnyTargetEffect` 21 cards, `EnchantedCreatureDealsPowerDamageToAnyTargetEffect`) have a
+  player-or-permanent recipient. `SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect` carries
+  `OptionalTargetEffect`. The non-target creature-to-player records (`EnchantedCreatureDealsPowerDamageToController`,
+  `EnchantedCreatureDealsDamageToEachOpponent`, `EquippedCreatureDealsDamageToDefendingPlayer`,
+  `EachCreatureDealsDamageToItsController`, `EnchantedCreatureDealsDamageToItsOwner`) fold into B once its `GrantScope`
+  dealer is a `PermanentSubject` (step 6; tokens need a step-7 "created" subject) and a per-dealer "its controller"
+  is expressible. The fixed-amount permanent records (`EnchantedCreatureDealsDamageToTargetCreature`,
+  `TargetCreatureDealsDamageToSelf`, `TargetLandDealsDamageToTriggeringCreature`) fold into A if it gains a
+  `DynamicAmount`.
+- `DealDamageToTargetPermanentEffect` and the set-damage records of 5g were not taken: neither is a dealer/recipient
+  shape. Not in the two groups and still unaudited: the `TargetCreatureDealsPowerDamageToEachOther*`,
+  `TargetCreatureDealsPowerDamageToEachTarget`, `...ThenApplyPerpetual...`, `ControlledCreaturesDealPowerDamage*`,
+  `ChosenPermanentDealsPowerDamage*` records (5m).
+- `agent-docs/EFFECT_MERGE_PLAN.md`'s `DealsPowerDamageEffect(...)` row (4 classes, unnamed) is about these records;
+  this run gave every absorbed shape the carrier form except `source()`, which keeps the ability's entry.
 
 ## Prompt
 

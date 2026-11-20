@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -701,11 +702,16 @@ public class GameSimulator {
         return ranked;
     }
 
-    /** Damage the ability deals to what it aims at; a permanent damaging itself ("and 3 damage to itself") is not. */
+    /**
+     * Damage the ability deals to what it aims at; a permanent damaging itself ("and 3 damage to itself") is not, nor
+     * is a target creature's power damage (the creature, not the ability's source, deals it).
+     */
     private static boolean isAimedDamage(CardEffect effect) {
         return effect instanceof DamageDealingEffect
                 && !(effect instanceof DealDamageToTargetCreatureEffect damage
-                && damage.subject() instanceof PermanentSubject.Source);
+                && damage.subject() instanceof PermanentSubject.Source)
+                && !(effect instanceof TargetDealsPowerDamageToTargetEffect powerDamage
+                && !powerDamage.canDamageCreatures());
     }
 
     private double abilityTargetPriority(GameData gd, UUID targetId, UUID playerId,

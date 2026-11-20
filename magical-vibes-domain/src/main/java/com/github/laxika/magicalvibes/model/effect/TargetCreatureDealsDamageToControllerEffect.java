@@ -4,14 +4,19 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * A targeted creature, or tokens created during this resolution, deal the specified damage.
- * Each permanent is its own damage source. The player dealt the damage is that permanent's controller
- * ({@code controllerOf(target())}, the default) or the resolving ability's controller ({@code you()}).
+ * A targeted creature, or tokens created during this resolution, deal the specified damage to a player. Each
+ * permanent is its own damage source (its lifelink, infect and damage triggers apply). The player dealt the damage is
+ * that permanent's controller ({@code controllerOf(target())}, the default: "target creature deals damage equal to its
+ * power to that creature's controller", with {@code new SourcePower()}), the resolving ability's controller
+ * ({@code you()}: "target creature an opponent controls deals damage equal to its power to you"), or each opponent of
+ * the ability's controller ({@code eachOpponent()}, target only: "target creature you control deals damage equal to
+ * its power to each opponent").
  *
- * @param damage the amount each permanent deals, independent of its power
+ * @param damage the amount each permanent deals, evaluated with that permanent as the amount's source
+ *               ({@code SourcePower} is its power)
  * @param scope a targeted creature or the tokens created during this resolution
  * @param player {@code controllerOf(target())}: each damaging permanent's own controller; {@code you()}: the resolving
- *               ability's controller
+ *               ability's controller; {@code eachOpponent()}: each opponent of the resolving ability's controller
  */
 public record TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage, GrantScope scope,
                                                            PlayerSubject player)
@@ -21,8 +26,13 @@ public record TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage, 
         if (scope != GrantScope.TARGET && scope != GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
             throw new IllegalArgumentException("Unsupported damage source scope");
         }
-        if (!(player instanceof PlayerSubject.You) && !player.equals(Subjects.controllerOf(Subjects.target()))) {
+        boolean eachOpponent = player.equals(Subjects.eachOpponent());
+        if (!(player instanceof PlayerSubject.You) && !player.equals(Subjects.controllerOf(Subjects.target()))
+                && !eachOpponent) {
             throw new IllegalArgumentException("Unsupported damage recipient: " + player);
+        }
+        if (eachOpponent && scope != GrantScope.TARGET) {
+            throw new IllegalArgumentException("Each opponent is dealt damage only by a targeted creature");
         }
     }
 
@@ -52,5 +62,10 @@ public record TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage, 
     @Override
     public boolean canDamagePlayers() {
         return true;
+    }
+
+    @Override
+    public boolean damagesController() {
+        return player instanceof PlayerSubject.You;
     }
 }
