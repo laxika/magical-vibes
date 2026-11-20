@@ -149,6 +149,23 @@ class HandOfVecnaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boosts the creature the Equipment is attached to as the ability resolves, not as it triggered")
+    void boostsCreatureEquippedAtResolution() {
+        Permanent hand = harness.addToBattlefieldAndReturn(player1, new HandOfVecna());
+        Permanent first = addCreatureReady(new HillGiantHerdgorger());
+        Permanent second = addCreatureReady(new HillGiantHerdgorger());
+        hand.setAttachedTo(first.getId());
+        harness.setHand(player1, List.of(new HillGiantHerdgorger()));
+        enterBeginningOfCombat();
+
+        hand.setAttachedTo(second.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(7);
+    }
+
+    @Test
     void doesNotBoostCreaturesOnOpponentsCombat() {
         Permanent hand = harness.addToBattlefieldAndReturn(player1, new HandOfVecna());
         Permanent equipped = addCreatureReady(new HillGiantHerdgorger());

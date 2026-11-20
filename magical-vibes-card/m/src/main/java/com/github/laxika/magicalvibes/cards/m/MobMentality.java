@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,6 +41,6 @@ public class MobMentality extends Card {
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new AllMatchingCreaturesAttack(nonWallCreature)),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, new Fixed(0)));
+                new BoostSelfEffect(Subjects.attached(), attackingCreatures, new Fixed(0)));
     }
 }

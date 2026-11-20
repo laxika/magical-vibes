@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +30,7 @@ public class VeteransArmaments extends Card {
         PermanentCount attackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
-                new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
+                new BoostSelfEffect(Subjects.triggering(), attackingCreatures, attackingCreatures));
 
         // Whenever a Soldier creature enters, you may attach this Equipment to it.
         addTrigger(Triggers.enters(

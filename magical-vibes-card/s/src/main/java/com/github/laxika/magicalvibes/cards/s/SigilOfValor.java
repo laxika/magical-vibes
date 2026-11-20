@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +24,7 @@ public class SigilOfValor extends Card {
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(otherCreatures, otherCreatures));
+                new BoostSelfEffect(Subjects.triggering(), otherCreatures, otherCreatures));
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,8 +19,7 @@ public class ThunderousMight extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(
-                        new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED),
+                new BoostSelfEffect(Subjects.triggering(), new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED),
                         new Fixed(0)));
     }
 }

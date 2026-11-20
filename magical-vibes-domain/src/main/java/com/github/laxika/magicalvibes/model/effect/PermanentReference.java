@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Names a permanent an effect acts on without targeting it. Used by
- * {@link BoostReferencedPermanentEffect}, {@link RemoveReferencedPermanentFromCombatEffect} and the other effects
+ * {@link RemoveReferencedPermanentFromCombatEffect} and the other effects
  * that have not yet taken a {@link PermanentSubject}; {@link Subjects#of(PermanentReference)} adapts it.
  *
  * <ul>

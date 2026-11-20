@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,6 +32,6 @@ public class TrailOfMystery extends Card {
                         "Search your library for a basic land card?"));
         addTrigger(Triggers.turnedFaceUp(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new TargetPermanentMatches(new PermanentIsCreaturePredicate())),
-                new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING, 2, 2));
+                new BoostSelfEffect(Subjects.triggering(), 2, 2));
     }
 }

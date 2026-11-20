@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class PrimalForcemage extends Card {
     public PrimalForcemage() {
         // Whenever another creature you control enters, that creature gets +3/+3 until end of turn.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING, 3, 3));
+                new BoostSelfEffect(Subjects.triggering(), 3, 3));
     }
 }

@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpe
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellModeCount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
@@ -1283,14 +1282,14 @@ class SpellTriggersTest {
     }
 
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — BoostEquippedCreatureUntilEndOfTurnEffect")
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — BoostSelfEffect on the attached creature")
     class ControllerBoostEquippedOnSpellCast {
 
         @Test
         @DisplayName("puts triggered ability on stack carrying the source permanent id")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Leering Emblem");
-            var effect = new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(2), new Fixed(2));
+            var effect = new BoostSelfEffect(Subjects.attached(), new Fixed(2), new Fixed(2));
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 

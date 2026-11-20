@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -394,7 +394,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | done |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | done (`DealDamageToTargetPermanentEffect` kept: not a subject sibling) |
 | 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | done (8 folded into two survivors; 13 left in the ledger) |
-| 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | open |
+| 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | done (3 folded into `BoostSelfEffect`; Hand of Vecna's choice record and `BoostTargetPermanentEffect` kept) |
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | open |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | open |
 | 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | open |
@@ -2211,6 +2211,89 @@ bite cards, every rewritten card), `TargetDealsPowerDamageToTargetEffectHandlerT
   `ChosenPermanentDealsPowerDamage*` records (5m).
 - `agent-docs/EFFECT_MERGE_PLAN.md`'s `DealsPowerDamageEffect(...)` row (4 classes, unnamed) is about these records;
   this run gave every absorbed shape the carrier form except `source()`, which keeps the ability's entry.
+
+### Step 5, run 5i (2026-11-20)
+
+`--family Boost` / `--siblings` give the one-permanent one-shot boosts `BoostSelfEffect` (1,079 cards),
+`BoostTargetCreatureEffect` (1,356), `BoostEquippedCreatureUntilEndOfTurnEffect` (32), `BoostReferencedPermanentEffect` (21),
+`BoostTargetPermanentEffect` (9), `BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect` (7) and
+`BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect` (5). The split between the two survivors is by amount context,
+not by name: every non-target sibling but Referenced evaluated its amounts against the boosted permanent (Two-Handed Axe's
+"double its power", Sigil of Valor's "each other creature you control"), as `BoostSelfEffect` does, and Referenced's
+amounts never read the context permanent except Junk Jet's. So `BoostSelfEffect` takes every non-targeting one-permanent
+boost and `BoostTargetCreatureEffect` is unchanged.
+
+**Survivor.** `BoostSelfEffect(powerBoost, toughnessBoost, duration, PermanentSubject subject, Set<Keyword> keywords)`;
+every old constructor kept (`source()`, no keywords), so its 1,079 cards are untouched. New `(subject, p, t[, keywords])`
+and `(subject, int, int[, Keyword])`. The compact constructor rejects a target or set subject. `targetSpec()` is the old
+self-targeting marker for `source()` and `attachedOrSource()` (old SelfOrEnchanted), else `NONE` (old Equipped,
+Referenced); `resolvesAgainstAttachedPermanent()` for `attached()` / `attachedOrSource()`; `hasAbilityResolutionCondition()`
+from the amounts (Bronze Cudgels; no `source()` card has such an amount). The handler resolves the subject through
+`SubjectResolutionService`, evaluates the amounts with the boosted permanent as source, adds the 7c boost (UEOT through
+`addPowerToughnessBoost`, other durations as before) and a layer-6 `GrantKeywordEffect` for the keywords, both on that
+permanent with the effect's duration (CR 611.2a, timestamps as before), and for a non-`source()` subject refreshes the
+source snapshots of the boosted permanent's waiting abilities (the old Referenced step, Ogre Battledriver). The static
+paths (`BoostSelfSelfEffectHandler`, `StaticEffectSupport`) throw for any other subject or a keyword.
+
+**Resolver.** Two variants, each for a shape no composition expresses: `attachedOrSource()` (bestow "this creature ...; if
+it's an Aura, enchanted creature ... instead": the host while the source, as it is or last was, is attached, else the
+source; Everflame Eidolon, Erebos's Emissary) and `triggeringOrSource()` ("whenever this creature or equipped creature
+attacks, it gets": the own attack trigger records no triggering permanent; Chainflail Centipede, Razorfield Ripper).
+Tests: `SubjectResolutionServiceTest$AttachedOrSource`, `$Triggering.triggeringOrSourcePermanent`.
+
+**Deleted** (3 records, 3 handlers; ratchet 4,889 / 4,122): `BoostReferencedPermanentEffect` (TRIGGERING `triggering()`,
+ATTACHED `attached()`, ATTACHED_AT_TRIGGER `attachedAtTrigger()` (Paroxysm; its "Aura moved in response" test passes),
+RETURNED `returned()`), `BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect` (by Oracle text: Fiery Mantle, Pemmin's Aura
+`attached()`; Scriv's Contract `triggering()`; the bestow and reconfigure cards above),
+`BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect` (Bestial Fury, Hedron Blade, Spiked Ripsaw `triggering()`;
+Luxior, Ring of Evos Isle `attached()`). `BoostEquippedCreatureUntilEndOfTurnEffect` keeps only Hand of Vecna's choice form
+(`orControlledCreatureMatching` required; the equipped candidate is `attached()`); its 31 other cards are
+`BoostSelfEffect(attached(), ...)` (activated abilities and triggers not about the host: Adventuring Gear's ruling) or
+`(triggering(), ...)` ("whenever equipped/enchanted creature attacks/blocks, it gets": Gift of the Woods, Two-Handed Axe,
+Sigil of Valor, Thunderous Might, Veteran's Armaments, Slab Hammer; attached combat triggers record the creature). 64
+card files rewritten by a deleted scratch script, Junk Jet by hand (`EnchantedPermanentPower(true)` → `SourcePower(true)`,
+the boosted creature's power), 1 application test, 12 agent-docs files.
+
+**`source()` fallback.** With a temporary probe that threw when a `BoostSelfEffect` resolved on an entry with no source
+permanent and a target, 408 test classes (a 350-per-class sample of `BoostSelfEffect` cards and every card of the ten
+effects whose handlers call `BoostSelfEffectHandler`) passed; no spell carries the record. `source()` stays strict and the
+fallback is gone.
+
+**AI parity.** `SpellEvaluator` (self-pump value, sacrifice-only-beneficiary check) and `HardAiDecisionEngine.selfBoost`
+match `BoostSelfEffect` only with a `source()` subject; the absorbed records were not read by any AI code.
+
+**Behaviour changes.** (1) Hand of Vecna's "equipped creature" is the one the Equipment is attached to as the ability
+resolves, not as it triggered (the old step-trigger read of the attached snapshot; Adventuring Gear ruling, Hand of
+Vecna's "choose as it resolves" ruling). Test: `HandOfVecnaTest.boostsCreatureEquippedAtResolution`. (2) "It" in an
+attached combat trigger is the triggering creature only: the old keyword and Equipped handlers fell back to the
+Equipment's current host (or the entry's target) once that creature had left, boosting a new object (CR 400.7). (3) The
+waiting-ability snapshot refresh now also follows the former Equipped / SelfOrEnchanted / keyword boosts. (4) Log lines
+are `BoostSelfEffect`'s ("gets +X/+Y [and gains K] until end of turn."); the former Referenced keyword boosts now name
+the keyword. Nothing tested changed.
+
+**Kept exactly.** Layer 7c placement and timestamps (CR 613.7), durations, the set of one permanent fixed as the effect
+begins (CR 611.2c), nothing for a permanent that left (CR 400.7), the 5e activation-cost capture (`BriarShieldTest`'s
+sacrifice case), last-known hosts through the resolver (CR 608.2h).
+
+**Tests**: 264 suites, 2,038 test cases, all pass: every rewritten card's test, Hand of Vecna, a 60-per-class sample of
+`BoostSelfEffect`, `SubjectResolutionServiceTest`, the two ratchets, `SpellTriggersTest`, `StepTriggerServiceTest`,
+`DrawServiceTest`, `LibraryTriggersTest`, `GameQueryServiceTest`, `AbilityActivationServiceTest`,
+`ActivatedAbilityExecutionServiceTest`, `SpellEvaluatorTest`, `HardAiDecisionEngineTest`. `StepTriggerServiceTest` did not
+compile on HEAD (`d563f5e806` changed the `StepTriggerService` constructor to `TargetLegalityService`); fixed to pass it.
+
+**For later runs.**
+
+- Kept (ledger): `BoostTargetPermanentEffect` (target permanent incl. Vehicles, harmful spec; not a subject sibling of the
+  benign creature target; step 10), `BoostPairedCreatureOfTargetEffect` (needs a paired-with subject),
+  `BoostCreatedTokensEffect` (step 7), `BoostEquippedCreatureOfEnchantedEquipmentEffect` (static, step 6), Hand of Vecna's
+  record (`unique`). The set-wide and `GrantScope` boosts wait for step 6 as planned.
+- `PermanentReference` and `Subjects.of` stay: their readers are now Sacrifice (5j), RemoveFromCombat (5k), Explore, Goad,
+  TurnSourceFaceUp, Shuffle, MustBlockSource, `DoesntUntapWithCounterEffect`, `PutOrRemoveCounterIfAttackedOrBlocked...`,
+  the fused destroy record and `PermanentBlockingSourcePredicate`, not only 5k.
+- Step 10's Boost merge: `BoostSelfEffect` reads amounts against the boosted permanent, `BoostTargetCreatureEffect` against
+  the source. A merged record needs that as a property of the subject (target → source context) or an explicit choice.
+- "Gains [keyword] until end of turn" for one named permanent is `BoostSelfEffect(subject, 0, 0, keyword)`; Ogre
+  Battledriver still pairs a boost with `GrantKeywordEffect(GrantScope.TRIGGERING_PERMANENT)` (step 6).
 
 ## Prompt
 

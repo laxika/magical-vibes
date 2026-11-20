@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,10 +22,10 @@ public class GiftOfTheWoods extends Card {
         // and you gain 1 life. No "by a creature" clause, so it triggers once per combat event
         // regardless of how many creatures are involved.
         addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
-                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(0), new Fixed(3)),
+                new BoostSelfEffect(Subjects.triggering(), new Fixed(0), new Fixed(3)),
                 new GainLifeEffect(1));
         addTrigger(Triggers.becomesBlocked(),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(0), new Fixed(3)),
+                new BoostSelfEffect(Subjects.triggering(), new Fixed(0), new Fixed(3)),
                 new GainLifeEffect(1));
     }
 }

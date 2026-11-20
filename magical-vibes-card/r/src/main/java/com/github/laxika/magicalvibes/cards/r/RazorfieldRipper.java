@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.ControllerEnergyCounters;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
@@ -35,8 +36,7 @@ public class RazorfieldRipper extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 Duration.WHILE_ATTACHED));
         addTrigger(Triggers.attacks(), new EnergyCountersEffect(1),
-                new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(
-                new ControllerEnergyCounters(), new ControllerEnergyCounters()));
+                new BoostSelfEffect(Subjects.triggeringOrSource(), new ControllerEnergyCounters(), new ControllerEnergyCounters()));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

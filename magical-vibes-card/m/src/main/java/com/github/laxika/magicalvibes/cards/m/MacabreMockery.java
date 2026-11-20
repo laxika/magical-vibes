@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,8 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -25,7 +25,7 @@ public class MacabreMockery extends Card {
                 .targetGraveyard(true)
                 .sacrificeAtEndStep(true)
                 .build());
-        addSpellEffect(new BoostReferencedPermanentEffect(PermanentReference.RETURNED, new Fixed(2), new Fixed(0),
+        addSpellEffect(new BoostSelfEffect(Subjects.returned(), new Fixed(2), new Fixed(0),
                 Set.of(Keyword.HASTE)));
     }
 }

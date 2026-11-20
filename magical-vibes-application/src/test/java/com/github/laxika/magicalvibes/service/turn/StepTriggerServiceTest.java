@@ -125,7 +125,6 @@ import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -248,8 +247,6 @@ class StepTriggerServiceTest {
         // mock would silently return nulls and break them.
         TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(
                 gameQueryService, predicateEvaluationService, targetLegalityService);
-        ValidTargetService validTargetService = new ValidTargetService(
-                gameQueryService, predicateEvaluationService, targetLegalityService, null, null, null);
         sut = new StepTriggerService(
                 drawService,
                 gameQueryService,
@@ -265,7 +262,7 @@ class StepTriggerServiceTest {
                 graveyardService,
                 triggeredAbilityQueueService,
                 triggerTargetCollector,
-                validTargetService,
+                targetLegalityService,
                 creatureControlService,
                 etbTokenTargetService,
                 amountEvaluationService,

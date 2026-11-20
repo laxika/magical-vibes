@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +35,7 @@ public class BetrothedOfFire extends Card {
                                         new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
                                 "an untapped creature",
                                 false),
-                        new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(2), new Fixed(0))),
+                        new BoostSelfEffect(Subjects.attached(), new Fixed(2), new Fixed(0))),
                 "Sacrifice an untapped creature: Enchanted creature gets +2/+0 until end of turn."
         ));
 

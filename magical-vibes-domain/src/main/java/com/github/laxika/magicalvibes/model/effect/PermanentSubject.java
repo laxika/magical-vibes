@@ -17,7 +17,7 @@ import java.util.UUID;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target, PermanentSubject.AllTargets,
-        PermanentSubject.Attached, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringCard,
+        PermanentSubject.Attached, PermanentSubject.AttachedOrSource, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringOrSource, PermanentSubject.TriggeringCard,
         PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.Granter, PermanentSubject.Named,
         PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf, PermanentSubject.AllOf {
 
@@ -89,6 +89,14 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     }
 
     /**
+     * "This creature ... If it's an Aura, enchanted creature ... instead" (a bestow card's own ability): the permanent
+     * the source is attached to while it is attached, else the source itself; read from the source as it is, else as
+     * it last existed.
+     */
+    record AttachedOrSource() implements PermanentSubject {
+    }
+
+    /**
      * "That creature" in an Aura's or Equipment's ability whose trigger condition names its host ("at the beginning of
      * the upkeep of enchanted creature's controller, ... destroy that creature"): the permanent the source was attached
      * to when the ability triggered or was activated, as the stack entry recorded it, not whatever it is attached to
@@ -104,6 +112,19 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
     /** "It", "that creature": the permanent the trigger event was about. */
     record Triggering() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "It" after "whenever this creature or equipped creature attacks" (a reconfigure card's own trigger): the
+     * permanent the trigger event recorded (the equipped creature), else, for the source's own event, which records
+     * none, the source itself.
+     */
+    record TriggeringOrSource() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

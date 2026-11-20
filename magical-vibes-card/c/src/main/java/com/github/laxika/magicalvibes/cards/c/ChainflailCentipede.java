@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -25,7 +26,7 @@ import java.util.Set;
 public class ChainflailCentipede extends Card {
 
     public ChainflailCentipede() {
-        addTrigger(Triggers.attacks(), new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(2, 0));
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(Subjects.triggeringOrSource(), 2, 0));
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 Duration.WHILE_ATTACHED));
 

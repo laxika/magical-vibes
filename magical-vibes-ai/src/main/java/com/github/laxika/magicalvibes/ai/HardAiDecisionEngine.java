@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -2378,7 +2379,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     /** Keeps the AI's one sanctioned concrete self-pump dispatch in a single place. */
     private BoostSelfEffect selfBoost(CardEffect effect) {
-        return effect instanceof BoostSelfEffect boost ? boost : null;
+        return effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source ? boost : null;
     }
 
     private List<CardEffect> stackEffects(StackEntry entry) {

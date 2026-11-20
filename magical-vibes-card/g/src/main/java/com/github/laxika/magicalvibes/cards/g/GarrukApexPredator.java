@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEff
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -81,8 +80,7 @@ public class GarrukApexPredator extends Card {
                         "Whenever a creature attacks you, it gets +5/+5 and gains trample until end of turn.",
                         Subjects.targetPlayer(), List.of(),
                         List.of(new TriggeredAbility(Triggers.creatureAttacksYou(),
-                                new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING,
-                                        new Fixed(5), new Fixed(5), Set.of(Keyword.TRAMPLE)))))),
+                                new BoostSelfEffect(Subjects.triggering(), new Fixed(5), new Fixed(5), Set.of(Keyword.TRAMPLE)))))),
                 "−8: Target opponent gets an emblem with \"Whenever a creature attacks you, it "
                         + "gets +5/+5 and gains trample until end of turn.\"",
                 new PlayerPredicateTargetFilter(

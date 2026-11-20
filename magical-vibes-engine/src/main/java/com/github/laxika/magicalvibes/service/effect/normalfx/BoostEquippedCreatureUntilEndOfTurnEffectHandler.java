@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -32,6 +33,7 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,73 +45,38 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         var e = (BoostEquippedCreatureUntilEndOfTurnEffect) effect;
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        // An activated ability refers to the "equipped creature" as it is when the ability resolves (CR 301.5f),
-        // so a Jitte-style ability follows the equipment if it was moved before resolution. A trigger about the
-        // creature the attachment was on ("whenever enchanted creature attacks, it gets ...", or one the attachment
-        // grants that creature) boosts that creature, even if the attachment moved or left the battlefield before
-        // resolution: the entry's attached snapshot, when it is the ability's source or the creature the source was
-        // attached to as the ability triggered. Any other trigger ("whenever a creature enters, enchanted creature
-        // gets ...") boosts the creature the source is attached to as the ability resolves (Adventuring Gear's ruling).
-        // Once the equipment has left, its last known information (CR 608.2h) is the creature it was attached
-        // to when it left, which the departure refreshes on the source snapshot; the activation-time attached
-        // snapshot can be stale if the equipment moved since.
-        UUID attachedId;
-        Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
-        if (attachedSnapshot != null && entry.getSourcePermanentSnapshot() != null
-                && !attachedSnapshot.getId().equals(entry.getSourcePermanentSnapshot().getAttachedTo())
-                && !attachedSnapshot.getId().equals(entry.getSourcePermanentId())) {
-            attachedSnapshot = null;
-        }
-        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY && equipment != null) {
-            attachedId = equipment.getAttachedTo();
-        } else if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY && entry.getSourcePermanentSnapshot() != null) {
-            attachedId = entry.getSourcePermanentSnapshot().getAttachedTo();
-        } else {
-            attachedId = attachedSnapshot != null ? attachedSnapshot.getId()
-                    : equipment != null ? equipment.getAttachedTo()
-                    : entry.getSourcePermanentSnapshot() != null
-                    ? entry.getSourcePermanentSnapshot().getAttachedTo() : entry.getTargetId();
-        }
-        Permanent equippedCreature = attachedId == null ? null : gameQueryService.findPermanentById(gameData, attachedId);
+        // "Equipped creature" is the creature the Equipment is attached to as the ability resolves (as for Adventuring
+        // Gear's ruling), or the one it was attached to as it left the battlefield.
+        Permanent equippedCreature = subjectResolutionService.permanent(gameData, entry, effect, Subjects.attached());
 
-        if (e.orControlledCreatureMatching() != null) {
-            List<UUID> candidateIds = new ArrayList<>();
-            if (equippedCreature != null) {
-                candidateIds.add(equippedCreature.getId());
+        List<UUID> candidateIds = new ArrayList<>();
+        if (equippedCreature != null) {
+            candidateIds.add(equippedCreature.getId());
+        }
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())) {
+            if (!candidateIds.contains(permanent.getId())
+                    && gameQueryService.isCreature(gameData, permanent)
+                    && predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, permanent, e.orControlledCreatureMatching())) {
+                candidateIds.add(permanent.getId());
             }
-            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())) {
-                if (!candidateIds.contains(permanent.getId())
-                        && gameQueryService.isCreature(gameData, permanent)
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, e.orControlledCreatureMatching())) {
-                    candidateIds.add(permanent.getId());
-                }
-            }
-            if (candidateIds.isEmpty()) {
-                log.info("Game {} - {} trigger has no creature to boost", gameData.id, sourceName);
-                return;
-            }
-            if (candidateIds.size() > 1) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.BoostEquippedOrMatchingCreatureChoice(entry, e));
-                playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidateIds,
-                        "Choose the creature that gets the boost.");
-                return;
-            }
-            equippedCreature = gameQueryService.findPermanentById(gameData, candidateIds.getFirst());
-        } else if (attachedId == null) {
-            // The source left the battlefield (e.g. its own sacrifice cost) and no attached
-            // permanent was captured at activation.
-            log.info("Game {} - {} trigger fizzles: equipment no longer attached", gameData.id, sourceName);
+        }
+        if (candidateIds.isEmpty()) {
+            log.info("Game {} - {} trigger has no creature to boost", gameData.id, sourceName);
             return;
         }
-        if (equippedCreature == null) {
-            log.info("Game {} - {} trigger fizzles: equipped creature no longer on battlefield", gameData.id, sourceName);
+        if (candidateIds.size() > 1) {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.BoostEquippedOrMatchingCreatureChoice(entry, e));
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidateIds,
+                    "Choose the creature that gets the boost.");
             return;
         }
-
-        applyBoost(gameData, entry, e, equippedCreature);
+        Permanent creature = gameQueryService.findPermanentById(gameData, candidateIds.getFirst());
+        if (creature == null) {
+            return;
+        }
+        applyBoost(gameData, entry, e, creature);
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,

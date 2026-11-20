@@ -212,6 +212,7 @@ public class StaticEffectSupport {
                 accumulator.addKeywords(boost.grantedKeywords());
             }
         } else if (wrapped instanceof BoostSelfEffect boost) {
+            BoostSelfSelfEffectHandler.requireStaticSelfBoost(boost);
             AmountContext amountContext =
                     AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
             accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), amountContext));

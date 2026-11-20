@@ -144,9 +144,12 @@ public class SubjectResolutionService {
                     .filter(id -> !ctx.gameData().playerIds.contains(id))
                     .toList();
             case PermanentSubject.Attached ignored -> listOf(attachedId(ctx));
+            case PermanentSubject.AttachedOrSource ignored -> listOf(attachedOrSourceId(ctx));
             case PermanentSubject.AttachedAtTrigger ignored -> listOf(ctx.entry().getAttachedPermanentSnapshot() == null
                     ? null : ctx.entry().getAttachedPermanentSnapshot().getId());
             case PermanentSubject.Triggering ignored -> listOf(ctx.entry().getTriggeringPermanentId());
+            case PermanentSubject.TriggeringOrSource ignored -> listOf(ctx.entry().getTriggeringPermanentId() != null
+                    ? ctx.entry().getTriggeringPermanentId() : ctx.sourceId());
             case PermanentSubject.TriggeringCard ignored -> listOf(triggeringCardPermanentId(ctx));
             case PermanentSubject.TargetSpell ignored -> List.of();
             case PermanentSubject.TriggeringSpell ignored -> List.of();
@@ -206,6 +209,29 @@ public class SubjectResolutionService {
         Permanent snapshot = ctx.sourceSnapshot();
         if (snapshot != null) {
             return permanentAttachment(ctx.gameData(), snapshot);
+        }
+        Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
+        return attachedSnapshot == null ? null : attachedSnapshot.getId();
+    }
+
+    /**
+     * The host of the source while the source (as it is, else as it last existed) is attached to a permanent, else the
+     * source itself; with no source known, the host the entry recorded.
+     */
+    private UUID attachedOrSourceId(Context ctx) {
+        if (ctx.staticSource() != null) {
+            UUID host = permanentAttachment(ctx.gameData(), ctx.staticSource());
+            return host != null ? host : ctx.staticSource().getId();
+        }
+        StackEntry entry = ctx.entry();
+        UUID sourceId = entry.getSourcePermanentId();
+        Permanent source = sourceId == null ? null : gameQueryService.findPermanentById(ctx.gameData(), sourceId);
+        if (source == null) {
+            source = ctx.sourceSnapshot();
+        }
+        if (source != null) {
+            UUID host = permanentAttachment(ctx.gameData(), source);
+            return host != null ? host : source.getId();
         }
         Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
         return attachedSnapshot == null ? null : attachedSnapshot.getId();

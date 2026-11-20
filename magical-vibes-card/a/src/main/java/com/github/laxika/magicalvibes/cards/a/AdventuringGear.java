@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +15,7 @@ public class AdventuringGear extends Card {
 
     public AdventuringGear() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(2), new Fixed(2)));
+                new BoostSelfEffect(Subjects.attached(), new Fixed(2), new Fixed(2)));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

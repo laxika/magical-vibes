@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
@@ -33,7 +33,7 @@ public class AlexWilderRunaway extends Card {
                                         new PermanentNotPredicate(new PermanentCastFromZonePredicate(Zone.HAND)))))),
                         ObjectRelation.YOU_CONTROL),
                 SequenceEffect.of(
-                        new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING, 2, 0),
+                        new BoostSelfEffect(Subjects.triggering(), 2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT)));
 
         addCastingOption(new GraveyardCast(null, "{2}{R}", List.of(

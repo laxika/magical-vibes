@@ -18,8 +18,10 @@ public final class Subjects {
     private static final PermanentSubject TARGET = new PermanentSubject.Target(null);
     private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
+    private static final PermanentSubject ATTACHED_OR_SOURCE = new PermanentSubject.AttachedOrSource();
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
+    private static final PermanentSubject TRIGGERING_OR_SOURCE = new PermanentSubject.TriggeringOrSource();
     private static final PermanentSubject TRIGGERING_CARD = new PermanentSubject.TriggeringCard();
     private static final PermanentSubject TARGET_SPELL = new PermanentSubject.TargetSpell();
     private static final PermanentSubject TRIGGERING_SPELL = new PermanentSubject.TriggeringSpell();
@@ -69,6 +71,11 @@ public final class Subjects {
         return ATTACHED;
     }
 
+    /** "This creature ... If it's an Aura, enchanted creature ... instead": the host while attached, else the source. */
+    public static PermanentSubject attachedOrSource() {
+        return ATTACHED_OR_SOURCE;
+    }
+
     /**
      * "That creature" naming the host from the trigger condition: the permanent the source was attached to when the
      * ability triggered or was activated.
@@ -80,6 +87,11 @@ public final class Subjects {
     /** "It", "that creature": the permanent the trigger event was about. */
     public static PermanentSubject triggering() {
         return TRIGGERING;
+    }
+
+    /** "It" after "whenever this creature or equipped creature attacks": the recorded permanent, else the source. */
+    public static PermanentSubject triggeringOrSource() {
+        return TRIGGERING_OR_SOURCE;
     }
 
     /**

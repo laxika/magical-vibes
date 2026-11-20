@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -34,8 +35,17 @@ public class BoostSelfSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostSelfEffect) effect;
+        requireStaticSelfBoost(boost);
         AmountContext ctx = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
         accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), ctx));
         accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), ctx));
+    }
+
+    /** Only "this creature gets +X/+Y" is a static self bonus; another subject or a keyword grant is one-shot only. */
+    static void requireStaticSelfBoost(BoostSelfEffect boost) {
+        if (!(boost.subject() instanceof PermanentSubject.Source) || !boost.keywords().isEmpty()) {
+            throw new IllegalStateException("A static BoostSelfEffect boosts only its source and grants no keyword: "
+                    + boost);
+        }
     }
 }

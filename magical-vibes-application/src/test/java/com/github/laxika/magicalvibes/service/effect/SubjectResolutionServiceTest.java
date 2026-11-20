@@ -40,6 +40,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.activePlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.allOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.allTargets;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attached;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedOrSource;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedAtTrigger;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.chosenPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.chosenPlayers;
@@ -63,6 +64,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetSpell;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggering;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringOrSource;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringCard;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpell;
@@ -269,6 +271,36 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("attachedOrSource()")
+    class AttachedOrSource {
+
+        @Test
+        @DisplayName("Is the host while the source is attached, and the source itself once it is unattached")
+        void hostElseSource() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent bonesplitter = attach(player1, new Bonesplitter(), bears);
+            StackEntry entry = entry(player1, null, bonesplitter.getId());
+
+            assertThat(permanents(entry, attachedOrSource())).containsExactly(bears);
+
+            bonesplitter.setAttachedTo(null);
+
+            assertThat(permanents(entry, attachedOrSource())).containsExactly(bonesplitter);
+        }
+
+        @Test
+        @DisplayName("Is the creature the source was attached to as it last existed, once the source left")
+        void sourceThatLeftAttached() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            leaveBattlefield(pacifism);
+
+            assertThat(permanents(entry, attachedOrSource())).containsExactly(bears);
+        }
+    }
+
+    @Nested
     @DisplayName("attachedAtTrigger()")
     class AttachedAtTrigger {
 
@@ -317,6 +349,19 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(permanents(entry, triggering())).isEmpty();
             assertThat(subjects.permanentIds(gd, entry, EFFECT, triggering())).containsExactly(bears.getId());
+        }
+
+        @Test
+        @DisplayName("triggeringOrSource() is the recorded permanent, else the source of its own event")
+        void triggeringOrSourcePermanent() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry own = entry(player1, null, giant.getId());
+            StackEntry about = entry(player1, null, giant.getId());
+            about.setTriggeringPermanentId(bears.getId());
+
+            assertThat(permanents(own, triggeringOrSource())).containsExactly(giant);
+            assertThat(permanents(about, triggeringOrSource())).containsExactly(bears);
         }
     }
 

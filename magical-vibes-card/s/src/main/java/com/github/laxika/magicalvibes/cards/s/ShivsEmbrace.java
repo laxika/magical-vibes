@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "156")
 @CardRegistration(set = "M14", collectorNumber = "153")
@@ -23,7 +24,7 @@ public class ShivsEmbrace extends Card {
         target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
         addActivatedAbility(new ActivatedAbility(false, "{R}",
-                List.of(new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(1), new Fixed(0))),
+                List.of(new BoostSelfEffect(Subjects.attached(), new Fixed(1), new Fixed(0))),
                 "{R}: Enchanted creature gets +1/+0 until end of turn."));
     }
 }

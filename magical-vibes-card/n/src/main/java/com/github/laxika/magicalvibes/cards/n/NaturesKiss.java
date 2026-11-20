@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +23,7 @@ public class NaturesKiss extends Card {
                 false,
                 "{1}",
                 List.of(new ExileTopCardOfGraveyardCost(),
-                        new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(1), new Fixed(1))),
+                        new BoostSelfEffect(Subjects.attached(), new Fixed(1), new Fixed(1))),
                 "{1}, Exile the top card of your graveyard: Enchanted creature gets +1/+1 until end of turn."
         ));
     }

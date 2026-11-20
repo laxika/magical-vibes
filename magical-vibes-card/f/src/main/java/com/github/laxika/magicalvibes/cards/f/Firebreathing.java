@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -29,7 +30,7 @@ public class Firebreathing extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(1), new Fixed(0))),
+                List.of(new BoostSelfEffect(Subjects.attached(), new Fixed(1), new Fixed(0))),
                 "{R}: Enchanted creature gets +1/+0 until end of turn."
         ));
     }

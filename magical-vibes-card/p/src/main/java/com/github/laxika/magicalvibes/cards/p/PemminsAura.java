@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -47,10 +47,10 @@ public class PemminsAura extends Card {
                 List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Enchanted creature gets +1/-1 until end of turn",
-                                new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(1, -1)),
+                                new BoostSelfEffect(Subjects.attached(), 1, -1)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Enchanted creature gets -1/+1 until end of turn",
-                                new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(-1, 1))
+                                new BoostSelfEffect(Subjects.attached(), -1, 1))
                 ))),
                 "{1}: Enchanted creature gets +1/-1 or -1/+1 until end of turn."
         ));

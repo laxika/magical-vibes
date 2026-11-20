@@ -156,7 +156,7 @@ public class SpellEvaluator {
                 sacrificesChosenCreature |= cost.sacrificesChosenCreature();
                 continue;
             }
-            if (!(effect instanceof BoostSelfEffect)) {
+            if (!(effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source)) {
                 return false;
             }
             hasEffect = true;
@@ -254,7 +254,7 @@ public class SpellEvaluator {
                                          UUID aiPlayerId, UUID opponentId,
                                          List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
         // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)
-        if (effect instanceof BoostSelfEffect boost) {
+        if (effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
             return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
                     + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);

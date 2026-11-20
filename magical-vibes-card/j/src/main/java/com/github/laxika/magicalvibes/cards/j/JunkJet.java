@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -35,8 +35,7 @@ public class JunkJet extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentIsArtifactPredicate(), "Sacrifice another artifact"),
-                        new BoostReferencedPermanentEffect(
-                                PermanentReference.ATTACHED, new EnchantedPermanentPower(true), new Fixed(0))
+                        new BoostSelfEffect(Subjects.attached(), new SourcePower(true), new Fixed(0))
                 ),
                 "{3}, Sacrifice another artifact: Double equipped creature's power until end of turn."
         ));

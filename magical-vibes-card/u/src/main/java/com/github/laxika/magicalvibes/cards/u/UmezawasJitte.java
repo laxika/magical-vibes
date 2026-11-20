@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -33,7 +34,7 @@ public class UmezawasJitte extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
-                        new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(2), new Fixed(2))
+                        new BoostSelfEffect(Subjects.attached(), new Fixed(2), new Fixed(2))
                 ),
                 "Remove a charge counter from Umezawa's Jitte: Equipped creature gets +2/+2 until end of turn."
         ));
