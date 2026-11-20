@@ -114,6 +114,7 @@ class HostileHostelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The drain resolves together with the exile without another priority round")
     void drainResolvesTogetherWithExileWithoutAnotherPriorityRound() {
         Permanent inn = addTransformedInn(player1);
         Card creature = new UnrulyMob();
@@ -124,7 +125,6 @@ class HostileHostelTest extends BaseCardTest {
         attack(inn);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             harness.handleMayAbilityChosen(player1, true);
-            harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
             harness.assertLife(player1, 21);
             harness.assertLife(player2, 19);
@@ -133,6 +133,7 @@ class HostileHostelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the exile does not drain")
     void decliningExileDoesNotDrain() {
         Permanent inn = addTransformedInn(player1);
         Card creature = new UnrulyMob();
@@ -153,6 +154,7 @@ class HostileHostelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No question is asked and nothing drains without a creature card in the graveyard")
     void noCreatureInGraveyardDoesNotDrain() {
         Permanent inn = addTransformedInn(player1);
         Card land = new Island();
@@ -162,9 +164,7 @@ class HostileHostelTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             attack(inn);
-            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-                harness.handleMayAbilityChosen(player1, true);
-            }
+            assertThat(gd.interaction.activeInteraction()).isNull();
             resolveAllTriggers();
         });
 
@@ -175,6 +175,7 @@ class HostileHostelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Phasing keeps the exiled cards so a later attack drains for two")
     void phasingPreservesExiledCardsAndSubsequentAttackDrainsTwo() {
         Permanent inn = addTransformedInn(player1);
         Card first = new UnrulyMob();
@@ -208,6 +209,7 @@ class HostileHostelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The soul ability cannot be activated without a creature")
     void soulAbilityCannotBeActivatedWithoutACreature() {
         Permanent hostel = addReadyHostel(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -241,7 +243,10 @@ class HostileHostelTest extends BaseCardTest {
     private void exileAndResolveDrain(Card creature) {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             harness.handleMayAbilityChosen(player1, true);
-            harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.GraveyardChoice) {
+                harness.handleGraveyardCardChosen(player1,
+                        gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+            }
             resolveAllTriggers();
         });
     }

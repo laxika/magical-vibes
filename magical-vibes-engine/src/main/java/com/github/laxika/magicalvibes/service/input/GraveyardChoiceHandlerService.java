@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -84,6 +86,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -396,6 +399,13 @@ public class GraveyardChoiceHandlerService {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
 
+            // A later pick of a multi-card exile offers only the cards this one offered (the effect's filter).
+            Set<UUID> exileCandidateIds = destination == GraveyardChoiceDestination.EXILE && cardPool == null
+                    && exileRemainingCount > 1
+                    ? validIndices.stream().map(i -> gameData.playerGraveyards.get(playerId).get(i).getId())
+                            .collect(Collectors.toSet())
+                    : Set.of();
+
             // The cards of one multi-card exile leave the graveyard at the same time, so the batch opens
             // before the first of them is removed.
             if (destination == GraveyardChoiceDestination.EXILE && exileRemainingCount > 1
@@ -660,6 +670,13 @@ public class GraveyardChoiceHandlerService {
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , card, " from their graveyard."));
                     log.info("Game {} - {} exiles {} from graveyard", gameData.id, player.getUsername(), card.getName());
 
+                    // The resolving exile step's result arrives as its cards are chosen.
+                    if (gameData.pendingEffectResolutionEntry != null) {
+                        gameData.pendingEffectResolutionEntry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(
+                                List.of(card.getId()),
+                                List.of(cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId)));
+                    }
+
                     // Conditional life gain (e.g. Graveyard Shovel: "If it's a creature card, you gain 2 life.")
                     if (gainLifeIfCreatureAmount > 0 && gainLifeIfCreaturePlayerId != null
                             && card.hasType(CardType.CREATURE)) {
@@ -678,12 +695,16 @@ public class GraveyardChoiceHandlerService {
                     int remaining = exileRemainingCount - 1;
                     if (remaining > 0) {
                         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                        if (graveyard != null && !graveyard.isEmpty()) {
-                            List<Integer> newValidIndices = IntStream.range(0, graveyard.size()).boxed().toList();
+                        List<Integer> newValidIndices = graveyard == null ? List.of() : IntStream.range(0, graveyard.size())
+                                .filter(i -> exileCandidateIds.contains(graveyard.get(i).getId()))
+                                .boxed().toList();
+                        if (!newValidIndices.isEmpty()) {
                             interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                                     .builder(playerId, newValidIndices, GraveyardChoiceDestination.EXILE,
                                             "Choose a card to exile from your graveyard.")
                                     .exileRemainingCount(remaining)
+                                    .trackWithSourcePermanentId(trackWithSourcePermanentId)
+                                    .mandatory(graveyardChoice.mandatory())
                                     .build());
                             return;
                         }

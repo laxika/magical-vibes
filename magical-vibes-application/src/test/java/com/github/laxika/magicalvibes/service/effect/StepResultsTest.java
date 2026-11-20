@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -378,6 +380,114 @@ class StepResultsTest extends BaseCardTest {
                     new GainLifeEffect(AmountThisWay.exiledPower(), Subjects.playersThisWay(StepKind.EXILE)));
 
             assertThat(gd.getLife(player2.getId())).isEqualTo(23);
+        }
+
+        @Test
+        @DisplayName("A graveyard card chosen at the exile prompt is the step's result, and the rider runs once after it")
+        void ownGraveyardExileChosenAtAPromptIsTheStepResult() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            Card forest = new Forest();
+            harness.setGraveyard(player1, List.of(bears, forest, giant));
+
+            StackEntry entry = resolve(player1, null, null,
+                    ExileGraveyardCardsEffect.fromOwnGraveyard(1, creatureCard),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(1)));
+
+            var choice = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+            assertThat(choice.validIndices()).containsExactlyInAnyOrder(0, 2);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+            harness.handleGraveyardCardChosen(player1, 2);
+
+            StepOutcome exiled = entry.getResolutionResults().outcome(StepKind.EXILE);
+            assertThat(exiled.objectIds()).containsExactly(giant.getId());
+            assertThat(exiled.playerIds()).containsExactly(player1.getId());
+            assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears, forest);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+
+        @Test
+        @DisplayName("A lone matching graveyard card is exiled without a prompt; with none, nothing is exiled this way")
+        void ownGraveyardExileOfALoneMatchOrNone() {
+            Card bears = new GrizzlyBears();
+            Card forest = new Forest();
+            harness.setGraveyard(player1, List.of(forest, bears));
+
+            StackEntry entry = resolve(player1, null, null,
+                    ExileGraveyardCardsEffect.fromOwnGraveyard(1, creatureCard),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(1)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()).containsExactly(bears.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+
+            resolve(player1, null, null,
+                    ExileGraveyardCardsEffect.fromOwnGraveyard(1, creatureCard),
+                    ifDone(StepKind.EXILE, new GainLifeEffect(1)));
+
+            assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        }
+
+        @Test
+        @DisplayName("Each later pick of a multi-card graveyard exile offers only the matching cards still there")
+        void multiCardOwnGraveyardExileKeepsItsFilter() {
+            Card first = new GrizzlyBears();
+            Card second = new HillGiant();
+            Card third = new GrizzlyBears();
+            Card forest = new Forest();
+            harness.setGraveyard(player1, List.of(first, forest, second, third));
+
+            StackEntry entry = resolve(player1, null, null,
+                    ExileGraveyardCardsEffect.fromOwnGraveyard(2, creatureCard),
+                    new GainLifeEffect(new AmountThisWay(StepKind.EXILE), Subjects.you()));
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
+                    .containsExactlyInAnyOrder(0, 2, 3);
+            harness.handleGraveyardCardChosen(player1, 0);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
+                    .containsExactlyInAnyOrder(1, 2);
+            harness.handleGraveyardCardChosen(player1, 1);
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds())
+                    .containsExactly(first.getId(), second.getId());
+            assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest, third);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        }
+
+        @Test
+        @DisplayName("A library exile's permission lasts its duration, face down and paid for with life as it says")
+        void libraryExilePermissionKeepsItsDurationFaceDownAndLifePayment() {
+            Card giant = new HillGiant();
+            harness.setLibrary(player2, List.of(giant));
+
+            StackEntry entry = resolve(player1, player2.getId(), null,
+                    new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer())
+                            .exiledFaceDown().payingLifeEqualToManaValue().until(Duration.PERMANENT));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()).containsExactly(giant.getId());
+            assertThat(gd.findExiledCard(giant.getId()).faceDown()).isTrue();
+            assertThat(gd.exilePlayPermissionHolder(giant.getId())).isEqualTo(player1.getId());
+            assertThat(gd.exilePlayPermissionDuration(giant.getId())).isEqualTo(Duration.PERMANENT);
+            assertThat(gd.exilePlayForLifeCardIds()).contains(giant.getId());
+        }
+
+        @Test
+        @DisplayName("Malboro: each opponent exiles the top three cards of their library, all of them this step's result")
+        void eachOpponentExilesSeveralLibraryCards() {
+            Card first = new GrizzlyBears();
+            Card second = new HillGiant();
+            Card third = new Forest();
+            Card kept = new Forest();
+            harness.setLibrary(player2, List.of(first, second, third, kept));
+
+            StackEntry entry = resolve(player1, null, null,
+                    ExileTopCardOfOwnLibraryEffect.of(Subjects.eachOpponent(), 3));
+
+            StepOutcome exiled = entry.getResolutionResults().outcome(StepKind.EXILE);
+            assertThat(exiled.objectIds()).containsExactly(first.getId(), second.getId(), third.getId());
+            assertThat(gd.playerDecks.get(player2.getId())).containsExactly(kept);
+            assertThat(gd.exilePlayPermission(first.getId())).isEmpty();
         }
     }
 

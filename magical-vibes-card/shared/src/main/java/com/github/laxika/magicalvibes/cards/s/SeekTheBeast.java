@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 
 public class SeekTheBeast extends Card {
 
     public SeekTheBeast() {
-        addSpellEffect(new ExileTopCardsMayPlayUntilNextEndStepEffect(2));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(2, false)
+                .until(Duration.UNTIL_YOUR_NEXT_END_STEP));
     }
 }

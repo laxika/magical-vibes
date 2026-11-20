@@ -28,7 +28,8 @@ import org.springframework.stereotype.Component;
  * Oracle's Vault: exile the top card of the controller's library; until end of turn the controller
  * may play that card (any type). The free variant additionally lets it be cast without paying its
  * mana cost. Another library ("that player exiles the top card of their library", Fallen Shinobi): each player the
- * effect's {@code library} names exiles from their own, in APNAP order, and the controller may play the cards.
+ * effect's {@code library} names exiles from their own, in APNAP order, and the controller may play the cards for the
+ * effect's duration (face down, the controller may look at them).
  * Records the {@link StepKind#EXILE} step: the cards exiled and their owners.
  */
 @Slf4j
@@ -71,6 +72,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                            Permanent source, int count, UUID libraryOwnerId) {
         boolean withoutPaying = exileEffect.withoutPayingManaCost();
         UUID controllerId = entry.getControllerId();
+        Duration duration = exileEffect.duration();
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         String ownerName = gameData.playerIdToName.get(libraryOwnerId);
 
@@ -82,21 +84,29 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
 
         String verb = exileEffect.castOnly() ? "cast" : "play";
         String player = libraryOwnerId.equals(controllerId) ? "" : gameData.playerIdToName.get(controllerId) + " ";
-        String playNote = withoutPaying
-                ? " (" + player + "may " + verb + " it without paying its mana cost this turn)"
-                : " (" + player + "may " + verb + " it this turn)";
+        String playNote = " (" + player + "may " + verb + " it"
+                + (withoutPaying ? " without paying its mana cost" : "")
+                + durationText(gameData, controllerId, duration) + ")";
 
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, libraryOwnerId, topCard);
+            if (exileEffect.faceDown()) {
+                exileService.exileCardFaceDown(gameData, libraryOwnerId, topCard, null, controllerId);
+            } else {
+                exileService.exileCard(gameData, libraryOwnerId, topCard);
+            }
             entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(topCard.getId()), List.of(libraryOwnerId)));
 
             boolean permitted = !exileEffect.castOnly() || !topCard.hasType(CardType.LAND);
             if (permitted) {
-                // Play permission expiring at end of turn ("you may cast": not for a land card).
-                gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+                // Play permission for the effect's duration ("you may cast": not for a land card).
+                gameData.grantExilePlayPermission(topCard.getId(), controllerId, duration);
                 if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
                     gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), controllerId);
+                }
+                if (exileEffect.forLife()) {
+                    gameData.updateExilePlayPermission(topCard.getId(),
+                            granted -> granted.withForLifeEqualToManaValue(true));
                 }
                 boolean freeCast = withoutPaying || exileEffect.freeCastFilter() != null
                         && predicateEvaluationService.matchesCardPredicate(
@@ -104,15 +114,37 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                 if (freeCast) {
                     gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
                 } else if (exileEffect.anyManaType() && !topCard.hasType(CardType.LAND)) {
-                    gameData.grantExileAnyManaType(topCard.getId(), Duration.UNTIL_END_OF_TURN);
+                    gameData.grantExileAnyManaType(topCard.getId(), controllerId, duration);
                 }
             }
 
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(ownerName + " exiles ").card(topCard)
+            GameLog.Builder line = GameLog.builder().text(ownerName + " exiles ");
+            if (exileEffect.faceDown()) {
+                line.text("a card face down");
+            } else {
+                line.card(topCard);
+            }
+            gameLogService.append(gameData, line
                     .text(" from the top of their library" + (permitted ? playNote : "") + ".").build());
-            log.info("Game {} - {} exiles {} from library top (withoutPaying={})",
-                    gameData.id, ownerName, topCard.getName(), withoutPaying);
+            log.info("Game {} - {} exiles {} from library top (withoutPaying={}, duration={})",
+                    gameData.id, ownerName, topCard.getName(), withoutPaying, duration);
         }
+    }
+
+    /** How long the permission lasts, as the log says it; "your" is the controller's. */
+    private static String durationText(GameData gameData, UUID controllerId, Duration duration) {
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
+            return " this turn";
+        } else if (Duration.UNTIL_YOUR_NEXT_END_STEP.equals(duration)) {
+            return " until " + controllerName + "'s next end step";
+        } else if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
+            return " until the end of " + controllerName + "'s next turn";
+        } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)) {
+            return " until " + controllerName + "'s next upkeep";
+        } else if (Duration.PERMANENT.equals(duration)) {
+            return " for as long as it remains exiled";
+        }
+        return "";
     }
 }

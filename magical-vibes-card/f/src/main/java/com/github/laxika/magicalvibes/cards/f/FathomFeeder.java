@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +20,7 @@ public class FathomFeeder extends Card {
                 "{3}{U}{B}",
                 List.of(
                         new DrawCardEffect(1),
-                        new ExileTopCardsOfEachOpponentEffect(1)
+                        ExileTopCardOfOwnLibraryEffect.of(Subjects.eachOpponent())
                 ),
                 "{3}{U}{B}: Draw a card. Each opponent exiles the top card of their library."
         ));

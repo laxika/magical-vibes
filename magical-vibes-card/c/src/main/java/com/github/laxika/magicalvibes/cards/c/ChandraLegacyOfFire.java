@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -42,7 +42,7 @@ public class ChandraLegacyOfFire extends Card {
                 List.of(
                         new RemoveCounterFromChosenPermanentsEffect(
                                 CounterType.LOYALTY, new PermanentTruePredicate()),
-                        new ExileTopCardsMayPlayThisTurnEffect(new EventValue())
+                        new ExileTopCardMayPlayThisTurnEffect(new EventValue(), false)
                 ),
                 "0: Remove a loyalty counter from each of any number of permanents you control. "
                         + "Exile that many cards from the top of your library. You may play them this turn."

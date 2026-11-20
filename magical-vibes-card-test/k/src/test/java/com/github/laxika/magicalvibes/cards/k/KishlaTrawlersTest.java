@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.FrontlineRush;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -34,9 +35,8 @@ class KishlaTrawlersTest extends BaseCardTest {
 
         castKishlaTrawlers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(creature.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
 
         // The reflexive ability's target is chosen as it goes on the stack (CR 603.3d).
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
@@ -59,7 +59,7 @@ class KishlaTrawlersTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creature, instant));
 
         castKishlaTrawlers();
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -94,11 +94,9 @@ class KishlaTrawlersTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(trawlers.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(trawlers.getId()));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 
@@ -113,7 +111,7 @@ class KishlaTrawlersTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creature));
 
         castKishlaTrawlers();
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -128,7 +126,7 @@ class KishlaTrawlersTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creature, spell));
 
         castKishlaTrawlers();
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
 
         harness.assertInGraveyard(player1, "Frontline Rush");
@@ -154,7 +152,13 @@ class KishlaTrawlersTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opposingSpell));
 
         castKishlaTrawlers();
-        harness.handleMultipleCardsChosen(player1, List.of(exiledCreature.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.GraveyardChoice exileChoice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        assertThat(exileChoice.validIndices().stream().map(graveyard::get).toList())
+                .containsExactlyInAnyOrder(exiledCreature, remainingCreature);
+        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(exiledCreature));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
                 .containsExactly(instant);
         harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));

@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
@@ -18,7 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Each player the effect names exiles the top card of their library, in APNAP order. When the effect tracks the card
+ * Each player the effect names exiles the top card (or the effect's count of cards) of their library, in APNAP order;
+ * the count is evaluated once, with the source as it is or last was. When the effect tracks the card
  * with its source, the card is linked to that exile ability, so it is not treated as the source's imprint: a permanent
  * that copies the source (Dermotaxi copying Rona) must not borrow it as the imprinted card. Records the
  * {@link StepKind#EXILE} step (the cards and their owners, or nothing on empty libraries).
@@ -33,6 +38,8 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
     private final ExileService exileService;
     private final GameLogService gameLogService;
     private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,8 +50,24 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTopCardOfOwnLibraryEffect) effect;
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int count = amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
+        if (count <= 0) {
+            return;
+        }
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.player())) {
-            exileTopCard(gameData, entry, e, playerId);
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck == null || deck.isEmpty()) {
+                exileTopCard(gameData, entry, e, playerId);
+                continue;
+            }
+            for (int i = 0; i < count && !deck.isEmpty(); i++) {
+                exileTopCard(gameData, entry, e, playerId);
+            }
         }
     }
 

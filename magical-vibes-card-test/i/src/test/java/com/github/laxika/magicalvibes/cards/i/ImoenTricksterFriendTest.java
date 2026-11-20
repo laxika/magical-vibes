@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ImoenTricksterFriendTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cannot be blocked while attacking alone")
     void cannotBeBlockedWhenAttackingAlone() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent imoen = addCreatureReady(player1, new ImoenTricksterFriend());
@@ -40,6 +42,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reduced specialize exiles an instant and puts counters on creatures")
     void reducedSpecializeExilesAnInstantAndPutsCountersOnCreatures() {
         Permanent imoen = addCreatureReady(player1, new ImoenTricksterFriend());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
@@ -64,7 +67,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        chooseGraveyardExile(shock);
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getId())
                 .contains(shock.getId());
         assertThat(imoen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -72,6 +75,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blue face targets an opponent creature after exiling")
     void blueFaceTargetsAnOpponentsCreatureAfterExiling() {
         Permanent imoen = addCreatureReady(player1, new ImoenTricksterFriend());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -94,7 +98,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        chooseGraveyardExile(shock);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
@@ -107,6 +111,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be blocked when another creature is attacking")
     void canBeBlockedWhenAnotherCreatureIsAttacking() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent imoen = addCreatureReady(player1, new ImoenTricksterFriend());
@@ -121,6 +126,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Black face creates a Zombie during the exile ability resolution")
     void blackFaceCreatesZombieDuringTheExileAbilityResolution() {
         Permanent imoen = specialize(2, new DoomBlade());
         exileAfterCombatDamage(imoen);
@@ -128,6 +134,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Red face deals damage during the exile ability resolution")
     void redFaceDealsDamageDuringTheExileAbilityResolution() {
         Permanent imoen = specialize(3, new Shock());
         harness.setLife(player2, 20);
@@ -136,6 +143,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Green face draws and allows an extra land during the exile ability resolution")
     void greenFaceDrawsAndAllowsAnExtraLandDuringTheExileAbilityResolution() {
         Permanent imoen = specialize(4, new GrizzlyBears());
         Island drawn = new Island();
@@ -151,6 +159,7 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the exile puts no counters on creatures")
     void decliningExileDoesNotPutCountersOnCreatures() {
         Permanent imoen = specialize(0, new Plains());
         imoen.setAttacking(true);
@@ -163,12 +172,14 @@ class ImoenTricksterFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blue face can exile without an opponent creature to target")
     void blueFaceCanExileWithoutAnOpponentCreatureToTarget() {
         Permanent imoen = specialize(1, new Island());
         exileAfterCombatDamage(imoen);
     }
 
     @Test
+    @DisplayName("Specialize requires five mana with only one instant in the graveyard")
     void specializeRequiresFiveManaWithOnlyOneInstantInGraveyard() {
         addCreatureReady(player1, new ImoenTricksterFriend());
         harness.setGraveyard(player1, List.of(new Shock()));
@@ -208,7 +219,19 @@ class ImoenTricksterFriendTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         Card instant = gd.playerGraveyards.get(player1.getId()).getFirst();
-        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
+        chooseGraveyardExile(instant);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(instant);
+    }
+
+    private void chooseGraveyardExile(Card card) {
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        if (!(gd.interaction.activeInteraction() instanceof PendingInteraction.GraveyardChoice)) {
+            // Only one instant or sorcery matched, so it was exiled without a prompt.
+            return;
+        }
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.validIndices().stream().map(graveyard::get).toList()).contains(card);
+        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(card));
     }
 }

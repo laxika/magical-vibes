@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
@@ -127,9 +126,6 @@ public class GraveyardTargetingSupport {
                     ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD : GraveyardSearchScope.ALL_GRAVEYARDS,
                     "to exile", exile.maxTargets(), exile.graveyardChoiceMinTargets(), null,
                     exile.singleGraveyard());
-        }
-        if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
-            return findTarget(List.of(exileThen.thenEffect()));
         }
         if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect exile) {
             return new Target(exile.filter(), exile.graveyardScope(), "to exile", 1, 1);

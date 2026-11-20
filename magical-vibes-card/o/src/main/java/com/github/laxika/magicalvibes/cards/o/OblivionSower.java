@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -20,7 +21,7 @@ public class OblivionSower extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.youCastThisSpell(),
-                new ExileTopCardsOfTargetPlayerLibraryEffect(4),
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer(), 4),
                 new PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect());
     }
 }

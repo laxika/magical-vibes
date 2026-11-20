@@ -49,6 +49,21 @@ class IxhelScionOfAtraxaTest extends BaseCardTest {
         assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
     }
 
+    @Test
+    @DisplayName("The eligible opponent exiles the card face down and Ixhel's controller may look at it")
+    void exilesTheCardFaceDownForItsController() {
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(topCard));
+        gd.playerPoisonCounters.put(player2.getId(), 3);
+        harness.addToBattlefield(player1, new IxhelScionOfAtraxa());
+
+        resolveEndStepTrigger();
+
+        ExiledCardEntry exiled = gd.findExiledCard(topCard.getId());
+        assertThat(exiled.faceDown()).isTrue();
+        assertThat(exiled.exilerId()).isEqualTo(player1.getId());
+    }
+
     private void resolveEndStepTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

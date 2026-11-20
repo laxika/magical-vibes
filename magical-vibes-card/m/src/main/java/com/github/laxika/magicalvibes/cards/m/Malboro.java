@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -24,7 +24,7 @@ public class Malboro extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DiscardEffect(1, Subjects.eachOpponent()),
                 new LoseLifeEffect(2, Subjects.eachOpponent()),
-                new ExileTopCardsOfEachOpponentEffect(3)
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.eachOpponent(), 3)
         ));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",

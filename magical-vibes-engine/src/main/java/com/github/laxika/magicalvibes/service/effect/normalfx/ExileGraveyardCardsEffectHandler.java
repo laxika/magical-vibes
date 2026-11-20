@@ -35,9 +35,9 @@ import org.springframework.stereotype.Component;
  * behaviour (and log strings) of the record it was collapsed from.
  *
  * <p>Records the {@link StepKind#EXILE} step: the cards exiled and their owners (the graveyards they left). A branch
- * whose player chooses the cards at a prompt ({@code OWN} and {@code TRIGGERING_PLAYER} with more cards than the
- * count, {@code EACH_OPPONENT_KEEP}) records nothing for the chosen cards, so it is not an earlier step on that
- * path.</p>
+ * whose player chooses the cards at a prompt ({@code OWN} and {@code TRIGGERING_PLAYER} with more matching cards than
+ * the count, {@code EACH_OPPONENT_KEEP}) pauses at the end of its step: the graveyard choice adds each chosen card to
+ * the step as it is exiled, and the resolution resumes once.</p>
  */
 @Slf4j
 @Component
@@ -62,11 +62,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         var e = (ExileGraveyardCardsEffect) effect;
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         switch (e.scope()) {
-            case OWN -> resolveOwn(gameData, entry,
-                    entry.getControllerId(), e.count());
+            case OWN -> resolveOwn(gameData, entry, e, entry.getControllerId());
             case TRIGGERING_PLAYER -> {
                 if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
-                    resolveOwn(gameData, entry, entry.getTargetId(), e.count());
+                    resolveOwn(gameData, entry, e, entry.getTargetId());
                 }
             }
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
@@ -81,26 +80,46 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    /** {@code affectedPlayerId} exiles {@code count} cards from their graveyard, choosing when they have more. */
-    private void resolveOwn(GameData gameData, StackEntry entry, UUID affectedPlayerId, int count) {
+    /**
+     * {@code affectedPlayerId} exiles {@code count} of the cards in their graveyard that match the effect's filter,
+     * choosing when more match. Tracked with the source permanent when the effect says so and the source is still on
+     * the battlefield. The cards chosen at the prompt are added to the {@link StepKind#EXILE} step as they are chosen,
+     * so the step ends with its result recorded.
+     */
+    private void resolveOwn(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e, UUID affectedPlayerId) {
+        int count = e.count();
         String playerName = gameData.playerIdToName.get(affectedPlayerId);
         List<Card> graveyard = gameData.playerGraveyards.get(affectedPlayerId);
+        UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        List<Card> candidates = graveyard == null ? List.of() : graveyard.stream()
+                .filter(card -> e.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, e.filter(), sourceCardId, gameData, entry.getControllerId()))
+                .toList();
 
-        if (graveyard == null || graveyard.isEmpty()) {
-            String logEntry = playerName + " has no cards in graveyard to exile.";
+        if (candidates.isEmpty()) {
+            String logEntry = playerName + " has no " + (e.filter() == null ? "" : "matching ")
+                    + "cards in graveyard to exile.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no graveyard cards to exile", gameData.id, playerName);
             return;
         }
 
-        if (graveyard.size() <= count) {
+        UUID trackingPermanentId = e.trackWithSource() && entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null
+                ? entry.getSourcePermanentId() : null;
+        if (candidates.size() <= count) {
             // Auto-exile all cards
-            List<Card> toExile = new ArrayList<>(graveyard);
-            graveyard.clear();
+            List<Card> toExile = new ArrayList<>(candidates);
+            graveyard.removeAll(toExile);
             graveyardService.notifyCardsExiledFromGraveyard(gameData, affectedPlayerId, toExile);
             UUID batchPlayerId = affectedPlayerId;
-            gameData.runAsSingleCardExileBatch(() -> toExile.forEach(
-                    card -> exileService.exileCard(gameData, batchPlayerId, card)));
+            gameData.runAsSingleCardExileBatch(() -> toExile.forEach(card -> {
+                if (trackingPermanentId == null) {
+                    exileService.exileCard(gameData, batchPlayerId, card);
+                } else {
+                    exileService.exileCard(gameData, batchPlayerId, card, trackingPermanentId);
+                }
+            }));
             recordExiled(entry, toExile, affectedPlayerId);
             GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
             appendCardList(builder, toExile);
@@ -109,7 +128,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             log.info("Game {} - {} auto-exiles {} cards from graveyard", gameData.id, playerName, toExile.size());
         } else {
             // Player must choose which cards to exile
-            graveyardReturnSupport.beginGraveyardExileChoice(gameData, affectedPlayerId, count);
+            graveyardReturnSupport.beginGraveyardExileChoice(gameData, affectedPlayerId, candidates, count,
+                    trackingPermanentId);
         }
     }
 

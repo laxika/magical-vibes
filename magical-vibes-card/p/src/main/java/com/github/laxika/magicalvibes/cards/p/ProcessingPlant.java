@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -61,7 +61,7 @@ public class ProcessingPlant extends Card {
                 new ConditionalEffect(new EventValueAtLeast(1),
                         new UntapPermanentsEffect(Subjects.source())),
                 new ConditionalEffect(new NotCondition(new EventValueAtLeast(1)),
-                        new ExileTopCardsOfEachOpponentEffect(1))));
+                        ExileTopCardOfOwnLibraryEffect.of(Subjects.eachOpponent()))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

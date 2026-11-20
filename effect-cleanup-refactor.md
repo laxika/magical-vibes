@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 10 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 11 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -529,6 +529,7 @@ cause under Findings.
 | 8 | `--unaudited --family Exile` restricted to `Then` / `And` / `IfYouDo` / `Unless` names: the permanent exiles whose first half is `ExileTargetPermanentEffect` | done (6 split, 2 absorbed, 2 survivors, 10 blocked-other, 2 blocked-step-model, 3 unique; 9 cards rewritten; `ManifestTopCardEffect` and `CloakTopCardOfControllerLibraryEffect` take a `PlayerSubject`) |
 | 9 | run 8's prerequisite: graveyard and library exiles record an EXILE step; the fused Exile records that unblocks (graveyard target, source card, top of library) and the Swords family's one-target cards | done (11 split, 1 amount absorbed, 7 survivors, 2 blocked-other, 4 blocked-step-model, 1 unique; 37 cards rewritten; `HappenedThisWay.toACard` and `AmountThisWay.exiled*`) |
 | 10 | run 9's next prerequisites: a count-honouring controller-graveyard target (Quintorius, Loremaster; Nyla), a `PlayerSubject` for whose library the two library-exile primitives take, and the "that player / target opponent exiles the top card, you may play it" records that unblocks | done (5 split, 5 absorbed, 3 survivors, 1 blocked-other, item 3 not started; 16 cards rewritten; `fromLibraryOf`, `mayOnlyCast`, `withAnyManaType`) |
+| 11 | run 10's leftovers: permission durations on the library-exile primitive and the records they absorb; the recording choose-a-card graveyard exile and the "you may exile a card from your graveyard. If you do" records | done (4 split, 12 absorbed, 1 amount absorbed, 4 survivors; 39 card files rewritten; `until(Duration)`, `exiledFaceDown`, `payingLifeEqualToManaValue`, a count on `ExileTopCardOfOwnLibraryEffect`, `fromOwnGraveyard`) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4116,6 +4117,100 @@ compile.
   `HappenedThisWay.atLeast(EXILE, N)`. Decide first whether the optional "may" is `allowZeroTargets` on the OWN scope or a `MayEffect`
   around it (the record's Javadoc says the 'If you do' riders must not see a declined choice). Luminate Primordial still needs a per-object
   amount.
+
+### Step 8, run 11 (2026-11-20)
+
+Run 10's "For later runs": the library-exile records a permission duration absorbs, then item 3, the recording choose-a-card
+exile. Verdicts (ledger, step `8`): **absorbed 12** (`ExileTopCardsMayPlayThisTurnEffect`, `ExileTopCardsMayPlayUntilNextEndStepEffect`,
+`ExileTopCardMayPlayUntilNextUpkeepEffect`, `ExileTopCardOfEachOpponentAndMayCastThisTurnEffect`,
+`ExileTopCardOfEachPlayersLibraryAndGrantPlayPermissionUntilEndOfTurnEffect`, `ExileTopCardOfEachPlayersLibraryMayPlayUntilNextTurnEffect`,
+`ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect`, `ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect`,
+`ExileTopCardsOfTargetPlayerMayPlayForLifeThisTurnEffect`, `ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffect`,
+`ExileTopCardsOfEachOpponentEffect`, `ExileTopCardsOfTargetPlayerLibraryEffect`), **split 4** (`ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrantPlayPermissionEffect`,
+`ExileOwnGraveyardCardThenEffect`, `ExileCardFromGraveyardThenEffect`, `ExileOwnGraveyardCardThenCreateTokenEffect`), with their handlers;
+**amount absorbed 1** (`ManaValueOfLastCardExiledWithSource` into `AmountThisWay.exiledManaValue()`, `model/amount`); **survivor 4**
+(`ExileTopCardMayPlayThisTurnEffect`, `ExileTopCardOfOwnLibraryEffect`, `ExileGraveyardCardsEffect`, `MayEffect`'s handler). Ratchet 4,791 /
+4,024 → 4,775 / 4,008. 39 card files rewritten (deleted scratch scripts for the 20 mechanical ones, the rest by hand); Oracle text of each
+checked with `get_card`, rulings of Thought-String Analyst (none), Ixhel, Cunning Rhetoric, Xander's Pact, Inside Information and
+Brainstealer Dragon (none) with `get_rulings`. No CR number is cited below.
+
+- **Library primitive.** `ExileTopCardMayPlayThisTurnEffect` gained `Duration duration` (`until(...)`, default `UNTIL_END_OF_TURN`; "your" is the
+  controller's), `faceDown` (`exiledFaceDown()`: the controller is the exiler and may look) and `forLife` (`payingLifeEqualToManaValue()`); the
+  old 7-argument constructor is kept. The any-mana rider now lasts the permission's duration with the controller as its "your" (the
+  end-of-turn rider ignores the controller, so unchanged). Every rewritten duration was a plain `Duration` before (`UNTIL_YOUR_NEXT_END_STEP`,
+  `UNTIL_CONTROLLERS_NEXT_UPKEEP`, `UNTIL_END_OF_YOUR_NEXT_TURN`, `PERMANENT`). The static draw-replacement reader is unaffected (its cards keep the
+  default). Log: one line per card, "(… may play it until <player>'s next end step)" / "for as long as it remains exiled"; face-down lines hide
+  the card. `ExileTopCardOfOwnLibraryEffect` gained `DynamicAmount count` (`of(player, count)`, evaluated once with the source as it is or last
+  was; `trackWithSource` only for one card).
+- **Rewritten library cards.** Plain: Jeska's Will, Memorial Vault, Witch-king, Chandra Legacy of Fire (this turn); Haste Magic, Inti, Opera
+  Love Song, Ob Nixilis Captive Kingpin, Riveteers Charm, Seek the Beast, Shadow Urchin, Wiccan (until your next end step); Elkin Bottle (next
+  upkeep). Other libraries: Nassari (`eachOpponent()`, cast only, any mana), Mezzio Mugger and Lidless Gaze (`eachPlayer()`, any mana; Lidless
+  until the end of your next turn), Brainstealer Dragon (`eachOpponent()`, `PERMANENT`), Ixhel (`matching(eachOpponent(),
+  PlayerHasPoisonCountersAtLeastPredicate(3))`, face down, `PERMANENT`), Cunning Rhetoric (`triggeringPlayer()`, the attacking player the
+  trigger baked), Inside Information (`targetPlayer()`, for life), Xander's Pact (`eachOpponent()`, cast only, for life). Split: Thought-String
+  Analyst (the face-down `PERMANENT` exile of `targetPlayer()`, then `LoseLifeEffect(AmountThisWay.exiledManaValue(), you())`). No play
+  permission: Malboro, Ashiok Nightmare Muse's token, Fathom Feeder, Processing Plant (`of(eachOpponent(), n)`), Ashiok Wicked Manipulator,
+  Oblivion Sower, Raven Guild Master, Sire of Stagnation (`of(targetPlayer(), n)`, the same harmful player target the old record declared).
+- **Recording choose-a-card exile.** `ExileGraveyardCardsEffect`'s `OWN` (and `TRIGGERING_PLAYER`) scope now offers only cards matching `filter`
+  (judged with the source card, so "other than this card" works), exiles a lone match without a prompt, honours `trackWithSource` (source still
+  on the battlefield) and begins its choice through `GraveyardReturnSupport.beginGraveyardExileChoice(gameData, player, candidates, count,
+  trackingPermanentId)` (mandatory, the matching indices). `GraveyardChoiceHandlerService`'s EXILE completion adds each exiled card and its
+  graveyard's owner to the parked entry's EXILE outcome (`addToStep`), keeps the tracking permanent, and a later pick of a multi-card exile
+  offers only the cards the first pick offered (it offered the whole graveyard; the spell-excluding variant now stays excluded). The step pauses
+  at its end and the parked entry resumes once (the existing completion tail). No existing `OWN` user set a filter. Factories
+  `fromOwnGraveyard(count, filter)` / `fromOwnGraveyardWithSource(count, filter)`.
+- **The "may" decision.** "You may exile a … card from your graveyard. If you do, X" is
+  `MayEffect(SequenceEffect.of(fromOwnGraveyard(1, filter), ConditionalEffect(HappenedThisWay.exiled(), X)))` ("When you do": X in a
+  `QueueReflexiveAbilityEffect`); the existing `MayEffect` path wraps the pausing step: an accepted may splices the sequence, the exile parks at
+  index + 1 and the conditional runs after the choice. `MayEffectHandler` offers no choice when the controller's graveyard has no matching card
+  (as the old records skipped the prompt). Split cards: Ichorid, Kishla Trawlers (reflexive), Creeping Inn (`WithSource`), Imoen's five faces
+  (the specialized trigger is already a `MayEffect` in `SpecializeImoenEffectHandler`, so the helper returns the sequence), Master Skald and
+  Masked Vandal (the rider's target is still chosen as the trigger goes on the stack: `GraveyardTargetingSupport` and the AI's
+  `TargetPolarityClassifier` unwrap may / sequence / conditional, their `ExileCardFromGraveyardThenEffect` branches are deleted), Aphemia and
+  Tymaret Calls the Dead (the Zombie now goes through `CreateTokenEffectHandler`, so token replacements apply; the old handler called
+  `applyCreateToken` directly), The Aesir Escape Valhalla chapter I (mandatory, no `MayEffect`: `fromOwnGraveyardWithSource(1, permanent card)`
+  then `GainLifeEffect(AmountThisWay.exiledManaValue())`).
+- **Behaviour changes.** Ixhel (ONC 1, "exiles the top card of their library face down. You may look at and play those cards"; its ruling "the
+  cards remain exiled face down"): the old record exiled face up; now face down with Ixhel's controller as exiler
+  (`IxhelScionOfAtraxaTest.exilesTheCardFaceDownForItsController`, fails on the old card). Thought-String Analyst's Lich's-Duel-Mastery-style
+  question is now asked by the life-loss step after the exile (as Hotel of Fears in run 10; `LichsDuelMasteryTest` updated). Prompt shapes of the
+  nine graveyard cards: a yes/no may, then a forced `GraveyardChoice` of the matching cards only when several match (the old records asked one
+  optional multi-graveyard choice even for a lone card; Creeping Inn and Imoen asked a may and then an optional choice); Masked Vandal and Master
+  Skald are no longer asked with no creature card in the graveyard; a Creeping Inn / Aesir source that left before resolution no longer tracks
+  the card (nothing reads it then). The survivors' log lines win (no test asserted the old ones).
+- **AI.** No AI class named a deleted record but `TargetPolarityClassifier`'s `ExileCardFromGraveyardThenEffect` branch (its may / sequence /
+  conditional unwrapping gives Masked Vandal's target the same HARMFUL_REMOVAL); `TargetPolarityGuardTest` passes.
+- **Tests.** The nine graveyard cards' tests were updated for the prompt shapes by a delegated run (no test deleted; missing `@DisplayName`s added;
+  Tymaret gained "only offers own creature or enchantment cards"); it found the doubled Imoen may, fixed in the card. `StepResultsTest` +5: a
+  graveyard card chosen at the prompt is the step's result and the rider runs once, a lone match / no match, a two-card exile keeps its filter on
+  the second pick, a face-down `PERMANENT` for-life library exile, Malboro's three-card each-opponent exile. `ReflexiveRouteRecordTest`'s
+  `EXILE_OWN_GRAVEYARD_CARD` route is rebuilt from the steps. One Gradle run (one `--tests` list per task): the tests of every rewritten card and
+  of the cards that use one as a helper, `--tests-for ExileTopCardMayPlayThisTurnEffect ExileTopCardOfOwnLibraryEffect ExileGraveyardCardsEffect
+  --max-per-class 12`, `--tests-for MayEffect --max-per-class 15`, application (`StepResultsTest`, `ExileGraveyardCardsEffectHandlerTest`,
+  `ReflexiveRouteRecordTest`, `GraveyardTargetingServiceTest`, `MayEffectHandlerTest`, `MayAbilityHandlerServiceTest`,
+  `GraveyardChoiceInteractionHandlersTest`, `ResolutionScratchpadAmountTest`, `EffectResolutionServiceTest`, `SubjectResolutionServiceTest`, both
+  ratchets, `InputHandlerEpilogueRatchetTest`, `CardImmutabilityArchTest`), AI `TargetPolarityGuardTest`: 120 top-level classes, 1,327 test
+  cases (174 result files with the `@Nested` suites), all pass. Application, AI, engine testFixtures and card-test modules `a`–`z` that ran
+  compile.
+
+**For later runs.**
+
+- Library exiles still unaudited, with what each needs (read the handler first): `ExileTopCardsMayPlayUntilNextTurnEffect` (53 cards) is now
+  `ExileTopCardMayPlayThisTurnEffect(count, false).until(UNTIL_END_OF_YOUR_NEXT_TURN | DURING_YOUR_NEXT_TURN)` for 51 of them; its
+  `forTriggeringPermanentController` card needs the permission holder to be another player (with Curse of Hospitality, a who-may-play subject
+  now used by two records) and its `freeCastIfCastFromGraveyard` card a free-if-cast-from-graveyard flag; the log changes from one aggregate line
+  to one per card. `ExileTopCardsOfDefendingPlayerLibraryEffect` (10 cards) is `ExileTopCardOfOwnLibraryEffect.of(defendingPlayer(), n)` if
+  `defendingPlayer()` resolves the same player (its handler also falls back to the attacked permanent's controller). `ExileTopCardMayPlayWhileExiledEffect`
+  (4) needs a permission condition and a spell filter on the primitive. Then the choose-one / matching / random-opponent / token records
+  (`ExileTopCardsChooseOne*`, `ExileTopCardsMayCastMatching*`, `ExileTopCardOfRandomOpponent…`, `ExileTopCardsMayPlayThisTurnAndCreateTokens*`,
+  Hidetsugu and Kairi).
+- Raven Guild Master and Sire of Stagnation say "that player" but still declare a (harmful) player target, as their old record did; a rules
+  fix would be `triggeringPlayer()` after checking what the two triggers bake.
+- Choose-a-card graveyard exiles left: `ExileNCardsFromGraveyardThenEffect` (4 cards and `CreateTokenThenMayExileCardsAndRepeatEffectHandler`'s
+  builder): `fromOwnGraveyard(N, filter)` + `HappenedThisWay.atLeast(EXILE, N)`, but with fewer than N matching cards the old record exiled nothing
+  and the new step would exile them all, so add an "exactly N or none" guard (a `MayEffectHandler` check like the one for no matching card)
+  first; `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect` (the `afterExileEffects` continuation of `beginGraveyardExileChoice`).
+  Hand exiles still record nothing (every hand-exile primitive chooses at a prompt). Luminate Primordial still needs a per-object amount.
 
 ## Prompt
 

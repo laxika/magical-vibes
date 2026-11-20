@@ -597,8 +597,8 @@ class LichsDuelMasteryTest extends BaseCardTest {
     @Test
     @CardUsed({ThoughtStringAnalyst.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
     @FailOnLegacyDepartureFallback
-    @DisplayName("Thought-String Analyst asks library-or-Kalitas before the exile, then exiles once and loses no life")
-    void exileFromLibraryThenLifeLossAsksTheMasteryBeforeTheExile() {
+    @DisplayName("Thought-String Analyst's life loss asks library-or-Kalitas after the exile and loses no life")
+    void exileFromLibraryThenLifeLossAsksTheMasteryAfterTheExile() {
         Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
         harness.addToBattlefield(player2, new ThoughtStringAnalyst());
         Card topCard = new GrizzlyBears();
@@ -612,7 +612,8 @@ class LichsDuelMasteryTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(topCard.getId());
 
         harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
 

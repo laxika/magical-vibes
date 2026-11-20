@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,6 +16,7 @@ public class WiccanYoungAvenger extends Card {
         // Whenever you cast a noncreature spell, exile the top card of your library. Until your
         // next end step, you may play that card.
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
+                new ExileTopCardMayPlayThisTurnEffect(1, false)
+                        .until(Duration.UNTIL_YOUR_NEXT_END_STEP));
     }
 }

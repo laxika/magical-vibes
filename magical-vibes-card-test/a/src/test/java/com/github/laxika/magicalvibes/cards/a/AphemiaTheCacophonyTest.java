@@ -26,10 +26,9 @@ class AphemiaTheCacophonyTest extends BaseCardTest {
 
         triggerAphemia();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(enchantment.getId());
-        harness.withAutoStop(TurnStep.END_STEP, () ->
-                harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId())));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(enchantment);
@@ -47,7 +46,7 @@ class AphemiaTheCacophonyTest extends BaseCardTest {
 
         triggerAphemia();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment);
@@ -84,11 +83,8 @@ class AphemiaTheCacophonyTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(aphemia);
         harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(aphemia.getId());
-        harness.withAutoStop(TurnStep.END_STEP, () ->
-                harness.handleMultipleCardsChosen(player1, List.of(aphemia.getId())));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(aphemia);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Zombie"))
@@ -102,10 +98,14 @@ class AphemiaTheCacophonyTest extends BaseCardTest {
         Card second = new OmenOfTheSea();
         harness.setGraveyard(player1, List.of(first, second));
         triggerAphemia();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.validIndices().stream().map(graveyard::get).toList())
+                .containsExactlyInAnyOrder(first, second);
         harness.withAutoStop(TurnStep.END_STEP, () ->
-                harness.handleMultipleCardsChosen(player1, List.of(second.getId())));
+                harness.handleGraveyardCardChosen(player1, graveyard.indexOf(second)));
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerBattlefields.get(player1.getId()))

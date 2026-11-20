@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibraryAndGrantPlayPermissionUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "49")
@@ -14,6 +15,6 @@ public class MezzioMugger extends Card {
         addCastingOption(AlternateHandCast.blitz("{2}{R}"));
 
         addTrigger(Triggers.attacks(),
-                new ExileTopCardOfEachPlayersLibraryAndGrantPlayPermissionUntilEndOfTurnEffect());
+                new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.eachPlayer()).withAnyManaType());
     }
 }

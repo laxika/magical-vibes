@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfTargetPlayerMayPlayForLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -14,6 +15,7 @@ public class InsideInformation extends Card {
     public InsideInformation() {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));
-        addSpellEffect(new ExileTopCardsOfTargetPlayerMayPlayForLifeThisTurnEffect(new XValue()));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(new XValue(), false)
+                .fromLibraryOf(Subjects.targetPlayer()).payingLifeEqualToManaValue());
     }
 }

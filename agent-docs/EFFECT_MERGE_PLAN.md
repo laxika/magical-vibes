@@ -1429,6 +1429,9 @@ discard first.
 
 **Outcome.** 17b was merged as specified. **17a's central premise is false and the full merge was
 rejected**; only its "free sub-merge" was taken. Details in *What actually happened* below.
+Later (`effect-cleanup-refactor.md` step 8, run 11) the `ExilePlayWindow` axis was taken as a `Duration`
+component of `ExileTopCardMayPlayThisTurnEffect` (`until(...)`), which absorbed `ExileTopCardMayPlayUntilNextUpkeepEffect`
+and the until-next-end-step / for-as-long-as-exiled records; the survivor's per-card log won.
 
 **17a Target**
 ```java

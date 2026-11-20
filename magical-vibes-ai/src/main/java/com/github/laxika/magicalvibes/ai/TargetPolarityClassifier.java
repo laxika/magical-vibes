@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -220,9 +219,6 @@ public class TargetPolarityClassifier {
             return counters.type() == CounterType.PLUS_ONE_PLUS_ONE || counters.type() == CounterType.SHIELD
                     ? TargetPolarity.BENEFICIAL
                     : TargetPolarity.NEUTRAL;
-        }
-        if (effect instanceof ExileCardFromGraveyardThenEffect exileThen) {
-            return classify(gameData, exileThen.thenEffect(), aiPlayerId);
         }
         if (effect instanceof TributeNotPaidEffect tributeNotPaid) {
             return classify(gameData, tributeNotPaid.wrapped(), aiPlayerId);

@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Exile the top {@code count} cards of a library ({@code library}, the controller's by default: "that player
- * exiles the top two cards of their library", "exile the top card of target opponent's library"). Until end of turn,
- * the controller may play those cards (any type, lands included). When {@code withoutPayingManaCost} is
+ * exiles the top two cards of their library", "exile the top card of target opponent's library"). For
+ * {@code duration} (until end of turn by default) the controller may play those cards (any type, lands included). When {@code withoutPayingManaCost} is
  * {@code true} the play is free; otherwise it is played at its normal costs and timing. When
  * {@code freeCastFilter} is non-null, only matching cards are free; all other exiled cards retain
  * normal play permission (Nahiri, Forged in Fury). The count is evaluated when the effect resolves.
  * <p>
- * Grants an {@link com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect} until end of turn (and, for the
+ * Grants an {@link com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect} for {@code duration} (and, for the
  * free variant, {@code exilePlayWithoutPayingManaCost}). The filter is used for mixed normal/free
  * permission effects; use {@link ExileTopCardsMayCastMatchingThisTurnEffect} when non-matching
  * cards should not receive play permission at all.
@@ -21,7 +21,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                    declares the (harmful) player target
  * @param castOnly    "you may cast that card": a land card gets no permission (Ragavan, Daxos)
  * @param anyManaType "and you may spend mana as though it were mana of any color to cast that spell": for each
- *                    nonland card exiled this way
+ *                    nonland card exiled this way, for as long as the permission lasts
+ * @param duration    how long the permission lasts: {@link Duration#UNTIL_END_OF_TURN} ("this turn"),
+ *                    {@link Duration#UNTIL_YOUR_NEXT_END_STEP}, {@link Duration#UNTIL_END_OF_YOUR_NEXT_TURN},
+ *                    {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP}, {@link Duration#PERMANENT} ("for as long as it
+ *                    remains exiled"); "your" is the controller's
+ * @param faceDown    "exile ... face down. You may look at and play that card": the controller may look at it
+ * @param forLife     "if you cast a spell this way, pay life equal to its mana value rather than pay its mana cost"
  */
 public record ExileTopCardMayPlayThisTurnEffect(
         DynamicAmount count,
@@ -30,13 +36,32 @@ public record ExileTopCardMayPlayThisTurnEffect(
         boolean duringTurnsLoreCounterPutOnSource,
         PlayerSubject library,
         boolean castOnly,
-        boolean anyManaType
+        boolean anyManaType,
+        Duration duration,
+        boolean faceDown,
+        boolean forLife
 ) implements ExileTopCardsMayPlayThisTurnDrawReplacementEffect {
 
     public ExileTopCardMayPlayThisTurnEffect {
         if (library == null) {
             throw new IllegalArgumentException("ExileTopCardMayPlayThisTurnEffect requires a library subject");
         }
+        if (duration == null) {
+            throw new IllegalArgumentException("ExileTopCardMayPlayThisTurnEffect requires a permission duration");
+        }
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(
+            DynamicAmount count,
+            boolean withoutPayingManaCost,
+            CardPredicate freeCastFilter,
+            boolean duringTurnsLoreCounterPutOnSource,
+            PlayerSubject library,
+            boolean castOnly,
+            boolean anyManaType
+    ) {
+        this(count, withoutPayingManaCost, freeCastFilter, duringTurnsLoreCounterPutOnSource, library, castOnly,
+                anyManaType, Duration.UNTIL_END_OF_TURN, false, false);
     }
 
     public ExileTopCardMayPlayThisTurnEffect(
@@ -92,19 +117,37 @@ public record ExileTopCardMayPlayThisTurnEffect(
     /** The same effect on {@code library}'s library ("that player exiles the top card of their library"). */
     public ExileTopCardMayPlayThisTurnEffect fromLibraryOf(PlayerSubject library) {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
-                duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType);
+                duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife);
     }
 
     /** "You may cast that card": no permission for a land card. */
     public ExileTopCardMayPlayThisTurnEffect mayOnlyCast() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
-                duringTurnsLoreCounterPutOnSource, library, true, anyManaType);
+                duringTurnsLoreCounterPutOnSource, library, true, anyManaType, duration, faceDown, forLife);
     }
 
     /** "And you may spend mana as though it were mana of any color to cast that spell." */
     public ExileTopCardMayPlayThisTurnEffect withAnyManaType() {
         return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
-                duringTurnsLoreCounterPutOnSource, library, castOnly, true);
+                duringTurnsLoreCounterPutOnSource, library, castOnly, true, duration, faceDown, forLife);
+    }
+
+    /** The permission lasts for {@code duration} instead of until end of turn ("until your next end step"). */
+    public ExileTopCardMayPlayThisTurnEffect until(Duration duration) {
+        return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
+                duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, forLife);
+    }
+
+    /** "Exile ... face down. You may look at and play that card." */
+    public ExileTopCardMayPlayThisTurnEffect exiledFaceDown() {
+        return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
+                duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, true, forLife);
+    }
+
+    /** "If you cast a spell this way, pay life equal to its mana value rather than pay its mana cost." */
+    public ExileTopCardMayPlayThisTurnEffect payingLifeEqualToManaValue() {
+        return new ExileTopCardMayPlayThisTurnEffect(count, withoutPayingManaCost, freeCastFilter,
+                duringTurnsLoreCounterPutOnSource, library, castOnly, anyManaType, duration, faceDown, true);
     }
 
     @Override

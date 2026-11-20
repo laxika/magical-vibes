@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DiscordantPiper;
 import com.github.laxika.magicalvibes.cards.o.OmenOfTheSea;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,15 +32,17 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
 
         advanceToNextChapter();
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
-                milledCreature.getId(), milledEnchantment.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .containsExactly(milledCreature, milledEnchantment, milledLand);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.mandatory()).isTrue();
+        assertThat(choice.validIndices().stream().map(graveyard::get).toList())
+                .containsExactlyInAnyOrder(milledCreature, milledEnchantment);
+        assertThat(graveyard).containsExactly(milledCreature, milledEnchantment, milledLand);
 
-        harness.handleMultipleCardsChosen(player1, List.of(milledCreature.getId()));
-        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(milledCreature));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(milledCreature);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -51,7 +54,7 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter I only offers own creature or enchantment cards and may be declined")
+    @DisplayName("Chapter I exile may be declined")
     void chapterIExileMayBeDeclined() {
         DiscordantPiper ownCreature = new DiscordantPiper();
         DiscordantPiper opponentCreature = new DiscordantPiper();
@@ -63,10 +66,8 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
 
         advanceToNextChapter();
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
-        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -76,6 +77,31 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .filter(permanent -> permanent.getCard().getName().equals("Zombie")))
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter I only offers own creature or enchantment cards")
+    void chapterIOffersOnlyOwnMatchingCards() {
+        DiscordantPiper firstCreature = new DiscordantPiper();
+        DiscordantPiper secondCreature = new DiscordantPiper();
+        DiscordantPiper opponentCreature = new DiscordantPiper();
+        Forest ownLand = new Forest();
+        harness.setLibrary(player1, List.of(firstCreature, secondCreature, ownLand));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player1, true);
+
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.validIndices().stream().map(graveyard::get).toList())
+                .containsExactlyInAnyOrder(firstCreature, secondCreature);
+        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(secondCreature));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(secondCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
     }
 
     @Test
@@ -101,6 +127,7 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entering triggers chapter I and can exile an older enchantment")
     void enteringTriggersChapterIAndCanExileAnOlderEnchantment() {
         OmenOfTheSea enchantment = new OmenOfTheSea();
         harness.setGraveyard(player1, List.of(enchantment));
@@ -110,9 +137,8 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(enchantment.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -121,6 +147,7 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II can exile an enchantment milled from a short library")
     void chapterIICanExileAnEnchantmentFromAShortLibrary() {
         OmenOfTheSea enchantment = new OmenOfTheSea();
         Forest land = new Forest();
@@ -131,9 +158,8 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
 
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(enchantment.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
@@ -142,6 +168,7 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II without eligible cards only mills and asks nothing")
     void chapterIIWithoutEligibleCardsOnlyMills() {
         Forest land = new Forest();
         harness.setLibrary(player1, List.of(land));
@@ -157,6 +184,7 @@ class TymaretCallsTheDeadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III with only opposing Zombies gains nothing and does not scry")
     void chapterIIIWithOnlyOpposingZombiesGainsNothingAndDoesNotScry() {
         Permanent saga = addSagaWithLore(2);
         harness.addToBattlefield(player2, new DiscordantPiper());

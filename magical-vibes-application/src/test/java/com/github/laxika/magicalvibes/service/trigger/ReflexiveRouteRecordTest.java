@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -127,8 +127,10 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         CREATE_TOKEN_THEN(effect -> new CreateTokenThenEffect(CreateTokenEffect.ofTreasureToken(1), effect)),
         CREATE_TOKEN_ABOUT_THAT_TOKEN(effect -> CreateTokenThenEffect.aboutThatToken(
                 CreateTokenEffect.ofTreasureToken(1), effect)),
-        EXILE_OWN_GRAVEYARD_CARD(effect -> new ExileOwnGraveyardCardThenEffect(
-                new CardTypePredicate(CardType.CREATURE), effect)),
+        EXILE_OWN_GRAVEYARD_CARD(effect -> new MayEffect(SequenceEffect.of(
+                ExileGraveyardCardsEffect.fromOwnGraveyard(1, new CardTypePredicate(CardType.CREATURE)),
+                new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(effect))),
+                "Exile a creature card?")),
         MAY_THEN(effect -> new MayEffect(new QueueReflexiveAbilityEffect(effect), "Do it?")),
         PAID_COST_THEN(effect -> new ForcedCostOrElseEffect(new PayLifeCost(1), List.of(), true,
                 List.of(new QueueReflexiveAbilityEffect(effect)))),

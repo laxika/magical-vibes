@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -32,11 +33,7 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
 
         advanceToNextChapter();
 
-        PendingInteraction.MultiGraveyardChoice graveyardChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(graveyardChoice.validCardIds()).containsExactly(exiledPermanent.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(exiledPermanent.getId()));
-        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiledPermanent);
@@ -61,8 +58,7 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(exiledPermanent.getId()));
-        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, target.getId());
@@ -86,9 +82,7 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
 
         harness.castFromHand(player1, new TheAesirEscapeValhalla(), "{2}{G}");
         resolveAllTriggers();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
-                .isNotNull();
-        harness.handleMultipleCardsChosen(player1, List.of(exiledPermanent.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertLife(player1, 22);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiledPermanent);
@@ -105,13 +99,12 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
         Permanent saga = addSagaWithLore(0);
 
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        chooseExile(first, second);
         resolveAllTriggers();
         harness.assertLife(player1, 22);
 
         saga.setCounterCount(CounterType.LORE, 0);
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
         resolveAllTriggers();
 
         harness.assertLife(player1, 24);
@@ -129,11 +122,10 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        chooseExile(first, second);
         resolveAllTriggers();
         saga.setCounterCount(CounterType.LORE, 0);
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
         resolveAllTriggers();
 
         advanceToNextChapter();
@@ -168,11 +160,7 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "The Aesir Escape Valhalla");
         resolveAllTriggers();
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(saga.getCard().getId());
-        harness.handleMultipleCardsChosen(player1, List.of(saga.getCard().getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(saga.getCard());
@@ -210,7 +198,6 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(exiledPermanent.getId()));
         resolveAllTriggers();
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, target.getId());
@@ -229,6 +216,16 @@ class TheAesirEscapeValhallaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(exiledPermanent).doesNotContain(saga.getCard());
         harness.assertInGraveyard(player1, "The Aesir Escape Valhalla");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    private void chooseExile(GrizzlyBears chosen, GrizzlyBears other) {
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.mandatory()).isTrue();
+        assertThat(choice.validIndices().stream().map(graveyard::get).toList())
+                .containsExactlyInAnyOrder(chosen, other);
+        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(chosen));
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

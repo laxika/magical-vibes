@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCommanderAsCa
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -34,7 +33,7 @@ public class JeskasWill extends Card {
                                 new CardsInHand(CountScope.TARGET_PLAYER)), targetOpponent),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile the top three cards of your library. You may play them this turn",
-                        new ExileTopCardsMayPlayThisTurnEffect(3))
+                        new ExileTopCardMayPlayThisTurnEffect(3, false))
         ), new ControlledCommanderAsCast()));
     }
 }

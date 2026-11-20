@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +16,7 @@ public class CunningRhetoric extends Card {
     public CunningRhetoric() {
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(1)),
-                new ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect());
+                new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.triggeringPlayer())
+                        .withAnyManaType().until(Duration.PERMANENT));
     }
 }

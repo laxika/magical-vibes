@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +22,8 @@ public class BrainstealerDragon extends Card {
 
     public BrainstealerDragon() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect());
+                new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.eachOpponent())
+                        .withAnyManaType().until(Duration.PERMANENT));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),

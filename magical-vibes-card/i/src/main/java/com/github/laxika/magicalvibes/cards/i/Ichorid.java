@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -19,7 +23,6 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "65")
@@ -32,18 +35,16 @@ public class Ichorid extends Card {
 
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
-                ExileOwnGraveyardCardThenEffect.ifYouDo(
-                                new CardAllOfPredicate(List.of(
-                                        new CardColorPredicate(CardColor.BLACK),
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardNotPredicate(new CardIsSelfPredicate())
-                                )),
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build(),
-                                false
-                        ));
+                new MayEffect(SequenceEffect.of(
+                        ExileGraveyardCardsEffect.fromOwnGraveyard(1, new CardAllOfPredicate(List.of(
+                                new CardColorPredicate(CardColor.BLACK),
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardNotPredicate(new CardIsSelfPredicate())))),
+                        new ConditionalEffect(HappenedThisWay.exiled(), ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .build())),
+                        "Exile a black creature card other than Ichorid from your graveyard?"));
     }
 }

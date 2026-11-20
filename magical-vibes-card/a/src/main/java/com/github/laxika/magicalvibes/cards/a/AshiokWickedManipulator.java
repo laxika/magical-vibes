@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromLibraryInsteadOfLifePaymentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -74,7 +75,7 @@ public class AshiokWickedManipulator extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new ExileTopCardsOfTargetPlayerLibraryEffect(
+                List.of(ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer(),
                         new TotalManaValueOfCardsOwnedInExile())),
                 "\u22127: Target player exiles the top X cards of their library, where X is the total mana value of cards you own in exile.",
                 new PlayerPredicateTargetFilter(

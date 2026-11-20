@@ -262,7 +262,6 @@ import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
-import com.github.laxika.magicalvibes.model.amount.ManaValueOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -983,8 +982,6 @@ public class AmountEvaluationService {
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
                     totalManaValueOfCardsExiledWithSource(gameData, ctx);
-            case ManaValueOfLastCardExiledWithSource ignored ->
-                    manaValueOfLastCardExiledWithSource(gameData, ctx);
             case TotalManaValueOfCardsInGraveyard a ->
                     totalManaValueOfCardsInGraveyard(gameData, a, ctx);
             case TotalManaValueOfCardsOwnedInExile ignored ->
@@ -4359,12 +4356,6 @@ public class AmountEvaluationService {
         return gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
                 .mapToInt(Card::getManaValue)
                 .sum();
-    }
-
-    private int manaValueOfLastCardExiledWithSource(GameData gameData, AmountContext ctx) {
-        if (ctx.sourcePermanent() == null) return 0;
-        List<Card> exiled = gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId());
-        return exiled.isEmpty() ? 0 : exiled.getLast().getManaValue();
     }
 
     private int totalManaValueOfCardsOwnedInExile(GameData gameData, AmountContext ctx) {

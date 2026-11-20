@@ -255,7 +255,6 @@ public sealed interface DynamicAmount permits
         TotalPowerOfTargetGroup,
         TopCardOfLibraryManaValue,
         TotalManaValueOfCardsExiledWithSource,
-        ManaValueOfLastCardExiledWithSource,
         TotalManaValueOfCardsInGraveyard,
         TotalManaValueOfCardsOwnedInExile,
         TotalManaValueOfDestroyedPermanents,

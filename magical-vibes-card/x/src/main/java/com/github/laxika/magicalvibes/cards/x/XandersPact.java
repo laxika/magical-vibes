@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +18,7 @@ public class XandersPact extends Card {
         addTrigger(Triggers.youCastThisSpell(), TriggerOptions.DEFAULT.withInterveningIf(new CasualtyCostPaid()),
                 new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(2));
-        addSpellEffect(new ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffect());
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(false).fromLibraryOf(Subjects.eachOpponent())
+                .mayOnlyCast().payingLifeEqualToManaValue());
     }
 }

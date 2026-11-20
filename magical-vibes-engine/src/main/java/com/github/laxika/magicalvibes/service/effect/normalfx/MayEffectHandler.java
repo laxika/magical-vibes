@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -130,6 +132,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 insertElseEffect(entry, e);
                 return;
             }
+        }
+        if (leadingEffect instanceof ExileGraveyardCardsEffect ownExile
+                && ownExile.scope() == GraveyardExileScope.OWN
+                && !hasOwnGraveyardCardToExile(gameData, entry, ownExile)) {
+            // "You may exile a [card] from your graveyard": with no such card there is no choice to offer.
+            insertElseEffect(entry, e);
+            return;
         }
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.BlightEffect
                 && !controlsBlightableCreature(gameData, entry.getControllerId())) {
@@ -344,6 +353,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         ).withGrantingPermanentId(entry.getGrantingPermanentId())
                 .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                 .withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
+    }
+
+    private boolean hasOwnGraveyardCardToExile(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect exile) {
+        UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .anyMatch(card -> exile.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, exile.filter(), sourceCardId, gameData, entry.getControllerId()));
     }
 
     /**

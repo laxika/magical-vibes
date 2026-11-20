@@ -9,7 +9,7 @@
 > zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
 > copy's ability list it is `StaticAbility.of(e)`, next to `new TriggeredAbility(trigger, e)` for
 > a trigger. Readers use `getStaticEffects()`.
-- 3-chapter Saga with mill, own-graveyard exile/token, and Zombie count: `t/TymaretCallsTheDead.java` uses `SequenceEffect.of(MillEffect(3, CONTROLLER), ExileOwnGraveyardCardThenCreateTokenEffect(CREATURE or ENCHANTMENT, CreateTokenEffect.blackZombie(1)))` for chapters I/II and the same `PermanentCount(HasSubtype(ZOMBIE), CONTROLLER)` for chapter III life gain and scry.
+- 3-chapter Saga with mill, own-graveyard exile/token, and Zombie count: `t/TymaretCallsTheDead.java` uses `SequenceEffect.of(MillEffect(3, CONTROLLER), MayEffect(SequenceEffect.of(ExileGraveyardCardsEffect.fromOwnGraveyard(1, CREATURE or ENCHANTMENT), ConditionalEffect(HappenedThisWay.exiled(), CreateTokenEffect.blackZombie(1))))` for chapters I/II and the same `PermanentCount(HasSubtype(ZOMBIE), CONTROLLER)` for chapter III life gain and scry.
 - 3-chapter Saga with tap-count reflexive damage and optional controlled-artifact animation: `y/YotiaDeclaresWar.java` uses `TapAnyNumberOfPermanentsThenReflexiveAbilityEffect` for chapter II and an optional controlled-artifact Saga target group with `AnimatePermanentsEffect(4/4, Subjects.target(), UNTIL_END_OF_TURN)` for chapter III.
 
 All paths relative to `cards/`.

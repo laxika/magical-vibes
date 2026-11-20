@@ -23,7 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                         unused for the whole-graveyard scopes).
  *                         Kept as an int — no live card uses a dynamic count here.
  * @param scope            which graveyard(s) are affected and how targets are chosen
- * @param filter           optional type restriction on the cards to exile (null = any card)
+ * @param filter           optional type restriction on the cards to exile (null = any card); the OWN scope offers
+ *                         only matching cards, judged with the source card ("other than this card")
  * @param fromBattlefieldThisTurn whether matching cards must have been put into their graveyard
  *                                from the battlefield this turn
  * @param eventValueFilter       optional filter whose matching exiled targets are recorded on the
@@ -114,6 +115,20 @@ public record ExileGraveyardCardsEffect(
 
     public ExileGraveyardCardsEffect(GraveyardExileScope scope) {
         this(0, scope, null, false, false, false, null, false);
+    }
+
+    /**
+     * "Exile {@code count} [filter] cards from your graveyard", chosen as it resolves: the controller picks when more
+     * match, and the chosen cards are this step's EXILE result. "You may exile …" is a {@link MayEffect} around it, its
+     * "if you do" a {@code ConditionalEffect(HappenedThisWay.exiled(), …)} after it.
+     */
+    public static ExileGraveyardCardsEffect fromOwnGraveyard(int count, CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(count, GraveyardExileScope.OWN, filter);
+    }
+
+    /** {@link #fromOwnGraveyard} tracked with the source permanent ("exiled with this creature"). */
+    public static ExileGraveyardCardsEffect fromOwnGraveyardWithSource(int count, CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(count, GraveyardExileScope.OWN, filter, false, true, false);
     }
 
     public static ExileGraveyardCardsEffect targetedFromAnyGraveyardWithEventValue(

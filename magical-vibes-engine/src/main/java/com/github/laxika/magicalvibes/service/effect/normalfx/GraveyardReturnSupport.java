@@ -3212,6 +3212,27 @@ public class GraveyardReturnSupport {
     }
 
     /**
+     * Has {@code playerId} choose {@code remainingCount} of {@code candidates} (cards in their graveyard) to exile, one
+     * at a time; each later choice offers only the candidates still there. With {@code trackWithSourcePermanentId} the
+     * cards are exiled with that permanent ("exiled with this creature").
+     */
+    public void beginGraveyardExileChoice(GameData gameData, UUID playerId, List<Card> candidates, int remainingCount,
+                                          UUID trackWithSourcePermanentId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        Set<UUID> candidateIds = candidates.stream().map(Card::getId).collect(Collectors.toSet());
+        List<Integer> validIndices = IntStream.range(0, graveyard.size())
+                .filter(i -> candidateIds.contains(graveyard.get(i).getId()))
+                .boxed().toList();
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(playerId, validIndices, GraveyardChoiceDestination.EXILE,
+                        "Choose a card to exile from your graveyard.")
+                .exileRemainingCount(remainingCount)
+                .trackWithSourcePermanentId(trackWithSourcePermanentId)
+                .mandatory(true)
+                .build());
+    }
+
+    /**
      * Resolves an {@link EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect}. Each player
      * returns up to {@code maxCount} matching cards from their graveyard to the battlefield.
      * If a player has fewer matching cards than {@code maxCount}, all are returned automatically.

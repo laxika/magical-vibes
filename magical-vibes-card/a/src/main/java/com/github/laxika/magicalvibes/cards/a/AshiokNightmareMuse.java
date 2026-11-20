@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CastUpToNSpellsFromOpponentsExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -24,8 +26,8 @@ import java.util.Set;
 public class AshiokNightmareMuse extends Card {
 
     public AshiokNightmareMuse() {
-        ExileTopCardsOfEachOpponentEffect nightmareTrigger =
-                new ExileTopCardsOfEachOpponentEffect(2);
+        CardEffect nightmareTrigger =
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.eachOpponent(), 2);
         CreateTokenEffect nightmareToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Nightmare", 2, 3,
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),

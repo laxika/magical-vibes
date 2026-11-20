@@ -82,6 +82,7 @@ class MaskedVandalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No question is asked and nothing is exiled without a creature card in your own graveyard")
     void cannotExileArtifactWithoutCreatureInOwnGraveyard() {
         LeoninScimitar noncreature = new LeoninScimitar();
         GrizzlyBears opponentsCreature = new GrizzlyBears();
@@ -91,7 +92,7 @@ class MaskedVandalTest extends BaseCardTest {
 
         castMaskedVandal();
         chooseTarget(artifact);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertOnBattlefield(player2, "Leonin Scimitar");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature);
@@ -101,6 +102,7 @@ class MaskedVandalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exactly one of several creature cards is chosen and exiled")
     void choosesExactlyOneCreatureAtResolution() {
         GrizzlyBears first = new GrizzlyBears();
         GrizzlyBears second = new GrizzlyBears();
@@ -123,6 +125,7 @@ class MaskedVandalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An illegal target prevents the creature exile")
     void illegalTargetPreventsCreatureExile() {
         GrizzlyBears creature = new GrizzlyBears();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
@@ -141,6 +144,7 @@ class MaskedVandalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No creature is exiled when there is no legal target")
     void noLegalTargetDoesNotExileCreature() {
         GrizzlyBears creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
@@ -157,7 +161,6 @@ class MaskedVandalTest extends BaseCardTest {
     private void chooseTarget(Permanent target) {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     private void castMaskedVandal() {

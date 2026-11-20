@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -44,7 +45,8 @@ public class RiveteersCharm extends Card {
                         opponentFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile the top three cards of your library. Until your next end step, you may play those cards",
-                        new ExileTopCardsMayPlayUntilNextEndStepEffect(3)),
+                        new ExileTopCardMayPlayThisTurnEffect(3, false)
+                                .until(Duration.UNTIL_YOUR_NEXT_END_STEP)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile target player's graveyard",
                         new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE),
