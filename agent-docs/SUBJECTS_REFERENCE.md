@@ -62,3 +62,10 @@ creature; its controller loses 2 life").
 `Subjects.narrowed(set, filter)` narrows a set subject (`controlledBy`, `ownedBy`, `attachmentsOf`) by an effect's own
 filter. `GrantScope.subject()` gives a `GrantScope` constant's subject while the effects still carry the enum; a one-shot
 handler that reads a constant including the source names the including-self constant's subject.
+
+A static ability's handler asks about one permanent at a time: `SubjectResolutionService.names(StaticEffectContext,
+subject, filter, StaticReads)` (through `StaticEffectSupport.names`) says whether the subject names the context's
+target. It judges `source()`, `attached()`, `attachedOrSource()`, `named()`, `allOf()` and `controlledBy()` (with
+`you()`, `eachPlayer()`, `eachOpponent()`, `enchantedPlayer()` read off the context, other players through the list
+form) without looking anything up; creature, land and the effect's filter are answered by the static pass's
+recursion-safe reads. `ownedBy` and `attachmentsOf` have no one-permanent form yet.

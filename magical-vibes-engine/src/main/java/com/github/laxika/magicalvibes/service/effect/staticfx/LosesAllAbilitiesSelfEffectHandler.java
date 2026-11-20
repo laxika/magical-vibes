@@ -27,17 +27,7 @@ public class LosesAllAbilitiesSelfEffectHandler implements StaticEffectHandlerBe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllAbilitiesEffect) effect;
-        boolean applies = switch (loses.scope()) {
-            case SELF, SELF_AND_PAIRED -> support.matchesStaticFilter(context, context.target(), loses.filter());
-            // "Creatures lose all abilities" reaches its own source when that is a creature (Dress Down
-            // under Opalescence).
-            case ALL_CREATURES_INCLUDING_SELF, ALL_OWN_CREATURES ->
-                    support.matchesCreatureScope(context, loses.scope(), loses.filter());
-            // "All lands lose all other abilities" reaches its own source when that is a land (Toxicrene
-            // under Ashaya, Soul of the Wild).
-            case OWN_LANDS, ALL_LANDS_INCLUDING_SELF -> support.matchesLandScope(context, loses.scope(), loses.filter());
-            default -> false;
-        };
+        boolean applies = support.names(context, loses.scope().subject(), loses.filter());
         if (applies) {
             accumulator.setLosesAllAbilities(true);
         }

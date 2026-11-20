@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -27,13 +26,7 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
-        boolean inScope = boost.scope() == GrantScope.SELF
-                || ((boost.scope() == GrantScope.ALL_OWN_CREATURES
-                || boost.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
-                && support.matchesCreatureScope(context, boost.scope(), boost.filter()))
-                || (boost.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF
-                && support.matchesLandScope(context, boost.scope(), boost.filter()));
-        if (inScope && support.matchesStaticFilter(context, context.target(), boost.filter())) {
+        if (support.names(context, boost.scope().subject(), boost.filter())) {
             int multiplier = boost.scalingCounter() == null
                     ? 1
                     : context.sourceCounterCount(boost.scalingCounter());

@@ -18,7 +18,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5c, 5e–5l done; 5d partly done: its restriction readers move to step 6; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a done |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a, 6.2b done (6.2b: `GrantScope` part; the static `TapUntapScope` readers moved to 6.2e) |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -447,10 +447,10 @@ Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run th
 |---|---|---|
 | 6.1 | the inventory | done |
 | 6.2a | the one-shot `normalfx` readers | done |
-| 6.2b | `staticfx` + `StaticEffectSupport`, the static `TapUntapScope` readers | open |
+| 6.2b | `staticfx` + `StaticEffectSupport`, the static `TapUntapScope` readers | done for `GrantScope`; the static `TapUntapScope` readers moved to 6.2e |
 | 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | open |
 | 6.2d | the AI | open |
-| 6.2e | the one-shot `TapUntapScope` restriction handlers | open |
+| 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | open |
 | 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` / `TapUntapScope` deleted | open |
 | 6.4 | the rule-4 tests | open |
 
@@ -2782,6 +2782,66 @@ ability with a constant other than TARGET or SELF (634 cards, the Genju cycle am
 `LibraryChoiceHandlerServiceTest`, `FlickerEffectHandlerTest`; application, AI and testFixtures test sources compile. Ask for a
 full card-test run (the plan asks for one after sub-step 2: run it after 6.2e, or now).
 
+
+### Step 6, run 6.2b (2026-11-20)
+
+**Done.** Every `staticfx` handler and `StaticEffectSupport` (SES) finds its permanents through the resolver's static
+entry point asked about one permanent: `SubjectResolutionService.names(StaticEffectContext, subject, filter,
+StaticReads)`, called as `support.names(context, scope.subject(), filter)`. It judges the subject's structure itself
+(`source()` by id, `attached()` by the source's `attachedTo`, `controlledBy` players from the context's
+`targetOnSameBattlefield` / the Curse's player, the set predicate's not-the-source / paired / tapped parts) and hands
+creature, land and the effect's filter to `StaticReads`, which SES implements with its old recursion-safe reads
+(`isEffectivelyCreature`, `matchesStaticLeaf`, `matchesStaticFilter`). No lookup, no allocation per call, nothing new
+read by the pass, so `computeBoardFingerprint` is unchanged; the set is re-evaluated by every pass (CR 611.3a).
+`matchesCreatureScope`, `matchesLandScope` and `selfInScope` are gone. `matchesAnimateLand` (the AllLandsAreCreatures
+scan) uses the context-free overload `names(GameData, source, controllerId, onSourcesBattlefield, target, subject,
+reads)`. `GrantScope.subject()` now returns one cached instance per constant, its set predicates ordered cheap first
+(not-the-source, tapped, then creature / land) so the per-permanent cost and the dependency footprint stay as they
+were. No stack-entry or no-variant constant reached a static handler in the probed tests (the resolver would throw).
+
+**Per-verb readings 6.3 must apply when it rewrites cards** (kept from the old handlers, named in SES):
+`withAllPermanentsIncludingSource`: `ALL_PERMANENTS` includes the source for BecomeColorless, GrantCardType, GrantColor,
+GrantSubtype, static AnimatePermanents, GrantEffect and GrantActivatedAbility (Thran Lens and Ghostflame Sliver are
+colourless themselves; GrantKeyword, GrantTriggeredAbility and SetCardTypes exclude it, as `subject()` does).
+`withOwnPermanentsAsOthers`: `OWN_PERMANENTS` is "other permanents you control" for GrantKeyword (both handlers) and
+GrantActivatedAbilitySelf (the activated-ability grant reaches its source through the non-self handler: the
+`LayerSystemService` / `GameQueryService` dispatch exception for GrantActivatedAbility OWN_PERMANENTS, 6.2c moves both
+together). The conditional self path (`applySelfOnlyConditionalStaticEffect`) reads `ALL_CREATURES` including the
+source. Non-self handlers whose old code returned nothing for `SELF` use `namesBeyondSource` (a `source()` subject is the
+self handler's), because the assembly hands non-self handlers the source itself for granted static effects (Sedge
+Sliver's granted "this creature gets +1/+1" would otherwise count twice). The self handlers that handle only
+`source()` (SetCardTypesSelf, GrantAllCreatureTypesToSelf, GrantChosenSubtypeToSelf) and the graveyard keyword scan
+test `subject() instanceof Source`; GrantTriggeredAbility's attachment check is `instanceof Attached`.
+
+**Subject change.** `OWN_UNTAPPED_CREATURES` is now `controlledBy(you(), ¬tapped ∧ ¬source ∧ creature)`, like
+`OWN_TAPPED_CREATURES`: Augusta, Dean of Order (STX 155) says "Other untapped creatures you control get +0/+1"; the old
+self handler never gave it to her. Its other users (Sword of the Paruns, Dragonologist) can't be their own target.
+
+**Behaviour changes** (found by a temporary probe that compared old and new per call over the tests below, removed):
+the self-including sets now check that the source is a creature / matches the filter where the old self handlers did
+not. Cid, Timeless Artificer (FIN 216, a Human Artificer: "Artifact creatures and Heroes you control get +1/+1 ...")
+no longer boosts itself (`CidTimelessArtificerTest.doesNotBoostItselfWhileNotArtifactOrHero`, fails on the old
+code); the noncreature sources Knowledge Is Power, Commander's Insignia (DynamicStaticBoost), Sorcerer Class
+(conditional activated-ability grant) and Common Cause (conditional boost) no longer give "creatures you control" /
+"nonartifact creatures" effects to themselves. AllLandsAreCreatures reads land-ness from the layered state, not the
+printed card: a land a later effect makes a non-land (Soul Sculptor, CR 613.7 in layer 4) is no longer animated
+(`LivingPlaneTest.landThatStopsBeingALandIsNoLongerAnimated`).
+
+**Left for 6.2e.** The static `TapUntapScope` readers (`UntapStepService`'s self / enchanted / controlled cross-player
+untap and counter-lock reads, `UntapPreventionSupport.hasActiveSelfDoesntUntap`) dispatch by kind into three untap
+routines with their own logs, not by membership; moving them is a restructure of `UntapStepService`, and
+`TapUntapScope` has no `subject()` yet. 6.2c note: `GrantScope.subject()` instances are now shared per constant; the
+CR 613.6 layer-4 verdict memo must keep keying on an effect's own filter, never on a subject's set predicate.
+
+**Tests**: 1,968 test classes (2,094 suites with the nested ones, 17,749 test cases), all pass (1 skipped): the application `layers` package, `SubjectResolutionServiceTest` (new
+`StaticMembership`: source / attached, sets with players, predicate and filter, tapped, the Curse's player, agreement
+with the list form for every static `GrantScope` subject on a mixed board, stack subjects rejected),
+`LayerClassifierTest`, `EffectCountRatchetTest`, `GameQueryServiceTest`, `PredicateEvaluationServiceTest`; every test
+class of the cards of every scoped static record with at most 112 test classes, a 160-per-class sample of the rest
+(GrantKeyword, ConditionalEffect, StaticBoost, AnimatePermanents, GrantActivatedAbility, GrantTriggeredAbility,
+SetBasePowerToughness, ProtectionFromColors), and the cards above. Application, AI and testFixtures test sources and the
+touched card-test modules compile. Ratchet unchanged (no record or handler deleted; no ledger rows: nothing folded).
+Ask for the full card-test run the plan asks for after sub-step 2 (6.2b is part of it).
 
 ## Prompt
 

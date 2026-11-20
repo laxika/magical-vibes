@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -23,9 +22,7 @@ public class SetChosenNameAndCreatureTypeEffectHandler implements StaticEffectHa
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         SetChosenNameAndCreatureTypeEffect set = (SetChosenNameAndCreatureTypeEffect) effect;
-        boolean applies = set.scope() == GrantScope.SELF
-                ? context.target().getId().equals(context.sourceId())
-                : support.matchesCreatureScope(context, set.scope(), null);
+        boolean applies = support.names(context, set.scope().subject(), null);
         if (!applies) return;
 
         String chosenName = context.source().getChosenName();

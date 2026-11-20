@@ -22,7 +22,7 @@ public class BoostCreaturesOfChosenPlayerModeEffectHandler implements StaticEffe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostCreaturesOfChosenPlayerModeEffect) effect;
-        if (!support.matchesCreatureScope(context, boost.scope(), null)) return;
+        if (!support.namesBeyondSource(context, boost.scope().subject(), null)) return;
 
         var targetControllerId = context.gameData().findControllerOf(context.target());
         var chosenModes = context.planarSource() != null

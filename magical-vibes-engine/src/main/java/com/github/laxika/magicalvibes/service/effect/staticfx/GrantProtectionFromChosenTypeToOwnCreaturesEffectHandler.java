@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -34,7 +33,7 @@ public class GrantProtectionFromChosenTypeToOwnCreaturesEffectHandler implements
         var grant = (GrantProtectionFromChosenTypeToOwnCreaturesEffect) effect;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
-        if (support.matchesCreatureScope(context, GrantScope.OWN_CREATURES,
+        if (support.names(context, StaticEffectSupport.OTHER_CREATURES_YOU_CONTROL,
                 new PermanentHasSubtypePredicate(grant.recipientSubtype()))) {
             accumulator.addGrantedEffect(new ProtectionFromSubtypesEffect(Set.of(chosenSubtype), true));
         }

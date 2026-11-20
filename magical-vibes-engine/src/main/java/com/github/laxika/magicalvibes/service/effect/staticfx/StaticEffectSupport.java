@@ -13,6 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -56,7 +63,7 @@ import java.util.UUID;
  * handlers reuse these helpers; behavior is identical to the original monolith privates.
  */
 @Component
-public class StaticEffectSupport {
+public class StaticEffectSupport implements SubjectResolutionService.StaticReads {
 
     private final GameQueryService gameQueryService;
 
@@ -77,84 +84,87 @@ public class StaticEffectSupport {
     @Lazy
     private PredicateEvaluationService predicateEvaluationService;
 
+    /**
+     * Resolves the handlers' subjects (the resolver's static entry point, asked about one permanent). Injected lazily
+     * for the same reason as the evaluation service.
+     */
+    @Autowired
+    @Lazy
+    private SubjectResolutionService subjectResolutionService;
+
     private static final PermanentIsLandPredicate LAND_PREDICATE = new PermanentIsLandPredicate();
+    private static final PermanentPredicate CREATURE = new PermanentIsCreaturePredicate();
+    private static final PermanentPredicate NOT_SOURCE =
+            new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
+
+    /** "Enchanted creature", "equipped creature", "enchanted permanent". */
+    public static final PermanentSubject ATTACHED = Subjects.attached();
+    /** "Creatures you control". */
+    public static final PermanentSubject CREATURES_YOU_CONTROL = Subjects.controlledBy(Subjects.you(), CREATURE);
+    /** "Other creatures you control". */
+    public static final PermanentSubject OTHER_CREATURES_YOU_CONTROL = Subjects.controlledBy(Subjects.you(),
+            new PermanentAllOfPredicate(List.of(NOT_SOURCE, CREATURE)));
+    /** "Other permanents you control". */
+    public static final PermanentSubject OTHER_PERMANENTS_YOU_CONTROL = Subjects.controlledBy(Subjects.you(),
+            NOT_SOURCE);
+    /** "All permanents", the source included. */
+    public static final PermanentSubject ALL_PERMANENTS_INCLUDING_SOURCE = Subjects.controlledBy(Subjects.eachPlayer());
 
     /**
-     * Returns true if the target matches the given creature-centric scope.
-     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, and OWN_PERMANENTS.
+     * The subject of {@code scope} for the verbs whose static "all permanents" reaches the source too (colour, card
+     * types, subtypes, animation, granted abilities: Thran Lens is colourless itself, Ghostflame Sliver is a Sliver):
+     * {@link GrantScope#ALL_PERMANENTS} is read including the source; every other constant is its own subject.
      */
-    public boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.OWN_PERMANENTS) {
-            return context.targetOnSameBattlefield()
-                    && matchesStaticFilter(context, context.target(), filter);
-        }
-        if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
-            return context.source().isAttached()
-                    && context.source().getAttachedTo().equals(context.target().getId())
-                    && matchesStaticFilter(context, context.target(), filter);
-        }
-        if (scope == GrantScope.ENCHANTED_PLAYER_CREATURES) {
-            if (!context.source().isAttached()) return false;
-            UUID attachedPlayerId = context.source().getAttachedTo();
-            List<Permanent> attachedPlayerBf = context.gameData().playerBattlefields.get(attachedPlayerId);
-            if (attachedPlayerBf == null || !attachedPlayerBf.contains(context.target())) return false;
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context, context.target(), filter);
-        }
-        if (scope == GrantScope.SELF_AND_PAIRED) {
-            UUID pairedId = context.source().getPairedWithId();
-            return context.target().getId().equals(context.sourceId())
-                    || (pairedId != null && context.target().getId().equals(pairedId));
-        }
-        if (scope == GrantScope.OWN_TAPPED_CREATURES) {
-            return context.targetOnSameBattlefield() && context.target().isTapped()
-                    && !context.target().getId().equals(context.sourceId())
-                    && isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifactEffect(context.gameData()))
-                    && matchesStaticFilter(context, context.target(), filter);
-        }
-        if (scope == GrantScope.OWN_UNTAPPED_CREATURES) {
-            if (!context.targetOnSameBattlefield() || context.target().isTapped()) return false;
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context, context.target(), filter);
-        }
-        if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
-                || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
-                || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
-            if ((scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES)
-                    && context.target().getId().equals(context.sourceId())) {
-                return false;
-            }
-            boolean ownCheck = scope == GrantScope.ALL_CREATURES
-                    || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
-                    || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())
-                    || (scope == GrantScope.ALL_OWN_CREATURES && context.targetOnSameBattlefield())
-                    || (scope == GrantScope.OPPONENT_CREATURES && !context.targetOnSameBattlefield());
-            if (!ownCheck) return false;
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context, context.target(), filter);
-        }
-        return false;
+    public static PermanentSubject withAllPermanentsIncludingSource(GrantScope scope) {
+        return scope == GrantScope.ALL_PERMANENTS ? ALL_PERMANENTS_INCLUDING_SOURCE : scope.subject();
     }
 
     /**
-     * Returns true if the target matches a land-centric scope ({@link GrantScope#OWN_LANDS} /
-     * {@link GrantScope#OPPONENT_LANDS} /
-     * {@link GrantScope#ALL_LANDS}) and the optional filter. The land check goes through the
-     * recursion-safe static matcher rather than {@code GameQueryService}, which would re-enter
-     * static-bonus assembly from inside the static pass.
+     * The subject of {@code scope} for the static keyword and activated-ability grants, whose
+     * {@link GrantScope#OWN_PERMANENTS} means "other permanents you control": the keyword grant never reaches its
+     * source, and the activated-ability grant reaches it through the non-self handler, which the assembly hands the
+     * source for that constant. Every other constant is its own subject.
      */
-    public boolean matchesLandScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.OWN_LANDS && !context.targetOnSameBattlefield()) {
-            return false;
-        }
-        if (scope == GrantScope.OPPONENT_LANDS && context.targetOnSameBattlefield()) {
-            return false;
-        }
-        return predicateEvaluationService.matchesStaticLeaf(context.target(), LAND_PREDICATE)
-                && matchesStaticFilter(context, context.target(), filter);
+    public static PermanentSubject withOwnPermanentsAsOthers(GrantScope scope) {
+        return scope == GrantScope.OWN_PERMANENTS ? OTHER_PERMANENTS_YOU_CONTROL : scope.subject();
+    }
+
+    /** "Lands you control". */
+    public static final PermanentSubject LANDS_YOU_CONTROL = Subjects.controlledBy(Subjects.you(), LAND_PREDICATE);
+
+    /**
+     * Whether a static ability's {@code subject} names the context's target and the target matches {@code filter}:
+     * {@link SubjectResolutionService#names(StaticEffectContext, PermanentSubject, PermanentPredicate,
+     * SubjectResolutionService.StaticReads)}, with this support's recursion-safe reads.
+     */
+    public boolean names(StaticEffectContext context, PermanentSubject subject, PermanentPredicate filter) {
+        return subjectResolutionService.names(context, subject, filter, this);
+    }
+
+    /**
+     * {@link #names} for a handler that applies a static ability to permanents other than its source: a
+     * {@code source()} subject is the effect's self handler's (the source's own abilities are assembled apart), so
+     * this answers no for it even when the assembly hands the handler the source itself (a static ability granted to
+     * the source).
+     */
+    public boolean namesBeyondSource(StaticEffectContext context, PermanentSubject subject,
+                                     PermanentPredicate filter) {
+        return !(subject instanceof PermanentSubject.Source) && names(context, subject, filter);
+    }
+
+    @Override
+    public boolean isCreature(GameData gameData, Permanent permanent) {
+        return isEffectivelyCreature(gameData, permanent, hasAnimateArtifactEffect(gameData));
+    }
+
+    @Override
+    public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+        return predicateEvaluationService.matchesStaticLeaf(permanent, leaf);
+    }
+
+    @Override
+    public boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter) {
+        return matchesStaticFilter(context, permanent, filter);
     }
 
     public boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
@@ -201,7 +211,7 @@ public class StaticEffectSupport {
 
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
-            if (selfInScope(context, boost.scope(), boost.filter())) {
+            if (conditionalNamesSource(context, boost.scope(), boost.filter())) {
                 int multiplier = boost.scalingCounter() == null
                         ? 1
                         : (boost.scalingCounterOnTarget()
@@ -218,53 +228,48 @@ public class StaticEffectSupport {
             accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), amountContext));
             accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), amountContext));
         } else if (wrapped instanceof GrantKeywordEffect grant) {
-            if (grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || selfInScope(context, grant.scope(), grant.filter())) {
+            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof GrantSubtypeEffect grant) {
-            if (selfInScope(context, grant.scope(), grant.filter())) {
+            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
                 accumulator.addGrantedSubtype(grant.subtype());
                 if (grant.overriding()) {
                     accumulator.setSubtypeOverriding(true);
                 }
             }
         } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
-            if (selfInScope(context, grant.scope(), grant.filter())) {
+            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
                 accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
-            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || selfInScope(context, grant.scope(), grant.filter())) {
+            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
                 accumulator.addGrantedColor(grant.color());
                 if (grant.overriding()) {
                     accumulator.setColorOverriding(true);
                 }
             }
         } else if (wrapped instanceof GrantTriggeredAbilityEffect grant) {
-            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || selfInScope(context, grant.scope(), grant.filter())) {
+            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
                 accumulator.addGrantedEffect(grant);
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
         } else if (wrapped instanceof RemoveKeywordEffect remove
-                && remove.scope() == GrantScope.SELF
-                && matchesStaticFilter(context, context.target(), remove.filter())) {
+                && conditionalNamesSource(context, remove.scope(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
         } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
-                && setPT.scope() == GrantScope.SELF
-                && matchesStaticFilter(context, context.target(), setPT.filter())) {
+                && conditionalNamesSource(context, setPT.scope(), setPT.filter())) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         } else if (wrapped instanceof SetNameEffect setName
-                && setName.scope() == GrantScope.SELF) {
+                && conditionalNamesSource(context, setName.scope(), null)) {
             accumulator.setName(setName.name());
         } else if (wrapped instanceof GrantEffectEffect grant) {
-            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || matchesStaticFilter(context, context.target(), grant.filter())) {
+            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
             }
-        } else if (wrapped instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) {
+        } else if (wrapped instanceof AnimatePermanentsEffect animate
+                && conditionalNamesSource(context, animate.scope(), animate.filter())) {
             accumulator.setSelfBecomeCreature(true);
             if (animate.cardTypeOverriding()) {
                 java.util.Set<CardType> types = java.util.EnumSet.of(CardType.CREATURE);
@@ -282,7 +287,8 @@ public class StaticEffectSupport {
                 accumulator.addGrantedSubtype(subtype);
             }
             accumulator.addKeywords(animate.grantedKeywords());
-        } else if (wrapped instanceof SetCardTypesEffect set && set.scope() == GrantScope.SELF
+        } else if (wrapped instanceof SetCardTypesEffect set
+                && conditionalNamesSource(context, set.scope(), null)
                 && (!Duration.WHILE_ATTACHED.equals(set.duration()) || context.source().isAttached())) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());
@@ -290,23 +296,12 @@ public class StaticEffectSupport {
     }
 
     /**
-     * Whether a conditional static effect's scope covers the source permanent itself.
-     * {@link GrantScope#OWN_CREATURES} means "other creatures you control" and is excluded;
-     * attachment scopes (equipped/enchanted) never cover the source.
+     * Whether a conditional static ability of the source's own reaches the source itself: whether its subject names
+     * it. "All creatures" reaches it too here (the conditional path reads that constant including the source).
      */
-    private boolean selfInScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) {
-            return matchesStaticFilter(context, context.target(), filter);
-        }
-        if (scope == GrantScope.OWN_LANDS || scope == GrantScope.ALL_LANDS_INCLUDING_SELF) {
-            // "Lands you control have ..." covers the conditional source itself when it is a land.
-            return matchesLandScope(context, scope, filter);
-        }
-        boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
-                || scope == GrantScope.ALL_CREATURES
-                || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
-                || scope == GrantScope.OWN_PERMANENTS;
-        return selfCoveringScope && matchesStaticFilter(context, context.target(), filter);
+    private boolean conditionalNamesSource(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        return names(context, scope == GrantScope.ALL_CREATURES
+                ? GrantScope.ALL_CREATURES_INCLUDING_SELF.subject() : scope.subject(), filter);
     }
 
     /**
@@ -386,11 +381,8 @@ public class StaticEffectSupport {
                     if (!(printed instanceof AllLandsAreCreaturesEffect)) continue;
                     CardEffect e = TextChangeTransformer.transform(printed, gameData.textReplacements(source.getId()));
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
-                            && (animateLands.scope() == GrantScope.ALL_LANDS
-                                    || (animateLands.scope() == GrantScope.OWN_LANDS
-                                            && bf.contains(permanent))
-                                    || (animateLands.scope() == GrantScope.OPPONENT_LANDS
-                                            && !bf.contains(permanent)))
+                            && subjectResolutionService.names(gameData, source, playerId,
+                                    bf.contains(permanent), permanent, animateLands.scope().subject(), this)
                             && (animateLands.requiredSubtype() == null
                                     || subtypes.contains(animateLands.requiredSubtype()))) {
                         return true;

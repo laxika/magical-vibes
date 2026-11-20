@@ -21,11 +21,7 @@ public class LosesAllAbilitiesEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllAbilitiesEffect) effect;
-        boolean matches = switch (loses.scope()) {
-            case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->
-                    support.matchesLandScope(context, loses.scope(), loses.filter());
-            default -> support.matchesCreatureScope(context, loses.scope(), loses.filter());
-        };
+        boolean matches = support.namesBeyondSource(context, loses.scope().subject(), loses.filter());
         if (matches) {
             accumulator.setLosesAllAbilities(true);
         }

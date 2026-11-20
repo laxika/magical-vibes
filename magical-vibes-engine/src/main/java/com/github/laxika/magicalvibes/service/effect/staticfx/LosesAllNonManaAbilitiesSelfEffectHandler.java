@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -28,8 +27,7 @@ public class LosesAllNonManaAbilitiesSelfEffectHandler implements StaticEffectHa
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllNonManaAbilitiesEffect) effect;
-        if ((loses.scope() == GrantScope.SELF || loses.scope() == GrantScope.SELF_AND_PAIRED)
-                && support.matchesStaticFilter(context, context.target(), loses.filter())) {
+        if (support.names(context, loses.scope().subject(), loses.filter())) {
             accumulator.setLosesAllNonManaAbilities(true);
         }
     }

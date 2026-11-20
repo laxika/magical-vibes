@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -29,7 +28,7 @@ public class GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffectH
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CardType chosenType = context.source().getChosenCardType();
         if (chosenType != null
-                && support.matchesCreatureScope(context, GrantScope.OWN_CREATURES, null)) {
+                && support.names(context, StaticEffectSupport.OTHER_CREATURES_YOU_CONTROL, null)) {
             accumulator.addGrantedEffect(new ProtectionFromCardTypesEffect(Set.of(chosenType)));
         }
     }

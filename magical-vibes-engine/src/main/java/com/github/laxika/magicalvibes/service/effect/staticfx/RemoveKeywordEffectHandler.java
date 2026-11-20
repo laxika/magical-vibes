@@ -21,7 +21,7 @@ public class RemoveKeywordEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var remove = (RemoveKeywordEffect) effect;
-        if (support.matchesCreatureScope(context, remove.scope(), remove.filter())) {
+        if (support.namesBeyondSource(context, remove.scope().subject(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
         }
     }

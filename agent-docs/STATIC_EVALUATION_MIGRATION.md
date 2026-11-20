@@ -442,7 +442,7 @@ guarantees: it bypasses the CR 613.6 verdict memo. The memo is keyed by filter *
 leaf predicates are component-less records, so a locally constructed instance compares equal to some
 unrelated ability's filter and would collect that ability's verdict. Only a filter that really is
 the ability's own may read it. Everything that constructs its own predicate now routes through
-`matchesStaticLeaf`: the land check in `matchesLandScope`, the creature checks inside
+`matchesStaticLeaf`: the characteristic leaves of a static subject (`StaticEffectSupport.matchesLeaf`), the creature checks inside
 `hasGreatestManaValueAmongAllCreatures`, the subtype check behind `HasSourceChosenSubtype`, the two
 `BoostCreaturesOfChosenSubtype` handlers and
 `GrantProtectionFromChosenTypeToOwnCreaturesSelfEffectHandler`. This subsumes

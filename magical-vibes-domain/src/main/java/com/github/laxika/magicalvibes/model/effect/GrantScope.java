@@ -109,40 +109,65 @@ public enum GrantScope {
     private static final PermanentPredicate NOT_SOURCE =
             new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
     private static final PermanentPredicate TAPPED = new PermanentIsTappedPredicate();
+    private static final PermanentSubject[] SUBJECTS = subjects();
 
     /**
-     * The subject this constant stands for. "Other" is the not-the-source-permanent predicate (it matches by permanent
-     * id). {@link #TARGET_AND_SHARING_CREATURES}, {@link #DECLARED_ATTACKERS}, {@link #TOKENS_CREATED_THIS_RESOLUTION}
-     * and {@link #BANDED_WITH_SELF} have no subject variant yet; their handlers keep their own lookup.
+     * The subject this constant stands for, one shared instance per constant (the layered pass asks for it per
+     * permanent). "Other" is the not-the-source-permanent predicate (it matches by permanent id); a set's cheap
+     * structural parts (not the source, tapped) come before its characteristic parts (creature, land), which is the
+     * order the static resolver judges them in. {@link #TARGET_AND_SHARING_CREATURES}, {@link #DECLARED_ATTACKERS},
+     * {@link #TOKENS_CREATED_THIS_RESOLUTION} and {@link #BANDED_WITH_SELF} have no subject variant yet; their
+     * handlers keep their own lookup.
      *
      * @throws UnsupportedOperationException for those four constants
      */
     public PermanentSubject subject() {
+        PermanentSubject subject = SUBJECTS[ordinal()];
+        if (subject == null) {
+            throw new UnsupportedOperationException("No subject variant for " + this + " yet");
+        }
+        return subject;
+    }
+
+    private static PermanentSubject[] subjects() {
+        GrantScope[] scopes = values();
+        PermanentSubject[] subjects = new PermanentSubject[scopes.length];
+        for (GrantScope scope : scopes) {
+            subjects[scope.ordinal()] = scope.newSubject();
+        }
+        return subjects;
+    }
+
+    /**
+     * {@link #OWN_UNTAPPED_CREATURES} is "other untapped creatures you control", like {@link #OWN_TAPPED_CREATURES}
+     * (Augusta, Dean of Order).
+     */
+    private PermanentSubject newSubject() {
         return switch (this) {
             case SELF -> Subjects.source();
             case TRIGGERING_PERMANENT -> Subjects.triggering();
             case SELF_AND_PAIRED -> Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsSourceOrPairedPredicate());
             case TARGET, TARGETS -> Subjects.target();
             case ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE -> Subjects.attached();
-            case OWN_TAPPED_CREATURES -> Subjects.controlledBy(Subjects.you(), allOf(CREATURE, TAPPED, NOT_SOURCE));
+            case OWN_TAPPED_CREATURES -> Subjects.controlledBy(Subjects.you(), allOf(TAPPED, NOT_SOURCE, CREATURE));
             case OWN_UNTAPPED_CREATURES -> Subjects.controlledBy(Subjects.you(),
-                    allOf(CREATURE, new PermanentNotPredicate(TAPPED)));
-            case OWN_CREATURES -> Subjects.controlledBy(Subjects.you(), allOf(CREATURE, NOT_SOURCE));
+                    allOf(new PermanentNotPredicate(TAPPED), NOT_SOURCE, CREATURE));
+            case OWN_CREATURES -> Subjects.controlledBy(Subjects.you(), allOf(NOT_SOURCE, CREATURE));
             case ALL_OWN_CREATURES -> Subjects.controlledBy(Subjects.you(), CREATURE);
             case OPPONENT_CREATURES -> Subjects.controlledBy(Subjects.eachOpponent(), CREATURE);
             case OWN_PERMANENTS -> Subjects.controlledBy(Subjects.you());
             case TARGET_PLAYERS_CREATURES -> Subjects.controlledBy(Subjects.targetPlayer(), CREATURE);
             case TARGET_PLAYERS_LANDS -> Subjects.controlledBy(Subjects.targetPlayer(), LAND);
-            case ALL_CREATURES -> Subjects.controlledBy(Subjects.eachPlayer(), allOf(CREATURE, NOT_SOURCE));
+            case ALL_CREATURES -> Subjects.controlledBy(Subjects.eachPlayer(), allOf(NOT_SOURCE, CREATURE));
             case ALL_CREATURES_INCLUDING_SELF -> Subjects.controlledBy(Subjects.eachPlayer(), CREATURE);
             case ALL_PERMANENTS -> Subjects.controlledBy(Subjects.eachPlayer(), NOT_SOURCE);
             case ENCHANTED_PLAYER_CREATURES -> Subjects.controlledBy(Subjects.enchantedPlayer(), CREATURE);
             case OWN_LANDS -> Subjects.controlledBy(Subjects.you(), LAND);
             case OPPONENT_LANDS -> Subjects.controlledBy(Subjects.eachOpponent(), LAND);
-            case ALL_LANDS -> Subjects.controlledBy(Subjects.eachPlayer(), allOf(LAND, NOT_SOURCE));
+            case ALL_LANDS -> Subjects.controlledBy(Subjects.eachPlayer(), allOf(NOT_SOURCE, LAND));
             case ALL_LANDS_INCLUDING_SELF -> Subjects.controlledBy(Subjects.eachPlayer(), LAND);
             case TARGET_AND_SHARING_CREATURES, DECLARED_ATTACKERS, TOKENS_CREATED_THIS_RESOLUTION, BANDED_WITH_SELF ->
-                    throw new UnsupportedOperationException("No subject variant for " + this + " yet");
+                    null;
         };
     }
 

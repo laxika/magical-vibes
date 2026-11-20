@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final StaticEffectSupport support;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,12 +33,7 @@ public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBea
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var e = (AllLandsAreCreaturesEffect) effect;
-        if (context.target().getCard().hasType(CardType.LAND)
-                && (e.scope() == GrantScope.ALL_LANDS
-                        || (e.scope() == GrantScope.OWN_LANDS
-                                && context.targetOnSameBattlefield())
-                        || (e.scope() == GrantScope.OPPONENT_LANDS
-                                && !context.targetOnSameBattlefield()))
+        if (support.namesBeyondSource(context, e.scope().subject(), null)
                 && (e.requiredSubtype() == null
                         || gameQueryService.hasEffectiveSubtype(
                                 context.gameData(), context.target(), e.requiredSubtype()))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -73,7 +73,8 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
                 }
                 for (CardEffect staticEffect : card.getStaticEffects()) {
                     if (staticEffect instanceof ProtectionFromColorsEffect protection
-                            && (protection.scope() == null || protection.scope() == GrantScope.SELF)) {
+                            && (protection.scope() == null
+                                    || protection.scope().subject() instanceof PermanentSubject.Source)) {
                         accumulator.addProtectionColors(protection.colors());
                     }
                 }

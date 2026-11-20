@@ -21,7 +21,7 @@ public class SetBasePowerToughnessStaticEffectHandler implements StaticEffectHan
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var setPT = (SetBasePowerToughnessEffect) effect;
-        if (support.matchesCreatureScope(context, setPT.scope(), setPT.filter())) {
+        if (support.namesBeyondSource(context, setPT.scope().subject(), setPT.filter())) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         }
     }

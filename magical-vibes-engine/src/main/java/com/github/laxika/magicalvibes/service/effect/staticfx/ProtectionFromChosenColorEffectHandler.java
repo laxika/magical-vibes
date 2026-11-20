@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import lombok.RequiredArgsConstructor;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -17,7 +17,10 @@ import java.util.Set;
  * never reaches here.
  */
 @Component
+@RequiredArgsConstructor
 public class ProtectionFromChosenColorEffectHandler implements StaticEffectHandlerBean {
+
+    private final StaticEffectSupport support;
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return ProtectionFromChosenColorEffect.class;
@@ -26,13 +29,12 @@ public class ProtectionFromChosenColorEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromChosenColorEffect) effect;
-        if (protection.scope() != GrantScope.ENCHANTED_CREATURE
-                && protection.scope() != GrantScope.EQUIPPED_CREATURE) {
+        if (protection.scope() == null
+                || !support.namesBeyondSource(context, protection.scope().subject(), null)) {
             return;
         }
         CardColor chosen = context.source().getChosenColor();
-        if (chosen != null && context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
+        if (chosen != null) {
             accumulator.addProtectionColors(Set.of(chosen));
         }
     }

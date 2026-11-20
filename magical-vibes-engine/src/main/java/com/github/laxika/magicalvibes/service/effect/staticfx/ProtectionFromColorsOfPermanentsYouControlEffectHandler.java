@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -18,9 +17,12 @@ import java.util.Set;
 public class ProtectionFromColorsOfPermanentsYouControlEffectHandler implements StaticEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final StaticEffectSupport support;
 
-    public ProtectionFromColorsOfPermanentsYouControlEffectHandler(GameQueryService gameQueryService) {
+    public ProtectionFromColorsOfPermanentsYouControlEffectHandler(GameQueryService gameQueryService,
+                                                                   StaticEffectSupport support) {
         this.gameQueryService = gameQueryService;
+        this.support = support;
     }
 
     @Override
@@ -31,9 +33,8 @@ public class ProtectionFromColorsOfPermanentsYouControlEffectHandler implements 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromColorsOfPermanentsYouControlEffect) effect;
-        if (protection.scope() != GrantScope.ENCHANTED_CREATURE
-                || !context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
+        if (protection.scope() == null
+                || !support.namesBeyondSource(context, protection.scope().subject(), null)) {
             return;
         }
 

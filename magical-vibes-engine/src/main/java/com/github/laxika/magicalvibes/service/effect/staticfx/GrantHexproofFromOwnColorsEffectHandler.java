@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -27,7 +26,7 @@ public class GrantHexproofFromOwnColorsEffectHandler implements StaticEffectHand
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (!support.matchesCreatureScope(context, GrantScope.OWN_CREATURES, null)) {
+        if (!support.names(context, StaticEffectSupport.OTHER_CREATURES_YOU_CONTROL, null)) {
             return;
         }
         Set<CardColor> colors = gameQueryService.colorsForStaticEvaluation(context.target());

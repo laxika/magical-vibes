@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class DynamicStaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
 
     private final AmountEvaluationService amountEvaluationService;
+    private final StaticEffectSupport support;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,9 +29,7 @@ public class DynamicStaticBoostSelfEffectHandler implements StaticEffectHandlerB
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (DynamicStaticBoostEffect) effect;
-        if (boost.scope() != GrantScope.SELF
-                && boost.scope() != GrantScope.ALL_OWN_CREATURES
-                && boost.scope() != GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+        if (!support.names(context, boost.scope().subject(), boost.filter())) {
             return;
         }
         AmountContext amountContext = boost.amountsFromTarget()

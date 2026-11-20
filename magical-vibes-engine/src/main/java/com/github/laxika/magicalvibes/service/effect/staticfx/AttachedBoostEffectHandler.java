@@ -39,7 +39,7 @@ public class AttachedBoostEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (AttachedBoostEffect) effect;
-        if (!support.matchesCreatureScope(context, boost.scope(), null)) {
+        if (!support.namesBeyondSource(context, boost.scope().subject(), null)) {
             return;
         }
         AmountContext ctx = boost.amountsFromAttachedCreature()

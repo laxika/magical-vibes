@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +26,7 @@ public class GrantEffectSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantEffectEffect) effect;
-        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                || support.matchesCreatureScope(context, grant.scope(), grant.filter()))
-                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
+        if (support.names(context, grant.scope().subject(), grant.filter())) {
             accumulator.addGrantedEffect(grant.effect());
         }
     }

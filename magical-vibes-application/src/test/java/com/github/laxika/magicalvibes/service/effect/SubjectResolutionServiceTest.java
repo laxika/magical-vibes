@@ -15,6 +15,12 @@ import com.github.laxika.magicalvibes.model.SubgameResult;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -853,6 +859,131 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThatThrownBy(() -> subjects.permanents(gd, bears, target()))
                     .isInstanceOf(IllegalArgumentException.class);
             assertThatThrownBy(() -> subjects.players(gd, bears, controllerOf(triggering())))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("The static entry point asked about one permanent")
+    class StaticMembership {
+
+        private StaticEffectSupport reads;
+
+        @BeforeEach
+        void setUpReads() {
+            reads = GameTestEngineContext.get().getBean(StaticEffectSupport.class);
+        }
+
+        private boolean names(Permanent source, Permanent target, PermanentSubject subject,
+                              PermanentPredicate filter) {
+            UUID controllerId = gd.findControllerOf(source);
+            StaticEffectContext context = new StaticEffectContext(source, target, controllerId,
+                    controllerId.equals(gd.findControllerOf(target)), gd);
+            return subjects.names(context, subject, filter, reads);
+        }
+
+        @Test
+        @DisplayName("Names the source and what the source is attached to, nothing else")
+        void sourceAndAttached() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+
+            assertThat(names(pacifism, pacifism, source(), null)).isTrue();
+            assertThat(names(pacifism, bears, source(), null)).isFalse();
+            assertThat(names(pacifism, bears, attached(), null)).isTrue();
+            assertThat(names(pacifism, giant, attached(), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Names a set's permanents by whose battlefield they are on, its own predicate and the filter")
+        void sets() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            Permanent forest = addCreatureReady(player1, new Forest());
+            Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+            PermanentSubject otherCreaturesYouControl = controlledBy(you(),
+                    new PermanentAllOfPredicate(List.of(new PermanentNotPredicate(
+                            new PermanentIsSourcePermanentPredicate()), new PermanentIsCreaturePredicate())));
+
+            assertThat(names(bears, giant, otherCreaturesYouControl, null)).isTrue();
+            assertThat(names(bears, bears, otherCreaturesYouControl, null)).isFalse();
+            assertThat(names(bears, forest, otherCreaturesYouControl, null)).isFalse();
+            assertThat(names(bears, opposingBears, otherCreaturesYouControl, null)).isFalse();
+            assertThat(names(bears, opposingBears, controlledBy(eachOpponent(), new PermanentIsCreaturePredicate()),
+                    null)).isTrue();
+            assertThat(names(bears, forest, controlledBy(eachPlayer(), new PermanentIsLandPredicate()), null))
+                    .isTrue();
+            assertThat(names(bears, giant, controlledBy(you()), new PermanentNotPredicate(
+                    new PermanentIsSourcePermanentPredicate()))).isTrue();
+            assertThat(names(bears, bears, controlledBy(you()), new PermanentNotPredicate(
+                    new PermanentIsSourcePermanentPredicate()))).isFalse();
+        }
+
+        @Test
+        @DisplayName("A tapped-creatures set follows the permanent's tapped state")
+        void tapped() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            PermanentSubject tappedCreaturesYouControl = controlledBy(you(), new PermanentAllOfPredicate(List.of(
+                    new PermanentIsTappedPredicate(), new PermanentIsCreaturePredicate())));
+
+            assertThat(names(bears, giant, tappedCreaturesYouControl, null)).isFalse();
+            giant.tap();
+            assertThat(names(bears, giant, tappedCreaturesYouControl, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Names the creatures of the player a Curse enchants")
+        void enchantedPlayersCreatures() {
+            Permanent curse = addCreatureReady(player1, new CurseOfStalkedPrey());
+            curse.setAttachedTo(player2.getId());
+            Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+            PermanentSubject enchantedPlayersCreatures = controlledBy(enchantedPlayer(),
+                    new PermanentIsCreaturePredicate());
+
+            assertThat(names(curse, opposingBears, enchantedPlayersCreatures, null)).isTrue();
+            assertThat(names(curse, ownBears, enchantedPlayersCreatures, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Agrees with the set the static entry point lists, for every permanent on the battlefield")
+        void agreesWithTheList() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            addCreatureReady(player1, new HillGiant()).tap();
+            addCreatureReady(player1, new Forest());
+            addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player2, new Forest());
+            List<Permanent> board = gd.playerBattlefields.values().stream().flatMap(List::stream).toList();
+
+            for (GrantScope scope : GrantScope.values()) {
+                PermanentSubject subject;
+                try {
+                    subject = scope.subject();
+                } catch (UnsupportedOperationException noVariantYet) {
+                    continue;
+                }
+                if (subject.needsStackEntry()) {
+                    continue;
+                }
+                List<Permanent> listed = subjects.permanents(gd, bears, subject);
+                for (Permanent permanent : board) {
+                    assertThat(names(bears, permanent, subject, null))
+                            .as("%s on %s", scope, permanent.getCard().getName())
+                            .isEqualTo(listed.contains(permanent));
+                }
+            }
+        }
+
+        @Test
+        @DisplayName("Rejects a subject that reads a stack entry")
+        void rejectsStackSubjects() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+            assertThatThrownBy(() -> names(bears, bears, target(), null))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> names(bears, bears, controlledBy(targetPlayer()), null))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }

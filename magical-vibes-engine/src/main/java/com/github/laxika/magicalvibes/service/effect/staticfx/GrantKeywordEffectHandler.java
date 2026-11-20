@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,24 +21,8 @@ public class GrantKeywordEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
-        boolean scopeMatch = switch (grant.scope()) {
-            case ALL_PERMANENTS -> !context.target().getId().equals(context.sourceId())
-                    && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                    && !context.target().getId().equals(context.sourceId())
-                    && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->
-                    support.matchesLandScope(context, grant.scope(), grant.filter());
-            case SELF -> context.target().getId().equals(context.sourceId())
-                    && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case SELF_AND_PAIRED -> {
-                UUID targetId = context.target().getId();
-                UUID sourceId = context.sourceId();
-                UUID pairedId = context.source().getPairedWithId();
-                yield targetId.equals(sourceId) || (pairedId != null && targetId.equals(pairedId));
-            }
-            default -> support.matchesCreatureScope(context, grant.scope(), grant.filter());
-        };
+        boolean scopeMatch = support.names(context,
+                StaticEffectSupport.withOwnPermanentsAsOthers(grant.scope()), grant.filter());
         if (scopeMatch) {
             accumulator.addKeywords(grant.keywords());
         }

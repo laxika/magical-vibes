@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ public class EnchantedPermanentBecomesOnlyLandEffectHandler implements StaticEff
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (support.matchesCreatureScope(context, GrantScope.ENCHANTED_PERMANENT, null)) {
+        if (support.names(context, StaticEffectSupport.ATTACHED, null)) {
             accumulator.setCardTypeOverriding(true);
             accumulator.addGrantedCardType(CardType.LAND);
         }

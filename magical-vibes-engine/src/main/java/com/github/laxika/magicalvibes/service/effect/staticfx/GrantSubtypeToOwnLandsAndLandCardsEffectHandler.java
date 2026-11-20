@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnLandsAndLandCardsEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -22,7 +21,7 @@ public class GrantSubtypeToOwnLandsAndLandCardsEffectHandler implements StaticEf
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantSubtypeToOwnLandsAndLandCardsEffect) effect;
-        if (support.matchesLandScope(context, GrantScope.OWN_LANDS, null)) {
+        if (support.names(context, StaticEffectSupport.LANDS_YOU_CONTROL, null)) {
             accumulator.addGrantedSubtype(grant.subtype());
         }
     }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -27,11 +26,7 @@ public class RemoveKeywordSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var remove = (RemoveKeywordEffect) effect;
-        boolean inScope = remove.scope() == GrantScope.SELF
-                || remove.scope() == GrantScope.SELF_AND_PAIRED
-                || (remove.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
-                && support.matchesCreatureScope(context, remove.scope(), remove.filter()));
-        if (inScope && support.matchesStaticFilter(context, context.target(), remove.filter())) {
+        if (support.names(context, remove.scope().subject(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
         }
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -10,9 +9,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Self pass for {@link GrantKeywordEffect}: grants the keyword(s) to the source permanent itself
- * when the scope covers it ({@link GrantScope#SELF}, {@link GrantScope#SELF_AND_PAIRED},
- * {@link GrantScope#ALL_OWN_CREATURES}, {@link GrantScope#ALL_CREATURES_INCLUDING_SELF}, or
- * {@link GrantScope#ALL_LANDS_INCLUDING_SELF} while the source is a land, filter permitting). The non-self
+ * when the effect's subject names it, filter permitting ("this creature", "creatures you control" while it is a
+ * creature, "each land" while it is a land; never "other permanents you control",
+ * {@link StaticEffectSupport#withOwnPermanentsAsOthers}). The non-self
  * {@link GrantKeywordEffectHandler} already covers other creatures — e.g. Sun Quan, Lord of Wu
  * grants horsemanship to himself as well as the rest of your board.
  */
@@ -35,12 +34,8 @@ public class GrantKeywordSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
-        if (grant.scope() == GrantScope.OWN_PERMANENTS) return;
-        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                || grant.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF
-                && support.matchesLandScope(context, grant.scope(), grant.filter())
-                || support.matchesCreatureScope(context, grant.scope(), grant.filter()))
-                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
+        if (support.names(context,
+                StaticEffectSupport.withOwnPermanentsAsOthers(grant.scope()), grant.filter())) {
             accumulator.addKeywords(grant.keywords());
         }
     }

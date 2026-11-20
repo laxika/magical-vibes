@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -19,6 +18,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GrantChosenBasicLandTypeToOwnLandsEffectHandler implements StaticEffectHandlerBean {
 
+    private static final PermanentHasSourceChosenSubtypePredicate CHOSEN_SUBTYPE =
+            new PermanentHasSourceChosenSubtypePredicate();
+
     private final StaticEffectSupport support;
 
     @Override
@@ -29,8 +31,7 @@ public class GrantChosenBasicLandTypeToOwnLandsEffectHandler implements StaticEf
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
-        if (chosenSubtype == null || !support.matchesLandScope(context, GrantScope.OWN_LANDS,
-                new PermanentHasSourceChosenSubtypePredicate())) {
+        if (chosenSubtype == null || !support.names(context, StaticEffectSupport.LANDS_YOU_CONTROL, CHOSEN_SUBTYPE)) {
             return;
         }
 

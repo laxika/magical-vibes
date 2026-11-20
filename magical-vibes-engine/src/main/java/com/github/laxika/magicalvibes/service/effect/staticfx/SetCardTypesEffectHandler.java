@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -22,14 +21,7 @@ public class SetCardTypesEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var set = (SetCardTypesEffect) effect;
-        boolean matches = switch (set.scope()) {
-            case ALL_PERMANENTS -> !context.sourceId().equals(context.target().getId())
-                    && support.matchesStaticFilter(context, context.target(), null);
-            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                    && support.matchesStaticFilter(context, context.target(), null);
-            case SELF -> false;
-            default -> support.matchesCreatureScope(context, set.scope(), null);
-        };
+        boolean matches = support.namesBeyondSource(context, set.scope().subject(), null);
         if (matches) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());

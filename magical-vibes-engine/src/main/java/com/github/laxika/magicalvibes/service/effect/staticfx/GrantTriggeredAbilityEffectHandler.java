@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 
-import java.util.EnumSet;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,9 +21,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBean {
 
-    private static final Set<GrantScope> ATTACHMENT_SCOPES = EnumSet.of(
-            GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
-
     private final StaticEffectSupport support;
 
     @Override
@@ -36,21 +31,7 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantTriggeredAbilityEffect) effect;
-        boolean scopeMatch = switch (grant.scope()) {
-            case ALL_PERMANENTS -> !context.target().getId().equals(context.sourceId())
-                    && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                    && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case SELF -> context.target().getId().equals(context.sourceId())
-                    && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case SELF_AND_PAIRED -> {
-                UUID targetId = context.target().getId();
-                UUID sourceId = context.sourceId();
-                UUID pairedId = context.source().getPairedWithId();
-                yield targetId.equals(sourceId) || (pairedId != null && targetId.equals(pairedId));
-            }
-            default -> support.matchesCreatureScope(context, grant.scope(), grant.filter());
-        };
+        boolean scopeMatch = support.names(context, grant.scope().subject(), grant.filter());
         if (scopeMatch) {
             accumulator.addGrantedEffect(asGrantedByAttachment(asGrantedInstance(grant, context.sourceId()),
                     context.sourceId()));
@@ -65,7 +46,7 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
      */
     private static GrantTriggeredAbilityEffect asGrantedByAttachment(GrantTriggeredAbilityEffect grant,
                                                                      UUID grantingPermanentId) {
-        if (!ATTACHMENT_SCOPES.contains(grant.scope())
+        if (!(grant.scope().subject() instanceof PermanentSubject.Attached)
                 || !(grant.grantedAbility() instanceof TriggeredAbility ability)) {
             return grant;
         }

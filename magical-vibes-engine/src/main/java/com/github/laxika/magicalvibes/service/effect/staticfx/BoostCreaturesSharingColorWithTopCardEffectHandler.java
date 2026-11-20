@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesSharingColorWithTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -32,7 +31,7 @@ public class BoostCreaturesSharingColorWithTopCardEffectHandler implements Stati
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (!support.matchesCreatureScope(context, GrantScope.ALL_OWN_CREATURES, null)) {
+        if (!support.names(context, StaticEffectSupport.CREATURES_YOU_CONTROL, null)) {
             return;
         }
 

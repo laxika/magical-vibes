@@ -34,13 +34,7 @@ public class GrantTriggeredAbilitySelfEffectHandler implements StaticEffectHandl
         var grant = (GrantTriggeredAbilityEffect) effect;
         // "Creatures you control have …" / "all creatures have …" include the source only while it is a creature
         // (an enchantment such as Pendrell Mists doesn't have the ability it grants).
-        boolean applies = switch (grant.scope()) {
-            case SELF, SELF_AND_PAIRED, OWN_PERMANENTS ->
-                    support.matchesStaticFilter(context, context.target(), grant.filter());
-            case ALL_OWN_CREATURES, ALL_CREATURES_INCLUDING_SELF ->
-                    support.matchesCreatureScope(context, grant.scope(), grant.filter());
-            default -> false;
-        };
+        boolean applies = support.names(context, grant.scope().subject(), grant.filter());
         if (applies) {
             accumulator.addGrantedEffect(grant);
         }

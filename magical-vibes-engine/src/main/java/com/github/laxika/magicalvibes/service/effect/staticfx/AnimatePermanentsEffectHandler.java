@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -28,9 +27,8 @@ public class AnimatePermanentsEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var animate = (AnimatePermanentsEffect) effect;
-        if ((animate.scope() != GrantScope.ALL_PERMANENTS
-                && (animate.scope() != GrantScope.OWN_PERMANENTS || !context.targetOnSameBattlefield()))
-                || !support.matchesStaticFilter(context, context.target(), animate.filter())) {
+        if (!support.namesBeyondSource(context,
+                StaticEffectSupport.withAllPermanentsIncludingSource(animate.scope()), animate.filter())) {
             return;
         }
 

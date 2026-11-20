@@ -21,11 +21,7 @@ public class StaticBoostEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
-        boolean applies = switch (boost.scope()) {
-            case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->
-                    support.matchesLandScope(context, boost.scope(), boost.filter());
-            default -> support.matchesCreatureScope(context, boost.scope(), boost.filter());
-        };
+        boolean applies = support.namesBeyondSource(context, boost.scope().subject(), boost.filter());
         if (applies) {
             int multiplier = boost.scalingCounter() == null
                     ? 1

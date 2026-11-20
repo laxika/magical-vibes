@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -25,6 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
 
+    private static final PermanentHasSubtypePredicate SAMURAI = new PermanentHasSubtypePredicate(CardSubtype.SAMURAI);
+
     private final StaticEffectSupport support;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
@@ -36,8 +37,7 @@ public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (!support.matchesCreatureScope(context, GrantScope.OWN_CREATURES,
-                new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))) {
+        if (!support.names(context, StaticEffectSupport.OTHER_CREATURES_YOU_CONTROL, SAMURAI)) {
             return;
         }
         int bushido = bushidoValue(context, context.target());

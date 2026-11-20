@@ -9,6 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -105,6 +113,142 @@ public class SubjectResolutionService {
         requireStatic(subject.needsStackEntry(), subject);
         return players(new Context(gameData, null, null, source,
                 gameQueryService.findPermanentController(gameData, source.getId())), subject);
+    }
+
+    /**
+     * Whether {@code subject}, for a static ability of the context's source, names the context's target and the target
+     * matches {@code filter}: the static entry point asked about one permanent, which is how the layered pass applies a
+     * static ability (it re-evaluates the set on every pass, CR 611.3a). It judges the subject's structure itself (the
+     * source, its attachment, whose battlefield the target is on) and leaves every characteristic to {@code reads},
+     * which answers from the layered pass in progress, so a pass never re-enters itself. It looks nothing up and
+     * allocates nothing.
+     *
+     * @throws IllegalArgumentException for a subject that needs a stack entry
+     * @throws UnsupportedOperationException for a subject with no one-permanent form yet ({@code ownedBy},
+     *                                       {@code attachmentsOf})
+     */
+    public boolean names(StaticEffectContext context, PermanentSubject subject, PermanentPredicate filter,
+                         StaticReads reads) {
+        requireStatic(subject.needsStackEntry(), subject);
+        return namesUnfiltered(context.gameData(), context.source(), context.sourceId(), context.sourceControllerId(),
+                context.targetOnSameBattlefield(), context.target(), subject, reads)
+                && (filter == null || reads.matchesFilter(context, context.target(), filter));
+    }
+
+    /**
+     * {@link #names(StaticEffectContext, PermanentSubject, PermanentPredicate, StaticReads)} with no filter, for a
+     * scan that has no {@link StaticEffectContext} at hand: {@code target} is on the battlefield of
+     * {@code sourceControllerId} exactly when {@code targetOnSourcesBattlefield}.
+     */
+    public boolean names(GameData gameData, Permanent source, UUID sourceControllerId,
+                         boolean targetOnSourcesBattlefield, Permanent target, PermanentSubject subject,
+                         StaticReads reads) {
+        requireStatic(subject.needsStackEntry(), subject);
+        return namesUnfiltered(gameData, source, source.getId(), sourceControllerId, targetOnSourcesBattlefield,
+                target, subject, reads);
+    }
+
+    /**
+     * The characteristics the static membership form reads about the permanent it judges, answered by the static
+     * effect handlers' recursion-safe reads of the layered pass in progress.
+     */
+    public interface StaticReads {
+
+        /** Whether {@code permanent} is a creature as the static pass has it so far. */
+        boolean isCreature(GameData gameData, Permanent permanent);
+
+        /** Whether {@code permanent} matches a single characteristic predicate of a subject's set. */
+        boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf);
+
+        /** Whether {@code permanent} matches an effect's own filter, judged for the context's source. */
+        boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter);
+    }
+
+    private boolean namesUnfiltered(GameData gameData, Permanent source, UUID sourceId, UUID controllerId,
+                                    boolean onSourcesBattlefield, Permanent target, PermanentSubject subject,
+                                    StaticReads reads) {
+        return switch (subject) {
+            case PermanentSubject.Source ignored -> target.getId().equals(sourceId);
+            case PermanentSubject.Attached ignored -> source != null
+                    && target.getId().equals(permanentAttachment(gameData, source));
+            case PermanentSubject.AttachedOrSource ignored -> {
+                if (source == null) {
+                    yield false;
+                }
+                UUID host = permanentAttachment(gameData, source);
+                yield target.getId().equals(host != null ? host : sourceId);
+            }
+            case PermanentSubject.Named named -> target.getId().equals(named.permanentId());
+            case PermanentSubject.ControlledBy controlledBy ->
+                    controlledByIncludes(gameData, source, controllerId, onSourcesBattlefield, target,
+                            controlledBy.players())
+                            && setFilterMatches(gameData, source, sourceId, target, controlledBy.filter(), reads);
+            case PermanentSubject.AllOf allOf -> {
+                for (PermanentSubject part : allOf.subjects()) {
+                    if (namesUnfiltered(gameData, source, sourceId, controllerId, onSourcesBattlefield, target, part,
+                            reads)) {
+                        yield true;
+                    }
+                }
+                yield false;
+            }
+            default -> throw new UnsupportedOperationException(
+                    "No one-permanent static form for " + subject + " yet");
+        };
+    }
+
+    /** Whether {@code target} is on the battlefield of one of the players a static set names. */
+    private boolean controlledByIncludes(GameData gameData, Permanent source, UUID controllerId,
+                                         boolean onSourcesBattlefield, Permanent target, PlayerSubject players) {
+        return switch (players) {
+            case PlayerSubject.You ignored -> onSourcesBattlefield;
+            case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.ALL || !onSourcesBattlefield;
+            case PlayerSubject.EnchantedPlayer ignored -> {
+                List<Permanent> battlefield = source == null || source.getAttachedTo() == null
+                        ? null : gameData.playerBattlefields.get(source.getAttachedTo());
+                yield battlefield != null && battlefield.contains(target);
+            }
+            default -> {
+                if (source == null) {
+                    throw new UnsupportedOperationException("No static form without a source for " + players);
+                }
+                for (UUID playerId : players(new Context(gameData, null, null, source, controllerId), players)) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                    if (battlefield != null && battlefield.contains(target)) {
+                        yield true;
+                    }
+                }
+                yield false;
+            }
+        };
+    }
+
+    /**
+     * A static set's own predicate: the structural parts (the source, its pair, tapped) are judged here, the
+     * characteristic parts by {@code reads}, in the predicate's order.
+     */
+    private static boolean setFilterMatches(GameData gameData, Permanent source, UUID sourceId, Permanent target,
+                                            PermanentPredicate predicate, StaticReads reads) {
+        return switch (predicate) {
+            case null -> true;
+            case PermanentTruePredicate ignored -> true;
+            case PermanentAllOfPredicate allOf -> {
+                for (PermanentPredicate part : allOf.predicates()) {
+                    if (!setFilterMatches(gameData, source, sourceId, target, part, reads)) {
+                        yield false;
+                    }
+                }
+                yield true;
+            }
+            case PermanentNotPredicate not -> !setFilterMatches(gameData, source, sourceId, target, not.predicate(),
+                    reads);
+            case PermanentIsSourcePermanentPredicate ignored -> target.getId().equals(sourceId);
+            case PermanentIsSourceOrPairedPredicate ignored -> target.getId().equals(sourceId)
+                    || source != null && target.getId().equals(source.getPairedWithId());
+            case PermanentIsTappedPredicate ignored -> target.isTapped();
+            case PermanentIsCreaturePredicate ignored -> reads.isCreature(gameData, target);
+            default -> reads.matchesLeaf(target, predicate);
+        };
     }
 
     private static void requireStatic(boolean needsStackEntry, Object subject) {

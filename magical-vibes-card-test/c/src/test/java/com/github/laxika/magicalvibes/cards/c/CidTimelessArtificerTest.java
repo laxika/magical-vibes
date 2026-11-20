@@ -43,6 +43,16 @@ class CidTimelessArtificerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cid, a Human Artificer, doesn't boost itself while it is neither an artifact nor a Hero")
+    void doesNotBoostItselfWhileNotArtifactOrHero() {
+        Permanent cid = harness.addToBattlefieldAndReturn(player1, new CidTimelessArtificer());
+        harness.setGraveyard(player1, List.of(new CidTimelessArtificer()));
+
+        assertThat(gqs.getEffectivePower(gd, cid)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cid)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Cycling Cid draws a card")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new CidTimelessArtificer()));

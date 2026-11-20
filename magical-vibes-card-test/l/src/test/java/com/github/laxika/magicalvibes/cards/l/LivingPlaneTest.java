@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
+import com.github.laxika.magicalvibes.cards.s.SoulSculptor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,8 +17,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LivingPlane.class, Forest.class, Mountain.class, GrizzlyBears.class, GloriousAnthem.class,
-        MishrasFactory.class})
+        MishrasFactory.class, SoulSculptor.class})
 class LivingPlaneTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A land that a later effect makes a non-land is no longer animated")
+    void landThatStopsBeingALandIsNoLongerAnimated() {
+        addCreatureReady(player1, new SoulSculptor());
+        harness.addToBattlefield(player1, new LivingPlane());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isLand(gd, forest)).isFalse();
+        assertThat(gqs.isEnchantment(gd, forest)).isTrue();
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+    }
 
     @Test
     void laterLivingPlaneOverridesEarlierFactoryAnimation() {
