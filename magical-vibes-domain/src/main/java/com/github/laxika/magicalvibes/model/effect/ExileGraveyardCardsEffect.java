@@ -16,9 +16,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code ExileAllOpponentsGraveyardsEffect} (ALL_OPPONENTS).
  *
  * @param count            number of cards to exile (used by OWN and TARGET_CARDS_OPPONENT_GRAVEYARD;
- *                         1 for the single-target card scope, or {@code > 1} for
+ *                         1 for the single-target card scopes, or {@code > 1} for
  *                         TARGET_CARDS_ANY_GRAVEYARD's "up to N target cards from a single
- *                         graveyard" flavour — Rag Dealer; unused for the whole-graveyard scopes).
+ *                         graveyard" flavour — Rag Dealer; the most targets TARGET_CARDS_CONTROLLER_GRAVEYARD
+ *                         takes, {@link Integer#MAX_VALUE} for "any number of target cards from your graveyard";
+ *                         unused for the whole-graveyard scopes).
  *                         Kept as an int — no live card uses a dynamic count here.
  * @param scope            which graveyard(s) are affected and how targets are chosen
  * @param filter           optional type restriction on the cards to exile (null = any card)
@@ -149,9 +151,22 @@ public record ExileGraveyardCardsEffect(
                 filter, false, false, true, null, false);
     }
 
+    /** "Exile any number of target cards from your graveyard. You may play those cards this turn." */
     public static ExileGraveyardCardsEffect targetedFromControllerGraveyardMayPlayThisTurn() {
-        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
-                null, false, false, false, null, true);
+        return new ExileGraveyardCardsEffect(Integer.MAX_VALUE, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                null, false, false, false, null, true, true);
+    }
+
+    /** "Exile target [filter] card from your graveyard", tracked with the source permanent ("exiled with ~"). */
+    public static ExileGraveyardCardsEffect oneTargetFromControllerGraveyardWithSource(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, true, true, false, null, false);
+    }
+
+    /** "Exile up to one target [filter] card from your graveyard", tracked with the source permanent. */
+    public static ExileGraveyardCardsEffect upToOneTargetFromControllerGraveyardWithSource(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, false, true, false, null, false, true);
     }
 
     public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {
@@ -170,9 +185,12 @@ public record ExileGraveyardCardsEffect(
                 null, false, true, false, null, false, true);
     }
 
-    /** Exiles up to any number of source-tracked controller-graveyard cards and marks each with a kick counter. */
+    /**
+     * Exiles any number of source-tracked controller-graveyard cards and marks each with a kick counter; the card's
+     * target group limits how many.
+     */
     public static ExileGraveyardCardsEffect upToControllerGraveyardWithKickCounters(CardPredicate filter) {
-        return new ExileGraveyardCardsEffect(100, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+        return new ExileGraveyardCardsEffect(Integer.MAX_VALUE, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
                 filter, false, true, false, null, false, true, true);
     }
 

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -39,6 +40,8 @@ public class GrenzoHavocRaiser extends Card {
                                         "Target must be a creature defending player controls")),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Exile the top card",
-                                new ExileTopCardOfDamagedPlayerLibraryMayCastThisTurnEffect()))));
+                                new ExileTopCardMayPlayThisTurnEffect(1, false)
+                                        .fromLibraryOf(Subjects.triggeringPlayer())
+                                        .mayOnlyCast().withAnyManaType()))));
     }
 }

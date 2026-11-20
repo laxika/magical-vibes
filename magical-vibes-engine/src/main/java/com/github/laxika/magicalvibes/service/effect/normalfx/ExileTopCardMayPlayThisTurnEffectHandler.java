@@ -1,21 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -27,7 +27,9 @@ import org.springframework.stereotype.Component;
 /**
  * Oracle's Vault: exile the top card of the controller's library; until end of turn the controller
  * may play that card (any type). The free variant additionally lets it be cast without paying its
- * mana cost. Records the {@link StepKind#EXILE} step: the cards exiled and their owner.
+ * mana cost. Another library ("that player exiles the top card of their library", Fallen Shinobi): each player the
+ * effect's {@code library} names exiles from their own, in APNAP order, and the controller may play the cards.
+ * Records the {@link StepKind#EXILE} step: the cards exiled and their owners.
  */
 @Slf4j
 @Component
@@ -39,6 +41,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,9 +52,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileTopCardMayPlayThisTurnEffect exileEffect = (ExileTopCardMayPlayThisTurnEffect) effect;
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
-        boolean withoutPaying = exileEffect.withoutPayingManaCost();
-        UUID controllerId = entry.getControllerId();
-        var source = entry.getSourcePermanentId() == null ? null
+        Permanent source = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
@@ -61,43 +62,57 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         if (count <= 0) {
             return;
         }
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String controllerName = gameData.playerIdToName.get(controllerId);
+        for (UUID libraryOwnerId : subjectResolutionService.players(gameData, entry, effect, exileEffect.library())) {
+            exileFrom(gameData, entry, exileEffect, source, count, libraryOwnerId);
+        }
+    }
+
+    private void exileFrom(GameData gameData, StackEntry entry, ExileTopCardMayPlayThisTurnEffect exileEffect,
+                           Permanent source, int count, UUID libraryOwnerId) {
+        boolean withoutPaying = exileEffect.withoutPayingManaCost();
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        String ownerName = gameData.playerIdToName.get(libraryOwnerId);
 
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData,
-                    GameLog.text(controllerName + "'s library is empty — nothing to exile."));
+                    GameLog.text(ownerName + "'s library is empty — nothing to exile."));
             return;
         }
 
+        String verb = exileEffect.castOnly() ? "cast" : "play";
+        String player = libraryOwnerId.equals(controllerId) ? "" : gameData.playerIdToName.get(controllerId) + " ";
         String playNote = withoutPaying
-                ? " (may play it without paying its mana cost this turn)"
-                : " (may play it this turn)";
+                ? " (" + player + "may " + verb + " it without paying its mana cost this turn)"
+                : " (" + player + "may " + verb + " it this turn)";
 
-        int exiledCount = 0;
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
-            exiledCount++;
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, topCard);
-            entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(topCard.getId()), List.of(controllerId)));
+            exileService.exileCard(gameData, libraryOwnerId, topCard);
+            entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(topCard.getId()), List.of(libraryOwnerId)));
 
-            // Play permission (any card type) expiring at end of turn.
-            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
-            if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
-                gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), controllerId);
-            }
-            boolean freeCast = withoutPaying || exileEffect.freeCastFilter() != null
-                    && predicateEvaluationService.matchesCardPredicate(
-                            topCard, exileEffect.freeCastFilter(), null);
-            if (freeCast) {
-                gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
+            boolean permitted = !exileEffect.castOnly() || !topCard.hasType(CardType.LAND);
+            if (permitted) {
+                // Play permission expiring at end of turn ("you may cast": not for a land card).
+                gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+                if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
+                    gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), controllerId);
+                }
+                boolean freeCast = withoutPaying || exileEffect.freeCastFilter() != null
+                        && predicateEvaluationService.matchesCardPredicate(
+                                topCard, exileEffect.freeCastFilter(), null);
+                if (freeCast) {
+                    gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
+                } else if (exileEffect.anyManaType() && !topCard.hasType(CardType.LAND)) {
+                    gameData.grantExileAnyManaType(topCard.getId(), Duration.UNTIL_END_OF_TURN);
+                }
             }
 
             gameLogService.append(gameData, GameLog.builder()
-                    .text(controllerName + " exiles ").card(topCard)
-                    .text(" from the top of their library" + playNote + ".").build());
+                    .text(ownerName + " exiles ").card(topCard)
+                    .text(" from the top of their library" + (permitted ? playNote : "") + ".").build());
             log.info("Game {} - {} exiles {} from library top (withoutPaying={})",
-                    gameData.id, controllerName, topCard.getName(), withoutPaying);
+                    gameData.id, ownerName, topCard.getName(), withoutPaying);
         }
     }
 }

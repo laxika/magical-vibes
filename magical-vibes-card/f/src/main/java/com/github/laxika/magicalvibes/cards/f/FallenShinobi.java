@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH1", collectorNumber = "199")
@@ -14,7 +15,6 @@ public class FallenShinobi extends Card {
     public FallenShinobi() {
         addNinjutsu("{2}{U}{B}");
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect(
-                        2, true));
+                new ExileTopCardMayPlayThisTurnEffect(2, true).fromLibraryOf(Subjects.triggeringPlayer()));
     }
 }

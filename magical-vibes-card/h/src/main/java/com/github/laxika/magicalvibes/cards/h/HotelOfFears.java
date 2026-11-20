@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -8,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DevotionToChosenColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +34,9 @@ public class HotelOfFears extends Card {
 
     public HotelOfFears() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect());
+                SequenceEffect.of(
+                        new ExileTopCardMayPlayThisTurnEffect(1, false),
+                        new LoseLifeEffect(AmountThisWay.exiledManaValue(), Subjects.you())));
 
         PutCounterOnTargetPermanentEffect counterEffect = new PutCounterOnTargetPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,

@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -36,7 +37,9 @@ public class QuintoriusLoremaster extends Card {
                 List.of(CardSubtype.SPIRIT));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ExileTargetCardFromGraveyardAndCreateTokenEffect(noncreatureNonland, true, spirit, true));
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(noncreatureNonland),
+                        spirit));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

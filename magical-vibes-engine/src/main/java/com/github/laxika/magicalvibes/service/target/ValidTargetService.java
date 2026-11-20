@@ -1144,9 +1144,14 @@ public class ValidTargetService {
             }
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
-                minTargets = 0;
-                maxTargets = validGraveyardCardIds.size();
-                prompt = "Select any number of target cards from your graveyard";
+                int count = graveyardEffect.count();
+                minTargets = graveyardEffect.allowZeroTargets() ? 0
+                        : graveyardEffect.exactTargetCount() ? count : Math.min(1, count);
+                maxTargets = Math.min(count, validGraveyardCardIds.size());
+                prompt = count == Integer.MAX_VALUE ? "Select any number of target cards from your graveyard"
+                        : graveyardEffect.allowZeroTargets()
+                        ? "Select up to " + count + " target cards from your graveyard"
+                        : "Select " + count + " target cards from your graveyard";
                 break;
             }
             // "Exile up to N target cards from a single graveyard" (Rag Dealer): "up to" allows zero

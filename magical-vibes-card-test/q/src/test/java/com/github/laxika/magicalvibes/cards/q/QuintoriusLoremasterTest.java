@@ -37,6 +37,8 @@ class QuintoriusLoremasterTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(shock.getId());
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
 
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();

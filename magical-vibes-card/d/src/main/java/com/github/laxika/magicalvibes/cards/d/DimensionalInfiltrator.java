@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,10 +25,12 @@ public class DimensionalInfiltrator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{C}",
-                List.of(new ExileTopCardOfTargetPlayerLibraryEffect(
-                        0,
-                        new MayEffect(ReturnToHandEffect.self(),
-                                "Return Dimensional Infiltrator to its owner's hand?"))),
+                List.of(
+                        ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer()),
+                        new ConditionalEffect(
+                                HappenedThisWay.toACard(StepKind.EXILE, new CardTypePredicate(CardType.LAND)),
+                                new MayEffect(ReturnToHandEffect.self(),
+                                        "Return Dimensional Infiltrator to its owner's hand?"))),
                 "{1}{C}: Target opponent exiles the top card of their library. If it's a land card, you may return this creature to its owner's hand.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

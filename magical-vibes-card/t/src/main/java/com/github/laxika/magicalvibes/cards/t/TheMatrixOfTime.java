@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithPlanarSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibraryWithPlanarSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class TheMatrixOfTime extends Card {
         // owner loses 3 life and exiles the top card of their library.
         CardEffect playedCardFollowUp = SequenceEffect.of(
                 new LoseLifeEffect(3, Subjects.ownerOf(Subjects.triggeringCard())),
-                ExileTopCardOfTriggeringPlayerLibraryEffect.ofTriggeringCardOwner());
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.ownerOf(Subjects.triggeringCard())));
         addTrigger(Triggers.youCastSpell().exiledWithThis(), playedCardFollowUp);
         addTrigger(Triggers.youPlayLand().exiledWithThis(), playedCardFollowUp);
         addTrigger(Triggers.chaosEnsues(), CreateTokenEffect.ofTreasureToken(2));

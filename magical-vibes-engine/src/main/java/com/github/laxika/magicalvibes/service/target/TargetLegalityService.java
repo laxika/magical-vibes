@@ -415,8 +415,7 @@ public class TargetLegalityService {
                     effect instanceof TargetedGraveyardCardsEffect
                             || effect instanceof ExileCardsFromGraveyardEffect
                             || effect instanceof ExileGraveyardCardsEffect graveyardEffect
-                            && (graveyardEffect.allowZeroTargets()
-                            || graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
+                            && graveyardEffect.allowZeroTargets()
                             || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                             && returnEffect.minTargets() == 0
                             || effect instanceof ReturnCardFromGraveyardEffect returnEffect
@@ -555,6 +554,12 @@ public class TargetLegalityService {
             }
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+                if (targetCardIds.size() > graveyardEffect.count()) {
+                    throw new IllegalStateException("Cannot target more than " + graveyardEffect.count() + " cards");
+                }
+                if (graveyardEffect.exactTargetCount() && targetCardIds.size() != graveyardEffect.count()) {
+                    throw new IllegalStateException("Must select exactly " + graveyardEffect.count() + " target cards");
+                }
                 if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
                     throw new IllegalStateException("Cannot target the same card twice");
                 }

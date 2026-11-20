@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -315,6 +316,56 @@ class StepResultsTest extends BaseCardTest {
             assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).playerIds()).containsExactly(player1.getId());
             assertThat(gd.getLife(player1.getId())).isEqualTo(26);
             assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        }
+
+        @Test
+        @DisplayName("Daxos of Meletis: \"that player\" exiles their top card; its owner is recorded and only you may cast it")
+        void anotherPlayersLibraryExileRecordsTheOwnerAndGrantsTheController() {
+            Card giant = new HillGiant();
+            harness.setLibrary(player2, List.of(giant));
+
+            StackEntry entry = resolve(player1, player2.getId(), null,
+                    new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer())
+                            .mayOnlyCast().withAnyManaType(),
+                    new GainLifeEffect(AmountThisWay.exiledManaValue(), Subjects.you()));
+
+            StepOutcome exiled = entry.getResolutionResults().outcome(StepKind.EXILE);
+            assertThat(exiled.objectIds()).containsExactly(giant.getId());
+            assertThat(exiled.playerIds()).containsExactly(player2.getId());
+            assertThat(gd.exilePlayPermissionHolder(giant.getId())).isEqualTo(player1.getId());
+            assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        }
+
+        @Test
+        @DisplayName("A land card exiled by a \"you may cast that card\" step gets no permission and gives no life")
+        void castOnlyLibraryExileGivesALandNoPermission() {
+            Card forest = new Forest();
+            harness.setLibrary(player2, List.of(forest));
+
+            resolve(player1, player2.getId(), null,
+                    new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer())
+                            .mayOnlyCast(),
+                    new GainLifeEffect(AmountThisWay.exiledManaValue(), Subjects.you()));
+
+            assertThat(gd.findExiledCard(forest.getId())).isNotNull();
+            assertThat(gd.exilePlayPermission(forest.getId())).isEmpty();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("Scrib Nibblers: target player's top card exiled this way is judged as a land card by its owner's step")
+        void targetPlayersLibraryExileIsJudgedByType() {
+            Card forest = new Forest();
+            harness.setLibrary(player2, List.of(forest));
+
+            StackEntry entry = resolve(player1, player2.getId(), null,
+                    ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer()),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.EXILE, landCard), new GainLifeEffect(1)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).playerIds())
+                    .containsExactly(player2.getId());
+            assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
         }
 
         @Test

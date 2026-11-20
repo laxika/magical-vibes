@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
@@ -138,12 +137,9 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileGraveyardCardsEffect exile) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope != null) {
-                boolean anyNumber = exile.scope()
-                        == com.github.laxika.magicalvibes.model.effect.GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD;
-                int minTargets = exile.allowZeroTargets() || anyNumber ? 0
+                int minTargets = exile.allowZeroTargets() ? 0
                         : exile.exactTargetCount() ? exile.count() : Math.min(1, exile.count());
-                int maxTargets = anyNumber ? Integer.MAX_VALUE : exile.count();
-                return new Target(exile.filter(), scope, "to exile", maxTargets, minTargets);
+                return new Target(exile.filter(), scope, "to exile", exile.count(), minTargets);
             }
         }
         if (effect instanceof ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect) {
@@ -156,9 +152,6 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
             return new Target(imprint.filter(), imprint.scope(), "to exile", 1, imprint.upToOne() ? 0 : 1);
-        }
-        if (effect instanceof ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect exileThen) {
-            return new Target(exileThen.filter(), exileThen.scope(), "to exile", 1, 0);
         }
         if (effect instanceof ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect discovery) {
             return new Target(discovery.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,

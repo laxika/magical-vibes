@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 9 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 10 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -528,6 +528,7 @@ cause under Findings.
 | 7 | the chosen sacrifice's last-known stats: `SacrificePermanentsEffect` records `DepartureResult`s; `SacrificePermanentThenEffect`'s cards, Disciple of Bolas, Rupture, the Tribute to Hunger record | done (3 records split, 2 amounts absorbed into `AmountThisWay`; 111 of `SacrificePermanentThenEffect`'s 121 cards split, 10 kept; 10 "If you do" cards fixed from reflexive by Oracle text) |
 | 8 | `--unaudited --family Exile` restricted to `Then` / `And` / `IfYouDo` / `Unless` names: the permanent exiles whose first half is `ExileTargetPermanentEffect` | done (6 split, 2 absorbed, 2 survivors, 10 blocked-other, 2 blocked-step-model, 3 unique; 9 cards rewritten; `ManifestTopCardEffect` and `CloakTopCardOfControllerLibraryEffect` take a `PlayerSubject`) |
 | 9 | run 8's prerequisite: graveyard and library exiles record an EXILE step; the fused Exile records that unblocks (graveyard target, source card, top of library) and the Swords family's one-target cards | done (11 split, 1 amount absorbed, 7 survivors, 2 blocked-other, 4 blocked-step-model, 1 unique; 37 cards rewritten; `HappenedThisWay.toACard` and `AmountThisWay.exiled*`) |
+| 10 | run 9's next prerequisites: a count-honouring controller-graveyard target (Quintorius, Loremaster; Nyla), a `PlayerSubject` for whose library the two library-exile primitives take, and the "that player / target opponent exiles the top card, you may play it" records that unblocks | done (5 split, 5 absorbed, 3 survivors, 1 blocked-other, item 3 not started; 16 cards rewritten; `fromLibraryOf`, `mayOnlyCast`, `withAnyManaType`) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4030,6 +4031,91 @@ modules `a b c d e f g h i k l m p r s shared t v` compile.
   exile primitive with a `PlayerSubject` for whose library, then record and split like Hidetsugu; (3) the choose-at-resolution graveyard
   and hand exiles need a recording choice primitive (pause at the end of the step, as `DiscardEffect` does) before their fused records
   split; (4) Luminate Primordial needs a per-object amount.
+
+### Step 8, run 10 (2026-11-20)
+
+Run 9's next prerequisites for the Exile family (items 1 and 2 of its "Next for Exile"). Verdicts (ledger, step `8`): **split 5**
+(`ExileTargetCardFromGraveyardAndCreateTokenEffect`, `ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect`,
+`ExileTopCardOfDamagedPlayerLibraryGainLifeAndMayCastThisTurnEffect`, `ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect`,
+`ExileTopCardOfTargetPlayerLibraryEffect`), **absorbed 5** (`ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffect`,
+`ExileTopCardsOfTargetPlayerControllerMayPlayThisTurnEffect`, `ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerCastPermissionUntilEndOfTurnEffect`,
+`ExileTopCardOfDamagedPlayerLibraryMayCastThisTurnEffect`, `ExileTopCardOfTriggeringPlayerLibraryEffect`), with their handlers; **survivor 3**
+(`ExileGraveyardCardsEffect`, `ExileTopCardMayPlayThisTurnEffect`, `ExileTopCardOfOwnLibraryEffect`); **blocked-other 1**
+(`ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect`, Curse of Hospitality only). Ratchet 4,801 /
+4,034 → 4,791 / 4,024. 16 card files rewritten (a deleted scratch script plus Quintorius and Nyla by hand); Oracle text of each checked with
+`get_card`, rulings of Quintorius, Nyla, Daxos, Ragavan, Fallen Shinobi, Scrib Nibblers and Dimensional Infiltrator with `get_rulings`. CR 608.2b
+and 109.5 checked with `get_rule` (2026-11-20).
+
+- **Controller-graveyard target honours its count.** `ExileGraveyardCardsEffect.TARGET_CARDS_CONTROLLER_GRAVEYARD` meant "any number of target
+  cards" in `GraveyardTargetingSupport`, `ValidTargetService` (activated-ability prompt) and `TargetLegalityService` (zero targets always
+  allowed, no upper bound). It now reads `count`, `exactTargetCount` and `allowZeroTargets` like the other target scopes; "any number" is
+  `count = Integer.MAX_VALUE` with `allowZeroTargets` (Quintorius Kand's −6, Zethi's kick-counter exile, whose target group still caps it).
+  `GraveyardTargetValidators` was already count-free. New factories `oneTargetFromControllerGraveyardWithSource(filter)` and
+  `upToOneTargetFromControllerGraveyardWithSource(filter)`. Cast-time prompts unchanged: Quintorius's end-step trigger still asks exactly one
+  noncreature, nonland card of your graveyard (min 1, max 1), Nyla's up to one creature card (min 0, max 1); both tests now assert min and max,
+  the Kand and Zethi tests pass unchanged.
+- **Split, graveyard.** Quintorius, Loremaster: `SequenceEffect.of(oneTarget…(noncreature nonland), Spirit token)`, ungated ("Create", no "if";
+  its ruling and CR 608.2b: an illegal only target makes the ability not resolve, so no token). Nyla: `SequenceEffect.of(upToOne…(creature),
+  ConditionalEffect(HappenedThisWay.exiled(), lose life + Clues of AmountThisWay.exiledManaValue()))`, replacing the handler's `eventValue`.
+- **Library subject.** `ExileTopCardMayPlayThisTurnEffect` gained `PlayerSubject library` (`fromLibraryOf`, default `you()`), `castOnly`
+  (`mayOnlyCast()`: "you may cast that card", a land gets no permission) and `anyManaType` (`withAnyManaType()`: any-type spending for nonland
+  cards); `ExileTopCardOfOwnLibraryEffect` gained `PlayerSubject player` (`of(player)`). Each named player exiles from their own library in
+  APNAP order through `SubjectResolutionService`, the controller gets the permission, and the EXILE step records the cards with their
+  owners. `targetPlayer()` declares a harmful player target (the old records: Korvold, Thought Harvester, Scrib Nibblers, Dimensional
+  Infiltrator harmful; Knacksaw Clique / Ornate Kanzashi benign; harmful is checked only for permanent targets and in the AI's player ranking,
+  and the cards' opponent target filters leave one legal player, so the legal targets and choices are unchanged).
+- **Rewritten cards.** Absorbed: Knacksaw Clique, Ornate Kanzashi (`targetPlayer()`), Korvold and the Noble Thief (3 cards), Fallen Shinobi
+  (2, free, `triggeringPlayer()`), Breeches (`withAnyManaType()`), Ragavan (`mayOnlyCast()`), Grenzo's mode (both), Fathom Feeder
+  (`ExileTopCardOfOwnLibraryEffect.of(triggeringPlayer())`), The Matrix of Time (`of(ownerOf(triggeringCard()))`, the subject its life loss
+  already used). Split: Daxos (the exile, then `GainLifeEffect(exiledManaValue(), you())`; a land gives 0 life, as its ruling says), Hotel of
+  Fears (`ExileTopCardMayPlayThisTurnEffect` then `LoseLifeEffect(exiledManaValue(), you())`), Scrib Nibblers and Dimensional Infiltrator
+  (the exile, then `ConditionalEffect(HappenedThisWay.toACard(EXILE, land card), …)`), Thought Harvester (the exile alone).
+- **Behaviour changes.** The damaged-player records gave the permission to the triggering creature's current controller; Fallen Shinobi,
+  Breeches, Ragavan, Grenzo and Daxos say "you", the ability's controller as it triggered (CR 109.5): the same player unless control
+  changed in between. Hotel of Fears' Lich's-Duel-Mastery-style life-loss question is now asked by the life-loss step after the exile, not
+  before it (the exile is an earlier finished step, so nothing is redone). Log lines of another player's library exile are the survivor's
+  ("<owner> exiles <card> from the top of their library (<controller> may play it this turn)."); the old Grenzo/Daxos "cannot cast it" line
+  is gone. `ExileTopCardOfTargetPlayerLibraryEffect`'s fallback to the controller's library with no target is gone (it always declared one).
+- **Blocked.** Curse of Hospitality: "that creature's controller may play that card" needs a who-may-play subject on the primitive that no
+  other card sets, so the record stays with one card (its `count` / `withoutPayingManaCost` components now have no other user).
+- **Item 3 not started** (the recording choose-a-card exile primitive): see "For later runs".
+- **AI.** No AI class named a deleted record. `TargetPolarityGuardTest` and `AiTargetSelectorTest` pass. Scrib Nibblers' land rider is now a
+  `GainLifeEffect` step the evaluators see on its own.
+
+**Tests** (one Gradle run, one `--tests` list per task): the tests of the 16 rewritten cards and of Curse of Hospitality, Quintorius Kand,
+Zethi, Oracle's Vault, Rona and Precognition Field, `--tests-for ExileTopCardMayPlayThisTurnEffect ExileTopCardOfOwnLibraryEffect
+ExileGraveyardCardsEffect --max-per-class 12`, application (`StepResultsTest` +3: another player's library exile records its owner and gives
+the controller the permission, a cast-only land gets none, a target player's land card judged by `toACard`; `ExileGraveyardCardsEffectHandlerTest`,
+`TargetLegalityServiceTest`, `ValidTargetServiceTest`, `GraveyardTargetingServiceTest`, `SubjectResolutionServiceTest`,
+`TriggeredAbilityStackServiceTest`, `StepTriggerServiceTest`, `MayEffectHandlerTest`, `EtbTriggerServiceTest`,
+`ActivatedAbilityExecutionServiceTest`, `CardImmutabilityArchTest`, `EffectCountRatchetTest`), AI (`TargetPolarityGuardTest`,
+`AiTargetSelectorTest`): 66 top-level classes, 1,128 test cases (plus their `@Nested` suites), all pass; `EffectCountRatchetTest` again after
+the baseline change, passes. Nyla's test gained `@DisplayName`s and two cases (a target that left the graveyard gives no life loss or Clues;
+the trigger can't target an opponent's graveyard). Application, AI, engine testFixtures and card-test `b c d f g h k n o q r s t z` test sources
+compile.
+
+**For later runs.**
+
+- "That player / target opponent exiles the top N cards of their library. You may play / cast them this turn" is
+  `ExileTopCardMayPlayThisTurnEffect(...).fromLibraryOf(subject)` (+ `mayOnlyCast()`, `withAnyManaType()`); "… exiles the top card of their
+  library" without a permission is `ExileTopCardOfOwnLibraryEffect.of(subject)`. Their riders read `AmountThisWay.exiled*()` /
+  `HappenedThisWay.toACard(EXILE, …)` like Hidetsugu. Candidates left in the library family: `ExileTopCardsOfEachOpponentEffect` (Fathom
+  Feeder's activated ability: `of(eachOpponent())` if its handler has nothing more), `ExileTopCardOfRandomOpponentLibrary…` (random opponent
+  and source tracking: no subject), `ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrantPlayPermissionEffect` (face down,
+  permission while exiled), `ExileTopCardOfAttackingPlayerLibrary…` (permission while exiled), `ExileTopCardsOfTargetPlayerMayPlayForLife…`,
+  `ExileTopCardLoseLifeEqualToManaValueAndMayCastInstantOrSorceryEffect` (Hidetsugu and Kairi: target opponent loses life, free cast of an
+  instant or sorcery), `ExileTopCardsMayPlay…AndCreateTokens…`. A "until your next turn" / "while exiled" duration on the primitive would
+  absorb several of them; check each handler first.
+- Item 3, the recording choose-a-card exile (`ExileOwnGraveyardCardThenEffect` 5 cards, `ExileCardFromGraveyardThenEffect` 2,
+  `ExileNCardsFromGraveyardThenEffect` 4, `ExileOwnGraveyardCardThenCreateTokenEffect` 2): `ExileGraveyardCardsEffect.OWN` already pauses on
+  `GraveyardReturnSupport.beginGraveyardExileChoice`, whose `GraveyardChoiceHandlerService` EXILE completion exiles one card at a time and
+  resumes the parked entry (it also carries a bespoke `afterExileEffects` "if you do" continuation). The primitive needs: the completion
+  adding each exiled card to the parked entry's EXILE outcome (`addToStep`, as `DiscardEffect`'s prompt does) so the step ends with its result
+  recorded; `resolveOwn` honouring `filter` (it ignores it today) and offering only matching cards; a "you may" form that asks even when the
+  graveyard has no more cards than the count; source tracking on the chosen path; and for "exile N … When you do" a gate
+  `HappenedThisWay.atLeast(EXILE, N)`. Decide first whether the optional "may" is `allowZeroTargets` on the OWN scope or a `MayEffect`
+  around it (the record's Javadoc says the 'If you do' riders must not see a declined choice). Luminate Primordial still needs a per-object
+  amount.
 
 ## Prompt
 
