@@ -266,6 +266,15 @@ public final class Subjects {
     }
 
     /**
+     * {@link #cardsThisWay(StepKind)} narrowed to the cards matching {@code filter} as they are now: "that card" after
+     * "exile cards from the top of your library until you exile a nonland card" is
+     * {@code cardsThisWay(EXILE, nonland)}. A step result.
+     */
+    public static CardSubject cardsThisWay(StepKind kind, CardPredicate filter) {
+        return new CardSubject.CardsThisWay(kind, filter);
+    }
+
+    /**
      * "Target [filter] card in your graveyard / in a graveyard": the effect's card target in a graveyard of
      * {@code scope}; the effect reading it declares the target.
      */

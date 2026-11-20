@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandMayCastWithoutPayingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastDiscardedCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -27,7 +29,8 @@ public class NicoMinoruRunaway extends Card {
                 "{2}{R}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new ExileTopUntilNonlandMayCastWithoutPayingManaEffect()
+                        ExileCardsFromTopUntilEffect.untilNonland(Subjects.you()),
+                        new MayCastDiscardedCardWithoutPayingManaCostEffect(Subjects.cardsThisWay(StepKind.EXILE))
                 ),
                 "{2}{R}, {T}, Discard a card: Exile cards from the top of your library until you exile a nonland card. You may cast that card without paying its mana cost."
         ));

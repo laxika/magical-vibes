@@ -140,7 +140,12 @@ public class SubjectResolutionService {
     public List<LocatedCard> locatedCards(GameData gameData, StackEntry entry, CardEffect effect,
                                           CardSubject subject) {
         return switch (subject) {
-            case CardSubject.CardsThisWay thisWay -> cardsThisWay(gameData, entry, thisWay.kind());
+            case CardSubject.CardsThisWay thisWay -> thisWay.filter() == null
+                    ? cardsThisWay(gameData, entry, thisWay.kind())
+                    : cardsThisWay(gameData, entry, thisWay.kind()).stream()
+                    .filter(located -> predicateEvaluationService.matchesCardPredicate(located.card(),
+                            thisWay.filter(), entry.getCard().getId(), gameData, located.ownerId()))
+                    .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
         };
     }
@@ -182,7 +187,8 @@ public class SubjectResolutionService {
     /**
      * {@link CardSubject.CardsThisWay}: for each object the step recorded, the card it became in the zone the step put
      * it in ({@link StepOutcome#movedCards()}); an exiled card that kept its id is looked for in exile, a discarded card
-     * in its graveyard, else in exile where a replacement put it. Only a card still in that zone is named.
+     * in its graveyard, else in exile where a replacement put it. Only a card still in that zone is named; the subject's
+     * filter, when it has one, is then judged on each card as it is there.
      */
     private List<LocatedCard> cardsThisWay(GameData gameData, StackEntry entry, StepKind kind) {
         StepOutcome outcome = entry.getResolutionResults().outcome(kind);

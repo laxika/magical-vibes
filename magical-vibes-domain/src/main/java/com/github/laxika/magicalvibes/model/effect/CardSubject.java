@@ -33,8 +33,18 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * the card the countered spell became in its graveyard or in exile (a copy, an ability or a card put into a hidden
      * zone becomes none). The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has
      * left that zone since is a new object and is not named.
+     *
+     * <p>With a {@code filter}, only the cards matching it as they are now: "that card" after "exile cards from the top
+     * of your library until you exile a nonland card" is the one nonland card among them.
+     *
+     * @param kind   the step kind whose most recent step is read
+     * @param filter which of the moved cards are named; {@code null} for all of them
      */
-    record CardsThisWay(StepKind kind) implements CardSubject {
+    record CardsThisWay(StepKind kind, CardPredicate filter) implements CardSubject {
+
+        public CardsThisWay(StepKind kind) {
+            this(kind, null);
+        }
 
         public CardsThisWay {
             Objects.requireNonNull(kind, "kind");

@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileRandomCreatureCardFromDamagedPlayerLibraryAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -35,6 +39,9 @@ public class FearOfRidicule extends Card {
                 false, false, false, false, false, false, null, Set.of()).withReplacedCardTypes();
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(enchantmentCreature),
                 TriggerOptions.ONE_OR_MORE,
-                new ExileRandomCreatureCardFromDamagedPlayerLibraryAndCreateTokenCopyEffect(tokenCopy));
+                SequenceEffect.of(
+                        ExileCardAtRandomEffect.fromLibrary(Subjects.triggeringPlayer(),
+                                new CardTypePredicate(CardType.CREATURE)),
+                        CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE), tokenCopy)));
     }
 }

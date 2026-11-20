@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 and 2 done: Exile, 40 and 22 audited) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 3 done: Exile, 40, 22 and 42 audited) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -169,7 +169,7 @@ card it moved to a public zone, CR 400.7j). Variants:
 
 | Variant | Meaning |
 |---|---|
-| `cardsThisWay(StepKind)` | the cards the most recent step of that kind of the same resolution moved: `EXILE` the exiled cards in exile; `DESTROY` / `SACRIFICE` the card each removed permanent became in the zone it went to (`StepOutcome.movedCards`, recorded by the departure results and the destroy / exile handlers); `DISCARD` the discarded cards in the graveyard, or in exile where a replacement put them; `COUNTER_SPELL` (run 27) the countered spell's card in its graveyard or exile |
+| `cardsThisWay(StepKind)` | the cards the most recent step of that kind of the same resolution moved: `EXILE` the exiled cards in exile; `DESTROY` / `SACRIFICE` the card each removed permanent became in the zone it went to (`StepOutcome.movedCards`, recorded by the departure results and the destroy / exile handlers); `DISCARD` the discarded cards in the graveyard, or in exile where a replacement put them; `COUNTER_SPELL` (run 27) the countered spell's card in its graveyard or exile; `cardsThisWay(kind, filter)` (step 9 run 3) only those matching the filter as they are now |
 | `targetCard(filter, scope)` | the effect's graveyard card target, declared by the effect reading it (added in run 23 for Feldon of the Third Path's copy without exiling) |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)` (the token-copy step), `ReturnCardFromGraveyardEffect.returnAll(true).cards(...)`
@@ -607,6 +607,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 |---|---|---|
 | 1 | Exile: the five `step-9` hand-offs and the records used by one or two cards (the two-card ones, then their one-card siblings) | done (40 audited: 5 absorbed, 4 split, 5 survivors (one new step record), 9 unique, 17 blocked-other; 21 card files rewritten; `ExileTargetPlayerHandEffect` takes a `PlayerSubject`, `ExileUpToOneCardFromGraveyardEffect.withSource()`, `PutTimeCountersAndGainSuspendEffect`; two `step-9` rows left for run 2) |
 | 2 | Exile: the graveyard last-known P/T bug, the until-source-leaves family with the Detention Sphere `step-9` row, a timed permission step over a `CardSubject` and the records it splits | done (22 audited: 3 absorbed, 7 split, 5 survivors (one new step record), 7 blocked-other; 19 card files rewritten; graveyard exile steps record `StepOutcome.lastKnownCards`, `AmountThisWay.keepingNegative()`, `ExileTargetPermanentUntilSourceLeavesEffect` takes a `PermanentSubject`, `AllowPlayCardsFromExileEffect`; Glorious Protector's simultaneous return fixed; random / exile-until steps and the cast-copies `step-9` row not reached) |
+| 3 | Exile: the random-card exile step and the exile-until step with the records they split, the `AllowPlayCardsFromExileEffect` rider rows (Suspend Aggression, Mnemonic Betrayal), the cast-copies `step-9` row, the top-card permission records | done (42 audited: 2 absorbed, 15 split, 2 survivors (two new step records), 17 blocked-other, 7 unique; 21 card files rewritten; `ExileCardAtRandomEffect`, `ExileCardsFromTopUntilEffect`, `cardsThisWay(kind, filter)`; no `AllowPlayCardsFromExileEffect` rider added (each had one user); the cast-copies row ledgered blocked-other) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6126,6 +6127,83 @@ engine testFixtures and card-test `d g k l m n p r s t v` test sources compile.
 - The exile-until step recording the card it stops on (the five exile-until-nonland records), then `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect`
   (`step-9`: "cast the copy if able" and the random single copy on `CopyImprintedCardAndMayCastCopyEffect`).
 - Then the rest of the 227 tail records, two-card ones first.
+
+### Step 9, run 3 (2026-11-20)
+
+Family Exile, continued: the random-card exile step and the exile-until step run 2 named, with the records they split; the
+`AllowPlayCardsFromExileEffect` rider rows (Suspend Aggression's owner as holder, Mnemonic Betrayal's cast-only) checked against the
+guard rail; the cast-copies `step-9` row; the rest of the random and exile-until records and the top-card permission records used by
+fewer than three cards. Ratchet 4,683 / 3,912 → 4,670 / 3,899 records / handlers (15 records and handlers deleted, 2 added). 21 card
+files rewritten by hand (diffs read back by eye). Oracle text checked with `get_card` for every card rewritten or ledgered (Tersa
+Lightshatter, Advanced Reconstruction, Elkin Lair, Tempest Trapper, Rahilda, Kamachal, Radiant Scrollwielder, Wondrous Crucible, Sin,
+Fear of Ridicule, Capricious Hellraiser, Power Pack, Suspend Aggression, Mnemonic Betrayal, the exile-until cards, Umbris, Bismuth
+Mindrender, Krang & Shredder, The Day of the Doctor, Solstice Revelations, Flameshape, Possibility Technician, Lightning, Voltaic
+Visionary); no ruling was needed beyond the Oracle text. CR 400.7 and 608.2h checked with `get_rule` (2026-11-20).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Exile | 42 (40 classes, 2 of them re-ledgered rider rows, + 2 new step records) | 2 | 15 | 2 (both new step records) | 17 blocked-other: 4 a permission rider only one card would set (Rahilda's play condition, Elkin Lair's / Suspend Aggression's holder, Mnemonic Betrayal's cast-only and end-step return), 3 no step for "if you don't cast it, put it into your hand" / "onto the battlefield or into your hand" over a card subject (Breaching Dragonstorm and Bre, Solstice Revelations, Ketria and Illuna), 3 a source-linked library exile (Krang & Shredder, Voltaic Visionary, Pick Up the Pace), 1 each: Storm of Memories' exile-instead on the cast-now step, Power Pack's random target and next-upkeep cast, Capricious Hellraiser's choose-among, Planeswalker's Mischief's reveal, Auspicious Starrix's count-until and battlefield step, Bismuth Mindrender's cast-now-for-life, The Day of the Doctor's bottom-random rest, the cast-copies `step-9` row | 7 | 233 records (200 used by fewer than three cards); no `step-9` Exile row left |
+
+- **A random-card exile step.** New `ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter)` (`fromGraveyard` /
+  `fromLibrary`; the player is named without a target, in APNAP order; the filter is judged with the trigger's event value, so
+  Kamachal's "mana value equal to the damage dealt" is `CardManaValueEqualsEventValuePredicate`; a graveyard card is recorded with its
+  last-known stats as run 2's graveyard steps are, CR 608.2h). It records EXILE and never prompts. Split onto it: Tersa Lightshatter and
+  Advanced Reconstruction (+ `AllowPlayCardsFromExileEffect.thisTurn`), Tempest Trapper (`.withoutPayingManaCost()`), Kamachal, Radiant
+  Scrollwielder (instant or sorcery, `.exilingInsteadOfGraveyard()`), Wondrous Crucible (+ `CopyImprintedCardAndMayCastCopyEffect.of`: the
+  copy is now cast as part of the resolution, as run 24's copy cards are, not through a parked may-ability) and Fear of Ridicule (+
+  `CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE), options)`). A hand zone was not added: its two users (Elkin Lair, Planeswalker's
+  Mischief) stay blocked for other reasons.
+- **An exile-until step.** New `ExileCardsFromTopUntilEffect(PlayerSubject library, CardPredicate until)` (`untilNonland(library)`,
+  `NONLAND`; `targetPlayer()` declares the harmful player target the old records declared): each card is its own zone change, every
+  exiled card is recorded on the EXILE step. "That card" is the new filtered card subject `cardsThisWay(EXILE, filter)` (a
+  `CardSubject.CardsThisWay` component, resolved by `SubjectResolutionService` on the cards as they are now): only the card that matched,
+  since no earlier card did. Split onto it: Territorial Bruntar (`thisTurn`; new `TerritorialBruntarTest` case: a land exiled before the
+  nonland card gets no permission), Stolen Goods and Nicol Bolas +2 (`thisTurn(...).withoutPayingManaCost()`), Kang Prime and The Tenth
+  Doctor (`PutTimeCountersAndGainSuspendEffect`), Wanda's Vision, Nico Minoru and No Secret Is Hidden from Me
+  (`MayCastDiscardedCardWithoutPayingManaCostEffect(cardsThisWay(EXILE))`, which skips land cards; No Secret's spell is now flat effects
+  plus the repeat `ConditionalEffect(..., SequenceEffect.of(exile, cast))`), Undying Flames (`DealDamageToAnyTargetEffect(AmountThisWay
+  .exiledManaValue())`: the lands before the nonland card have mana value 0). Umbris's until-land record is absorbed
+  (`new ExileCardsFromTopUntilEffect(targetPlayer(), land)`). The AI's `TargetPolarityClassifier` entry for Undying Flames' record is gone
+  (its damage effect is classified already).
+- **Top-card permissions.** `ExileTopCardMayPlayWhileControllingSubtypeEffect` (Flameshape, Possibility Technician) is
+  `ExileTopCardMayPlayThisTurnEffect(n, false)[.exiledFaceDown()].until(PERMANENT).playableOnlyIf(ControlsPermanent(subtype))`; Flameshape's
+  controller may now look at its face-down cards ("Look at the top two cards of your library and exile them face down"; the old handler
+  granted no look permission). Lightning, Security Sergeant = `ExileTopCardOfOwnLibraryEffect.of(you())` +
+  `AllowPlayCardsFromExileEffect.whileYouControlSource(cardsThisWay(EXILE))` (the exile's source link, which nothing read, is gone).
+- **The `AllowPlayCardsFromExileEffect` riders were not added.** A holder subject has two users with two meanings (Elkin Lair's "that
+  player", Suspend Aggression's "its owner" per card); cast-only is needed only by Mnemonic Betrayal once the exile-until cards name the
+  nonland card with the filtered subject; a play condition only by Rahilda (Pick Up the Pace shares it but also needs a source-linked
+  exile); the next-end-step "put the cards still exiled into their graveyards" by Mnemonic Betrayal and Elkin Lair, both still blocked.
+  Each stays a rider only one card would set (guard rail).
+- **The cast-copies `step-9` row** stays: "cast the copy if able" with the order choice (Spelltwine, CR 608.2g is in its handler) and the
+  random single copy (Mysterious Stranger) are one card each; Arcane Proxy alone would split.
+- Logs: the new steps' lines ("P exiles X at random from their graveyard.", "P exiles N card(s) from the top of their library until X.")
+  replace the fused records' lines and play notes; the may-cast prompts are `MayCastDiscardedCardWithoutPayingManaCostEffect`'s. No test
+  asserted the old lines.
+
+**Tests** (one Gradle run, one `--tests` list per task, counted by XML file name): the 21 rewritten cards and every card test
+constructing one of them (the helper sweep: Chandra's Defeat, Clara Oswald, Dark Intimations, Fervent Paincaster, Gallifrey Stands,
+Inferno Jet, Liliana's Defeat, Manticore Eternal, Neheb the Eternal, Open Fire, Overwhelming Splendor, Samut the Tested, The Day of the
+Doctor, The Eleventh Hour, The Five Doctors, The Girl in the Fireplace, Time Beetle, Time Lord Regeneration, Trenzalore Clocktower, Twice
+Upon a Time, Wall of Forgotten Pharaohs, Warmaker Gunship, Zealot of the God-Pharaoh), `--tests-for` `AllowPlayCardsFromExileEffect`,
+`MayCastDiscardedCardWithoutPayingManaCostEffect`, `PutTimeCountersAndGainSuspendEffect`, `CopyImprintedCardAndMayCastCopyEffect`,
+`CreateTokenCopyOfCardEffect` (all), `ExileTopCardMayPlayThisTurnEffect` and `ExileTopCardOfOwnLibraryEffect` (`--max-per-class 8`):
+115 card test classes, 1,102 tests; application (`EffectCountRatchetTest`, `TargetSpecRatchetTest`, `CardEffectTargetingConsistencyTest`,
+`CardImmutabilityArchTest`, `SimulationCopyCompletenessTest`, `StepResultsTest`, `SubjectResolutionServiceTest`): 171 tests; AI
+(`GameDataDeepCopyTest`, `TargetPolarityGuardTest`): 65 tests; all pass on the first run. Application, AI, engine testFixtures and
+card-test `a f g k l n p r s t u w` test sources compile.
+
+**For the next run (Exile, run 4).**
+
+- The shared blockers this run counted, cheapest first: a "put the cards still in exile into your hand" step over a `CardSubject`
+  (Breaching Dragonstorm, Bre, Solstice Revelations: after `MayCastDiscardedCardWithoutPayingManaCostEffect` the cast card has left exile,
+  so "if you don't cast it, put it into your hand" is that step; Solstice also needs a "less than the number of Mountains" mana-value
+  filter, Bre one read from a `DynamicAmount`); a "put onto the battlefield or into your hand" choice step (Ketria, Illuna); a source link
+  on `ExileTopCardOfOwnLibraryEffect` without the imprint (Voltaic Visionary, Pick Up the Pace, and Krang & Shredder on
+  `ExileCardsFromTopUntilEffect`).
+- Then the rest of the 200 tail records, two-card ones first (`python3 -I scripts/effect-inventory.py --unaudited --family Exile`): the
+  token-copy exiles (`ExileTargetPermanentAndCreateTokenCopy*ForEachOtherPlayer*`), the "instead of dying" replacement records, the
+  target-hand face-down exiles with a delayed return, and the remaining top-of-library "and" records.
 
 ## Prompt
 

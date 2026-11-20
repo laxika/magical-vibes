@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -28,7 +30,8 @@ public class WondrousCrucible extends Card {
                 new CounterUnlessPaysEffect(2)), Subjects.permanentsYouControl()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(2, Subjects.you()),
-                new ExileRandomCardFromGraveyardAndMayCastCopyEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+                ExileCardAtRandomEffect.fromGraveyard(Subjects.you(),
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
+                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }

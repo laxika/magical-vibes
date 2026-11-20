@@ -4,7 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandWithSuspendEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTimeCountersAndGainSuspendEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +24,10 @@ import java.util.List;
 public class TheTenthDoctor extends Card {
 
     public TheTenthDoctor() {
-        addTrigger(Triggers.youAttack(), new ExileTopUntilNonlandWithSuspendEffect(3));
+        addTrigger(Triggers.youAttack(), SequenceEffect.of(
+                ExileCardsFromTopUntilEffect.untilNonland(Subjects.you()),
+                new PutTimeCountersAndGainSuspendEffect(
+                        Subjects.cardsThisWay(StepKind.EXILE, ExileCardsFromTopUntilEffect.NONLAND), 3)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{7}",

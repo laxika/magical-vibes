@@ -1,0 +1,47 @@
+package com.github.laxika.magicalvibes.model.effect;
+
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
+import java.util.Objects;
+
+/**
+ * "Exile a card at random from your graveyard", "exile a random card from your library", "exile a random creature card
+ * from that player's library": each player {@link #player()} names (in APNAP order) exiles one card chosen at random
+ * among the cards of their {@link #zone()} that match {@link #filter()}, and nothing when none matches. The step that
+ * follows reads the card as {@code Subjects.cardsThisWay(StepKind.EXILE)}: "you may play that card this turn" is
+ * {@link AllowPlayCardsFromExileEffect}, "copy it. You may cast the copy" is
+ * {@code CopyImprintedCardAndMayCastCopyEffect.of(...)}, "create a token that's a copy of that card" is
+ * {@link CreateTokenCopyOfCardEffect#of}.
+ *
+ * <p>The filter may compare with the triggering event's value ("a random card with mana value equal to the damage
+ * dealt": {@code CardManaValueEqualsEventValuePredicate}).
+ *
+ * @param zone   where the card is exiled from: {@link Zone#GRAVEYARD} or {@link Zone#LIBRARY}
+ * @param player whose zone: {@code you()}, or a player read without a target ({@code triggeringPlayer()} for "that
+ *               player's library")
+ * @param filter which cards may be picked; {@code null} for any card
+ */
+public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter) implements CardEffect {
+
+    public ExileCardAtRandomEffect {
+        Objects.requireNonNull(zone, "zone");
+        Objects.requireNonNull(player, "player");
+        if (zone != Zone.GRAVEYARD && zone != Zone.LIBRARY) {
+            throw new IllegalArgumentException("A random card is exiled from a graveyard or a library, not " + zone);
+        }
+        if (player.declaresTarget()) {
+            throw new IllegalArgumentException("The random exile names its player without a target: " + player);
+        }
+    }
+
+    /** "Exile a [filter] card at random from [player]'s graveyard"; {@code filter} {@code null} for any card. */
+    public static ExileCardAtRandomEffect fromGraveyard(PlayerSubject player, CardPredicate filter) {
+        return new ExileCardAtRandomEffect(Zone.GRAVEYARD, player, filter);
+    }
+
+    /** "Exile a random [filter] card from [player]'s library"; {@code filter} {@code null} for any card. */
+    public static ExileCardAtRandomEffect fromLibrary(PlayerSubject player, CardPredicate filter) {
+        return new ExileCardAtRandomEffect(Zone.LIBRARY, player, filter);
+    }
+}

@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopUntilLandOfTargetOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,6 +41,6 @@ public class UmbrisFearManifest extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE),
                                         new PermanentHasSubtypePredicate(CardSubtype.HORROR))))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new ExileTopUntilLandOfTargetOpponentEffect());
+                new ExileCardsFromTopUntilEffect(Subjects.targetPlayer(), new CardTypePredicate(CardType.LAND)));
     }
 }

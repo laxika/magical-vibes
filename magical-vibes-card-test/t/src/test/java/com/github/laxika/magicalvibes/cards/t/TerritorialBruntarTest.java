@@ -46,6 +46,22 @@ class TerritorialBruntarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A land exiled before the nonland card gets no permission")
+    void landExiledBeforeTheNonlandCardCannotBePlayed() {
+        Forest exiledLand = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, new TerritorialBruntar());
+        harness.setLibrary(player1, List.of(exiledLand, bears));
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledLand.getId());
+    }
+
+    @Test
     @DisplayName("Landfall does not trigger for an opponent's land")
     void opponentLandDoesNotTrigger() {
         GrizzlyBears bears = new GrizzlyBears();

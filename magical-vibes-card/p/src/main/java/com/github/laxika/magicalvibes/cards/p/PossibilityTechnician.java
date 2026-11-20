@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileControllingSubtypeEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,6 +31,9 @@ public class PossibilityTechnician extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.KAVU))),
                                 ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                        new ExileTopCardMayPlayWhileControllingSubtypeEffect(CardSubtype.KAVU)))));
+                        new ExileTopCardMayPlayThisTurnEffect(1, false)
+                                .until(Duration.PERMANENT)
+                                .playableOnlyIf(new ControlsPermanent(
+                                        new PermanentHasSubtypePredicate(CardSubtype.KAVU)))))));
     }
 }

@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -32,7 +35,9 @@ public class NicolBolasGodPharaoh extends Card {
         // nonland card. Until end of turn, you may cast that card without paying its mana cost.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect()),
+                List.of(ExileCardsFromTopUntilEffect.untilNonland(Subjects.targetPlayer()),
+                        AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE,
+                                ExileCardsFromTopUntilEffect.NONLAND)).withoutPayingManaCost()),
                 "+2: Target opponent exiles cards from the top of their library until they exile a "
                         + "nonland card. Until end of turn, you may cast that card without paying its mana cost.",
                 new PlayerPredicateTargetFilter(

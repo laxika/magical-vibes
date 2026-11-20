@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromLibraryMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,6 +31,8 @@ public class TempestTrapper extends Card {
                 "{T}: Add two mana in any combination of colors. Spend this mana only to cast instant or sorcery spells."
         ));
 
-        addTrigger(Triggers.youCastSpell().nthThisTurn(3), new ExileRandomCardFromLibraryMayPlayThisTurnEffect(true));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(3), SequenceEffect.of(
+                ExileCardAtRandomEffect.fromLibrary(Subjects.you(), null),
+                AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE)).withoutPayingManaCost()));
     }
 }

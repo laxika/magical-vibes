@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromGraveyardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +32,8 @@ public class AdvancedReconstruction extends Card {
     public AdvancedReconstruction() {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(1, Subjects.you()),
-                new ExileRandomCardFromGraveyardMayPlayThisTurnEffect()));
+                ExileCardAtRandomEffect.fromGraveyard(Subjects.you(), null),
+                AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

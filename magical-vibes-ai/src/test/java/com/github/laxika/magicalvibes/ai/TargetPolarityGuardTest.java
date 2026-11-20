@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilOpponentBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -172,9 +171,6 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
-        assertThat(classifier.classify(gd,
-                new ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect(), aiPlayerId))
-                .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
         assertThat(classifier.classify(gd,
                 new ReturnTargetCardOnDeathThisTurnEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);

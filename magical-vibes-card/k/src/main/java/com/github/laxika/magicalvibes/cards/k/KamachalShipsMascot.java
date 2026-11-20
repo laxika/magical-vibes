@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,6 +27,8 @@ public class KamachalShipsMascot extends Card {
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 CreateTokenEffect.ofTreasureToken(1),
-                new ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffect()));
+                ExileCardAtRandomEffect.fromLibrary(Subjects.triggeringPlayer(),
+                        new CardManaValueEqualsEventValuePredicate()),
+                AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }
