@@ -1631,28 +1631,6 @@ public class CardChoiceHandlerService {
             }
         }
 
-        // Boost permanent after "discard a card, then this creature gets +X/+Y" completes
-        if (followUp.boostPermanentId() != null) {
-            UUID permanentId = followUp.boostPermanentId();
-            int powerBoost = followUp.boostPower();
-            int toughnessBoost = followUp.boostToughness();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> bf = gameData.playerBattlefields.get(pid);
-                if (bf == null) continue;
-                for (Permanent p : bf) {
-                    if (p.getId().equals(permanentId)) {
-                        gameData.addPowerToughnessBoost(p, powerBoost, toughnessBoost);
-                        gameLogService.append(gameData, GameLog.builder()
-                                .card(p.getCard())
-                                .text(String.format(" gets %+d/%+d until end of turn.",
-                                        powerBoost, toughnessBoost))
-                                .build());
-                        break;
-                    }
-                }
-            }
-        }
-
         // Return cards from graveyard to hand after "discard X cards, then return a card for
         // each discarded" completes (Recall). One sequential pick per discarded card; the
         // graveyard holds at least that many (the cards just discarded), so the choice always

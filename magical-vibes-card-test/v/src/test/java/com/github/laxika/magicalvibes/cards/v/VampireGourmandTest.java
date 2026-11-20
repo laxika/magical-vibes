@@ -73,7 +73,7 @@ class VampireGourmandTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no other creature, accepting the may does nothing")
+    @DisplayName("With no other creature, the sacrifice isn't offered")
     void noOtherCreatureDoesNothing() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -81,7 +81,7 @@ class VampireGourmandTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gqs.hasCantBeBlocked(gd, vampire)).isFalse();
@@ -138,7 +138,7 @@ class VampireGourmandTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);

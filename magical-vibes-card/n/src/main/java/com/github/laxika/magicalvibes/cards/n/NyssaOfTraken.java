@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -25,14 +26,14 @@ public class NyssaOfTraken extends Card {
     public NyssaOfTraken() {
         addStaticEffect(new NoMaximumHandSizeEffect());
 
-        targetUpTo(new EventValue(), TargetFilters.creature(), 1000)
+        targetUpTo(new AmountThisWay(StepKind.SACRIFICE), TargetFilters.creature(), 1000)
                 .addTrigger(Triggers.attacks(), SequenceEffect.of(
-                        new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsArtifactPredicate()),
+                        SacrificePermanentsEffect.anyNumber(new PermanentIsArtifactPredicate(), Subjects.you()),
                         new ConditionalEffect(
-                                new EventValueAtLeast(1),
+                                HappenedThisWay.sacrificed(),
                                 new QueueReflexiveAbilityEffect(
                                         SequenceEffect.of(
                                                 new TapPermanentsEffect(Subjects.target()),
-                                                new DrawCardEffect(new EventValue()))))));
+                                                new DrawCardEffect(new AmountThisWay(StepKind.SACRIFICE)))))));
     }
 }

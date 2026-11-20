@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class StrefanMaurerProgenitorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Creates a Blood token for each player who lost life this turn")
     void createsOneBloodForEachPlayerWhoLostLife() {
         harness.addToBattlefield(player1, new StrefanMaurerProgenitor());
         gd.lifeLostThisTurn.put(player1.getId(), 1);
@@ -30,6 +32,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates no Blood token when no player lost life")
     void doesNotCreateBloodWhenNoPlayerLostLife() {
         harness.addToBattlefield(player1, new StrefanMaurerProgenitor());
 
@@ -39,6 +42,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing two Blood tokens puts a Vampire onto the battlefield tapped and attacking with indestructible")
     void sacrificesTwoBloodToPutVampireOntoBattlefieldTappedAndAttackingWithIndestructible() {
         Permanent strefan = addCreatureReady(player1, new StrefanMaurerProgenitor());
         gd.lifeLostThisTurn.put(player1.getId(), 1);
@@ -63,6 +67,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts a player who lost life even if they gained more")
     void countsLifeLossEvenWhenThePlayerGainedMoreLife() {
         harness.addToBattlefield(player1, new StrefanMaurerProgenitor());
         harness.inMutationScope(() -> {
@@ -76,6 +81,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates one Blood token when only an opponent lost life")
     void createsOneBloodWhenOnlyOpponentLostLife() {
         harness.addToBattlefield(player1, new StrefanMaurerProgenitor());
         gd.lifeLostThisTurn.put(player2.getId(), 7);
@@ -86,6 +92,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger at an opponent's end step")
     void doesNotTriggerAtOpponentsEndStep() {
         harness.addToBattlefield(player1, new StrefanMaurerProgenitor());
         gd.lifeLostThisTurn.put(player2.getId(), 1);
@@ -100,6 +107,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline to sacrifice Blood tokens")
     void mayDeclineToSacrificeBlood() {
         Permanent strefan = prepareAttackWithBlood(2);
         harness.setHand(player1, List.of(new CaptivatingVampire()));
@@ -113,14 +121,14 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With only one Blood token, the sacrifice of two isn't offered")
     void cannotSacrificeOnlyOneBlood() {
         Permanent strefan = prepareAttackWithBlood(1);
         harness.setHand(player1, List.of(new CaptivatingVampire()));
 
         attackWith(strefan);
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Blood")).hasSize(1);
@@ -129,6 +137,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline to put a Vampire onto the battlefield after sacrificing")
     void mayDeclineToPutVampireAfterSacrificingBlood() {
         Permanent strefan = prepareAttackWithBlood(2);
         harness.setHand(player1, List.of(new CaptivatingVampire()));
@@ -144,6 +153,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blood tokens can be sacrificed with no Vampire in hand")
     void canSacrificeBloodWithNoVampireInHand() {
         Permanent strefan = prepareAttackWithBlood(2);
         harness.setHand(player1, List.of(new SculptingSteel()));
@@ -159,6 +169,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chooses exactly two Blood tokens when more are available")
     void choosesExactlyTwoBloodWhenMoreAreAvailable() {
         Permanent strefan = prepareAttackWithBlood(2);
         gd.lifeLostThisTurn.put(player1.getId(), 1);
@@ -180,6 +191,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The granted indestructible ends at end of turn")
     void indestructibleExpiresAtEndOfTurn() {
         Permanent strefan = prepareAttackWithBlood(2);
         harness.setHand(player1, List.of(new CaptivatingVampire()));
@@ -198,6 +210,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A nontoken copy of a Blood token can't be sacrificed")
     void cannotSacrificeNontokenCopyOfBlood() {
         Permanent strefan = prepareAttackWithBlood(1);
         Permanent blood = findPermanent(player1, "Blood");

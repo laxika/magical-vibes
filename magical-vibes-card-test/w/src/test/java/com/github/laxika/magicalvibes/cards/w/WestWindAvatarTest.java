@@ -104,12 +104,12 @@ class WestWindAvatarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the ETB trigger without a token or land does not gain life")
+    @DisplayName("Without a token or land, the sacrifice isn't offered and no life is gained")
     void acceptingWithoutEligiblePermanentDoesNotGainLife() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new WestWindAvatar());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 20);
         harness.assertOnBattlefield(player1, "Grizzly Bears");

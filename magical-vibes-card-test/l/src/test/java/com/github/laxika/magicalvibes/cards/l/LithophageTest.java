@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Lithophage.class, Mountain.class, Forest.class})
@@ -66,7 +68,6 @@ class LithophageTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Mountain").getId());
 
         harness.assertOnBattlefield(player1, "Lithophage");
         harness.assertNotOnBattlefield(player1, "Mountain");
@@ -128,7 +129,7 @@ class LithophageTest extends BaseCardTest {
         chosenMountain.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, chosenMountain.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosenMountain.getId()));
 
         harness.assertOnBattlefield(player1, "Lithophage");
         assertThat(findPermanents(player1, "Mountain"))
@@ -160,17 +161,13 @@ class LithophageTest extends BaseCardTest {
 
     @Test
     @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
-    @DisplayName("Accepting with no Mountain left asks for Lithophage's death replacement before it is sacrificed")
-    void acceptingWithNothingLeftAsksForTheDeathReplacementBeforeLithophageIsSacrificed() {
+    @DisplayName("With no Mountain, Lithophage's death replacement is asked before it is sacrificed")
+    void withoutMountainAsksForTheDeathReplacementBeforeLithophageIsSacrificed() {
         Permanent lithophage = harness.addToBattlefieldAndReturn(player1, new Lithophage());
         enchantWithMagemarkAgainstKalitas(lithophage);
-        harness.addToBattlefield(player1, new Mountain());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getName().equals("Mountain"));
-        harness.handleMayAbilityChosen(player1, true);
 
         assertDeathReplacementAskedWhileLithophageStays(lithophage);
 

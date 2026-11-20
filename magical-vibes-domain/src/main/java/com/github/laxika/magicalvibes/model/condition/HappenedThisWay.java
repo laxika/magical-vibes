@@ -113,6 +113,11 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
         return new HappenedThisWay(StepKind.SACRIFICE);
     }
 
+    /** "Remove a counter from it. If you do": the most recent remove-counters step removed at least one counter. */
+    public static HappenedThisWay removedCounters() {
+        return new HappenedThisWay(StepKind.REMOVE_COUNTERS);
+    }
+
     /** "If it was destroyed this way" after a destroy step. */
     public static HappenedThisWay destroyed() {
         return new HappenedThisWay(StepKind.DESTROY);

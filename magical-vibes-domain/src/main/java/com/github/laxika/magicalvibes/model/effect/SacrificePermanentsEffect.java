@@ -74,6 +74,14 @@ public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate 
                 false, false, true);
     }
 
+    /**
+     * "Sacrifice up to {@code count} [filter]": as {@link #anyNumber}, at most {@code count} of them ("you may sacrifice
+     * up to three Zombies", Ravenous Rotbelly).
+     */
+    public static SacrificePermanentsEffect upTo(int count, PermanentPredicate filter, PlayerSubject player) {
+        return new SacrificePermanentsEffect(new Fixed(count), filter, player, false, false, false, false, true);
+    }
+
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
             PlayerSubject player, boolean countPerSacrificingPlayer,
             boolean recordSacrificedCount, boolean recordSacrificedPower) {

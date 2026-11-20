@@ -59,7 +59,7 @@ class DireFleetWarmongerTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.getEffectivePower(gd, warmonger)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, warmonger)).isEqualTo(3);

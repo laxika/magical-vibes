@@ -62,13 +62,13 @@ class UndercityScavengerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no other creature, accepting the sacrifice has no effect")
+    @DisplayName("With no other creature, the sacrifice isn't offered")
     void noOtherCreatureMeansNoEffect() {
         prepareCast(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanent(player1, "Undercity Scavenger")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InvasionOfNewCapennaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Sacrificing an artifact exiles the target artifact or creature an opponent controls")
     void maySacrificeArtifactThenExilesTargetArtifactOrCreatureOpponentControls() {
         Permanent sacrificedArtifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -58,6 +60,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice leaves every permanent untouched")
     void decliningSacrificeLeavesPermanentsUntouched() {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -71,6 +74,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A defeated siege casts its back face transformed")
     void defeatedSiegeCastsBackFaceTransformed() {
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfNewCapenna());
         battle.setCounterCount(CounterType.DEFENSE, 0);
@@ -86,6 +90,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attacking equipped creature and your other creatures sharing a type with it get counters")
     void attackingEquippedCreatureGetsCountersOnItAndOtherMatchingCreaturesYouControl() {
         Permanent equippedCreature = addCreatureReady(player1, new BalduvianBarbarians());
         Permanent matchingCreature = addCreatureReady(player1, new BalduvianBarbarians());
@@ -104,6 +109,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Equip attaches the Cannon to a creature you control")
     void equipAttachesCannonToCreatureYouControl() {
         addCreatureReady(player1, new HolyFrazzleCannon());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
@@ -117,6 +123,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a creature exiles an opponent's creature")
     void sacrificingCreatureExilesOpponentsCreature() {
         harness.addToBattlefield(player1, new AlabasterHostSanctifier());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenScaleAeronaut());
@@ -133,6 +140,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice is offered even without an opposing artifact or creature")
     void canSacrificeEvenWithoutAnOpposingArtifactOrCreature() {
         harness.addToBattlefield(player1, new AlabasterHostSanctifier());
 
@@ -146,11 +154,12 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With nothing to sacrifice, the sacrifice isn't offered and nothing is exiled")
     void decliningWithNothingToSacrificeDoesNotExileAnything() {
         harness.addToBattlefield(player2, new AlabasterHostSanctifier());
 
         castInvasion();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Alabaster Host Sanctifier");
@@ -159,6 +168,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attack trigger still puts counters after the Cannon becomes unattached")
     void attackTriggerStillCountersAttackerAndMatchingCreaturesAfterCannonBecomesUnattached() {
         Permanent attacker = addCreatureReady(player1, new AlabasterHostSanctifier());
         Permanent matching = addCreatureReady(player1, new AlabasterHostSanctifier());
@@ -177,6 +187,7 @@ class InvasionOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attack trigger uses the attacker's last-known creature types when it dies in response")
     void attackTriggerUsesLastKnownCreatureTypesWhenAttackerDiesInResponse() {
         Permanent attacker = addCreatureReady(player1, new AlabasterHostSanctifier());
         Permanent matching = addCreatureReady(player1, new AlabasterHostSanctifier());

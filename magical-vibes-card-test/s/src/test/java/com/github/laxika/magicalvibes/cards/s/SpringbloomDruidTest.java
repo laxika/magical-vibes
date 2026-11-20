@@ -115,14 +115,14 @@ class SpringbloomDruidTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Without a controlled land, accepting cannot search or sacrifice an opponent's land")
+    @DisplayName("Without a controlled land, the sacrifice isn't offered and no opponent's land is sacrificed")
     void noControlledLandDoesNotSearch() {
         Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
         SnowCoveredForest forest = new SnowCoveredForest();
         harness.setLibrary(player1, List.of(forest));
 
         castSpringbloomDruid();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingLand);

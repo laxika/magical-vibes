@@ -86,7 +86,7 @@ class KillmongerScourgeOfWakandaTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KunLunWarrior());
 
         castKillmonger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Killmonger, Scourge of Wakanda");

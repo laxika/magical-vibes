@@ -5,10 +5,16 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -18,13 +24,13 @@ import java.util.Set;
 public class GiantOpportunity extends Card {
 
     public GiantOpportunity() {
-        addSpellEffect(new SacrificePermanentsOrElseEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                2,
-                giantToken(),
-                foodTokens(),
-                "Foods"
-        ));
+        addSpellEffect(new MayEffect(
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(2, new PermanentHasSubtypePredicate(CardSubtype.FOOD),
+                                Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.atLeast(StepKind.SACRIFICE, 2), giantToken())),
+                "Sacrifice two Foods?",
+                foodTokens()));
     }
 
     private static CreateTokenEffect giantToken() {

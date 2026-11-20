@@ -113,14 +113,14 @@ class AceFearlessRebelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting Nitro-9 without an artifact does not add a counter or fight")
+    @DisplayName("Without an artifact, Nitro-9's sacrifice isn't offered and nothing happens")
     void noArtifactMeansNoCounterOrFight() {
         Permanent ace = addCreatureReady(player1, new AceFearlessRebel());
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ace)).isEqualTo(2);

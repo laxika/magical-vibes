@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -37,6 +38,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a creature at upkeep puts the first revealed creature onto the battlefield and shuffles the rest in")
     void upkeepSacrificeFindsCreatureAndShufflesOtherRevealedCardsIntoLibrary() {
         Card sacrificed = new GrizzlyBears();
         Card found = new GrizzlyBears();
@@ -56,6 +58,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Planeswalking to the plane triggers the sacrifice ability")
     void planeswalkingToThePlaneTriggersTheSacrificeAbility() {
         Card sacrificed = new GrizzlyBears();
         Card found = new GrizzlyBears();
@@ -75,6 +78,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the upkeep sacrifice reveals nothing")
     void decliningUpkeepSacrificeDoesNothing() {
         Card sacrificed = new GrizzlyBears();
         Card forest = new Forest();
@@ -91,6 +95,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos lets the controller put a creature card from hand onto the battlefield")
     void chaosMayPutCreatureFromHandOntoBattlefield() {
         Card creature = new GrizzlyBears();
         Card land = new Forest();
@@ -107,6 +112,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the chaos ability leaves the hand unchanged")
     void decliningChaosLeavesHandUnchanged() {
         Card creature = new GrizzlyBears();
         harness.setHand(player1, List.of(creature));
@@ -121,6 +127,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice and the reveal happen in the same resolution")
     void sacrificeAndRevealResolveWithoutAnotherPriorityRound() {
         Card sacrificed = new GrizzlyBears();
         Card found = new GrizzlyBears();
@@ -137,19 +144,22 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without a creature to sacrifice, the sacrifice isn't offered and the library is unchanged")
     void noCreatureToSacrificeLeavesLibraryUnchanged() {
         Card found = new GrizzlyBears();
         harness.setLibrary(player1, List.of(found));
 
-        triggerUpkeep();
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(found);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
+    @DisplayName("A library without creatures is revealed and shuffled back in full")
     void libraryWithoutCreaturesIsReturnedInFull() {
         Card sacrificed = new GrizzlyBears();
         Card forest = new Forest();
@@ -167,6 +177,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Finding a creature as the first card still shuffles the library")
     void findingCreatureFirstStillShufflesLibrary() {
         harness.addToBattlefield(player1, new PsychogenicProbe());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -185,6 +196,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library is still shuffled after the sacrifice")
     void emptyLibraryStillShufflesAfterSacrifice() {
         harness.addToBattlefield(player1, new PsychogenicProbe());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -202,6 +214,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos with only lands in hand puts nothing onto the battlefield")
     void chaosWithOnlyLandsInHandPutsNothingOntoBattlefield() {
         Card land = new Forest();
         harness.setHand(player1, List.of(land));
@@ -216,6 +229,7 @@ class TheAetherFluesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The upkeep ability uses the active planar controller's creatures and library")
     void upkeepUsesActivePlayersCreaturesAndLibrary() {
         Card opponentCreature = new GrizzlyBears();
         Card sacrificed = new GrizzlyBears();

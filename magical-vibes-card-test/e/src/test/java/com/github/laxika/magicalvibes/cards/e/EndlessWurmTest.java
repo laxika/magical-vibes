@@ -53,7 +53,6 @@ class EndlessWurmTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Glorious Anthem").getId());
 
         harness.assertOnBattlefield(player1, "Endless Wurm");
         harness.assertNotOnBattlefield(player1, "Glorious Anthem");
@@ -120,7 +119,6 @@ class EndlessWurmTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Glorious Anthem"));
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Endless Wurm")).isEqualTo(1);

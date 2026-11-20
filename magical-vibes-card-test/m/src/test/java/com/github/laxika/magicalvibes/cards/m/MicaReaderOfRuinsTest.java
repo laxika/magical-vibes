@@ -193,7 +193,7 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         harness.assertLife(player2, 17);

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -10,8 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -25,8 +28,8 @@ public class PlungeIntoDarkness extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice any number of creatures and gain 3 life for each",
                         List.of(
-                                new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsCreaturePredicate()),
-                                new GainLifeEffect(new Scaled(new EventValue(), 3)))),
+                                SacrificePermanentsEffect.anyNumber(new PermanentIsCreaturePredicate(), Subjects.you()),
+                                new GainLifeEffect(new Scaled(new AmountThisWay(StepKind.SACRIFICE), 3)))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Pay any amount of life, then look at that many cards",
                         SequenceEffect.of(

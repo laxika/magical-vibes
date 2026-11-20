@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DefiantSalvager;
 import com.github.laxika.magicalvibes.cards.l.LeaveInTheDust;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -54,7 +55,7 @@ class IroncladRevolutionaryTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new DefiantSalvager());
         castIronclad();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         Permanent revolutionary = findPermanent(player1, "Ironclad Revolutionary");
         assertThat(revolutionary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -68,7 +69,7 @@ class IroncladRevolutionaryTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         castIronclad();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanent(player1, "Ironclad Revolutionary")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

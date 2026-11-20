@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,9 +33,9 @@ public class KyloxVisionaryInventor extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new SacrificeAnyNumberOfPermanentsEffect(otherCreature, true),
+                SacrificePermanentsEffect.anyNumber(otherCreature, Subjects.you()),
                 new ExileTopCardsAndMayCastSpellsEffect(
-                        new SacrificedPermanentPower(), Subjects.you(), false, null,
+                        AmountThisWay.sacrificedPower(), Subjects.you(), false, null,
                         instantOrSorcery)));
     }
 }

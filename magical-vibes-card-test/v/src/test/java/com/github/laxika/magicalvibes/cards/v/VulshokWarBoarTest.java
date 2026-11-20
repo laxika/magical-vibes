@@ -53,11 +53,8 @@ class VulshokWarBoarTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        UUID artifactId = findPermanent(player1, "Darksteel Ingot").getId();
-        harness.handlePermanentChosen(player1, artifactId);
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Vulshok War Boar");
         harness.assertNotOnBattlefield(player1, "Darksteel Ingot");
         harness.assertInGraveyard(player1, "Darksteel Ingot");
@@ -91,7 +88,7 @@ class VulshokWarBoarTest extends BaseCardTest {
         UUID ingotId = findPermanent(player1, "Darksteel Ingot").getId();
         UUID gargoyleId = findPermanent(player1, "Darksteel Gargoyle").getId();
         UUID goblinId = findPermanent(player1, "Crazed Goblin").getId();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(ingotId, gargoyleId)
                 .doesNotContain(goblinId);
     }
@@ -103,7 +100,6 @@ class VulshokWarBoarTest extends BaseCardTest {
 
         castWarBoar();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Darksteel Gargoyle"));
 
         harness.assertOnBattlefield(player1, "Vulshok War Boar");
         harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
@@ -137,7 +133,6 @@ class VulshokWarBoarTest extends BaseCardTest {
         bounceInResponse(harness.getPermanentId(player1, "Vulshok War Boar"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Darksteel Ingot"));
 
         harness.assertInHand(player1, "Vulshok War Boar");
         harness.assertNotOnBattlefield(player1, "Vulshok War Boar");
@@ -165,7 +160,7 @@ class VulshokWarBoarTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Darksteel Ingot"));
+        harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player1, "Darksteel Ingot")));
         harness.assertOnBattlefield(player1, "Vulshok War Boar");
 
         harness.passBothPriorities();

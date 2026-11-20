@@ -84,12 +84,12 @@ class BoilerbilgesRipperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no other creature or enchantment deals no damage")
+    @DisplayName("With no other creature or enchantment, the sacrifice isn't offered and no damage is dealt")
     void noEligibleSacrificeDoesNothing() {
         int lifeBefore = gd.getLife(player2.getId());
 
         castRipperToMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

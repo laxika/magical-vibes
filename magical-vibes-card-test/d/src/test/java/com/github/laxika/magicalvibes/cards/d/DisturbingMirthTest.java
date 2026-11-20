@@ -111,7 +111,7 @@ class DisturbingMirthTest extends BaseCardTest {
 
         castDisturbingMirth();
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

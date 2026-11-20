@@ -69,13 +69,13 @@ class CorneredCrookTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without an artifact does not create a damage trigger")
+    @DisplayName("Without an artifact, the sacrifice isn't offered and no damage trigger is created")
     void noArtifactDealsNoDamage() {
         harness.addToBattlefield(player2, new RedHerring());
         int lifeBefore = gd.getLife(player2.getId());
 
         castCrookToMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
         harness.assertOnBattlefield(player2, "Red Herring");

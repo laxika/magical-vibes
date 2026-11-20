@@ -1007,27 +1007,16 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeLandsSearchLandsToBattlefieldTapped() implements MultiPermanentChoiceContext {
     }
 
-    /** Sacrifice exactly the chosen permanents, then resolve the follow-up effect. */
-    record SacrificePermanentsThen(UUID controllerId, Card sourceCard, int requiredCount,
-                                   CardEffect thenEffect) implements MultiPermanentChoiceContext {
-    }
-
     /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
     record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,
                                      CardEffect elseEffect) implements MultiPermanentChoiceContext {
     }
 
     /**
-     * Sacrifice the chosen permanents and record their count, and optionally their total power, on
-     * the resolving stack entry for a following effect.
+     * Sacrifice the chosen permanents, none included ("sacrifice any number of …"), as the resolving entry's
+     * SACRIFICE step: a following "that many" reads {@code AmountThisWay(StepKind.SACRIFICE)}.
      */
-    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry,
-                                            boolean recordSacrificedPower)
-            implements MultiPermanentChoiceContext {
-
-        public SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) {
-            this(resolvingEntry, false);
-        }
+    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }
 
     /** The controller chose distinct artifact and/or creature tokens to copy. */

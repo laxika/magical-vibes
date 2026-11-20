@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterControlLossUnattachTr
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryThenDiscoverEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
@@ -170,11 +169,6 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
         assertThat(classifier.classify(gd,
                 new ReturnTargetCardOnDeathThisTurnEffect(), aiPlayerId))
-                .isEqualTo(TargetPolarity.BENEFICIAL);
-        assertThat(classifier.classify(gd,
-                new SacrificePermanentsOrElseEffect(null, 1,
-                        new BoostTargetCreatureEffect(5, 5),
-                        new BoostTargetCreatureEffect(3, 3), "permanent"), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE), aiPlayerId))

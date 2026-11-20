@@ -74,7 +74,7 @@ class RuthlessLawbringerTest extends BaseCardTest {
         harness.castFromHand(player1, new RuthlessLawbringer(), "{1}{W}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

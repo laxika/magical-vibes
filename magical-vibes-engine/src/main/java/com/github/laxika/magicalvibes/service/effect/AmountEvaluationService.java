@@ -1119,7 +1119,7 @@ public class AmountEvaluationService {
 
     /**
      * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice,
-     * destroy or exile step removed (CR 608.2h), each counted as at least 0. A count of only those that died, match a
+     * destroy or exile step removed (CR 608.2h); a negative power counts in the total, which is at least 0 (CR 107.1b). A count of only those that died, match a
      * filter or were the amount's controller's reads the removal step's departures, judging each permanent as it last
      * existed on the battlefield and by the controller it had as it left. One that includes what a destroy step didn't
      * destroy reads every departure of that step, a permanent still on the battlefield as it is now; it reads nothing
@@ -1169,9 +1169,9 @@ public class AmountEvaluationService {
                 case TOUGHNESS -> result.lastKnownToughness();
                 case MANA_VALUE -> result.lastKnownManaValue();
             };
-            total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
+            total = SaturatingMath.add(total, value == null ? 0 : value);
         }
-        return total;
+        return Math.max(0, total);
     }
 
     /** A departed permanent as it last existed on the battlefield, or one that stayed there as it is now. */
@@ -1184,7 +1184,7 @@ public class AmountEvaluationService {
     }
 
     /**
-     * The total of {@code stat} over what an exile step exiled, each counted as at least 0: a permanent as the entry
+     * The total of {@code stat} over what an exile step exiled, at least 0 (CR 107.1b): a permanent as the entry
      * recorded it as it left the battlefield, a card exiled from another zone as it is now (it keeps its
      * characteristics in exile).
      */
@@ -1209,9 +1209,9 @@ public class AmountEvaluationService {
                     case AMOUNT, DIED -> 0;
                 };
             }
-            total = SaturatingMath.add(total, value == null ? 0 : Math.max(0, value));
+            total = SaturatingMath.add(total, value == null ? 0 : value);
         }
-        return total;
+        return Math.max(0, total);
     }
 
     /** The chosen number of the first permanent created earlier in the resolving entry; 0 if none. */

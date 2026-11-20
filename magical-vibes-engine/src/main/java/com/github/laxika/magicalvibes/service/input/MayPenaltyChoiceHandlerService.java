@@ -78,7 +78,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
@@ -1883,72 +1882,6 @@ public class MayPenaltyChoiceHandlerService {
             destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
             gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to return a permanent."));
         }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Sacred Mesa: the controller may sacrifice a permanent matching the effect's filter instead of
-     * sacrificing the source. Declining — or having nothing left to sacrifice — sacrifices the source.
-     */
-    public void handleSacrificeUnlessSacrificeOwnPermanentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        SacrificeUnlessSacrificeOwnPermanentEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof SacrificeUnlessSacrificeOwnPermanentEffect)
-                .map(e -> (SacrificeUnlessSacrificeOwnPermanentEffect) e)
-                .findFirst().orElseThrow();
-
-        Card sourceCard = ability.sourceCard();
-        UUID controllerId = ability.controllerId();
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-
-        Permanent sourcePermanent = null;
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (ability.sourcePermanentId() != null
-                        ? p.getId().equals(ability.sourcePermanentId())
-                        : p.getCard().getId().equals(sourceCard.getId())) {
-                    sourcePermanent = p;
-                    break;
-                }
-            }
-        }
-
-        if (accepted) {
-            List<UUID> validIds = new ArrayList<>();
-            if (battlefield != null) {
-                for (Permanent p : battlefield) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.filter())) {
-                        validIds.add(p.getId());
-                    }
-                }
-            }
-
-            if (!validIds.isEmpty()) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf(controllerId, sourceCard.getId()));
-                playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
-                        "Choose " + effect.description() + " to sacrifice.");
-
-                gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + " chooses to sacrifice " + effect.description() + "."));
-                log.info("Game {} - {} accepts sacrifice-unless-sacrifice for {}", gameData.id, player.getUsername(), sourceCard.getName());
-                return;
-            }
-
-            // Battlefield changed since the trigger — nothing valid left, fall through to sacrifice
-        }
-
-        if (sourcePermanent != null) {
-            destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
-            gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " declines to sacrifice " + effect.description() + "."));
-            log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
-        } else {
-            gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " declines to sacrifice " + effect.description() + "."));
-            log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
-        }
-
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

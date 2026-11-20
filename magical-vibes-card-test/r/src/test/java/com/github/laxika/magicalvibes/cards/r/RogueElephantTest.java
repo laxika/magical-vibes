@@ -52,11 +52,8 @@ class RogueElephantTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        UUID forestId = findPermanent(player1, "Forest").getId();
-        harness.handlePermanentChosen(player1, forestId);
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Rogue Elephant");
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
@@ -79,7 +76,8 @@ class RogueElephantTest extends BaseCardTest {
     @Test
     @DisplayName("Only Forests are offered as the permanent to sacrifice")
     void onlyForestsAreValidChoices() {
-        harness.addToBattlefield(player1, new Forest());
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
+        UUID secondForestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
         harness.addToBattlefield(player1, new WindingCanyons());
 
         castElephant();
@@ -87,9 +85,8 @@ class RogueElephantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         UUID windingCanyonsId = findPermanent(player1, "Winding Canyons").getId();
-        UUID forestId = findPermanent(player1, "Forest").getId();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
-                .contains(forestId)
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(forestId, secondForestId)
                 .doesNotContain(windingCanyonsId);
     }
 
@@ -111,9 +108,6 @@ class RogueElephantTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        UUID forestId = findPermanent(player1, "Forest").getId();
-        harness.handlePermanentChosen(player1, forestId);
-
         harness.assertOnBattlefield(player1, "Infernal Tribute");
         harness.assertNotOnBattlefield(player1, "Rogue Elephant");
         harness.assertInGraveyard(player1, "Rogue Elephant");
@@ -130,10 +124,10 @@ class RogueElephantTest extends BaseCardTest {
 
         castElephant();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .hasSize(2)
                 .contains(tappedForestId);
-        harness.handlePermanentChosen(player1, tappedForestId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(tappedForestId));
 
         harness.assertOnBattlefield(player1, "Rogue Elephant");
         harness.assertOnBattlefield(player1, "Forest");

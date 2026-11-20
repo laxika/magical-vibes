@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilled
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -55,6 +57,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private AuraAttachmentService auraAttachmentService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -299,20 +304,19 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     || !choicePlayerId.equals(gameQueryService.findPermanentController(gameData, source.getId()))
                     || gameQueryService.cantBeSacrificed(gameData, source);
         }
-        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect sacrifice
-                && sacrifice.count() instanceof com.github.laxika.magicalvibes.model.amount.Fixed count
+        if (optionalAction instanceof SacrificePermanentsEffect sacrifice
+                && sacrifice.count() instanceof Fixed count
                 && count.value() > 0
-                && (sacrifice.player().declaresTarget()
-                || sacrifice.player() instanceof com.github.laxika.magicalvibes.model.effect.PlayerSubject.You)) {
+                && (sacrifice.player().declaresTarget() || sacrifice.player() instanceof PlayerSubject.You)) {
             UUID sacrificingPlayerId = sacrifice.player().declaresTarget() && targetId != null
                     ? targetId : choicePlayerId;
-            // The choice is only withheld when the deciding player is the one who would sacrifice; a
-            // controller choosing for a targeted opponent is asked whatever that opponent controls.
+            // "You may sacrifice N [permanents]" (alone or leading "If you do, ..."): a player who can't sacrifice
+            // all N can't choose that option (CR 608.2d). The choice is only withheld when the deciding player is
+            // the one who would sacrifice; a controller choosing for a targeted opponent is asked whatever that
+            // opponent controls.
             cannotSacrifice = choicePlayerId.equals(sacrificingPlayerId)
-                    && gameData.playerBattlefields.getOrDefault(sacrificingPlayerId, List.of()).stream()
-                    .noneMatch(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent, sacrifice.filter())
-                            && (sacrifice.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, permanent, sacrifice.filter())));
+                    && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
+                    gameData, entry, sacrifice, sacrificingPlayerId);
         }
         if (cannotSacrifice) {
             gameData.resolvingMayEffectFromStack = false;

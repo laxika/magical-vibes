@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -61,7 +62,7 @@ class ShadowMysteriousAssassinTest extends BaseCardTest {
         shadow.setAttacking(true);
 
         resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shadow, land);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -103,7 +104,7 @@ class ShadowMysteriousAssassinTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player2, "Mind Stone");
         harness.assertOnBattlefield(player1, "Shadow, Mysterious Assassin");

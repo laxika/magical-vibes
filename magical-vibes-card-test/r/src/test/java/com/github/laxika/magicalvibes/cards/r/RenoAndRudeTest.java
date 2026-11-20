@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RenoAndRudeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Combat damage exiles the damaged player's top card but does not grant permission before sacrificing")
+    @DisplayName("Combat damage exiles the damaged player's top card, and with nothing to sacrifice no permission is granted")
     void declineSacrificeLeavesCardExiledWithoutPermission() {
         Permanent reno = addAttackingReno();
         Card topCard = new GrizzlyBears();
@@ -37,8 +37,7 @@ class RenoAndRudeTest extends BaseCardTest {
         assertThat(exiled.sourcePermanentId()).isEqualTo(reno.getId());
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
 
-        harness.handleMayAbilityChosen(player1, false);
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
     }
@@ -197,7 +196,7 @@ class RenoAndRudeTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Reno and Rude");

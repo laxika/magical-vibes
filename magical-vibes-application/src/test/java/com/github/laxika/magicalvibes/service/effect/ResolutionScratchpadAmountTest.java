@@ -69,12 +69,16 @@ class ResolutionScratchpadAmountTest {
     }
 
     @Test
-    @DisplayName("Several sacrificed permanents add up and negative power counts as zero")
-    void severalPermanentsAddUpAndNegativePowerCountsAsZero() {
+    @DisplayName("Several sacrificed permanents add up; a negative power lowers the total, which is at least zero")
+    void severalPermanentsAddUpAndNegativePowerLowersTheTotal() {
         entry.recordDepartures(List.of(departure(4, 4, true), departure(-2, 1, true), departure(null, null, true)));
 
-        assertThat(evaluate(AmountThisWay.sacrificedPower())).isEqualTo(4);
+        assertThat(evaluate(AmountThisWay.sacrificedPower())).isEqualTo(2);
         assertThat(evaluate(AmountThisWay.sacrificedToughness())).isEqualTo(5);
+
+        entry.recordDepartures(List.of(departure(1, 1, true), departure(-3, 1, true)));
+
+        assertThat(evaluate(AmountThisWay.sacrificedPower())).isZero();
     }
 
     @Test

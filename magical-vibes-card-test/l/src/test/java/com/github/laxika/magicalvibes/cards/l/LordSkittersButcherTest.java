@@ -60,7 +60,7 @@ class LordSkittersButcherTest extends BaseCardTest {
     void sacrificeModeRequiresAnotherCreature() {
         castButcher(SACRIFICE_MODE);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(findPermanent(player1, "Lord Skitter's Butcher")).isNotNull();
@@ -111,7 +111,7 @@ class LordSkittersButcherTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
         castButcher(SACRIFICE_MODE);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);

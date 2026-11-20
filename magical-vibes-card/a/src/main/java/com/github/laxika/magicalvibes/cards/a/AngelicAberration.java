@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerAtMostPredicate;
@@ -30,9 +32,10 @@ public class AngelicAberration extends Card {
     ));
 
     public AngelicAberration() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeAnyNumberOfPermanentsEffect(SMALL_CREATURE),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                SacrificePermanentsEffect.anyNumber(SMALL_CREATURE, Subjects.you()),
                 new CreateTokenEffect(
-                new EventValue(),
+                new AmountThisWay(StepKind.SACRIFICE),
                 "Eldrazi Angel",
                 4,
                 4,

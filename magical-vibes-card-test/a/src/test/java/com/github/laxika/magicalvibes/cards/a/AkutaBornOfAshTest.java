@@ -81,6 +81,7 @@ class AkutaBornOfAshTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(akuta));
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new Swamp());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -178,7 +179,7 @@ class AkutaBornOfAshTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without a Swamp does not return Akuta")
+    @DisplayName("Without a Swamp, the sacrifice isn't offered and Akuta stays in the graveyard")
     void acceptingWithoutSwampDoesNotReturnAkuta() {
         AkutaBornOfAsh akuta = new AkutaBornOfAsh();
         harness.setGraveyard(player1, List.of(akuta));
@@ -187,7 +188,7 @@ class AkutaBornOfAshTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))

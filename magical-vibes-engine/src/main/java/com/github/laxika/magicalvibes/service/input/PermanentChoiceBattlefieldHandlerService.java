@@ -1869,18 +1869,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleSacrificeOwnPermanentOrSacrificeSelf(GameData gameData, UUID permanentId) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Target permanent no longer exists");
-        }
-
-        destructionSupport.sacrificeAndLog(gameData, target, gameQueryService.findPermanentController(gameData, target.getId()));
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     /**
      * "If this land would enter, sacrifice an untapped [land] instead. If you do, put it onto the
      * battlefield. If you don't, put it into its owner's graveyard." (Balduvian Trading Post.)

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -76,7 +77,7 @@ class SwarmCullerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
 
         tapAndResolve(culler);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(culler);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -145,7 +146,7 @@ class SwarmCullerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
 
         tapAndResolve(culler);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(culler);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature, artifact);

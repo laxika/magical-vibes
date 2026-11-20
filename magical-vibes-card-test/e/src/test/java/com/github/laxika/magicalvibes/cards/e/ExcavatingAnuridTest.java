@@ -71,14 +71,18 @@ class ExcavatingAnuridTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No land to sacrifice means no card is drawn")
+    @DisplayName("With no land to sacrifice, the sacrifice isn't offered and no card is drawn")
     void noLandDoesNotDraw() {
         harness.addToBattlefield(player2, new SnowCoveredForest());
         harness.setLibrary(player1, List.of(new SnowCoveredForest()));
-        castAnurid(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new ExcavatingAnurid(), "{4}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertOnBattlefield(player2, "Snow-Covered Forest");

@@ -44,7 +44,6 @@ class ScytheTigerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Mountain"));
 
         harness.assertOnBattlefield(player1, "Scythe Tiger");
         harness.assertNotOnBattlefield(player1, "Mountain");
@@ -96,7 +95,7 @@ class ScytheTigerTest extends BaseCardTest {
         castScytheTiger();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, chosenLand.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosenLand.getId()));
 
         harness.assertOnBattlefield(player1, "Scythe Tiger");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(unchosenLand).doesNotContain(chosenLand);
@@ -163,7 +162,6 @@ class ScytheTigerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Mountain"));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(returnedTiger);

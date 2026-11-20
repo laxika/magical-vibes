@@ -107,7 +107,6 @@ class ContaminationTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Argothian Swine").getId());
 
         harness.assertOnBattlefield(player1, "Contamination");
         harness.assertNotOnBattlefield(player1, "Argothian Swine");
@@ -209,7 +208,6 @@ class ContaminationTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, contamination.getId());
 
         harness.assertNotOnBattlefield(player1, "Contamination");
         harness.assertInGraveyard(player1, "Contamination");

@@ -65,13 +65,13 @@ class BrawlBashOgreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no other creature, accepting the may does nothing")
+    @DisplayName("With no other creature, the sacrifice isn't offered")
     void noOtherCreatureDoesNothing() {
         Permanent ogre = addCreatureReady(player1, new BrawlBashOgre());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ogre)).isEqualTo(3);
@@ -123,7 +123,7 @@ class BrawlBashOgreTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);

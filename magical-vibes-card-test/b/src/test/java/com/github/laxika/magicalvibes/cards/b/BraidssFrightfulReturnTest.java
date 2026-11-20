@@ -135,7 +135,7 @@ class BraidssFrightfulReturnTest extends BaseCardTest {
 
         triggerNextChapter();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

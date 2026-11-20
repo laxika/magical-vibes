@@ -5,15 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,13 +41,13 @@ public class CampsiteCuisine extends Card {
 
         var grantKeywords = new GrantKeywordEffect(
                 Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), Subjects.triggeringSpellTargets());
-        targetUpTo(new EventValue(), TargetFilters.attackingCreature(), 100)
+        targetUpTo(new AmountThisWay(StepKind.SACRIFICE), TargetFilters.attackingCreature(), 100)
                 .addTrigger(Triggers.youAttack(), new MayEffect(
                         SequenceEffect.of(
-                                new SacrificeAnyNumberOfPermanentsEffect(
-                                        new PermanentHasSubtypePredicate(CardSubtype.FOOD)),
+                                SacrificePermanentsEffect.anyNumber(
+                                        new PermanentHasSubtypePredicate(CardSubtype.FOOD), Subjects.you()),
                                 new ConditionalEffect(
-                                        new EventValueAtLeast(1),
+                                        HappenedThisWay.sacrificed(),
                                         new QueueReflexiveAbilityEffect(
                                                 SequenceEffect.of(
                                                         new BoostTargetCreatureEffect(3, 3),

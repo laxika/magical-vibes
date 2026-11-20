@@ -85,13 +85,13 @@ class BloodmistInfiltratorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no other creature, accepting the may does nothing")
+    @DisplayName("With no other creature, the sacrifice isn't offered")
     void noOtherCreatureDoesNothing() {
         Permanent infiltrator = addCreatureReady(player1, new BloodmistInfiltrator());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, infiltrator)).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();

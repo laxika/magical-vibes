@@ -100,7 +100,7 @@ class SpiritSistersCallTest extends BaseCardTest {
         assertThat(choice.cards()).containsExactly(chosen);
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

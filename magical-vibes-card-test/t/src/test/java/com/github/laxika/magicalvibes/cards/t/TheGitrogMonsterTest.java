@@ -49,7 +49,6 @@ class TheGitrogMonsterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Forest").getId());
 
         int handBefore = handSize();
         resolveAllTriggers();

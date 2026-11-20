@@ -67,7 +67,7 @@ class EnigmaticIncarnationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without another enchantment does nothing")
+    @DisplayName("Without another enchantment, the sacrifice isn't offered")
     void acceptingWithoutAnotherEnchantmentDoesNothing() {
         EnigmaticIncarnation incarnation = new EnigmaticIncarnation();
         harness.addToBattlefield(player1, incarnation);
@@ -75,7 +75,7 @@ class EnigmaticIncarnationTest extends BaseCardTest {
 
         moveToEndStep();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .map(Permanent::getCard)).containsExactly(incarnation);

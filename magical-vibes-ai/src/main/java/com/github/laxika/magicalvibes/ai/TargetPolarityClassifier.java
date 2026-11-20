@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
@@ -222,11 +221,6 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof TributeNotPaidEffect tributeNotPaid) {
             return classify(gameData, tributeNotPaid.wrapped(), aiPlayerId);
-        }
-        if (effect instanceof SacrificePermanentsOrElseEffect sacrificeOrElse) {
-            TargetPolarity sacrificed = classify(gameData, sacrificeOrElse.sacrificedEffect(), aiPlayerId);
-            TargetPolarity otherwise = classify(gameData, sacrificeOrElse.elseEffect(), aiPlayerId);
-            return higherPriority(sacrificed, otherwise);
         }
 
         // Attaching an Equipment helps the creature it lands on; the absorbed "attach that Equipment to target creature"

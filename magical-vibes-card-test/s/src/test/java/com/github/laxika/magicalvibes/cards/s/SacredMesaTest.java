@@ -65,11 +65,7 @@ class SacredMesaTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-
-        UUID pegasusId = findPermanent(player1, "Stormfront Pegasus").getId();
-        harness.handlePermanentChosen(player1, pegasusId);
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Sacred Mesa");
         harness.assertNotOnBattlefield(player1, "Stormfront Pegasus");
         harness.assertInGraveyard(player1, "Stormfront Pegasus");
@@ -132,7 +128,6 @@ class SacredMesaTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve upkeep trigger
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Pegasus").getId());
 
         harness.assertOnBattlefield(player1, "Sacred Mesa");
         assertThat(countPermanents(player1, "Pegasus")).isZero();
@@ -152,7 +147,6 @@ class SacredMesaTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pegasus");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Pegasus").getId());
 
         harness.assertOnBattlefield(player1, "Sacred Mesa");
         assertThat(countPermanents(player1, "Pegasus")).isZero();
@@ -171,7 +165,6 @@ class SacredMesaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Pegasus").getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Sacred Mesa")).isEqualTo(1);

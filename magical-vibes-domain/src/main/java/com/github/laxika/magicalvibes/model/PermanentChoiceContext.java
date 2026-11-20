@@ -1746,9 +1746,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record BouncePermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
 
-    /** "Sacrifice this permanent unless you sacrifice a [permanent]." The chosen permanent is sacrificed. (Sacred Mesa.) */
-    record SacrificeOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
-
     /** "If this permanent would enter, sacrifice a [permanent] instead. If you do, put it onto the
      *  battlefield. If you don't, put it into its owner's graveyard." (Balduvian Trading Post.) The
      *  entering permanent is parked here — it is in no zone while the choice is pending. Choosing

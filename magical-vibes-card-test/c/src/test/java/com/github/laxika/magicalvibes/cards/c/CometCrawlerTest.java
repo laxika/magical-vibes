@@ -99,14 +99,15 @@ class CometCrawlerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no other creature or artifact does not boost the crawler")
+    @DisplayName("With no other creature or artifact, the sacrifice isn't offered and the crawler isn't boosted")
     void noEligibleSacrificeDoesNotBoost() {
         Permanent crawler = addCreatureReady(player1, new CometCrawler());
         addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new Spellbook());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            attackAndAcceptMay();
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
 
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(2);

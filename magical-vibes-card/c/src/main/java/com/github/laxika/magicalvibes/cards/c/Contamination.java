@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,8 +18,9 @@ public class Contamination extends Card {
 
     public Contamination() {
         // At the beginning of your upkeep, sacrifice this enchantment unless you sacrifice a creature.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessSacrificeOwnPermanentEffect(
-                new PermanentIsCreaturePredicate(), "a creature"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                "Sacrifice a creature? If you don't, sacrifice this enchantment.", new SacrificeSelfEffect()));
 
         // If a land is tapped for mana, it produces {B} instead of any other type and amount.
         addStaticEffect(new ReplaceLandManaWithColorEffect(ManaColor.BLACK, 1));

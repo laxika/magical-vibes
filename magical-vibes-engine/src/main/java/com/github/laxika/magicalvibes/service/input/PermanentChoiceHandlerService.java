@@ -426,7 +426,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ChampionCreature && permanentId == null
                 || context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach
                         && reattach.permanentToSacrificeId() != null
-                || context instanceof PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf
                 || context instanceof PermanentChoiceContext.SacrificePermanentToEnter toEnter
                         && !toEnter.controllerId().equals(permanentId)
                 || context instanceof PermanentChoiceContext.LandCasualty casualty
@@ -506,8 +505,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleChampionDeclined(gameData, champion);
             case PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach ->
                     battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
-            case PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf ignored ->
-                    battlefieldHandler.handleSacrificeOwnPermanentOrSacrificeSelf(gameData, permanentId);
             case PermanentChoiceContext.SacrificePermanentToEnter toEnter ->
                     battlefieldHandler.handleSacrificePermanentToEnter(gameData, permanentId, toEnter);
             case PermanentChoiceContext.LandCasualty casualty ->
@@ -954,8 +951,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.BouncePermanentOrSacrificeSelf) {
             battlefieldHandler.handleBouncePermanentOrSacrificeSelf(gameData, permanentId);
-        } else if (context instanceof PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf) {
-            battlefieldHandler.handleSacrificeOwnPermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentToEnter sacToEnter) {
             battlefieldHandler.handleSacrificePermanentToEnter(gameData, permanentId, sacToEnter);
         } else if (context instanceof PermanentChoiceContext.LandCasualty landCasualty) {

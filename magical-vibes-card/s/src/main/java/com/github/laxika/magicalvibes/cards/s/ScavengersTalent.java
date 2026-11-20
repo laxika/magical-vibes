@@ -8,17 +8,21 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -74,18 +78,19 @@ public class ScavengersTalent extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
                 new MayEffect(
-                        new SacrificePermanentsThenEffect(
-                                3,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                        .filter(new CardTypePredicate(CardType.CREATURE))
-                                        .enterWithCounter(CounterType.FINALITY)
-                                        .enterWithCounterCount(1)
-                                        .build(),
-                                "three other nonland permanents"),
+                        SequenceEffect.of(
+                                new SacrificePermanentsEffect(3,
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                                        Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.atLeast(StepKind.SACRIFICE, 3),
+                                        ReturnCardFromGraveyardEffect.builder()
+                                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                                .enterWithCounter(CounterType.FINALITY)
+                                                .enterWithCounterCount(1)
+                                                .build())),
                         "Sacrifice three other nonland permanents?"));
     }
 

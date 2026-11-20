@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.d.DeconstructionHammer;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -100,10 +101,10 @@ class GlorifierOfSufferingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no other permanent does not sacrifice Glorifier")
+    @DisplayName("With no other permanent, the sacrifice isn't offered and Glorifier stays")
     void cannotSacrificeItself() {
         castGlorifier();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player1, "Glorifier of Suffering");
         harness.assertNotInGraveyard(player1, "Glorifier of Suffering");

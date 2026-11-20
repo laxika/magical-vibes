@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.ThinkingCap;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -69,7 +70,7 @@ class BenthicCriminologistsTest extends BaseCardTest {
         castBenthicCriminologists();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -99,7 +100,7 @@ class BenthicCriminologistsTest extends BaseCardTest {
         castBenthicCriminologists();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);

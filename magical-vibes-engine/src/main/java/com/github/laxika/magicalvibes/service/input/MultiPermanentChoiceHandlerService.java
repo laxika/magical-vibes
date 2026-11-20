@@ -306,8 +306,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenSacrificeRestEffectHandler eachPlayerChoosesLandsThenSacrificeRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .SacrificePermanentsThenEffectHandler sacrificePermanentsThenEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .RaidingPartyEffectHandler raidingPartyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
@@ -745,11 +743,6 @@ public class MultiPermanentChoiceHandlerService {
             })) {
                 throw new IllegalStateException("A selected permanent is no longer eligible to sacrifice");
             }
-        }
-        if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsThen thenCtx
-                && permanentIds.size() != thenCtx.requiredCount()) {
-            throw new IllegalStateException("Must select exactly " + thenCtx.requiredCount()
-                    + " permanents to sacrifice");
         }
         if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse sacrificeCtx) {
             if (!permanentIds.isEmpty() && permanentIds.size() != sacrificeCtx.requiredCount()) {
@@ -2123,9 +2116,9 @@ public class MultiPermanentChoiceHandlerService {
      * {@link DestructionSupport#destroyBatch} batch, and
      * {@link MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice} likewise keeps its picks
      * and only prompts for the next player's land before its batch; its basic land searches come after.
-     * {@link MultiPermanentChoiceContext.SacrificePermanentsOrElse} (Insatiable Appetite, the multi-sacrifice
-     * form of "counter unless its controller sacrifices") asks its whole selection before the first
-     * sacrifice, and its "if you do" or "otherwise" branch is only queued after the sacrifices.
+     * {@link MultiPermanentChoiceContext.SacrificePermanentsOrElse} (the multi-sacrifice form of "counter unless
+     * its controller sacrifices") asks its whole selection before the first sacrifice, and its "if you do" or
+     * "otherwise" branch is only queued after the sacrifices.
      * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} sacrifices both chosen lands as one
      * batch, asking both before either leaves; Worms of the Earth itself is destroyed after, as a step of its own.
      * {@link MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice} (Voter's Dilemma) keeps
@@ -2137,7 +2130,6 @@ public class MultiPermanentChoiceHandlerService {
      * {@link MultiPermanentChoiceContext.DestroyCreaturesOpponentControls} and
      * {@link MultiPermanentChoiceContext.ForcedDestroy} destroy, and
      * {@link MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped},
-     * {@link MultiPermanentChoiceContext.SacrificePermanentsThen},
      * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} and
      * {@link MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource} sacrifice, with their
      * search, draws, "if you do" effect, mana or recorded count only after.
@@ -2187,7 +2179,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped
-                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsThen
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
                 || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice
@@ -2394,11 +2385,6 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped ignored -> {
                 handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
-                return;
-            }
-            case MultiPermanentChoiceContext.SacrificePermanentsThen ctx -> {
-                sacrificePermanentsThenEffectHandler.resolveAfterChoice(gameData, permanentIds, ctx);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
                 return;
             }
             case MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx -> {
@@ -2620,17 +2606,11 @@ public class MultiPermanentChoiceHandlerService {
                 .filter(java.util.Objects::nonNull)
                 .filter(permanent -> playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
                 .toList();
-        int sacrificedPower = context.recordSacrificedPower() ? selected.stream()
-                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent)).sum() : 0;
-        int sacrificed = selected.size();
+        // The sacrifices are added to the resolving entry's SACRIFICE step as they happen.
         destructionSupport.sacrificeTogether(gameData, selected, playerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
-        context.resolvingEntry().setEventValue(sacrificed);
-        if (context.recordSacrificedPower()) {
-            context.resolvingEntry().setSacrificedPower(sacrificedPower);
-        }
 
-        if (sacrificed == 0) {
+        if (selected.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.text(gameData.playerIdToName.get(playerId) + " sacrifices no permanents."));
         }

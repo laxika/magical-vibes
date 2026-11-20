@@ -55,13 +55,13 @@ class WeddingSecurityTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without a Blood token does nothing")
+    @DisplayName("Without a Blood token, the sacrifice isn't offered")
     void noBloodTokenDoesNothing() {
         Permanent security = addCreatureReady(player1, new WeddingSecurity());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(security.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -77,7 +77,7 @@ class WeddingSecurityTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(security.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

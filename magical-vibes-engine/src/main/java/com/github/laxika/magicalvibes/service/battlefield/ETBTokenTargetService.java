@@ -694,8 +694,7 @@ public class ETBTokenTargetService {
                 ? null
                 : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
-                new AmountContext(pending.controllerId(), source, null, pending.xValue(), pending.eventValue(), false,
-                        null, pending.repeatedAdditionalCosts(), null));
+                groupCountContext(pending, source));
         return Math.min(staticMax, Math.max(0, dynamicMax));
     }
 
@@ -719,9 +718,19 @@ public class ETBTokenTargetService {
                 ? null
                 : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int dynamicMin = amountEvaluationService.evaluate(gameData, group.getDynamicMinTargets(),
-                new AmountContext(pending.controllerId(), source, null, pending.xValue(), pending.eventValue(), false,
-                        null, pending.repeatedAdditionalCosts(), null));
+                groupCountContext(pending, source));
         return Math.max(staticMin, Math.max(0, dynamicMin));
+    }
+
+    /**
+     * The context a group's dynamic target count is read in: the ability's controller, source, X and event value, and
+     * its trigger record, so a reflexive ability's "up to that many target creatures" reads the step results its
+     * maker's resolution carried onto it ({@code AmountThisWay}).
+     */
+    private static AmountContext groupCountContext(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                                   Permanent source) {
+        return new AmountContext(pending.controllerId(), source, null, pending.xValue(), pending.eventValue(), false,
+                null, pending.repeatedAdditionalCosts(), null, pending.triggerRecord(), null, null, 0, 0, List.of());
     }
 
     /**

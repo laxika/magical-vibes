@@ -87,7 +87,9 @@ class RagefireHellkiteTest extends BaseCardTest {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
         addCreatureReady(player2, new RagefireHellkite());
 
-        attackAndAcceptMay();
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, hellkite, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hellkite);

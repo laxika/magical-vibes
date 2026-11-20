@@ -46,9 +46,6 @@ class BogElementalTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        UUID rhysticCaveId = findPermanent(player1, "Rhystic Cave").getId();
-        harness.handlePermanentChosen(player1, rhysticCaveId);
-
         harness.assertOnBattlefield(player1, "Bog Elemental");
         harness.assertNotOnBattlefield(player1, "Rhystic Cave");
         harness.assertInGraveyard(player1, "Rhystic Cave");
@@ -138,7 +135,6 @@ class BogElementalTest extends BaseCardTest {
         land.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, land.getId());
 
         harness.assertOnBattlefield(player1, "Bog Elemental");
         harness.assertNotOnBattlefield(player1, "Rhystic Cave");

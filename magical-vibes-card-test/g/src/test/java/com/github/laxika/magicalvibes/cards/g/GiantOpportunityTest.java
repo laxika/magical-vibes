@@ -23,6 +23,7 @@ class GiantOpportunityTest extends BaseCardTest {
         List<Permanent> foods = findPermanents(player1, "Food");
 
         castGiantOpportunity();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultiplePermanentsChosen(player1,
                 foods.subList(0, 2).stream().map(Permanent::getId).toList());
 
@@ -38,7 +39,7 @@ class GiantOpportunityTest extends BaseCardTest {
         castFoodProducer();
 
         castGiantOpportunity();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(6);
         harness.assertNotOnBattlefield(player1, "Giant");
@@ -97,20 +98,21 @@ class GiantOpportunityTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing just one Food is rejected without sacrificing it")
+    @DisplayName("Choosing just one Food is rejected without sacrificing it; exactly two must be chosen")
     void cannotSacrificeOnlyOneFood() {
         castFoodProducer();
         List<Permanent> foods = findPermanents(player1, "Food");
         castGiantOpportunity();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
                 List.of(foods.getFirst().getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(findPermanents(player1, "Food")).containsExactlyElementsOf(foods);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of());
-        assertThat(countPermanents(player1, "Food")).isEqualTo(6);
-        harness.assertNotOnBattlefield(player1, "Giant");
+        harness.handleMultiplePermanentsChosen(player1, foods.subList(0, 2).stream().map(Permanent::getId).toList());
+        assertThat(countPermanents(player1, "Food")).isOne();
+        harness.assertOnBattlefield(player1, "Giant");
     }
 
     private void activateFood() {

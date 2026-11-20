@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +23,8 @@ public class Chainbreaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new RemoveCounterAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 0, Subjects.target())),
+                List.of(new RemoveCounterFromTargetPermanentEffect(
+                        CounterType.MINUS_ONE_MINUS_ONE, new PermanentIsCreaturePredicate())),
                 "{3}, {T}: Remove a -1/-1 counter from target creature.",
                 TargetFilters.creature()
         ));

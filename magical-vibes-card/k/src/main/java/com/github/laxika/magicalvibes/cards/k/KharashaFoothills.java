@@ -2,13 +2,15 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,9 +26,9 @@ public class KharashaFoothills extends Card {
                         .withFilter(new PermanentIsAttackingOpponentOfSourceControllerPredicate()),
                 new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect());
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
-                new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsCreaturePredicate()),
+                SacrificePermanentsEffect.anyNumber(new PermanentIsCreaturePredicate(), Subjects.you()),
                 new ConditionalEffect(
-                        new EventValueAtLeast(1),
-                        new DealDamageToTargetCreatureEffect(new EventValue()))));
+                        HappenedThisWay.sacrificed(),
+                        new DealDamageToTargetCreatureEffect(new AmountThisWay(StepKind.SACRIFICE)))));
     }
 }

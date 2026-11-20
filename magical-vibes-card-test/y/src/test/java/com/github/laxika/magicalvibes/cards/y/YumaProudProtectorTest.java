@@ -106,14 +106,14 @@ class YumaProudProtectorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without a land does not draw")
+    @DisplayName("Without a land, the sacrifice isn't offered and nothing is drawn")
     void acceptingWithoutLandDoesNotDraw() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.enterBattlefieldAndReturn(player1, new YumaProudProtector());
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

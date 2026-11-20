@@ -3,15 +3,15 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,13 +28,13 @@ public class RavenousRotbelly extends Card {
     public RavenousRotbelly() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
-                        new SacrificeAnyNumberOfPermanentsEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), 3),
+                        SacrificePermanentsEffect.upTo(
+                                3, new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), Subjects.you()),
                         new ConditionalEffect(
-                                new EventValueAtLeast(1),
+                                HappenedThisWay.sacrificed(),
                                 new QueueReflexiveAbilityEffect(
                                         new SacrificePermanentsEffect(
-                                                new EventValue(),
+                                                new AmountThisWay(StepKind.SACRIFICE),
                                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                                                 Subjects.eachOpponent())))),
                 "Sacrifice up to three Zombies?"));

@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +25,9 @@ public class SunDroplet extends Card {
                 new PutCountersOnSelfEffect(CounterType.CHARGE, new EventValue()));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new MayEffect(
-                        new RemoveCounterAndGainLifeEffect(CounterType.CHARGE, 1, Subjects.source()),
+                        SequenceEffect.of(
+                                new RemoveCounterFromSourceEffect(CounterType.CHARGE, 1),
+                                new ConditionalEffect(HappenedThisWay.removedCounters(), new GainLifeEffect(1))),
                         "Remove a charge counter from Sun Droplet to gain 1 life?"));
     }
 }

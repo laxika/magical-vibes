@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -58,13 +59,13 @@ class TheMeepTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without another creature does nothing")
+    @DisplayName("Without another creature, the sacrifice isn't offered")
     void acceptingWithoutAnotherCreatureDoesNothing() {
         Permanent meep = addCreatureReady(player1, new TheMeep());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.getEffectivePower(gd, meep)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, meep)).isEqualTo(4);

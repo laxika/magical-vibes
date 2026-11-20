@@ -20,7 +20,9 @@ import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,10 +56,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // A new sacrifice step: every permanent sacrificed from here on, as this resolves or as its sacrifice prompts
-        // are answered, is added to the step's departures with its last-known information
-        // (DestructionSupport.sacrificeTogether), which make its SACRIFICE outcome.
-        entry.beginSacrificeStep();
         var e = (SacrificePermanentsEffect) effect;
         // "Sacrifice a creature" (bare creature filter) uses the single-select creature primitive;
         // every other filter uses the multi-permanent-choice flow. Both are behaviourally tested.
@@ -65,27 +63,39 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 && !e.simultaneousChoices();
 
         List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.player());
+        // Each player's count is read before this step begins, so "sacrifices that many" reads the earlier
+        // sacrifice step it refers to (CR 608.2c), not this one.
+        Map<UUID, Integer> counts = new HashMap<>();
+        for (UUID playerId : players) {
+            counts.put(playerId, evaluateCount(gameData, entry, e, playerId));
+        }
+        // A new sacrifice step: every permanent sacrificed from here on, as this resolves or as its sacrifice prompts
+        // are answered, is added to the step's departures with its last-known information
+        // (DestructionSupport.sacrificeTogether), which make its SACRIFICE outcome.
+        entry.beginSacrificeStep();
         if (e.upToCount()) {
             if (players.size() > 1) {
                 throw new IllegalStateException("An up-to-count sacrifice names one player: " + e.player());
             }
             if (!players.isEmpty()) {
-                resolveUpToCount(gameData, entry, e, players.getFirst());
+                resolveUpToCount(gameData, entry, e, players.getFirst(), counts.get(players.getFirst()));
             }
             return;
         }
         if (e.player() instanceof PlayerSubject.Each || e.player() instanceof PlayerSubject.Matching
                 || players.size() > 1) {
-            resolveSelectedPlayers(gameData, entry, e, players, creatureSingleSac);
+            resolveSelectedPlayers(gameData, entry, e, players, creatureSingleSac, counts);
         } else if (!players.isEmpty()) {
-            resolveSinglePlayer(gameData, entry, e, players.getFirst(), creatureSingleSac);
+            resolveSinglePlayer(gameData, entry, e, players.getFirst(), creatureSingleSac,
+                    counts.get(players.getFirst()));
         }
     }
 
     void resolveForPlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect,
             UUID playerId) {
         resolveSinglePlayer(gameData, entry, effect, playerId,
-                effect.filter() instanceof PermanentIsCreaturePredicate);
+                effect.filter() instanceof PermanentIsCreaturePredicate,
+                evaluateCount(gameData, entry, effect, playerId));
     }
 
     public boolean hasLegalSacrificeChoice(GameData gameData, StackEntry entry,
@@ -119,11 +129,11 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
      * included, so the choice is asked even with one candidate. Its completion sacrifices the chosen ones together
      * through {@code DestructionSupport.sacrificeTogether}, which adds them to this SACRIFICE step.
      */
-    private void resolveUpToCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e, UUID playerId) {
+    private void resolveUpToCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e, UUID playerId,
+            int count) {
         if (isSacrificeProtected(gameData, entry, playerId)) {
             return;
         }
-        int count = evaluateCount(gameData, entry, e, playerId);
         if (count <= 0) {
             return;
         }
@@ -149,7 +159,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
-            UUID playerId, boolean creatureSingleSac) {
+            UUID playerId, boolean creatureSingleSac, int count) {
         if (isSacrificeProtected(gameData, entry, playerId)) {
             if (!creatureSingleSac && (e.recordSacrificedCount() || e.recordSacrificedPower())) {
                 entry.setEventValue(0);
@@ -162,7 +172,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        int count = evaluateCount(gameData, entry, e, playerId);
         if (count <= 0) {
             if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
                 entry.setEventValue(0);
@@ -227,7 +236,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveSelectedPlayers(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
-            List<UUID> playerIds, boolean creatureSingleSac) {
+            List<UUID> playerIds, boolean creatureSingleSac, Map<UUID, Integer> counts) {
         if (e.recordSacrificedCount()) {
             entry.setEventValue(0);
         }
@@ -237,7 +246,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         // A lone affected player has no simultaneity to preserve, so a creature-only sacrifice uses the
         // single-select creature primitive, as it does for every other single-player sacrifice.
         if (creatureSingleSac && playerIds.size() == 1) {
-            resolveSinglePlayer(gameData, entry, e, playerIds.getFirst(), true);
+            resolveSinglePlayer(gameData, entry, e, playerIds.getFirst(), true, counts.get(playerIds.getFirst()));
             return;
         }
 
@@ -260,7 +269,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 continue;
             }
 
-            int count = evaluateCount(gameData, entry, e, playerId);
+            int count = counts.get(playerId);
             if (count <= 0) {
                 continue;
             }

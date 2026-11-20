@@ -34,8 +34,7 @@ class InsatiableAppetiteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         castAppetite(bears.getId());
-        Permanent food = findPermanent(player1, "Food");
-        harness.handleMultiplePermanentsChosen(player1, List.of(food.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
@@ -49,7 +48,7 @@ class InsatiableAppetiteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         castAppetite(bears.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Food")).isOne();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
@@ -80,12 +79,13 @@ class InsatiableAppetiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A nontoken Food can be sacrificed to give an opponent's creature +5/+5 until end of turn")
     void canSacrificeNontokenFoodToBoostOpponentsCreature() {
         Permanent food = harness.addToBattlefieldAndReturn(player1, new GoldenEgg());
         Permanent target = addCreatureReady(player2, new Gingerbrute());
 
         castAppetite(target.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(food.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(countPermanents(player1, "Golden Egg")).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(food.getCard());
@@ -100,6 +100,7 @@ class InsatiableAppetiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Food doesn't let the creature get +5/+5")
     void opponentsFoodDoesNotEnableLargerBoost() {
         harness.addToBattlefield(player2, new GoldenEgg());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
@@ -119,11 +120,12 @@ class InsatiableAppetiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target can itself be the Food sacrificed")
     void canSacrificeTargetWhenItIsFood() {
         Permanent target = addCreatureReady(player1, new Gingerbrute());
 
         castAppetite(target.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(countPermanents(player1, "Gingerbrute")).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
@@ -132,6 +134,7 @@ class InsatiableAppetiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An illegal target means the spell doesn't resolve and no Food is sacrificed")
     void illegalTargetPreventsFoodSacrificeChoice() {
         Permanent target = addCreatureReady(player1, new Gingerbrute());
         harness.addToBattlefield(player1, new GoldenEgg());
@@ -160,13 +163,13 @@ class InsatiableAppetiteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         castAppetite(bears.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(gingerbrute.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(gingerbrute);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
