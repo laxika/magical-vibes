@@ -5,8 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -44,12 +48,9 @@ public class NahiriTheUnforgiving extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
-                        GRAVEYARD_TARGET,
-                        true,
-                        List.of(),
-                        true,
-                        true)),
+                List.of(ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(GRAVEYARD_TARGET),
+                        CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE),
+                                new CreateTokenCopyOfTargetPermanentEffect(true, true))),
                 "0: Exile target creature or Equipment card with mana value less than Nahiri's loyalty "
                         + "from your graveyard. Create a token that's a copy of it. That token gains haste. "
                         + "Exile it at the beginning of the next end step."));

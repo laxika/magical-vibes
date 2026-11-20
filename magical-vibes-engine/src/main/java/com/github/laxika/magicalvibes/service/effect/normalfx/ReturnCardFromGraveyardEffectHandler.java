@@ -5,15 +5,18 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +32,7 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -83,6 +87,20 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
 
         UUID controllerId = entry.getControllerId();
         UUID sourceCardId = entry.getCard().getId();
+
+        if (e.cards() != null) {
+            Map<UUID, Set<UUID>> cardIdsByGraveyard = new LinkedHashMap<>();
+            for (SubjectResolutionService.LocatedCard card
+                    : subjectResolutionService.locatedCards(gameData, entry, e, e.cards())) {
+                if (card.zone() == Zone.GRAVEYARD && card.ownerId() != null) {
+                    cardIdsByGraveyard.computeIfAbsent(card.ownerId(), ignored -> new LinkedHashSet<>())
+                            .add(card.card().getId());
+                }
+            }
+            graveyardReturnSupport.resolveReturnOfCards(gameData, entry, e, controllerId, sourceCardId,
+                    cardIdsByGraveyard);
+            return;
+        }
 
         // Case 0: Choose permanent type first (e.g. Creeping Renaissance)
         if (e.choosePermanentType()) {

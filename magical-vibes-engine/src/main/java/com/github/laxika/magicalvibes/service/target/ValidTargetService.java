@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCar
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -2246,9 +2245,11 @@ public class ValidTargetService {
                                                      UUID sourceCardId, UUID controllerId, int effectiveXValue,
                                                      Integer xValue) {
         var declaredFilter = effect.targetSpec().graveyardCardPredicate().orElse(null);
+        UUID cardGraveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
+        UUID cardOwnerId = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : controllerId;
         if (declaredFilter != null
                 && !predicateEvaluationService.matchesCardPredicate(
-                        c, declaredFilter, sourceCardId, gameData, controllerId, null, null, xValue)) {
+                        c, declaredFilter, sourceCardId, gameData, cardOwnerId, null, null, xValue)) {
             return false;
         }
         if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
@@ -2268,7 +2269,8 @@ public class ValidTargetService {
                 && (e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
                 || e.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
                 && e.filter() != null) {
-            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId, gameData,
+                    cardOwnerId, null, null, xValue);
         } else if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
@@ -2277,21 +2279,6 @@ public class ValidTargetService {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
         } else if (effect instanceof GrantJumpStartToTargetGraveyardCardEffect) {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
-        } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e && e.filter() != null) {
-            if (!predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId)) {
-                return false;
-            }
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
-            return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
-                    || (graveyardOwnerId != null
-                    && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                            .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
-        } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e) {
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
-            return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
-                    || (graveyardOwnerId != null
-                    && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                            .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
         } else if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect e) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
             return !e.targetPutIntoGraveyardFromAnywhereThisTurn()

@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
@@ -512,7 +511,9 @@ public class TargetLegalityService {
                         throw new IllegalStateException("Target card not found in any graveyard");
                     }
                     if (anyGraveyardEffect.filter() != null
-                            && !predicateEvaluationService.matchesCardPredicate(card, anyGraveyardEffect.filter(), null)) {
+                            && !predicateEvaluationService.matchesCardPredicate(card, anyGraveyardEffect.filter(),
+                            sourceCardId, gameData, gameQueryService.findGraveyardOwnerById(gameData, cardId),
+                            null, null, xValue)) {
                         throw new IllegalStateException("Target card must be a "
                                 + CardPredicateUtils.describeFilter(anyGraveyardEffect.filter()));
                     }
@@ -574,7 +575,8 @@ public class TargetLegalityService {
                     }
                     if (graveyardEffect.filter() != null
                             && !predicateEvaluationService.matchesCardPredicate(
-                            card, graveyardEffect.filter(), null)) {
+                            card, graveyardEffect.filter(), sourceCardId, gameData, graveyardOwnerId,
+                            null, null, xValue)) {
                         throw new IllegalStateException("Target card must be a "
                                 + CardPredicateUtils.describeFilter(graveyardEffect.filter()));
                     }
@@ -720,40 +722,6 @@ public class TargetLegalityService {
                     if (returnCardsEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
                             && graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
                         throw new IllegalStateException("Target must be in your graveyard");
-                    }
-                }
-                break;
-            }
-            if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
-                if (targetCardIds.size() != 1) {
-                    throw new IllegalStateException("Must select exactly 1 target card");
-                }
-                UUID cardId = targetCardIds.getFirst();
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (card == null) {
-                    throw new IllegalStateException("Target card not found in any graveyard");
-                }
-                if (exileCopy.filter() != null
-                        && !predicateEvaluationService.matchesCardPredicate(
-                        card, exileCopy.filter(), sourceCardId, gameData, playerId,
-                        null, null, xValue)) {
-                    throw new IllegalStateException("Target card must be a "
-                            + CardPredicateUtils.describeFilter(exileCopy.filter()));
-                }
-                if (exileCopy.ownGraveyardOnly()) {
-                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                    if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
-                        throw new IllegalStateException("Target must be in your graveyard");
-                    }
-                }
-                if (exileCopy.targetPutIntoGraveyardFromAnywhereThisTurn()) {
-                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                    boolean tracked = graveyardOwnerId != null
-                            && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                                    .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId);
-                    if (!tracked) {
-                        throw new IllegalStateException(
-                                "Target must be a creature card put into a graveyard this turn");
                     }
                 }
                 break;

@@ -6,8 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -15,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "89")
@@ -31,19 +36,13 @@ public class ArdynTheUsurper extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON)));
 
         target(0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        false,
-                        List.of(CardSubtype.DEMON),
-                        false,
-                        false,
-                        CardColor.BLACK,
-                        5,
-                        5,
-                        Set.of(),
-                        false,
-                        false,
-                        null,
-                        true));
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(
+                                new CardTypePredicate(CardType.CREATURE)),
+                        CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE),
+                                        new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), 5, 5,
+                                                Map.of(), false, false, false, false, false, false, CardColor.BLACK,
+                                                Set.of()))
+                                .withCreatureTypesInstead(List.of(CardSubtype.DEMON))));
     }
 }

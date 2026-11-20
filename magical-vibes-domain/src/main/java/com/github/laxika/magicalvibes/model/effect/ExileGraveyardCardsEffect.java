@@ -197,6 +197,27 @@ public record ExileGraveyardCardsEffect(
                 null, false, false, false, null, true, true);
     }
 
+    /**
+     * "Exile target [filter] card from your graveyard". Its EXILE result is what a later "create a token that's a copy
+     * of it" ({@code CreateTokenCopyOfCardEffect} over {@code Subjects.cardsThisWay(StepKind.EXILE)}) copies.
+     */
+    public static ExileGraveyardCardsEffect oneTargetFromControllerGraveyard(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, true, false, false, null, false);
+    }
+
+    /** "Exile up to one target [filter] card from your graveyard". */
+    public static ExileGraveyardCardsEffect upToOneTargetFromControllerGraveyard(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, false, false, false, null, false, true);
+    }
+
+    /** "Exile up to one target [filter] card from a graveyard". */
+    public static ExileGraveyardCardsEffect upToOneTargetFromAnyGraveyard(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                filter, false, false, false, null, false, true);
+    }
+
     /** "Exile target [filter] card from your graveyard", tracked with the source permanent ("exiled with ~"). */
     public static ExileGraveyardCardsEffect oneTargetFromControllerGraveyardWithSource(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,

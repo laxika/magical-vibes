@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -56,8 +59,9 @@ public class TamiyoCompleatedSage extends Card {
                 List.<TargetFilter>of(artifactOrCreature), 0, 1));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
-                        NONLAND_PERMANENT_WITH_MANA_VALUE_X, true, List.of(), false, false)),
+                List.of(ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(NONLAND_PERMANENT_WITH_MANA_VALUE_X),
+                        CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE),
+                                new CreateTokenCopyOfTargetPermanentEffect())),
                 "\u2212X: Exile target nonland permanent card with mana value X from your graveyard. Create a token that's a copy of that card.",
                 null));
 

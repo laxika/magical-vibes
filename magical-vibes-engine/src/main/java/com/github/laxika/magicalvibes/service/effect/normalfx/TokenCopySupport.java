@@ -310,11 +310,15 @@ public class TokenCopySupport {
                 attackTargets, null, tokenRider, null, chooseAttackTargets, null);
     }
 
-    private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
-                                         Permanent sourcePermanent, UUID tokenControllerId,
-                                         CreateTokenCopyOfTargetPermanentEffect effect,
-                                         List<UUID> attackTargetIds,
-                                         Consumer<Card> copyException) {
+    /**
+     * Creates token copies entering attacking {@code attackTargetIds} (when the copies are tapped and attacking; else
+     * {@code null}), applying {@code copyException} to each copied token card before it enters.
+     */
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent, UUID tokenControllerId,
+                                        CreateTokenCopyOfTargetPermanentEffect effect,
+                                        List<UUID> attackTargetIds,
+                                        Consumer<Card> copyException) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
                 effect, attackTargetIds, copyException, null);
     }

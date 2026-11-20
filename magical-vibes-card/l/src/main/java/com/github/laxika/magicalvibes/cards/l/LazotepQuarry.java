@@ -9,16 +9,21 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M3C", collectorNumber = "79")
@@ -47,22 +52,14 @@ public class LazotepQuarry extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.DESERT),
                                 "Sacrifice a Desert",
                                 false),
-                        new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
-                                new CardAllOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardManaValueEqualsXPredicate())),
-                                true,
-                                List.of(CardSubtype.ZOMBIE),
-                                false,
-                                false,
-                                CardColor.BLACK,
-                                4,
-                                4,
-                                Set.of(),
-                                false,
-                                false,
-                                null,
-                                true)
+                        ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardManaValueEqualsXPredicate()))),
+                        CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE),
+                                        new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), 4, 4,
+                                                Map.of(), false, false, false, false, false, false, CardColor.BLACK,
+                                                Set.of()))
+                                .withCreatureTypesInstead(List.of(CardSubtype.ZOMBIE))
                 ),
                 "{X}{2}, {T}, Sacrifice a Desert: Exile target creature card with mana value X from your graveyard. "
                         + "Create a token that's a copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.",

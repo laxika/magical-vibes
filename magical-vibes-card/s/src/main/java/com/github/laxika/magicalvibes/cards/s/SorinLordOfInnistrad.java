@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -49,7 +52,12 @@ public class SorinLordOfInnistrad extends Card {
         // Return each card put into a graveyard this way to the battlefield under your control.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new DestroyUpToTargetsThenReturnFromGraveyardEffect()),
+                List.of(new DestroyTargetPermanentEffect(Subjects.allTargets()),
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .returnAll(true)
+                                .cards(Subjects.cardsThisWay(StepKind.DESTROY))
+                                .build()),
                 "\u22126: Destroy up to three target creatures and/or other planeswalkers. Return each card put into a graveyard this way to the battlefield under your control.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.u.UginTheSpiritDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GyrusWakerOfCorpses.class, GrizzlyBears.class, AirElemental.class})
+@CardUsed({GyrusWakerOfCorpses.class, GrizzlyBears.class, AirElemental.class, UginTheSpiritDragon.class})
 class GyrusWakerOfCorpsesTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,32 @@ class GyrusWakerOfCorpsesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("The copy's controller chooses what it attacks; it may attack a planeswalker while Gyrus attacks its controller")
+    void copyChoosesItsOwnAttackTarget() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent gyrus = addReadyGyrus(3);
+        Permanent ugin = harness.addToBattlefieldAndReturn(player2, new UginTheSpiritDragon());
+        ugin.setCounterCount(CounterType.LOYALTY, 7);
+        gd.playerAutoStopSteps.values().forEach(stops -> stops.add(TurnStep.DECLARE_BLOCKERS));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, ugin.getId());
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst()
+                .orElseThrow();
+        assertThat(gyrus.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(token.getAttackTarget()).isEqualTo(ugin.getId());
     }
 
     @Test

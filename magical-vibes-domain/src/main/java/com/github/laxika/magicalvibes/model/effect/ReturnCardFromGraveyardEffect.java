@@ -297,6 +297,14 @@ import lombok.Builder;
  * @param hasteUntilEndOfTurn  {@code true} when {@link #grantHaste} lasts only until end of turn ("It gains
  *                             haste until end of turn", Shallow Grave) rather than indefinitely ("It gains
  *                             haste", Postmortem Lunge)
+ * @param cards                with {@link #returnAll}, the cards to return instead of every matching card of the
+ *                             searched graveyards: "return each card put into a graveyard this way" is
+ *                             {@code Subjects.cardsThisWay(StepKind.DESTROY)} after the destroy step (each of those
+ *                             cards still in a graveyard and matching {@link #filter} returns); {@code null} for the
+ *                             searched graveyards
+ * @param sacrificeAtYourNextEndStep with {@link #cards}, each returned permanent is sacrificed at the beginning of the
+ *                             effect controller's next end step ("sacrifice it at the beginning of your next end
+ *                             step", Come Back Wrong), not at the next end step of any player
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -385,7 +393,19 @@ public record ReturnCardFromGraveyardEffect(
         boolean requiresPowerAtMostSacrificedPower,
         boolean hasteUntilEndOfTurn,
         boolean returnToHandAtYourNextEndStep,
-        boolean attachToSourceOptional) implements TargetCardGroupEffect {
+        boolean attachToSourceOptional,
+        boolean sacrificeAtYourNextEndStep,
+        CardSubject cards) implements TargetCardGroupEffect {
+
+    public ReturnCardFromGraveyardEffect {
+        if (cards != null && !returnAll) {
+            throw new IllegalArgumentException("A card subject names the cards a return-all returns");
+        }
+        if (sacrificeAtYourNextEndStep && cards == null) {
+            throw new IllegalArgumentException("\"Sacrifice it at the beginning of your next end step\" is read by the "
+                    + "card-subject return");
+        }
+    }
         public ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,
@@ -461,7 +481,7 @@ public record ReturnCardFromGraveyardEffect(
         Duration battlefieldEffectGrantDuration,
         int targetGroup
 ) {
-            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, false, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), false, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false, false, false, false);
+            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, false, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), false, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false, false, false, false, false, null);
         }
 
     /**

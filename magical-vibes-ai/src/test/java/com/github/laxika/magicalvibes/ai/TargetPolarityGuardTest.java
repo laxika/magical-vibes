@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromColorlessSourcesEffect;
 
@@ -355,15 +356,15 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("A destroy step over every target, the first step of a destroy-and-return, is harmful removal")
     void destroyAndReturnTargetsOpposingPermanents() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);
-        for (boolean sacrificeAtEndStep : List.of(false, true)) {
-            assertThat(classifier.classify(harness.getGameData(),
-                    new com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect(
-                            sacrificeAtEndStep), harness.getPlayer2().getId()))
-                    .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
-        }
+        assertThat(classifier.classify(harness.getGameData(),
+                new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(
+                        com.github.laxika.magicalvibes.model.effect.Subjects.allTargets()),
+                harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
     }
 
     @Test

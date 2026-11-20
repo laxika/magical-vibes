@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DiregrafCaptain;
 import com.github.laxika.magicalvibes.cards.f.FlayerOfTheHatebound;
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SorinLordOfInnistrad.class, GrizzlyBears.class, LilianaOfTheVeil.class,
-        DiregrafCaptain.class, FlayerOfTheHatebound.class})
+        DiregrafCaptain.class, FlayerOfTheHatebound.class, Opalescence.class, GloriousAnthem.class})
 class SorinLordOfInnistradTest extends BaseCardTest {
 
     @Test
@@ -139,6 +141,21 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("-6 returns each card put into a graveyard this way, even one that is not a creature card")
+    void minusSixReturnsANoncreatureCardWhosePermanentWasACreature() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 7);
+        harness.addToBattlefield(player2, new Opalescence());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(anthem.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
     }
 
     @Test

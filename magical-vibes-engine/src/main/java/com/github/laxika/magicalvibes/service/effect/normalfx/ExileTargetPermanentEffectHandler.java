@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -69,6 +73,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         }
 
         List<UUID> tokenControllers = new java.util.ArrayList<>();
+        List<MovedCard> moved = new java.util.ArrayList<>();
         for (UUID targetId : targetIds) {
             if (targetId == null) {
                 continue;
@@ -89,11 +94,13 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             entry.getLastKnownPermanentPowers().put(targetId, gameQueryService.getEffectivePower(gameData, target));
             entry.getLastKnownPermanentToughnesses().put(targetId,
                     gameQueryService.getEffectiveToughness(gameData, target));
+            Card card = target.getOriginalCard();
             if (permanentRemovalService.removePermanentToExile(gameData, target)) {
                 exiled.add(targetId);
                 if (controllerId != null) {
                     exiledControllers.add(controllerId);
                 }
+                addMovedCard(gameData, targetId, card, moved);
             }
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
@@ -105,7 +112,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             }
         }
 
-        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers));
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers, moved));
         permanentRemovalService.removeOrphanedAuras(gameData);
         for (UUID controllerId : tokenControllers) {
             destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
@@ -121,6 +128,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     private void exileSubject(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile) {
         List<UUID> exiled = new java.util.ArrayList<>();
         List<UUID> exiledControllers = new java.util.ArrayList<>();
+        List<MovedCard> moved = new java.util.ArrayList<>();
         List<Permanent> named = subjectResolutionService.permanents(gameData, entry, exile, exile.subject());
         java.util.Set<UUID> targeted = new java.util.HashSet<>();
         if (exile.subject() instanceof PermanentSubject.AllOf allOf) {
@@ -135,19 +143,19 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             permanentRemovalService.beginPermanentLeaveBatch(gameData);
         }
         try {
-            exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers);
+            exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved);
         } finally {
             if (together) {
                 permanentRemovalService.endPermanentLeaveBatch(gameData);
             }
         }
-        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers));
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(exiled, exiledControllers, moved));
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private void exileNamed(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile,
                             List<Permanent> named, java.util.Set<UUID> targeted, List<UUID> exiled,
-                            List<UUID> exiledControllers) {
+                            List<UUID> exiledControllers, List<MovedCard> moved) {
         for (Permanent permanent : named) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             if (targeted.contains(permanent.getId())) {
@@ -166,17 +174,30 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
                 }
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is removed from the game."));
             } else {
+                Card card = permanent.getOriginalCard();
                 if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
                     continue;
                 }
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
                 exiled.add(permanent.getId());
+                addMovedCard(gameData, permanent.getId(), card, moved);
                 if (controllerId != null) {
                     exiledControllers.add(controllerId);
                 }
             }
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+        }
+    }
+
+    /** The card an exiled permanent became in exile, for "the exiled card" (CR 400.7j); none for a token. */
+    private static void addMovedCard(GameData gameData, UUID permanentId, Card card, List<MovedCard> moved) {
+        if (card == null || card.isToken()) {
+            return;
+        }
+        ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+        if (exiled != null) {
+            moved.add(new MovedCard(permanentId, card.getId(), Zone.EXILE, exiled.ownerId()));
         }
     }
 }

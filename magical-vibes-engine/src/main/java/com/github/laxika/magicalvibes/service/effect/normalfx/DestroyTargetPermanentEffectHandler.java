@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -66,10 +69,11 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
 
         // Capture the controller before destruction (needed for token creation)
         UUID controllerId = rememberTarget(gameData, entry, target);
+        Card card = target.getOriginalCard();
         if (destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(),
                 destroy.cannotBeRegenerated())) {
             entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(target.getId()),
-                    controllerId == null ? List.of() : List.of(controllerId)));
+                    controllerId == null ? List.of() : List.of(controllerId), movedCard(gameData, target, card)));
         }
 
         // Create token for the target's controller if specified
@@ -126,10 +130,37 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 controllers.put(permanent.getId(), controllerId);
             }
         }
-        List<UUID> destroyed = destructionSupport.destroyBatchDestroyed(gameData, permanents,
-                entry.getCard().getName(), cannotBeRegenerated).stream().map(Permanent::getId).toList();
+        DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(gameData, permanents,
+                entry.getCard().getName(), cannotBeRegenerated);
+        List<UUID> destroyed = outcome.destroyed().stream().map(Permanent::getId).toList();
+        List<MovedCard> moved = outcome.results().stream()
+                .filter(result -> result.destroyed() && result.left() && result.newCardId() != null
+                        && result.destination() != null)
+                .map(result -> new MovedCard(result.permanentId(), result.newCardId(), result.destination(),
+                        result.destinationOwnerId()))
+                .toList();
         entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(destroyed, destroyed.stream()
-                .map(controllers::get).filter(Objects::nonNull).toList()));
+                .map(controllers::get).filter(Objects::nonNull).toList(), moved));
+    }
+
+    /**
+     * The card a destroyed permanent became in the public zone it went to (its graveyard, or exile under a
+     * replacement), for "each card put into a graveyard this way" (CR 400.7j); none for a token or a card that went to
+     * a hidden zone.
+     */
+    private List<MovedCard> movedCard(GameData gameData, Permanent destroyed, Card card) {
+        if (card == null || card.isToken()) {
+            return List.of();
+        }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (graveyardOwnerId != null) {
+            return List.of(new MovedCard(destroyed.getId(), card.getId(), Zone.GRAVEYARD, graveyardOwnerId));
+        }
+        ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+        if (exiled != null) {
+            return List.of(new MovedCard(destroyed.getId(), card.getId(), Zone.EXILE, exiled.ownerId()));
+        }
+        return List.of();
     }
 
     /** Records {@code target}'s controller, card, power and toughness as it is destroyed; returns that controller. */

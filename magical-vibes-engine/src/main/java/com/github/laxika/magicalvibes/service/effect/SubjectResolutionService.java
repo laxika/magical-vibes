@@ -3,6 +3,12 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.MovedCard;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,7 +39,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -41,7 +49,8 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * The only code that turns a {@link PermanentSubject} or {@link PlayerSubject} into permanents or players. A handler
+ * The only code that turns a {@link PermanentSubject}, {@link PlayerSubject} or {@link CardSubject} into permanents,
+ * players or cards. A handler
  * names its subject and keeps no lookup of its own. Two entry points:
  *
  * <ul>
@@ -107,6 +116,101 @@ public class SubjectResolutionService {
     public UUID player(GameData gameData, StackEntry entry, CardEffect effect, PlayerSubject subject) {
         List<UUID> players = players(gameData, entry, effect, subject);
         return players.isEmpty() ? null : players.getFirst();
+    }
+
+    /**
+     * The cards {@code subject} names for a resolving effect, as they are now: each in the public zone it is expected
+     * to be in. A card that moved from that zone since is a new object (CR 400.7) and is not named; a card a step of
+     * the same resolution moved to a public zone is found there (CR 400.7j).
+     */
+    public List<Card> cards(GameData gameData, StackEntry entry, CardEffect effect, CardSubject subject) {
+        return locatedCards(gameData, entry, effect, subject).stream().map(LocatedCard::card).toList();
+    }
+
+    /** {@link #cards}, each with the zone it is in and the player whose zone that is. */
+    public List<LocatedCard> locatedCards(GameData gameData, StackEntry entry, CardEffect effect,
+                                          CardSubject subject) {
+        return switch (subject) {
+            case CardSubject.CardsThisWay thisWay -> cardsThisWay(gameData, entry, thisWay.kind());
+            case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
+        };
+    }
+
+    /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD} or {@link Zone#EXILE}). */
+    public record LocatedCard(Card card, Zone zone, UUID ownerId) {
+    }
+
+    /**
+     * {@link CardSubject.CardsThisWay}: for each object the step recorded, the card it became in the zone the step put
+     * it in ({@link StepOutcome#movedCards()}); an exiled card that kept its id is looked for in exile, a discarded card
+     * in its graveyard, else in exile where a replacement put it. Only a card still in that zone is named.
+     */
+    private List<LocatedCard> cardsThisWay(GameData gameData, StackEntry entry, StepKind kind) {
+        StepOutcome outcome = entry.getResolutionResults().outcome(kind);
+        Map<UUID, MovedCard> moved = new LinkedHashMap<>();
+        outcome.movedCards().forEach(card -> moved.putIfAbsent(card.objectId(), card));
+        List<LocatedCard> located = new ArrayList<>();
+        Set<UUID> seen = new LinkedHashSet<>();
+        for (UUID objectId : outcome.objectIds()) {
+            MovedCard card = moved.get(objectId);
+            if (card == null && kind == StepKind.EXILE) {
+                card = new MovedCard(objectId, objectId, Zone.EXILE, null);
+            }
+            if (card == null && kind == StepKind.DISCARD) {
+                LocatedCard discarded = locate(gameData, objectId, Zone.GRAVEYARD);
+                if (discarded == null) {
+                    discarded = locate(gameData, objectId, Zone.EXILE);
+                }
+                if (discarded != null && seen.add(objectId)) {
+                    located.add(discarded);
+                }
+                continue;
+            }
+            if (card == null || !seen.add(card.cardId())) {
+                continue;
+            }
+            LocatedCard found = locate(gameData, card.cardId(), card.zone());
+            if (found != null) {
+                located.add(found);
+            }
+        }
+        return located;
+    }
+
+    /**
+     * {@link CardSubject.TargetCard}: the effect's targeted card while it is in a graveyard of the subject's scope and
+     * matches its filter, judged as the target was chosen (CR 608.2b).
+     */
+    private List<LocatedCard> targetCard(GameData gameData, StackEntry entry, CardSubject.TargetCard target) {
+        UUID cardId = entry.getTargetId();
+        if ((cardId == null || gameQueryService.findCardInGraveyardById(gameData, cardId) == null)
+                && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+            cardId = entry.getTargetCardIds().getFirst();
+        }
+        LocatedCard found = cardId == null ? null : locate(gameData, cardId, Zone.GRAVEYARD);
+        if (found == null || !target.scope().graveyardOwners(gameData.orderedPlayerIds, entry.getControllerId())
+                .contains(found.ownerId())) {
+            return List.of();
+        }
+        if (target.filter() != null && !predicateEvaluationService.matchesCardPredicate(found.card(), target.filter(),
+                entry.getCard().getId(), gameData, found.ownerId(), null, null, entry.getXValue(),
+                entry.getSourcePermanentSnapshot())) {
+            return List.of();
+        }
+        return List.of(found);
+    }
+
+    private LocatedCard locate(GameData gameData, UUID cardId, Zone zone) {
+        if (zone == Zone.GRAVEYARD) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            return card == null ? null
+                    : new LocatedCard(card, Zone.GRAVEYARD, gameQueryService.findGraveyardOwnerById(gameData, cardId));
+        }
+        if (zone == Zone.EXILE) {
+            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+            return exiled == null ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
+        }
+        return null;
     }
 
     /**
@@ -448,6 +552,10 @@ public class SubjectResolutionService {
                     union.addAll(ids(ctx, part));
                 }
                 yield List.copyOf(union);
+            }
+            case PermanentSubject.Except except -> {
+                Set<UUID> excluded = new LinkedHashSet<>(ids(ctx, except.excluded()));
+                yield ids(ctx, except.permanents()).stream().filter(id -> !excluded.contains(id)).toList();
             }
             case PermanentSubject.OneOf oneOf -> throw new IllegalArgumentException(
                     "A choice between subjects is made by the verb's handler, which resolves each option: " + oneOf);

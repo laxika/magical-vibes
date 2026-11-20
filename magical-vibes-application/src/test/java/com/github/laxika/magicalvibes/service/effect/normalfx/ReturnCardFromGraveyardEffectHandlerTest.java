@@ -214,7 +214,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
             return null;
         }).when(permanentRemovalService).addCardToHandFromGraveyard(
                 eq(gd), any(UUID.class), any(UUID.class), any(Card.class));
-        returnCardFromGraveyardHandler = new ReturnCardFromGraveyardEffectHandler(playerInputService, support, gameQueryService);
+        returnCardFromGraveyardHandler = new ReturnCardFromGraveyardEffectHandler(playerInputService, support, gameQueryService,
+                null);
 
     }
 

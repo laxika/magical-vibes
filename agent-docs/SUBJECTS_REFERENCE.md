@@ -1,6 +1,6 @@
 # Subjects reference
 
-Who or what an effect acts on. A verb effect takes a `PermanentSubject` or `PlayerSubject` built with the factory
+Who or what an effect acts on. A verb effect takes a `PermanentSubject`, `PlayerSubject` or `CardSubject` built with the factory
 `Subjects` (domain, `model/effect/`); `SubjectResolutionService` (engine, `service/effect/`) is the only code that
 resolves one. "Targets" = the variant declares the effect's target. "Static" = a static ability may use it (the
 resolver's static entry point rejects the others).
@@ -48,6 +48,7 @@ target), `allCreatures()` / `otherCreatures()`, `allPermanents()` / `otherPerman
 `sourceAndPaired()` (soulbond, CR 702.95: the source and its pair, as a set). Pick by the card's words: "creatures you
 control" includes the source, "other creatures you control" does not; a one-shot "all creatures gain ..." is
 `allCreatures()`.
+| `except(permanents, excluded)` | "then exile all other Nightmare tokens you control" after the copy step: `except(controlledBy(you(), Nightmare token), createdThisResolution())` (the permanents `permanents` names but those `excluded` names; neither part may target; Abyssal Harvester) | no | if both may |
 | `oneOf(options...)` | "exile this permanent or up to one target creature": one of the options, chosen by the controller as the effect resolves; the resolver refuses it, the verb's handler resolves each option and asks; a target option is declared by the ability (Kaya, Ghost Assassin) | no | no |
 
 ## PlayerSubject
@@ -74,6 +75,21 @@ control" includes the source, "other creatures you control" does not; a one-shot
 | `except(players, excluded)` | "the other chosen player": `except(chosenPlayers(), triggeringPlayer())` | no | if both may |
 | `allOf(players...)` | "that player or that planeswalker's controller": `allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))` over a "target player or planeswalker" another effect declares (each player once, APNAP order) | no | if every part may |
 | `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
+
+## CardSubject
+
+Cards outside the battlefield. The resolver names each card as it is now, in the public zone it is expected to be in: a
+card a step of the same resolution moved to a public zone is found there (CR 400.7j), and a card that has left that
+zone since is a new object (CR 400.7) and is not named. `SubjectResolutionService.cards` / `locatedCards` (the card,
+its zone and the player whose zone it is). No variant is static.
+
+| Factory | Card wording | Targets |
+|---|---|---|
+| `cardsThisWay(StepKind)` | "create a token that's a copy of it" after "exile target card" (`EXILE`: the exiled cards, in exile), "return each card put into a graveyard this way" (`DESTROY` / `SACRIFICE`: the card each removed permanent became in the zone it went to, from the step's `StepOutcome.movedCards`; a token becomes none), "the discarded card" (`DISCARD`: in its graveyard, or in exile where a replacement put it). Other kinds are refused. Step result (The Scarab God, Sorin Lord of Innistrad, Malcolm, Silvan Reveler) | no |
+| `targetCard(filter, scope)` | "a copy of target creature card in your graveyard": the effect's targeted card while it is in a graveyard of `scope` and matches `filter`; the effect reading it declares the graveyard target (Feldon of the Third Path) | yes |
+
+Readers: `CreateTokenCopyOfCardEffect.of(cards, options)`, `ReturnCardFromGraveyardEffect.builder().returnAll(true).cards(...)`,
+`MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost").
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
 creature; its controller loses 2 life"). A `PermanentIsTargetCardPredicate` leaf in a `controlledBy` filter is the entry's target permanent as the

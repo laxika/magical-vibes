@@ -132,15 +132,20 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
     private static StepOutcome departed(List<DepartureResult> results, boolean destroyed) {
         List<UUID> permanents = new ArrayList<>();
         List<UUID> controllers = new ArrayList<>();
+        List<MovedCard> moved = new ArrayList<>();
         for (DepartureResult result : results) {
             if (destroyed ? result.destroyed() : result.sacrificed()) {
                 permanents.add(result.permanentId());
                 if (result.lastKnownControllerId() != null) {
                     controllers.add(result.lastKnownControllerId());
                 }
+                if (result.newCardId() != null && result.destination() != null && result.left()) {
+                    moved.add(new MovedCard(result.permanentId(), result.newCardId(), result.destination(),
+                            result.destinationOwnerId()));
+                }
             }
         }
-        return StepOutcome.ofObjects(permanents, controllers);
+        return StepOutcome.ofObjects(permanents, controllers, moved);
     }
 
     private static int nonNegative(Integer value) {

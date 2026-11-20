@@ -9,12 +9,16 @@ import java.util.UUID;
  * What one resolution step of a {@link StepKind} did: how much, to which objects, for which players. What each kind
  * puts in each component is listed on {@link StepKind}. Immutable, so a {@link StackEntry} copy shares it.
  *
- * @param amount    how many cards, permanents, counters or tokens, or how much damage or life; never negative
- * @param objectIds the cards or permanents the step acted on, in the order it acted
- * @param playerIds the players the step happened to, or who controlled or owned what it acted on (CR 608.2h), each
- *                  once, in the order the step reached them
+ * @param amount     how many cards, permanents, counters or tokens, or how much damage or life; never negative
+ * @param objectIds  the cards or permanents the step acted on, in the order it acted
+ * @param playerIds  the players the step happened to, or who controlled or owned what it acted on (CR 608.2h), each
+ *                   once, in the order the step reached them
+ * @param movedCards for the objects the step moved to another zone as a new object (CR 400.7), the card each became
+ *                   there, so a later step of the resolution can find it (CR 400.7j); empty for a step that moved
+ *                   nothing, and for an object that is a card already in the zone the step put it in (a card exiled
+ *                   from a graveyard keeps its id)
  */
-public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds) {
+public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards) {
 
     /** A step that did nothing. */
     public static final StepOutcome NONE = new StepOutcome(0, List.of(), List.of());
@@ -25,11 +29,22 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         }
         objectIds = List.copyOf(objectIds);
         playerIds = List.copyOf(new LinkedHashSet<>(playerIds));
+        movedCards = movedCards == null ? List.of() : List.copyOf(movedCards);
+    }
+
+    /** An outcome that moved no object to a new zone as a new card. */
+    public StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds) {
+        this(amount, objectIds, playerIds, List.of());
     }
 
     /** An outcome of {@code objectIds.size()} objects. */
     public static StepOutcome ofObjects(List<UUID> objectIds, List<UUID> playerIds) {
         return new StepOutcome(objectIds.size(), objectIds, playerIds);
+    }
+
+    /** An outcome of {@code objectIds.size()} objects, some of which became {@code movedCards} in another zone. */
+    public static StepOutcome ofObjects(List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards) {
+        return new StepOutcome(objectIds.size(), objectIds, playerIds, movedCards);
     }
 
     /** An outcome that counts {@code amount} for players and acted on no object (life gained or lost). */
@@ -42,12 +57,14 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         return amount > 0;
     }
 
-    /** This outcome with {@code more} added: amounts summed, objects and players appended. */
+    /** This outcome with {@code more} added: amounts summed, objects, players and moved cards appended. */
     public StepOutcome plus(StepOutcome more) {
         List<UUID> objects = new ArrayList<>(objectIds);
         objects.addAll(more.objectIds);
         List<UUID> players = new ArrayList<>(playerIds);
         players.addAll(more.playerIds);
-        return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players);
+        List<MovedCard> moved = new ArrayList<>(movedCards);
+        moved.addAll(more.movedCards);
+        return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved);
     }
 }

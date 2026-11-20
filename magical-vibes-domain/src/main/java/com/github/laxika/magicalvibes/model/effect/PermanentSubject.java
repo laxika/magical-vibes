@@ -22,7 +22,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
         PermanentSubject.ReturnedThisResolution, PermanentSubject.ExiledThisResolution, PermanentSubject.Granter,
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
-        PermanentSubject.AllOf, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
+        PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.ThisWay {
 
@@ -370,6 +370,33 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return subjects.stream().anyMatch(PermanentSubject::needsStackEntry);
+        }
+    }
+
+    /**
+     * The permanents {@code permanents} names but those {@code excluded} names: "then exile all other Nightmare tokens
+     * you control" after creating a token is {@code except(controlledBy(you(), Nightmare token), createdThisResolution())}.
+     * Neither part declares a target.
+     */
+    record Except(PermanentSubject permanents, PermanentSubject excluded) implements PermanentSubject {
+
+        public Except {
+            Objects.requireNonNull(permanents, "permanents");
+            Objects.requireNonNull(excluded, "excluded");
+            if (permanents.declaresTarget() || excluded.declaresTarget()) {
+                throw new IllegalArgumentException("An exception can't declare a target: " + permanents + ", "
+                        + excluded);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return permanents.needsStackEntry() || excluded.needsStackEntry();
+        }
+
+        @Override
+        public boolean isSet() {
+            return permanents.isSet();
         }
     }
 

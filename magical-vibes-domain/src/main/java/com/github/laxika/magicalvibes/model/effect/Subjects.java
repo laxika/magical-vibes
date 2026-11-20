@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The named factory behind every {@link PermanentSubject} and {@link PlayerSubject}, so an effect reads like its card
+ * The named factory behind every {@link PermanentSubject}, {@link PlayerSubject} and {@link CardSubject}, so an effect reads like its card
  * text: {@code controllerOf(triggering())} is "that creature's controller". The variants are listed in
  * {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
@@ -229,6 +231,31 @@ public final class Subjects {
      */
     public static PermanentSubject thisWay(StepKind kind, PermanentPredicate filter) {
         return new PermanentSubject.ThisWay(kind, filter);
+    }
+
+    /**
+     * The permanents {@code permanents} names but those {@code excluded} names ("then exile all other Nightmare tokens
+     * you control" after the copy step: {@code except(controlledBy(you(), filter), createdThisResolution())}).
+     */
+    public static PermanentSubject except(PermanentSubject permanents, PermanentSubject excluded) {
+        return new PermanentSubject.Except(permanents, excluded);
+    }
+
+    /**
+     * "The exiled card", "each card put into a graveyard this way": the cards the most recent step of that kind of the
+     * same resolution moved, in the zone it put them in ({@code EXILE}, {@code DESTROY}, {@code SACRIFICE},
+     * {@code DISCARD}: "the discarded card"). A step result.
+     */
+    public static CardSubject cardsThisWay(StepKind kind) {
+        return new CardSubject.CardsThisWay(kind);
+    }
+
+    /**
+     * "Target [filter] card in your graveyard / in a graveyard": the effect's card target in a graveyard of
+     * {@code scope}; the effect reading it declares the target.
+     */
+    public static CardSubject targetCard(CardPredicate filter, GraveyardSearchScope scope) {
+        return new CardSubject.TargetCard(filter, scope);
     }
 
     /** "Each other creature banded with it": the other attacking creatures in {@code permanent}'s band. */

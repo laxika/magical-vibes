@@ -10,8 +10,8 @@ The effect system, parked resolutions, prompts, the resolution scratchpad.
 3. If it targets: override `targetSpec()`; a `@ValidatesTarget` method under `service/validate/` only for what the spec cannot express (`EFFECTS_INDEX.md`; a triggered ability's targets: `TRIGGERED_ABILITY_TARGETS.md`).
 4. If the AI scores its family: its capability interface (`RemovalEffect`, ...; `EFFECTS_QUICK_REFERENCE.md`).
 
-### A handler finds its permanents and players through the subject resolver
-Who an effect acts on is a `PermanentSubject` / `PlayerSubject`; a handler resolves it with `SubjectResolutionService`, never with its own lookup of the source, target, attached or triggering permanent or of a player.
+### A handler finds its permanents, players and cards through the subject resolver
+Who an effect acts on is a `PermanentSubject` / `PlayerSubject` / `CardSubject`; a handler resolves it with `SubjectResolutionService`, never with its own lookup of the source, target, attached or triggering permanent, of a player, or of a card an earlier step moved.
 Owner: `SubjectResolutionService` (`SUBJECTS_REFERENCE.md`).
 Why: private lookups drifted apart (enchanted creature, "its controller") and gave different answers for the same words.
 

@@ -14,7 +14,8 @@ package com.github.laxika.magicalvibes.model;
  *       id), their controllers as the step acted on them (CR 608.2h); a sacrifice step's and a batch destroy's
  *       ({@code DestroyAllPermanentsEffect}, {@code DestroyEachTargetPermanentEffect},
  *       {@code DestroyTargetPermanentsWithinTotalManaValueEffect}) {@code DepartureResult}s, those that stayed included,
- *       keep each one's last-known controller, power, toughness and mana value and where it went (whether it died); an
+ *       keep each one's last-known controller, power, toughness and mana value and where it went (whether it died); a
+ *       removed permanent's {@link StepOutcome#movedCards()} name the card it became in the zone it went to; an
  *       {@link #EXILE} step that exiles cards from a graveyard, a library or a hand records those cards and their
  *       owners;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step

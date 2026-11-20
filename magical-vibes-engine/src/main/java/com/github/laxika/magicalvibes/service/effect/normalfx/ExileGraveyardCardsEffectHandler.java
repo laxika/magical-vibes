@@ -256,11 +256,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
 
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-            // The filter is judged as the target was chosen against it: with the ability's X and source ("creature
-            // card with mana value X", Sequence Engine).
+            // The filter is judged as the target was chosen against it: with the ability's X and source, as it is or
+            // last existed ("creature card with mana value X", Sequence Engine; "less than Nahiri's loyalty").
             if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(),
                     entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
-                    entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue())) {
+                    entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue(),
+                    entry.getSourcePermanentSnapshot())) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                                 + CardPredicateUtils.describeFilter(e.filter()) + ")."));
                 continue;

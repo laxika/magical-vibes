@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -23,6 +27,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "705")
@@ -45,18 +50,12 @@ public class AniktheaHandOfErebos extends Card {
         var graveyardTarget = target(new GraveyardCardPredicateTargetFilter(
                 nonAuraEnchantment,
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1);
-        ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copyEffect =
-                new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
-                        nonAuraEnchantment,
-                        true,
-                        List.of(CardSubtype.ZOMBIE),
-                        false,
-                        false,
-                        CardColor.BLACK,
-                        3,
-                        3,
-                        Set.of(), false, false, null, false, false, false,
-                        Set.of(CardType.CREATURE), false, false, false, true);
+        SequenceEffect copyEffect = SequenceEffect.of(
+                ExileGraveyardCardsEffect.upToOneTargetFromControllerGraveyard(nonAuraEnchantment),
+                CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE),
+                        new CreateTokenCopyOfTargetPermanentEffect(List.of(CardSubtype.ZOMBIE),
+                                Set.of(CardType.CREATURE), 3, 3, Map.of(), false, false, false, false, false, false,
+                                CardColor.BLACK, Set.of())));
         graveyardTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), copyEffect);
         graveyardTarget.addTrigger(Triggers.attacks(), copyEffect);
     }

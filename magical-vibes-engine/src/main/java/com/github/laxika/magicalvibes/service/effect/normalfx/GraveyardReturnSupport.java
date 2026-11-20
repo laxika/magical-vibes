@@ -1360,10 +1360,30 @@ public class GraveyardReturnSupport {
     private void resolveTrackedReturnAllFromAllGraveyards(
             GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
             UUID controllerId, UUID sourceCardId) {
-        Map<UUID, List<Card>> cardsByGraveyard = new LinkedHashMap<>();
         Map<UUID, Set<UUID>> trackedCardsByGraveyard = effect.fromBattlefieldThisTurn()
                 ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                 : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn;
+        returnTrackedCardsFromAllGraveyards(gameData, entry, effect, controllerId, sourceCardId,
+                trackedCardsByGraveyard, entry.getDescription() + " - no cards were put into graveyards from anywhere this turn.");
+    }
+
+    /**
+     * Returns the cards a {@link ReturnCardFromGraveyardEffect#cards()} subject named, those still in a graveyard and
+     * matching the effect's filter, all at once ("return each card put into a graveyard this way to the battlefield
+     * under your control"). {@code cardIdsByGraveyard} holds the subject's cards by the player whose graveyard each is
+     * in; nothing is logged when none is left to return.
+     */
+    public void resolveReturnOfCards(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
+                                     UUID controllerId, UUID sourceCardId, Map<UUID, Set<UUID>> cardIdsByGraveyard) {
+        Map<UUID, Set<UUID>> mutable = new LinkedHashMap<>();
+        cardIdsByGraveyard.forEach((ownerId, ids) -> mutable.put(ownerId, new LinkedHashSet<>(ids)));
+        returnTrackedCardsFromAllGraveyards(gameData, entry, effect, controllerId, sourceCardId, mutable, null);
+    }
+
+    private void returnTrackedCardsFromAllGraveyards(
+            GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
+            UUID controllerId, UUID sourceCardId, Map<UUID, Set<UUID>> trackedCardsByGraveyard, String noneLog) {
+        Map<UUID, List<Card>> cardsByGraveyard = new LinkedHashMap<>();
         for (Map.Entry<UUID, List<Card>> graveyardEntry : gameData.playerGraveyards.entrySet()) {
             Set<UUID> trackedIds = trackedCardsByGraveyard.get(graveyardEntry.getKey());
             if (trackedIds == null || trackedIds.isEmpty()) {
@@ -1383,9 +1403,9 @@ public class GraveyardReturnSupport {
         }
 
         if (cardsByGraveyard.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.text(entry.getDescription()
-                            + " - no cards were put into graveyards from anywhere this turn."));
+            if (noneLog != null) {
+                gameLogService.append(gameData, GameLog.text(noneLog));
+            }
             return;
         }
 
@@ -1418,13 +1438,14 @@ public class GraveyardReturnSupport {
                             || effect.underOwnersControl()) ? graveyardOwnerId : controllerId;
                     if (toBattlefield) {
                         Permanent returnedPermanent;
-                        if (effect.grantHaste() || effect.exileAtEndStep()
-                                || effect.exileAtYourNextEndStep() || effect.sacrificeAtEndStep()) {
+                        if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                                || effect.sacrificeAtEndStep() || effect.sacrificeAtYourNextEndStep()) {
                             returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(
                                     gameData, targetPlayerId, card, effect.grantHaste(), effect.exileAtEndStep(),
                                     effect.sacrificeAtEndStep(), effect.exileIfLeavesBattlefield(),
                                     effect.enterTapped(), effect.enterAttacking(), effect.exileAtYourNextEndStep(),
-                                    losesAllAbilitiesBeforeEntering(effect), entry.getCard());
+                                    losesAllAbilitiesBeforeEntering(effect), entry.getCard(), null,
+                                    effect.sacrificeAtYourNextEndStep());
                             limitHasteToThisTurn(gameData, effect, returnedPermanent);
                         } else {
                             returnedPermanent = putCardOntoBattlefield(
@@ -2780,6 +2801,25 @@ public class GraveyardReturnSupport {
                                                               boolean losesAllAbilities,
                                                               Card delayedTriggerSource,
                                                               List<ReturnedPermanent> deferredEtbs) {
+        return putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, card, grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, exileIfLeavesBattlefield, enterTapped, enterAttacking, exileAtYourNextEndStep,
+                losesAllAbilities, delayedTriggerSource, deferredEtbs, false);
+    }
+
+    /**
+     * {@code sacrificeAtYourNextEndStep} sacrifices the permanent at the beginning of {@code controllerId}'s next end
+     * step rather than the next end step ("sacrifice it at the beginning of your next end step").
+     */
+    private Permanent putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
+                                                              boolean grantHaste, boolean exileAtEndStep,
+                                                              boolean sacrificeAtEndStep,
+                                                              boolean exileIfLeavesBattlefield,
+                                                              boolean enterTapped, boolean enterAttacking,
+                                                              boolean exileAtYourNextEndStep,
+                                                              boolean losesAllAbilities,
+                                                              Card delayedTriggerSource,
+                                                              List<ReturnedPermanent> deferredEtbs,
+                                                              boolean sacrificeAtYourNextEndStep) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
@@ -2827,12 +2867,12 @@ public class GraveyardReturnSupport {
                     new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
                     exileAtYourNextEndStep ? ActivePlayer.YOU : ActivePlayer.ANY);
         }
-        if (sacrificeAtEndStep) {
+        if (sacrificeAtEndStep || sacrificeAtYourNextEndStep) {
             DelayedPermanentActions.schedule(gameData, controllerId,
                     delayedTriggerSource != null ? delayedTriggerSource : permanent.getCard(),
                     delayedTriggerSource != null ? null : permanent.getId(),
                     new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
-                    ActivePlayer.ANY);
+                    sacrificeAtYourNextEndStep ? ActivePlayer.YOU : ActivePlayer.ANY);
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);

@@ -656,7 +656,6 @@ step could only be done by first making each effect declare the scope its oracle
 | `CastTargetInstantOrSorceryFromGraveyardEffect` | `OPPONENT_GRAVEYARD` always | its own `scope()` component |
 | `ExileTargetCardFromGraveyardAndImprintOnSourceEffect` | `OPPONENT_GRAVEYARD` always | a new `scope` record component — Myr Welder is "from a graveyard", Rona is "from your graveyard" (both verified on Scryfall), so one constant could not serve both |
 | `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect` | `ownGraveyardOnly` → `OPPONENT_GRAVEYARD` | `ownGraveyardOnly` → `CONTROLLERS_GRAVEYARD` |
-| `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect` | `ownGraveyardOnly` → `OPPONENT_GRAVEYARD` | `ownGraveyardOnly` → `CONTROLLERS_GRAVEYARD` |
 | `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect` | `ALL_GRAVEYARDS` | `OPPONENT_GRAVEYARD` |
 
 The three `// reproduces the legacy (graveyard=T, any=F) booleans exactly` comments that justified the

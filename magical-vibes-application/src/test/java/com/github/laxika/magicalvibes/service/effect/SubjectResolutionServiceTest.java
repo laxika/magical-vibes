@@ -8,6 +8,14 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.MovedCard;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1414,6 +1422,110 @@ class SubjectResolutionServiceTest extends BaseCardTest {
                     SubjectResolutionService.StaticReads.knownLand())).isTrue();
             assertThat(subjects.names(gd, bears, player1.getId(), player1.getId(), entering, creaturesYouControl,
                     SubjectResolutionService.StaticReads.knownLand())).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("Card subjects")
+    class CardSubjects {
+
+        @Test
+        @DisplayName("The cards an exile step recorded are named while they are in exile, and not once they left")
+        void exiledCardsWhileInExile() {
+            Card bears = new GrizzlyBears();
+            gd.addToExile(player2.getId(), bears);
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(bears.getId()), List.of(player2.getId())));
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.EXILE))).containsExactly(bears);
+
+            gd.removeFromExile(bears.getId());
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.EXILE))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A destroy step names the card its permanent became in the graveyard, and nothing once it moved on")
+        void destroyedPermanentsCard() {
+            Card bears = new GrizzlyBears();
+            harness.setGraveyard(player2, List.of(bears));
+            UUID permanentId = UUID.randomUUID();
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(permanentId), List.of(player2.getId()),
+                    List.of(new MovedCard(permanentId, bears.getId(), Zone.GRAVEYARD, player2.getId()))));
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.DESTROY)))
+                    .containsExactly(new SubjectResolutionService.LocatedCard(bears, Zone.GRAVEYARD, player2.getId()));
+
+            gd.playerGraveyards.get(player2.getId()).remove(bears);
+            gd.addToExile(player2.getId(), bears);
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.DESTROY))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A destroyed token, which became no card, is not named")
+        void destroyedTokenNamesNothing() {
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(UUID.randomUUID()),
+                    List.of(player2.getId())));
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.DESTROY))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A discarded card is named in its graveyard, or in exile where a replacement put it")
+        void discardedCard() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            harness.setGraveyard(player1, List.of(bears));
+            gd.addToExile(player1.getId(), giant);
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.DISCARD, StepOutcome.ofObjects(List.of(bears.getId(), giant.getId()),
+                    List.of(player1.getId())));
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.DISCARD)))
+                    .containsExactly(bears, giant);
+        }
+
+        @Test
+        @DisplayName("A step that moved no card names none, and a kind that moves no card is refused")
+        void nothingRecordedAndRefusedKinds() {
+            StackEntry entry = entry(player1, null, null);
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.EXILE))).isEmpty();
+            assertThatThrownBy(() -> Subjects.cardsThisWay(StepKind.DRAW))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("A target card is named while it is in a graveyard of its scope and matches its filter")
+        void targetCard() {
+            Card bears = new GrizzlyBears();
+            Card forest = new Forest();
+            harness.setGraveyard(player1, List.of(bears, forest));
+            CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
+
+            StackEntry onBears = entry(player1, bears.getId(), null);
+            assertThat(subjects.cards(gd, onBears, EFFECT,
+                    Subjects.targetCard(creature, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))).containsExactly(bears);
+            assertThat(subjects.cards(gd, onBears, EFFECT,
+                    Subjects.targetCard(creature, GraveyardSearchScope.OPPONENT_GRAVEYARD))).isEmpty();
+
+            StackEntry onForest = entry(player1, forest.getId(), null);
+            assertThat(subjects.cards(gd, onForest, EFFECT,
+                    Subjects.targetCard(creature, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("An exception names a set's permanents but the excluded ones")
+        void exceptExcludesPermanents() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry entry = entry(player1, null, source.getId());
+
+            assertThat(permanents(entry, except(controlledBy(you(), new PermanentIsCreaturePredicate()), source())))
+                    .containsExactly(giant);
+            assertThatThrownBy(() -> except(controlledBy(you(), new PermanentIsCreaturePredicate()), target()))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 }

@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TSR", collectorNumber = "344")
@@ -22,12 +26,11 @@ public class FeldonOfTheThirdPath extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{R}",
-                List.of(ExileTargetCardFromGraveyardAndCreateTokenCopyEffect.copyTargetCardKeepingItInGraveyard(
-                        new CardTypePredicate(CardType.CREATURE),
-                        true,
-                        Set.of(CardType.ARTIFACT),
-                        true,
-                        true)),
+                List.of(CreateTokenCopyOfCardEffect.of(
+                        Subjects.targetCard(new CardTypePredicate(CardType.CREATURE),
+                                GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                        new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(CardType.ARTIFACT), null, null,
+                                Map.of(), true, false, true, false, false, false, null, Set.of()))),
                 "{2}{R}, {T}: Create a token that's a copy of target creature card in your graveyard, "
                         + "except it's an artifact in addition to its other types. It gains haste. "
                         + "Sacrifice it at the beginning of the next end step."));
