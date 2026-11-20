@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,12 +19,18 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Attaches the effect's Equipment to its host, both named by {@link SubjectResolutionService}. An Equipment that can't
+ * be attached to the host stays where it is (CR 301.5c, 701.3b); one already attached to it doesn't move, but still
+ * counts as attached for the reflexive continuation. A moved Equipment gets a new timestamp (CR 613.7e), its
+ * unattach triggers and "becomes attached" triggers.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AttachSourceEquipmentToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
@@ -37,46 +43,46 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var attachEffect = (AttachSourceEquipmentToTargetCreatureEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData,
-                attachEffect.useTriggeringPermanent() ? entry.getTriggeringPermanentId() : entry.getTargetId());
-        if (target == null) {
-            
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (target creature no longer exists)."));
-            log.info("Game {} - Attach source equipment fizzles, target creature left battlefield", gameData.id);
+        List<Permanent> equipments = subjectResolutionService.permanents(gameData, entry, effect,
+                attachEffect.equipment());
+        if (equipments.isEmpty()) {
+            if (!attachEffect.equipment().declaresTarget()) {
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        "'s attach ability fizzles (the Equipment is no longer on the battlefield)."));
+                log.info("Game {} - Attach equipment fizzles, equipment left battlefield", gameData.id);
+            }
+            return;
+        }
+        Permanent host = subjectResolutionService.permanent(gameData, entry, effect, attachEffect.host());
+        if (host == null) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s attach ability fizzles (the creature is no longer on the battlefield)."));
+            log.info("Game {} - Attach equipment fizzles, host left battlefield", gameData.id);
             return;
         }
 
-        // Try sourcePermanentId first (ETB path), fall back to card ID lookup (death trigger path)
-        Permanent equipment = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                : null;
-        if (equipment == null && entry.getSourcePermanentId() == null) {
-            equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
-        }
-        if (equipment == null) {
-            
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (equipment no longer on the battlefield)."));
-            log.info("Game {} - Attach source equipment fizzles, equipment left battlefield", gameData.id);
-            return;
-        }
-
-        if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
-            return;
-        }
-
-        UUID oldAttachedTo = equipment.getAttachedTo();
-        if (!target.getId().equals(oldAttachedTo)) {
+        boolean attached = false;
+        for (Permanent equipment : equipments) {
+            if (!equipSupport.canAttachEquipment(gameData, equipment, host)) {
+                continue;
+            }
+            attached = true;
+            UUID oldAttachedTo = equipment.getAttachedTo();
+            if (host.getId().equals(oldAttachedTo)) {
+                continue;
+            }
             durationClock.sourceUnattached(gameData, equipment.getId());
-            equipment.setAttachedTo(target.getId());
+            equipment.setAttachedTo(host.getId());
             equipment.setTimestamp(gameData.nextTimestamp());
-            equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
+            equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());
             equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
+            gameLogService.append(gameData,
+                    GameLog.cardTextCard(equipment.getCard(), " is now attached to ", host.getCard(), "."));
+            log.info("Game {} - {} attached to {} via {}", gameData.id, equipment.getCard().getName(),
+                    host.getCard().getName(), entry.getCard().getName());
         }
 
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
-        log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
-
-        if (attachEffect.thenEffect() != null) {
+        if (attached && attachEffect.thenEffect() != null) {
             int effectIndex = findEffectIndex(entry, effect);
             if (effectIndex < 0) {
                 throw new IllegalStateException(

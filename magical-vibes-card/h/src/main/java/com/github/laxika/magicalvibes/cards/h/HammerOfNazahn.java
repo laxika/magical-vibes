@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachTriggeringEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,8 @@ public class HammerOfNazahn extends Card {
                         new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
                                 "Attach Hammer of Nazahn to target creature you control?"))
                 .addTrigger(Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                        new MayEffect(new AttachTriggeringEquipmentToTargetCreatureEffect(),
+                        new MayEffect(
+                                new AttachSourceEquipmentToTargetCreatureEffect(Subjects.triggering(), Subjects.target()),
                                 "Attach that Equipment to target creature you control?"));
 
         // Equipped creature gets +2/+0 and has indestructible.

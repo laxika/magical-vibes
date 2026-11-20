@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoonlitMeditation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FollowedFootsteps.class, SiegeWurm.class, SelesnyaSignet.class,
-        LeaveNoTrace.class, Putrefy.class})
+        LeaveNoTrace.class, Putrefy.class, GrizzlyBears.class, MoonlitMeditation.class})
 class FollowedFootstepsTest extends BaseCardTest {
 
     @Test
@@ -118,6 +120,25 @@ class FollowedFootstepsTest extends BaseCardTest {
                     assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
                     assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
                 });
+    }
+
+
+    @Test
+    @DisplayName("Moonlit Meditation may replace the upkeep token with a copy of its enchanted creature")
+    void tokenCreationReplacementApplies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
+        castFollowedFootsteps(creature);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent moonlit = harness.addToBattlefieldAndReturn(player1, new MoonlitMeditation());
+        moonlit.setAttachedTo(bears.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Siege Wurm")).isEmpty();
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .anyMatch(token -> token.getCard().isToken());
     }
 
     private void castFollowedFootsteps(Permanent creature) {

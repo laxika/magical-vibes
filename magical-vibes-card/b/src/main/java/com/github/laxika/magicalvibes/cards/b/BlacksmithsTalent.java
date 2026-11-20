@@ -15,13 +15,14 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
@@ -73,7 +74,7 @@ public class BlacksmithsTalent extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withEventCondition(
                                 new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL)))),
-                        new AttachTargetEquipmentToTargetCreatureEffect());
+                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(0), Subjects.target(1)));
         target(TargetFilters.creatureYouControl(), 0, 1);
 
         addStaticEffect(new ConditionalEffect(

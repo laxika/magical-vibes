@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +19,7 @@ public class AuriokWindwalker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AttachTargetEquipmentToTargetCreatureEffect()),
+                List.of(new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(0), Subjects.target(1))),
                 "{T}: Attach target Equipment you control to target creature you control.",
                 List.of(
                         new ControlledPermanentPredicateTargetFilter(

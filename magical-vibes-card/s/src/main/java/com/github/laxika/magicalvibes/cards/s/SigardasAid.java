@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AttachTriggeringEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,7 +24,7 @@ public class SigardasAid extends Card {
 
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(Triggers.EQUIPMENT,
                 ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayEffect(new AttachTriggeringEquipmentToTargetCreatureEffect(),
+                new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(Subjects.triggering(), Subjects.target()),
                         "Attach that Equipment to target creature you control?"));
     }
 }

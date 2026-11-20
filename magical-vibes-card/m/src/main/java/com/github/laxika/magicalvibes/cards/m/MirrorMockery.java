@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class MirrorMockery extends Card {
 
         target(TargetFilters.creature());
         addTrigger(Triggers.attacks(), new MayEffect(
-                CreateTokenCopyOfEnchantedPermanentEffect.ofTriggeringCreatureExiledAtEndOfCombat(),
+                CreateTokenCopyOfTargetPermanentEffect.exiledAtEndOfCombat().ofTriggeringPermanent(),
                 "Create a token that's a copy of that creature?"));
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -61,6 +60,6 @@ public class RatadrabikOfUrborg extends Card {
         addTrigger(Triggers.creatureDies(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new CreateTokenCopyOfDyingCreatureEffect(LEGENDARY_DEATH_COPY));
+                LEGENDARY_DEATH_COPY.ofTriggeringPermanent());
     }
 }

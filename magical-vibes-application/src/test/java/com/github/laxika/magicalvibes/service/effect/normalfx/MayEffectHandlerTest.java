@@ -3,15 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +41,8 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     @Test
     @DisplayName("Asks nothing for an effect that acts only on its targets when none was chosen")
     void skipsEffectActingOnlyOnItsTargetsWithoutTargets() {
-        MayEffect mayEffect = new MayEffect(new AttachTargetEquipmentToTriggeringPermanentEffect(), "Attach?");
+        MayEffect mayEffect = new MayEffect(
+                AttachSourceEquipmentToTargetCreatureEffect.targetEquipmentToTriggeringOrSource(), "Attach?");
         StackEntry entry = createEntry(createCard("Armory Automaton"), player1Id, List.of(mayEffect));
 
         resolveEffect(gd, entry, mayEffect);
@@ -109,7 +111,8 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     @Test
     @DisplayName("Asks for an effect that acts only on its targets when one was chosen")
     void asksForEffectActingOnlyOnItsTargetsWithATarget() {
-        AttachTargetEquipmentToTriggeringPermanentEffect attach = new AttachTargetEquipmentToTriggeringPermanentEffect();
+        AttachSourceEquipmentToTargetCreatureEffect attach =
+                AttachSourceEquipmentToTargetCreatureEffect.targetEquipmentToTriggeringOrSource();
         MayEffect mayEffect = new MayEffect(attach, "Attach?");
         StackEntry entry = createEntryWithTarget(createCard("Armory Automaton"), player1Id, List.of(mayEffect),
                 UUID.randomUUID());

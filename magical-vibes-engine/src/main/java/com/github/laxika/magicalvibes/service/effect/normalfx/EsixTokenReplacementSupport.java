@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EsixFractalBloomEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
@@ -85,7 +85,7 @@ public class EsixTokenReplacementSupport {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     crown.getCard(),
                     controllerId,
-                    List.of(new CreateTokenCopyOfEquippedCreatureEffect(amount, false, false, crown.getId())),
+                    List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(crown.getAttachedTo())),
                     crown.getCard().getName()
                             + " — You may create that many tokens that are copies of the equipped creature."));
             return true;
@@ -123,7 +123,7 @@ public class EsixTokenReplacementSupport {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     aura.getCard(),
                     controllerId,
-                    List.of(new CreateTokenCopyOfEnchantedPermanentEffect(amount, aura.getId())),
+                    List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(aura.getAttachedTo())),
                     aura.getCard().getName()
                             + " — You may create that many tokens that are copies of the enchanted permanent."));
             return true;

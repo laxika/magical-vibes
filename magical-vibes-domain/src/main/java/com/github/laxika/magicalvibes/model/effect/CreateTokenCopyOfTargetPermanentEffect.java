@@ -13,16 +13,28 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
- * Creates a token that's a copy of a permanent: the permanent referenced by the stack entry's targetId, or with
- * {@link #ofTriggeringPermanent()} / {@link #ofEachTriggeringPermanent()} the permanent (or permanents) the trigger event
- * was about, read from the entry's triggering permanents ("a token that's a copy of that creature", "for each of them"),
- * which the ability doesn't target. A triggering permanent that has left the battlefield is copied as it last existed
- * there (CR 608.2h). The token copies all copiable characteristics per CR 707.2.
+ * Creates a token that's a copy of a permanent, named by {@link #subject()}:
+ * <ul>
+ *   <li>{@code target()} (the default): the permanent the stack entry targets (or references by its targetId);</li>
+ *   <li>{@code triggering()} ({@link #ofTriggeringPermanent()}): the permanent the trigger event was about ("a copy of
+ *       that creature"); with several ("one or more … enter"), one of them chosen as the ability resolves ("a copy of
+ *       one of them");</li>
+ *   <li>{@code triggeringAll()} ({@link #ofEachTriggeringPermanent()}): each permanent the trigger event was about ("for
+ *       each of them, create a token that's a copy of it");</li>
+ *   <li>{@code attached()} ({@link #ofAttached()}): what the source Aura or Equipment is attached to ("a copy of
+ *       enchanted creature", "equipped creature"), read as the ability resolves, else as the source last existed;</li>
+ *   <li>{@code named(id)} ({@link #ofNamed}): one given permanent (the creature a token-creation replacement copies
+ *       instead).</li>
+ * </ul>
+ * Only {@code target()} targets. A non-target permanent that has left the battlefield is copied as it last existed
+ * there (CR 608.2h, 111.12). The token copies all copiable characteristics per CR 707.2.
  *
  * <p>Optional overrides support "except it's X/Y", "except it's also a [type]",
- * additional subtypes, colors or supertypes, removing legendary, and counters placed after the token enters.
+ * additional subtypes, colors or supertypes, removing legendary, and counters placed after the token enters
+ * (CR 707.9).
  */
 public record CreateTokenCopyOfTargetPermanentEffect(
         List<CardSubtype> additionalSubtypes,
@@ -52,25 +64,20 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean replaceCardTypes,
         boolean hasteUntilEndOfTurn,
         AnimatePermanentsEffect animateIfNotCreature,
-        Copied copied
+        PermanentSubject subject
 ) implements CardEffect {
 
-    /** What the token copies. */
-    public enum Copied {
-        /** The permanent the stack entry targets (or references by its targetId). */
-        TARGET,
-        /**
-         * The permanent the trigger event was about ("that creature"); with several ("one or more … enter"), one of them
-         * chosen as the ability resolves ("a copy of one of them").
-         */
-        TRIGGERING_PERMANENT,
-        /** Each permanent the trigger event was about ("for each of them, create a token that's a copy of it"). */
-        EACH_TRIGGERING_PERMANENT
-    }
-
     public CreateTokenCopyOfTargetPermanentEffect {
-        if (copied == null) {
-            copied = Copied.TARGET;
+        if (subject == null) {
+            subject = Subjects.target();
+        }
+        if (!(subject instanceof PermanentSubject.Target && ((PermanentSubject.Target) subject).group() == null)
+                && !(subject instanceof PermanentSubject.Triggering)
+                && !(subject instanceof PermanentSubject.TriggeringAll)
+                && !(subject instanceof PermanentSubject.Attached)
+                && !(subject instanceof PermanentSubject.Named)) {
+            throw new IllegalArgumentException("A token copy copies target(), triggering(), triggeringAll(), attached() "
+                    + "or named(id): " + subject);
         }
         if (animateIfNotCreature != null
                 && (!(animateIfNotCreature.power() instanceof Fixed)
@@ -116,7 +123,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
                 additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary, amount,
                 exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
-                replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, Copied.TARGET);
+                replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, null);
     }
 
     /** Backward-compatible constructor for copies without a post-entry animation. */
@@ -234,7 +241,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature, copied);
+                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature, subject);
     }
 
     /**
@@ -247,7 +254,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, true, animateIfNotCreature, copied);
+                nameOverride, replaceCardTypes, true, animateIfNotCreature, subject);
     }
 
     /**
@@ -255,21 +262,35 @@ public record CreateTokenCopyOfTargetPermanentEffect(
      * copy of that creature"); with several ("whenever one or more … enter"), one of them chosen as it resolves.
      */
     public CreateTokenCopyOfTargetPermanentEffect ofTriggeringPermanent() {
-        return withCopied(Copied.TRIGGERING_PERMANENT);
+        return withSubject(Subjects.triggering());
     }
 
     /** This copy effect, copying each permanent the trigger event was about ("for each of them, … a copy of it"). */
     public CreateTokenCopyOfTargetPermanentEffect ofEachTriggeringPermanent() {
-        return withCopied(Copied.EACH_TRIGGERING_PERMANENT);
+        return withSubject(Subjects.triggeringAll());
     }
 
-    private CreateTokenCopyOfTargetPermanentEffect withCopied(Copied newCopied) {
+    /**
+     * This copy effect, copying what the source Aura or Equipment is attached to ("a token that's a copy of enchanted
+     * creature", "equipped creature"); with the source gone, what it was attached to as it last existed (CR 608.2h).
+     */
+    public CreateTokenCopyOfTargetPermanentEffect ofAttached() {
+        return withSubject(Subjects.attached());
+    }
+
+    /** This copy effect, copying the permanent {@code permanentId} (as it last existed once it has left). */
+    public CreateTokenCopyOfTargetPermanentEffect ofNamed(UUID permanentId) {
+        return withSubject(Subjects.named(permanentId));
+    }
+
+    /** This copy effect, copying what {@code newSubject} names. */
+    public CreateTokenCopyOfTargetPermanentEffect withSubject(PermanentSubject newSubject) {
         return new CreateTokenCopyOfTargetPermanentEffect(additionalSubtypes, additionalTypes, powerOverride,
                 toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep,
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, newCopied);
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, newSubject);
     }
 
     /**
@@ -286,7 +307,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation, copied);
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation, subject);
     }
 
     /** Backward-compatible full constructor without a name override. */
@@ -666,6 +687,6 @@ public record CreateTokenCopyOfTargetPermanentEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return copied == Copied.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+        return subject.declaresTarget() ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

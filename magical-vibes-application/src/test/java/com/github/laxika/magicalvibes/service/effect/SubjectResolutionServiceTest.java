@@ -67,6 +67,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetSpell;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggering;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringAll;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringOrSource;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringCard;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer;
@@ -365,6 +366,27 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(permanents(own, triggeringOrSource())).containsExactly(giant);
             assertThat(permanents(about, triggeringOrSource())).containsExactly(bears);
+        }
+
+        @Test
+        @DisplayName("triggeringAll() is every permanent of a \"one or more\" event, else the one the event was about")
+        void triggeringAllPermanents() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry single = entry(player1, null, null);
+            single.setTriggeringPermanentId(bears.getId());
+            StackEntry group = entry(player1, null, null);
+            group.setTriggeringPermanentId(bears.getId());
+            group.setTriggeringPermanentIds(List.of(bears.getId(), giant.getId()));
+
+            assertThat(permanents(single, triggeringAll())).containsExactly(bears);
+            assertThat(permanents(group, triggeringAll())).containsExactly(bears, giant);
+
+            leaveBattlefield(giant);
+
+            assertThat(permanents(group, triggeringAll())).containsExactly(bears);
+            assertThat(subjects.permanentIds(gd, group, EFFECT, triggeringAll()))
+                    .containsExactly(bears.getId(), giant.getId());
         }
     }
 

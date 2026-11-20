@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -51,8 +50,7 @@ public class PenumbraUmbra extends Card {
         target(TargetFilters.creatureYouControl())
                 .addStaticEffect(new TotemArmorEffect())
                 .addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
-                        new CreateTokenCopyOfEnchantedPermanentEffect(
-                                new CreateTokenCopyOfTargetPermanentEffect(
-                                        List.of(), Set.of(), null, null, Map.of(), CardColor.BLACK, Set.of())));
+                        new CreateTokenCopyOfTargetPermanentEffect(
+                                List.of(), Set.of(), null, null, Map.of(), CardColor.BLACK, Set.of()).ofAttached());
     }
 }

@@ -49,7 +49,7 @@ reverts one of them is a regression:
 | File | Fix to preserve |
 |---|---|
 | `SacrificeSelfThenEffectHandler` (absorbed the `SacrificeSelfAndDrawCards` / `SacrificeSelfAndTargetPlayerDiscards` / `SacrificeSelfThenDealDamageToTargetPlayer` handlers in Step 2) | Fire `checkAllyPermanentSacrificedTriggers`, call `removeOrphanedAuras`, and gate the payload on the removal succeeding ("If you do"). **Never** re-express this as `SequenceEffect.of(SacrificeSelfEffect(), payload)` — a sequence splices its steps unconditionally |
-| `AttachSourceEquipmentToTargetCreatureEffectHandler`, `AttachTargetEquipmentToTargetCreatureEffectHandler` | Success path logs an attach message, not a fizzle message |
+| `AttachSourceEquipmentToTargetCreatureEffectHandler` (absorbed `AttachTargetEquipmentToTargetCreatureEffectHandler` and the other target/triggering Equipment shapes) | Success path logs an attach message, not a fizzle message |
 | `CopySpellForEachOtherSubtypePermanentEffectHandler` | Has the `isCantBeCopied()` guard (CR 707.10) |
 | `DealDamageEqualToChosenTypeCountEffectHandler` (absorbed the `DealDamageToAnyTargetEqualToChosenTypeCount` / `DealDamageToTargetCreatureEqualToChosenTypeCount` handlers) | Applies `applyDamageMultiplier` |
 | `DestroyEachTargetPermanentEffectHandler`, `DestroyPermanentsTargetPlayerControlsEffectHandler` | Route through `DestructionSupport.destroyBatchCollecting` so deaths are simultaneous |
@@ -1760,8 +1760,9 @@ source-restriction axis handled in `DamageSupport.dealCreatureDamage`.
 `AttachSourceEquipmentToTargetCreatureEffect` (3). Both have a non-targeting form reading the stack entry's triggering permanent (`AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent()`, `AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()`) that the merged effect keeps.
 
 **23b Target**: `AttachTargetToTargetPermanentEffect()` — `targetIds[0]` attaches to `targetIds[1]`.
-**Absorbs**: `AttachTargetAuraToTargetCreatureEffect` (2),
-`AttachTargetEquipmentToTargetCreatureEffect` (1).
+**Absorbs**: `AttachTargetAuraToTargetCreatureEffect` (2). The Equipment half is done: the two-target, target-to-source,
+target-to-triggering and triggering-to-target Equipment records are `AttachSourceEquipmentToTargetCreatureEffect`
+with an `equipment` and a `host` `PermanentSubject` (effect-cleanup run 5l).
 
 All four handlers share the identical core — `durationClock.sourceUnattached(gameData, x.getId())` →
 `x.setAttachedTo(target.getId())` → `x.setTimestamp(gameData.nextTimestamp())` with the same CR 613.7e
@@ -1772,7 +1773,7 @@ card has a `Triggers.becomesUnattachedFromPermanent()` ability. The equipment ha
 (`equipSupport.findEquipmentByCardId`, for the death-trigger path) is harmless on both.
 
 **Gotchas** — the success-log fix from `9b8147333` must survive. And
-`AttachTargetAuraToTargetCreatureEffect`/`AttachTargetEquipmentToTargetCreatureEffect` both declare
+`AttachTargetAuraToTargetCreatureEffect` (and the Equipment two-target shape it was paired with) declare
 `TargetSpec.benign(PLAYER_OR_PERMANENT)` for a two-permanent target, which looks wrong already —
 check it, don't copy it forward blindly.
 
@@ -1903,7 +1904,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `GrantFlashbackToGraveyardCardsEffect(+ targeted)` | 1 class | Mass path skips cards with a native `FlashbackCast`; target path has fizzle logging. Both must survive |
 | `AssignNoCombatDamageAndDefendingPlayerDiscardsEffect` → composition | 1 class | **Blocked**: `CombatBlockService:940-957` bakes the defender into `targetId`, but `DiscardEffectHandler`'s `DEFENDING_PLAYER` branch reads `getAttackedTargetId()` (`:104`). Fix the block-trigger code first |
 | `BoostSelfWhenCombatOpponentMatchesEffect` | `BoostSelfWhenBlockingKeywordEffect` (3) | **Rules question, not mechanical**: keyword variant is checked at trigger time, survivor re-checks at resolution. Settle which is right (verify the CR with the `rules` MCP) before merging |
-| `CreateTokenCopyOfSourceEffect` + subject selector | `CreateTokenCopyOfEquippedCreatureEffect` (1) | Prefer extracting a shared `TokenCopyFactory` over merging the records |
+| `CreateTokenCopyOfSourceEffect` + subject selector | — (`CreateTokenCopyOfEquippedCreatureEffect` is gone: `CreateTokenCopyOfTargetPermanentEffect.ofAttached()`) | Prefer extracting a shared `TokenCopyFactory` over merging the records |
 
 ---
 

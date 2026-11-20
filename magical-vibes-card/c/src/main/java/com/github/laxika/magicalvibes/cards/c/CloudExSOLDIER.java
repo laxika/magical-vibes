@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +33,8 @@ public class CloudExSOLDIER extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachTargetEquipmentToSourceEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(), Subjects.source()));
 
         PermanentAllOfPredicate equippedAttackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

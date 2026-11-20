@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
@@ -32,8 +32,9 @@ public class SuperSoldierSerum extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"), 0, 99)
-                .addTrigger(Triggers.attacks(), new AttachTargetEquipmentToTriggeringPermanentEffect())
+                .addTrigger(Triggers.attacks(),
+                        AttachSourceEquipmentToTargetCreatureEffect.targetEquipmentToTriggeringOrSource())
                 .addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
-                        new AttachTargetEquipmentToTriggeringPermanentEffect());
+                        AttachSourceEquipmentToTargetCreatureEffect.targetEquipmentToTriggeringOrSource());
     }
 }

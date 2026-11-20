@@ -17,7 +17,7 @@ import java.util.UUID;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target, PermanentSubject.AllTargets,
-        PermanentSubject.Attached, PermanentSubject.AttachedOrSource, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringOrSource, PermanentSubject.TriggeringCard,
+        PermanentSubject.Attached, PermanentSubject.AttachedOrSource, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringAll, PermanentSubject.TriggeringOrSource, PermanentSubject.TriggeringCard,
         PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
         PermanentSubject.ReturnedThisResolution, PermanentSubject.ExiledThisResolution, PermanentSubject.Granter,
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
@@ -114,6 +114,18 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
     /** "It", "that creature": the permanent the trigger event was about. */
     record Triggering() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Them", "each of them": every permanent the trigger event was about, the group of a "one or more" event (CR 603.2c),
+     * else its one permanent.
+     */
+    record TriggeringAll() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

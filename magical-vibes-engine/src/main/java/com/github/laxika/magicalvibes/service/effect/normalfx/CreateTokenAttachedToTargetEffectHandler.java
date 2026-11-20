@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -32,6 +35,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     private final AuraAttachmentService auraAttachmentService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,8 +45,13 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenAttachedToTargetEffect) effect;
-        if (e.oneOfTriggeringPermanents()) {
+        if (e.subject() instanceof PermanentSubject.Triggering) {
             resolveOneOfTriggeringPermanents(gameData, entry, e);
+            return;
+        }
+        if (!(e.subject() instanceof PermanentSubject.Target)) {
+            subjectResolutionService.permanents(gameData, entry, e, e.subject())
+                    .forEach(host -> createAttachedToken(gameData, entry, e, host.getId()));
             return;
         }
         List<UUID> targetIds = entry.targetsForEffect(e);
@@ -55,8 +64,9 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     }
 
     /**
-     * "Attached to one of them": the token is attached to one of the permanents whose event made the ability trigger
-     * that still fit it, which its controller chooses as it resolves when there are several (not a target).
+     * "Attached to that creature" / "to one of them": the token is attached to the permanent whose event made the ability
+     * trigger, or to one of them that still fits it, which its controller chooses as it resolves when there are several
+     * (not a target).
      */
     private void resolveOneOfTriggeringPermanents(GameData gameData, StackEntry entry,
                                                   CreateTokenAttachedToTargetEffect e) {
@@ -87,8 +97,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
 
     private List<UUID> triggeringCandidates(GameData gameData, StackEntry entry,
                                             CreateTokenAttachedToTargetEffect e) {
-        List<UUID> triggeringIds = !entry.getTriggeringPermanentIds().isEmpty() ? entry.getTriggeringPermanentIds()
-                : entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
+        List<UUID> triggeringIds = subjectResolutionService.permanentIds(gameData, entry, e, Subjects.triggeringAll());
         return triggeringIds.stream()
                 .filter(id -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);

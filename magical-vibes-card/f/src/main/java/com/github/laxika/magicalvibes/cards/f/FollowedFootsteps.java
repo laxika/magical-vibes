@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -15,6 +15,6 @@ public class FollowedFootsteps extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenCopyOfEnchantedPermanentEffect());
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenCopyOfTargetPermanentEffect().ofAttached());
     }
 }

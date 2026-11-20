@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -20,6 +22,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
+/**
+ * Creates token copies of the permanents the effect's subject names. A target is read as the entry recorded it; every
+ * other subject through {@link SubjectResolutionService}: "that creature" or "one of them" ({@code triggering()}),
+ * each of them ({@code triggeringAll()}), the source's host ({@code attached()}), or one named permanent. A named
+ * permanent that has left the battlefield is copied as it last existed (CR 608.2h, 111.12).
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffectHandlerBean {
@@ -30,8 +38,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private final AmountEvaluationService amountEvaluationService;
     private final EsixTokenReplacementSupport esixTokenReplacementSupport;
     private final ObjectProvider<CreateTokenCopyOfChosenCreatureEffectHandler> chosenCreatureCopyHandler;
-    private final ObjectProvider<CreateTokenCopyOfEquippedCreatureEffectHandler> equippedCreatureCopyHandler;
-    private final ObjectProvider<CreateTokenCopyOfEnchantedPermanentEffectHandler> enchantedPermanentCopyHandler;
+    private final SubjectResolutionService subjectResolutionService;
     private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
@@ -46,30 +53,41 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfTargetPermanentEffect) effect;
-        CreateTokenCopyOfTargetPermanentEffect.Copied copied = copyEffect.copied();
+        PermanentSubject subject = copyEffect.subject();
 
-        boolean oneOfSeveral = copied == CreateTokenCopyOfTargetPermanentEffect.Copied.TRIGGERING_PERMANENT
-                || copied == CreateTokenCopyOfTargetPermanentEffect.Copied.TARGET && entry.getTargetIds().isEmpty();
-        if (oneOfSeveral && entry.getTriggeringPermanentIds().size() > 1) {
-            List<UUID> candidates = entry.getTriggeringPermanentIds().stream()
-                    .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
-                    .toList();
-            if (candidates.size() > 1) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new com.github.laxika.magicalvibes.model.PermanentChoiceContext
-                                .CreateTokenCopyOfOneOfTriggeringPermanents());
-                playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
-                        "Choose one of the creatures that entered to create a token copy of.");
-                return;
+        boolean oneOfSeveral = subject instanceof PermanentSubject.Triggering
+                || subject instanceof PermanentSubject.Target && entry.getTargetIds().isEmpty();
+        if (oneOfSeveral) {
+            List<UUID> group = triggeringPermanentIds(gameData, entry, effect);
+            if (group.size() > 1) {
+                List<UUID> candidates = group.stream()
+                        .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                        .toList();
+                if (candidates.size() > 1) {
+                    gameData.interaction.setPermanentChoiceContext(
+                            new com.github.laxika.magicalvibes.model.PermanentChoiceContext
+                                    .CreateTokenCopyOfOneOfTriggeringPermanents());
+                    playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
+                            "Choose one of the creatures that entered to create a token copy of.");
+                    return;
+                }
             }
         }
 
-        List<UUID> targetIds = switch (copied) {
-            case TRIGGERING_PERMANENT -> triggeringPermanentToCopy(gameData, entry);
-            case EACH_TRIGGERING_PERMANENT -> triggeringPermanentIds(entry);
-            case TARGET -> targetIds(entry, copyEffect);
+        List<UUID> targetIds = switch (subject) {
+            case PermanentSubject.Target ignored -> targetIds(entry, copyEffect);
+            case PermanentSubject.Triggering ignored -> triggeringPermanentToCopy(gameData, entry, effect);
+            default -> subjectResolutionService.permanentIds(gameData, entry, effect, subject);
         };
+        resolveCopies(gameData, entry, copyEffect, targetIds, true);
+    }
 
+    /**
+     * Creates {@code copyEffect}'s tokens for each of {@code targetIds}; {@code offerReplacement} offers a "first time
+     * you would create tokens" replacement (Esix, Mirrormind Crown, Moonlit Meditation) first.
+     */
+    private void resolveCopies(GameData gameData, StackEntry entry, CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                               List<UUID> targetIds, boolean offerReplacement) {
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int copyCount = amountEvaluationService.evaluate(
@@ -78,7 +96,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
-        if (resolveEsixReplacement(gameData, entry, copyEffect, targetIds, copyCount)) {
+        if (offerReplacement && resolveEsixReplacement(gameData, entry, copyEffect, targetIds, copyCount)) {
             return;
         }
 
@@ -94,7 +112,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                     copySources.addAll(Collections.nCopies(copyCount, copySourceFor(targetPermanent)));
                     continue;
                 }
-                Card lastKnownCard = entry.lastKnownPermanentCard(targetId);
+                Card lastKnownCard = lastKnownCopySource(gameData, entry, copyEffect, targetId);
                 if (lastKnownCard != null) {
                     copySources.addAll(Collections.nCopies(copyCount, lastKnownCard));
                 }
@@ -127,19 +145,16 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
      * The permanents the trigger event was about, recorded on the entry: the group of a "one or more" event, else its
      * one permanent.
      */
-    private static List<UUID> triggeringPermanentIds(StackEntry entry) {
-        if (!entry.getTriggeringPermanentIds().isEmpty()) {
-            return entry.getTriggeringPermanentIds();
-        }
-        return entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
+    private List<UUID> triggeringPermanentIds(GameData gameData, StackEntry entry, CardEffect effect) {
+        return subjectResolutionService.permanentIds(gameData, entry, effect, Subjects.triggeringAll());
     }
 
     /**
      * "That creature", or "one of them" when only one of the event's permanents is still on the battlefield: that one;
      * with none left, the first, copied as it last existed on the battlefield (CR 608.2h).
      */
-    private List<UUID> triggeringPermanentToCopy(GameData gameData, StackEntry entry) {
-        List<UUID> ids = triggeringPermanentIds(entry);
+    private List<UUID> triggeringPermanentToCopy(GameData gameData, StackEntry entry, CardEffect effect) {
+        List<UUID> ids = triggeringPermanentIds(gameData, entry, effect);
         return ids.stream()
                 .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
                 .findFirst()
@@ -154,19 +169,36 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         if (entry == null) {
             throw new IllegalStateException("No effect is waiting for a creature choice");
         }
-        if (!entry.getTriggeringPermanentIds().contains(chosenPermanentId)
-                || gameQueryService.findPermanentById(gameData, chosenPermanentId) == null) {
-            throw new IllegalStateException("Choose a creature that entered");
-        }
         CreateTokenCopyOfTargetPermanentEffect copyEffect = entry.getEffectsToResolve().stream()
                 .filter(CreateTokenCopyOfTargetPermanentEffect.class::isInstance)
                 .map(CreateTokenCopyOfTargetPermanentEffect.class::cast)
                 .findFirst().orElseThrow();
+        if (!triggeringPermanentIds(gameData, entry, copyEffect).contains(chosenPermanentId)
+                || gameQueryService.findPermanentById(gameData, chosenPermanentId) == null) {
+            throw new IllegalStateException("Choose a creature that entered");
+        }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int copyCount = amountEvaluationService.evaluate(
                 gameData, copyEffect.amount(), AmountContext.forStackEntry(entry, sourcePermanent));
         resolveForTarget(gameData, entry, copyEffect, chosenPermanentId, copyCount);
+    }
+
+    /**
+     * Mirrormind Crown, Moonlit Meditation: creates {@code amount} token copies of the creature or permanent
+     * {@code attachmentId} is attached to, instead of the tokens the replaced effect would have created; nothing when
+     * that Aura or Equipment is no longer attached to a permanent. Offers no replacement of its own.
+     */
+    public void createCopiesOfHost(GameData gameData, StackEntry entry, UUID attachmentId, int amount) {
+        Permanent attachment = gameQueryService.findPermanentById(gameData, attachmentId);
+        UUID hostId = attachment == null ? null : attachment.getAttachedTo();
+        if (hostId == null || gameData.playerIds.contains(hostId)) {
+            return;
+        }
+        CreateTokenCopyOfTargetPermanentEffect copyEffect =
+                new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(hostId);
+        resolveCopies(gameData, entry, copyEffect,
+                subjectResolutionService.permanentIds(gameData, entry, copyEffect, copyEffect.subject()), false);
     }
 
     /**
@@ -190,14 +222,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             if (pending.copyChosenCreature()) {
                 chosenCreatureCopyHandler.getObject().resolve(gameData, entry,
                         new CreateTokenCopyOfChosenCreatureEffect(pending.amount(), pending.replacementPermanentId()));
-            } else if (pending.copyEnchantedPermanent()) {
-                enchantedPermanentCopyHandler.getObject().resolve(gameData, entry,
-                        new CreateTokenCopyOfEnchantedPermanentEffect(
-                                pending.amount(), pending.replacementPermanentId()));
             } else {
-                equippedCreatureCopyHandler.getObject().resolve(gameData, entry,
-                        new CreateTokenCopyOfEquippedCreatureEffect(
-                                pending.amount(), false, false, pending.replacementPermanentId()));
+                createCopiesOfHost(gameData, entry, pending.replacementPermanentId(), pending.amount());
             }
             return true;
         }
@@ -271,7 +297,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
      */
     private void resolveForDepartedTarget(GameData gameData, StackEntry entry,
                                           CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId, int copyCount) {
-        Card lastKnownCard = entry.lastKnownPermanentCard(targetId);
+        Card lastKnownCard = lastKnownCopySource(gameData, entry, effect, targetId);
         if (lastKnownCard == null || effect.chooseAttackTarget()) {
             return;
         }
@@ -288,5 +314,23 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, lastKnownCard),
                 sourcePermanent, tokenControllerId, effect, attackTargetIds);
+    }
+
+    /**
+     * The card a token copy of {@code permanentId}, which has left the battlefield, copies: the one the entry recorded
+     * as it last existed, else, for a permanent the effect doesn't target, the last-known snapshot the game kept of it
+     * (CR 608.2h).
+     */
+    private Card lastKnownCopySource(GameData gameData, StackEntry entry, CreateTokenCopyOfTargetPermanentEffect effect,
+                                     UUID permanentId) {
+        Card lastKnownCard = entry.lastKnownPermanentCard(permanentId);
+        if (lastKnownCard != null || effect.subject() instanceof PermanentSubject.Target) {
+            return lastKnownCard;
+        }
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(departed -> permanentId.equals(departed.getId()))
+                .findFirst()
+                .map(permanentCopierService::copiableCard)
+                .orElse(null);
     }
 }

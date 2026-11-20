@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -35,13 +36,13 @@ public class GylwainCastingDirector extends Card {
         ChooseOneEffect choice = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Royal Role token attached to that creature.",
-                        new CreateTokenAttachedToTriggeringPermanentEffect(royalRoleToken())),
+                        new CreateTokenAttachedToTargetEffect(royalRoleToken(), Subjects.triggering())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Sorcerer Role token attached to that creature.",
-                        new CreateTokenAttachedToTriggeringPermanentEffect(sorcererRoleToken())),
+                        new CreateTokenAttachedToTargetEffect(sorcererRoleToken(), Subjects.triggering())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Monster Role token attached to that creature.",
-                        new CreateTokenAttachedToTriggeringPermanentEffect(monsterRoleToken()))));
+                        new CreateTokenAttachedToTargetEffect(monsterRoleToken(), Subjects.triggering()))));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,

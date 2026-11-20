@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +22,7 @@ public class CursedCourtier extends Card {
 
     public CursedCourtier() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new CreateTokenAttachedToSourceEffect(cursedRoleToken()));
+                new CreateTokenAttachedToTargetEffect(cursedRoleToken(), Subjects.source()));
     }
 
     private static CreateTokenEffect cursedRoleToken() {

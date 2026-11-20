@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +24,7 @@ public class KorOutfitter extends Card {
         target(TargetFilters.creatureYouControl());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayEffect(new AttachTargetEquipmentToTargetCreatureEffect(),
+                new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(0), Subjects.target(1)),
                         "Attach target Equipment you control to target creature you control?"));
     }
 }

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
@@ -33,8 +33,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
-    private final CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
+    private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
     private final CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
     private final EsixTokenReplacementSupport esixTokenReplacementSupport;
     private final ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler;
@@ -42,8 +41,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     public CreateTokenEffectHandler(PermanentControlSupport permanentControlSupport,
                                     GameQueryService gameQueryService,
                                     AmountEvaluationService amountEvaluationService,
-                                    CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler,
-                                    CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler,
+                                    CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler,
                                     CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler,
                                     EsixTokenReplacementSupport esixTokenReplacementSupport,
                                     ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler) {
@@ -51,7 +49,6 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
         this.tokenCopyHandler = tokenCopyHandler;
-        this.enchantedPermanentTokenCopyHandler = enchantedPermanentTokenCopyHandler;
         this.chosenCreatureTokenCopyHandler = chosenCreatureTokenCopyHandler;
         this.esixTokenReplacementSupport = esixTokenReplacementSupport;
         this.attackTargetsHandler = attackTargetsHandler;
@@ -113,18 +110,16 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvedMayAccepted = null;
             if (Boolean.TRUE.equals(accepted)) {
                 if (pending.copyEnchantedPermanent()) {
-                    enchantedPermanentTokenCopyHandler.resolve(gameData, entry,
-                            new CreateTokenCopyOfEnchantedPermanentEffect(
-                                    pending.amount(), pending.replacementPermanentId()));
+                    tokenCopyHandler.createCopiesOfHost(gameData, entry, pending.replacementPermanentId(),
+                            pending.amount());
                 } else if (pending.copyChosenCreature()) {
                     chosenCreatureTokenCopyHandler.resolve(gameData, entry,
                             new CreateTokenCopyOfChosenCreatureEffect(
                                     pending.amount(), pending.replacementPermanentId()));
                 } else {
                     int createdBefore = entry.getCreatedPermanentIds().size();
-                    tokenCopyHandler.resolve(gameData, entry,
-                            new CreateTokenCopyOfEquippedCreatureEffect(
-                                    pending.amount(), false, false, pending.replacementPermanentId()));
+                    tokenCopyHandler.createCopiesOfHost(gameData, entry, pending.replacementPermanentId(),
+                            pending.amount());
                     if (e.tapped()) {
                         // The replacement changes what is created, not how the original event had it enter.
                         entry.getCreatedPermanentIds().stream().skip(createdBefore)
@@ -150,8 +145,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         crown.getCard(),
                         controllerId,
-                        List.of(new CreateTokenCopyOfEquippedCreatureEffect(
-                                amount, false, false, crown.getId())),
+                        List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount))
+                                .ofNamed(crown.getAttachedTo())),
                         crown.getCard().getName()
                                 + " — You may create that many tokens that are copies of the equipped creature."));
                 return;
@@ -165,7 +160,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         moonlit.getCard(),
                         controllerId,
-                        List.of(new CreateTokenCopyOfEnchantedPermanentEffect(amount, moonlit.getId())),
+                        List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount))
+                                .ofNamed(moonlit.getAttachedTo())),
                         moonlit.getCard().getName()
                                 + " — You may create that many tokens that are copies of the enchanted permanent."));
                 return;

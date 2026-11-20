@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -174,4 +175,22 @@ class ArmoryAutomatonTest extends BaseCardTest {
 
         assertThat(equipment).allSatisfy(item -> assertThat(item.getAttachedTo()).isEqualTo(automaton.getId()));
     }
+
+    @Test
+    @DisplayName("An Equipment already attached to it doesn't move and keeps its timestamp")
+    void alreadyAttachedEquipmentDoesNotMove() {
+        Permanent automaton = addCreatureReady(player1, new ArmoryAutomaton());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        equipment.setAttachedTo(automaton.getId());
+        long timestamp = equipment.getTimestamp();
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(automaton.getId());
+        assertThat(equipment.getTimestamp()).isEqualTo(timestamp);
+    }
+
 }

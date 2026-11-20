@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i, 5j, 5k done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i, 5j, 5k, 5l done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -397,7 +397,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | done (3 folded into `BoostSelfEffect`; Hand of Vecna's choice record and `BoostTargetPermanentEffect` kept) |
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | done (3 folded into `SacrificeSelfEffect`; the delayed and Animate Dead records kept) |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | done (3 enums gone; 4 records folded into `RemoveTargetFromCombatEffect` and `PhaseOutEffect`) |
-| 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | open |
+| 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | done (9 folded into three survivors; `Copied` enum gone; the defending-player token and `CreateTokenCopyOfSourceEffect` kept) |
 | 5m | Whatever `--siblings` still lists | — | — | open |
 
 Notes for every run:
@@ -2464,6 +2464,96 @@ two ratchets, `TargetPolarityGuardTest`.
   carry a duration or a resolution-time choice.
 - `oneOf` is the shape for any "this or target" choice; `returnedThisResolution()` / `exiledThisResolution()` are early
   step-7 results that still read the entry's `returnedPermanentIds` / target id; step 7 moves them to the scratchpad.
+
+### Step 5, run 5l (2026-11-20)
+
+`--siblings` gives `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (5: Target 139, Source 84, Enchanted 5, Dying 2, Equipped 1)
+and `CreateToken*To*` (4: AttachedToTarget 35, Source 3, DefendingPlayer 1, TriggeringPermanent 1). Each family has at least
+two true subject siblings once the handlers are read.
+
+**Survivor A.** `AttachSourceEquipmentToTargetCreatureEffect(thenEffect, thenEffectOptionalTarget, targetPredicate,
+PermanentSubject equipment, PermanentSubject host)` (the `useTriggeringPermanent` flag became `host` `triggering()`; every
+old constructor and `forCreatureYouControl()` / `forTriggeringCreature()` kept, so its 84 cards are untouched). New `(equipment,
+host[, targetPredicate])` and `targetEquipmentToTriggeringOrSource()`. Each subject is one of `source()`, `target([g])`,
+`triggering()`, `triggeringOrSource()`; two targets need two groups. `targetSpec()` keeps every old spec: benign permanent
+for two targets; for a host target benign permanent, or creature + predicate; for an Equipment target benign permanent, or
+permanent + predicate (the old triggering-host record's Equipment predicate); else `NONE`. `actsOnlyOnItsTargets()` for an
+Equipment target with a non-target host (the old triggering-host record; also the target-to-source shape, never inside a
+`MayEffect`). The handler names both through `SubjectResolutionService`, attaches each Equipment `canAttachEquipment` allows
+(CR 301.5c), leaves one already on the host where it is (CR 701.3b), restamps a moved one (CR 613.7e) and fires the
+unattach / "becomes attached" triggers, then queues the reflexive continuation if any Equipment is on the host.
+
+**Survivor B.** `CreateTokenCopyOfTargetPermanentEffect`'s `Copied copied` became `PermanentSubject subject` (`null` =
+`target()`): TARGET `target()`, TRIGGERING_PERMANENT `triggering()` ("that creature", or "one of them" chosen as it resolves
+when the event was about several: the handler reads the group through the resolver), EACH_TRIGGERING_PERMANENT **new**
+`triggeringAll()`, plus `attached()` (`ofAttached()`) and `named(id)` (`ofNamed(id)`); `withSubject` is public. The target
+path reads its targets as before; every other subject goes through the resolver. A non-target permanent that left is copied
+from the entry's last-known card, else from `GameData.departedPermanentSnapshots` (the old Aura / Equipment lookup).
+`createCopiesOfHost(gd, entry, attachmentId, amount)` is the Mirrormind Crown / Moonlit Meditation replacement (copies of the
+host as `named(hostId)`, no second replacement offered); `CreateTokenEffectHandler` calls it and `EsixTokenReplacementSupport`'s
+pending may abilities list `ofNamed(host)`.
+
+**Survivor C.** `CreateTokenAttachedToTargetEffect`'s `boolean oneOfTriggeringPermanents` became `PermanentSubject subject`
+(`target()` default, `source()`, `triggering()`); new `(token, subject)` (relation ANY, creature filter). `triggering()` is the
+old "one of them" path (group through the resolver's `triggeringAll()`, else the one permanent; filter, live, a choice when
+several); `source()` attaches to the live source; the target path is unchanged.
+
+**Resolver.** New `PermanentSubject.TriggeringAll` / `Subjects.triggeringAll()` (`getTriggeringPermanentIds()`, else the
+triggering permanent). Test: `SubjectResolutionServiceTest$Triggering.triggeringAllPermanents`.
+
+**Deleted** (enum `CreateTokenCopyOfTargetPermanentEffect.Copied`; 9 records, 9 handlers; ratchet 4,873 / 4,106):
+`AttachTargetEquipmentToTargetCreatureEffect` → A `(target(0), target(1))` (`creatureFirst()` `(target(1), target(0))`;
+11 cards), `AttachTargetEquipmentToTriggeringPermanentEffect` → A `targetEquipmentToTriggeringOrSource()` (6),
+`AttachTargetEquipmentToSourceEffect` → A `(target(), source())` (3), `AttachTriggeringEquipmentToTargetCreatureEffect` → A
+`(triggering(), target())` (2); `CreateTokenCopyOfEnchantedPermanentEffect` → B profile `.ofAttached()` (Followed Footsteps,
+Mechanized Production, Ghastly Mimicry, Penumbra Umbra) or `.ofTriggeringPermanent()` (Mirror Mockery),
+`CreateTokenCopyOfEquippedCreatureEffect` → B `(…, grantHaste, …, removeLegendary).ofAttached()` (Helm of the Host),
+`CreateTokenCopyOfDyingCreatureEffect` → B profile `.ofTriggeringPermanent()` (Ratadrabik, Genestealer Patriarch; the
+death collector records the dying creature's last-known card, so the old card-id and graveyard-card fallbacks had no user);
+`CreateTokenAttachedToSourceEffect` → C `(token, source())` (3), `CreateTokenAttachedToTriggeringPermanentEffect` → C
+`(token, triggering())` (Gylwain; a per-creature enter trigger records a group of one, CR 603.2c). 33 card files rewritten
+(a deleted scratch script for the attach family, the rest by hand); 6 engine, 5 domain, 1 AI main, 4 application test, 4 card test and
+10 agent-docs files changed.
+
+**`source()` fallback.** The attach handler found a source Equipment by card id when the entry had no source permanent ("death
+trigger path"); a temporary probe that threw there never fired across every test class of the survivors' cards, so the
+lookup is the strict `source()`. `EquipSupport.findEquipmentByCardId` stays for its other four callers.
+
+**AI parity.** `TargetPolarityClassifier`: the four attach name entries became one structural branch (BENEFICIAL, none for
+a `triggering()` Equipment, which had no entry); the copy name entry became a branch (NEUTRAL, none for `attached()` /
+`named`); the token-attached branch returns none for `source()`. The Dying cards now classify NEUTRAL (was none) and
+Gylwain BENEFICIAL (was none); both abilities declare no target, so no target choice reads it. `SpellEvaluator` scores
+`TokenCreatingEffect`s only on ETB and spell effects; the Dying record's interface was on a death trigger.
+
+**Behaviour changes.** (1) An Equipment already attached to the host doesn't move, get a new timestamp or fire
+"becomes attached" (CR 701.3b); the target-to-triggering, target-to-source and triggering-to-target records re-attached it.
+Test: `ArmoryAutomatonTest.alreadyAttachedEquipmentDoesNotMove`. (2) Mirror Mockery copies "that creature", the attacking
+creature, even after the Aura moved in response (it copied the current host). Test:
+`MirrorMockeryTest.copiesTheAttackingCreatureAfterTheAuraMoves`. (3) Helm of the Host copies the equipped creature's copiable
+values (CR 707.2: a face-down creature is a nameless 2/2) instead of its card. Test:
+`HelmOfTheHostTest.copiesFaceDownCreatureAsItsCopiableValues`. (4) Copies of an Aura's or Equipment's host offer the "first
+time you would create tokens" replacements (Esix, Mirrormind Crown, Moonlit Meditation), as every other token creation does.
+Test: `FollowedFootstepsTest.tokenCreationReplacementApplies`. (5) Attaching no longer requires the printed Equipment subtype
+as well as the effective one, and the target-to-source shape's "you control" is the target filter's resolution recheck. (6)
+Log lines are the survivor's ("X is now attached to Y."; none when nothing moved).
+
+**Kept exactly.** Copiable values and the "except …" modifications (CR 707.2, 707.9), copies of a permanent that left by
+last-known information (CR 608.2h, 111.12), the target paths of both copy and token-attached records (bound groups, the
+legacy target-less "one of them" check), Esix's offer, the reflexive attach continuation, every target spec.
+
+**Tests**: 304 suites, 2,519 test cases, all pass (every test class of every card naming one of the three survivors, with
+the probe; Esix, Mirrormind Crown, Moonlit Meditation; `DrawServiceTest`, `LibraryTriggersTest`, `MayEffectHandlerTest`,
+`CreateTokenEffectHandlerTest`, `CardImmutabilityArchTest`, `SubjectResolutionServiceTest`, the two ratchets,
+`TargetPolarityGuardTest`), then the five new tests' classes.
+
+**For later runs.**
+
+- Kept (ledger, `blocked-other`): `CreateTokenAttachedToDefendingPlayerEffect` (a player host; an attach verb with a player
+  host subject folds it and `AttachSourceAuraToTargetPlayerEffect`); `CreateTokenCopyOfSourceEffect` (head record, step 10).
+- Not audited (5m): `AttachCreatedEquipmentTo*` (2, a step-7 "created" subject), `AttachOneOfControlledEquipmentTo*` (2, a
+  resolution-time choice), `Attach*AuraTo*` (3), `CreateTokenCopyOf*For*` (4, a token controller subject),
+  `CreateTokenFor*` (4).
+- `triggeringAll()` is the plural "them"; a one-permanent verb reads it for "one of them" (B, C).
 
 ## Prompt
 

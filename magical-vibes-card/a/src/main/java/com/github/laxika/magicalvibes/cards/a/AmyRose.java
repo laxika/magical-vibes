@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,8 @@ public class AmyRose extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
-        var attachTargetEquipmentToTriggeringPermanent = new AttachTargetEquipmentToTriggeringPermanentEffect();
+        var attachTargetEquipmentToTriggeringPermanent =
+                AttachSourceEquipmentToTargetCreatureEffect.targetEquipmentToTriggeringOrSource();
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"), 0, 1)

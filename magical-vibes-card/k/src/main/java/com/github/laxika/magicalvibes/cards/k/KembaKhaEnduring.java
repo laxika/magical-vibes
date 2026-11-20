@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -31,7 +31,7 @@ public class KembaKhaEnduring extends Card {
                                         Triggers.CREATURE,
                                         new PermanentHasSubtypePredicate(CardSubtype.CAT))),
                                 ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                        new AttachTargetEquipmentToTriggeringPermanentEffect());
+                        AttachSourceEquipmentToTargetCreatureEffect.targetEquipmentToTriggeringOrSource());
 
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEquippedPredicate()));

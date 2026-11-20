@@ -148,6 +148,9 @@ public class SubjectResolutionService {
             case PermanentSubject.AttachedAtTrigger ignored -> listOf(ctx.entry().getAttachedPermanentSnapshot() == null
                     ? null : ctx.entry().getAttachedPermanentSnapshot().getId());
             case PermanentSubject.Triggering ignored -> listOf(ctx.entry().getTriggeringPermanentId());
+            case PermanentSubject.TriggeringAll ignored -> ctx.entry().getTriggeringPermanentIds().isEmpty()
+                    ? listOf(ctx.entry().getTriggeringPermanentId())
+                    : List.copyOf(ctx.entry().getTriggeringPermanentIds());
             case PermanentSubject.TriggeringOrSource ignored -> listOf(ctx.entry().getTriggeringPermanentId() != null
                     ? ctx.entry().getTriggeringPermanentId() : ctx.sourceId());
             case PermanentSubject.TriggeringCard ignored -> listOf(triggeringCardPermanentId(ctx));

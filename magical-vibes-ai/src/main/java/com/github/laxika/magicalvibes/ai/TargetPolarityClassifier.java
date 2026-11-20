@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -230,7 +232,21 @@ public class TargetPolarityClassifier {
             return higherPriority(sacrificed, otherwise);
         }
 
+        // Attaching an Equipment helps the creature it lands on; the absorbed "attach that Equipment to target creature"
+        // form (an Equipment that triggered) had no polarity.
+        if (effect instanceof AttachSourceEquipmentToTargetCreatureEffect attach) {
+            return attach.equipment() instanceof PermanentSubject.Triggering ? null : TargetPolarity.BENEFICIAL;
+        }
+        // A token copy of an Aura's or Equipment's host or of a replacement's creature (formerly their own records) had no
+        // polarity; the target and triggering forms kept the name entry's NEUTRAL.
+        if (effect instanceof CreateTokenCopyOfTargetPermanentEffect copy) {
+            return copy.subject() instanceof PermanentSubject.Attached || copy.subject() instanceof PermanentSubject.Named
+                    ? null : TargetPolarity.NEUTRAL;
+        }
         if (effect instanceof CreateTokenAttachedToTargetEffect attachToken) {
+            if (attachToken.subject() instanceof PermanentSubject.Source) {
+                return null;
+            }
             return attachToken.targetControllerRelation() == PlayerRelation.OPPONENT
                     ? TargetPolarity.HARMFUL
                     : TargetPolarity.BENEFICIAL;
@@ -627,13 +643,9 @@ public class TargetPolarityClassifier {
             entry("EarthbendTargetLandEffect", TargetPolarity.BENEFICIAL),
             entry("EarthbendTargetLandThenFightEffect", TargetPolarity.BENEFICIAL),
             entry("AttachOneOfControlledEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
-            entry("AttachTargetEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
-            entry("AttachTargetEquipmentToSourceEffect", TargetPolarity.BENEFICIAL),
-            entry("AttachTargetEquipmentToTriggeringPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetEquipmentsToTargetCreatureThenEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetToSourcePermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
-            entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("PowerToughnessBoostEffect", TargetPolarity.BENEFICIAL),
             entry("DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect", TargetPolarity.BENEFICIAL),
             entry("PreventAllDamageToTargetFromColorlessSourcesEffect", TargetPolarity.BENEFICIAL),
@@ -724,7 +736,6 @@ public class TargetPolarityClassifier {
             entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetCreatureForTargetPlayerEffect", TargetPolarity.NEUTRAL),
-            entry("CreateTokenCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("ConjureDuplicatesOfTargetPermanentsIntoHandEffect", TargetPolarity.NEUTRAL),
             entry("TemptingOfferCreateTokenCopyEffect", TargetPolarity.BENEFICIAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),

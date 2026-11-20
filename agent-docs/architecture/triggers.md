@@ -672,7 +672,7 @@ as a value; use `StackEntryType.isAbility`.
   walks `GameData.stackEntriesAndTriggerRecords()` (stack, hand, queued choices, prompts) and `carryTriggerRecord`
   passes the last-known maps on; stamp last-known information through that method, not `gameData.stack`.
 - "When this enters" and "whenever this attacks" records have no triggering permanent: an effect meaning its own
-  permanent by "it" falls back to the entry's source (`AttachTargetEquipmentToTriggeringPermanentEffectHandler`,
+  permanent by "it" falls back to the entry's source (the `triggeringOrSource()` subject,
   `ExchangeControlOfTargetPermanentsEffectHandler`).
 
 ### Ordering and divisions

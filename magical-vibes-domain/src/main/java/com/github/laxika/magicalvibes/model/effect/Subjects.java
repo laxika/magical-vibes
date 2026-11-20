@@ -21,6 +21,7 @@ public final class Subjects {
     private static final PermanentSubject ATTACHED_OR_SOURCE = new PermanentSubject.AttachedOrSource();
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
+    private static final PermanentSubject TRIGGERING_ALL = new PermanentSubject.TriggeringAll();
     private static final PermanentSubject TRIGGERING_OR_SOURCE = new PermanentSubject.TriggeringOrSource();
     private static final PermanentSubject TRIGGERING_CARD = new PermanentSubject.TriggeringCard();
     private static final PermanentSubject TARGET_SPELL = new PermanentSubject.TargetSpell();
@@ -89,6 +90,11 @@ public final class Subjects {
     /** "It", "that creature": the permanent the trigger event was about. */
     public static PermanentSubject triggering() {
         return TRIGGERING;
+    }
+
+    /** "Them", "each of them": every permanent the trigger event was about (the group of a "one or more" event). */
+    public static PermanentSubject triggeringAll() {
+        return TRIGGERING_ALL;
     }
 
     /** "It" after "whenever this creature or equipped creature attacks": the recorded permanent, else the source. */

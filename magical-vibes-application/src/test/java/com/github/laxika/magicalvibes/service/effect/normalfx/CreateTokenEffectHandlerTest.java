@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.rules.RulesEvent;
-import com.github.laxika.magicalvibes.model.rules.ActionEvent;
+import com.github.laxika.magicalvibes.cards.m.MoonlitMeditation;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,8 +8,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.m.MoonlitMeditation;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +26,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,9 +42,7 @@ class CreateTokenEffectHandlerTest {
     @Mock
     private AmountEvaluationService amountEvaluationService;
     @Mock
-    private CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
-    @Mock
-    private CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
+    private CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
     @Mock
     private CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
 
@@ -64,7 +62,6 @@ class CreateTokenEffectHandlerTest {
         gd.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
         handler = new CreateTokenEffectHandler(
                 permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
-                enchantedPermanentTokenCopyHandler,
                 chosenCreatureTokenCopyHandler, esixTokenReplacementSupport, null);
     }
 
@@ -135,7 +132,7 @@ class CreateTokenEffectHandlerTest {
         gd.resolvedMayAccepted = true;
         handler.resolve(gd, entry, effect);
 
-        verify(enchantedPermanentTokenCopyHandler).resolve(eq(gd), eq(entry), any());
+        verify(tokenCopyHandler).createCopiesOfHost(gd, entry, moonlit.getId(), 1);
     }
 
     /** The rules events emitted into {@code gameData} and not yet matched. */

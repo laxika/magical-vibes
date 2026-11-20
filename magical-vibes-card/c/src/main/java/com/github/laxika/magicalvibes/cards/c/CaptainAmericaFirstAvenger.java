@@ -5,15 +5,16 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1726")
@@ -34,6 +35,6 @@ public class CaptainAmericaFirstAvenger extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"), 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new AttachTargetEquipmentToSourceEffect());
+                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(), Subjects.source()));
     }
 }

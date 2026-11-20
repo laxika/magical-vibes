@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -32,6 +33,6 @@ public class BarretAvalancheLeader extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.REBEL),
                 "Target must be a Rebel you control"));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new AttachTargetEquipmentToTargetCreatureEffect());
+                new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(0), Subjects.target(1)));
     }
 }

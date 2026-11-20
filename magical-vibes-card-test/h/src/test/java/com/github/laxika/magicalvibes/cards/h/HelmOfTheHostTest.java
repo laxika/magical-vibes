@@ -13,14 +13,17 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.d.DeathmistRaptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HelmOfTheHost.class, GrizzlyBears.class, HallarTheFirefletcher.class,
-        Clone.class, InvokeTheDivine.class, BlinkOfAnEye.class, DivineVisitation.class})
+        Clone.class, InvokeTheDivine.class, BlinkOfAnEye.class, DivineVisitation.class, DeathmistRaptor.class})
 class HelmOfTheHostTest extends BaseCardTest {
 
     @Test
@@ -378,6 +381,32 @@ class HelmOfTheHostTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().isToken()).singleElement().satisfies(p ->
                         assertThat(gqs.getEffectiveColors(gd, p))
                                 .containsExactlyInAnyOrderElementsOf(gqs.getEffectiveColors(gd, creature)));
+    }
+
+
+    @Test
+    @DisplayName("Copying a face-down equipped creature creates a face-up 2/2 without its printed abilities")
+    void copiesFaceDownCreatureAsItsCopiableValues() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DeathmistRaptor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown).findFirst().orElseThrow();
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(creature.getId());
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(token.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isFalse();
     }
 
     private Permanent addHelmReady(Player player) {

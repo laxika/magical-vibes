@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class MechanizedProduction extends Card {
                 )),
                 "Target must be an artifact you control"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new CreateTokenCopyOfEnchantedPermanentEffect(),
+                new CreateTokenCopyOfTargetPermanentEffect().ofAttached(),
                 new ConditionalEffect(
                         new ControlsPermanentsWithSameName(8, new PermanentIsArtifactPredicate()),
                         new WinGameEffect())

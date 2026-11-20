@@ -18,11 +18,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MirrorMockery.class, ColossodonYearling.class, DeathmistRaptor.class,
-        Naturalize.class, SarkhansRage.class, TreadUpon.class})
+        Naturalize.class, SarkhansRage.class, TreadUpon.class, GrizzlyBears.class})
 class MirrorMockeryTest extends BaseCardTest {
 
     @Test
@@ -187,6 +188,24 @@ class MirrorMockeryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, copy, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+
+    @Test
+    @DisplayName("Copies the creature that attacked even if the Aura moved to another creature in response")
+    void copiesTheAttackingCreatureAfterTheAuraMoves() {
+        Permanent creature = addCreatureReady(player1, new ColossodonYearling());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castMirrorMockery(creature);
+        Permanent aura = findPermanent(player1, "Mirror Mockery");
+
+        keepCombatOpen();
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
+        aura.setAttachedTo(otherCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findTokenCopy().getCard().getName()).isEqualTo("Colossodon Yearling");
     }
 
     private void castMirrorMockery(Permanent creature) {
