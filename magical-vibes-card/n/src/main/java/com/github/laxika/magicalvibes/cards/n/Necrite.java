@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "181")
 @CardRegistration(set = "FEM", collectorNumber = "41a")
@@ -24,7 +26,8 @@ public class Necrite extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.attacksUnblocked(),
                         new MayEffect(
-                                SequenceEffect.of(new SacrificeSelfEffect(), new DestroyTargetPermanentEffect(true)),
+                                SequenceEffect.of(new SacrificeSelfEffect(), new ConditionalEffect(
+                                        HappenedThisWay.sacrificed(), new DestroyTargetPermanentEffect(true))),
                                 "You may sacrifice it. If you do, destroy target creature defending player controls. "
                                         + "It can't be regenerated."));
     }

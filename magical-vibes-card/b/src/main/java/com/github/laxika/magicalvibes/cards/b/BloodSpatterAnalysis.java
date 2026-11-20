@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,6 +19,9 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "189")
 @CardRegistration(set = "MKM", collectorNumber = "413")
@@ -35,10 +37,11 @@ public class BloodSpatterAnalysis extends Card {
                 new PutCountersOnSelfEffect(CounterType.BLOODSTAIN),
                 new ConditionalEffect(
                         new SourceCounterThreshold(5, CounterType.BLOODSTAIN),
-                        SacrificeSelfThenEffect.reflexive(ReturnCardFromGraveyardEffect.builder()
+                        SequenceEffect.of(new SacrificeSelfEffect(),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
                                 .targetGraveyard(true)
-                                .build()))));
+                                .build()))))));
     }
 }

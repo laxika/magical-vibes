@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -115,9 +115,9 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
             return new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
                     exiledCardId, r.enterTapped(), r.underAbilityController());
         }
-        if (effect instanceof SacrificeSelfThenEffect sacrifice) {
-            CardEffect inner = bindReturn(sacrifice.thenEffect(), exiledCardId);
-            return inner == sacrifice.thenEffect() ? effect : new SacrificeSelfThenEffect(inner, sacrifice.reflexive(), sacrifice.sacrificesTriggeringPermanent());
+        if (effect instanceof ConditionalEffect conditional) {
+            CardEffect inner = bindReturn(conditional.wrapped(), exiledCardId);
+            return inner == conditional.wrapped() ? effect : new ConditionalEffect(conditional.condition(), inner);
         }
         if (effect instanceof SequenceEffect sequence) {
             List<CardEffect> steps = sequence.steps().stream().map(step -> bindReturn(step, exiledCardId)).toList();

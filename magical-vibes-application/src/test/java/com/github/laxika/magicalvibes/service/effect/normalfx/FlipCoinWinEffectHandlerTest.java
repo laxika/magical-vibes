@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -90,6 +92,27 @@ class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
         verify(drawHandler).resolve(gd, entry, step1);
         verify(drawHandler).resolve(gd, entry, step2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("A conditional step of a branch resolves only when its condition is met (\"if you do\")")
+    void conditionalStepOfBranchIsGated(boolean met) {
+        Card card = createCard("Negative Zone Portal");
+        EffectHandler drawHandler = mock(EffectHandler.class);
+        registry.register(DrawCardEffect.class, drawHandler);
+        when(conditionEvaluationService.isMet(eq(gd), eq(HappenedThisWay.sacrificed()), any())).thenReturn(met);
+
+        DrawCardEffect first = new DrawCardEffect(1);
+        DrawCardEffect gated = new DrawCardEffect(2);
+        SequenceEffect sequence = SequenceEffect.of(first, new ConditionalEffect(HappenedThisWay.sacrificed(), gated));
+        FlipCoinWinEffect effect = new FlipCoinWinEffect(sequence, sequence);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(drawHandler).resolve(gd, entry, first);
+        verify(drawHandler, met ? times(1) : never()).resolve(gd, entry, gated);
     }
 
     /** The rules events emitted into {@code gameData} and not yet matched. */

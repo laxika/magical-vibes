@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "148")
 @CardRegistration(set = "WOE", collectorNumber = "352")
@@ -19,8 +21,9 @@ public class RotisserieElemental extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SKEWER),
                 new MayEffect(
-                        new SacrificeSelfThenEffect(new ExileTopCardMayPlayThisTurnEffect(
-                                new CountersOnSource(CounterType.SKEWER), false)),
+                        SequenceEffect.of(new SacrificeSelfEffect(),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new ExileTopCardMayPlayThisTurnEffect(
+                                new CountersOnSource(CounterType.SKEWER), false))),
                         "You may sacrifice Rotisserie Elemental.")));
     }
 }

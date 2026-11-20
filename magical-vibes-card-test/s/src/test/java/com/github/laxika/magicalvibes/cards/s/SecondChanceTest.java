@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,20 @@ class SecondChanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Second Chance");
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    @DisplayName("\"Sacrifice ... and take an extra turn\": the turn is taken even if Second Chance left before resolution")
+    void extraTurnEvenIfNotSacrificed() {
+        Permanent secondChance = harness.addToBattlefieldAndReturn(player1, new SecondChance());
+        harness.setLife(player1, 5);
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, secondChance));
+        harness.passBothPriorities();
+
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
 

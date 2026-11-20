@@ -9,13 +9,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +38,8 @@ public class MaritLagesSlumber extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(10, new PermanentHasSupertypePredicate(CardSupertype.SNOW))),
-                new SacrificeSelfThenEffect(new CreateTokenEffect(
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new CreateTokenEffect(
                         CardType.CREATURE,
                         1,
                         "Marit Lage",
@@ -55,6 +59,6 @@ public class MaritLagesSlumber extends Card {
                         true,
                         0,
                         Set.of(),
-                        Set.of())));
+                        Set.of()))));
     }
 }

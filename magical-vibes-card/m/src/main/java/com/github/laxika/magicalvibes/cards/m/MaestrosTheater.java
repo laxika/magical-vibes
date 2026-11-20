@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -14,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
 
@@ -23,7 +26,8 @@ public class MaestrosTheater extends Card {
 
     public MaestrosTheater() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                SacrificeSelfThenEffect.reflexive(SequenceEffect.of(
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(SequenceEffect.of(
                         new SearchLibraryEffect(
                                 new CardAllOfPredicate(List.of(
                                         CardPredicateUtils.basicLand(),
@@ -32,6 +36,6 @@ public class MaestrosTheater extends Card {
                                                 new CardSubtypePredicate(CardSubtype.SWAMP),
                                                 new CardSubtypePredicate(CardSubtype.MOUNTAIN))))),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        new GainLifeEffect(1))));
+                        new GainLifeEffect(1))))));
     }
 }

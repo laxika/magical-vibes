@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -18,6 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 
 @CardRegistration(set = "WHO", collectorNumber = "151")
 @CardRegistration(set = "WHO", collectorNumber = "756")
@@ -46,6 +48,7 @@ public class RegenerationsRestored extends Card {
                 new GainLifeEffect(1),
                 new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
-                        new ExileSelfThenEffect(new ControllerExtraTurnEffect(1)))));
+                        SequenceEffect.of(new ExileTargetPermanentEffect(Subjects.source()),
+                                new ConditionalEffect(HappenedThisWay.exiled(), new ControllerExtraTurnEffect(1))))));
     }
 }

@@ -106,12 +106,12 @@ class FellGravshipTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The return is part of the enters trigger's resolution, not a reflexive ability (\"then\")")
     void millingAndReturningOccurDuringTheSameTriggerResolution() {
         GravpackMonoist creature = new GravpackMonoist();
         harness.setLibrary(player1, List.of(creature, new Forest(), new Forest()));
         harness.forceActivePlayer(player1);
         harness.castFromHand(player1, new FellGravship(), "{2}{B}");
-        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 

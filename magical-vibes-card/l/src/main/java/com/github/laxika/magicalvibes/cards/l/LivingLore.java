@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsEx
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -30,7 +33,8 @@ public class LivingLore extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(exiledManaValue, exiledManaValue));
         addTrigger(Triggers.dealsCombatDamage(),
                 new MayEffect(
-                        new SacrificeSelfThenEffect(new MayCastCardExiledWithSourceEffect()),
+                        SequenceEffect.of(new SacrificeSelfEffect(),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new MayCastCardExiledWithSourceEffect())),
                         "You may sacrifice it. If you do, you may cast the exiled card without paying its mana cost."));
     }
 }

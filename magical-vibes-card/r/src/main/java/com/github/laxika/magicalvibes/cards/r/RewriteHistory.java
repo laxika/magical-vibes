@@ -10,16 +10,19 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MSH", collectorNumber = "71")
 public class RewriteHistory extends Card {
@@ -40,7 +43,7 @@ public class RewriteHistory extends Card {
         // "When the fourth plan counter is put" is an event trigger: removing counters in response does not stop it.
         addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(4, CounterType.PLAN)),
-                SacrificeSelfThenEffect.reflexive(
-                        ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(instantOrSorcery, 2)));
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(instantOrSorcery, 2)))));
     }
 }

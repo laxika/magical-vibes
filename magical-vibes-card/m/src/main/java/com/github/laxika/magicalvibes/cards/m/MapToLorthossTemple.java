@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CompleteChecklistObjectiveEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -29,10 +32,10 @@ public class MapToLorthossTemple extends Card {
     private static final Set<String> OBJECTIVES = Set.of(DIVING_GEAR, MERFOLK, RITUAL);
 
     public MapToLorthossTemple() {
-        CardEffect completion = new SacrificeSelfThenEffect(
-                new CreateTokenCopyOfCardEffect(
+        CardEffect completion = SequenceEffect.of(new SacrificeSelfEffect(),
+                new ConditionalEffect(HappenedThisWay.sacrificed(), new CreateTokenCopyOfCardEffect(
                         new LorthosTheTidemaker(),
-                        new CreateTokenCopyOfTargetPermanentEffect()));
+                        new CreateTokenCopyOfTargetPermanentEffect())));
 
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new CompleteChecklistObjectiveEffect(DIVING_GEAR, OBJECTIVES, completion));

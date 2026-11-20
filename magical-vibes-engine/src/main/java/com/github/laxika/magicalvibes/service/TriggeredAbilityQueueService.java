@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFrom
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -1809,9 +1808,6 @@ public class TriggeredAbilityQueueService {
         if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
             return targetedReturnEffect(sacrificeThen.thenEffect());
         }
-        if (effect instanceof SacrificeSelfThenEffect sacrificeSelfThen) {
-            return targetedReturnEffect(sacrificeSelfThen.thenEffect());
-        }
         if (effect instanceof SequenceEffect sequence) {
             return sequence.steps().stream()
                     .map(this::targetedReturnEffect)
@@ -1838,9 +1834,6 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
             return targetedReturnToHandEffect(sacrificeThen.thenEffect());
-        }
-        if (effect instanceof SacrificeSelfThenEffect sacrificeSelfThen) {
-            return targetedReturnToHandEffect(sacrificeSelfThen.thenEffect());
         }
         if (effect instanceof SequenceEffect sequence) {
             return sequence.steps().stream()

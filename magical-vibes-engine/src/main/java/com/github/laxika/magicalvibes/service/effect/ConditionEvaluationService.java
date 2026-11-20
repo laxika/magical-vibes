@@ -1413,7 +1413,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
-            case HappenedThisWay c -> ctx.resolutionResults().outcome(c.kind()).happened();
+            case HappenedThisWay c -> ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum();
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.
             // "If it has a single target": the spell or ability the event was about, as the ability triggers (CR 603.4),
             // judged from the ability's controller and source.

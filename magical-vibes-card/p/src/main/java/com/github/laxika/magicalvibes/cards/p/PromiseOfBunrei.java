@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +23,8 @@ public class PromiseOfBunrei extends Card {
         // When a creature you control dies, sacrifice this enchantment. If you do, create four
         // 1/1 colorless Spirit creature tokens.
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new SacrificeSelfThenEffect(spiritTokens()));
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), spiritTokens())));
     }
 
     private static CreateTokenEffect spiritTokens() {

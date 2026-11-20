@@ -7,9 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -20,7 +23,8 @@ public class OminousLockbox extends Card {
         addStaticEffect(new ChooseNumberOnEnterEffect(1, 20));
         addTrigger(Triggers.opponentCastsSpell()
                         .withStackEntryFilter(new StackEntryManaValueEqualsSourceChosenNumberPredicate()),
-                new SacrificeSelfThenEffect(new CopyTriggeringSpellEffect()));
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new CopyTriggeringSpellEffect())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

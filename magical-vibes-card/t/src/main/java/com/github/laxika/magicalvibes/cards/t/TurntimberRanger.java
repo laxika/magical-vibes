@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,8 @@ public class TurntimberRanger extends Card {
                         SequenceEffect.of(
                                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
                                         List.of(CardSubtype.WOLF), Set.of(), Set.of()),
-                                new PutCountersOnSourceEffect(1, 1, 1)),
+                                new ConditionalEffect(HappenedThisWay.created(),
+                                        new PutCountersOnSourceEffect(1, 1, 1))),
                         "Create a 2/2 green Wolf creature token?"));
     }
 }

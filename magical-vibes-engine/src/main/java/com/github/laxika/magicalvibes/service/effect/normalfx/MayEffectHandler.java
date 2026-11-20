@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -276,10 +279,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && (sacrificeAttached.subject() instanceof PermanentSubject.Attached
                 || sacrificeAttached.subject() instanceof PermanentSubject.AttachedAtTrigger)
                 && !canSacrificeEnchantedPermanent(gameData, entry, sacrificeAttached, choicePlayerId);
-        if (optionalAction instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect sacrificeThen) {
-            UUID sacrificedId = sacrificeThen.sacrificesTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+        if (optionalAction instanceof SacrificeSelfEffect sacrificeSelf && sacrificeSelfThenIfSacrificed(e.wrapped())) {
+            // "You may sacrifice it. If you do, ...": a permanent the player can't sacrifice isn't offered.
+            UUID sacrificedId = sacrificeSelf.subject() instanceof PermanentSubject.TriggeringOrSource
+                    && entry.getTriggeringPermanentId() != null
                     ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
-            var source = gameQueryService.findPermanentById(gameData, sacrificedId);
+            var source = sacrificedId == null ? null : gameQueryService.findPermanentById(gameData, sacrificedId);
             cannotSacrifice = source == null
                     || !choicePlayerId.equals(gameQueryService.findPermanentController(gameData, source.getId()))
                     || gameQueryService.cantBeSacrificed(gameData, source);
@@ -438,5 +443,19 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         return gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
+    }
+
+    /**
+     * Whether {@code wrapped} is "sacrifice this (or the triggering) permanent. If you do, ...": a sequence of a
+     * {@link SacrificeSelfEffect} of the source, or of the triggering permanent else the source, then a step gated on
+     * the sacrifice having happened.
+     */
+    private static boolean sacrificeSelfThenIfSacrificed(CardEffect wrapped) {
+        return wrapped instanceof SequenceEffect sequence && sequence.steps().size() == 2
+                && sequence.steps().getFirst() instanceof SacrificeSelfEffect sacrifice
+                && (sacrifice.subject() instanceof PermanentSubject.Source
+                || sacrifice.subject() instanceof PermanentSubject.TriggeringOrSource)
+                && sequence.steps().get(1) instanceof ConditionalEffect gate
+                && gate.condition() instanceof HappenedThisWay happened && happened.kind() == StepKind.SACRIFICE;
     }
 }

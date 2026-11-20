@@ -9,10 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -28,9 +29,10 @@ public class TheMistyMountainsCold extends Card {
                 new ConditionalEffect(
                         new ControlsPermanentCount(4,
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
-                        new SacrificeSelfThenEffect(new CreateTokenEffect(
+                        SequenceEffect.of(new SacrificeSelfEffect(),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(), new CreateTokenEffect(
                                 "Dragon", 6, 6, CardColor.RED,
-                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()))));
+                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())))));
         addTrigger(Triggers.chapter(1), treasureThenDragon);
         addTrigger(Triggers.chapter(2), treasureThenDragon);
         addTrigger(Triggers.chapter(3), treasureThenDragon);

@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingEquipmentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "79")
 public class TrickstersTalisman extends Card {
@@ -23,7 +26,9 @@ public class TrickstersTalisman extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
-                        new SacrificeGrantingEquipmentThenEffect(new CreateTokenCopyOfSourceEffect(false, 1)),
+                        SequenceEffect.of(new SacrificeSelfEffect(Subjects.granter()),
+                                new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                        new CreateTokenCopyOfSourceEffect(false, 1))),
                         "You may sacrifice Trickster's Talisman. If you do, create a token that's a copy of this creature.")),
                 Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

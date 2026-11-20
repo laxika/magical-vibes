@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -24,6 +27,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean, Choose
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,6 +76,14 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean, Choose
         if (effect instanceof SequenceEffect sequence) {
             for (CardEffect step : sequence.steps()) {
                 dispatch(gameData, entry, step);
+            }
+            return;
+        }
+        // "Sacrifice it. If you do, ...": the condition reads what the earlier steps of the branch recorded.
+        if (effect instanceof ConditionalEffect conditional) {
+            if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStackEntry(entry))) {
+                dispatch(gameData, entry, conditional.wrapped());
             }
             return;
         }

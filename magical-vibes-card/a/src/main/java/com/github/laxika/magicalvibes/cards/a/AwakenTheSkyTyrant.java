@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -17,8 +20,9 @@ public class AwakenTheSkyTyrant extends Card {
 
     public AwakenTheSkyTyrant() {
         addTrigger(Triggers.youAreDealtDamageBySourceOpponentControls(),
-                new SacrificeSelfThenEffect(new CreateTokenEffect(
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new CreateTokenEffect(
                         "Dragon", 5, 5, CardColor.RED, List.of(CardSubtype.DRAGON),
-                        Set.of(Keyword.FLYING), Set.of())));
+                        Set.of(Keyword.FLYING), Set.of()))));
     }
 }

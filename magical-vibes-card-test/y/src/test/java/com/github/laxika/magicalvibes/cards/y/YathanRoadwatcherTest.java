@@ -96,8 +96,8 @@ class YathanRoadwatcherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A library with fewer than four cards still permits the reflexive return")
-    void returnsCreatureAfterMillingShortLibrary() {
+    @DisplayName("Milling fewer than four cards from a short library doesn't trigger the reflexive return")
+    void shortLibraryDoesNotTriggerTheReturn() {
         HardenedTactician eligible = new HardenedTactician();
         harness.setGraveyard(player1, List.of());
         harness.setLibrary(player1, List.of(eligible, new Forest()));
@@ -106,13 +106,9 @@ class YathanRoadwatcherTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
-                .validCardIds()).containsExactly(eligible.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Hardened Tactician");
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Hardened Tactician");
     }
 
     @Test

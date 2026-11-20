@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -48,6 +47,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -112,7 +115,8 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         QUEUE_REFLEXIVE(QueueReflexiveAbilityEffect::new),
         REMOVE_COUNTER(effect -> new RemoveCounterFromSourceThenEffect(CounterType.PLUS_ONE_PLUS_ONE, effect)),
         EXILE_GRAVEYARD_CARDS(effect -> new ExileNCardsFromGraveyardThenEffect(1, effect)),
-        DRAW_THEN(effect -> new DrawCardsThenEffect(1, effect)),
+        DRAW_THEN(effect -> SequenceEffect.of(new DrawCardEffect(1),
+                new ConditionalEffect(HappenedThisWay.drew(), new QueueReflexiveAbilityEffect(effect)))),
         DISCARD_THEN(effect -> new DiscardCardThenEffect(
                 new CardTypePredicate(CardType.CREATURE), effect, "a creature card")),
         BOUNCE_THEN(effect -> new ReturnPermanentControlledByPlayerToHandThenEffect(

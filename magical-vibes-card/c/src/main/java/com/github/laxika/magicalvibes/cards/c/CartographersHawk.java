@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "18")
 @CardRegistration(set = "C20", collectorNumber = "24")
@@ -22,10 +25,10 @@ public class CartographersHawk extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withEventCondition(
                         new TargetPlayerControlsMoreLandsThanController()),
-                        new ReturnSelfToHandThenEffect(
-                                new MayEffect(
+                        SequenceEffect.of(ReturnToHandEffect.self(),
+                                new ConditionalEffect(HappenedThisWay.returned(), new MayEffect(
                                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS),
                                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                                        "Search your library for a Plains card?")));
+                                        "Search your library for a Plains card?"))));
     }
 }

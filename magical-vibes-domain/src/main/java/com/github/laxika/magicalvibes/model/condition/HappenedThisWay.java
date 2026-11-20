@@ -13,11 +13,46 @@ import java.util.Objects;
  * so does an entry with no such step. A permanent counts wherever it ended up: a creature sacrificed into exile
  * instead of the graveyard was still sacrificed. Use it with a {@code ConditionalEffect} after that step, since it
  * is only meaningful as the entry resolves; "if you don't" is a {@link NotCondition} of it.
+ *
+ * <p>{@code minimum} is how much the step must have done: 1 for "if you do", the written number for "when you draw
+ * four cards this way" ({@link #atLeast}): a step that did less than it was told, a library running out, did not do
+ * the written action (The Royal Scions' ruling: fewer than four cards drawn don't trigger its "when you do").
+ *
+ * @param kind    the kind of step read
+ * @param minimum the least amount the step must have recorded; at least 1
  */
-public record HappenedThisWay(StepKind kind) implements Condition {
+public record HappenedThisWay(StepKind kind, int minimum) implements Condition {
 
     public HappenedThisWay {
         Objects.requireNonNull(kind, "kind");
+        if (minimum < 1) {
+            throw new IllegalArgumentException("A step happened if it did at least 1: " + minimum);
+        }
+    }
+
+    /** "If you do": the most recent {@code kind} step did anything. */
+    public HappenedThisWay(StepKind kind) {
+        this(kind, 1);
+    }
+
+    /** "When you mill four cards this way": the most recent {@code kind} step did at least {@code minimum}. */
+    public static HappenedThisWay atLeast(StepKind kind, int minimum) {
+        return new HappenedThisWay(kind, minimum);
+    }
+
+    /** "If you do" after an exile step: it exiled something. */
+    public static HappenedThisWay exiled() {
+        return new HappenedThisWay(StepKind.EXILE);
+    }
+
+    /** "If you do" after a return-to-hand step: it returned something. */
+    public static HappenedThisWay returned() {
+        return new HappenedThisWay(StepKind.RETURN);
+    }
+
+    /** "If you do" after a token step: it created a token. */
+    public static HappenedThisWay created() {
+        return new HappenedThisWay(StepKind.CREATE_TOKEN);
     }
 
     /** "If you do" after a draw step: it drew a card. */

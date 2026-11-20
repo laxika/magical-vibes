@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -17,6 +16,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
@@ -32,9 +36,10 @@ public class IbHalfheartGoblinTactician extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
-                SacrificeSelfThenEffect.ofTriggeringPermanent(new DealDamageToEachMatchingPermanentEffect(
+                SequenceEffect.of(new SacrificeSelfEffect(Subjects.triggeringOrSource()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DealDamageToEachMatchingPermanentEffect(
                         4, new PermanentBlockingSourcePredicate(), EachPermanentScope.ALL_PLAYERS)
-                        .dealtByTriggeringPermanent()));
+                        .dealtByTriggeringPermanent())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

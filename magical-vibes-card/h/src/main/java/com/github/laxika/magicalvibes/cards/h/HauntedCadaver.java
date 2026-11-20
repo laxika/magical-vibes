@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "154")
 public class HauntedCadaver extends Card {
@@ -14,8 +17,8 @@ public class HauntedCadaver extends Card {
     public HauntedCadaver() {
         addMorph("{1}{B}");
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayEffect(new SacrificeSelfThenEffect(
-                        new DiscardEffect(3, Subjects.triggeringPlayer())),
+                new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DiscardEffect(3, Subjects.triggeringPlayer()))),
                         "You may sacrifice it. If you do, that player discards three cards."));
     }
 }

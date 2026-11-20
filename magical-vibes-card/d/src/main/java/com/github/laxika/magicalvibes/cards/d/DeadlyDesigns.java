@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -19,7 +22,8 @@ public class DeadlyDesigns extends Card {
     public DeadlyDesigns() {
         target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.sourceState(
                         new PermanentHasAtLeastCountersPredicate(CounterType.PLOT, 5)),
-                new SacrificeSelfThenEffect(new DestroyEachTargetPermanentEffect()));
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DestroyEachTargetPermanentEffect())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

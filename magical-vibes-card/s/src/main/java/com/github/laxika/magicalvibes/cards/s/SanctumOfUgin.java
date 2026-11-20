@@ -7,13 +7,16 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -36,7 +39,8 @@ public class SanctumOfUgin extends Card {
         // land. If you do, search your library for a colorless creature card, reveal it, put it into
         // your hand, then shuffle.
         addTrigger(Triggers.youCastSpell().withFilter(colorlessSpellWithManaValueSeven),
-                new MayEffect(new SacrificeSelfThenEffect(new SearchLibraryEffect(
-                        colorlessCreature, LibrarySearchDestination.HAND)), "Sacrifice Sanctum of Ugin?"));
+                new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new SearchLibraryEffect(
+                        colorlessCreature, LibrarySearchDestination.HAND))), "Sacrifice Sanctum of Ugin?"));
     }
 }

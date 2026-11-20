@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -24,10 +27,11 @@ public class FlaxenIntruder extends Card {
         addCastingOption(new AdventureCast("{5}{G}{G}"));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                new SacrificeSelfThenEffect(new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(
+                SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
-                                new PermanentIsEnchantmentPredicate()))))),
+                                new PermanentIsEnchantmentPredicate())))))),
                 "You may sacrifice this creature. When you do, destroy target artifact or enchantment."));
     }
 

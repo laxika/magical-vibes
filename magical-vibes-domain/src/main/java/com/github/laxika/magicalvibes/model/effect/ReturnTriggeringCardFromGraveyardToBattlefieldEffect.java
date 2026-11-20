@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * <p>
  * Pushed as a triggered ability by the death pipeline for delayed "return that card when it dies this
  * turn" effects (e.g. Graceful Reprieve untapped, Supernatural Stamina tapped). Also used directly on a
- * death trigger, e.g. Angelic Renewal's {@code (false, true)} payload of a {@link SacrificeSelfThenEffect}.
+ * death trigger, e.g. Angelic Renewal's {@code (false, true)} "if you do" payload after a {@link SacrificeSelfEffect}.
  */
 public record ReturnTriggeringCardFromGraveyardToBattlefieldEffect(boolean enterTapped,
                                                                    boolean returnUnderController,

@@ -208,7 +208,7 @@ MillControllerAndMayReturnMilledPermanentToHandEffect,blocked-step-model,4f,"fus
 MillControllerThenIfMilledEffect,blocked-step-model,4f,"fused: mill then act on the cards milled this way; step 7/8"
 MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect,blocked-step-model,4f,"fused: mill then act on the cards milled this way; step 7/8"
 MillControllerAndReturnMilledCardsToHandEffect,blocked-step-model,4f,"fused: mill then act on the cards milled this way; step 7/8"
-MillControllerThenEffect,blocked-step-model,4f,"fused mill + reflexive then-effect (already a MillEffect(you()) step plus a queued reflexive ability); step 8"
+MillControllerThenEffect,split,8,"SequenceEffect.of(MillEffect(N, you()), ConditionalEffect(HappenedThisWay.atLeast(MILL, N), QueueReflexiveAbilityEffect(X))) (rulings: triggers only when N were milled); Fell Gravship's ""then"" is a plain step now (was wrongly reflexive)"
 MillControllerAndReturnMilledCardToHandEffect,blocked-step-model,4f,"fused: mill then act on the cards milled this way; step 7/8"
 MillControllerAndMayPlayFromGraveyardThisTurnEffect,blocked-step-model,4f,"fused: mill then act on the cards milled this way; step 7/8"
 MillControllerAndPutMilledCardOntoBattlefieldEffect,blocked-step-model,4f,"fused: mill then act on the cards milled this way; step 7/8"
@@ -347,7 +347,7 @@ ExileSelfEffect,absorbed,5b,"ExileTargetPermanentEffect(source()); ExileSelfEffe
 ExileEnchantedCreatureEffect,absorbed,5b,"ExileTargetPermanentEffect(attached()); resolvesAgainstAttachedPermanent() kept for attached()"
 ExileEquippedCreatureEffect,absorbed,5b,"ExileTargetPermanentEffect(attached()) (Oathkeeper, Takeno's Daisho: resolver reads the departed Equipment's snapshot attachedTo)"
 ExileSelfAtEndStepEffect,blocked-other,5b,"delayed (DelayedPermanentActions) and has the legacy source-to-targetId fallback; no target sibling on the same mechanism (as 5a's DestroySelfAtEndStepEffect)"
-ExileSelfThenEffect,blocked-other,5b,"fused exile + then-effect (step 8); subject sibling of ExileTargetPermanentThenEffect but that one carries ThenEffectRecipient and a leave batch"
+ExileSelfThenEffect,split,8,"SequenceEffect.of(ExileTargetPermanentEffect(source()), ConditionalEffect(HappenedThisWay.exiled(), X)); Mazemind Tome, Regenerations Restored"
 ExileTriggeringCreatureAndTrackWithSourceEffect,unique,5b,"exiles the dying creature's card from a graveyard, not a permanent; not a subject sibling of ExileTargetPermanentAndTrackWithSourceEffect"
 ExileTriggeringCreatureWithHitCounterEffect,unique,5b,"exiles the died creature's card from a graveyard, not a permanent; not a subject sibling of ExileTargetCreatureWithHitCounterEffect"
 ReturnToHandEffect,survivor,5c,"BounceScope became PermanentSubject subject (null only for selfSpell()); orSuspendedCard / ofChosenCreatureType target modes; public (PermanentSubject) ctor, withSubject; new subjects ownedBy, attachmentsOf, granter"
@@ -358,7 +358,7 @@ ReturnSelfToHandAtEndStepEffect,absorbed,5c,"ReturnTargetPermanentToHandAtEndSte
 ReturnCombatOpponentToHandAtEndOfCombatEffect,blocked-other,5c,"schedules a TemporaryGlobalTriggeredAbility with a baked ReturnToHandEffect.target(), not DelayedPermanentActions; fold after the delayed-mechanism unification noted in 5a"
 ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffect,blocked-other,5c,"one delayed trigger returning Aura and host simultaneously (TemporaryGlobalTriggeredAbility); scheduling each through DelayedPermanentActions would split the event"
 ReturnSelectedPermanentToHandAtEndOfCombatEffect,blocked-other,5c,"reads ResolutionResults.pickedIds; needs a step-7 picked() subject"
-ReturnSelfToHandThenEffect,blocked-other,5c,"fused bounce + then-effect (step 8); its target sibling ReturnTargetPermanentToHandThenEffect carries ThenEffectRecipient and two conditions"
+ReturnSelfToHandThenEffect,split,8,"SequenceEffect.of(ReturnToHandEffect.self(), ConditionalEffect(HappenedThisWay.returned(), X)); Cartographer's Hawk, Bob"
 ReturnTargetPermanentToHandThenEffect,blocked-other,5c,"fused bounce + then-effect (step 8)"
 ReturnSelfToHandOnCoinFlipLossEffect,blocked-other,5c,"fused coin flip + self-bounce (step 8)"
 ReturnSourceToHandAtNextCleanupEffect,unique,5c,"delayed to the next cleanup step (Thawing Glaciers); no subject sibling"
@@ -379,8 +379,8 @@ TapCreaturesGainLifePerCreatureEffect,blocked-other,5d,"fused tap any number + g
 TapAnyNumberOfPermanentsThenDrawPerTappedEffect,blocked-other,5d,"fused tap any number + draw per tapped (step 7/8)"
 TapCreaturesBoostSelfEffect,blocked-other,5d,"fused tap any number + boost per tapped (step 7/8)"
 TapPlayersPermanentsAndDamageEqualToCountEffect,blocked-other,5d,"fused tap a set + damage equal to the count (step 7/8)"
-TapSourceThenEffect,blocked-other,5d,"fused tap this + then-effect (step 8)"
-TapTargetThenEffect,blocked-other,5d,"fused tap target + then-effect (step 8)"
+TapSourceThenEffect,blocked-step-model,8,"first half (tap) is not on step 7's earlier-step list and has no StepKind"
+TapTargetThenEffect,blocked-step-model,8,"first half (tap) is not on step 7's earlier-step list and has no StepKind"
 TapAndPreventCombatDamageByTargetAndBlockersEffect,blocked-other,5d,"fused tap + prevention (step 8)"
 TapCombatOpponentsOfTargetAtEndOfCombatEffect,unique,5d,"delayed end-of-combat tap of the target's blockers; needs a combat-opponents subject"
 TapCombatOpponentAtEndOfCombatEffect,unique,5d,"end-of-combat tap of the source's blockers (Joven's Ferrets); needs a combat-opponents subject"
@@ -528,7 +528,7 @@ SacrificeTargetPermanentAtEndStepEffect,blocked-other,5j,"delayed: TemporaryGlob
 SacrificeAtEndOfCombatEffect,blocked-other,5j,"delayed end-of-combat ability with a damage rider"
 SacrificeSelfAtNextCleanupEffect,blocked-other,5j,"delayed cleanup-step sacrifice"
 SacrificeSelfUnlessEscapedEffect,blocked-other,5j,"conditional (not escaped) wrapper around SacrificeSelfEffect: a ConditionalEffect once an escaped condition exists (step 9)"
-SacrificeSelfThenEffect,blocked-other,5j,"fused (step 8)"
+SacrificeSelfThenEffect,split,8,"SequenceEffect.of(SacrificeSelfEffect(), ConditionalEffect(HappenedThisWay.sacrificed(), X)); reflexive = QueueReflexiveAbilityEffect(X); ofTriggeringPermanent = SacrificeSelfEffect(triggeringOrSource()); 62 cards"
 FlickerEffect,survivor,5k,"FlickerScope replaced by a PermanentSubject (target/source/triggering/oneOf/controlledBy/returnedThisResolution/exiledThisResolution/host-with-Auras allOf); per-shape handler paths kept"
 PhaseOutEffect,survivor,5k,"PhaseOutSubject replaced by a PermanentSubject; absorbed PhaseOutPermanentsEffect as controlledBy sets"
 PhaseOutPermanentsEffect,absorbed,5k,"PhaseOutEffect(controlledBy(you()|targetPlayer(), filter)); PhaseOutScope.ALL was dead"
@@ -604,8 +604,8 @@ GoadEquippedCreatureEffect,blocked-other,5m,static goad read through affectedPre
 GoadSourceCreatureEffect,blocked-other,5m,static goad read through affectedPredicate (GrantScope-like): step 6
 TurnTargetCreatureFaceUpEffect,blocked-other,5m,TurnFaceUpCopyService.turnFaceUpWithoutCost path (no isTurnFaceUpPrevented check) differs from GameService path of the other two; unify the path first
 TurnTargetFaceUpEffect,blocked-other,5m,GameService turn-face-up path with its own instant/sorcery check; fold with TurnSourceFaceUpEffect once TurnTargetCreatureFaceUpEffect shares the path
-ShuffleSelfIntoOwnerLibraryEffect,blocked-other,5m,"then-effect rider (fused, step 8), deferred shuffle for this-and-target, owner of a departed source"
-ShuffleTargetPermanentIntoLibraryEffect,blocked-other,5m,"then-effect rider (fused, step 8) and the deferred shuffle when ShuffleSelfIntoOwnerLibraryEffect follows"
+ShuffleSelfIntoOwnerLibraryEffect,blocked-step-model,8,"shuffle-into-library is not an earlier-step primitive and has no StepKind; ThenEffectRecipient stays for it"
+ShuffleTargetPermanentIntoLibraryEffect,blocked-step-model,8,"shuffle-into-library is not an earlier-step primitive and has no StepKind; ThenEffectRecipient stays for it"
 TargetPlayerLosesGameEffect,blocked-other,5m,targetPlayer() with combat-damage-baked targetId plus an engine-bound playerId; folds into ControllerLosesGameEffect with a per-card triggeringPlayer mapping
 GainControlOfTargetEffect,blocked-other,5m,"the record is the payload of the floating control effect (LayerClassifier, FloatingContinuousEffect, CreatureControlService read it): a fold changes the layer readers"
 GainControlOfEnchantedPermanentEffect,blocked-other,5m,"the record is the payload of the floating control effect (LayerClassifier, FloatingContinuousEffect, CreatureControlService read it): a fold changes the layer readers"
@@ -622,3 +622,10 @@ CreateTokenEffect,survivor,7,head primitive; records its CREATE_TOKEN step resul
 DealDamageToAnyTargetEffect,survivor,7,head primitive; begins its DEAL_DAMAGE step result (DamageSupport adds the damage as it is dealt)
 CounterSpellEffect,survivor,7,head primitive; records its COUNTER_SPELL step result (was ResolutionResults.counteredSpell)
 CopyTriggeringSpellEffect,survivor,7,head primitive; records its COPY_SPELL step result (was ResolutionResults.copiedSpell)
+DrawCardsThenEffect,split,8,"DrawCardEffect(N) + ConditionalEffect(HappenedThisWay.atLeast(DRAW, N), QueueReflexiveAbilityEffect(X)); The Royal Scions"
+SacrificeGrantingEquipmentThenEffect,split,8,"SequenceEffect.of(SacrificeSelfEffect(granter()), ConditionalEffect(sacrificed(), X)); Spare Dagger reflexive, Trickster's Talisman ""if you do"" now plain (was wrongly reflexive)"
+SurveilThenEffect,blocked-step-model,8,"surveil is not on step 7's earlier-step list (it already splices SurveilEffect + continuation; add surveil to the list to split)"
+PutCardToBattlefieldThenEffect,blocked-step-model,8,"put-from-hand choice with a bespoke continuation (applyPutCardToBattlefield then-effect)"
+PutTargetPermanentIntoLibraryNFromTopThenEffect,blocked-step-model,8,"put-into-library is not an earlier-step primitive and has no StepKind; ThenEffectRecipient stays for it"
+ShuffleCardsFromHandIntoLibraryThenEffect,blocked-step-model,8,"hand-card choice with a bespoke continuation (PutCardsFromHandOnLibraryCardChoice)"
+CreateTokenThenEffect,unique,8,"""when you do"" triggers once per written quantity of tokens made (CR 603.12a) and aboutThatToken binds each token; a gate step cannot count occurrences"

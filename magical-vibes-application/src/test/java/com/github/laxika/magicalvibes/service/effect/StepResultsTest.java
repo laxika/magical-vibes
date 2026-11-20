@@ -113,6 +113,29 @@ class StepResultsTest extends BaseCardTest {
             assertThat(entry.getResolutionResults().outcome(StepKind.DRAW)).isEqualTo(StepOutcome.NONE);
             assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
         }
+
+        @Test
+        @DisplayName("The Royal Scions: \"draw four cards. When you do\" needs all four drawn (fewer don't count)")
+        void fewerCardsThanWrittenDoNotCount() {
+            harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+            resolve(player1, null, null, new DrawCardEffect(4),
+                    new ConditionalEffect(HappenedThisWay.atLeast(StepKind.DRAW, 4), new GainLifeEffect(5)));
+
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("The Royal Scions: four cards drawn meet \"draw four cards. When you do\"")
+        void theWrittenNumberCounts() {
+            harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+            resolve(player1, null, null, new DrawCardEffect(4),
+                    new ConditionalEffect(HappenedThisWay.atLeast(StepKind.DRAW, 4), new GainLifeEffect(5)));
+
+            assertThat(gd.getLife(player1.getId())).isEqualTo(25);
+        }
     }
 
     @Nested

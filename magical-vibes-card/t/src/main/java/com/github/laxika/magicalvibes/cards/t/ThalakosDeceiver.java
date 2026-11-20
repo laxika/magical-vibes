@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "45")
 public class ThalakosDeceiver extends Card {
@@ -17,7 +20,8 @@ public class ThalakosDeceiver extends Card {
         // control of target creature.
         target(TargetFilters.creature());
         addTrigger(Triggers.attacksUnblocked(),
-                new MayEffect(new SacrificeSelfThenEffect(new GainControlOfTargetEffect(Duration.PERMANENT)),
+                new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new GainControlOfTargetEffect(Duration.PERMANENT))),
                         "You may sacrifice it. If you do, gain control of target creature."));
     }
 }

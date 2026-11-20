@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -1050,7 +1049,6 @@ public class Card {
             case ExilePermanentYouControlAndTrackWithSourceEffect e ->
                     bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case SacrificePermanentThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
-            case SacrificeSelfThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) bindEffectToTargetGroup(e.elseEffect(), targetIndex);

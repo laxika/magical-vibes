@@ -52,6 +52,24 @@ class TrickstersTalismanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"If you do\": the copy is created as the trigger resolves, with no reflexive ability on the stack")
+    void copyIsCreatedDuringTheTriggersResolution() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachTalisman(player1, creature);
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Trickster's Talisman");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Grizzly Bears"));
+    }
+
+    @Test
     @DisplayName("Declining the combat-damage trigger leaves the Talisman attached")
     void decliningTriggerLeavesTalismanAttached() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());

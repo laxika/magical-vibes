@@ -48,7 +48,7 @@ reverts one of them is a regression:
 
 | File | Fix to preserve |
 |---|---|
-| `SacrificeSelfThenEffectHandler` (absorbed the `SacrificeSelfAndDrawCards` / `SacrificeSelfAndTargetPlayerDiscards` / `SacrificeSelfThenDealDamageToTargetPlayer` handlers in Step 2) | Fire `checkAllyPermanentSacrificedTriggers`, call `removeOrphanedAuras`, and gate the payload on the removal succeeding ("If you do"). **Never** re-express this as `SequenceEffect.of(SacrificeSelfEffect(), payload)` — a sequence splices its steps unconditionally |
+| "Sacrifice it. If you do" (was `SacrificeSelfThenEffectHandler`, which absorbed the `SacrificeSelfAndDrawCards` / `SacrificeSelfAndTargetPlayerDiscards` / `SacrificeSelfThenDealDamageToTargetPlayer` handlers in Step 2; split in effect-cleanup step 8 into `SequenceEffect.of(new SacrificeSelfEffect(), new ConditionalEffect(HappenedThisWay.sacrificed(), payload))`) | The sacrifice departs through `DepartureService` (ally-sacrifice triggers, orphaned Auras) and the payload is gated on the removal succeeding ("If you do"). **Never** write `SequenceEffect.of(SacrificeSelfEffect(), payload)` without the `ConditionalEffect` gate — a sequence splices its steps unconditionally |
 | `AttachSourceEquipmentToTargetCreatureEffectHandler` (absorbed `AttachTargetEquipmentToTargetCreatureEffectHandler` and the other target/triggering Equipment shapes) | Success path logs an attach message, not a fizzle message |
 | `CopySpellForEachOtherSubtypePermanentEffectHandler` | Has the `isCantBeCopied()` guard (CR 707.10) |
 | `DealDamageEqualToChosenTypeCountEffectHandler` (absorbed the `DealDamageToAnyTargetEqualToChosenTypeCount` / `DealDamageToTargetCreatureEqualToChosenTypeCount` handlers) | Applies `applyDamageMultiplier` |
@@ -484,7 +484,7 @@ view, no serialization. Turn-engine consumers were untouched.
   returned `DAMAGED_PLAYER` unconditionally, including for its targeted form, which is never
   an effect of a `Triggers.dealsCombatDamageToPlayer()` ability. The merged record implements the interface for *every*
   kind, so this was checked against all four readers — `CombatDamageService:1219`,
-  `TriggerCollectionService:801`, `SequenceEffect:77`, `SacrificeSelfThenEffect:38` — and every one
+  `TriggerCollectionService:801`, `SequenceEffect:77`, `SacrificeSelfThenEffect:38` (deleted since, effect-cleanup step 8) — and every one
   calls the method rather than using `instanceof` as a bare marker, with `null` documented as "no
   special context". Yosei's `SequenceEffect` therefore still reports the same context it did when
   its untap step was a non-implementing record.

@@ -12,7 +12,14 @@ import java.util.Objects;
  * "if equipped creature didn't deal combat damage", Thirsting Axe), {@link Subjects#attachedAtTrigger()} ("that player
  * sacrifices that creature" after "at the beginning of the upkeep of enchanted creature's controller": the creature
  * the Aura enchanted as the ability triggered) or {@link Subjects#target()} / {@code target(group)}
- * ("target creature you control deals damage ... Then sacrifice it"; the only subject that declares a target).
+ * ("target creature you control deals damage ... Then sacrifice it"; the only subject that declares a target),
+ * {@link Subjects#triggeringOrSource()} ("sacrifice it" after "whenever this creature or equipped creature deals
+ * combat damage", Ogre-Head Helm) or {@link Subjects#granter()} ("sacrifice Spare Dagger" in an ability the Equipment
+ * grants).
+ *
+ * <p>"Sacrifice it. If you do, ..." is this effect followed by a {@code ConditionalEffect} of
+ * {@code HappenedThisWay.sacrificed()} (in a {@link SequenceEffect} where the steps must stay one effect); "when you
+ * do" wraps the payload in a {@link QueueReflexiveAbilityEffect}.
  *
  * <p>{@code sacrificer} is the player told to sacrifice it: {@link Subjects#you()} by default,
  * {@code controllerOf(subject)} for "that creature's controller sacrifices it" (Basalt Golem), or the player a step
@@ -39,9 +46,10 @@ public record SacrificeSelfEffect(PermanentSubject subject,
         Objects.requireNonNull(sacrificer, "sacrificer");
         if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering
                 || subject instanceof PermanentSubject.Attached || subject instanceof PermanentSubject.AttachedAtTrigger
-                || subject instanceof PermanentSubject.Target)) {
-            throw new IllegalArgumentException("Sacrifices the source, the triggering, the attached (now or at "
-                    + "trigger) or the target permanent: " + subject);
+                || subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.TriggeringOrSource
+                || subject instanceof PermanentSubject.Granter)) {
+            throw new IllegalArgumentException("Sacrifices the source, the triggering (or else the source), the "
+                    + "attached (now or at trigger), the granting or the target permanent: " + subject);
         }
         if (targetFilter != null && !(subject instanceof PermanentSubject.Target)) {
             throw new IllegalArgumentException("A target filter needs a target subject: " + subject);
@@ -118,6 +126,7 @@ public record SacrificeSelfEffect(PermanentSubject subject,
         }
         // The source form implicitly acts on its own source permanent — so trigger collectors that key off
         // selfTargeting() (e.g. the spell-cast collector) carry the source id onto the stack entry.
-        return sacrificesSource() ? new TargetSpec(null, false, null, true, 1) : TargetSpec.NONE;
+        return sacrificesSource() || subject instanceof PermanentSubject.TriggeringOrSource
+                ? new TargetSpec(null, false, null, true, 1) : TargetSpec.NONE;
     }
 }

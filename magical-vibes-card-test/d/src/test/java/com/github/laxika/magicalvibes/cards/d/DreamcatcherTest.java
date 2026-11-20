@@ -195,7 +195,7 @@ class DreamcatcherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting after another player gained control of Dreamcatcher sacrifices nothing and draws nothing")
+    @DisplayName("After another player gained control of Dreamcatcher, no sacrifice is offered and nothing is drawn")
     void noSacrificeMeansNoDraw() {
         Permanent dreamcatcher = addDreamcatcher();
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
@@ -206,8 +206,9 @@ class DreamcatcherTest extends BaseCardTest {
             gd.playerBattlefields.get(player2.getId()).add(dreamcatcher);
         });
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(dreamcatcher);
         harness.assertNotInHand(player1, "Araba Mothrider");

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerThenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -23,6 +22,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
 
 @CardRegistration(set = "TMT", collectorNumber = "154")
 public class TheLastRonin extends Card {
@@ -31,12 +35,13 @@ public class TheLastRonin extends Card {
         addTrigger(Triggers.chapter(1),
                 new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
 
-        addTrigger(Triggers.chapter(2), new MillControllerThenEffect(4,
-                ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.HAND)
-                        .filter(new CardTypePredicate(CardType.CREATURE))
-                        .targetGraveyard(true)
-                        .build()));
+        addTrigger(Triggers.chapter(2), SequenceEffect.of(new MillEffect(4, Subjects.you()),
+                new ConditionalEffect(HappenedThisWay.atLeast(StepKind.MILL, 4),
+                        new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
+                                .build()))));
 
         addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(

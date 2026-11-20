@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 
 /**
  * Search the City — {4}{U} enchantment.
@@ -38,7 +39,8 @@ public class SearchTheCity extends Card {
                         "Put a card with that name exiled with Search the City into its owner's hand?"),
                 new ConditionalEffect(new NoCardsExiledWithSource(),
                         new ConditionalEffect(new SourceIsOnBattlefield(),
-                                SequenceEffect.of(new SacrificeSelfEffect(), new ControllerExtraTurnEffect(1))))};
+                                SequenceEffect.of(new SacrificeSelfEffect(), new ConditionalEffect(
+                                        HappenedThisWay.sacrificed(), new ControllerExtraTurnEffect(1)))))};
         addTrigger(Triggers.youCastSpell().withFilter(new CardSharesNameWithCardExiledWithSourcePredicate()),
                 playedCardWithExiledName);
         addTrigger(Triggers.youPlayLand().withFilter(new CardSharesNameWithCardExiledWithSourcePredicate()),

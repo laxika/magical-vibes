@@ -181,9 +181,27 @@ class NecriteTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertOnBattlefield(player2, "Necrite");
+        harness.assertOnBattlefield(player2, "Scathe Zombies");
+    }
+
+    @Test
+    @DisplayName("\"If you do\": a Necrite that left the battlefield in response can't be sacrificed, so nothing is destroyed")
+    void noDestroyWhenNecriteLeavesBeforeResolution() {
+        Permanent victim = addDefenderCreature();
+        Permanent attacker = addAttacker();
+
+        declareNoBlocks();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
         harness.assertOnBattlefield(player2, "Scathe Zombies");
     }
 

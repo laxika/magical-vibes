@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
 
@@ -24,9 +26,10 @@ public class KnowledgeVault extends Card {
                 "{2}, {T}: Exile the top card of your library face down."));
 
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new SacrificeSelfThenEffect(SequenceEffect.of(
+                List.of(SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), SequenceEffect.of(
                         new DiscardHandEffect(),
-                        new PutAllCardsExiledWithSourceIntoOwnersHandsEffect()))),
+                        new PutAllCardsExiledWithSourceIntoOwnersHandsEffect())))),
                 "Sacrifice this artifact. If you do, discard your hand, then put all cards exiled with this artifact into their owner's hand."));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),

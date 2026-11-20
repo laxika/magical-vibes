@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -18,6 +17,10 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -28,8 +31,8 @@ public class BloodSpeaker extends Card {
         // At the beginning of your upkeep, you may sacrifice this creature. If you do, search your
         // library for a Demon card, reveal that card, put it into your hand, then shuffle.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(new SacrificeSelfThenEffect(
-                        new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DEMON))),
+                new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DEMON)))),
                         "Sacrifice Blood Speaker to search your library for a Demon card?"));
 
         // Whenever a Demon you control enters, return this card from your graveyard to your hand.

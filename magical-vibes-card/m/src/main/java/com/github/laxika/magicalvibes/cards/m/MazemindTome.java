@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 
@@ -36,6 +40,7 @@ public class MazemindTome extends Card {
 
         addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) ->
                         sourcePermanent.getCounterCount(CounterType.PAGE) >= 4),
-                new ExileSelfThenEffect(new GainLifeEffect(4)));
+                SequenceEffect.of(new ExileTargetPermanentEffect(Subjects.source()),
+                        new ConditionalEffect(HappenedThisWay.exiled(), new GainLifeEffect(4))));
     }
 }

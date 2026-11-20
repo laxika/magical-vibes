@@ -173,6 +173,27 @@ class SearchTheCityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"If you do\": losing control of it in response means it isn't sacrificed and no extra turn is taken")
+    void notSacrificedMeansNoExtraTurn() {
+        UUID permId = resolveEtb(List.of(new Forest()));
+        var source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getId().equals(permId)).findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(source);
+            gd.playerBattlefields.get(player2.getId()).add(source);
+        });
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(source);
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
     @DisplayName("After control changes, a matching card returns to its owner")
     void newControllerReturnsCardToOriginalOwner() {
         UUID permId = resolveEtb(List.of(new Forest()));

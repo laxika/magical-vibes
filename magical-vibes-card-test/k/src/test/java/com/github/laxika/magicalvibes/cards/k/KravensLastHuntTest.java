@@ -86,12 +86,12 @@ class KravensLastHuntTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter I includes newly milled creatures and mills a short library")
+    @DisplayName("Chapter I includes newly milled creatures")
     void chapterIUsesNewlyMilledCreature() {
         HillGiant milledCreature = new HillGiant();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new Forest(), milledCreature));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), milledCreature));
         addSaga(0);
 
         triggerChapter();
@@ -112,7 +112,7 @@ class KravensLastHuntTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setGraveyard(player1, List.of());
         harness.setGraveyard(player2, List.of(new HillGiant()));
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         addSaga(0);
 
         triggerChapter();
@@ -129,7 +129,7 @@ class KravensLastHuntTest extends BaseCardTest {
     void chapterIChecksGraveyardAtDamageResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setGraveyard(player1, List.of(new HillGiant()));
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         addSaga(0);
 
         triggerChapter();
@@ -165,6 +165,23 @@ class KravensLastHuntTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, saga.getCard()).doesNotContain(creature);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
+    @Test
+    @DisplayName("Chapter I milling fewer than five cards from a short library doesn't trigger the damage")
+    void chapterIShortLibraryDoesNotTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addSaga(0);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
     }
 
     @Test

@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open |
+| 8 | Split the fused effects (repeatable) | open (step 8: run 1 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -516,6 +516,10 @@ Rules to hold on to:
 
 A run stops at about 15 split classes. Record the verdict counts and the blocked classes' common
 cause under Findings.
+
+| Run | Takes | Status |
+|---|---|---|
+| 1 | the `thenEffect` wrappers of one named permanent (sacrifice / exile / return this, the granting Equipment), mill and draw "then", the library-move and tap wrappers | done (6 split, 8 blocked-step-model, 1 unique; mill "when you do" gated, Necrite and Search the City gated; the Destroy / Exile / Return target wrappers and `DiscardCardThenEffect` need rider subjects first) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3309,6 +3313,95 @@ Application, AI, engine testFixtures and card-test `b`, `d`, `f`, `s` test sourc
   gate; step 8 should gate it with `HappenedThisWay(CREATE_TOKEN)`.
 - The in-resolution `eventValue` writers (`rememberAmount`, `recordDamageDealt`, `recordTargetLifeLost`,
   `recordSacrificedCount`) now have a typed twin; steps 8–9 move their cards to `AmountThisWay` and drop the flags.
+
+### Step 8, run 1 (2026-11-20)
+
+The wrappers with a `thenEffect`, smallest and self-subject first. Verdicts (ledger, step `8`): **split 6**, **blocked-step-model
+8**, **unique 1**, blocked-player-loop 0.
+
+- **Split** (records and handlers deleted; ratchet 4,858 / 4,091 → 4,852 / 4,085):
+  `SacrificeSelfThenEffect` (62 cards, script) → `SequenceEffect.of(new SacrificeSelfEffect(), new ConditionalEffect(HappenedThisWay.sacrificed(), X))`,
+  `.reflexive(X)` → `X` in a `QueueReflexiveAbilityEffect`, `.ofTriggeringPermanent` → `SacrificeSelfEffect(Subjects.triggeringOrSource())`;
+  `SacrificeGrantingEquipmentThenEffect` (2) → `SacrificeSelfEffect(Subjects.granter())` + gate;
+  `ExileSelfThenEffect` (2) → `ExileTargetPermanentEffect(source())` + `HappenedThisWay.exiled()`;
+  `ReturnSelfToHandThenEffect` (2) → `ReturnToHandEffect.self()` + `HappenedThisWay.returned()`;
+  `MillControllerThenEffect` (4) → `SequenceEffect.of(MillEffect(N, you()), ConditionalEffect(HappenedThisWay.atLeast(MILL, N), QueueReflexiveAbilityEffect(X)))`
+  for "mill N. When you do", a plain `SequenceEffect.of(MillEffect, X)` for Fell Gravship's "then";
+  `DrawCardsThenEffect` (1) → `DrawCardEffect(4)` + `ConditionalEffect(HappenedThisWay.atLeast(DRAW, 4), QueueReflexiveAbilityEffect(X))`.
+  Every first half is on step 7's earlier-step list. Target specs: the sequence's first declared target is the payload's,
+  as the wrapper's was; a sequence with none keeps `SacrificeSelfEffect`'s self-targeting spec (`SacrificeSelfEffect` now
+  gives `triggeringOrSource()` that spec too, as the wrapper had). `targetsChosenByReflexiveAbility` comes through
+  `ConditionalEffect`. No AI class named the split records.
+- **Survivor changes.** `HappenedThisWay` gained `minimum` (default 1; `atLeast(kind, n)`) and `exiled()` / `returned()` /
+  `created()`. `SacrificeSelfEffect` accepts `triggeringOrSource()` and `granter()`. `MayEffectHandler` keeps the wrapper's
+  "a permanent you can't sacrifice isn't offered" check, now for `MayEffect(SequenceEffect.of(SacrificeSelfEffect(source() |
+  triggeringOrSource()), ConditionalEffect(HappenedThisWay(SACRIFICE), …)))`; Dreamcatcher has that shape, so it is no
+  longer asked after losing control of it (same outcome; `DreamcatcherTest.noSacrificeMeansNoDraw` updated). Necrite's
+  ungated `SequenceEffect.of(SacrificeSelfEffect(), Destroy...)` is not that shape and is still asked.
+  `FlipCoinWinEffectHandler`'s synchronous branch dispatch judges a `ConditionalEffect` (Negative Zone Portal, Sorcerer's
+  Strongbox-style branches); `FlipCoinWinEffectHandlerTest.conditionalStepOfBranchIsGated`. `ExileDyingCreatureCardAndCreateTokenEffectHandler.bindReturn`
+  descends into `ConditionalEffect`. `SacrificeSelfThenDealDamageToEnteringCreatureEffectHandler` (Flame-Kin War Scout) dispatches
+  `SacrificeSelfEffect` and reads its SACRIFICE outcome. `Card.bindEffectToTargetGroup` and `TriggeredAbilityQueueService`
+  lost their wrapper cases (sequence and conditional cases cover them).
+- **Behaviour changes (Oracle text).** Fell Gravship (EOE 101) "mill three cards, then return …": the return was a reflexive
+  ability; it is now part of the trigger's resolution (`FellGravshipTest.millingAndReturningOccurDuringTheSameTriggerResolution`
+  fails on the old code). Trickster's Talisman (AFR 79) "If you do, create a token": `SacrificeGrantingEquipmentThenEffect`
+  made every payload reflexive; the copy is now made as the trigger resolves (`TrickstersTalismanTest.copyIsCreatedDuringTheTriggersResolution`).
+  Turntimber Ranger's counter is gated on `HappenedThisWay.created()`; no game state makes a token creation fail today,
+  so no test can fail on the old card (the accept test covers the gated path). The survivor's log wins: Impaler Shrike's
+  "fizzles — source no longer on the battlefield" line is gone (`ImpalerShrikeTest` now asserts no sacrifice and no draw).
+- **"Mill N. When you do"** (Yathan Roadwatcher TDM 236, The Last Ronin TMT 154, Kraven's Last Hunt SPM 105): gated with
+  `HappenedThisWay.atLeast(StepKind.MILL, N)`. The Yathan and Last Ronin rulings say the reflexive ability "triggers when you
+  mill four cards this way" (Kraven has no rulings and the same wording), and The Royal Scions' ruling says fewer cards than
+  written don't trigger; so a library shorter than N no longer triggers it (the old wrapper queued it always). The tests
+  that asserted a short-library trigger were changed to full libraries, and each card has a short-library test that
+  nothing triggers (`YathanRoadwatcherTest.shortLibraryDoesNotTriggerTheReturn`,
+  `TheLastRoninTest.chapterIIShortLibraryDoesNotTrigger`, `KravensLastHuntTest.chapterIShortLibraryDoesNotTrigger`). No other
+  card has "mill N. When you do".
+- **Ungated sacrifices.** The 20 cards that start a sequence with a bare `SacrificeSelfEffect`, by Oracle text: "if you do"
+  on Necrite (5ED 181) and Search the City (RTR 49, whose ruling says a Search the City that wasn't sacrificed gives no extra
+  turn): both gated with `HappenedThisWay.sacrificed()` (`NecriteTest.noDestroyWhenNecriteLeavesBeforeResolution`,
+  `SearchTheCityTest.notSacrificedMeansNoExtraTurn`, both failing on the old cards; Necrite's stolen-source test no longer
+  answers a prompt, as the can't-sacrifice check now applies to it). The other 18 read "sacrifice X and Y", "sacrifice X,
+  [then] Y" or "sacrifice X. Y" (Timothar's Bat, The Heron Moon, Tellah, Sothera, Sorcerer's Strongbox, Second Chance,
+  Robot Domination, Political Triumph, Planar Collapse, Monkey Cage, Mogg Bombers, Measure of Wickedness, Impending
+  Disaster, Hellish Rebuke, Defense of the Heart, Dawn of a New Age, Daredevil Dragster, Brink of Madness): left ungated,
+  as the Mogg Bombers and Second Chance rulings require (the second part happens even if the sacrifice didn't;
+  `SecondChanceTest.extraTurnEvenIfNotSacrificed`).
+- **Blocked-step-model** (first half not on step 7's list, or a bespoke continuation): `TapSourceThenEffect`,
+  `TapTargetThenEffect` (tap has no `StepKind`), `SurveilThenEffect` (already splices `SurveilEffect` + continuation; adding
+  surveil to the list would split it), `PutCardToBattlefieldThenEffect`, `ShuffleCardsFromHandIntoLibraryThenEffect`
+  (choice continuations), `ShuffleTargetPermanentIntoLibraryEffect`, `ShuffleSelfIntoOwnerLibraryEffect`,
+  `PutTargetPermanentIntoLibraryNFromTopThenEffect` (library moves have no `StepKind`). Common cause: no recorded step result
+  for tap / surveil / shuffle-into-library, or a prompt with a bespoke continuation.
+- **Unique**: `CreateTokenThenEffect`: its "when you do" triggers once per written quantity of tokens made (CR 603.12a, checked
+  2026-11-20) and `aboutThatToken` binds each token; a gate step can't count occurrences.
+- **`ThenEffectRecipient` stays**: its readers are `DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`,
+  `ReturnTargetPermanentToHandThenEffect`, `DestroyCombatOpponentAtEndOfCombatEffectHandler` and the three blocked library
+  records.
+
+**Tests**: card tests of every rewritten card plus the cards of `SacrificeSelfThenDealDamageToEnteringCreatureEffect`,
+`ExileDyingCreatureCardAndCreateTokenEffect`, `FlipCoinWinEffect` and every `MayEffect(SequenceEffect.of(new SacrificeSelfEffect(), …))`:
+120 classes, 1,180 test cases, all pass; after the follow-up (mill gates, Necrite, Search the City, Second Chance) those
+six classes again: 56 test cases, all pass. Application: `StepResultsTest` (+2, `atLeast`), `ReflexiveRouteRecordTest` (`DRAW_THEN`
+rebuilt from the steps), `FlipCoinWinEffectHandlerTest` (+1), `MayEffectHandlerTest`, `EffectResolutionServiceTest`,
+`SubjectResolutionServiceTest`, `EffectCountRatchetTest` and the 9 other application tests naming `SacrificeSelfEffect`,
+`HappenedThisWay` or `FlipCoinWinEffect`: 534 test cases, all pass. Application, AI, engine testFixtures and the touched
+card-test modules compile.
+
+**For later runs.**
+
+- Not audited here, and what each needs first: `DestroyTargetPermanentThenEffect` (89 cards), `ExileTargetPermanentThenEffect`
+  (25), `ReturnTargetPermanentToHandThenEffect` (12): their riders for "its controller" (`TARGET_CONTROLLER*`) include verbs
+  with no `PlayerSubject` (`CreateTokenEffect`, `SearchLibraryEffect` with its `MayEffect` binding, `SeekEffect`,
+  `SurveilEffect`, `ManifestDreadEffect`, `CreateTokenCopyOfCardEffect`, `TargetPlayerExilesFromHandEffect`, `ProliferateEffect`),
+  their `EventStat` snapshot needs last-known amounts of the removed target (toughness, power, mana value, counters; the
+  replaced-destruction case reads the survivor), `thenCondition` needs a last-known "it was a …" condition, Destroy's
+  `ResolveRiderForPlayerEffect` rider steps and requires-death check need a replacement, Exile's leave batch makes both
+  leave together (CR 603.10a), and `TargetPolarityClassifier` names all three (HARMFUL_REMOVAL; `ReturnToHandEffect` is
+  benign). Give those verbs a player subject first (a step-4-style run), then split per card. `DiscardCardThenEffect` (70):
+  `DiscardEffect` needs a card filter and a "the discarded card was a …" condition (and the alternate-type branch) first.
+- `HappenedThisWay.atLeast` is the gate for any "when you [do N things] this way" (The Royal Scions, the three mill cards).
 
 ## Prompt
 

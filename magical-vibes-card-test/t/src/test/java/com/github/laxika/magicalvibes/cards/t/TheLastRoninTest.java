@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -98,7 +99,8 @@ class TheLastRoninTest extends BaseCardTest {
     void chapterIICanReturnACreatureAlreadyInTheGraveyard() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
-        harness.setLibrary(player1, List.of(new TheLastRonin(), new TheLastRonin()));
+        harness.setLibrary(player1, List.of(new TheLastRonin(), new TheLastRonin(), new TheLastRonin(),
+                new TheLastRonin()));
         addSaga(1);
 
         advanceToNextChapter();
@@ -108,7 +110,25 @@ class TheLastRoninTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Chapter II milling fewer than four cards from a short library doesn't trigger the return")
+    void chapterIIShortLibraryDoesNotTrigger() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(new TheLastRonin(), new TheLastRonin()));
+        harness.setHand(player1, List.of());
+        addSaga(1);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
     }
 
     @Test
