@@ -41,8 +41,9 @@ public class SoulSeparator extends Card {
                                 new CreateTokenCopyOfTargetPermanentEffect(List.of(CardSubtype.SPIRIT), Set.of(), 1, 1,
                                         Map.of(), false, false, false, false, false, false, null,
                                         Set.of(Keyword.FLYING))),
-                        new CreateTokenEffect("Zombie", AmountThisWay.exiledPower(), AmountThisWay.exiledToughness(),
-                                CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of())),
+                        new CreateTokenEffect("Zombie", AmountThisWay.exiledPower().keepingNegative(),
+                                AmountThisWay.exiledToughness().keepingNegative(), CardColor.BLACK,
+                                List.of(CardSubtype.ZOMBIE), Set.of(), Set.of())),
                 "{5}, {T}, Sacrifice Soul Separator: Exile target creature card from your graveyard. "
                         + "Create a token that's a copy of that card, except it's 1/1, it's a Spirit in addition to "
                         + "its other types, and it has flying. Create a black Zombie creature token with power equal "

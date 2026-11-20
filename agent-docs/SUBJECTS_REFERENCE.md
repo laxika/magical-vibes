@@ -91,8 +91,8 @@ its zone and the player whose zone it is). No variant is static.
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)`, `ReturnCardFromGraveyardEffect.builder().returnAll(true).cards(...)`,
 `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost": a card in exile whoever owns
-it, Transcendent Dragon; a graveyard card only from your own graveyard), `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(cards)` ("you may
-cast that card without paying its mana cost for as long as it remains exiled"),
+it, Transcendent Dragon; a graveyard card only from your own graveyard), `AllowPlayCardsFromExileEffect` ("you may
+play that card this turn / until the end of your next turn / for as long as it remains exiled"),
 `CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy"), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
 from your graveyard") and, in a filter, `CardSharesCardTypeWithCardsPredicate(cards)` ("a card that doesn't share a card type with the
 discarded card"; bound by `SubjectResolutionService.bindCardSubjects`).

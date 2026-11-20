@@ -1143,11 +1143,6 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /** The controller chose other nontoken creatures to exile until the source leaves. */
-    record ExileOwnNontokenCreaturesUntilSourceLeaves(UUID sourcePermanentId)
-            implements MultiPermanentChoiceContext {
-    }
-
     /** Each player chooses the required number of matching permanents they control to exile until the source leaves. */
     record EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves(
             List<UUID> remainingPlayerIds, List<UUID> chosenIds, PermanentPredicate filter,

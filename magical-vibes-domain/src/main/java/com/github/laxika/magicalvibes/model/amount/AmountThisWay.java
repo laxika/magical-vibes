@@ -18,9 +18,13 @@ import java.util.Objects;
  * step sacrificed, as each last existed on the battlefield (CR 608.2h, its {@code DepartureResult}), each counted as at
  * least 0; a permanent that wasn't a creature has no power or toughness and counts 0. Only a sacrifice step records
  * those for every way it sacrifices, so a stat is read from one, or from an {@link StepKind#EXILE} step: "the
- * exiled card's toughness", "that card's mana value" is the total over what it exiled, a card exiled from a
- * graveyard, a library or a hand as it is now (a card keeps its characteristics in exile, CR 608.2h), an exiled
- * permanent as it last existed on the battlefield.
+ * exiled card's toughness", "that card's mana value" is the total over what it exiled, each as it last existed in the
+ * zone it left (CR 608.2h): a card exiled from a graveyard as the step recorded it there (a power that counts the
+ * graveyards changes as the card leaves; a reflexive "when you do" ability reads it as it is in exile, where that
+ * ability expects it), an exiled permanent as it last existed on the battlefield, a card exiled from
+ * a library or a hand as it is now in exile. A stat's total is at least 0 (CR 107.1b), unless {@code negativeKept}
+ * ({@link #keepingNegative()}): an effect that sets a creature's power or toughness to it uses a negative value as it
+ * is ("create a token whose power is equal to that card's power", Ritual of the Returned, Soul Separator).
  *
  * <p>{@link Stat#DIED}, {@code filter} and {@code yours} count only some of what a removal step that records its
  * departures removed (a sacrifice step, or the destroy step of {@code DestroyAllPermanentsEffect} or
@@ -44,9 +48,11 @@ import java.util.Objects;
  * @param filter             only the removed permanents that match it count; {@code null} for all of them
  * @param yours              only the removed permanents the amount's controller controlled count
  * @param includesUnremoved  every permanent the destroy step applied to counts, not only those it destroyed
+ * @param negativeKept       a negative power or toughness total is the amount, for an effect that sets a power or
+ *                           toughness to it
  */
 public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
-                            boolean includesUnremoved)
+                            boolean includesUnremoved, boolean negativeKept)
         implements DynamicAmount {
 
     /** What {@link AmountThisWay} reads from the step. */
@@ -80,6 +86,15 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
             throw new IllegalArgumentException(
                     "Only a destroy step's count or stat covers what it didn't destroy: " + kind + " " + stat);
         }
+        if (negativeKept && stat != Stat.POWER && stat != Stat.TOUGHNESS) {
+            throw new IllegalArgumentException("Only a power or toughness can be negative: " + stat);
+        }
+    }
+
+    /** The amount over the removed permanents that count, a negative total read as 0. */
+    public AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
+                         boolean includesUnremoved) {
+        this(kind, stat, filter, yours, includesUnremoved, false);
     }
 
     /** The amount over only the removed permanents matching {@code filter}, or those the amount's controller controlled. */
@@ -104,7 +119,8 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
 
     /** "For each nontoken creature destroyed this way": this amount over only the removed permanents matching it. */
     public AmountThisWay matching(PermanentPredicate filter) {
-        return new AmountThisWay(kind, stat, Objects.requireNonNull(filter, "filter"), yours, includesUnremoved);
+        return new AmountThisWay(kind, stat, Objects.requireNonNull(filter, "filter"), yours, includesUnremoved,
+                negativeKept);
     }
 
     /**
@@ -112,7 +128,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
      * permanents the amount's controller controlled.
      */
     public AmountThisWay controlledByYou() {
-        return new AmountThisWay(kind, stat, filter, true, includesUnremoved);
+        return new AmountThisWay(kind, stat, filter, true, includesUnremoved, negativeKept);
     }
 
     /**
@@ -120,7 +136,15 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
      * applied to, those it didn't destroy included.
      */
     public AmountThisWay includingUnremoved() {
-        return new AmountThisWay(kind, stat, filter, yours, true);
+        return new AmountThisWay(kind, stat, filter, yours, true, negativeKept);
+    }
+
+    /**
+     * "Create a token whose power is equal to that card's power": this power or toughness total as it is, a negative
+     * one included, for an effect that sets a creature's power or toughness to it (CR 107.1b).
+     */
+    public AmountThisWay keepingNegative() {
+        return new AmountThisWay(kind, stat, filter, yours, includesUnremoved, true);
     }
 
     /** "The total mana value of permanents destroyed this way": the last-known mana value of what a destroy step destroyed. */

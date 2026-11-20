@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -60,10 +61,12 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
                 && !entry.getControllerId().equals(ownerId)) {
             return;
         }
+        List<LastKnownCardStats> known = gameQueryService.asInGraveyard(gameData, List.of(sourceCard));
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
         if (ownerId != null) {
             exileService.exileCard(gameData, ownerId, sourceCard);
-            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(cardId), List.of(ownerId)));
+            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(cardId), List.of(ownerId))
+                    .withLastKnownCards(known));
         }
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is exiled."));

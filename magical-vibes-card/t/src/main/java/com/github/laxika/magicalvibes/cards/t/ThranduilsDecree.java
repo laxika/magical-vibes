@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsWithoutPayingManaCostWhileExiledEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
@@ -31,7 +31,7 @@ public class ThranduilsDecree extends Card {
                 new CounterSpellEffect(),
                 SequenceEffect.of(
                         new CounterSpellEffect(CounteredSpellDestination.EXILE),
-                        new AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(
-                                Subjects.cardsThisWay(StepKind.COUNTER_SPELL)))));
+                        AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.COUNTER_SPELL))
+                                .withoutPayingManaCost())));
     }
 }

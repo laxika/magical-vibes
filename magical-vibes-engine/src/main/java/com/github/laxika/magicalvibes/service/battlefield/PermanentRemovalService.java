@@ -61,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
@@ -3418,13 +3417,8 @@ public class PermanentRemovalService {
             }
             pendingReturns = null;
         }
-        boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getOwnEntryEffects()
-                .stream()
-                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
-                .anyMatch(effect -> effect instanceof ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect same
-                        && same.returnsOnSourceLeavesTrigger());
         // A leaves-the-battlefield ability triggers even when the enter-the-battlefield exile never happened
-        // (CR 603.6c); Fiend Hunter's return ability is such an ability.
+        // (CR 603.6c); Fiend Hunter's and Detention Sphere's return abilities are such abilities.
         boolean hasLeavesTriggerExile = removedPermanent.getCard().getOwnEntryEffects()
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
@@ -3444,7 +3438,7 @@ public class PermanentRemovalService {
                 .stream()
                 .anyMatch(effect -> effect instanceof ExileAllPermanentsUntilSourceLeavesEffect exileAll
                         && exileAll.returnsOnSourceLeavesTrigger());
-        if (pendingReturns == null && !returnsOnSourceLeavesTrigger && !hasLeavesTriggerExile
+        if (pendingReturns == null && !hasLeavesTriggerExile
                 && !hasLeavesTriggerHandExile && !hasLeavesTriggerExileAll) {
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
@@ -3481,7 +3475,6 @@ public class PermanentRemovalService {
                         && exileAll.returnsOnSourceLeavesTrigger());
         returnsThroughLeavesTrigger |= returnsThroughEndOfCombatLeavesTrigger;
         returnsThroughLeavesTrigger |= returnsThroughActivatedAbilityLeavesTrigger;
-        returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
         returnsThroughLeavesTrigger |= hasLeavesTriggerHandExile;
         returnsThroughLeavesTrigger |= hasLeavesTriggerExileAll;
         returnsThroughLeavesTrigger |= removedPermanent.getCard().getCastingCosts().stream()
@@ -3491,7 +3484,7 @@ public class PermanentRemovalService {
                 phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
                 return;
             }
-            List<PendingExileReturn> returnBatches = returnsOnSourceLeavesTrigger || hasLeavesTriggerExileAll
+            List<PendingExileReturn> returnBatches = hasLeavesTriggerExile || hasLeavesTriggerExileAll
                     || returnsThroughEndOfCombatLeavesTrigger || returnsThroughActivatedAbilityLeavesTrigger
                     ? mergeSameControllerReturns(pendingReturns)
                     : pendingReturns;
@@ -3513,8 +3506,7 @@ public class PermanentRemovalService {
         boolean multipleExiledCards = pendingReturns.size() > 1;
         boolean simultaneousReturn = removedPermanent.getCard().getOwnEntryEffects()
                 .stream().anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect
-                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileOwnNontokenCreaturesUntilSourceLeavesEffect
-                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfPermanentsUntilSourceLeavesEffect
                         || multipleExiledCards && effect instanceof ExileTargetPermanentUntilSourceLeavesEffect);
         if (simultaneousReturn) {
             List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> cards = new ArrayList<>();

@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,12 +23,9 @@ public class PracticedScrollsmith extends Card {
         // When this creature enters, exile target noncreature, nonland card from your graveyard.
         // Until the end of your next turn, you may cast that card.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                                new CardNotPredicate(new CardTypePredicate(CardType.LAND))
-                        )),
-                        true
-                ));
+                ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(new CardAllOfPredicate(List.of(
+                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))))),
+                AllowPlayCardsFromExileEffect.untilEndOfYourNextTurn(Subjects.cardsThisWay(StepKind.EXILE)));
     }
 }

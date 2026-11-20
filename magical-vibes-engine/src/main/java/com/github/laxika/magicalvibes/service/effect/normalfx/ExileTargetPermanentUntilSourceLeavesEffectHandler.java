@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,11 +37,8 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTargetPermanentUntilSourceLeavesEffect) effect;
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
-        if (targetIds.isEmpty()) {
+        List<Permanent> named = subjectResolutionService.permanents(gameData, entry, effect, e.permanents());
+        if (named.isEmpty()) {
             return;
         }
 
@@ -68,9 +67,8 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             return;
         }
 
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
+        for (Permanent target : named) {
+            if (gameQueryService.findPermanentById(gameData, target.getId()) == null) {
                 continue;
             }
 

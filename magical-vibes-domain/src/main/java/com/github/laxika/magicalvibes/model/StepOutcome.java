@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,8 +18,11 @@ import java.util.UUID;
  *                   there, so a later step of the resolution can find it (CR 400.7j); empty for a step that moved
  *                   nothing, and for an object that is a card already in the zone the step put it in (a card exiled
  *                   from a graveyard keeps its id)
+ * @param lastKnownCards for the cards the step exiled from a graveyard, each as it last existed there (CR 608.2h);
+ *                       empty for every other object and step
  */
-public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards) {
+public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
+                          List<LastKnownCardStats> lastKnownCards) {
 
     /** A step that did nothing. */
     public static final StepOutcome NONE = new StepOutcome(0, List.of(), List.of());
@@ -30,6 +34,12 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         objectIds = List.copyOf(objectIds);
         playerIds = List.copyOf(new LinkedHashSet<>(playerIds));
         movedCards = movedCards == null ? List.of() : List.copyOf(movedCards);
+        lastKnownCards = lastKnownCards == null ? List.of() : List.copyOf(lastKnownCards);
+    }
+
+    /** An outcome that recorded no card as it last existed in a graveyard. */
+    public StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards) {
+        this(amount, objectIds, playerIds, movedCards, List.of());
     }
 
     /** An outcome that moved no object to a new zone as a new card. */
@@ -52,12 +62,25 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         return new StepOutcome(Math.max(0, amount), List.of(), playerIds);
     }
 
+    /** This outcome with {@code cards}, the cards it exiled from a graveyard as each last existed there. */
+    public StepOutcome withLastKnownCards(List<LastKnownCardStats> cards) {
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, cards);
+    }
+
+    /** {@code cardId} as it last existed in the graveyard this step exiled it from, if the step recorded it. */
+    public Optional<LastKnownCardStats> lastKnownCard(UUID cardId) {
+        return lastKnownCards.stream().filter(card -> card.cardId().equals(cardId)).findFirst();
+    }
+
     /** Whether the step did anything ("if you do", "this way"). */
     public boolean happened() {
         return amount > 0;
     }
 
-    /** This outcome with {@code more} added: amounts summed, objects, players and moved cards appended. */
+    /**
+     * This outcome with {@code more} added: amounts summed, objects, players, moved cards and last-known cards
+     * appended.
+     */
     public StepOutcome plus(StepOutcome more) {
         List<UUID> objects = new ArrayList<>(objectIds);
         objects.addAll(more.objectIds);
@@ -65,6 +88,8 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         players.addAll(more.playerIds);
         List<MovedCard> moved = new ArrayList<>(movedCards);
         moved.addAll(more.movedCards);
-        return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved);
+        List<LastKnownCardStats> known = new ArrayList<>(lastKnownCards);
+        known.addAll(more.lastKnownCards);
+        return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved, known);
     }
 }

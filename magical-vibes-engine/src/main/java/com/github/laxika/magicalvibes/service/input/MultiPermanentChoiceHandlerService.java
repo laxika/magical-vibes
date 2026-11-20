@@ -1219,9 +1219,6 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SagaChapterTargetSelection ctx) {
             handleSagaChapterTargetSelection(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.ExileOwnNontokenCreaturesUntilSourceLeaves ctx) {
-            exileUntilSourceLeavesHandler.completeChoice(gameData, permanentIds, ctx.sourcePermanentId());
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOwnPermanentsToExileUntilSourceLeaves ctx) {
             eachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesHandler.completeChoice(
                     gameData, permanentIds, ctx);

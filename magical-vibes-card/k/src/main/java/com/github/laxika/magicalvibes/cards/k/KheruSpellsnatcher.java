@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsWithoutPayingManaCostWhileExiledEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,7 +21,7 @@ public class KheruSpellsnatcher extends Card {
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 SequenceEffect.of(
                         new CounterSpellEffect(CounteredSpellDestination.EXILE),
-                        new AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(
-                                Subjects.cardsThisWay(StepKind.COUNTER_SPELL))));
+                        AllowPlayCardsFromExileEffect.whileExiled(Subjects.cardsThisWay(StepKind.COUNTER_SPELL))
+                                .withoutPayingManaCost()));
     }
 }

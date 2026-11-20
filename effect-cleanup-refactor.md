@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (run 1 done: Exile, 40 audited) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 and 2 done: Exile, 40 and 22 audited) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -175,7 +175,7 @@ card it moved to a public zone, CR 400.7j). Variants:
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)` (the token-copy step), `ReturnCardFromGraveyardEffect.returnAll(true).cards(...)`
 (the return step), `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` (the "cast it now for free" step),
 `CopyImprintedCardAndMayCastCopyEffect.of(cards)` (the may-cast-a-copy step, run 24), `ExileGraveyardCardsEffect.cards(cards)` (the
-exile step, run 24), `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(cards)` (the permission step, run 27) and, inside a card filter, `CardSharesCardTypeWithCardsPredicate(cards)`, which a handler binds through
+exile step, run 24), `AllowPlayCardsFromExileEffect` (the permission step, run 27; durations and riders in step 9 run 2) and, inside a card filter, `CardSharesCardTypeWithCardsPredicate(cards)`, which a handler binds through
 `SubjectResolutionService.bindCardSubjects` (the seek, run 24).
 
 ### One resolver
@@ -606,6 +606,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | Run | Family | Status |
 |---|---|---|
 | 1 | Exile: the five `step-9` hand-offs and the records used by one or two cards (the two-card ones, then their one-card siblings) | done (40 audited: 5 absorbed, 4 split, 5 survivors (one new step record), 9 unique, 17 blocked-other; 21 card files rewritten; `ExileTargetPlayerHandEffect` takes a `PlayerSubject`, `ExileUpToOneCardFromGraveyardEffect.withSource()`, `PutTimeCountersAndGainSuspendEffect`; two `step-9` rows left for run 2) |
+| 2 | Exile: the graveyard last-known P/T bug, the until-source-leaves family with the Detention Sphere `step-9` row, a timed permission step over a `CardSubject` and the records it splits | done (22 audited: 3 absorbed, 7 split, 5 survivors (one new step record), 7 blocked-other; 19 card files rewritten; graveyard exile steps record `StepOutcome.lastKnownCards`, `AmountThisWay.keepingNegative()`, `ExileTargetPermanentUntilSourceLeavesEffect` takes a `PermanentSubject`, `AllowPlayCardsFromExileEffect`; Glorious Protector's simultaneous return fixed; random / exile-until steps and the cast-copies `step-9` row not reached) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6049,6 +6050,82 @@ u w` test sources compile.
   records); graveyard exile steps recording last-known P/T (the three stat records, and Soul Separator's reads).
 - `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect` (`step-9`) still needs "cast the copy if able" and the random single copy on
   `CopyImprintedCardAndMayCastCopyEffect`.
+
+### Step 9, run 2 (2026-11-20)
+
+Family Exile, continued: the graveyard last-known P/T bug run 1 found, the until-source-leaves subfamily with its `step-9` row
+(Detention Sphere, Deputy of Detention), then the cheapest prerequisite run 1's blocked rows named (a timed play-permission step over a
+`CardSubject`) and the records it splits. Ratchet 4,692 / 3,921 → 4,683 / 3,912 records / handlers (9 records and handlers deleted, one
+renamed into the new step record). 19 card files rewritten (11 by a scratch script, 8 by hand; diffs read back by eye). Oracle text
+checked with `get_card` (Victor Mancha, Thor, Rooting Moloch, Savvy Trader, Dire Fleet Daredevil, Moonstone, Cryptic Pursuit); rulings
+with `get_rulings` (Glorious Protector, Detention Sphere, Deputy of Detention, Lumbering Battlement, Venom); CR 107.1b, 400.7, 604.3,
+608.2h, 610.3, 610.3b, 610.3c and 610.3d checked with `get_rule` (2026-11-20).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Exile | 22 (20 classes + 2 survivors re-ledgered) | 3 | 7 | 5 (one new step record) | 7 blocked-other: 3 delayed trigger bound to an exiled card (Portcullis, Lagrella, Mysterious Limousine's "return each other card"), 1 permission held by each card's owner (Suspend Aggression), 1 filter on the triggering-card exile (Cryptic Pursuit), 1 cast-only permission + next-end-step return (Mnemonic Betrayal), 1 random-card exile step (re-noted) | 0 | 260 records (227 used by fewer than three cards); `step-9` row left: `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect` |
+
+- **Graveyard last-known stats (rules fix).** A graveyard exile step now records each card as it last existed in the graveyard
+  (`StepOutcome.lastKnownCards`, `LastKnownCardStats`, read by `GameQueryService.asInGraveyard` before any of the cards leave; a sweep reads
+  every graveyard first) on every recording path: each `ExileGraveyardCardsEffect` branch, the graveyard choice's exile
+  (`GraveyardChoiceHandlerService`, each card before its own removal), `ExileCardsFromGraveyardEffect`, `ExileUpToOneCardFromGraveyardEffect`,
+  `ExileTriggeringCardFromGraveyardEffect`, `ExileSourceCardFromGraveyardEffect`. `AmountThisWay.exiled*` read it (CR 608.2h: the card left the
+  zone the effect expected it in; Morbid Bloom's, Scour the Desert's and Ritual of the Returned's rulings). A reflexive "when you do" ability
+  reads the card as it is in exile, where that ability expects it (`ResolutionResults.asReadByLaterAbility()`, applied by
+  `StackEntry.carryResolutionResultsFrom`; `VenomDeadlyDevourerTest`'s Tarmogoyf case holds it). New `SoulSeparatorTest` case: a Boneyard Wurm
+  exiled beside a Grizzly Bears makes a 2/2 Zombie (1/1 on the old code). Library and hand exiles still read the card in exile.
+- **A set P/T keeps a negative value.** `AmountThisWay` totals are at least 0 (CR 107.1b) unless `.keepingNegative()`, for an effect that sets
+  a power or toughness to it: Ritual of the Returned and Soul Separator's Zombie (new `SoulSeparatorTest` case: Char-Rumbler makes a -1/3
+  Zombie; it made a 0/3 one). Two cards set it.
+- **The three stat records split.** Morbid Bloom = `ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, creature, false)` +
+  `CreateTokenEffect(...).withAmount(exiledToughness())`; Scour the Desert the same over `oneTargetFromControllerGraveyard(creature)`; Ritual of
+  the Returned = `oneTargetFromControllerGraveyard(creature)` + `CreateTokenEffect("Zombie", exiledPower().keepingNegative(),
+  exiledToughness().keepingNegative(), …)`; Rotfeaster Maggot = `exactTargetedFromAnyGraveyard(1, creature, false)` +
+  `GainLifeEffect(exiledToughness())`. The spells declare the target through the effect only: a card-level `target(filter)` bound to
+  `ExileGraveyardCardsEffect` makes the single-UUID cast path refuse the graveyard target ("Invalid target"). Their CDA tests (Lord of
+  Extinction, Mortivore, Consuming Aberration) pass unchanged; logs are the exile step's.
+- **Until-source-leaves takes a subject.** `ExileTargetPermanentUntilSourceLeavesEffect` gained `PermanentSubject permanents` (default
+  `target()`; it must declare the target), resolved by `SubjectResolutionService` as the effect applies (CR 608.2h). Detention Sphere =
+  `allOf(target(), otherPermanentsSharing(target(), NAME, any))`, `exileIfSourceAlreadyLeft` and `returnsOnSourceLeavesTrigger` (its ruling:
+  if Sphere left first, the exile is indefinite); Deputy of Detention = `allOf(target(), except(otherPermanentsSharing(target(), NAME,
+  nonland), controlledBy(opponentsOf(controllerOf(target())), any)))`, neither flag (its ruling: nothing is exiled once Deputy left). Gained
+  from the survivor's handler: the melded-card returns, the LKI power, the skip of a permanent that a replacement kept on the battlefield;
+  the same-name handler's fallback to a source found by card identity is gone (CR 400.7). `PermanentRemovalService` merges the returns of
+  any survivor that returns through its leaves ability (CR 610.3: one one-shot effect returns them all). Lumbering Battlement's record is
+  `ExileAnyNumberOfPermanentsUntilSourceLeavesEffect(other nontoken creature you control)`, and that record's cards now return together:
+  Glorious Protector's returned one at a time (new `GloriousProtectorTest` case: two Soul Wardens see each other enter; fails on the old
+  return path). The prompt text is the survivor's.
+- **A timed permission step.** `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect` became `AllowPlayCardsFromExileEffect(CardSubject,
+  Duration, freeCast, anyManaType, exileInsteadOfGraveyard)` with `whileExiled` / `thisTurn` / `untilEndOfYourNextTurn` /
+  `whileYouControlSource` and `.withoutPayingManaCost()` / `.withAnyManaType()` / `.exilingInsteadOfGraveyard()`. It split Thor, Rooting
+  Moloch, Practiced Scrollsmith, Victor Mancha (`oneTargetFromControllerGraveyardWithSource(null)` + `whileYouControlSource`: granted only while
+  the controller controls Victor), Savvy Trader, Nita and Dire Fleet Daredevil (`oneTargetFromOpponentGraveyard(instant or sorcery)` +
+  `thisTurn(...).withAnyManaType().exilingInsteadOfGraveyard()`), Moonstone (`MayEffect(SequenceEffect.of(ExileTriggeringCardFromGraveyardEffect,
+  untilEndOfYourNextTurn(...)))`). Any-type mana now goes to the permission holder for the duration (Nita's had no holder). The logs are the
+  exile steps' lines without the permission note; no test asserted them.
+
+**Tests** (one Gradle run, one `--tests` list per task, counted by XML file name, then the changed classes again): the 19 rewritten cards,
+Glorious Protector, the helper sweep (Storm the Vault; AI `AiTargetSelectorTest`, `InstantCategoryClassifierTest`), every card reading
+`AmountThisWay.exiled*`, the leave-trigger survivor cards (Oblivion Ring, Fiend Hunter, Journey to Nowhere, Icy Prison, Leonin Relic-Warder,
+Faceless Devourer, Parallax Wave and Tide), Portcullis, Mysterious Limousine, Urborg Scavengers, Patchwork Crawler, `--tests-for`
+`ExileTargetPermanentUntilSourceLeavesEffect` (20 per class), `ExileGraveyardCardsEffect` (15), the four other graveyard exile steps (6),
+`ExileAnyNumberOfPermanentsUntilSourceLeavesEffect` and `AllowPlayCardsFromExileEffect` (all): 104 card result files, 899 tests; 6 failures
+(Scour the Desert's bound target, Venom's reflexive read) fixed, then those classes pass. Application (`EffectCountRatchetTest`,
+`TargetSpecRatchetTest`, `CardEffectTargetingConsistencyTest`, `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest`, `StepResultsTest`,
+`SubjectResolutionServiceTest`, the three graveyard / until-source-leaves handler tests (`ExileTargetPermanentUntilSourceLeavesEffectHandlerTest`'s
+hand-built handler takes the resolver), `TriggerTargetCollectorTest`, `ETBTokenTargetServiceTest`, the graveyard-choice and multi-selection
+interaction tests): 234 tests; AI (`GameDataDeepCopyTest`, `TargetPolarityGuardTest`, the two above): 200 tests; all pass. Application, AI,
+engine testFixtures and card-test `d g k l m n p r s t v` test sources compile.
+
+**For the next run (Exile, run 3).**
+
+- The random-card exile step (`ExileRandomCardFromGraveyardMayPlayThisTurnEffect`, `…FromHand…` with Elkin Lair's delayed rider,
+  `…FromLibrary…`, `…FromDamagedPlayerLibrary…`): with it, each splits into the step + `AllowPlayCardsFromExileEffect`.
+- `AllowPlayCardsFromExileEffect` riders the blocked rows name: a holder `PlayerSubject` (Suspend Aggression: `ownerOf`), cast-only (Mnemonic
+  Betrayal); then the delayed "put the cards still exiled into their graveyards at the next end step" over `cardsThisWay(EXILE)`.
+- The exile-until step recording the card it stops on (the five exile-until-nonland records), then `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect`
+  (`step-9`: "cast the copy if able" and the random single copy on `CopyImprintedCardAndMayCastCopyEffect`).
+- Then the rest of the 227 tail records, two-card ones first.
 
 ## Prompt
 

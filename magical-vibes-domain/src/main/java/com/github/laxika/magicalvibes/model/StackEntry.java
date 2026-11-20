@@ -688,10 +688,11 @@ public class StackEntry {
 
     /**
      * Gives this entry, a reflexive ability made by {@code resolving}'s resolution ("when you do, ..."), what the
-     * earlier steps of that resolution did, so it can read "the sacrificed creature" (CR 603.12, 608.2h).
+     * earlier steps of that resolution did, so it can read "the sacrificed creature" (CR 603.12, 608.2h); a card those
+     * steps exiled from a graveyard it reads as it is in exile ({@link ResolutionResults#asReadByLaterAbility()}).
      */
     public void carryResolutionResultsFrom(StackEntry resolving) {
-        resolutionResults = resolving.resolutionResults;
+        resolutionResults = resolving.resolutionResults.asReadByLaterAbility();
     }
 
     /** Records what a player picked in the step being resolved, for the next step to act on. */

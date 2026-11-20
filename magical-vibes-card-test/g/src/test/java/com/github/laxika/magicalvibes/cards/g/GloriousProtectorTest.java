@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RestorationAngel;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GloriousProtector.class, GrizzlyBears.class, RestorationAngel.class, Unsummon.class})
+@CardUsed({GloriousProtector.class, GrizzlyBears.class, RestorationAngel.class, Unsummon.class, SoulWarden.class})
 class GloriousProtectorTest extends BaseCardTest {
 
     @Test
@@ -173,6 +174,36 @@ class GloriousProtectorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(protector.getId()).faceDown()).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exiled creatures return at the same time and see each other enter")
+    void exiledCreaturesReturnTogether() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SoulWarden());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SoulWarden());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GloriousProtector(), "{2}{W}{W}");
+        // The Soul Wardens' triggers on Protector entering resolve before its enter ability asks.
+        for (int i = 0; i < 6
+                && gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null; i++) {
+            harness.passBothPriorities();
+        }
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.assertNotOnBattlefield(player1, "Soul Warden");
+        int lifeBeforeReturn = gd.playerLifeTotals.get(player1.getId());
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Glorious Protector"));
+        for (int i = 0; i < 5 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Soul Warden"))
+                .hasSize(2);
+        harness.assertLife(player1, lifeBeforeReturn + 2);
     }
 
     private void castProtector() {

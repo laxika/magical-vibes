@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
@@ -415,6 +416,8 @@ public class GraveyardChoiceHandlerService {
             }
 
             Card card;
+            // The exiled card as it last existed in its graveyard (CR 608.2h), for the resolving exile step's result.
+            List<LastKnownCardStats> exiledAsInGraveyard = List.of();
             // Owner of the graveyard the card is leaving — used to return it if a continuous effect
             // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
             UUID cardGraveyardOwnerId = null;
@@ -443,6 +446,7 @@ public class GraveyardChoiceHandlerService {
                         && gameData.pendingGraveyardReturnBatch.holdInGraveyard()) {
                     // Stays in its graveyard until the whole batch enters.
                 } else if (destination == GraveyardChoiceDestination.EXILE) {
+                    exiledAsInGraveyard = gameQueryService.asInGraveyard(gameData, List.of(card));
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
                 } else {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -461,6 +465,7 @@ public class GraveyardChoiceHandlerService {
                 } else if (destination == GraveyardChoiceDestination.HAND && gameData.holdGraveyardHandReturns) {
                     // Stays in the graveyard until every player has chosen.
                 } else if (destination == GraveyardChoiceDestination.EXILE) {
+                    exiledAsInGraveyard = gameQueryService.asInGraveyard(gameData, List.of(card));
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
                 } else {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -674,7 +679,8 @@ public class GraveyardChoiceHandlerService {
                     if (gameData.pendingEffectResolutionEntry != null) {
                         gameData.pendingEffectResolutionEntry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(
                                 List.of(card.getId()),
-                                List.of(cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId)));
+                                List.of(cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId))
+                                .withLastKnownCards(exiledAsInGraveyard));
                     }
 
                     // Conditional life gain (e.g. Graveyard Shovel: "If it's a creature card, you gain 2 life.")

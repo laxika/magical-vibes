@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BoneyardWurm;
+import com.github.laxika.magicalvibes.cards.c.CharRumbler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingChorus;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
@@ -25,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class, SoulSeparator.class, GrizzlyBears.class, Plains.class, SageOfAncientLore.class,
-        WerewolfOfAncientHunger.class, ShrillHowler.class, HowlingChorus.class, SpellQueller.class})
+        WerewolfOfAncientHunger.class, ShrillHowler.class, HowlingChorus.class, SpellQueller.class, BoneyardWurm.class,
+        CharRumbler.class})
 class SoulSeparatorTest extends BaseCardTest {
 
     @Test
@@ -172,6 +175,37 @@ class SoulSeparatorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The Zombie has the exiled card's power and toughness as it last existed in the graveyard")
+    void zombieUsesStatsAsInGraveyard() {
+        harness.addToBattlefield(player1, new SoulSeparator());
+        Card wurm = new BoneyardWurm();
+        harness.setGraveyard(player1, List.of(wurm, new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(wurm.getId()));
+        harness.passBothPriorities();
+
+        // In the graveyard Boneyard Wurm counted itself and Grizzly Bears; in exile it would count only the Bears.
+        Permanent zombie = findPermanent(player1, "Zombie");
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The Zombie keeps a negative power of the exiled card")
+    void zombieKeepsNegativePower() {
+        harness.addToBattlefield(player1, new SoulSeparator());
+        Card rumbler = new CharRumbler();
+        harness.setGraveyard(player1, List.of(rumbler));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(rumbler.getId()));
+        harness.passBothPriorities();
+
+        Permanent zombie = findPermanent(player1, "Zombie");
+        assertThat(zombie.getCard().getPower()).isEqualTo(-1);
+        assertThat(zombie.getCard().getToughness()).isEqualTo(3);
     }
 
     @Test

@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -83,7 +84,8 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentUntilSourceLeavesHandler = new ExileTargetPermanentUntilSourceLeavesEffectHandler(gameQueryService, gameLogService, permanentRemovalService);
+        exileTargetPermanentUntilSourceLeavesHandler = new ExileTargetPermanentUntilSourceLeavesEffectHandler(gameQueryService, gameLogService, permanentRemovalService,
+                new SubjectResolutionService(gameQueryService, null, null));
 
     }
 

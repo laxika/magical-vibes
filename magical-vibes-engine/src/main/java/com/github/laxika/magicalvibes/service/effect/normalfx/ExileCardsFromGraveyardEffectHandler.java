@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +61,11 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         List<UUID> exiledOwnerIds = new ArrayList<>();
         List<Card> exiledCards = new ArrayList<>();
         if (targetCardIds != null && !targetCardIds.isEmpty()) {
+            List<Card> stillTargeted = targetCardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .filter(Objects::nonNull)
+                    .toList();
+            List<LastKnownCardStats> known = gameQueryService.asInGraveyard(gameData, stillTargeted);
             List<String> exiledNames = new ArrayList<>();
             for (UUID cardId : targetCardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -94,7 +101,10 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
             }
             exiledCount = exiledNames.size();
             entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(
-                    exiledCards.stream().map(Card::getId).toList(), exiledOwnerIds));
+                    exiledCards.stream().map(Card::getId).toList(), exiledOwnerIds)
+                    .withLastKnownCards(known.stream()
+                            .filter(card -> exiledCards.stream().anyMatch(c -> c.getId().equals(card.cardId())))
+                            .toList()));
             if (!exiledNames.isEmpty()) {
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from graveyard.";
                 gameLogService.append(gameData, GameLog.text(logEntry));

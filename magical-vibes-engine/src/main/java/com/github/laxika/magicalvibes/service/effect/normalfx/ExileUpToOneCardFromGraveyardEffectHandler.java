@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -65,12 +66,15 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
                     .findFirst()
                     .orElse(null);
             UUID ownerId = chosen == null ? null : gameQueryService.findGraveyardOwnerById(gameData, chosenCardId);
+            List<LastKnownCardStats> known = chosen == null ? List.of()
+                    : gameQueryService.asInGraveyard(gameData, List.of(chosen));
             if (chosen == null || ownerId == null
                     || !graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, chosenCardId, chosen,
                     exileEffect.trackWithSource() ? entry.getSourcePermanentId() : null)) {
                 return;
             }
-            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(chosenCardId), List.of(ownerId)));
+            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(chosenCardId), List.of(ownerId))
+                    .withLastKnownCards(known));
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " exiles ", chosen, " from a graveyard."));
             return;

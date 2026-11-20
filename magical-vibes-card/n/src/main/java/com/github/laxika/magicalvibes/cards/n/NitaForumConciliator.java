@@ -4,11 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,7 +38,10 @@ public class NitaForumConciliator extends Card {
                 "{2}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()
+                        ExileGraveyardCardsEffect.oneTargetFromOpponentGraveyard(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)))),
+                        AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))
+                                .withAnyManaType().exilingInsteadOfGraveyard()
                 ),
                 "{2}, Sacrifice another creature: Exile target instant or sorcery card from an "
                         + "opponent's graveyard. You may cast it this turn, and mana of any type can be "

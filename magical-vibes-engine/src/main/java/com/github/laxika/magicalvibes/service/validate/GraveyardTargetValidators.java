@@ -7,15 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayWhileExiledEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokensEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEmbalmToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
@@ -396,125 +390,6 @@ public class GraveyardTargetValidators {
         }
     }
 
-    @ValidatesTarget(ExileTargetCreatureCardCreateTokensEqualToToughnessEffect.class)
-    public void validateExileTargetCreatureCardCreateTokens(
-            TargetValidationContext ctx, ExileTargetCreatureCardCreateTokensEqualToToughnessEffect effect) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Spell requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Spell requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
-        if (effect.graveyardScope() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
-                && !ctx.sourceControllerId().equals(graveyardOwnerId)) {
-            throw new IllegalStateException("Target must be in your graveyard");
-        }
-        if (effect.graveyardScope() == GraveyardSearchScope.OPPONENT_GRAVEYARD
-                && ctx.sourceControllerId().equals(graveyardOwnerId)) {
-            throw new IllegalStateException("Target must be in an opponent's graveyard");
-        }
-        if (!graveyardCard.hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Target must be a creature card");
-        }
-    }
-
-    @ValidatesTarget(ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect.class)
-    public void validateExileTargetCreatureCardCreateToken(TargetValidationContext ctx) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Spell requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Spell requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (!graveyardCard.hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Target must be a creature card");
-        }
-        UUID controllerId = tvs.findSourcePermanentController(ctx);
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
-        if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
-            throw new IllegalStateException("Target must be in your graveyard");
-        }
-    }
-
-    @ValidatesTarget(ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect.class)
-    public void validateExileTargetCreatureCardGainLife(TargetValidationContext ctx) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Ability requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Ability requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (!graveyardCard.hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Target must be a creature card");
-        }
-    }
-
-    @ValidatesTarget(ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect.class)
-    public void validateExileTargetCardFromGraveyardMayPlay(
-            TargetValidationContext ctx, ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect effect) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Ability requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Ability requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
-            String label = CardPredicateUtils.describeFilter(effect.filter());
-            throw new IllegalStateException("Target must be a " + label);
-        }
-        if (effect.ownGraveyardOnly()) {
-            UUID controllerId = tvs.findSourcePermanentController(ctx);
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
-            if (graveyardOwnerId != null && controllerId != null && !graveyardOwnerId.equals(controllerId)) {
-                throw new IllegalStateException("Target must be in your graveyard");
-            }
-        }
-    }
-
-    @ValidatesTarget(ExileTargetCardFromGraveyardMayPlayWhileExiledEffect.class)
-    public void validateExileTargetCardFromGraveyardMayPlayWhileExiled(
-            TargetValidationContext ctx, ExileTargetCardFromGraveyardMayPlayWhileExiledEffect effect) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Ability requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Ability requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (effect.filter() != null
-                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
-            String label = CardPredicateUtils.describeFilter(effect.filter());
-            throw new IllegalStateException("Target must be a " + label);
-        }
-        if (effect.ownGraveyardOnly()) {
-            UUID controllerId = tvs.findSourcePermanentController(ctx);
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
-            if (graveyardOwnerId != null && controllerId != null && !graveyardOwnerId.equals(controllerId)) {
-                throw new IllegalStateException("Target must be in your graveyard");
-            }
-        }
-    }
-
     @ValidatesTarget(PlayTargetCardFromGraveyardWithoutPayingManaCostEffect.class)
     public void validatePlayTargetCardFromGraveyardWithoutPaying(
             TargetValidationContext ctx, PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
@@ -536,28 +411,6 @@ public class GraveyardTargetValidators {
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
         if (graveyardOwnerId != null && controllerId != null && !graveyardOwnerId.equals(controllerId)) {
             throw new IllegalStateException("Target must be in your graveyard");
-        }
-    }
-
-    @ValidatesTarget(ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect.class)
-    public void validateExileTargetInstantOrSorceryFromOpponentGraveyardMayCast(TargetValidationContext ctx) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Ability requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Ability requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (!graveyardCard.hasType(CardType.INSTANT) && !graveyardCard.hasType(CardType.SORCERY)) {
-            throw new IllegalStateException("Target must be an instant or sorcery card");
-        }
-        UUID controllerId = tvs.findSourcePermanentController(ctx);
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
-        if (graveyardOwnerId != null && controllerId != null && graveyardOwnerId.equals(controllerId)) {
-            throw new IllegalStateException("Target must be in an opponent's graveyard");
         }
     }
 

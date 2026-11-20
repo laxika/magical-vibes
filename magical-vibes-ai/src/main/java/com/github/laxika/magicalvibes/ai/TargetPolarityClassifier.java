@@ -518,7 +518,6 @@ public class TargetPolarityClassifier {
             entry("PhaseOutTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutCountersOnSelfEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndImprintEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndTrackWithSourceEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),

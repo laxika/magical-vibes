@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.ResolutionResults;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
@@ -1119,11 +1121,13 @@ public class AmountEvaluationService {
 
     /**
      * {@link AmountThisWay}: the step's amount, or the total of a last-known stat over what the most recent sacrifice,
-     * destroy or exile step removed (CR 608.2h); a negative power counts in the total, which is at least 0 (CR 107.1b). A count of only those that died, match a
-     * filter or were the amount's controller's reads the removal step's departures, judging each permanent as it last
-     * existed on the battlefield and by the controller it had as it left. One that includes what a destroy step didn't
-     * destroy reads every departure of that step, a permanent still on the battlefield as it is now; it reads nothing
-     * unless the departures are that step's (the permanents among them that were destroyed are its outcome's).
+     * destroy or exile step removed (CR 608.2h); a negative power counts in the total, which is at least 0 unless the
+     * amount keeps a negative one for an effect that sets a power or toughness to it (CR 107.1b). A count of only those
+     * that died, match a filter or were the amount's controller's reads the removal step's departures, judging each
+     * permanent as it last existed on the battlefield and by the controller it had as it left. One that includes what a
+     * destroy step didn't destroy reads every departure of that step, a permanent still on the battlefield as it is
+     * now; it reads nothing unless the departures are that step's (the permanents among them that were destroyed are
+     * its outcome's).
      */
     private int amountThisWay(GameData gameData, AmountContext ctx, AmountThisWay thisWay) {
         StackEntry entry = ctx.stackEntry();
@@ -1133,7 +1137,8 @@ public class AmountEvaluationService {
             return results.outcome(thisWay.kind()).amount();
         }
         if (thisWay.kind() == StepKind.EXILE) {
-            return exiledStat(gameData, entry, results.outcome(StepKind.EXILE).objectIds(), thisWay.stat());
+            int total = exiledStat(gameData, entry, results.outcome(StepKind.EXILE), thisWay.stat());
+            return thisWay.negativeKept() ? total : Math.max(0, total);
         }
         boolean sacrifice = thisWay.kind() == StepKind.SACRIFICE;
         Set<UUID> recorded = new HashSet<>(results.outcome(thisWay.kind()).objectIds());
@@ -1171,7 +1176,7 @@ public class AmountEvaluationService {
             };
             total = SaturatingMath.add(total, value == null ? 0 : value);
         }
-        return Math.max(0, total);
+        return thisWay.negativeKept() ? total : Math.max(0, total);
     }
 
     /** A departed permanent as it last existed on the battlefield, or one that stayed there as it is now. */
@@ -1184,15 +1189,23 @@ public class AmountEvaluationService {
     }
 
     /**
-     * The total of {@code stat} over what an exile step exiled, at least 0 (CR 107.1b): a permanent as the entry
-     * recorded it as it left the battlefield, a card exiled from another zone as it is now (it keeps its
-     * characteristics in exile).
+     * The total of {@code stat} over what an exile step exiled, a negative one included, each as it last existed in the
+     * zone it was exiled from (CR 608.2h): a permanent as the entry recorded it as it left the battlefield, a card from
+     * a graveyard as the step recorded it there, a card exiled from a hidden zone as it is now in exile.
      */
-    private int exiledStat(GameData gameData, StackEntry entry, List<UUID> exiledIds, AmountThisWay.Stat stat) {
+    private int exiledStat(GameData gameData, StackEntry entry, StepOutcome exiled, AmountThisWay.Stat stat) {
         int total = 0;
-        for (UUID id : exiledIds) {
+        for (UUID id : exiled.objectIds()) {
             Integer value;
-            if (entry.getLastKnownPermanentPowers().containsKey(id)) {
+            LastKnownCardStats fromGraveyard = exiled.lastKnownCard(id).orElse(null);
+            if (fromGraveyard != null) {
+                value = switch (stat) {
+                    case POWER -> fromGraveyard.power();
+                    case TOUGHNESS -> fromGraveyard.toughness();
+                    case MANA_VALUE -> fromGraveyard.manaValue();
+                    case AMOUNT, DIED -> 0;
+                };
+            } else if (entry.getLastKnownPermanentPowers().containsKey(id)) {
                 Card lastKnown = entry.lastKnownPermanentCard(id);
                 value = switch (stat) {
                     case POWER -> entry.getLastKnownPermanentPowers().get(id);
@@ -1211,7 +1224,7 @@ public class AmountEvaluationService {
             }
             total = SaturatingMath.add(total, value == null ? 0 : value);
         }
-        return Math.max(0, total);
+        return total;
     }
 
     /** The chosen number of the first permanent created earlier in the resolving entry; 0 if none. */

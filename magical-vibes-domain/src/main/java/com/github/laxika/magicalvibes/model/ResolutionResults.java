@@ -102,6 +102,18 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
         return new ResolutionResults(departures, pickedIds, updated);
     }
 
+    /**
+     * These results as a later ability reads them ("when you do, … where X is the exiled card's toughness"): the cards
+     * the steps exiled from a graveyard are read as they are now, in exile, where that ability expects them (CR 608.2h),
+     * so their graveyard last-known values are dropped.
+     */
+    public ResolutionResults asReadByLaterAbility() {
+        Map<StepKind, StepOutcome> updated = new EnumMap<>(StepKind.class);
+        outcomes.forEach((kind, outcome) -> updated.put(kind,
+                outcome.lastKnownCards().isEmpty() ? outcome : outcome.withLastKnownCards(List.of())));
+        return new ResolutionResults(departures, pickedIds, updated);
+    }
+
     /** The outcome of the most recent {@code kind} step, or {@link StepOutcome#NONE} when none ran. */
     public StepOutcome outcome(StepKind kind) {
         return outcomes.getOrDefault(kind, StepOutcome.NONE);

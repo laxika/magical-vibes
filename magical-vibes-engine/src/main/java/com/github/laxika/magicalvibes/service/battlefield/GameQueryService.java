@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
@@ -4574,6 +4575,21 @@ public class GameQueryService {
             return null;
         }
         return animation;
+    }
+
+    /**
+     * Each of {@code cards}, read while it is still in its graveyard, as an exile step records it before the cards leave
+     * (CR 608.2h: "the exiled card's toughness" is the card as it last existed in the graveyard, its graveyard-reading
+     * characteristic-defining power and any change to graveyard cards included). Cards that leave together are read
+     * before the first of them leaves.
+     */
+    public List<LastKnownCardStats> asInGraveyard(GameData gameData, Collection<Card> cards) {
+        List<LastKnownCardStats> known = new ArrayList<>(cards.size());
+        for (Card card : cards) {
+            known.add(new LastKnownCardStats(card.getId(), getEffectiveCardPower(gameData, card),
+                    getEffectiveCardToughness(gameData, card), card.getManaValue()));
+        }
+        return known;
     }
 
     /** Returns the current power of a non-battlefield card, including temporary graveyard changes. */
