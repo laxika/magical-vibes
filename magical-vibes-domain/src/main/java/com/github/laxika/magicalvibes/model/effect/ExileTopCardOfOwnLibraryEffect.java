@@ -20,8 +20,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                        {@code ownerOf(triggeringCard())} for "that card's owner"
  * @param count           how many cards each named player exiles, evaluated once as the effect resolves (with the
  *                        source as it is or last was); a library with fewer exiles what it has
+ * @param linkedToSource  "exiled with this creature" without an imprint: each card is exiled with the source permanent
+ *                        (the entry's, even after it left), which "when you play a card exiled with this creature"
+ *                        and "you may play cards exiled with this enchantment" read (Voltaic Visionary, Pick Up the
+ *                        Pace); {@code trackWithSource} links and also imprints
  */
-public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player, DynamicAmount count)
+public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player, DynamicAmount count,
+                                             boolean linkedToSource)
         implements CardEffect {
 
     public ExileTopCardOfOwnLibraryEffect {
@@ -34,6 +39,13 @@ public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubj
         if (trackWithSource && !(count instanceof Fixed fixed && fixed.value() == 1)) {
             throw new IllegalArgumentException("ExileTopCardOfOwnLibraryEffect tracks only one card with its source");
         }
+        if (trackWithSource && linkedToSource) {
+            throw new IllegalArgumentException("trackWithSource already links the card to the source");
+        }
+    }
+
+    public ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player, DynamicAmount count) {
+        this(trackWithSource, player, count, false);
     }
 
     public ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player) {
@@ -52,6 +64,11 @@ public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubj
     /** "[Player] exiles the top {@code count} cards of their library", untracked. */
     public static ExileTopCardOfOwnLibraryEffect of(PlayerSubject player, int count) {
         return of(player, new Fixed(count));
+    }
+
+    /** "Exile the top card of your library", exiled with the source permanent ({@link #linkedToSource}). */
+    public static ExileTopCardOfOwnLibraryEffect linkedToSource(PlayerSubject player) {
+        return new ExileTopCardOfOwnLibraryEffect(false, player, new Fixed(1), true);
     }
 
     /** "[Player] exiles the top X cards of their library", untracked. */

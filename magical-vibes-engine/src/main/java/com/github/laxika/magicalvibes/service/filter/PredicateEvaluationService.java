@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCoun
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
@@ -1351,6 +1352,8 @@ public class PredicateEvaluationService {
             // Bound to the event's value by the matchesCardPredicate overload that is given one (bindEventValue).
             case CardManaValueEqualsEventValuePredicate ignored -> false;
             case CardManaValueAtMostEventValuePredicate ignored -> false;
+            // Bound to its amount by the handler that has the resolving entry (AmountEvaluationService.bindAmounts).
+            case CardManaValueAtMostAmountPredicate ignored -> false;
             // Bound to its cards' card types by the handler that has the resolving entry
             // (SubjectResolutionService.bindCardSubjects).
             case CardSharesCardTypeWithCardsPredicate ignored -> false;

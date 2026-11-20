@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,6 +29,6 @@ public class EgoDrain extends Card {
                 1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FAERIE))),
-                new ExileCardFromHandEffect()));
+                EachOpponentExilesFromHandEffect.byPlayers(Subjects.you(), 1)));
     }
 }

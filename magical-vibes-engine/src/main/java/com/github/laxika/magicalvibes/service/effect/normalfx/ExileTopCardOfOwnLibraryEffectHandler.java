@@ -92,6 +92,8 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
                         ? exiled.withAbilityLink(EXILE_ABILITY_LINK) : exiled);
             }
             gameData.setImprintedCard(entry.getCard(), topCard);
+        } else if (e.linkedToSource() && entry.getSourcePermanentId() != null) {
+            exileService.exileCard(gameData, playerId, topCard, entry.getSourcePermanentId());
         } else {
             exileService.exileCard(gameData, playerId, topCard);
         }

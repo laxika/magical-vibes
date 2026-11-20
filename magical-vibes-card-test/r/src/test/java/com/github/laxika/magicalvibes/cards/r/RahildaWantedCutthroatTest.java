@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,8 +24,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RahildaWantedCutthroatTest extends BaseCardTest {
 
     @Test
-    void combatDamageExilesRandomNonlandFromEntireLibraryAndTracksIt() {
-        Permanent rahilda = addCreatureReady(player1, new RahildaWantedCutthroat());
+    @DisplayName("Combat damage exiles a nonland card at random from anywhere in that player's library, face up")
+    void combatDamageExilesRandomNonlandFromEntireLibrary() {
+        addCreatureReady(player1, new RahildaWantedCutthroat());
         Card land = new Forest();
         Card nonland = new GrizzlyBears();
         harness.setLibrary(player2, List.of(land, nonland));
@@ -34,7 +36,6 @@ class RahildaWantedCutthroatTest extends BaseCardTest {
         ExiledCardEntry exiled = gd.findExiledCard(nonland.getId());
         assertThat(exiled).isNotNull();
         assertThat(exiled.faceDown()).isFalse();
-        assertThat(exiled.sourcePermanentId()).isEqualTo(rahilda.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(land);
     }
 

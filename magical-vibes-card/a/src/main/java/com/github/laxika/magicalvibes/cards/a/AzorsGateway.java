@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceExiledDifferentManaV
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +29,7 @@ public class AzorsGateway extends Card {
                 "{1}",
                 List.of(
                         new DrawCardEffect(1),
-                        new ExileCardFromHandWithSourceEffect(),
+                        EachOpponentExilesFromHandEffect.byPlayers(Subjects.you(), 1),
                         new ConditionalEffect(
                                 new SourceExiledDifferentManaValuesThreshold(5),
                                 SequenceEffect.of(

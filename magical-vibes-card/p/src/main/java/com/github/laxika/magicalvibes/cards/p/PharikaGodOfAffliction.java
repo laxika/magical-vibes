@@ -8,14 +8,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokenForOwnerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +39,9 @@ public class PharikaGodOfAffliction extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{G}",
-                List.of(new ExileTargetCreatureCardCreateTokenForOwnerEffect(snake)),
+                List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
+                                1, new CardTypePredicate(CardType.CREATURE), false),
+                        snake.forController(Subjects.playersThisWay(StepKind.EXILE))),
                 "{B}{G}: Exile target creature card from a graveyard. Its owner creates a 1/1 black and green Snake enchantment creature token with deathtouch."));
     }
 }

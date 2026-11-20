@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastDiscardedCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "70")
@@ -16,6 +20,8 @@ public class MindsDilation extends Card {
     public MindsDilation() {
         // "Whenever an opponent casts their first spell each turn".
         addTrigger(Triggers.opponentCastsSpell().nthThisTurn(1),
-                new ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect());
+                SequenceEffect.of(
+                        ExileTopCardOfOwnLibraryEffect.of(Subjects.triggeringPlayer()),
+                        new MayCastDiscardedCardWithoutPayingManaCostEffect(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }

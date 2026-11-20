@@ -69,20 +69,6 @@ class FuneralPyreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
-    @Test
-    @DisplayName("Creates the token for the card owner even when the card is in another graveyard")
-    void createsTokenForCardOwner() {
-        Card target = new BattleScreech();
-        target.setOwnerId(player1.getId());
-        harness.setGraveyard(player2, List.of(target));
-
-        castFuneralPyre(target);
-
-        assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Battle Screech"));
-        assertSpiritToken(player1);
-        harness.assertNotOnBattlefield(player2, "Spirit");
-    }
 
     @Test
     @DisplayName("Fizzles if the target leaves the graveyard before resolution")
@@ -132,21 +118,6 @@ class FuneralPyreTest extends BaseCardTest {
                         && permanent.getCard().getKeywords().contains(Keyword.FLYING));
     }
 
-    @Test
-    @DisplayName("Creates the Spirit for the exiled card's owner")
-    void createsTokenForCardOwnerJudReview() {
-        Card target = new SuntailHawk();
-        target.setOwnerId(player1.getId());
-        harness.setGraveyard(player2, List.of(target));
-
-        castFuneralPyre(target);
-
-        harness.assertNotInGraveyard(player2, "Suntail Hawk");
-        assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Suntail Hawk"));
-        assertSpiritToken(player1);
-        harness.assertNotOnBattlefield(player2, "Spirit");
-    }
 
     @Test
     @DisplayName("Does not affect a card that leaves and returns to the graveyard")

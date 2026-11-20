@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Nicol Bolas, God-Pharaoh +1: each opponent exiles N cards from their hand (their choice).
- * APNAP order; opponents with empty hands are skipped.
+ * Nicol Bolas, God-Pharaoh +1: each opponent exiles N cards from their hand (their choice); with another player subject
+ * each player (Mind Swords) or you (Ego Drain). The players are asked in APNAP order (CR 101.4); a player with an
+ * empty hand is skipped.
  */
 @Slf4j
 @Component
@@ -28,6 +30,7 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,30 +46,18 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
             return;
         }
         UUID controllerId = entry.getControllerId();
-        UUID activePlayerId = gameData.activePlayerId;
-
-        // APNAP: active player first (if an opponent), then others in turn order.
-        List<UUID> opponents = new ArrayList<>();
-        if (!activePlayerId.equals(controllerId)) {
-            opponents.add(activePlayerId);
-        }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(controllerId) || playerId.equals(activePlayerId)) {
-                continue;
-            }
-            opponents.add(playerId);
-        }
+        List<UUID> players = subjectResolutionService.players(gameData, entry, e, e.players());
 
         List<UUID> choosers = new ArrayList<>();
-        for (UUID opponentId : opponents) {
-            List<Card> hand = gameData.playerHands.get(opponentId);
+        for (UUID playerId : players) {
+            List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null || hand.isEmpty()) {
-                String name = gameData.playerIdToName.get(opponentId);
+                String name = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData,
                         GameLog.text(name + " has no cards to exile from hand."));
                 continue;
             }
-            choosers.add(opponentId);
+            choosers.add(playerId);
         }
 
         if (choosers.isEmpty()) {

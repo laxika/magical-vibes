@@ -18,9 +18,9 @@ import java.util.UUID;
 
 /**
  * Resolves {@link AllowPlayCardsFromExileEffect}: each card its subject names in exile may be played by the effect's
- * controller for the effect's duration, with its riders (free, any type of mana, exile instead of a graveyard). A
- * permission for as long as the controller controls the source is granted only while they control it, linked to that
- * source. It never prompts.
+ * controller (or by the card's owner) for the effect's duration, with its riders (free, any type of mana, exile instead of a graveyard, a
+ * condition that must hold as the card is played). A permission for as long as the controller controls the source is
+ * granted only while they control it, linked to that source. It never prompts.
  */
 @Component
 @RequiredArgsConstructor
@@ -54,19 +54,24 @@ public class AllowPlayCardsFromExileEffectHandler implements NormalEffectHandler
                 continue;
             }
             UUID cardId = located.card().getId();
+            UUID holderId = permission.ownerPlays() && located.ownerId() != null ? located.ownerId() : controllerId;
             if (whileSourceControlled) {
                 gameData.grantExilePlayPermission(cardId, new ExilePlayPermissionEffect(controllerId),
                         sourcePermanentId, controllerId, Duration.WHILE_SOURCE_CONTROLLED);
             } else {
-                gameData.grantExilePlayPermission(cardId, controllerId, permission.duration());
+                gameData.grantExilePlayPermission(cardId, holderId, permission.duration());
             }
             if (permission.freeCast()) {
                 gameData.setExilePlayWithoutPayingManaCost(cardId, true);
             } else if (permission.anyManaType() && !located.card().hasType(CardType.LAND)) {
-                gameData.grantExileAnyManaType(cardId, controllerId, permission.duration());
+                gameData.grantExileAnyManaType(cardId, holderId, permission.duration());
             }
             if (permission.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard(entry, cardId);
+            }
+            if (permission.playCondition() != null) {
+                gameData.updateExilePlayPermission(cardId,
+                        granted -> granted.withCondition(permission.playCondition()));
             }
         }
     }

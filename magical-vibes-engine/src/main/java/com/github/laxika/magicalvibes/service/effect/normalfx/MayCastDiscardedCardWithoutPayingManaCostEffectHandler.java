@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWi
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -24,7 +26,9 @@ import org.springframework.stereotype.Component;
  * owner's graveyard when the controller owns it, that matches the effect's filter and is not a land card, is offered
  * for a free cast as part of the resolution (a card moved to a public zone can be found there, CR 400.7j). A card in a
  * graveyard is cast from there (only from the controller's own graveyard); one in exile, whoever owns it, through the
- * exile free-cast offer (Transcendent Dragon casts the opponent's spell it countered).
+ * exile free-cast offer (Transcendent Dragon casts the opponent's spell it countered). A mana-value cap read from an
+ * amount ("if the spell's mana value is less than or equal to the life you gained this turn") is evaluated once, as the
+ * effect resolves (CR 608.2h).
  */
 @Component
 @RequiredArgsConstructor
@@ -34,6 +38,7 @@ public class MayCastDiscardedCardWithoutPayingManaCostEffectHandler implements N
 
     private final SubjectResolutionService subjectResolutionService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,12 +50,14 @@ public class MayCastDiscardedCardWithoutPayingManaCostEffectHandler implements N
         var castEffect = (MayCastDiscardedCardWithoutPayingManaCostEffect) effect;
         List<SubjectResolutionService.LocatedCard> cards =
                 subjectResolutionService.locatedCards(gameData, entry, castEffect, castEffect.cards());
+        CardPredicate filter = amountEvaluationService.bindAmounts(gameData, castEffect.filter(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
         for (SubjectResolutionService.LocatedCard located : cards.reversed()) {
             Card card = located.card();
             if (located.zone() != Zone.EXILE && !entry.getControllerId().equals(located.ownerId())
                     || card.hasType(CardType.LAND)
-                    || castEffect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                    card, castEffect.filter(), entry.getCard().getId())) {
+                    || filter != null && !predicateEvaluationService.matchesCardPredicate(
+                    card, filter, entry.getCard().getId())) {
                 continue;
             }
             String prompt = entry.getCard().getName() + " — Cast " + card.getName()
@@ -68,7 +75,7 @@ public class MayCastDiscardedCardWithoutPayingManaCostEffectHandler implements N
                     card,
                     entry.getControllerId(),
                     List.of(new PlayTargetCardFromGraveyardWithoutPayingManaCostEffect(
-                            castEffect.filter() == null ? NONLAND : castEffect.filter())),
+                            filter == null ? NONLAND : filter)),
                     prompt));
         }
     }

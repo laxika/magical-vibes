@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final AuraAttachmentService auraAttachmentService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,6 +67,33 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
     private void resolve(GameData gameData, StackEntry entry,
                          ReturnAllCardsExiledWithSourceEffect returnEffect,
                          UUID excludedCardId) {
+        List<ExiledCardEntry> toReturn = returnEffect.cards() != null
+                ? namedCardsInExile(gameData, entry, returnEffect)
+                : cardsExiledWithSource(gameData, entry, returnEffect, excludedCardId);
+        if (toReturn != null) {
+            returnCards(gameData, entry, returnEffect, toReturn);
+        }
+    }
+
+    /** The cards the effect's card subject names that are in exile, each once. */
+    private List<ExiledCardEntry> namedCardsInExile(GameData gameData, StackEntry entry,
+                                                    ReturnAllCardsExiledWithSourceEffect returnEffect) {
+        List<ExiledCardEntry> named = new ArrayList<>();
+        for (SubjectResolutionService.LocatedCard located
+                : subjectResolutionService.locatedCards(gameData, entry, returnEffect, returnEffect.cards())) {
+            ExiledCardEntry exiled = located.zone() == Zone.EXILE
+                    ? gameData.findExiledCard(located.card().getId()) : null;
+            if (exiled != null && !named.contains(exiled)) {
+                named.add(exiled);
+            }
+        }
+        return named;
+    }
+
+    /** The cards exiled with the source (or its linked permanent) the effect returns; {@code null} with no source. */
+    private List<ExiledCardEntry> cardsExiledWithSource(GameData gameData, StackEntry entry,
+                                                        ReturnAllCardsExiledWithSourceEffect returnEffect,
+                                                        UUID excludedCardId) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (returnEffect.useLinkedSource()) {
             // The cards exiled with the permanent the source is linked to, read from the source as it last existed.
@@ -73,7 +103,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             sourcePermanentId = entry.getCard().getId();
         }
         if (sourcePermanentId == null) {
-            return;
+            return null;
         }
         UUID sourceId = sourcePermanentId;
 
@@ -90,7 +120,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             }
         }
 
-        List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
+        return gameData.exiledCards.stream()
                 .filter(e -> sourceId.equals(e.sourcePermanentId()))
                 .filter(e -> excludedCardId == null
                         || !excludedCardId.equals(e.card().getId()))
@@ -98,7 +128,10 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                         || predicateEvaluationService.matchesCardPredicate(
                         e.card(), returnEffect.filter(), entry.getCard().getId()))
                 .toList();
+    }
 
+    private void returnCards(GameData gameData, StackEntry entry, ReturnAllCardsExiledWithSourceEffect returnEffect,
+                             List<ExiledCardEntry> toReturn) {
         boolean underControllerControl = returnEffect.underControllerControl();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
@@ -164,7 +197,11 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                         ActivePlayer.ANY);
             }
 
-            gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(newControllerId) + "'s control.").build());
+            gameLogService.append(gameData, returnEffect.cards() != null
+                    ? GameLog.textCardText(gameData.playerIdToName.get(newControllerId) + " puts ", card,
+                    " onto the battlefield.")
+                    : GameLog.builder().card(card).text(" returns to the battlefield under "
+                    + gameData.playerIdToName.get(newControllerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
                     gameData.id, card.getName(), entry.getCard().getName());
             enteredCreatures.add(new SimultaneousEntry(card, newControllerId));

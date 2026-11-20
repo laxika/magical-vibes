@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
+
 import java.util.Objects;
 
 /**
@@ -19,9 +21,16 @@ import java.util.Objects;
  * @param freeCast               the cards are played without paying their mana costs
  * @param anyManaType            mana of any type can be spent to cast a card this way (not a land, which isn't cast)
  * @param exileInsteadOfGraveyard "if that spell would be put into a graveyard, exile it instead"
+ * @param playCondition          "during any turn you attacked with a Wolf or Werewolf, you may cast that card" (Rahilda),
+ *                               "you may play cards exiled with this enchantment as long as you attacked this turn"
+ *                               (Pick Up the Pace): the permission is usable only while it holds, judged as the card is
+ *                               played; {@code null} for always
+ * @param ownerPlays             "its owner may play it" (Suspend Aggression, Release to the Wind): each card's owner holds
+ *                               its permission instead of the effect's controller, "their next turn" being the owner's
  */
 public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration, boolean freeCast,
-                                            boolean anyManaType, boolean exileInsteadOfGraveyard)
+                                            boolean anyManaType, boolean exileInsteadOfGraveyard,
+                                            Condition playCondition, boolean ownerPlays)
         implements CardEffect {
 
     public AllowPlayCardsFromExileEffect {
@@ -30,6 +39,14 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
         if (cards.declaresTarget()) {
             throw new IllegalArgumentException("The permission names the cards an earlier step moved: " + cards);
         }
+        if (ownerPlays && Duration.WHILE_SOURCE_CONTROLLED.equals(duration)) {
+            throw new IllegalArgumentException("A permission held while you control the source is yours");
+        }
+    }
+
+    public AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration, boolean freeCast, boolean anyManaType,
+                                         boolean exileInsteadOfGraveyard) {
+        this(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard, null, false);
     }
 
     /** "You may play that card for as long as it remains exiled." */
@@ -54,16 +71,31 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
 
     /** "… without paying its mana cost." */
     public AllowPlayCardsFromExileEffect withoutPayingManaCost() {
-        return new AllowPlayCardsFromExileEffect(cards, duration, true, anyManaType, exileInsteadOfGraveyard);
+        return new AllowPlayCardsFromExileEffect(cards, duration, true, anyManaType, exileInsteadOfGraveyard,
+                playCondition, ownerPlays);
     }
 
     /** "… and mana of any type can be spent to cast that spell." */
     public AllowPlayCardsFromExileEffect withAnyManaType() {
-        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, true, exileInsteadOfGraveyard);
+        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, true, exileInsteadOfGraveyard,
+                playCondition, ownerPlays);
     }
 
     /** "If that spell would be put into a graveyard, exile it instead." */
     public AllowPlayCardsFromExileEffect exilingInsteadOfGraveyard() {
-        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, true);
+        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, true, playCondition,
+                ownerPlays);
+    }
+
+    /** "During any turn [condition], you may cast that card", "… as long as [condition]". */
+    public AllowPlayCardsFromExileEffect playableOnlyIf(Condition condition) {
+        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
+                Objects.requireNonNull(condition, "condition"), ownerPlays);
+    }
+
+    /** "Its owner may play it": each card's owner, not you, may play it. */
+    public AllowPlayCardsFromExileEffect playableByOwner() {
+        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
+                playCondition, true);
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -12,7 +13,8 @@ import java.util.Set;
  * {@code GameData.exiledCards} by source permanent ID) to the battlefield. Used as a
  * death trigger by cards like Helvault whose abilities accumulate exiled cards and
  * release them when the source is put into a graveyard from the battlefield, and as a
- * sacrifice ability by Endless Sands and Cold Storage.
+ * sacrifice ability by Endless Sands and Cold Storage. With {@link #cards()} it puts the cards a
+ * card subject names in exile onto the battlefield instead ({@link #putOntoBattlefield}).
  *
  * @param underControllerControl when {@code true} the cards return under the ability
  *        controller's control ("under your control", Cold Storage); when {@code false}
@@ -32,6 +34,8 @@ import java.util.Set;
  * @param sacrificeAtEndStep whether returned permanents are sacrificed at the beginning of the next end step
  * @param enterFaceDown whether returned permanents enter face down as 2/2 artifact creatures;
  *                      {@code grantedSubtype}, when present, is included among their face-down subtypes
+ * @param cards the cards put onto the battlefield instead of those exiled with the source, each one the subject
+ *        names that is in exile; {@code null} for the cards exiled with the source
  */
 public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                    CardPredicate filter,
@@ -43,24 +47,42 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                                                    CounterType enteringCounterType,
                                                    boolean enterTapped, boolean useLinkedSource,
                                                    boolean sacrificeAtEndStep,
-                                                   boolean enterFaceDown) implements CardEffect {
+                                                   boolean enterFaceDown,
+                                                   CardSubject cards) implements CardEffect {
+
+    public ReturnAllCardsExiledWithSourceEffect {
+        if (cards != null && cards.declaresTarget()) {
+            throw new IllegalArgumentException("The step names the cards an earlier step moved: " + cards);
+        }
+    }
+
+    /**
+     * "Put [those cards] onto the battlefield" under your control: each card {@code cards} names that is in exile,
+     * entering together (an Aura asks what it enchants, CR 303.4f, and stays in exile with nothing to enchant,
+     * CR 303.4g). "Put all artifact cards exiled this way onto the battlefield" is
+     * {@code cardsThisWay(StepKind.EXILE, artifact)} (Tezzeret, Master of the Bridge).
+     */
+    public static ReturnAllCardsExiledWithSourceEffect putOntoBattlefield(CardSubject cards) {
+        return new ReturnAllCardsExiledWithSourceEffect(true, null, false, Set.of(), null, null, null, null,
+                false, false, false, false, Objects.requireNonNull(cards, "cards"));
+    }
 
     public ReturnAllCardsExiledWithSourceEffect() {
-        this(false, null, false, Set.of(), null, null, null, null, false, false, false, false);
+        this(false, null, false, Set.of(), null, null, null, null, false, false, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl) {
-        this(underControllerControl, null, false, Set.of(), null, null, null, null, false, false, false, false);
+        this(underControllerControl, null, false, Set.of(), null, null, null, null, false, false, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(CardPredicate filter) {
-        this(false, filter, false, Set.of(), null, null, null, null, false, false, false, false);
+        this(false, filter, false, Set.of(), null, null, null, null, false, false, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                 CardPredicate filter,
                                                 boolean turnFaceUp) {
-        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null, false, false, false, false);
+        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null, false, false, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
@@ -68,26 +90,26 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                                                 boolean turnFaceUp,
                                                 Set<Keyword> grantedKeywords) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords,
-                null, null, null, null, false, false, false, false);
+                null, null, null, null, false, false, false, false, null);
     }
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
             boolean turnFaceUp, Set<Keyword> grantedKeywords, boolean enterTapped, boolean useLinkedSource) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, null, null, null, null,
-                enterTapped, useLinkedSource, false, false);
+                enterTapped, useLinkedSource, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
             boolean turnFaceUp, Set<Keyword> grantedKeywords, boolean enterTapped, boolean useLinkedSource,
             boolean sacrificeAtEndStep) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, null, null, null, null,
-                enterTapped, useLinkedSource, sacrificeAtEndStep, false);
+                enterTapped, useLinkedSource, sacrificeAtEndStep, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
             boolean turnFaceUp, Set<Keyword> grantedKeywords, Integer basePower, Integer baseToughness,
             CardSubtype grantedSubtype, CounterType enteringCounterType) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
-                grantedSubtype, enteringCounterType, false, false, false, false);
+                grantedSubtype, enteringCounterType, false, false, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
@@ -95,7 +117,7 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
             CardSubtype grantedSubtype, CounterType enteringCounterType, boolean enterTapped,
             boolean useLinkedSource) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
-                grantedSubtype, enteringCounterType, enterTapped, useLinkedSource, false, false);
+                grantedSubtype, enteringCounterType, enterTapped, useLinkedSource, false, false, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl, CardPredicate filter,
@@ -104,7 +126,7 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
             boolean useLinkedSource, boolean sacrificeAtEndStep) {
         this(underControllerControl, filter, turnFaceUp, grantedKeywords, basePower, baseToughness,
                 grantedSubtype, enteringCounterType, enterTapped, useLinkedSource,
-                sacrificeAtEndStep, false);
+                sacrificeAtEndStep, false, null);
     }
 
     /** Returns matching source-tracked cards under your control as face-down 2/2 Cybermen. */
@@ -112,6 +134,6 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
             CardPredicate filter, CardSubtype subtype) {
         return new ReturnAllCardsExiledWithSourceEffect(
                 true, filter, false, Set.of(), null, null, subtype, null,
-                false, false, false, true);
+                false, false, false, true, null);
     }
 }

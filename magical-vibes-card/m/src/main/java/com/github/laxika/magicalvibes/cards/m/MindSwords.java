@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -23,6 +24,6 @@ public class MindSwords extends Card {
                 false));
 
         // Each player exiles two cards from their hand.
-        addSpellEffect(new EachPlayerExilesFromHandEffect(2));
+        addSpellEffect(EachOpponentExilesFromHandEffect.byPlayers(Subjects.eachPlayer(), 2));
     }
 }

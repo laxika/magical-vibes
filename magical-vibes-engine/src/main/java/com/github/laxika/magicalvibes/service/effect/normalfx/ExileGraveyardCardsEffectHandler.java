@@ -296,7 +296,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         List<Card> exiledCards = new ArrayList<>();
         for (UUID targetCardId : targetCardIds) {
             Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
-            if (targetCard == null) {
+            if (targetCard == null || !isTargetedGraveyardObject(gameData, entry, targetCardId)) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
                 continue;
             }
@@ -359,6 +359,21 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         appendCardList(builder, exiledCards);
         builder.text(" from a graveyard.");
         gameLogService.append(gameData, builder.build());
+    }
+
+    /**
+     * Whether the targeted card is still the graveyard object that was targeted: a card that left its graveyard and
+     * came back is a new object (CR 400.7) and is not affected, whichever way its target was recorded.
+     */
+    private boolean isTargetedGraveyardObject(GameData gameData, StackEntry entry, UUID cardId) {
+        long version = gameData.graveyardEntryVersion(cardId);
+        if (cardId.equals(entry.getTargetId()) && entry.getTargetGraveyardEntryVersion() >= 0
+                && version != entry.getTargetGraveyardEntryVersion()) {
+            return false;
+        }
+        Long mixedZoneVersion = entry.getMixedZoneTargetGraveyardVersions().get(cardId);
+        return (mixedZoneVersion == null || mixedZoneVersion == version)
+                && entry.isTargetCardSameGraveyardObject(cardId, version);
     }
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry,

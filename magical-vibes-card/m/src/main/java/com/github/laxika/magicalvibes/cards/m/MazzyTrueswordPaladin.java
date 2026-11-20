@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,6 +37,8 @@ public class MazzyTrueswordPaladin extends Card {
         addTrigger(Triggers.dies(new PermanentAllOfPredicate(List.of(
                                 Triggers.AURA_OR_EQUIPMENT, new PermanentHasSubtypePredicate(CardSubtype.AURA))),
                         ObjectRelation.YOU_CONTROL),
-                new ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect());
+                SequenceEffect.of(
+                        new ExileTriggeringCardFromGraveyardEffect(),
+                        AllowPlayCardsFromExileEffect.untilEndOfYourNextTurn(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }

@@ -291,6 +291,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -2617,6 +2618,25 @@ public class AmountEvaluationService {
                 CardPredicate bound = bindTriggeringCard(not.predicate(), triggeringCardId);
                 yield bound.equals(not.predicate()) ? filter : new CardNotPredicate(bound);
             }
+            default -> filter;
+        };
+    }
+
+    /**
+     * {@code filter} with each "mana value at most [amount]" ({@link CardManaValueAtMostAmountPredicate}) bound to its
+     * amount, evaluated once now in {@code ctx} (CR 608.2h): "if the spell's mana value is less than or equal to the
+     * amount of life you gained this turn" (Bre of Clan Stoutarm). A filter without the predicate is returned as it is.
+     */
+    public CardPredicate bindAmounts(GameData gameData, CardPredicate filter, AmountContext ctx) {
+        return switch (filter) {
+            case null -> null;
+            case CardManaValueAtMostAmountPredicate atMost ->
+                    new CardMaxManaValuePredicate(evaluate(gameData, atMost.amount(), ctx), false);
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindAmounts(gameData, part, ctx)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindAmounts(gameData, part, ctx)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindAmounts(gameData, not.predicate(), ctx));
             default -> filter;
         };
     }

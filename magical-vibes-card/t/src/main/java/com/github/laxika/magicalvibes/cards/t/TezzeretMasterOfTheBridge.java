@@ -4,13 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndPutMatchingOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -51,8 +53,9 @@ public class TezzeretMasterOfTheBridge extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new ExileTopCardsAndPutMatchingOntoBattlefieldEffect(
-                        10, new CardTypePredicate(CardType.ARTIFACT))),
+                List.of(ExileTopCardOfOwnLibraryEffect.of(Subjects.you(), 10),
+                        ReturnAllCardsExiledWithSourceEffect.putOntoBattlefield(Subjects.cardsThisWay(StepKind.EXILE,
+                                new CardTypePredicate(CardType.ARTIFACT)))),
                 "−8: Exile the top ten cards of your library. Put all artifact cards from among them onto the battlefield."
         ));
     }

@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AppaSteadfastGuardian;
+import com.github.laxika.magicalvibes.cards.d.DesperateMeasures;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -27,12 +27,10 @@ class SolsticeRevelationsTest extends BaseCardTest {
         Mountain revealedLand = new Mountain();
         castSolstice(List.of(revealedLand, hit));
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.params().cards()).containsExactly(hit);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(revealedLand, hit);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == hit
                 && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
@@ -60,11 +58,26 @@ class SolsticeRevelationsTest extends BaseCardTest {
         Mountain revealedLand = new Mountain();
         castSolstice(List.of(revealedLand, hit));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == hit);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(revealedLand);
+    }
+
+    @Test
+    @CardUsed(DesperateMeasures.class)
+    @DisplayName("A free cast that can't be made, for want of a legal target, puts the card into hand")
+    void uncastableAcceptedCardGoesToHand() {
+        addMountains(2);
+        DesperateMeasures hit = new DesperateMeasures();
+        castSolstice(List.of(hit));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(hit);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == hit);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test
@@ -108,7 +121,7 @@ class SolsticeRevelationsTest extends BaseCardTest {
         SolsticeRevelations hit = new SolsticeRevelations();
         castSolstice(List.of(hit));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Ally")).hasSize(1);
