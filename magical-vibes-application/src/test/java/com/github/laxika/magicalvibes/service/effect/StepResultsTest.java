@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -717,6 +718,78 @@ class StepResultsTest extends BaseCardTest {
                     .containsExactly(player2.getId());
             assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
                     .containsExactly("Grizzly Bears");
+        }
+
+        @Test
+        @DisplayName("A permanent chosen at the return prompt is the step's result, and \"if you do\" runs after the choice")
+        void chosenReturnEndsTheStepOnTheChoice() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new HillGiant());
+            harness.setLife(player1, 10);
+
+            StackEntry entry = resolve(player1, null, null,
+                    ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsCreaturePredicate(),
+                            "creature"),
+                    ifDone(StepKind.RETURN, new GainLifeEffect(3)));
+            harness.assertLife(player1, 10);
+            harness.handlePermanentChosen(player1, bears.getId());
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.RETURN).objectIds())
+                    .containsExactly(bears.getId());
+            assertThat(entry.getResolutionResults().outcome(StepKind.RETURN).playerIds())
+                    .containsExactly(player1.getId());
+            harness.assertInHand(player1, "Grizzly Bears");
+            harness.assertLife(player1, 13);
+        }
+
+        @Test
+        @DisplayName("With nothing to choose, nothing is returned this way and \"if you do\" does nothing")
+        void nothingToReturnIsNoReturn() {
+            harness.setLife(player1, 10);
+
+            StackEntry entry = resolve(player1, null, null,
+                    ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsCreaturePredicate(),
+                            "creature"),
+                    ifDone(StepKind.RETURN, new GainLifeEffect(3)));
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.RETURN)).isEqualTo(StepOutcome.NONE);
+            harness.assertLife(player1, 10);
+        }
+
+        @Test
+        @DisplayName("\"If a Bear was returned this way\" judges the returned permanent as it last existed")
+        void returnedPermanentIsJudgedAsItLastExisted() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+            harness.setLife(player1, 10);
+            CardEffect gainIfBear = new ConditionalEffect(
+                    HappenedThisWay.toA(StepKind.RETURN, new PermanentHasSubtypePredicate(CardSubtype.BEAR)),
+                    new GainLifeEffect(3));
+            CardEffect returnCreature = ReturnPermanentControlledByPlayerToHandEffect.controller(
+                    new PermanentIsCreaturePredicate(), "creature");
+
+            resolve(player1, null, null, returnCreature, gainIfBear);
+            harness.handlePermanentChosen(player1, giant.getId());
+            harness.assertLife(player1, 10);
+
+            resolve(player1, null, null, returnCreature, gainIfBear);
+            harness.handlePermanentChosen(player1, bears.getId());
+            harness.assertLife(player1, 13);
+        }
+
+        @Test
+        @DisplayName("\"Return one of them\": the controller chooses only among the permanents the subject names")
+        void choosingOneOfOffersOnlyTheSubjectsPermanents() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.addToBattlefield(player2, new HillGiant());
+
+            resolve(player1, null, null, ReturnPermanentControlledByPlayerToHandEffect.choosingOneOf(
+                    Subjects.ownedBy(Subjects.you(), new PermanentIsCreaturePredicate()), "creature you own"));
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                    .containsExactly(bears.getId());
+            harness.handlePermanentChosen(player1, bears.getId());
+            harness.assertInHand(player1, "Grizzly Bears");
         }
     }
 

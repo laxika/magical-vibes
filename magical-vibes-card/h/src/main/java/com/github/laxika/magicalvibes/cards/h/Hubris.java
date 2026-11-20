@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetAndAttachedMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Hubris extends Card {
 
     public Hubris() {
-        target(TargetFilters.creature()).addSpellEffect(new ReturnTargetAndAttachedMatchingToHandEffect(
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.targetCreatureAndAttached(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA)));
     }
 }

@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,6 +93,11 @@ class ReturnToHandEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
+        // A batch of returns leaves together inside the removal service's simultaneous scope: run the removals.
+        lenient().doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(2).run();
+            return null;
+        }).when(permanentRemovalService).performSimultaneousRemovals(any(), any(), any());
 
         bounceSupport = new BounceSupport(gameQueryService, predicateEvaluationService, gameLogService,
                 permanentRemovalService, stateTriggerService);

@@ -77,7 +77,7 @@ public class ReturnUpToNTargetPermanentsToHandEffectHandler implements NormalEff
 
         int maxCount = Math.min(e.maxCount(), permanentIds.size());
         playerInputService.beginMultiPermanentChoice(gameData, chooserId, permanentIds, maxCount,
-                new MultiPermanentChoiceContext.ReturnTargetPermanentsToHand(e.thenEffect()),
+                new MultiPermanentChoiceContext.ReturnTargetPermanentsToHand(),
                 "Choose up to " + maxCount + " permanent" + (maxCount == 1 ? "" : "s")
                         + " to return to their owners' hands.");
     }

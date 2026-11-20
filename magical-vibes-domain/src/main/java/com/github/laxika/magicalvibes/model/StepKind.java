@@ -30,8 +30,9 @@ package com.github.laxika.magicalvibes.model;
  * chooses at a prompt), exile the top card of a library, destroy, copy, create a token and mill (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
- * {@code DestructionSupport.sacrificeTogether}), put counters (a replacement order answered later adds the rest) and
- * counter a spell; deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
+ * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
+ * ({@code ReturnPermanentControlledByPlayerToHandEffect}: its {@code BounceCreature} choice adds the returned
+ * permanent), put counters (a replacement order answered later adds the rest) and counter a spell; deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
  * own, is never an earlier step. A damage, discard or sacrifice step records {@link StepOutcome#NONE} as it begins and the
  * engine adds to it as the damage is dealt, the cards discarded and the permanents sacrificed.</p>

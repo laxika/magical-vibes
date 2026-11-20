@@ -71,8 +71,8 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
 
     /**
      * "If a Dinosaur is dealt damage this way", "if the sacrificed creature was a Hamster": the most recent
-     * {@code kind} step recorded a permanent that, on the battlefield now or as a sacrificed or destroyed one last
-     * existed, matches {@code filter}.
+     * {@code kind} step recorded a permanent that, on the battlefield now or as a sacrificed, destroyed or returned
+     * one last existed, matches {@code filter} ("if another Desert was returned this way", Arid Archway).
      */
     public static HappenedThisWay toA(StepKind kind, PermanentPredicate filter) {
         return new HappenedThisWay(kind, 1, Objects.requireNonNull(filter, "filter"));

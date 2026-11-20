@@ -252,10 +252,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record BounceCreature(UUID bouncingPlayerId, PermanentPredicate thenCondition, CardEffect thenEffect)
-            implements PermanentChoiceContext {
+    /**
+     * A chosen permanent is returned to its owner's hand. With {@code recordsStep} the choice ends the resolving
+     * entry's RETURN step ({@code ReturnPermanentControlledByPlayerToHandEffect}), so the returned permanent is added
+     * to that step's result.
+     */
+    record BounceCreature(UUID bouncingPlayerId, boolean recordsStep) implements PermanentChoiceContext {
         public BounceCreature(UUID bouncingPlayerId) {
-            this(bouncingPlayerId, null, null);
+            this(bouncingPlayerId, false);
         }
     }
 
@@ -267,9 +271,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** A chosen permanent is returned to hand, then a reflexive follow-up resolves. */
-    record BouncePermanentThen(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                               CardEffect thenEffect) implements PermanentChoiceContext {}
     /** A chosen permanent is returned to hand, then a non-Angel creature card is upgraded. */
     record BouncePermanentAndPerpetuallyBecomeAngel(UUID controllerId, Card sourceCard,
                                                     UUID sourcePermanentId)
@@ -278,9 +279,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ConjureDuplicateOfCombatDamageDealerChoice(UUID controllerId, Card sourceCard,
                                                        List<UUID> combatDamageDealerIds)
             implements PermanentChoiceContext {}
-    /** Return a chosen permanent, then put a +1/+1 counter on the source permanent. */
-    record ReturnPermanentAndPutCounterOnSource(UUID controllerId, Card sourceCard,
-                                                UUID sourcePermanentId) implements PermanentChoiceContext {}
     /** Return a chosen creature, then put +1/+1 counters on the source equal to its power. */
     record ReturnCreatureToHandAndPutCountersOnSourceEqualToPower(UUID controllerId, Card sourceCard,
                                                                    UUID sourcePermanentId)

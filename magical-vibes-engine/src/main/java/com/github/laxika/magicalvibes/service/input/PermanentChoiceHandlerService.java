@@ -939,16 +939,12 @@ public class PermanentChoiceHandlerService {
             }
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
-        } else if (context instanceof PermanentChoiceContext.BouncePermanentThen bounceThen) {
-            battlefieldHandler.handleBouncePermanentThen(gameData, permanentId, bounceThen);
         } else if (context instanceof PermanentChoiceContext.BouncePermanentAndPerpetuallyBecomeAngel becomeAngel) {
             battlefieldHandler.handleBouncePermanentAndPerpetuallyBecomeAngel(gameData, permanentId, becomeAngel);
         } else if (context instanceof PermanentChoiceContext.ConjureDuplicateOfCombatDamageDealerChoice conjureChoice) {
             conjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler.completeChoice(
                     gameData, permanentId, conjureChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof PermanentChoiceContext.ReturnPermanentAndPutCounterOnSource returnAndCounter) {
-            battlefieldHandler.handleReturnPermanentAndPutCounterOnSource(gameData, permanentId, returnAndCounter);
         } else if (context instanceof PermanentChoiceContext.ReturnCreatureToHandAndPutCountersOnSourceEqualToPower returnAndCounter) {
             battlefieldHandler.handleReturnCreatureToHandAndPutCountersOnSourceEqualToPower(
                     gameData, permanentId, returnAndCounter);

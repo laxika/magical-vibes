@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -28,7 +31,8 @@ public class StockpilingCelebrant extends Card {
                 )),
                 "Target must be another nonland permanent you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new MayEffect(new ReturnTargetPermanentsThenEffect(new ScryEffect(2)),
+                        new MayEffect(SequenceEffect.of(ReturnToHandEffect.target(),
+                                new ConditionalEffect(HappenedThisWay.returned(), new ScryEffect(2))),
                                 "Return the targeted permanent to its owner's hand?"));
     }
 }

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -37,9 +38,9 @@ public class TheKamiWar extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another nonland permanent");
         addTrigger(Triggers.chapter(2),
-                new ReturnTargetPermanentsThenEffect(
-                        new DiscardEffect(1, Subjects.eachOpponent()),
-                        chapterTwoTarget.predicate(), true));
+                SequenceEffect.of(
+                        ReturnToHandEffect.target(chapterTwoTarget.predicate()),
+                        new DiscardEffect(1, Subjects.eachOpponent())));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(chapterTwoTarget, 0, 1)));
 

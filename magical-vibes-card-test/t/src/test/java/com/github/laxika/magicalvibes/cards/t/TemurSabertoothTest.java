@@ -36,10 +36,11 @@ class TemurSabertoothTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(creature.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, sabertooth, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -58,7 +59,7 @@ class TemurSabertoothTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasKeyword(gd, sabertooth, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -73,6 +74,7 @@ class TemurSabertoothTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -91,10 +93,11 @@ class TemurSabertoothTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(other.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(other.getId()));
+        harness.handlePermanentChosen(player1, other.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
         harness.assertInHand(player1, "Temur Sabertooth");
@@ -118,7 +121,8 @@ class TemurSabertoothTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
@@ -136,7 +140,8 @@ class TemurSabertoothTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creature.getId());
         assertThat(gqs.hasKeyword(gd, sabertooth, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -156,10 +161,11 @@ class TemurSabertoothTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new TemurSabertooth());
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(other.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(other.getId()));
+        harness.handlePermanentChosen(player1, other.getId());
 
         harness.assertInHand(player1, "Temur Sabertooth");
         assertThat(gqs.hasKeyword(gd, source, Keyword.INDESTRUCTIBLE)).isTrue();

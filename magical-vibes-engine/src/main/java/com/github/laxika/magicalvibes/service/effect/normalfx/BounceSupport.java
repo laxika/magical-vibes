@@ -65,25 +65,30 @@ public class BounceSupport {
     }
 
     public int applyReturnPermanentsToHand(GameData gameData, StackEntry entry, List<Permanent> toReturn) {
-        int returnedControlledNontokens = 0;
+        int[] returnedControlledNontokens = {0};
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
-            for (Permanent permanent : toReturn) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-                boolean controlledNontoken = entry.getControllerId().equals(controllerId)
-                        && !permanent.getCard().isToken();
-                boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
-                if (returned) {
-                    entry.rememberRemovedPermanentController(permanent.getId(), controllerId);
-                }
-                if (returned && controlledNontoken) {
-                    returnedControlledNontokens++;
-                }
+            // They leave together (CR 603.10a): each one's leave abilities look back at the battlefield as it was
+            // before any of them left (an Aura that removed a creature's abilities, returned with it).
+            permanentRemovalService.performSimultaneousRemovals(gameData, toReturn, () -> {
+                for (Permanent permanent : toReturn) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                    boolean controlledNontoken = entry.getControllerId().equals(controllerId)
+                            && !permanent.getCard().isToken();
+                    boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
+                    if (returned) {
+                        entry.rememberRemovedPermanentController(permanent.getId(), controllerId);
+                    }
+                    if (returned && controlledNontoken) {
+                        returnedControlledNontokens[0]++;
+                    }
 
-                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
-                log.info("Game {} - {} returned to owner's hand by {}",
-                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
-            }
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                    log.info("Game {} - {} returned to owner's hand by {}",
+                            gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+                }
+            });
         } finally {
             permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
@@ -91,7 +96,7 @@ public class BounceSupport {
         if (!toReturn.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        return returnedControlledNontokens;
+        return returnedControlledNontokens[0];
     }
 
     public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color) {

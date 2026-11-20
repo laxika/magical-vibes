@@ -1970,11 +1970,6 @@ public class MultiPermanentChoiceHandlerService {
                                         + " returned to their owners' hands.").build());
                 log.info("Game {} - {} returns {} permanents to hand", gameData.id,
                         gameData.playerIdToName.get(playerId), bouncedCards.size());
-
-                if (context.thenEffect() != null && gameData.pendingEffectResolutionEntry != null) {
-                    gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                            gameData.pendingEffectResolutionIndex, List.of(context.thenEffect()));
-                }
             }
         }
 

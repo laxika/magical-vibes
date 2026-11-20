@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -28,6 +29,8 @@ import java.util.Objects;
  *       target player controls matching the filter (River's Rebuke).</li>
  *   <li>{@link #permanentsTargetPlayerOwns(PermanentPredicate)} — bounce every permanent the target
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
+ *   <li>{@link #targetCreatureAndAttached(PermanentPredicate)} — bounce target creature and the matching permanents
+ *       attached to it together (Hubris).</li>
  *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
  *   <li>{@link #enchantedAndAuras()} — bounce the permanent the source Aura is attached to and
  *       every Aura attached to that permanent (Mark of Eviction).</li>
@@ -175,6 +178,16 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
      */
     public static ReturnToHandEffect aurasAttachedToTarget() {
         return of(Subjects.attachmentsOf(Subjects.target(), AURA));
+    }
+
+    /**
+     * Returns target creature and every permanent attached to it that matches {@code attachedFilter} to their owners'
+     * hands as one simultaneous event ("target creature and all Auras attached to it", Hubris; "all white Auras you own
+     * attached to it", Word of Undoing). Only the creature is targeted.
+     */
+    public static ReturnToHandEffect targetCreatureAndAttached(PermanentPredicate attachedFilter) {
+        return new ReturnToHandEffect(Subjects.allOf(Subjects.attachmentsOf(Subjects.target(), attachedFilter),
+                Subjects.target()), new PermanentIsCreaturePredicate(), false, false, 0, 0, null, null, 0);
     }
 
     /** Returns the permanent the source Aura is attached to to its owner's hand (Sun Clasp). Non-targeting. */

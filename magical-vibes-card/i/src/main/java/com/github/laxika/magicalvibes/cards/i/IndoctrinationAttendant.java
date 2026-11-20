@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -26,10 +28,10 @@ public class IndoctrinationAttendant extends Card {
     public IndoctrinationAttendant() {
         addStaticEffect(new ToxicEffect(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ReturnPermanentControlledByPlayerToHandThenEffect(
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
-                        miteToken(),
-                        "another permanent"),
+                SequenceEffect.of(
+                        ReturnPermanentControlledByPlayerToHandEffect.controller(
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()), "another permanent"),
+                        new ConditionalEffect(HappenedThisWay.returned(), miteToken())),
                 "Return another permanent you control to its owner's hand?"));
     }
 

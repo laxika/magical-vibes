@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,8 +37,9 @@ public class AridArchway extends Card {
 
         // When this land enters, return a land you control to its owner's hand. If another Desert
         // was returned this way, surveil 1.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnPermanentControlledByPlayerToHandEffect(
-                new PermanentIsLandPredicate(), "land", ANOTHER_DESERT, new SurveilEffect(1)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land"),
+                new ConditionalEffect(HappenedThisWay.toA(StepKind.RETURN, ANOTHER_DESERT), new SurveilEffect(1))));
 
         // {T}: Add {C}{C}.
         addActivatedAbility(new ActivatedAbility(

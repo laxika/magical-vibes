@@ -34,12 +34,12 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
@@ -120,8 +120,9 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 new ConditionalEffect(HappenedThisWay.drew(), new QueueReflexiveAbilityEffect(effect)))),
         DISCARD_THEN(effect -> new DiscardCardThenEffect(
                 new CardTypePredicate(CardType.CREATURE), effect, "a creature card")),
-        BOUNCE_THEN(effect -> new ReturnPermanentControlledByPlayerToHandThenEffect(
-                new PermanentIsCreaturePredicate(), effect, "a creature")),
+        BOUNCE_THEN(effect -> SequenceEffect.of(
+                ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsCreaturePredicate(), "creature"),
+                new ConditionalEffect(HappenedThisWay.returned(), new QueueReflexiveAbilityEffect(effect)))),
         SACRIFICE_FOR_POWER_DAMAGE(effect -> new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
         EXILE_THEN_EXILE_MATCHING(effect -> new ExilePermanentThenExileMatchingPermanentsEffect(
                 new PermanentIsCreaturePredicate(), new PermanentIsCreaturePredicate(), "creature")),

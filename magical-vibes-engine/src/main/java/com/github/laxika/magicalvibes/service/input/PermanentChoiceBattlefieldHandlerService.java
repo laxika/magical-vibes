@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
@@ -53,7 +55,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1762,22 +1763,16 @@ public class PermanentChoiceBattlefieldHandlerService {
                 context.sourceCardName() + " — Choose a creature you control to return to its owner's hand.");
     }
 
+    /**
+     * Returns the chosen permanent to its owner's hand. A choice that ends a RETURN step adds the returned permanent
+     * and its owner (the player whose hand its card went to) to the parked entry's step result.
+     */
     public void handleBounceCreature(GameData gameData, UUID permanentId,
                                      PermanentChoiceContext.BounceCreature context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {
             throw new IllegalStateException("Target creature no longer exists");
         }
-
-        StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
-        boolean resolveFollowUp = context.thenEffect() != null
-                && (context.thenCondition() == null || resolvingEntry != null
-                && predicateEvaluationService.matchesPermanentPredicate(
-                target,
-                context.thenCondition(),
-                FilterContext.of(gameData)
-                        .withSourceCardId(resolvingEntry.getCard().getId())
-                        .withSourceControllerId(resolvingEntry.getControllerId())));
 
         boolean returned = permanentRemovalService.removePermanentToHand(gameData, target, true);
         if (returned) {
@@ -1787,58 +1782,18 @@ public class PermanentChoiceBattlefieldHandlerService {
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
         }
 
-        if (returned && resolveFollowUp && resolvingEntry != null) {
-            resolvingEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex, List.of(context.thenEffect()));
+        StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
+        if (returned && context.recordsStep() && resolvingEntry != null) {
+            UUID handOwnerId = gameData.playerHands.entrySet().stream()
+                    .filter(hand -> hand.getValue().stream()
+                            .anyMatch(card -> card.getId().equals(target.getOriginalCard().getId())))
+                    .map(Map.Entry::getKey)
+                    .findFirst().orElse(null);
+            resolvingEntry.addToStep(StepKind.RETURN, StepOutcome.ofObjects(List.of(target.getId()),
+                    handOwnerId == null ? List.of() : List.of(handOwnerId)));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleBouncePermanentThen(GameData gameData, UUID permanentId,
-                                           PermanentChoiceContext.BouncePermanentThen context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
-        }
-
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to owner's hand by {}", gameData.id,
-                    target.getCard().getName(), context.sourceCard().getName());
-
-            if (context.thenEffect() != null) {
-                List<CardEffect> thenEffects = new ArrayList<>(List.of(context.thenEffect()));
-                var targetSpec = context.thenEffect().targetSpec();
-                boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                        || targetSpec.admits(TargetPredicate.Kind.PLAYER);
-                if (needsTarget) {
-                    // The targeted follow-up is an ability of its own (CR 603.12): it records what the resolving
-                    // entry was about, and the stack door chooses its target as it goes on the stack (CR 603.3d).
-                    triggeredAbilityStackService.putMade(gameData, bounceFollowUpRecord(gameData, context, thenEffects));
-                } else if (gameData.pendingEffectResolutionEntry != null) {
-                    // "If you do, …" is part of the same resolution, not a new ability; a "when you do"
-                    // payoff wraps itself in QueueReflexiveAbilityEffect to reach the stack (CR 603.12).
-                    gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                            gameData.pendingEffectResolutionIndex, thenEffects);
-                } else {
-                    triggeredAbilityStackService.putMade(gameData, bounceFollowUpRecord(gameData, context, thenEffects));
-                }
-            }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** The entry of the bounce follow-up's ability when it chooses nothing: what the resolving entry was about. */
-    private StackEntry bounceFollowUpRecord(GameData gameData, PermanentChoiceContext.BouncePermanentThen context,
-                                            List<CardEffect> thenEffects) {
-        return ReflexiveAbilitySupport.recordFor(gameData,
-                ReflexiveAbilitySupport.resolvingEntryOf(gameData, context.sourceCard(), context.sourcePermanentId()),
-                context.sourceCard(), context.controllerId(), thenEffects,
-                context.sourceCard().getName() + "'s effect", context.sourcePermanentId());
     }
 
     public void handleBouncePermanentAndPerpetuallyBecomeAngel(
@@ -1846,30 +1801,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             PermanentChoiceContext.BouncePermanentAndPerpetuallyBecomeAngel context) {
         returnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler.completeChoice(
                 gameData, permanentId, context);
-    }
-
-    public void handleReturnPermanentAndPutCounterOnSource(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.ReturnPermanentAndPutCounterOnSource context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
-        }
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " is returned to its owner's hand."));
-            Permanent source = context.sourcePermanentId() == null
-                    ? gameData.playerBattlefields.getOrDefault(context.controllerId(), List.of()).stream()
-                    .filter(permanent -> permanent.getCard() == context.sourceCard())
-                    .findFirst()
-                    .orElse(null)
-                    : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            if (source != null) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1, context.controllerId());
-            }
-        }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleReturnCreatureToHandAndPutCountersOnSourceEqualToPower(

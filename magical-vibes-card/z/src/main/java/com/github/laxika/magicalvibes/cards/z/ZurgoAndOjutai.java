@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnOneOfCombatDamageDealersToHandThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,8 +32,8 @@ public class ZurgoAndOjutai extends Card {
                 SequenceEffect.of(
                         LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)),
                         new MayEffect(
-                                new ReturnOneOfCombatDamageDealersToHandThenEffect(
-                                        null, "one of those Dragons"),
+                                ReturnPermanentControlledByPlayerToHandEffect.choosingOneOf(Subjects.triggeringAll(),
+                                        "one of those Dragons"),
                                 "Return one of those Dragons to its owner's hand?")));
     }
 }

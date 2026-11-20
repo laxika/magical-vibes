@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -15,10 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnOneOfCombatDamageDealersToHandThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -36,10 +38,12 @@ public class KaitoDancingShadow extends Card {
                         .withFilter(new PermanentIsCreaturePredicate()),
                 TriggerOptions.ONE_OR_MORE,
                 new MayEffect(
-                        new ReturnOneOfCombatDamageDealersToHandThenEffect(
-                                new MayEffect(new GrantExtraLoyaltyActivationToSourceEffect(true),
-                                        "Activate Kaito's loyalty abilities twice this turn?"),
-                                "a creature that dealt combat damage"),
+                        SequenceEffect.of(
+                                ReturnPermanentControlledByPlayerToHandEffect.choosingOneOf(Subjects.triggeringAll(),
+                                        "a creature that dealt combat damage"),
+                                new ConditionalEffect(HappenedThisWay.returned(),
+                                        new MayEffect(new GrantExtraLoyaltyActivationToSourceEffect(true),
+                                                "Activate Kaito's loyalty abilities twice this turn?"))),
                         "Return one of them to its owner's hand?"));
 
         addActivatedAbility(new ActivatedAbility(

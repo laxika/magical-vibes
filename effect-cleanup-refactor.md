@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 14 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 15 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -533,6 +533,7 @@ cause under Findings.
 | 12 | run 11's leftovers: `ExileTopCardsMayPlayUntilNextTurnEffect` and Curse of Hospitality's record (a who-may-play subject), `ExileTopCardsOfDefendingPlayerLibraryEffect`, `ExileTopCardMayPlayWhileExiledEffect`, `ExileNCardsFromGraveyardThenEffect` ("exactly N or none") | done (4 absorbed, 1 split, 1 unique, 2 survivors; 72 card files rewritten; `playableBy(PlayerSubject)`, `playableOnlyIf(Condition)`; Blightwing Bandit and Skywarp Skaab fixed by Oracle text) |
 | 13 | run 12's leftovers: the choose-one, cast-matching, random-opponent, token and Hidetsugu library records; Heated Argument's graveyard record; Raven Guild Master and Sire of Stagnation's player | done (6 absorbed, 2 split, 2 blocked-other, 1 unique; 32 card files rewritten; `mayOnlyCast(filter)`, `upTo(n)`, `choosingOne()`; Narset's Adventure fixed by a ruling; the four multi-card graveyard "and" records not reached) |
 | 14 | run 13's graveyard "and" records: the imprint and track-with-source target exiles, then the token-copy and may-cast-a-copy records | done (2 absorbed into `ExileGraveyardCardsEffect`, `imprintingOnSource()`; 16 card files rewritten; stopped at `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`: no token-copy step copies a card an EXILE step recorded, a design decision; the may-cast-a-copy record not started) |
+| 15 | the Return family (fused names or a nested `CardEffect`; Exile left for the card-subject decision): the chosen return records a RETURN step, then its "then" records, the target-return "then" records, the attached bounce | done (6 split, 1 absorbed, 4 survivors, 1 unique, 9 blocked-other; 23 card files rewritten; `choosingOneOf`, `ReturnToHandEffect.targetCreatureAndAttached`, `toA(RETURN)`; Paradoxical Outcome kept on its record; the batch bounce now looks back, CR 603.10a) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4455,6 +4456,103 @@ classes (124 result files with the `@Nested` suites), 1,153 test cases, all pass
   `ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect` and `ExileGraveyardCardsAndMayCastCopiesEffect` might share: one run to build it
   and fold those, after the human signs off on its shape. Blue Mage's Cane says "defending player's graveyard" (its record kept the
   opponent-graveyard scope; `fromDefendingPlayerGraveyard()`'s `defendingPlayerOnly` differs only with more than one opponent).
+
+### Step 8, run 15 (2026-11-20)
+
+Family choice: run 14 left the Exile family on a human decision (a "card an EXILE step recorded" subject for the token-copy
+and may-cast-a-copy steps), so its records, Hidetsugu and Kairi stay as they are. Of the other first-word families with
+`Then` / `And` / `IfYouDo` / `Unless` / `OrElse` names or a nested `CardEffect` (`--unaudited`), Return had the most
+split-able multi-card records whose first half records a step: `ReturnToHandEffect` (step 7) for the target ones, and
+`ReturnPermanentControlledByPlayerToHandEffect` once it records (a run-9-size engine change, done first). Grant's nested
+effects are static abilities, not second instructions; Search's are mostly "and/or graveyard"; Sacrifice's remainder is
+mostly "unless". Verdicts (ledger, step `8`): **split 6** (`ReturnPermanentControlledByPlayerToHandThenEffect`,
+`ReturnOneOfCombatDamageDealersToHandThenEffect`, `ReturnPermanentOwnedByPlayerToHandThenEffect`,
+`ReturnPermanentAndPutCounterOnSourceEffect`, `ReturnTargetPermanentToHandWithManaValueConditionalEffect`,
+`ReturnTargetCreatureToHandThenCreateTokensEqualToManaValueEffect`), **absorbed 1** (`ReturnTargetAndAttachedMatchingToHandEffect`),
+with their handlers; **survivor 4** (`ReturnPermanentControlledByPlayerToHandEffect`, `ReturnToHandEffect`, `HappenedThisWay`,
+`RegisterDelayedCreateTokenAtNextUpkeepEffect`); **unique 1** (`ReturnUpToNTargetPermanentsToHandEffect`, Devastating Mastery
+only now); **blocked-other 9** (`ReturnTargetPermanentsThenEffect` with Paradoxical Outcome, the five "Unless" records, the two
+perpetual riders, Supplant Form's token copy); blocked-step-model 0, blocked-player-loop 0. `ReturnSourceAsAuraEffect` (3 cards) is
+left unaudited: its nested effect is the static ability the returned Aura gets, not a second instruction. Ratchet 4,760 / 3,993 →
+4,753 / 3,986. 23 card files rewritten (a deleted scratch script); Oracle text of every one checked with `get_card`, rulings of
+Temur Sabertooth, Mistbreath Elder, Kaito, Wanderwine Farewell, Paradoxical Outcome and The Eagles Are Coming! with `get_rulings`.
+CR 603.10a, 707.2 and 608.2c checked with `get_rule` (2026-11-20).
+
+- **The chosen return is a step.** `ReturnPermanentControlledByPlayerToHandEffect` records `StepOutcome.NONE` for RETURN as it
+  begins; its `PermanentChoiceContext.BounceCreature(bouncingPlayerId, recordsStep)` completion adds the returned permanent and
+  the owner of the hand its card went to to the parked entry's outcome (`addToStep`), so the step ends on the choice and a later
+  step reads it (`StepKind` Javadoc lists it). The other `BounceCreature` users (Sunken Hope, upkeep bounces, the may-penalty and
+  sharing-type returns) don't record. The record lost `thenCondition` / `thenEffect` and gained `PermanentSubject candidates`
+  (`choosingOneOf(subject, noun)`: the controller chooses among the live permanents a subject names); its filter context now
+  has the source permanent (Mistbreath Elder's "another creature" is `PermanentIsSourcePermanentPredicate`). The prompt reads
+  "Choose another creature …" instead of "Choose a another creature …". `HappenedThisWay.toA(RETURN, filter)` judges a returned
+  permanent as it last existed (the departure snapshot, as for SACRIFICE / DESTROY).
+- **Split, chosen return** (`MayEffect` around the sequence for "you may"): Geothermal Kami, Indoctrination Attendant, Slab Hammer
+  (`ConditionalEffect(HappenedThisWay.returned(), X)`), Pyroclastic Hellion ("When you do": X in a `QueueReflexiveAbilityEffect`,
+  as before), Arid Archway (`toA(RETURN, another Desert)`), Kaito (`choosingOneOf(triggeringAll())` + gate around its own may),
+  Zurgo and Ojutai (`choosingOneOf(triggeringAll())`, no rider), Phenomenon Investigators (`choosingOneOf(ownedBy(you(), nonland))`),
+  Mistbreath Elder (gate for the counter, `NotCondition(returned())` for "Otherwise, you may return this creature"), Temur Sabertooth
+  (`MayEffect(controller(another creature) + gate)`; its ruling: you choose whether and which as it resolves).
+- **Split, target return** (`ReturnToHandEffect.target()`, which records RETURN): Nurturing Pixie and Stockpiling Celebrant (gate),
+  Niambi (gate + `GainLifeEffect(TargetManaValue)`), The Kami War II (ungated "Then", `target(chapter filter)`), Wanderwine Farewell
+  (`AmountThisWay(StepKind.RETURN)` inside the Merfolk condition), The Eagles Are Coming! (gate + the delayed tokens'
+  `AmountThisWay(RETURN)`, evaluated by `RegisterDelayedCreateTokenAtNextUpkeepEffectHandler` as it registers), Perilous Voyage and
+  Serum Snare (`TargetPermanentMatches(PermanentMaxManaValuePredicate(n))`, the departed target's mana value), Aether Mutation
+  (`CreateTokenEffect(TargetManaValue)`). Target specs are unchanged: every target step is a benign permanent target with the
+  card's filter, as the records declared, and `RemovalEffect` BOUNCE, so the AI's polarity is the same.
+- **Absorbed.** `ReturnToHandEffect.targetCreatureAndAttached(attachedFilter)` = `allOf(attachmentsOf(target(), filter), target())`
+  with a creature target filter (Hubris, Orzhov Charm, Portal of Sanctuary, Word of Undoing).
+- **Engine change: a batch bounce looks back (CR 603.10a).** `BounceSupport.applyReturnPermanentsToHand` (every non-target
+  `ReturnToHandEffect` subject, three other mass-bounce handlers and the opponent-chosen bounce) now runs its returns inside
+  `PermanentRemovalService.performSimultaneousRemovals`, as the attached record's handler did: leave abilities judge the board as it
+  was before any of them left. Hubris', Word of Undoing's and Portal of Sanctuary's look-back tests (Darksteel Mutation on
+  Thragtusk, Funeral March) failed on the leave batch alone and pass with it. `ReturnToHandEffectHandlerTest` stubs the mocked
+  `performSimultaneousRemovals` to run its removals.
+- **Removed context paths.** `PermanentChoiceContext.BouncePermanentThen` and `ReturnPermanentAndPutCounterOnSource` and their
+  completions are gone; `MultiPermanentChoiceContext.ReturnTargetPermanentsToHand` lost `thenEffect`.
+- **Behaviour changes.** Temur Sabertooth asks "you may" and then a permanent choice instead of an up-to-one multi-select (its
+  tests updated). Mistbreath Elder's "Otherwise" also follows a chosen return that didn't happen (an exile replacement), as its
+  ruling reads "If you don't"; the self-return may is asked as a step of the trigger, not as a parked pending may. Wanderwine
+  Farewell and The Eagles Are Coming! count permanents returned, not cards (a melded permanent once: "for each permanent / creature
+  returned"). Niambi's and Aether Mutation's mana value is the permanent's (`getPermanentManaValue`: a face-down creature's 0).
+  Kaito's, Zurgo's and Phenomenon Investigators' choice prompts lost the card-name prefix. The survivors' log lines win.
+- **AI.** No AI class named a deleted record; the split cards' target steps are `RemovalEffect` BOUNCE as the records were.
+- **Tests.** `StepResultsTest` +4 (a chosen return ends the step on the choice and its "if you do" runs after it; nothing to choose
+  is no return; `toA(RETURN)` judges the returned permanent as it last existed; `choosingOneOf` offers only the subject's
+  permanents). `ReflexiveRouteRecordTest`'s `BOUNCE_THEN` route is rebuilt from the steps. One Gradle run of card tests (one
+  `--tests` list per task): the tests of every rewritten card, of Devastating Mastery and Paradoxical Outcome, of the 40 other card
+  tests that construct one of them, every card test naming `BounceCreature`, `--tests-for ReturnPermanentControlledByPlayerToHandEffect
+  --max-per-class 60`, `--tests-for ReturnToHandEffect --max-per-class 30`, `--tests-for` the up-to-N, half-creatures, delayed-token,
+  three mass-bounce, upkeep-bounce and sharing-type return records: 170 classes, 1,362 test cases (top-level suites), all pass
+  after the look-back fix and the Temur update. Application (`StepResultsTest`, `ReflexiveRouteRecordTest`,
+  `ReturnToHandEffectHandlerTest`, `BouncePermanentOnUpkeepEffectHandlerTest`, `PermanentChoiceInteractionHandlerTest`,
+  `MultiSelectionInteractionHandlersTest`, `PlayerInputServiceTest`, `MayEffectHandlerTest`, `EffectResolutionServiceTest`,
+  `SubjectResolutionServiceTest`, `ResolutionScratchpadAmountTest`, both ratchets, `CardImmutabilityArchTest`, two others):
+  374 test cases, all pass; AI `TargetPolarityGuardTest`, `SpellEvaluatorTest`: 98, all pass. Application, AI, engine testFixtures
+  and card-test `a g h i k m n o p s t w z` test sources compile.
+
+**For later runs.**
+
+- "You may return a [filter] you control to its owner's hand. If you do / When you do" is
+  `MayEffect(SequenceEffect.of(ReturnPermanentControlledByPlayerToHandEffect.controller(filter, noun), ConditionalEffect(HappenedThisWay.returned(), X)))`;
+  "return one of them" `choosingOneOf(Subjects.triggeringAll(), noun)`; "if a [kind] was returned this way" `HappenedThisWay.toA(StepKind.RETURN, filter)`.
+  "Return target …. If its mana value was N or less" is `ReturnToHandEffect.target()` + `TargetPermanentMatches(PermanentMaxManaValuePredicate(N))`.
+- Still fused in Return: Paradoxical Outcome (a "cards returned to your hand" count, melded components each: an `AmountThisWay`
+  stat over the RETURN objects' departed snapshots would do it once a second card needs it), Supplant Form (a token copy of a
+  face-down departed target), the perpetual riders, `ReturnCreatureToHandAndPutCountersOnSourceEqualToPowerEffect` (First
+  Responder: needs `AmountThisWay` POWER for RETURN), Echoing Truth / Mists of Lórien (same name / same mana value as the target
+  among all permanents).
+- **Next run: the Destroy family.** Its split-able multi-card records: `DestroyTargetPermanentWithManaValueConditionalEffect`
+  (3 cards, this run's Perilous Voyage pattern), `DestroyTargetPermanentAndAllWithSameNameEffect` (5; with Echoing Truth and Mists
+  of Lórien it wants `otherCreaturesSharing` widened to any permanent with a filter, `SharedQuality.NAME` / a new `MANA_VALUE`),
+  `DestroyBlockedCreatureAndSelfEffect` (2, `allOf`), `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect` (2, run 3's
+  search subject), `DestroyUpToTargetsThenReturnFromGraveyardEffect` (2), and `DestroyAllPermanentsEffect`'s `thenEffect` rider
+  (260 cards use the record; count the rider's users first). Skip the two "Unless" records and
+  `DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect` unless its halves separate.
+- **Remaining fused multi-card records** (`--unaudited`, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
+  `OrElse` name): 137 (1,275 card uses); by first word Exile 22, Search 10, Sacrifice 10, Reveal 9, Counter 8, Prevent 7,
+  Destroy 7, Draw 6, Each 6, Cant 5, Choose 5, Put 4. About a third are not two instructions ("unless" taxes and restrictions,
+  "and/or graveyard" searches), so roughly 90 split-able families remain.
 
 ## Prompt
 

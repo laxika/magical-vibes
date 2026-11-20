@@ -4,8 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnUpToNTargetPermanentsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,13 +27,17 @@ public class TemurSabertooth extends Card {
 
     public TemurSabertooth() {
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",
-                List.of(new ReturnUpToNTargetPermanentsToHandEffect(1,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentControlledBySourceControllerPredicate(),
-                                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                                )),
-                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()))),
+                List.of(new MayEffect(SequenceEffect.of(
+                                ReturnPermanentControlledByPlayerToHandEffect.controller(
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentControlledBySourceControllerPredicate(),
+                                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                                        )),
+                                        "another creature"),
+                                new ConditionalEffect(HappenedThisWay.returned(),
+                                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()))),
+                                "Return another creature you control to its owner's hand?")),
                 "{1}{G}: You may return another creature you control to its owner's hand. If you do, this creature gains indestructible until end of turn."));
     }
 }

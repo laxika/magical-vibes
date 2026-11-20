@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetAndAttachedMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -38,7 +38,7 @@ public class OrzhovCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature you control and all Auras you control attached to it to their owner's hand",
-                        new ReturnTargetAndAttachedMatchingToHandEffect(
+                        ReturnToHandEffect.targetCreatureAndAttached(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.AURA),
                                         new PermanentControlledBySourceControllerPredicate()))),

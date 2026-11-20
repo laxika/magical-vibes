@@ -1423,6 +1423,7 @@ public class ConditionEvaluationService {
                     ? ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum()
                     : ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
                     .map(id -> c.kind() == StepKind.SACRIFICE || c.kind() == StepKind.DESTROY
+                            || c.kind() == StepKind.RETURN
                             ? permanentOrLastKnown(gameData, id) : gameQueryService.findPermanentById(gameData, id))
                     .anyMatch(permanent -> permanent != null && matchesPermanent(gameData, permanent, c.filter(), ctx));
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.

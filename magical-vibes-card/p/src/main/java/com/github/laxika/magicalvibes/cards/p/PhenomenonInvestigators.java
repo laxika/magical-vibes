@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentOwnedByPlayerToHandThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -41,10 +45,11 @@ public class PhenomenonInvestigators extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DOUBT)),
                 new MayEffect(
-                        new ReturnPermanentOwnedByPlayerToHandThenEffect(
-                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                                new DrawCardEffect(),
-                                "nonland permanent"),
+                        SequenceEffect.of(
+                                ReturnPermanentControlledByPlayerToHandEffect.choosingOneOf(Subjects.ownedBy(
+                                        Subjects.you(), new PermanentNotPredicate(new PermanentIsLandPredicate())),
+                                        "nonland permanent you own"),
+                                new ConditionalEffect(HappenedThisWay.returned(), new DrawCardEffect())),
                         "Return a nonland permanent you own to your hand?"));
     }
 }

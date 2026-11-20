@@ -4,13 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,8 +36,8 @@ public class NiambiEsteemedSpeaker extends Card {
                 )),
                 "Target must be another creature you control"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ReturnTargetPermanentsThenEffect(EventStat.MANA_VALUE,
-                        new GainLifeEffect(new EventValue())),
+                SequenceEffect.of(ReturnToHandEffect.target(),
+                        new ConditionalEffect(HappenedThisWay.returned(), new GainLifeEffect(new TargetManaValue()))),
                 "Return target creature you control to its owner's hand?"
         ));
 
