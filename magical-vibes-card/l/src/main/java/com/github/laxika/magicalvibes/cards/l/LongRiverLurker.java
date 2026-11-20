@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -38,7 +38,7 @@ public class LongRiverLurker extends Card {
                         new RegisterDelayedWatchedCreaturesCombatDamageEffect(
                                 List.of(new MayEffect(
                                         new FlickerEffect(
-                                                FlickerScope.TRIGGERING,
+                                                Subjects.triggering(),
                                                 null,
                                                 ReturnTiming.IMMEDIATE,
                                                 TurnStep.END_STEP,

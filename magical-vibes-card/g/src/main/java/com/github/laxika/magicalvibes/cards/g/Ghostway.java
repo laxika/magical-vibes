@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -15,8 +15,8 @@ public class Ghostway extends Card {
 
     public Ghostway() {
         addSpellEffect(new FlickerEffect(
-                FlickerScope.CONTROLLERS_PERMANENTS,
-                new PermanentIsCreaturePredicate(),
+                Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate()),
+                null,
                 ReturnTiming.AT_STEP,
                 TurnStep.END_STEP,
                 false,

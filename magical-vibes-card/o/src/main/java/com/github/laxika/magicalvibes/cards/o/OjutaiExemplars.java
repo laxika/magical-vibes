@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
@@ -38,7 +37,7 @@ public class OjutaiExemplars extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Exile Ojutai Exemplars, then return it to the battlefield tapped under its owner's control",
                                 new FlickerEffect(
-                                        FlickerScope.SELF,
+                                        Subjects.source(),
                                         null,
                                         ReturnTiming.IMMEDIATE,
                                         TurnStep.END_STEP,

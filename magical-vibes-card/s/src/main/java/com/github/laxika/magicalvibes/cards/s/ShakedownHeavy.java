@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveSourceFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class ShakedownHeavy extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(),
                         new UntapPermanentsEffect(Subjects.source()),
-                        new RemoveSourceFromCombatEffect()),
+                        new RemoveTargetFromCombatEffect(Subjects.source())),
                 "Have this creature's controller draw a card?",
                 null,
                 MayChoicePlayer.DEFENDING_PLAYER));

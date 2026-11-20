@@ -57,7 +57,10 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.matching;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.named;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.ownerOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.exiledThisResolution;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.oneOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.returnedThisResolution;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.target;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
@@ -395,6 +398,59 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThat(permanents(entry(player1, bears.getCard().getId(), null), returned()))
                     .containsExactly(bears);
+        }
+    }
+
+    @Nested
+    @DisplayName("returnedThisResolution()")
+    class ReturnedThisResolution {
+
+        @Test
+        @DisplayName("Is every permanent the entry recorded as returned that is still on the battlefield")
+        void recordedReturns() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            StackEntry entry = entry(player1, null, null);
+            entry.rememberReturnedPermanent(bears.getId());
+            entry.rememberReturnedPermanent(giant.getId());
+
+            assertThat(permanents(entry, returnedThisResolution())).containsExactly(bears, giant);
+
+            leaveBattlefield(giant);
+
+            assertThat(permanents(entry, returnedThisResolution())).containsExactly(bears);
+        }
+    }
+
+    @Nested
+    @DisplayName("exiledThisResolution()")
+    class ExiledThisResolution {
+
+        @Test
+        @DisplayName("Names no permanent on the battlefield, only the id of the entry's target as it left")
+        void namesTheExiledTargetsId() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, bears.getId(), null);
+            harness.getPermanentRemovalService().removePermanentToExile(gd, bears);
+
+            assertThat(permanents(entry, exiledThisResolution())).isEmpty();
+            assertThat(subjects.permanentIds(gd, entry, EFFECT, exiledThisResolution()))
+                    .containsExactly(bears.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("oneOf(...)")
+    class OneOf {
+
+        @Test
+        @DisplayName("Is a choice the verb's handler makes, so the resolver refuses it")
+        void refusedByTheResolver() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, bears.getId());
+
+            assertThatThrownBy(() -> permanents(entry, oneOf(source(), target())))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 

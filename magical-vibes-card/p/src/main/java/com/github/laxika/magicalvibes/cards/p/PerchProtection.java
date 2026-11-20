@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -13,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -35,7 +36,7 @@ public class PerchProtection extends Card {
         addSpellEffect(new CreateTokenEffect(4, "Bird", 2, 2,
                 CardColor.BLUE, List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new PhaseOutPermanentsEffect(new PermanentTruePredicate(), true)));
+                new PhaseOutEffect(Subjects.controlledBy(Subjects.you(), new PermanentTruePredicate()))));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new LifeTotalCantChangeUntilNextTurnEffect()));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),

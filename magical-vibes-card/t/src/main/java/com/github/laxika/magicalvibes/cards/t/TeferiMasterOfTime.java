@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -39,7 +38,7 @@ public class TeferiMasterOfTime extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new PhaseOutEffect(PhaseOutSubject.TARGET)),
+                List.of(new PhaseOutEffect(Subjects.target())),
                 "\u22123: Target creature you don't control phases out.",
                 TargetFilters.creatureAnOpponentControls()
         ));

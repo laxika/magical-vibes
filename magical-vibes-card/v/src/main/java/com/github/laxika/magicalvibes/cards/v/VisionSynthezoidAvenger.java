@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class VisionSynthezoidAvenger extends Card {
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Vision phases out.",
-                                new PhaseOutEffect(PhaseOutSubject.SOURCE))
+                                new PhaseOutEffect(Subjects.source()))
                 )));
     }
 }

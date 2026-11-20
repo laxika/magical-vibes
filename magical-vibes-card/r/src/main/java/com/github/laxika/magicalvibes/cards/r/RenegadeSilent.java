@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,6 +21,6 @@ public class RenegadeSilent extends Card {
                 SequenceEffect.of(
                         new GoadTargetCreatureUntilNextTurnEffect(),
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new PhaseOutEffect(PhaseOutSubject.SOURCE)));
+                        new PhaseOutEffect(Subjects.source())));
     }
 }

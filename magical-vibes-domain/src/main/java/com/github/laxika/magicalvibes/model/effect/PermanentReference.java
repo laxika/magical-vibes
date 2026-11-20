@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Names a permanent an effect acts on without targeting it. Used by
- * {@link RemoveReferencedPermanentFromCombatEffect} and the other effects
- * that have not yet taken a {@link PermanentSubject}; {@link Subjects#of(PermanentReference)} adapts it.
+ * Names a permanent an effect acts on without targeting it. Used by the effects that have not yet taken a
+ * {@link PermanentSubject}; {@link Subjects#of(PermanentReference)} adapts it.
  *
  * <ul>
  *   <li>{@link #SOURCE} — the permanent the ability came from ("remove it from combat", "shuffle this

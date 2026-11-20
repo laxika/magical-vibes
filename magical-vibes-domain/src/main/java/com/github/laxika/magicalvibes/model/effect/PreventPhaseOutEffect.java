@@ -10,16 +10,22 @@ package com.github.laxika.magicalvibes.model.effect;
  * untap step, so a permanent protected on turn N is still protected during the protector's own
  * untap step on turn N+1.
  *
- * <p>{@link PhaseOutSubject#TARGET} is the chosen-permanent form (Spatial Binding) and is the only
- * subject that declares a {@code TargetSpec}; {@link PhaseOutSubject#SOURCE} protects the ability's
- * own permanent ("this creature can't phase out"; Ertai's Familiar).
- * {@link PhaseOutSubject#ATTACHED} is not supported.
+ * <p>{@code target()} is the chosen-permanent form (Spatial Binding) and is the only subject that declares a
+ * {@code TargetSpec}; {@code source()} protects the ability's own permanent ("this creature can't phase out";
+ * Ertai's Familiar). No other subject is accepted.
  */
-public record PreventPhaseOutEffect(PhaseOutSubject subject) implements CardEffect {
+public record PreventPhaseOutEffect(PermanentSubject subject) implements CardEffect {
+
+    public PreventPhaseOutEffect {
+        if (!(subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Source)) {
+            throw new IllegalArgumentException("Only this permanent or a target can be kept from phasing out: "
+                    + subject);
+        }
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return subject == PhaseOutSubject.TARGET
+        return subject instanceof PermanentSubject.Target
                 ? TargetSpec.benign(TargetPredicates.permanent())
                 : TargetSpec.NONE;
     }

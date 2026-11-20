@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link TargetSpec}.
  *
  * <p>Resolution registers a delayed "at end of combat" ability about the attacker carrying a
- * {@link PhaseOutEffect}, so the creature is still around to deal its
+ * {@link PhaseOutEffect} naming it ({@code Subjects.named}), so the creature is still around to deal its
  * combat damage and the phasing uses the stack. The phasing itself goes through
  * {@code PhasingService}, which takes attachments along indirectly (CR 702.26g) and removes the
  * permanent from combat (CR 506.4); because it phased out directly it phases in during its

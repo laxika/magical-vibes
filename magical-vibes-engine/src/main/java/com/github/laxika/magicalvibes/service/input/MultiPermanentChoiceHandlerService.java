@@ -868,20 +868,8 @@ public class MultiPermanentChoiceHandlerService {
                 && !new HashSet<>(permanentIds).equals(new HashSet<>(validIds))) {
             throw new IllegalStateException("All matching permanents must be ordered");
         }
-        if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber
-                && permanentIds.stream().anyMatch(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    StackEntry resolvingEntry = ((MultiPermanentChoiceContext.FlickerAnyNumber) context).resolvingEntry();
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(resolvingEntry.getCard().getId())
-                            .withSourceControllerId(resolvingEntry.getControllerId())
-                            .withSourcePermanentId(resolvingEntry.getSourcePermanentId());
-                    return permanent == null
-                            || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
-                            || !predicateEvaluationService.matchesPermanentPredicate(
-                            permanent, ((MultiPermanentChoiceContext.FlickerAnyNumber) context).effect().filter(),
-                            filterContext);
-                })) {
+        if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber flickerChoice
+                && !flickerEffectHandler.eligibleChoices(gameData, flickerChoice).containsAll(permanentIds)) {
             throw new IllegalStateException("A selected permanent is no longer an eligible permanent you control");
         }
         if (context instanceof MultiPermanentChoiceContext.RecloakDisguisedCreatures

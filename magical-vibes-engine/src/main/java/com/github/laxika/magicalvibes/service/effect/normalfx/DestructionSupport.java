@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceC
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedBlockOrBecomesBlockedTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -889,7 +888,7 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ExileSourceCardFromGraveyardEffect exileSource) {
                 exileSourceCardFromGraveyardEffectHandler.resolve(gameData, entry, exileSource);
             } else if (elseEffect instanceof PhaseOutEffect phaseOut
-                    && phaseOut.subject() == PhaseOutSubject.SOURCE) {
+                    && phaseOut.subject() instanceof PermanentSubject.Source) {
                 // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
                 phaseOutSource(gameData, entry);
             } else if (elseEffect instanceof LoseLifeEffect loseLife

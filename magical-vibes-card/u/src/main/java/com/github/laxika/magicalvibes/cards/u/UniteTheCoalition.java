@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -41,7 +40,7 @@ public class UniteTheCoalition extends Card {
         addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target permanent phases out",
-                        () -> new PhaseOutEffect(PhaseOutSubject.TARGET),
+                        () -> new PhaseOutEffect(Subjects.target()),
                         TargetFilters.permanent()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target player draws a card",

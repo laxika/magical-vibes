@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
@@ -322,7 +322,13 @@ public class TargetPolarityClassifier {
         // Phasing: only the targeted form aims at a permanent the AI chose (Reality Ripple, Vision
         // Charm) — the source and attached forms carry no target and no polarity.
         if (effect instanceof PhaseOutEffect phaseOut) {
-            return phaseOut.subject() == PhaseOutSubject.TARGET ? TargetPolarity.HARMFUL_REMOVAL : null;
+            return phaseOut.subject() instanceof PermanentSubject.Target ? TargetPolarity.HARMFUL_REMOVAL : null;
+        }
+        // Remove from combat: the target form and the triggering form (Melee's delayed ability) kept the name entry's
+        // HARMFUL; the source and enchanted-creature forms (formerly their own records) have no polarity.
+        if (effect instanceof RemoveTargetFromCombatEffect removal) {
+            return removal.subject() instanceof PermanentSubject.Target
+                    || removal.subject() instanceof PermanentSubject.Triggering ? TargetPolarity.HARMFUL : null;
         }
 
         // Redirect-next-damage: the target is either the object the redirected damage lands on
@@ -592,7 +598,6 @@ public class TargetPolarityClassifier {
             entry("HuntedByTheFamilyEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
-            entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),

@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -43,7 +43,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves every "exile permanent(s), return under owner's (or controller's) control" flicker via
- * {@link FlickerEffect}, dispatching on {@link FlickerEffect#timing()} then {@link FlickerEffect#scope()}.
+ * {@link FlickerEffect}, dispatching on {@link FlickerEffect#timing()} then the shape of {@link FlickerEffect#subject()},
+ * whose permanents {@link SubjectResolutionService} names.
  *
  * <p>{@code AT_STEP} scopes delegate to {@link ExileSupport#exileAndScheduleReturn} (a delayed trigger
  * that survives the source leaving the battlefield). {@code IMMEDIATE} exiles and re-creates the
@@ -60,7 +61,6 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileSupport exileSupport;
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -72,6 +72,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private final CloneService cloneService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final StateTriggerService stateTriggerService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -81,17 +82,16 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (FlickerEffect) effect;
-        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.CONTROLLERS_PERMANENTS
-                && e.chooseAnyNumber()) {
+        if (e.chooseAnyNumber()) {
             beginControllersPermanentsChoice(gameData, entry, e,
                     e.timing() == ReturnTiming.IMMEDIATE ? entry.getXValue() + 1 : 1);
             return;
         }
         if (e.timing() == ReturnTiming.NONE) {
-            exileTargetOnly(gameData, entry);
+            exileTargetOnly(gameData, entry, e);
             return;
         }
-        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.TARGET_EXILED_EARLIER) {
+        if (e.subject() instanceof PermanentSubject.ExiledThisResolution) {
             returnEarlierExile(gameData, entry, e);
             return;
         }
@@ -99,17 +99,17 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             resolveImmediate(gameData, entry, e);
             return;
         }
-        switch (e.scope()) {
-            case TARGET -> resolveTargetAtStep(gameData, entry, e);
-            case SELF -> resolveSelfAtStep(gameData, entry, e);
-            case TRIGGERING -> resolvePermanentAtStep(gameData, entry, e, entry.getTriggeringPermanentId());
-            case SELF_OR_TARGET -> resolveSelfOrTargetAtStep(gameData, entry, e);
-            case TARGET_PLAYERS_PERMANENTS -> resolvePlayersPermanentsAtStep(gameData, entry, e);
-            case CONTROLLERS_PERMANENTS -> resolveControllersPermanentsAtStep(gameData, entry, e);
-            case ALL_PLAYERS_PERMANENTS -> resolveAllPlayersPermanentsAtStep(gameData, entry, e);
-            case RETURNED_PERMANENTS -> resolveReturnedPermanentsAtStep(gameData, entry, e);
-            case ENCHANTED_CREATURE_AND_AURAS -> resolveEnchantedCreatureAndAurasAtStep(gameData, entry, e);
-            case TARGET_EXILED_EARLIER -> { }
+        if (e.exilesHostWithAuras()) {
+            resolveHostWithAurasAtStep(gameData, entry, e);
+        } else if (e.subject() instanceof PermanentSubject.Target) {
+            resolveTargetAtStep(gameData, entry, e);
+        } else if (e.subject() instanceof PermanentSubject.OneOf oneOf) {
+            resolveOneOfAtStep(gameData, entry, e, oneOf);
+        } else if (e.subject().isSet() || e.subject() instanceof PermanentSubject.ReturnedThisResolution) {
+            resolveSetAtStep(gameData, entry, e);
+        } else {
+            resolvePermanentAtStep(gameData, entry, e,
+                    subjectResolutionService.permanent(gameData, entry, e, e.subject()));
         }
     }
 
@@ -117,9 +117,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
      * Exiles the targeted permanent and returns nothing, remembering its last known card and
      * controller so a later effect of the same resolution can return it from exile.
      */
-    private void exileTargetOnly(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetId();
-        Permanent target = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
+    private void exileTargetOnly(GameData gameData, StackEntry entry, FlickerEffect e) {
+        Permanent target = subjectResolutionService.permanent(gameData, entry, e, e.subject());
         if (target == null) {
             return;
         }
@@ -139,7 +138,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
      * longer in exile.
      */
     private void returnEarlierExile(GameData gameData, StackEntry entry, FlickerEffect e) {
-        UUID targetId = entry.getTargetId();
+        List<UUID> exiledIds = subjectResolutionService.permanentIds(gameData, entry, e, e.subject());
+        UUID targetId = exiledIds.isEmpty() ? null : exiledIds.getFirst();
         Card card = targetId == null ? null : entry.lastKnownPermanentCard(targetId);
         if (card == null || gameData.findExiledCard(card.getId()) == null) {
             return;
@@ -162,19 +162,18 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                         + e.returnStep().getDisplayName().toLowerCase() + "."));
     }
 
-    private void resolveEnchantedCreatureAndAurasAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        UUID creatureId = entry.getTargetId();
-        Permanent creature = creatureId == null ? null : gameQueryService.findPermanentById(gameData, creatureId);
+    /**
+     * Exiles the host and every Aura attached to it and schedules one return: the host first, then the Auras attached
+     * to it (Flickerform). The host is the subject's first part and the Auras its {@code attachmentsOf} part.
+     */
+    private void resolveHostWithAurasAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
+        List<PermanentSubject> parts = ((PermanentSubject.AllOf) e.subject()).subjects();
+        Permanent creature = subjectResolutionService.permanent(gameData, entry, e, parts.getFirst());
         if (creature == null) {
             return;
         }
 
-        List<Permanent> attachedAuras = new ArrayList<>();
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (creatureId.equals(permanent.getAttachedTo()) && permanent.getCard().isAura()) {
-                attachedAuras.add(permanent);
-            }
-        });
+        List<Permanent> attachedAuras = subjectResolutionService.permanents(gameData, entry, e, parts.get(1));
 
         List<Card> creatureCards = creature.cardsLeavingBattlefield();
         if (creatureCards.isEmpty()) {
@@ -212,20 +211,16 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveTargetAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        List<UUID> targetIds = entry.targetsForEffect(e);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
-        if (targetIds.isEmpty()) {
+        resolveTargetsAtStep(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject()));
+    }
+
+    private void resolveTargetsAtStep(GameData gameData, StackEntry entry, FlickerEffect e, List<Permanent> targets) {
+        if (targets.isEmpty()) {
             return;
         }
 
         Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
+        for (Permanent target : targets) {
 
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
             UUID ownerId = e.returnUnderController()
@@ -271,12 +266,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 .withTriggerSource(entry.getCard(), entry.getControllerId()));
     }
 
-    private void resolveSelfAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        resolvePermanentAtStep(gameData, entry, e, entry.getSourcePermanentId());
-    }
-
-    private void resolvePermanentAtStep(GameData gameData, StackEntry entry, FlickerEffect e, UUID permanentId) {
-        Permanent source = permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+    private void resolvePermanentAtStep(GameData gameData, StackEntry entry, FlickerEffect e, Permanent source) {
         if (source == null) {
             return;
         }
@@ -290,121 +280,66 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 e.returnAtControllerNextStep() ? entry.getControllerId() : null);
     }
 
-    private void resolveSelfOrTargetAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        List<UUID> targetIds = entry.targetsForEffect(e);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
+    /**
+     * "Exile this permanent or up to one target creature": with no target chosen, the first option without a target
+     * (the source); with both on the battlefield the controller picks one as the ability resolves; else whichever is
+     * still there.
+     */
+    private void resolveOneOfAtStep(GameData gameData, StackEntry entry, FlickerEffect e,
+                                    PermanentSubject.OneOf oneOf) {
+        PermanentSubject targetOption = oneOf.options().stream()
+                .filter(PermanentSubject.Target.class::isInstance).findFirst().orElse(null);
+        PermanentSubject otherOption = oneOf.options().stream()
+                .filter(option -> option != targetOption).findFirst().orElseThrow();
+        List<UUID> targetIds = targetOption == null ? List.of()
+                : subjectResolutionService.permanentIds(gameData, entry, e, targetOption);
+        Permanent other = subjectResolutionService.permanent(gameData, entry, e, otherOption);
         if (targetIds.isEmpty()) {
-            resolveSelfAtStep(gameData, entry, e);
+            resolvePermanentAtStep(gameData, entry, e, other);
             return;
         }
         // "Exile this permanent or up to one target creature": only the creature is targeted, so the
         // controller picks between the source and the target as the ability resolves.
-        Permanent source = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent target = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
-        if (source == null || target == null) {
-            resolveTargetAtStep(gameData, entry, e);
+        List<Permanent> targets = subjectResolutionService.permanents(gameData, entry, e, targetOption);
+        Permanent target = targets.isEmpty() ? null : targets.getFirst();
+        if (other == null || target == null) {
+            resolveTargetsAtStep(gameData, entry, e, targets);
             return;
         }
         playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
                 new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
                         new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                                "Exile " + source.getCard().getName(),
-                                e.withScope(com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF)),
+                                "Exile " + other.getCard().getName(), e.withSubject(otherOption)),
                         new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                                "Exile " + target.getCard().getName(),
-                                e.withScope(com.github.laxika.magicalvibes.model.effect.FlickerScope.TARGET)))),
+                                "Exile " + target.getCard().getName(), e.withSubject(targetOption)))),
                 entry.getSourcePermanentId());
     }
 
-    private void resolvePlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-            return;
-        }
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        List<Permanent> toExile = battlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
-                .toList();
-
-        exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
-    }
-
     /**
-     * Exiles every filtered permanent the ability's controller controls and queues a single delayed
-     * return per owner, so the whole group re-enters simultaneously at the requested step
-     * (Legion's Initiative).
+     * Exiles every permanent of a set subject ("each creature target player controls", "nontoken creatures you
+     * control", the permanents an earlier step returned) and queues a single delayed return, so the whole group
+     * re-enters simultaneously at the requested step, each card under its owner's control.
      */
-    private void resolveControllersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
+    private void resolveSetAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
+        List<Permanent> toExile = subjectResolutionService.permanents(gameData, entry, e, e.subject());
+        exileSetAtStep(gameData, entry, e, toExile);
+        if (e.subject() instanceof PermanentSubject.ReturnedThisResolution) {
+            entry.clearReturnedPermanentIds();
         }
-
-        List<Permanent> toExile = battlefield.stream()
-                .filter(p -> matchesControllerPermanentFilter(gameData, entry, p, e))
-                .toList();
-        exileControllersPermanentsAtStep(gameData, entry, e, toExile);
     }
 
-    private void resolveControllersPermanentsAtStep(
+    private void resolveChosenPermanentsAtStep(
             GameData gameData, StackEntry entry, FlickerEffect e, List<UUID> permanentIds) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
+        List<UUID> stillMatching = subjectResolutionService.permanentIds(gameData, entry, e, e.subject());
         List<Permanent> toExile = permanentIds.stream()
+                .filter(stillMatching::contains)
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
-                .filter(p -> p != null
-                        && matchesControllerPermanentFilter(gameData, entry, p, e))
+                .filter(java.util.Objects::nonNull)
                 .toList();
-        exileControllersPermanentsAtStep(gameData, entry, e, toExile);
+        exileSetAtStep(gameData, entry, e, toExile);
     }
 
-    private boolean matchesControllerPermanentFilter(
-            GameData gameData, StackEntry entry, Permanent permanent, FlickerEffect effect) {
-        FilterContext context = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId());
-        return predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), context);
-    }
-
-    private void resolveAllPlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        FilterContext context = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId());
-        List<Permanent> toExile = new ArrayList<>();
-        gameData.forEachPermanent((ignoredControllerId, permanent) -> {
-            if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), context)) {
-                toExile.add(permanent);
-            }
-        });
-        exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
-    }
-
-    private void resolveReturnedPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        List<Permanent> toExile = entry.getReturnedPermanentIds().stream()
-                .map(id -> gameQueryService.findPermanentById(gameData, id))
-                .filter(permanent -> permanent != null)
-                .toList();
-        exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
-        entry.clearReturnedPermanentIds();
-    }
-
-    private void exileAllPlayersPermanentsAtStep(
-            GameData gameData, StackEntry entry, FlickerEffect e, List<Permanent> toExile) {
+    private void exileSetAtStep(GameData gameData, StackEntry entry, FlickerEffect e, List<Permanent> toExile) {
         if (toExile.isEmpty()) {
             return;
         }
@@ -422,47 +357,13 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // One delayed triggered ability returns every card, each under its owner's control.
-        List<Card> cards = cardsByOwner.values().stream().flatMap(List::stream).toList();
-        PendingExileReturns.schedule(gameData,new PendingExileReturn(
-                cards.getFirst(), cardsByOwner.keySet().iterator().next(), e.returnTapped(), false, e.returnStep(),
-                e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
-                false, e.grantHaste(), false, false, null, null, false,
-                e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
-                Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
-                e.countersOnReturn(), e.returnLandsTapped())
-                .withTriggerSource(entry.getCard(), entry.getControllerId())
-                .withReturnControllers(returnControllersByCardId(cardsByOwner)));
-        log.info("Game {} - {} exiles {} permanents; they return at next {}",
-                gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
-    }
-
-    private void exileControllersPermanentsAtStep(
-            GameData gameData, StackEntry entry, FlickerEffect e, List<Permanent> toExile) {
-        UUID controllerId = entry.getControllerId();
-        if (toExile.isEmpty()) {
-            return;
-        }
-
-        Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
-        for (Permanent permanent : toExile) {
-            UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), controllerId);
-            List<Card> cards = permanent.cardsLeavingBattlefield();
-            permanentRemovalService.removePermanentToExile(gameData, permanent);
-            cardsByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>()).addAll(cards);
-            gameLogService.append(gameData, GameLog.cardThen(cards.getFirst(),
-                    " is exiled. It will return at the beginning of the next "
-                            + e.returnStep().getDisplayName().toLowerCase() + "."));
-        }
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
         // One delayed triggered ability returns every card, each under its owner's control (Ghostway).
         List<Card> cards = cardsByOwner.values().stream().flatMap(List::stream).toList();
         PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 cards.getFirst(), cardsByOwner.keySet().iterator().next(), e.returnTapped(), false, e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                 e.returnAtControllerNextStep(), e.grantHaste(), false, false,
-                e.returnAtControllerNextStep() ? controllerId : null, null, false,
+                e.returnAtControllerNextStep() ? entry.getControllerId() : null, null, false,
                 e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
                 Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
                 e.countersOnReturn(), e.returnLandsTapped())
@@ -479,7 +380,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveImmediate(GameData gameData, StackEntry entry, FlickerEffect e) {
-        List<UUID> permanentIds = immediateFlickerTargets(entry, e);
+        List<UUID> permanentIds = immediateFlickerTargets(gameData, entry, e);
 
         // Every chosen permanent leaves before any of them comes back, so a multi-target flicker
         // (Ghostly Flicker) returns them simultaneously and their ETB triggers see each other.
@@ -509,11 +410,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     public void flickerSelfUnderControl(GameData gameData, StackEntry entry, UUID returnControllerId) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        FlickerEffect effect = FlickerEffect.flickerSelfUnderYourControl();
+        Permanent source = subjectResolutionService.permanent(gameData, entry, effect, effect.subject());
         if (source == null) {
             return;
         }
-        FlickerEffect effect = FlickerEffect.flickerSelfUnderYourControl();
         List<FlickeredPermanent> flickered = exileForImmediateReturn(gameData, entry, effect, source, returnControllerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
         if (flickered.size() == 1) {
@@ -543,22 +444,23 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private void beginControllersPermanentsChoice(
             GameData gameData, StackEntry entry, FlickerEffect effect, int remainingIterations) {
         UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return;
-        List<UUID> validIds = battlefield.stream()
-                .filter(permanent -> matchesControllerPermanentFilter(gameData, entry, permanent, effect))
-                .map(Permanent::getId)
-                .toList();
+        List<UUID> validIds = subjectResolutionService.permanentIds(gameData, entry, effect, effect.subject());
         if (validIds.isEmpty()) return;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, validIds, validIds.size(),
                 new MultiPermanentChoiceContext.FlickerAnyNumber(entry, effect, remainingIterations),
                 entry.getCard().getName() + " — Choose any number of permanents you control to exile.");
     }
 
+    /** The permanents an "any number of permanents you control" flicker may still exile, as its subject names them. */
+    public List<UUID> eligibleChoices(GameData gameData, MultiPermanentChoiceContext.FlickerAnyNumber context) {
+        return subjectResolutionService.permanentIds(gameData, context.resolvingEntry(), context.effect(),
+                context.effect().subject());
+    }
+
     public boolean completeAnyNumberChoice(GameData gameData, List<UUID> permanentIds,
                                             MultiPermanentChoiceContext.FlickerAnyNumber context) {
         if (context.effect().timing() == ReturnTiming.AT_STEP) {
-            resolveControllersPermanentsAtStep(
+            resolveChosenPermanentsAtStep(
                     gameData, context.resolvingEntry(), context.effect(), permanentIds);
         } else {
             flickerPermanentsUnderOwnersControl(gameData, context.resolvingEntry(), permanentIds);
@@ -571,30 +473,30 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * The permanents an immediate flicker touches: the source for SELF, otherwise the chosen target
-     * group — which is a single {@code targetId} for the usual one-target flicker and a real list for
-     * a card that binds the effect to a multi-target group.
+     * The permanents an immediate flicker touches: those the subject names, where a target is the chosen target
+     * group — a single {@code targetId} for the usual one-target flicker and a real list for a card that binds the
+     * effect to a multi-target group — and a choice offers its target when one was chosen, else its other option.
      */
-    private List<UUID> immediateFlickerTargets(StackEntry entry, FlickerEffect e) {
-        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF) {
-            return List.of(entry.getSourcePermanentId());
+    private List<UUID> immediateFlickerTargets(GameData gameData, StackEntry entry, FlickerEffect e) {
+        if (e.subject() instanceof PermanentSubject.OneOf oneOf) {
+            List<UUID> chosen = List.of();
+            for (PermanentSubject option : oneOf.options().stream()
+                    .sorted(java.util.Comparator.comparing(option -> !(option instanceof PermanentSubject.Target)))
+                    .toList()) {
+                chosen = subjectResolutionService.permanentIds(gameData, entry, e, option);
+                if (!chosen.isEmpty()) {
+                    break;
+                }
+            }
+            return chosen;
         }
-        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.TRIGGERING) {
-            return entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
+        if (e.subject() instanceof PermanentSubject.Target) {
+            List<UUID> boundGroups = targetsOfEveryBoundGroup(entry, e);
+            if (boundGroups != null) {
+                return boundGroups;
+            }
         }
-        List<UUID> boundGroups = targetsOfEveryBoundGroup(entry, e);
-        if (boundGroups != null) {
-            return boundGroups;
-        }
-        List<UUID> group = entry.targetsForEffect(e);
-        if (!group.isEmpty()) {
-            return group;
-        }
-        if (entry.getTargetId() != null) {
-            return List.of(entry.getTargetId());
-        }
-        return e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF_OR_TARGET
-                ? List.of(entry.getSourcePermanentId()) : List.of();
+        return subjectResolutionService.permanentIds(gameData, entry, e, e.subject());
     }
 
     /**
@@ -730,7 +632,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         // A copy-on-enter card returning alone gets its copy choice however it was flickered, and the
         // flicker's own tapped return still applies to the copy.
         boolean soleReturn = simultaneous.size() == 1;
-        if ((e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF || soleReturn)
+        if ((e.subject() instanceof PermanentSubject.Source || soleReturn)
                 && cloneService.prepareCloneReplacementEffect(
                         gameData, returnControllerId, card, null, 0)) {
             gameData.cloneOperation.entersTapped = e.returnTapped() || e.tapOnImmediateReturn();

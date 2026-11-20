@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutAttackingCreatureAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -40,7 +40,7 @@ public class PhaseOutAttackingCreatureAtEndOfCombatEffectHandler implements Norm
         }
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                attacker.getId(), new PhaseOutEffect(PhaseOutSubject.TARGET)));
+                attacker.getId(), new PhaseOutEffect(Subjects.named(attacker.getId()))));
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), " will phase out at end of combat."));
     }
 }

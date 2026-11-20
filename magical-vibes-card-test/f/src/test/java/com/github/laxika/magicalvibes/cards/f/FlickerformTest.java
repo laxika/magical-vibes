@@ -169,6 +169,30 @@ class FlickerformTest extends BaseCardTest {
                 .isEqualTo(findPermanent(player2, "Courier Hawk").getId());
     }
 
+    @Test
+    @DisplayName("Exiles the creature it enchants as the ability resolves, not the one it enchanted when activated")
+    void exilesTheCreatureEnchantedAtResolution() {
+        Permanent firstCreature = setupFlickerform();
+        Permanent secondCreature = addCreatureReady(player1, new CourierHawk());
+        Permanent flickerform = findPermanent(player1, "Flickerform");
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, null);
+        flickerform.setAttachedTo(secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(firstCreature)
+                .doesNotContain(secondCreature, flickerform);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Moldervine Cloak")
+                        && firstCreature.getId().equals(permanent.getAttachedTo()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card == secondCreature.getCard())
+                .anyMatch(card -> card.getName().equals("Flickerform"));
+    }
+
     private Permanent setupFlickerform() {
         Permanent creature = addCreatureReady(player1, new CourierHawk());
 

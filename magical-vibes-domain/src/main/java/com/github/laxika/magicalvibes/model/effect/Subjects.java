@@ -27,6 +27,8 @@ public final class Subjects {
     private static final PermanentSubject TRIGGERING_SPELL = new PermanentSubject.TriggeringSpell();
     private static final PermanentSubject RETURNED = new PermanentSubject.Returned();
     private static final PermanentSubject GRANTER = new PermanentSubject.Granter(null);
+    private static final PermanentSubject RETURNED_THIS_RESOLUTION = new PermanentSubject.ReturnedThisResolution();
+    private static final PermanentSubject EXILED_THIS_RESOLUTION = new PermanentSubject.ExiledThisResolution();
 
     private static final PlayerSubject YOU = new PlayerSubject.You();
     private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null, true);
@@ -117,6 +119,16 @@ public final class Subjects {
         return RETURNED;
     }
 
+    /** Every permanent an earlier step of the same resolution returned to the battlefield ("exile them again"). */
+    public static PermanentSubject returnedThisResolution() {
+        return RETURNED_THIS_RESOLUTION;
+    }
+
+    /** The card an earlier step of the same resolution exiled from the effect's target ("return that card"). */
+    public static PermanentSubject exiledThisResolution() {
+        return EXILED_THIS_RESOLUTION;
+    }
+
     /** "This Equipment" in an ability it grants: the permanent that granted the resolving ability. */
     public static PermanentSubject granter() {
         return GRANTER;
@@ -155,6 +167,11 @@ public final class Subjects {
     /** Several subjects together, each permanent once. */
     public static PermanentSubject allOf(PermanentSubject... subjects) {
         return new PermanentSubject.AllOf(List.of(subjects));
+    }
+
+    /** One of {@code options}, chosen by the controller as the effect resolves ("this permanent or target creature"). */
+    public static PermanentSubject oneOf(PermanentSubject... options) {
+        return new PermanentSubject.OneOf(List.of(options));
     }
 
     /**

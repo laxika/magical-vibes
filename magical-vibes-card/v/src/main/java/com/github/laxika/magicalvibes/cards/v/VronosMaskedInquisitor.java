@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
@@ -44,7 +44,7 @@ public class VronosMaskedInquisitor extends Card {
                 false,
                 null,
                 List.of(new RegisterDelayedEndStepTriggerEffect(
-                        List.of(), new PhaseOutEffect(PhaseOutSubject.TARGET))),
+                        List.of(), new PhaseOutEffect(Subjects.target()))),
                 "+1: Up to two other target planeswalkers you control phase out at the beginning of the next end step.",
                 otherPlaneswalkerYouControl,
                 +1,

@@ -567,6 +567,8 @@ nothing). Both are no-ops for today's pool — no Aura or `TRIGGERING` card pass
 `PhaseOutSelfAndCombatOpponentEffect` (two permanents, combat-opponent reference) and
 `PhaseOutChosenTypeNontokenPermanentsEffect`. `PreventPhaseOutTargetPermanentEffect` is the
 protection marker, not a phase-out.
+Later (effect-cleanup run 5k): `PhaseOutSubject` became a `PermanentSubject` and `PhaseOutPermanentsEffect`
+folded into `PhaseOutEffect(Subjects.controlledBy(...))`.
 
 **Tests** — no test referenced any of the six classes by name, and all 30 cards already had test
 classes. Added the cross-contamination assertions a `switch` merge needs, one per axis where a

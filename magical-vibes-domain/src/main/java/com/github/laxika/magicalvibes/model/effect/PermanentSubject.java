@@ -18,8 +18,10 @@ import java.util.UUID;
  */
 public sealed interface PermanentSubject permits PermanentSubject.Source, PermanentSubject.Target, PermanentSubject.AllTargets,
         PermanentSubject.Attached, PermanentSubject.AttachedOrSource, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringOrSource, PermanentSubject.TriggeringCard,
-        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned, PermanentSubject.Granter, PermanentSubject.Named,
-        PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf, PermanentSubject.AllOf {
+        PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
+        PermanentSubject.ReturnedThisResolution, PermanentSubject.ExiledThisResolution, PermanentSubject.Granter,
+        PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
+        PermanentSubject.AllOf, PermanentSubject.OneOf {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -186,6 +188,31 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     }
 
     /**
+     * "Exile them again" after an earlier step of the same resolution returned permanents to the battlefield: every
+     * permanent that step recorded on the stack entry as returned (Lae'zel's Acrobatics). A step result.
+     */
+    record ReturnedThisResolution() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Return that card" after an earlier step of the same resolution exiled the effect's target: the card that step
+     * exiled, which is no permanent, so it names none on the battlefield; its id (the entry's target) leads to the card
+     * the entry remembered as the permanent left. Declares no target (Gilraen, Dúnedain Protector). A step result.
+     */
+    record ExiledThisResolution() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
      * "Return this Equipment to its owner's hand" in an ability the Equipment grants: the permanent that granted the
      * resolving ability, not the creature that has it. {@code boundPermanentId} is the granting permanent an activated
      * ability recorded as it was activated ({@code null} until then); a granted triggered ability's entry records it
@@ -305,6 +332,26 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return subjects.stream().anyMatch(PermanentSubject::needsStackEntry);
+        }
+    }
+
+    /**
+     * "Exile this permanent or up to one target creature": one of the permanents {@code options} name, which the
+     * controller chooses as the effect resolves. The resolver does not choose; the verb's handler resolves each option
+     * and asks. A target option's target is declared by the ability that holds the effect, not by this subject.
+     */
+    record OneOf(List<PermanentSubject> options) implements PermanentSubject {
+
+        public OneOf {
+            options = List.copyOf(options);
+            if (options.size() < 2) {
+                throw new IllegalArgumentException("OneOf offers at least two subjects: " + options);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return options.stream().anyMatch(PermanentSubject::needsStackEntry);
         }
     }
 }

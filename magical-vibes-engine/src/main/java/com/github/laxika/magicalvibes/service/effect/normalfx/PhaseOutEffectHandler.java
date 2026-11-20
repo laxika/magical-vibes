@@ -1,33 +1,33 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link PhaseOutEffect}: resolves the subject permanent, then hands it to
- * {@link PhasingService}, which owns attachments (CR 702.26g), combat removal (CR 506.4) and
- * phasing back in. If the subject is gone — the source or target already left the battlefield, or
- * the source Aura is unattached — the ability simply does nothing.
+ * Resolves {@link PhaseOutEffect}: {@link SubjectResolutionService} names the permanents, which phase out together
+ * through {@link PhasingService}, which owns attachments (CR 702.26g), combat removal (CR 506.4) and phasing back in.
+ * If the subject names nothing on the battlefield — the source or target already left, or the source Aura is
+ * unattached — the ability does nothing. A set ("all lands you control") also logs how many phased out.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PhaseOutEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PhasingService phasingService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,66 +37,18 @@ public class PhaseOutEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PhaseOutEffect e = (PhaseOutEffect) effect;
-
-        List<UUID> targetIds = e.subject() == PhaseOutSubject.TARGET
-                ? entry.targetsForEffect(effect)
-                : List.of();
-        if (e.subject() == PhaseOutSubject.TARGET && targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
-
-        if (e.subject() == PhaseOutSubject.TARGET) {
-            List<Permanent> subjects = targetIds.stream()
-                    .map(id -> findPermanent(gameData, id))
-                    .filter(java.util.Objects::nonNull)
-                    .toList();
-            if (!subjects.isEmpty()) {
-                phasingService.phaseOut(gameData, subjects);
-            }
+        List<Permanent> toPhaseOut = subjectResolutionService.permanents(gameData, entry, effect, e.subject());
+        if (toPhaseOut.isEmpty()) {
             return;
         }
-
-        Permanent subject = switch (e.subject()) {
-            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
-            case TARGET -> null;
-            case ATTACHED -> findAttached(gameData, entry);
-        };
-        if (subject != null) {
-            phasingService.phaseOut(gameData, List.of(subject));
+        phasingService.phaseOut(gameData, toPhaseOut);
+        if (e.subject().isSet()) {
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(entry.getCard())
+                    .text(String.format(" phases out %d permanent(s).", toPhaseOut.size()))
+                    .build());
+            log.info("Game {} - {} phases out {} permanents", gameData.id,
+                    entry.getCard() != null ? entry.getCard().getName() : "effect", toPhaseOut.size());
         }
-    }
-
-    private Permanent findPermanent(GameData gameData, UUID permanentId) {
-        return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
-    }
-
-    private Permanent findAttached(GameData gameData, StackEntry entry) {
-        Permanent aura = findPermanent(gameData, entry.getSourcePermanentId());
-        UUID attachedToId;
-        if (aura == null) {
-            // The ability exists independently of its source (CR 113.7a), so when the source has left the
-            // battlefield the equipped/enchanted creature is taken from the source's last known information.
-            Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
-            if (sourceSnapshot == null || sourceSnapshot.getAttachedTo() == null) {
-                log.info("Game {} - Aura {} no longer on battlefield, skipping phase out",
-                        gameData.id, entry.getCard().getName());
-                return null;
-            }
-            attachedToId = sourceSnapshot.getAttachedTo();
-        } else {
-            attachedToId = aura.getAttachedTo();
-        }
-        if (attachedToId == null) {
-            log.info("Game {} - {} is not attached to anything, skipping phase out",
-                    gameData.id, entry.getCard().getName());
-            return null;
-        }
-
-        Permanent host = gameQueryService.findPermanentById(gameData, attachedToId);
-        if (host == null) {
-            log.info("Game {} - Enchanted creature no longer on battlefield, skipping phase out",
-                    gameData.id);
-        }
-        return host;
     }
 }

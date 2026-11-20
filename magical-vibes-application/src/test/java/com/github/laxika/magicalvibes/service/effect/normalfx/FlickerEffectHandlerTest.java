@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -109,12 +109,15 @@ class FlickerEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
+        handler = new FlickerEffectHandler(exileSupport, gameQueryService,
                 gameLogService, permanentRemovalService, battlefieldEntryService,
                 drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class),
                 cloneService, battlefieldEntryBatchSupport,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.state.StateTriggerService.class));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.state.StateTriggerService.class),
+                new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
+                        predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
         // The mocked removal exiles what it is handed, so an immediate flicker finds the card to return.
         org.mockito.Mockito.lenient().when(permanentRemovalService.removePermanentToExile(any(), any()))
                 .thenAnswer(invocation -> {
@@ -249,7 +252,7 @@ class FlickerEffectHandlerTest {
             Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
             Card sourceCard = createCreatureCard("Ojutai Exemplars");
             FlickerEffect effect = new FlickerEffect(
-                    FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
+                    Subjects.target(), null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                     true, null, null, 0, false, false);
             StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                     List.of(effect), 0, target.getId(), null);
@@ -273,7 +276,7 @@ class FlickerEffectHandlerTest {
             Permanent target = new Permanent(targetCard);
             Card sourceCard = createCreatureCard("Flicker");
             FlickerEffect effect = new FlickerEffect(
-                    FlickerScope.SELF, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
+                    Subjects.source(), null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                     false, null, null, 0, false, false);
             StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                     List.of(effect), null, target.getId());

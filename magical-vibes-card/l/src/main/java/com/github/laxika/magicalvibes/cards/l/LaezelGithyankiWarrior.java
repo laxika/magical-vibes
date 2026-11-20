@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureFromOppo
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -47,7 +47,7 @@ public class LaezelGithyankiWarrior extends Card {
                 new GrantTriggeredAbilityToCastSpellEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                 new MayEffect(
-                                        new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE,
+                                        new FlickerEffect(Subjects.source(), null, ReturnTiming.IMMEDIATE,
                                                 TurnStep.END_STEP, false, null, null, 0, false, false),
                                         "Exile this creature, then return it to the battlefield under its owner's control?"))));
 

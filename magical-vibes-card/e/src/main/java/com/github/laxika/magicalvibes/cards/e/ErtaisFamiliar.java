@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PreventPhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,7 +30,7 @@ public class ErtaisFamiliar extends Card {
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MillEffect(3, Subjects.you()));
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",
-                List.of(new PreventPhaseOutEffect(PhaseOutSubject.SOURCE)),
+                List.of(new PreventPhaseOutEffect(Subjects.source())),
                 "{U}: Until your next upkeep, this creature can't phase out."));
     }
 }

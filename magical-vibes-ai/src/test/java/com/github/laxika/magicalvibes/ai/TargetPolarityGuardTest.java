@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFi
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
@@ -143,9 +143,9 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd, new MakeTargetAttackingCreatureBlockedEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
-        assertThat(classifier.classify(gd, new PhaseOutEffect(PhaseOutSubject.TARGET), aiPlayerId))
+        assertThat(classifier.classify(gd, new PhaseOutEffect(Subjects.target()), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
-        assertThat(classifier.classify(gd, new PhaseOutEffect(PhaseOutSubject.SOURCE), aiPlayerId))
+        assertThat(classifier.classify(gd, new PhaseOutEffect(Subjects.source()), aiPlayerId))
                 .isNull();
         assertThat(classifier.classify(gd,
                 new PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect(

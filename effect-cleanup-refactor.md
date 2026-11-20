@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i, 5j done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i, 5j, 5k done; 5d partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -396,7 +396,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5h | A creature deals damage | none | `*DealsPowerDamageTo*` (7), `*DealsDamageTo*` (5) | done (8 folded into two survivors; 13 left in the ledger) |
 | 5i | Boost (one-shot) | `PermanentReference` users | `Boost{Self,TargetCreature,EquippedCreatureUntilEndOfTurn,ReferencedPermanent,TargetPermanent}Effect` | done (3 folded into `BoostSelfEffect`; Hand of Vecna's choice record and `BoostTargetPermanentEffect` kept) |
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | done (3 folded into `SacrificeSelfEffect`; the delayed and Animate Dead records kept) |
-| 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | open |
+| 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | done (3 enums gone; 4 records folded into `RemoveTargetFromCombatEffect` and `PhaseOutEffect`) |
 | 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | open |
 | 5m | Whatever `--siblings` still lists | — | — | open |
 
@@ -2374,6 +2374,96 @@ the application tests naming `SacrificeSelfEffect`.
 - `PermanentReference` lost its Sacrifice reader; the rest of 5i's list stands.
 - A sacrifice "that player" on an enchanted-controller step trigger is `activePlayer()`; `triggeringPlayer()` does not
   work there for the end step (its entry's `targetId` is the enchanted permanent).
+
+### Step 5, run 5k (2026-11-20)
+
+`--family Flicker` / `PhaseOut` / `Remove` and `--siblings` give one flicker record (`FlickerEffect`, 147 cards), the
+phase-out records (`PhaseOutEffect` 33, `PhaseOutPermanentsEffect` 4, `PreventPhaseOutEffect` 2, 12 one-card records with
+their own duration or choice) and `Remove*FromCombat` (4 plus the fused Ydwen Efreet record).
+
+**Survivors.** (1) `FlickerEffect`'s `FlickerScope scope` became `PermanentSubject subject` in every constructor (first
+parameter, `null` normalises to `target()`); `withScope` became `withSubject`, new `exilesHostWithAuras()`. `filter` is now
+only a target restriction (rejected for any other subject); a set keeps its filter in the subject; `chooseAnyNumber`
+needs `controlledBy(you(), ...)`. `targetSpec()` per old constant: benign permanent (+ filter) for `target()`, benign
+player for a `controlledBy` whose players declare a target, the self-targeting marker for `source()` and the
+host-with-Auras shape (Flickerform's activation capture), else `NONE` (Kaya's `oneOf`, as SELF_OR_TARGET had). The
+handler keeps every per-shape path (immediate batch with every bound group exiled first, delayed return through
+`PendingExileReturns` / `exileAndScheduleReturn`, tokens not returning, counters and Auras falling off, return under
+owner's or your control, `returnedPermanentIds` cleared after a re-exile) and names its permanents only through
+`SubjectResolutionService`; the three set paths (target player's, your, every player's, plus returned permanents) are
+one `exileSetAtStep` (the two old copies differed only in the owner fallback, which is the same player for permanents
+you control, and in the controller-next-step flag, false on every non-`you()` card). `MultiPermanentChoiceHandlerService`'s
+"still eligible" check for an any-number flicker reads `FlickerEffectHandler.eligibleChoices` (the subject) instead of its
+own filter lookup. (2) `PhaseOutEffect(PermanentSubject)`: `target()` harmful permanent, `controlledBy(targetPlayer(),
+f)` harmful player, else `NONE`; one handler phases every named permanent out together through `PhasingService`
+(attachments indirectly, CR 702.26g; removed from combat, CR 506.4; no zone change) and logs a count for a set. Teferi's
+Veil's delayed payload is `named(attackerId)`. (3) `PreventPhaseOutEffect(PermanentSubject)`, `target()` or `source()`
+only. (4) `RemoveTargetFromCombatEffect(PermanentSubject subject, boolean unblockSoleBlockedAttackers)`, every old
+constructor kept plus `(PermanentSubject)`; benign creature spec only for `target()`; the handler removes each named
+permanent through `CombatRemovalSupport`.
+
+Constants mapped. FlickerScope: TARGET `target()`, SELF `source()`, TRIGGERING `triggering()`, SELF_OR_TARGET **new**
+`oneOf(source(), target())`, TARGET_PLAYERS_PERMANENTS `controlledBy(targetPlayer(), f)`, CONTROLLERS_PERMANENTS
+`controlledBy(you(), f)`, ALL_PLAYERS_PERMANENTS `controlledBy(eachPlayer(), f)`, RETURNED_PERMANENTS **new**
+`returnedThisResolution()`, ENCHANTED_CREATURE_AND_AURAS `allOf(attached(), attachmentsOf(attached(), Aura))`,
+TARGET_EXILED_EARLIER **new** `exiledThisResolution()`. PhaseOutSubject: SOURCE `source()`, TARGET `target()`, ATTACHED
+`attached()`. PhaseOutScope: CONTROLLER `controlledBy(you(), f)`, TARGET_PLAYER `controlledBy(targetPlayer(), f)`, ALL
+dead (confirmed: only the `(filter, false)` compatibility constructor reached it and no card or engine code called that).
+
+**Resolver.** Three variants: `returnedThisResolution()` (the entry's `returnedPermanentIds`), `exiledThisResolution()`
+(names nothing on the battlefield; `permanentIds` is the entry's target id, whose card the entry remembered; the old read)
+and `oneOf(options...)` (refused by the resolver: the verb's handler resolves each option and asks). Tests:
+`SubjectResolutionServiceTest$ReturnedThisResolution`, `$ExiledThisResolution`, `$OneOf`.
+
+**Deleted** (`FlickerScope`, `PhaseOutSubject`, `PhaseOutScope`; 4 records, 4 handlers; ratchet 4,882 / 4,115):
+`RemoveSelfFromCombatEffect` and `RemoveSourceFromCombatEffect` → `RemoveTargetFromCombatEffect(Subjects.source())` (five
+Gustcloaks; Mijae Djinn, Shakedown Heavy), `RemoveReferencedPermanentFromCombatEffect` → `(attached())` (Observed
+Stasis), `(triggering())` (Gustcloak Savior), `(triggering(), true)` (Imprison), `PhaseOutPermanentsEffect` →
+`PhaseOutEffect(controlledBy(you(), f))` (Taniwha, Teferi's Protection, Perch Protection) or `(controlledBy(targetPlayer(),
+f))` (Galadriel's Dismissal). 61 card files rewritten (a deleted scratch script, Ghostway, Golden Argosy and the four
+phase-out sets by hand), 8 engine, 8 domain, 1 AI main, 5 test and 7 agent-docs files changed.
+
+**`source()` fallback.** `RemoveSelfFromCombatEffect` fell back to the entry's target; a temporary probe that threw when
+a `source()` removal resolved on an entry with no source and a target never fired across every card test of the
+survivors. The other `source()` lookups (flicker SELF, phase-out SOURCE) were already strict.
+
+**AI parity.** `TargetPolarityClassifier`: `PhaseOutEffect` is HARMFUL_REMOVAL only for `target()` (the old TARGET; the
+absorbed set record had no entry); `RemoveTargetFromCombatEffect`'s name entry became a structural branch, HARMFUL for
+`target()` and `triggering()` (what the name gave both), none for the absorbed `source()` / `attached()` forms (their
+classes had no entry, so Observed Stasis's own-entry effects classify as before). `FlickerEffect` keeps its name entry.
+
+**Behaviour changes.** (1) Flickerform exiles the creature it enchants as the ability resolves ("exile enchanted
+creature", CR 608.2h), not the host captured at activation. Test: `FlickerformTest.exilesTheCreatureEnchantedAtResolution`.
+(2) An any-number flicker (Yorion, Nahiri's Resolve, Another Round) re-checks that a chosen permanent is still one you
+control matching the filter with the resolver's fuller filter context. (3) Its attached Auras are found by effective
+subtype instead of the printed one. (4) Gustcloak removals log "X removes X from combat." and leave an attacker marked
+blocked-without-blockers only when no other blocker remains (the attacker stays blocked either way, CR 509.1h).
+(5) Set flickers and set phase-outs list players in APNAP order instead of seat order (simultaneous; log order only).
+
+**Kept exactly.** New objects on return (CR 400.7), return under owner's / your control, immediate vs. delayed return
+(the delayed ones still `PendingExileReturns` / `TemporaryGlobalTriggeredAbility`, CR 603.7), tokens not returning
+(CR 111.7), `returnedPermanentIds` recording; indirect phasing and no leave/enter triggers; combat removal through
+`CombatRemovalSupport`.
+
+**Tests**: 253 suites, 2,068 test cases, all pass: every test class of a card naming one of the four survivors (with the
+probe), Melee, Skywriter Djinn, Sword of Hearth and Home, Teferi's Veil, Ydwen Efreet, Fortune, Zuko, Sol'kanar,
+`FlickerEffectHandlerTest` (now over a real resolver on its mocks), `SubjectResolutionServiceTest`,
+`StepTriggerServiceTest`, `UntapStepServiceTest`, `PermanentRemovalServiceTest`, `DestructionSupportFallbackTest`, the
+two ratchets, `TargetPolarityGuardTest`.
+
+**For later runs.**
+
+- `PermanentReference` and `Subjects.of` stay; their readers are now Explore, Goad, TurnSourceFaceUp, Shuffle,
+  MustBlockSource, `DoesntUntapWithCounterEffect`, `PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeep`, the fused
+  `RemoveAllCountersThenDestroyReferencedPermanentAndDamageController` and `PermanentBlockingSourcePredicate`.
+- Kept (ledger): `RemoveSourceFromCombatAndUnblockSoleBlockersEffect` is fused with a can't-block effect (step 8; its
+  removal half is `RemoveTargetFromCombatEffect(source(), true)`); `PhaseOutAttackingCreatureAtEndOfCombatEffect` uses
+  `TemporaryGlobalTriggeredAbility` (5a's delayed-mechanism note); `ExileTargetCreatureAndReturnAtNextEndStepEffect`
+  declares a harmful creature target and is a `RemovalEffect` where the flicker target is benign; the other
+  `ExileSelfReturnAt*` / `...DeclareAttackers` records have their own return timing; the one-card phase-out records
+  carry a duration or a resolution-time choice.
+- `oneOf` is the shape for any "this or target" choice; `returnedThisResolution()` / `exiledThisResolution()` are early
+  step-7 results that still read the entry's `returnedPermanentIds` / target id; step 7 moves them to the scratchpad.
 
 ## Prompt
 

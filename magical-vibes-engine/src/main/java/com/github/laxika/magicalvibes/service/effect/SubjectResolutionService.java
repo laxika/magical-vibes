@@ -154,6 +154,8 @@ public class SubjectResolutionService {
             case PermanentSubject.TargetSpell ignored -> List.of();
             case PermanentSubject.TriggeringSpell ignored -> List.of();
             case PermanentSubject.Returned ignored -> listOf(returnedPermanentId(ctx));
+            case PermanentSubject.ReturnedThisResolution ignored -> List.copyOf(ctx.entry().getReturnedPermanentIds());
+            case PermanentSubject.ExiledThisResolution ignored -> listOf(ctx.entry().getTargetId());
             case PermanentSubject.Granter granter -> listOf(granter.boundPermanentId() != null
                     ? granter.boundPermanentId() : ctx.entry().getGrantingPermanentId());
             case PermanentSubject.Named named -> listOf(named.permanentId());
@@ -173,6 +175,8 @@ public class SubjectResolutionService {
                 }
                 yield List.copyOf(union);
             }
+            case PermanentSubject.OneOf oneOf -> throw new IllegalArgumentException(
+                    "A choice between subjects is made by the verb's handler, which resolves each option: " + oneOf);
         };
     }
 

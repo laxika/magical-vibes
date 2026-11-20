@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -28,6 +28,6 @@ public class GuardianOfFaith extends Card {
                 )),
                 "Target must be another creature you control"
         ), 0, Integer.MAX_VALUE).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PhaseOutEffect(PhaseOutSubject.TARGET));
+                new PhaseOutEffect(Subjects.target()));
     }
 }

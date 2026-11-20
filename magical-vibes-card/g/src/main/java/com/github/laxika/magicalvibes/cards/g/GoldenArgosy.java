@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,8 +19,8 @@ public class GoldenArgosy extends Card {
 
     public GoldenArgosy() {
         addTrigger(Triggers.attacks(), new FlickerEffect(
-                FlickerScope.ALL_PLAYERS_PERMANENTS,
-                new PermanentCrewedBySourceThisTurnPredicate(),
+                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentCrewedBySourceThisTurnPredicate()),
+                null,
                 ReturnTiming.AT_STEP,
                 TurnStep.END_STEP,
                 true,
